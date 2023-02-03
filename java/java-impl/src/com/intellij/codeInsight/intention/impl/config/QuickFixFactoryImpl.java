@@ -28,6 +28,7 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.request.CreateConstructorFromUsage;
@@ -37,16 +38,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassKind;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyMemberType;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -674,7 +676,10 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createOptimizeImportsFix(final boolean onTheFly, boolean isInContent) {
+  public IntentionAction createOptimizeImportsFix(final boolean onTheFly, @NotNull PsiFile file) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    VirtualFile virtualFile = file.getVirtualFile();
+    boolean isInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(file.getProject(), virtualFile, false);
     return new OptimizeImportsFix(onTheFly, isInContent);
   }
 
@@ -683,6 +688,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     private final boolean myInContent;
 
     private OptimizeImportsFix(boolean onTheFly, boolean isInContent) {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
       myOnTheFly = onTheFly;
       myInContent = isInContent;
     }
@@ -701,7 +707,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return (!myOnTheFly || timeToOptimizeImports(file, myInContent)) && file instanceof PsiJavaFile && BaseIntentionAction.canModify(file);
+      if (myOnTheFly && !timeToOptimizeImports(file, myInContent) || !(file instanceof PsiJavaFile)) {
+        return false;
+      }
+      VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
+      return myInContent ||
+             ScratchUtil.isScratch(virtualFile) ||
+             virtualFile.getFileSystem() instanceof NonPhysicalFileSystem;
     }
 
     @Override

@@ -387,7 +387,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createCreateAnnotationMethodFromUsageFix(@NotNull PsiNameValuePair pair);
 
   @NotNull
-  public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly, boolean isInContent);
+  public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly, @NotNull PsiFile file);
 
   @NotNull
   public abstract IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter, boolean excludingHierarchy);
@@ -506,7 +506,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createFillPermitsListFix(@NotNull PsiIdentifier classIdentifier);
 
   /**
-   * @param subClass class that should be added to parents permits list
+   * @param subClass class that should be added to the parent permits list
    * @param superClass sealed parent class from subclasses' extends / implements clause
    */
   @NotNull

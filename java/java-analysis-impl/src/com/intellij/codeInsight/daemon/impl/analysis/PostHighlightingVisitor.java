@@ -20,10 +20,10 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -69,38 +69,6 @@ class PostHighlightingVisitor {
   private final HighlightInfoType myDeadCodeInfoType;
   private final UnusedDeclarationInspectionBase myDeadCodeInspection;
 
-  private void optimizeImportsOnTheFlyLater(@NotNull ProgressIndicator progress, boolean isInContent) {
-    if ((myHasRedundantImports || myHasMisSortedImports) && !progress.isCanceled()) {
-      scheduleOptimizeOnDaemonFinished(isInContent);
-    }
-  }
-
-  private void scheduleOptimizeOnDaemonFinished(final boolean isInContent) {
-    Disposable daemonDisposable = Disposer.newDisposable();
-
-    // schedule optimise action after all applyInformation() calls
-    myProject.getMessageBus().connect(daemonDisposable)
-      .subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
-        @Override
-        public void daemonFinished(@NotNull Collection<? extends FileEditor> incomingFileEditors) {
-          Disposer.dispose(daemonDisposable);
-          if (((DaemonCodeAnalyzerEx)DaemonCodeAnalyzer.getInstance(myProject)).isErrorAnalyzingFinished(myFile)) {
-            // later because should invoke when highlighting is finished (OptimizeImportsFix relies on that)
-            AppUIExecutor.onUiThread().later().withDocumentsCommitted(myProject).execute(() -> {
-              if (!myFile.isValid() || !myFile.isWritable()) return;
-              IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, isInContent);
-              if (optimizeImportsFix.isAvailable(myProject, null, myFile)) {
-                optimizeImportsFix.invoke(myProject, null, myFile);
-              }
-            });
-          }
-          else {
-            scheduleOptimizeOnDaemonFinished(isInContent);
-          }
-        }
-      });
-  }
-
   PostHighlightingVisitor(@NotNull PsiFile file,
                           @NotNull Document document,
                           @NotNull RefCountHolder refCountHolder) throws ProcessCanceledException {
@@ -124,11 +92,54 @@ class PostHighlightingVisitor {
 
     myUnusedSymbolInspection = myDeadCodeInspection != null ? myDeadCodeInspection.getSharedLocalInspectionTool() : null;
 
-    myDeadCodeInfoType = myDeadCodeKey == null
-                         ? HighlightInfoType.UNUSED_SYMBOL
+    myDeadCodeInfoType = myDeadCodeKey == null ? HighlightInfoType.UNUSED_SYMBOL
                          : new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(myDeadCodeKey, myFile).getSeverity(),
-                                                                       ObjectUtils.notNull(profile.getEditorAttributes(myDeadCodeKey.toString(), myFile), 
-                                                                                           HighlightInfoType.UNUSED_SYMBOL.getAttributesKey()));
+                            ObjectUtils.notNull(profile.getEditorAttributes(myDeadCodeKey.toString(), myFile),
+                                                HighlightInfoType.UNUSED_SYMBOL.getAttributesKey()));
+  }
+
+  private void optimizeImportsOnTheFlyLater(@NotNull ProgressIndicator progress) {
+    if ((myHasRedundantImports || myHasMisSortedImports) && !progress.isCanceled()) {
+      scheduleOptimizeOnDaemonFinished();
+    }
+  }
+
+  private void scheduleOptimizeOnDaemonFinished() {
+    if (myProject.isDisposed()) {
+      return;
+    }
+    Disposable daemonDisposable = Disposer.newDisposable();
+    // schedule optimise action after all applyInformation() calls
+    myProject.getMessageBus().connect(daemonDisposable)
+      .subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+        @Override
+        public void daemonFinished(@NotNull Collection<? extends FileEditor> __) {
+          Disposer.dispose(daemonDisposable);
+          ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
+            if (myProject.isDisposed() || !myFile.isValid() || !myFile.isWritable()) return;
+            if (((DaemonCodeAnalyzerEx)DaemonCodeAnalyzer.getInstance(myProject)).isErrorAnalyzingFinished(myFile)) {
+              long stampBefore = myFile.getModificationStamp();
+              IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
+              // later because should invoke when highlighting is finished (OptimizeImportsFix relies on that)
+              AppUIExecutor.onUiThread().later().withDocumentsCommitted(myProject).execute(() -> {
+                if (myProject.isDisposed()) return;
+                long stampAfter = myFile.getModificationStamp();
+                if (stampAfter == stampBefore) {
+                  if (optimizeImportsFix.isAvailable(myProject, null, myFile)) {
+                    optimizeImportsFix.invoke(myProject, null, myFile);
+                  }
+                }
+                else {
+                  scheduleOptimizeOnDaemonFinished();
+                }
+              });
+            }
+            else {
+              scheduleOptimizeOnDaemonFinished();
+            }
+          }));
+        }
+      });
   }
 
   void collectHighlights(@NotNull HighlightInfoHolder result, @NotNull ProgressIndicator progress) {
@@ -181,10 +192,7 @@ class PostHighlightingVisitor {
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
       fileStatusMap.setErrorFoundFlag(myProject, myDocument, true);
     }
-
-    VirtualFile virtualFile = myFile.getVirtualFile();
-    boolean isInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(myProject, virtualFile, false);
-    optimizeImportsOnTheFlyLater(progress, isInContent);
+    optimizeImportsOnTheFlyLater(progress);
   }
 
   private boolean isUnusedImportEnabled(HighlightDisplayKey unusedImportKey) {
@@ -453,14 +461,10 @@ class PostHighlightingVisitor {
       HighlightInfo.Builder highlightInfo = checkUnusedParameter(parameter, identifier, null);
       if (highlightInfo != null) {
         if (declarationScope.getParent() instanceof PsiSwitchBlock) {
-          if (variable.getParent() instanceof PsiDeconstructionPattern) {
-            IntentionAction action = quickFixFactory.createDeleteFix(parameter);
-            highlightInfo.registerFix(action, null, null, null, null);
-          }
-          else {
-            IntentionAction action = quickFixFactory.createRenameToIgnoredFix(parameter, false);
-            highlightInfo.registerFix(action, null, null, null, null);
-          }
+          IntentionAction action = variable.getParent() instanceof PsiDeconstructionPattern
+                                   ? quickFixFactory.createDeleteFix(parameter)
+                                   : quickFixFactory.createRenameToIgnoredFix(parameter, false);
+          highlightInfo.registerFix(action, null, null, null, null);
         }
         else if (!(variable.getPattern() instanceof PsiTypeTestPattern pattern && pattern.getParent() instanceof PsiDeconstructionList)) {
           IntentionAction action = quickFixFactory.createDeleteFix(parameter);
@@ -644,12 +648,11 @@ class PostHighlightingVisitor {
         .descriptionAndTooltip(description)
         .group(GeneralHighlightingPass.POST_UPDATE_ALL);
 
-    boolean isInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(myProject, virtualFile, false);
-    IntentionAction action1 = QuickFixFactory.getInstance().createOptimizeImportsFix(false, isInContent);
-    info.registerFix(action1, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
+    IntentionAction optimizeFix = QuickFixFactory.getInstance().createOptimizeImportsFix(false, myFile);
+    info.registerFix(optimizeFix, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
 
-    @Nullable IntentionAction action = QuickFixFactory.getInstance().createEnableOptimizeImportsOnTheFlyFix();
-    info.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
+    IntentionAction switchFix = QuickFixFactory.getInstance().createEnableOptimizeImportsOnTheFlyFix();
+    info.registerFix(switchFix, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
     if (!predefinedImport) myHasRedundantImports = true;
     return info;
   }
