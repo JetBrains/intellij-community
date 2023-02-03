@@ -87,6 +87,13 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
         }
       }
     }
+
+    @Throws(IllegalStateException::class)
+    @JvmStatic
+    fun <T : TargetEnvironmentType<*>> findInstance(targetClass: Class<T>): T {
+      return EXTENSION_NAME.extensionList.filterIsInstance(targetClass).firstOrNull()
+             ?: throw IllegalStateException("Cannot find TargetEnvironmentType instance of $targetClass")
+    }
   }
 
   /**
@@ -122,3 +129,5 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
     fun toStorableMap(): Map<String, String>
   }
 }
+
+inline fun <reified T : TargetEnvironmentType<*>> findTargetEnvironmentType() = TargetEnvironmentType.findInstance(T::class.java)
