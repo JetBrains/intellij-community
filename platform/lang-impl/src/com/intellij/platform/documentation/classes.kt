@@ -31,7 +31,7 @@ internal data class LinkData(
 
 @Internal
 class AsyncDocumentation(
-  val supplier: AsyncSupplier<DocumentationResult.Data?>
+  val supplier: AsyncSupplier<DocumentationResult.Documentation?>
 ) : DocumentationResult
 
 @Internal

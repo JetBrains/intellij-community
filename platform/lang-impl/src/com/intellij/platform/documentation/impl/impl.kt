@@ -19,21 +19,21 @@ internal fun DocumentationTarget.documentationRequest(): DocumentationRequest {
 }
 
 @Internal
-fun CoroutineScope.computeDocumentationAsync(targetPointer: Pointer<out DocumentationTarget>): Deferred<DocumentationResultData?> {
+fun CoroutineScope.computeDocumentationAsync(targetPointer: Pointer<out DocumentationTarget>): Deferred<DocumentationData?> {
   return async(Dispatchers.Default) {
     computeDocumentation(targetPointer)
   }
 }
 
-internal suspend fun computeDocumentation(targetPointer: Pointer<out DocumentationTarget>): DocumentationResultData? {
+internal suspend fun computeDocumentation(targetPointer: Pointer<out DocumentationTarget>): DocumentationData? {
   return withContext(Dispatchers.Default) {
     val documentationResult: DocumentationResult? = readAction {
       targetPointer.dereference()?.computeDocumentation()
     }
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
     when (documentationResult) {
-      is DocumentationResultData -> documentationResult
-      is AsyncDocumentation -> documentationResult.supplier.invoke() as DocumentationResultData?
+      is DocumentationData -> documentationResult
+      is AsyncDocumentation -> documentationResult.supplier.invoke() as DocumentationData?
       null -> null
       else -> error("Unexpected result: $documentationResult") // this fixes Kotlin incremental compilation
     }
@@ -176,7 +176,7 @@ private fun contentUpdater(target: DocumentationTarget, url: String): ContentUpd
 }
 
 @TestOnly
-fun computeDocumentationBlocking(targetPointer: Pointer<out DocumentationTarget>): DocumentationResultData? {
+fun computeDocumentationBlocking(targetPointer: Pointer<out DocumentationTarget>): DocumentationData? {
   return runBlocking {
     withTimeout(1000 * 60) {
       computeDocumentation(targetPointer)

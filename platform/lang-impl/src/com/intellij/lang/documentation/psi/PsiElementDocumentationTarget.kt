@@ -87,10 +87,10 @@ class PsiElementDocumentationTarget private constructor(
   }
 
   @RequiresReadLock
-  private fun localDoc(provider: DocumentationProvider): DocumentationResultData? {
+  private fun localDoc(provider: DocumentationProvider): DocumentationData? {
     val html = localDocHtml(provider)
                ?: return null
-    return DocumentationResultData(
+    return DocumentationData(
       content = DocumentationContentData(
         html = html,
         imageResolver = pointer.imageResolver,
@@ -135,7 +135,7 @@ class PsiElementDocumentationTarget private constructor(
       targetElement: PsiElement,
       provider: ExternalDocumentationProvider,
       urls: List<String>,
-      localDoc: DocumentationResult.Data?,
+      localDoc: DocumentationResult.Documentation?,
     ): DocumentationResult = DocumentationResult.asyncDocumentation(Supplier {
       LOG.debug("External documentation URLs: $urls")
       for (url in urls) {
@@ -143,7 +143,7 @@ class PsiElementDocumentationTarget private constructor(
         val doc = provider.fetchExternalDocumentation(project, targetElement, listOf(url), false)
                   ?: continue
         LOG.debug("Fetched documentation from $url")
-        return@Supplier DocumentationResultData(
+        return@Supplier DocumentationData(
           content = DocumentationContentData(
             html = doc,
             imageResolver = imageResolver,

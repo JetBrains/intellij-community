@@ -66,7 +66,7 @@ final class PsiExternalDocumentationHandlerTarget implements DocumentationTarget
   }
 
   // static method ensures that this is not captured
-  private static @NotNull Supplier<DocumentationResult.@Nullable Data> fetchComputable(
+  private static @NotNull Supplier<DocumentationResult.@Nullable Documentation> fetchComputable(
     @NotNull ExternalDocumentationHandler handler,
     @NotNull String url,
     @NotNull PsiElement context

@@ -7,22 +7,25 @@ import org.jetbrains.annotations.Nls
 import java.awt.Image
 import java.util.function.Supplier
 
+/**
+ * This is a union type: `Documentation | suspend () -> Documentation?`.
+ */
 @Experimental
 sealed interface DocumentationResult {
 
-  sealed interface Data : DocumentationResult {
+  sealed interface Documentation : DocumentationResult {
 
-    fun html(html: @Nls String): Data
+    fun html(html: @Nls String): Documentation
 
     /**
      * @param images map from `url` of `<img src="url">` tag to an image
      */
-    fun images(images: Map<String, Image>): Data
+    fun images(images: Map<String, Image>): Documentation
 
     /**
      * @param content [html] with [images]
      */
-    fun content(content: DocumentationContent): Data
+    fun content(content: DocumentationContent): Documentation
 
     /**
      * The scrolling is only executed on the initial showing, the anchor does not have an effect on [updates].
@@ -30,44 +33,44 @@ sealed interface DocumentationResult {
      * @param anchor element `id` or link `name` in the [html] to scroll to,
      * or `null` to scroll to the top
      */
-    fun anchor(anchor: String?): Data
+    fun anchor(anchor: String?): Documentation
 
     /**
      * @param externalUrl a URL to use in *External Documentation* action;
      * the URL will be appended to the bottom of the [html]
      */
-    fun externalUrl(externalUrl: String?): Data
+    fun externalUrl(externalUrl: String?): Documentation
 
     /**
      * [Updates][updates] continuously replace the browser content until the flow is fully collected.
      * Clicking another link, closing the browser, resetting the browser, going back or forward cancels the flow collection.
      * Scrolling position is preserved in the browser when the update is applied, i.e. [anchor] does not have any effect on updates.
      */
-    fun updates(updates: Flow<DocumentationContent>): Data
+    fun updates(updates: Flow<DocumentationContent>): Documentation
 
     /**
      * Same as asynchronous overload, but blocking.
      * The [updates] is collected in [IO context][kotlinx.coroutines.Dispatchers.IO].
      */
-    fun blockingUpdates(updates: BlockingDocumentationContentFlow): Data
+    fun blockingUpdates(updates: BlockingDocumentationContentFlow): Documentation
   }
 
   companion object {
 
     /**
-     * @param html see [Data.html]
+     * @param html see [Documentation.html]
      */
     @JvmStatic
-    fun documentation(html: @Nls String): Data {
+    fun documentation(html: @Nls String): Documentation {
       return documentation(DocumentationContent.content(html))
     }
 
     /**
-     * @param content see [Data.content]
+     * @param content see [Documentation.content]
      */
     @JvmStatic
-    fun documentation(content: DocumentationContent): Data {
-      return DocumentationResultData(content as DocumentationContentData)
+    fun documentation(content: DocumentationContent): Documentation {
+      return DocumentationData(content as DocumentationContentData)
     }
 
     /**
@@ -75,7 +78,7 @@ sealed interface DocumentationResult {
      * - will be invoked in background;
      * - is free to obtain a read action itself if needed.
      */
-    fun asyncDocumentation(supplier: suspend () -> Data?): DocumentationResult {
+    fun asyncDocumentation(supplier: suspend () -> Documentation?): DocumentationResult {
       return AsyncDocumentation(supplier)
     }
 
@@ -84,7 +87,7 @@ sealed interface DocumentationResult {
      * The [supplier] will be invoked under progress indicator.
      */
     @JvmStatic
-    fun asyncDocumentation(supplier: Supplier<Data?>): DocumentationResult {
+    fun asyncDocumentation(supplier: Supplier<Documentation?>): DocumentationResult {
       return AsyncDocumentation(supplier.asAsyncSupplier())
     }
   }

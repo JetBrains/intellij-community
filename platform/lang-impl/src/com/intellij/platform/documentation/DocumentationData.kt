@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.documentation
 
-import com.intellij.platform.documentation.DocumentationResult.Data
+import com.intellij.platform.documentation.DocumentationResult.Documentation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -10,41 +10,41 @@ import java.awt.Image
 
 @Internal
 @VisibleForTesting
-data class DocumentationResultData internal constructor(
+data class DocumentationData internal constructor(
   internal val content: DocumentationContentData,
   internal val links: LinkData = LinkData(),
   val anchor: String? = null,
   internal val updates: Flow<DocumentationContentData> = emptyFlow(),
-) : Data {
+) : Documentation {
 
   val html: String get() = content.html
 
-  override fun html(html: String): Data {
+  override fun html(html: String): Documentation {
     return content(content.copy(html = html))
   }
 
-  override fun images(images: Map<String, Image>): Data {
+  override fun images(images: Map<String, Image>): Documentation {
     return content(content.copy(imageResolver = imageResolver(images)))
   }
 
-  override fun content(content: DocumentationContent): Data {
+  override fun content(content: DocumentationContent): Documentation {
     return copy(content = content as DocumentationContentData)
   }
 
-  override fun anchor(anchor: String?): Data {
+  override fun anchor(anchor: String?): Documentation {
     return copy(anchor = anchor)
   }
 
-  override fun externalUrl(externalUrl: String?): Data {
+  override fun externalUrl(externalUrl: String?): Documentation {
     return copy(links = links.copy(externalUrl = externalUrl))
   }
 
-  override fun updates(updates: Flow<DocumentationContent>): Data {
+  override fun updates(updates: Flow<DocumentationContent>): Documentation {
     @Suppress("UNCHECKED_CAST")
     return copy(updates = updates as Flow<DocumentationContentData>)
   }
 
-  override fun blockingUpdates(updates: BlockingDocumentationContentFlow): Data {
+  override fun blockingUpdates(updates: BlockingDocumentationContentFlow): Documentation {
     return updates(updates.asFlow())
   }
 }

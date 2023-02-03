@@ -9,7 +9,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.platform.documentation.DocumentationResultData;
+import com.intellij.platform.documentation.DocumentationData;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +127,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
   @Test
   public void testVmOptionDocumentation() {
     VMOption option = new VMOption("Flag", "bool", "true", VMOptionKind.Experimental, "SuperOption", VMOptionVariant.XX);
-    DocumentationResultData result = (DocumentationResultData)option.computeDocumentation();
+    DocumentationData result = (DocumentationData)option.computeDocumentation();
     String doc = result.getHtml();
     assertEquals("""
                    <table>\

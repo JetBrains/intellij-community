@@ -40,7 +40,7 @@ public final class QuickDocUtil {
 
   /**
    * @deprecated No op in v2 implementation.
-   * Use {@link DocumentationResult#asyncDocumentation} or {@link DocumentationResult.Data#updates} for async updates.
+   * Use {@link DocumentationResult#asyncDocumentation} or {@link DocumentationResult.Documentation#updates} for async updates.
    */
   @Deprecated
   public static void updateQuickDoc(@NotNull final Project project, @NotNull final PsiElement element, @Nullable @Nls final String documentation) {
@@ -56,7 +56,7 @@ public final class QuickDocUtil {
 
   /**
    * @deprecated Returns `null` in v2 implementation.
-   * Use {@link  DocumentationResult#asyncDocumentation} or {@link DocumentationResult.Data#updates} for async updates.
+   * Use {@link  DocumentationResult#asyncDocumentation} or {@link DocumentationResult.Documentation#updates} for async updates.
    */
   @Deprecated
   @Nullable
