@@ -52,6 +52,14 @@ public class ObjectEquality {
     test(num == obj);
   }
 
+  // Strings are handled separately by StringEqualityInspection, so don't warn.
+  void compareStrings(String s1, String s2, Object obj) {
+    test(s1 == s2);
+    test(s1 != s2);
+    test(s1 == obj);
+    test(obj == s2);
+  }
+
   // The interface 'java.util.Collection' does not require 'equals' and 'hashCode'
   // to implement a value-based comparison.
   void compareCollections(Collection<String> coll1, Collection<String> coll2) {
