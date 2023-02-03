@@ -934,7 +934,7 @@ public class ExpectedHighlightingData {
 
     @Override
     public boolean equals(Object obj) {
-      return this == obj || (obj instanceof PathIcon && ((PathIcon)obj).path == path);
+      return this == obj || (obj instanceof PathIcon && ((PathIcon)obj).path.equals(path));
     }
 
     @Override

@@ -25,7 +25,7 @@ public final class ExtraHTTPHeadersParser {
         String[] pairs = data.split(";");
         for (String pair : pairs) {
           String[] strings = pair.split("=");
-          if (strings.length == 2 && "" != strings[0] && "" != strings[1]) {
+          if (strings.length == 2 && !strings[0].isEmpty() && !strings[1].isEmpty()) {
             res.put(strings[0], strings[1]);
           }
         }

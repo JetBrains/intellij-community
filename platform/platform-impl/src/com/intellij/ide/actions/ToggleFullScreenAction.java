@@ -35,7 +35,7 @@ final class ToggleFullScreenAction extends DumbAwareAction implements LightEditC
       isApplicable = frame != null;
     }
 
-    if (e.getPlace() != ActionPlaces.MAIN_TOOLBAR) {
+    if (!ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
       p.setVisible(isApplicable);
     }
     p.setEnabled(isApplicable);

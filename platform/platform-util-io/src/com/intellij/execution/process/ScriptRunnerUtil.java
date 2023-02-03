@@ -139,11 +139,7 @@ public final class ScriptRunnerUtil {
     }
 
     String pathWithExt = PathEnvironmentVariableUtil.findExecutableInWindowsPath(exeName);
-    if (pathWithExt != exeName) {
-      return true;
-    }
-
-    return false;
+    return !pathWithExt.equals(exeName);
   }
 
   public static ScriptOutput executeScriptInConsoleWithFullOutput(String exePathString,

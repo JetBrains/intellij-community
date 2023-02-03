@@ -132,7 +132,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   }
 
   public boolean isDebug() {
-    return myExecutor.getId() == DefaultDebugExecutor.EXECUTOR_ID;
+    return myExecutor.getId().equals(DefaultDebugExecutor.EXECUTOR_ID);
   }
 
   public boolean isPaused() {
