@@ -49,6 +49,9 @@ internal fun populateModuleDependenciesWithDependenciesContainer(
     val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
 
     mppModel.sourceSetsByName.values.forEach { sourceSet ->
+        /* Support for non-mpp Android plugins, which are not aware of our new extension points yet */
+        if (shouldDelegateToOtherPlugin(sourceSet)) return@forEach
+
         val sourceSetModuleIde = KotlinSourceSetModuleId(resolverCtx, gradleModule, sourceSet)
         val sourceSetDataNode = ideModule.findSourceSetNode(sourceSetModuleIde) ?: return@forEach
         val sourceSetDependencies = dependencies[sourceSet.name]
