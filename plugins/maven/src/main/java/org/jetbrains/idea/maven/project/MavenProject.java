@@ -42,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.jetbrains.idea.maven.model.MavenProjectProblem.ProblemType.SYNTAX;
 
 @SuppressWarnings({"SynchronizationOnLocalVariableOrMethodParameter", "SynchronizeOnNonFinalField"})
-public class MavenProject {
+public class MavenProject implements MavenProjectPathHolder {
   private static final Key<MavenArtifactIndex> DEPENDENCIES_CACHE_KEY = Key.create("MavenProject.DEPENDENCIES_CACHE_KEY");
   private static final Key<List<String>> FILTERS_CACHE_KEY = Key.create("MavenProject.FILTERS_CACHE_KEY");
 
@@ -299,6 +299,7 @@ public class MavenProject {
     return myFile;
   }
 
+  @Override
   public @NotNull @NonNls String getPath() {
     return myFile.getPath();
   }

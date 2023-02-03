@@ -862,7 +862,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return myProjectsTree.getIgnoredState(project);
   }
 
-  public void setIgnoredState(@NotNull List<MavenProject> projects, boolean ignored) {
+  public void setIgnoredState(@NotNull List<? extends MavenProjectPathHolder> projects, boolean ignored) {
     if (!isInitialized()) return;
     myProjectsTree.setIgnoredState(projects, ignored);
   }

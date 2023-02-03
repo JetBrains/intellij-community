@@ -4,7 +4,9 @@ package org.jetbrains.idea.maven.project.projectRoot;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureExtension;
-import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenProjectPathHolder;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.ArrayList;
@@ -14,7 +16,7 @@ import java.util.Set;
 
 public class MavenModuleStructureExtension extends ModuleStructureExtension {
   private final Set<Module> myModulesToRemove = new HashSet<>();
-  private final List<MavenProject> myMavenProjectsToIgnore = new ArrayList<>();
+  private final List<MavenProjectPathHolder> myMavenProjectsToIgnore = new ArrayList<>();
   private MavenProjectsManager myMavenProjectsManager = null;
 
   @Override
@@ -30,12 +32,35 @@ public class MavenModuleStructureExtension extends ModuleStructureExtension {
     return !myModulesToRemove.isEmpty();
   }
 
+  private static class NonExistingMavenProject implements MavenProjectPathHolder {
+    private final String path;
+
+    NonExistingMavenProject(String path) {
+      this.path = path;
+    }
+
+    @NotNull
+    @Override
+    public @NonNls String getPath() {
+      return path;
+    }
+  }
+
   @Override
   public void apply() throws ConfigurationException {
     myModulesToRemove.forEach(moduleToRemove -> {
       var mavenProject = myMavenProjectsManager.findProject(moduleToRemove);
       if (null != mavenProject) {
         myMavenProjectsToIgnore.add(mavenProject);
+      } else {
+        // If we add and then remove a maven module in Project Structure,
+        // its content stays on the disk and the module is immediately re-imported.
+        // To prevent it, we try to add its pom to ignore list
+        var imlPath = moduleToRemove.getModuleFilePath();
+        if (imlPath.endsWith(".iml")) {
+          var pomPath = imlPath.substring(0, imlPath.length()-4) + "/pom.xml";
+          myMavenProjectsToIgnore.add(new NonExistingMavenProject(pomPath));
+        }
       }
     });
     myModulesToRemove.clear();

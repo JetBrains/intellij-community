@@ -16,8 +16,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.*;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.containers.*;
 import com.intellij.util.io.PathKt;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
@@ -26,7 +26,10 @@ import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
@@ -35,9 +38,9 @@ import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
@@ -255,16 +258,16 @@ public final class MavenProjectsTree {
     }
   }
 
-  public void setIgnoredState(List<MavenProject> projects, boolean ignored) {
+  public void setIgnoredState(List<? extends MavenProjectPathHolder> projects, boolean ignored) {
     setIgnoredState(projects, ignored, false);
   }
 
-  public void setIgnoredState(List<MavenProject> projects, boolean ignored, boolean fromImport) {
+  public void setIgnoredState(List<? extends MavenProjectPathHolder> projects, boolean ignored, boolean fromImport) {
     doSetIgnoredState(projects, ignored, fromImport);
   }
 
-  private void doSetIgnoredState(List<MavenProject> projects, final boolean ignored, boolean fromImport) {
-    final List<String> paths = MavenUtil.collectPaths(MavenUtil.collectFiles(projects));
+  private void doSetIgnoredState(List<? extends MavenProjectPathHolder> projects, final boolean ignored, boolean fromImport) {
+    final List<String> paths = ContainerUtil.map(projects, project -> project.getPath());
     doChangeIgnoreStatus(() -> {
       if (ignored) {
         myIgnoredFilesPaths.addAll(paths);
