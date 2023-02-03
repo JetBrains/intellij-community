@@ -1794,7 +1794,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       )
     );
     var result = !withUrl
-                 ? content
+                 ? List.of(CONTENT_ELEMENT.children(content))
                  : List.of(
                    DEFINITION_ELEMENT.children(HtmlChunk.tag("pre").addText(file.getPresentableUrl())),
                    CONTENT_ELEMENT.children(content)
