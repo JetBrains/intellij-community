@@ -66,6 +66,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   static final String MUST_EXECUTE_INSIDE_READ_ACTION = "Read access is allowed from inside read-action (or EDT) only (see Application.runReadAction())";
   static final String MUST_EXECUTE_INSIDE_WRITE_ACTION = "Write access is allowed inside write-action only (see Application.runWriteAction())";
   static final String MUST_EXECUTE_UNDER_EDT = "Access is allowed from event dispatch thread only";
+  static final String MUST_NOT_EXECUTE_UNDER_EDT = "Access from event dispatch thread is not allowed";
 
   final ReadMostlyRWLock myLock;
 
@@ -1034,7 +1035,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public void assertIsNonDispatchThread() {
     if (isDispatchThread()) {
-      throwThreadAccessException("Access from event dispatch thread is not allowed");
+      throwThreadAccessException(MUST_NOT_EXECUTE_UNDER_EDT);
     }
   }
 
