@@ -49,9 +49,6 @@ internal fun populateModuleDependenciesWithDependenciesContainer(
     val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
 
     mppModel.sourceSetsByName.values.forEach { sourceSet ->
-        /* Support for non-mpp Android plugins, which are not aware of our new extension points yet */
-        if (shouldDelegateToOtherPlugin(sourceSet)) return@forEach
-
         val sourceSetModuleIde = KotlinSourceSetModuleId(resolverCtx, gradleModule, sourceSet)
         val sourceSetDataNode = ideModule.findSourceSetNode(sourceSetModuleIde) ?: return@forEach
         val sourceSetDependencies = dependencies[sourceSet.name]
@@ -62,6 +59,13 @@ internal fun populateModuleDependenciesWithDependenciesContainer(
                 extensionContext, sourceSetDataNode, sourceSet, sourceSetDependencies
             ) == KotlinMppGradleProjectResolverExtension.Result.Skip
         ) return@forEach
+
+        /*
+         Support for non-mpp Android plugins, which are not aware of our new extension points yet
+         This is explicitly placed *after* calling into the extension points, so they can still handle the
+         request with the EP instead.
+         */
+        if (shouldDelegateToOtherPlugin(sourceSet)) return@forEach
 
         /*
         Some dependencies are represented as IdeaKotlinProjectArtifactDependency.
