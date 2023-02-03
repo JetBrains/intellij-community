@@ -295,7 +295,7 @@ public final class Switcher extends BaseSwitcherAction {
         }
       };
       files = JBListWithOpenInRightSplit
-        .createListWithOpenInRightSplitter(mySpeedSearch != null ? mySpeedSearch.wrap(filesModel) : filesModel, null, true);
+        .createListWithOpenInRightSplitter(mySpeedSearch != null ? mySpeedSearch.wrap(filesModel) : filesModel, null);
       files.setVisibleRowCount(files.getItemsCount());
       files.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
       files.getAccessibleContext().setAccessibleName(IdeBundle.message("recent.files.accessible.file.list"));
