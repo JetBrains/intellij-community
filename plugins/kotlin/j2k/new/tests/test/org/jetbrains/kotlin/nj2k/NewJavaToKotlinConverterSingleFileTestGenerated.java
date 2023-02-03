@@ -522,6 +522,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/assignmentExpression/compoundAssignmentPriority2.java");
         }
 
+        @TestMetadata("compoundAssignmentTypeConversion.java")
+        public void testCompoundAssignmentTypeConversion() throws Exception {
+            runTest("testData/newJ2k/assignmentExpression/compoundAssignmentTypeConversion.java");
+        }
+
         @TestMetadata("declarationAssignmentsChain.java")
         public void testDeclarationAssignmentsChain() throws Exception {
             runTest("testData/newJ2k/assignmentExpression/declarationAssignmentsChain.java");
