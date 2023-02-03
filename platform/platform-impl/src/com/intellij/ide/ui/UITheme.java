@@ -102,6 +102,36 @@ public final class UITheme {
     return loadFromJson(theme, provider, iconsMapper);
   }
 
+  public static @NotNull UITheme loadFromJson(@Nullable UITheme parentTheme,
+                                              byte[] data,
+                                              @NotNull @NonNls String themeId,
+                                              @Nullable ClassLoader provider,
+                                              @NotNull Function<? super String, String> iconsMapper) throws IOException {
+    UITheme theme = JSON_READER.beanFrom(UITheme.class, data);
+    theme.id = themeId;
+    if (parentTheme != null) {
+      importFromParentTheme(theme, parentTheme);
+    }
+    return loadFromJson(theme, provider, iconsMapper);
+  }
+
+  private static void importFromParentTheme(@NotNull UITheme theme, @NotNull UITheme parentTheme) {
+    theme.ui = importMapFromParentTheme(theme.ui, parentTheme.ui);
+    theme.icons = importMapFromParentTheme(theme.icons, parentTheme.icons);
+    theme.background = importMapFromParentTheme(theme.background, parentTheme.background);
+    theme.emptyFrameBackground = importMapFromParentTheme(theme.emptyFrameBackground, parentTheme.emptyFrameBackground);
+    theme.colors = importMapFromParentTheme(theme.colors, parentTheme.colors);
+    theme.iconColorsOnSelection = importMapFromParentTheme(theme.iconColorsOnSelection, parentTheme.iconColorsOnSelection);
+  }
+
+  private static @Nullable Map<String, Object> importMapFromParentTheme(@Nullable Map<String, Object> themeMap,
+                                                                        @Nullable Map<String, Object> parentThemeMap) {
+    if (parentThemeMap == null) return themeMap;
+    Map<String, Object> result = new HashMap<>(parentThemeMap);
+    if (themeMap != null) result.putAll(themeMap);
+    return result;
+  }
+
   private static @NotNull UITheme loadFromJson(@NotNull UITheme theme,
                                                @Nullable ClassLoader provider,
                                                @NotNull Function<? super String, String> iconsMapper)

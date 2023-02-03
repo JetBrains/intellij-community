@@ -3,6 +3,7 @@
 
 package com.intellij.ide.ui.laf
 
+import com.intellij.ide.ui.UITheme
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.ide.ui.laf.UiThemeProviderListManager.Companion.sortThemes
 import com.intellij.openapi.components.Service
@@ -11,6 +12,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
+import com.intellij.util.graph.DFSTBuilder
+import com.intellij.util.graph.OutboundSemiGraph
 import javax.swing.UIManager.LookAndFeelInfo
 
 // separate service to avoid using LafManager in the EditorColorsManagerImpl initialization
@@ -90,7 +93,8 @@ internal class UiThemeProviderListManager {
       return null
     }
 
-    val theme = provider.createTheme() ?: return null
+    val parentTheme = findParentTheme(lafList, provider.parentTheme)
+    val theme = provider.createTheme(parentTheme) ?: return null
     editorColorsManager().handleThemeAdded(theme)
     val newLaF = UIThemeBasedLookAndFeelInfo(theme)
     lafList = lafList + newLaF
@@ -112,9 +116,38 @@ internal class UiThemeProviderListManager {
 
 private fun computeList(): List<UIThemeBasedLookAndFeelInfo> {
   val themes = ArrayList<UIThemeBasedLookAndFeelInfo>(UIThemeProvider.EP_NAME.point.size())
-  UIThemeProvider.EP_NAME.processExtensions { provider, _ ->
-    themes.add(UIThemeBasedLookAndFeelInfo(provider.createTheme() ?: return@processExtensions))
+
+  val orderedProviders = sortTopologically(UIThemeProvider.EP_NAME.extensions.asList(), { it.id }, { it.parentTheme })
+  for (provider in orderedProviders) {
+    val parentTheme = findParentTheme(themes, provider.parentTheme)
+    val uiTheme = provider.createTheme(parentTheme) ?: continue
+    themes.add(UIThemeBasedLookAndFeelInfo(uiTheme))
   }
+
   sortThemes(themes)
   return themes
+}
+
+private fun findParentTheme(themes: List<UIThemeBasedLookAndFeelInfo>, parentId: String?): UITheme? {
+  if (parentId == null) return null
+  return themes.map { it.theme }.find { it.id == parentId }
+}
+
+private fun <T, K> sortTopologically(list: List<T>, idFun: (T) -> K, parentIdFun: (T) -> K?): List<T> {
+  val mapById = list.associateBy(idFun)
+
+  val graph: OutboundSemiGraph<T> = object : OutboundSemiGraph<T> {
+    override fun getNodes(): Collection<T> {
+      return list
+    }
+
+    override fun getOut(n: T): Iterator<T> {
+      val parentId = parentIdFun(n)
+      val parent = mapById[parentId]
+      return listOfNotNull(parent).iterator()
+    }
+  }
+
+  val builder: DFSTBuilder<T> = DFSTBuilder(graph)
+  return builder.sortedNodes.reversed()
 }
