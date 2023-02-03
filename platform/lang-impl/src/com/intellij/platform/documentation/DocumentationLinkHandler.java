@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public interface DocumentationLinkHandler {
 
   @Internal
-  ExtensionPointName<DocumentationLinkHandler> EP_NAME = ExtensionPointName.create("com.intellij.lang.documentationLinkHandler");
+  ExtensionPointName<DocumentationLinkHandler> EP_NAME = ExtensionPointName.create("com.intellij.platform.documentation.linkHandler");
 
   /**
    * @return result of resolving the given {@code url} to another {@link DocumentationTarget},

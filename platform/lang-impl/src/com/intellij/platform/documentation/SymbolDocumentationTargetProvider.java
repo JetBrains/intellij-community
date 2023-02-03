@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * To provide a {@link DocumentationTarget} by a Symbol, either:
  * <ul>
- * <li>implement {@link SymbolDocumentationTargetProvider} and register as {@code com.intellij.lang.symbolDocumentation} extension</li>
+ * <li>implement {@link SymbolDocumentationTargetProvider} and register as {@code com.intellij.platform.documentation.symbolTargetProvider} extension</li>
  * <li>implement {@link DocumentationSymbol} in a Symbol to provide the documentation target for the symbol</li>
  * <li>implement {@link DocumentationTarget} directly in a Symbol</li>
  * </ul>
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public interface SymbolDocumentationTargetProvider {
 
   @Internal
-  ExtensionPointName<SymbolDocumentationTargetProvider> EP_NAME = ExtensionPointName.create("com.intellij.lang.symbolDocumentation");
+  ExtensionPointName<SymbolDocumentationTargetProvider> EP_NAME = ExtensionPointName.create("com.intellij.platform.documentation.symbolTargetProvider");
 
   /**
    * @return target to handle documentation actions which are invoked on the given {@code symbol},
