@@ -2391,7 +2391,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
-    <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.ArtifactWebServerRootsProvider" order="last"/>
+    <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.ArtifactWebServerRootsProvider" order="before LastResortProvider"/>
   </extensions>
 
   <actions resource-bundle="messages/JavaUiBundle">
