@@ -8,20 +8,40 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.await
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.Node
 import org.w3c.dom.asList
 import org.w3c.dom.parsing.XMLSerializer
 
+val nodeToLastValidHTML = mutableMapOf<Element, String>()
+
 suspend fun renderBlock(block: HTMLElement, cacheId: String, content: String): Node? {
   val id = "mermaid-generated-$cacheId"
   var node: Node? = null
-  Mermaid.api.renderAsync(id, content, block) { svg ->
-    block.innerHTML = svg
-    node = block.childNodes.asList().firstOrNull { it.nodeName == "svg" }
-    addExplicitDimensionsAttributes(node.unsafeCast<HTMLElement>())
-  }.await()
+  try {
+    Mermaid.api.renderAsync(id, content, block) { svg ->
+      block.innerHTML = svg
+      node = block.childNodes.asList().firstOrNull { it.nodeName == "svg" }
+      addExplicitDimensionsAttributes(node.unsafeCast<HTMLElement>())
+    }.await()
+
+    nodeToLastValidHTML[block.getLanguageMermaidCodeBlockParent()] = block.innerHTML
+  } catch (exception: Throwable) {
+    console.error("Error while generating blocks:\n", exception)
+
+    block.innerHTML = nodeToLastValidHTML.getOrElse(block.getLanguageMermaidCodeBlockParent()) { "" }
+      .plus("<div class=\"error-text\">${exception.message}</div>")
+    node = null
+  }
   return node
+}
+
+private fun HTMLElement.getLanguageMermaidCodeBlockParent(): Element {
+  val parentElement = parentElement
+  checkNotNull(parentElement)
+  check(parentElement.className == "language-mermaid")
+  return parentElement
 }
 
 private fun addExplicitDimensionsAttributes(element: HTMLElement) {
