@@ -5,7 +5,7 @@ import com.intellij.platform.util.ArgsParser
 import java.nio.file.Files
 import java.nio.file.Path
 
-interface OpenProjectArgs {
+interface OpenProjectArgs : HeadlessConfigurableArgs {
   val projectDir: Path
 
   val convertProject: Boolean
@@ -14,7 +14,7 @@ interface OpenProjectArgs {
   val disabledConfigurators: Set<String>
 }
 
-open class OpenProjectArgsImpl(parser: ArgsParser) : OpenProjectArgs {
+open class OpenProjectArgsImpl(parser: ArgsParser) : HeadlessConfigurableArgsImpl(parser), OpenProjectArgs {
   override val projectDir by parser.arg("project-dir", "project home directory").file()
 
   override val convertProject by parser.arg("convert-project", "Call IntelliJ version converters").optional().boolean { true }

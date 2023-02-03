@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup
 
+import com.intellij.ide.environment.impl.EnvironmentUtil
 import com.intellij.ide.warmup.WarmupStatus
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -63,6 +64,11 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
   options:
     ${argsParser.usage(includeHidden = true)}""")
       exitProcess(2)
+    }
+
+    val pathToConfig = commandArgs.pathToConfigurationFile
+    if (pathToConfig != null) {
+      EnvironmentUtil.setPathToConfigurationFile(pathToConfig.toAbsolutePath())
     }
 
     val buildMode = getBuildMode(commandArgs)
