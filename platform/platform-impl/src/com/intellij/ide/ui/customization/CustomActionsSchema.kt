@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.keymap.impl.ui.Group
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.DefaultJDOMExternalizer
 import com.intellij.openapi.util.IconLoader.getDisabledIcon
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
@@ -25,6 +24,9 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ImageLoader.loadCustomIcon
 import com.intellij.util.SmartList
 import com.intellij.util.ui.JBImageIcon
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentHashMapOf
+import kotlinx.collections.immutable.toPersistentMap
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -47,7 +49,8 @@ private const val GROUP = "group"
 private val additionalIdToName = ConcurrentHashMap<String, String>()
 
 @State(name = "com.intellij.ide.ui.customization.CustomActionsSchema",
-       storages = [Storage(value = "customization.xml", usePathMacroManager = false)], category = SettingsCategory.UI)
+       storages = [Storage(value = "customization.xml", usePathMacroManager = false)],
+       category = SettingsCategory.UI)
 class CustomActionsSchema : PersistentStateComponent<Element?> {
   /**
    * Contain action id binding to some icon reference. It can be one of the following:
@@ -59,8 +62,12 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
    */
   private val iconCustomizations = HashMap<String, String?>()
   private val lock = Any()
-  private val idToName: MutableMap<String, String>
-  private val idToActionGroup = HashMap<String, ActionGroup>()
+
+  @Volatile
+  private var idToName: PersistentMap<String, String>
+
+  @Volatile
+  private var idToActionGroup = persistentHashMapOf<String, ActionGroup>()
   private val extGroupIds = HashSet<String>()
   private val actions = ArrayList<ActionUrl>()
   private var isFirstLoadState = true
@@ -92,43 +99,38 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
     fillExtGroups(idToName, extGroupIds)
     CustomizableActionGroupProvider.EP_NAME.addChangeListener({ fillExtGroups(idToName, extGroupIds) }, null)
     idToName.putAll(additionalIdToName)
-    this.idToName = idToName
+    this.idToName = idToName.toPersistentMap()
   }
 
   companion object {
-
     /**
      * Original icon should be saved in template presentation when one customizes action icon
      */
+    @JvmField
     val PROP_ORIGINAL_ICON = Key.create<Icon?>("originalIcon")
 
-    // used by Rider
-    @Suppress("unused")
+    @JvmStatic
     fun addSettingsGroup(itemId: String, itemName: @Nls String) {
       additionalIdToName.put(itemId, itemName)
 
       // Need to sync new items with global instance (if it has been created)
-      val customActionSchema = serviceIfCreated<CustomActionsSchema>()
-      if (customActionSchema != null) {
-        synchronized(customActionSchema.lock) { customActionSchema.idToName.put(itemId, itemName) }
-      }
+      val customActionSchema = serviceIfCreated<CustomActionsSchema>() ?: return
+      customActionSchema.idToName = customActionSchema.idToName.put(itemId, itemName)
     }
 
-    // used by Rider
-    @Suppress("unused")
+    @JvmStatic
     fun removeSettingsGroup(itemId: String) {
       additionalIdToName.remove(itemId)
 
       // Need to sync new items with global instance (if it has been created)
-      val customActionSchema = serviceIfCreated<CustomActionsSchema>()
-      if (customActionSchema != null) {
-        synchronized(customActionSchema.lock) { customActionSchema.idToName.remove(itemId) }
-      }
+      val customActionSchema = serviceIfCreated<CustomActionsSchema>() ?: return
+      customActionSchema.idToName = customActionSchema.idToName.remove(itemId)
     }
 
     @JvmStatic
     fun getInstance(): CustomActionsSchema = service<CustomActionsSchema>()
 
+    @JvmStatic
     fun setCustomizationSchemaForCurrentProjects() {
       // increment myModificationStamp clear children cache in CustomisedActionGroup
       //  as a result do it *before* update all toolbars, menu bars and popups
@@ -145,6 +147,7 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
      */
     @ApiStatus.Internal
     @Throws(IOException::class)
+    @JvmStatic
     fun loadCustomIcon(path: String): Icon? {
       val independentPath = FileUtil.toSystemIndependentName(path)
       val urlString = if (independentPath.startsWith("file:") || independentPath.startsWith("jar:")) {
@@ -179,7 +182,7 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
 
   fun copyFrom(result: CustomActionsSchema) {
     synchronized(lock) {
-      idToActionGroup.clear()
+      idToActionGroup = idToActionGroup.clear()
       actions.clear()
       val ids = HashSet(iconCustomizations.keys)
       iconCustomizations.clear()
@@ -213,10 +216,9 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
   override fun loadState(element: Element) {
     var reload: Boolean
     synchronized(lock) {
-      idToActionGroup.clear()
+      idToActionGroup = idToActionGroup.clear()
       actions.clear()
       iconCustomizations.clear()
-      DefaultJDOMExternalizer.readExternal(this, element)
       var schElement = element
       val activeName = element.getAttributeValue(ACTIVE)
       if (activeName != null) {
@@ -236,6 +238,7 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
       }
 
       if (ApplicationManager.getApplication().isUnitTestMode) {
+        @Suppress("SpellCheckingInspection")
         LOG.error(IdeBundle.message("custom.option.testmode", actions.toString()))
       }
 
@@ -269,7 +272,6 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
 
   override fun getState(): Element {
     val element = Element("state")
-    DefaultJDOMExternalizer.writeExternal(this, element)
     for (group in actions) {
       val groupElement = Element(GROUP)
       group.writeExternal(groupElement)
@@ -280,64 +282,47 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
   }
 
   fun getCorrectedAction(id: String): AnAction? {
-    synchronized(lock) {
-      if (!idToName.containsKey(id)) {
-        return ActionManager.getInstance().getAction(id)
-      }
-      val existing = idToActionGroup.get(id)
-      if (existing != null) {
-        return existing
-      }
+    val name = idToName.get(id) ?: return ActionManager.getInstance().getAction(id)
+
+    idToActionGroup.get(id)?.let {
+      return it
     }
 
-    val actionGroup = ActionManager.getInstance().getAction(id) as? ActionGroup
-    if (actionGroup != null) {
-      // if a plugin is disabled
-      synchronized(lock) {
-        val name = idToName.get(id)
-        val corrected = CustomizationUtil.correctActionGroup(actionGroup, this, name, name, true)
-        idToActionGroup.put(id, corrected)
-        return corrected
-      }
+    val actionGroup = ActionManager.getInstance().getAction(id) as? ActionGroup ?: return null
+    // if a plugin is disabled
+    val corrected = CustomizationUtil.correctActionGroup(actionGroup, this, name, name, true)
+    synchronized(lock) {
+      idToActionGroup = idToActionGroup.put(id, corrected)
     }
-    return null
+    return corrected
   }
 
   fun getDisplayName(id: String): String? {
-    synchronized(lock) {
-      return idToName.get(id)
-    }
+    return idToName.get(id)
   }
 
   fun invalidateCustomizedActionGroup(groupId: String) {
-    var group: ActionGroup?
-    synchronized(lock) {
-      group = idToActionGroup.get(groupId)
-    }
+    val group = idToActionGroup.get(groupId)
     if (group is CustomisedActionGroup) {
-      (group as CustomisedActionGroup).resetChildren()
+      group.resetChildren()
     }
   }
 
   fun fillCorrectedActionGroups(root: DefaultMutableTreeNode) {
     val actionManager = ActionManager.getInstance()
-    val path = SmartList<String>("root")
-    synchronized(lock) {
-      for ((key, value) in idToName) {
-        val actionGroup = (actionManager.getAction(key) as? ActionGroup) ?: continue
-        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createCorrectedGroup(actionGroup, value, path, actions)))
-      }
+    val path = SmartList("root")
+    for ((key, value) in idToName) {
+      val actionGroup = (actionManager.getAction(key) as? ActionGroup) ?: continue
+      root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createCorrectedGroup(actionGroup, value, path, actions)))
     }
   }
 
   fun fillActionGroups(root: DefaultMutableTreeNode) {
     val actionManager = ActionManager.getInstance()
-    synchronized(lock) {
-      for ((key, value) in idToName) {
-        val actionGroup = (actionManager.getAction(key) as? ActionGroup) ?: continue
-        //J2EE/Commander plugin was disabled
-        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, value, null, null, true, null, false)))
-      }
+    for ((key, value) in idToName) {
+      val actionGroup = (actionManager.getAction(key) as? ActionGroup) ?: continue
+      //J2EE/Commander plugin was disabled
+      root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, value, null, null, true, null, false)))
     }
   }
 
