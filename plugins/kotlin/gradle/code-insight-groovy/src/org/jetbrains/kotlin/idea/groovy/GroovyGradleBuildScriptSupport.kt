@@ -127,20 +127,7 @@ class GroovyBuildScriptManipulator(
         }
 
         jvmTarget?.let {
-            addJdkSpec(it, version, gradleVersion) { useToolchain, useToolchainHelper, targetVersionNumber ->
-                when {
-                    useToolchainHelper -> scriptFile.getKotlinBlock()
-                        .addFirstExpressionInBlockIfNeeded("jvmToolchain($targetVersionNumber)")
-
-                    useToolchain -> scriptFile.getKotlinBlock().getBlockOrCreate("jvmToolchain")
-                        .addFirstExpressionInBlockIfNeeded("languageVersion = JavaLanguageVersion.of($targetVersionNumber)")
-
-                    else -> {
-                        changeKotlinTaskParameter(scriptFile, "jvmTarget", jvmTarget, forTests = false)
-                        changeKotlinTaskParameter(scriptFile, "jvmTarget", jvmTarget, forTests = true)
-                    }
-                }
-            }
+            configureJvmTarget(it, version)
         }
 
         return scriptFile.text != oldText
@@ -285,6 +272,23 @@ class GroovyBuildScriptManipulator(
                     }
                 """.trimIndent()
             )
+    }
+
+    override fun configureJvmTarget(jvmTarget: String, version: IdeKotlinVersion) {
+        addJdkSpec(jvmTarget, version, gradleVersion) { useToolchain, useToolchainHelper, targetVersionNumber ->
+            when {
+                useToolchainHelper -> scriptFile.getKotlinBlock()
+                    .addFirstExpressionInBlockIfNeeded("jvmToolchain($targetVersionNumber)")
+
+                useToolchain -> scriptFile.getKotlinBlock().getBlockOrCreate("jvmToolchain")
+                    .addFirstExpressionInBlockIfNeeded("languageVersion = JavaLanguageVersion.of($targetVersionNumber)")
+
+                else -> {
+                    changeKotlinTaskParameter(scriptFile, "jvmTarget", jvmTarget, forTests = false)
+                    changeKotlinTaskParameter(scriptFile, "jvmTarget", jvmTarget, forTests = true)
+                }
+            }
+        }
     }
 
     private fun GrClosableBlock.addParameterAssignment(

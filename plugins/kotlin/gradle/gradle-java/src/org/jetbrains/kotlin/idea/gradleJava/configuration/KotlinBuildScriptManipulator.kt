@@ -94,19 +94,7 @@ class KotlinBuildScriptManipulator(
                 addMavenCentralIfMissing()
             }
             jvmTarget?.let {
-                addJdkSpec(it, version, gradleVersion) { useToolchain, useToolchainHelper, targetVersionNumber ->
-                    when {
-                        useToolchainHelper -> getKotlinBlock()?.addExpressionIfMissing("jvmToolchain($targetVersionNumber)")
-
-                        useToolchain -> getKotlinBlock()?.findOrCreateBlock("jvmToolchain")
-                            ?.addExpressionIfMissing("(this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of($targetVersionNumber))")
-
-                        else -> {
-                            changeKotlinTaskParameter("jvmTarget", jvmTarget, forTests = false)
-                            changeKotlinTaskParameter("jvmTarget", jvmTarget, forTests = true)
-                        }
-                    }
-                }
+                configureJvmTarget(it, version)
             }
         }
 
@@ -208,6 +196,22 @@ class KotlinBuildScriptManipulator(
                         }
                     """.trimIndent()
             )
+    }
+
+    override fun configureJvmTarget(jvmTarget: String, version: IdeKotlinVersion) {
+        addJdkSpec(jvmTarget, version, gradleVersion) { useToolchain, useToolchainHelper, targetVersionNumber ->
+            when {
+                useToolchainHelper -> scriptFile.getKotlinBlock()?.addExpressionIfMissing("jvmToolchain($targetVersionNumber)")
+
+                useToolchain -> scriptFile.getKotlinBlock()?.findOrCreateBlock("jvmToolchain")
+                    ?.addExpressionIfMissing("(this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of($targetVersionNumber))")
+
+                else -> {
+                    scriptFile.changeKotlinTaskParameter("jvmTarget", jvmTarget, forTests = false)
+                    scriptFile.changeKotlinTaskParameter("jvmTarget", jvmTarget, forTests = true)
+                }
+            }
+        }
     }
 
     private fun KtBlockExpression.addNoVersionCompileStdlibIfMissing(stdlibArtifactName: String): KtCallExpression? =

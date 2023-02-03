@@ -58,6 +58,8 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
     fun addPluginRepository(repository: RepositoryDescription)
 
     fun addResolutionStrategy(pluginId: String)
+
+    fun configureJvmTarget(jvmTarget: String, version: IdeKotlinVersion)
 }
 
 fun GradleBuildScriptManipulator<*>.usesNewMultiplatform(): Boolean {
