@@ -41,7 +41,7 @@ import java.util.function.Consumer;
 import static com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.getJavaBuildSystemData;
 import static com.intellij.ide.wizard.LanguageNewProjectWizardData.getLanguageData;
 import static com.intellij.ide.wizard.NewProjectWizardBaseData.getBaseData;
-import static com.intellij.testFramework.utils.module.ModuleAssertionsKt.assertModules;
+import static com.intellij.testFramework.utils.module.ModuleAssertions.assertModules;
 import static org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.getJavaGradleData;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 

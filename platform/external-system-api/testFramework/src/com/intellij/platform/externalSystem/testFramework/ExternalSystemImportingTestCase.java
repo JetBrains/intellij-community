@@ -41,7 +41,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.utils.module.ModuleAssertionsKt;
+import com.intellij.testFramework.utils.module.ModuleAssertions;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
@@ -81,7 +81,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected void assertModules(String... expectedNames) {
-    ModuleAssertionsKt.assertModules(myProject, expectedNames);
+    ModuleAssertions.assertModules(myProject, expectedNames);
   }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {
