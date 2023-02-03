@@ -3,13 +3,12 @@ package org.jetbrains.kotlin.gradle.newTests
 
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.VfsTestUtil
 import org.jetbrains.kotlin.gradle.newTests.testFeatures.*
-import org.jetbrains.kotlin.gradle.newTests.testServices.*
+import org.jetbrains.kotlin.gradle.newTests.infra.*
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
@@ -21,6 +20,7 @@ import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
+import org.junit.runner.Description
 import org.junit.runner.RunWith
 import java.io.File
 import java.io.PrintStream
@@ -30,48 +30,45 @@ import java.io.PrintStream
 abstract class AbstractKotlinMppGradleImportingTest :
     GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl, HighlightingCheckDsl,
     TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl {
-    val kotlinTestPropertiesService: KotlinTestPropertiesService = KotlinTestPropertiesService.constructFromEnvironment()
 
-    final override val gradleVersion: String
-        // equal to this.gradleVersion, going through the Service for the sake of consistency
-        get() = kotlinTestPropertiesService.gradleVersion.version
+    internal val testFeatures = listOf<TestFeature<*>>(
+        GradleProjectsPublishingTestsFeature,
+        LinkedProjectPathsTestsFeature,
+        HighlightingCheckTestFeature,
+        NoErrorEventsDuringImportFeature,
+        WorkspaceModelChecksFeature
+    )
 
-    final override val kotlinPluginVersion: KotlinToolingVersion
-        get() = kotlinTestPropertiesService.kotlinGradlePluginVersion
-
-    val importedProject: Project
-        get() = myProject
-    val importedProjectRoot: VirtualFile
-        get() = myProjectRoot
-
-    private val gradleProjectsPublishingService = GradleProjectsPublishingService
-    private val gradleProjectLinkingService = GradleProjectLinkingService
-    private val highlightingCheckService = HighlightingCheckService
-
-    open fun TestConfigurationDslScope.defaultTestConfiguration() {}
+    private val context: KotlinMppTestsContextImpl = KotlinMppTestsContextImpl()
 
     @get:Rule
-    val workspaceModelTestingService = WorkspaceModelTestingService()
-
+    val testDescriptionProviderJUnitRule = TestDescriptionProviderJUnitRule(context)
     @get:Rule
-    val noErrorEventsDuringImportService = NoErrorEventsDuringImportService()
-
-    @get:Rule
-    val testDataDirectoryService = TestDataDirectoryService()
-
-    @get:Rule
-    val gradleDaemonWatchdogService = GradleDaemonWatchdogService
+    val testFeaturesBeforeAfterJUnit4Adapter = TestFeaturesBeforeAfterJUnit4Adapter()
 
     @get:Rule
     val pluginTargetVersionRule = PluginTargetVersionsRule()
 
+    // Two properties below are needed solely for compatibility with PluginTargetVersionsRule;
+    // please, use context.testPropertiesService if you need those versions in your code
+    final override val gradleVersion: String
+        get() = context.gradleVersion.version
+
+    final override val kotlinPluginVersion: KotlinToolingVersion
+        get() = context.kgpVersion
+
+
+    open fun TestConfigurationDslScope.defaultTestConfiguration() {}
+
     protected fun doTest(configuration: TestConfigurationDslScope.() -> Unit = { }) {
         val defaultConfig = TestConfiguration().apply { defaultTestConfiguration() }
         val testConfig = defaultConfig.copy().apply { configuration() }
-        doTest(testConfig)
+        context.testConfiguration = testConfig
+        context.doTest()
     }
 
-    private fun doTest(configuration: TestConfiguration) {
+    private fun KotlinMppTestsContextImpl.doTest() {
+        testFeatures.forEach { feature -> with(feature) { context.beforeTestExecution() } }
         createProjectSubFile(
             "local.properties",
             """
@@ -80,21 +77,13 @@ abstract class AbstractKotlinMppGradleImportingTest :
             """.trimMargin()
         )
 
-        configureByFiles(testDataDirectoryService.testDataDirectory(), configuration)
+        configureByFiles()
 
-        configuration.getConfiguration(LinkedProjectPathsTestsFeature).linkedProjectPaths.forEach {
-            gradleProjectLinkingService.linkGradleProject(it, importedProjectRoot.toNioPath(), importedProject)
-        }
-
-        configuration.getConfiguration(GradleProjectsPublishingTestsFeature).publishedSubprojectNames.forEach {
-            gradleProjectsPublishingService.publishSubproject(it, importedProjectRoot.toNioPath(), importedProject)
-        }
+        testFeatures.forEach { feature -> with(feature) { context.beforeImport() } }
 
         importProject()
 
-        noErrorEventsDuringImportService.checkImportErrors(testDataDirectoryService)
-        workspaceModelTestingService.checkWorkspaceModel(configuration, this)
-        highlightingCheckService.runHighlightingCheckOnAllModules(configuration, this)
+        testFeatures.forEach { feature -> with(feature) { context.afterImport() } }
     }
 
     final override fun findJdkPath(): String {
@@ -109,17 +98,21 @@ abstract class AbstractKotlinMppGradleImportingTest :
         // see KT-55554
         assumeTrue("Test is ignored because it requires Mac-host", HostManager.hostIsMac)
         // Hack: usually this is set-up by JUnit's Parametrized magic, but
-        // our tests source versions from `kotlintestPropertiesService`, not from
+        // our tests source versions from `kotlinTestPropertiesService`, not from
         // @Parametrized
-        this.gradleVersion = kotlinTestPropertiesService.gradleVersion.version
+        this.gradleVersion = context.gradleVersion.version
         super.setUp()
+
+        context.testProject = myProject
+        context.testProjectRoot = myProjectRoot.toNioPath().toFile()
 
         // Otherwise Gradle Daemon fails with Metaspace exhausted periodically
         GradleSystemSettings.getInstance().gradleVmOptions =
             "-XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${System.getProperty("user.dir")}"
     }
 
-    private fun configureByFiles(rootDir: File, testConfiguration: TestConfiguration): List<VirtualFile> {
+    private fun KotlinMppTestsContext.configureByFiles(): List<VirtualFile> {
+        val rootDir = context.testDataDirectory
         assert(rootDir.exists()) { "Directory ${rootDir.path} doesn't exist" }
         val devModeConfig = testConfiguration.getConfiguration(DevModeTestFeature)
         val writeTestProjectTo = devModeConfig.writeTestProjectTo
@@ -131,7 +124,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
                 it.isDirectory -> null
 
                 !it.name.endsWith(KotlinGradleImportingTestCase.AFTER_SUFFIX) -> {
-                    val text = kotlinTestPropertiesService.substituteKotlinTestPropertiesInText(
+                    val text = context.testProperties.substituteKotlinTestPropertiesInText(
                         clearTextFromDiagnosticMarkup(FileUtil.loadFile(it, /* convertLineSeparators = */ true)),
                         it
                     )
@@ -198,8 +191,29 @@ abstract class AbstractKotlinMppGradleImportingTest :
         stream.println(text)
     }
 
-    companion object {
-        // TODO: enable on TC when monitoring comes
-        var healthchecksEnabled: Boolean = false
+    class TestDescriptionProviderJUnitRule(private val testContext: KotlinMppTestsContextImpl) : KotlinBeforeAfterTestRuleWithDescription {
+        override fun before(description: Description) {
+            testContext.description = description
+        }
+    }
+
+    class TestFeaturesBeforeAfterJUnit4Adapter : KotlinBeforeAfterTestRuleWithTarget {
+        private val testFeaturesCompletedSetUp: MutableList<TestFeature<*>> = mutableListOf()
+
+        override fun before(target: Any) {
+            require(target is AbstractKotlinMppGradleImportingTest) {
+                "TeatFeaturesBeforeAfterJUnit4Adapter can only be used in inheritors of AbstractKotlinMppGradleImportingTest"
+            }
+            testFeaturesCompletedSetUp.clear()
+            target.testFeatures.forEach {
+                it.additionalSetUp()
+                testFeaturesCompletedSetUp += it
+            }
+        }
+
+        override fun after(target: Any) {
+            // Make sure to call tearDown on those and only those features that executed setUp
+            testFeaturesCompletedSetUp.forEach { it.additionalTearDown() }
+        }
     }
 }

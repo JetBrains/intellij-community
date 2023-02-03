@@ -1,29 +1,36 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.newTests.testServices
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.gradle.newTests.testFeatures
 
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
+import org.jetbrains.kotlin.gradle.newTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.newTests.TestFeature
 import org.jetbrains.kotlin.idea.codeInsight.gradle.ImportStatusCollector
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.junit.rules.ExternalResource
 import java.io.File
 
-class NoErrorEventsDuringImportService : ExternalResource() {
+internal object NoErrorEventsDuringImportFeature : TestFeature<Unit> {
     private val importStatusCollector = ImportStatusCollector()
 
-    override fun before() {
+    override fun createDefaultConfiguration() { }
+
+    override fun additionalSetUp() {
         ExternalSystemProgressNotificationManager
             .getInstance()
             .addNotificationListener(importStatusCollector)
     }
 
-    override fun after() {
+    override fun additionalTearDown() {
         ExternalSystemProgressNotificationManager
             .getInstance()
             .removeNotificationListener(importStatusCollector)
     }
 
-    fun checkImportErrors(testDataDirectoryService: TestDataDirectoryService) {
-        val expectedFailure = File(testDataDirectoryService.testDataDirectory(), "importErrors.txt")
+    override fun KotlinMppTestsContext.afterImport() {
+        checkImportErrors(testDataDirectoryProvider.testDataDirectory())
+    }
+
+    fun checkImportErrors(testDataDirectory: File) {
+        val expectedFailure = File(testDataDirectory, "importErrors.txt")
         val buildErrors = importStatusCollector.buildErrors
         when {
             !expectedFailure.exists() && buildErrors.isEmpty() -> return

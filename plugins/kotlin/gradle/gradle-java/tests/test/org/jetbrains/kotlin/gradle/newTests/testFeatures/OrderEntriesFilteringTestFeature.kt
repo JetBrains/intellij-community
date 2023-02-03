@@ -73,12 +73,12 @@ interface OrderEntriesFilteringSupport {
         get() = config.hideKonanDist
         set(value) { config.hideKonanDist = value }
 
-    fun TestConfigurationDslScope.excludeDependencies(@Language("Regex") regex: String) {
+    fun TestConfigurationDslScope.excludeDependencies(@Language("RegExp") regex: String) {
         require(config.onlyDependencies == null) { "excludeDependencies can not be used together with onlyDependencies" }
         config.excludeDependencies = regex.toRegex()
     }
 
-    fun TestConfigurationDslScope.onlyDependencies(@Language("Regex") regex: String) {
+    fun TestConfigurationDslScope.onlyDependencies(@Language("RegExp") regex: String) {
         require(config.excludeDependencies == null) { "onlyDependencies can not be used together with excludeDependencies" }
         config.onlyDependencies = regex.toRegex()
     }
