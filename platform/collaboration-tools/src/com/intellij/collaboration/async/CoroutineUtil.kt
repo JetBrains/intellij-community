@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.childScope
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
@@ -155,24 +157,38 @@ suspend fun <T> Flow<T>.collectWithPrevious(initial: T, collector: suspend (prev
 fun <T> Flow<T>.modelFlow(cs: CoroutineScope, log: Logger): SharedFlow<T> =
   catch { log.error(it) }.shareIn(cs, SharingStarted.Lazily, 1)
 
-fun <ID : Any, T, R> Flow<List<T>>.mapCaching(sourceIdentifier: (T) -> ID,
-                                              mapper: (CoroutineScope, T) -> R,
-                                              destroy: suspend R.() -> Unit,
-                                              update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> =
+fun <ID : Any, T, R> Flow<Iterable<T>>.associateBy(sourceIdentifier: (T) -> ID,
+                                                   mapper: (CoroutineScope, T) -> R,
+                                                   destroy: suspend R.() -> Unit,
+                                                   update: (suspend R.(T) -> Unit)? = null,
+                                                   customHashingStrategy: HashingStrategy<ID>? = null)
+  : Flow<Map<ID, R>> =
   channelFlow {
     val cs = this
     var initial = true
-    val result = LinkedHashMap<ID, R>()
+    val result = if (customHashingStrategy == null) {
+      mutableMapOf<ID, R>()
+    }
+    else {
+      CollectionFactory.createCustomHashingStrategyMap(customHashingStrategy)
+    }
 
     collect { items ->
       var hasStructureChanges = false
-      val itemsById = items.associateBy(sourceIdentifier)
+      val newItemsIdSet = if (customHashingStrategy == null) {
+        items.mapTo(mutableSetOf(), sourceIdentifier)
+      }
+      else {
+        CollectionFactory.createCustomHashingStrategySet(customHashingStrategy).let {
+          items.mapTo(it, sourceIdentifier)
+        }
+      }
 
       // remove missing
       val iter = result.iterator()
       while (iter.hasNext()) {
         val (key, exisingResult) = iter.next()
-        if (!itemsById.containsKey(key)) {
+        if (!newItemsIdSet.contains(key)) {
           iter.remove()
           hasStructureChanges = true
           exisingResult.destroy()
@@ -195,8 +211,14 @@ fun <ID : Any, T, R> Flow<List<T>>.mapCaching(sourceIdentifier: (T) -> ID,
 
       if (hasStructureChanges || initial) {
         initial = false
-        send(result.values.toList())
+        send(result)
       }
     }
     awaitClose()
   }
+
+fun <ID : Any, T, R> Flow<Iterable<T>>.mapCaching(sourceIdentifier: (T) -> ID,
+                                                  mapper: (CoroutineScope, T) -> R,
+                                                  destroy: suspend R.() -> Unit,
+                                                  update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> =
+  associateBy(sourceIdentifier, mapper, destroy, update).map { it.values.toList() }
