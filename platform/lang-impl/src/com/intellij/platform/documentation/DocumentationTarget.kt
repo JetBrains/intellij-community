@@ -7,7 +7,6 @@ import com.intellij.openapi.util.NlsContexts.HintText
 import com.intellij.pom.Navigatable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
 /**
@@ -18,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus.OverrideOnly
  * - by a target [symbol][com.intellij.model.Symbol] - [SymbolDocumentationTargetProvider] (or see other options in its docs);
  * - by a target [element][com.intellij.psi.PsiElement] - [PsiDocumentationTargetProvider].
  */
-@Experimental
 @OverrideOnly
 interface DocumentationTarget {
 

@@ -10,7 +10,6 @@ import java.util.function.Supplier
 /**
  * This is a union type: `Documentation | suspend () -> Documentation?`.
  */
-@Experimental
 sealed interface DocumentationResult {
 
   sealed interface Documentation : DocumentationResult {
@@ -52,6 +51,7 @@ sealed interface DocumentationResult {
      * Same as asynchronous overload, but blocking.
      * The [updates] are collected in [IO context][kotlinx.coroutines.Dispatchers.IO].
      */
+    @Experimental
     fun blockingUpdates(updates: BlockingDocumentationContentFlow): Documentation
   }
 

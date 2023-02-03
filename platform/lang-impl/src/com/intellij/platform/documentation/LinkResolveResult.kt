@@ -4,10 +4,8 @@ package com.intellij.platform.documentation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.function.Supplier
 
-@Experimental
 sealed interface LinkResolveResult {
 
   companion object {

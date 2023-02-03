@@ -5,7 +5,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
  * @see DocumentationTargetProvider
  * @see SymbolDocumentationTargetProvider
  */
-@Experimental
 public interface PsiDocumentationTargetProvider {
 
   @Internal
