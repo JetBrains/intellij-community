@@ -400,6 +400,7 @@ public class WindowTabsComponent extends JBTabsImpl {
       ID tabGroup = Foundation.invoke(window, "tabGroup");
       ID tab = MacUtil.getWindowFromJavaWindow(tabFrame);
       Foundation.invoke(tabGroup, "addWindow:", tab);
+      Foundation.invoke(tabGroup, "setSelectedWindow:", tab);
 
       ApplicationManager.getApplication().invokeLater(() -> MacWinTabsHandlerV2.updateTabBarsAfterMove(tabFrame, target, -1));
     });
@@ -412,7 +413,6 @@ public class WindowTabsComponent extends JBTabsImpl {
     int oldIndex = myIndexes.get(movedFrame);
 
     recalculateIndexes();
-    select(info, true);
 
     if (oldIndex != newIndex) {
       moveTabToNewIndex(movedFrame, newIndex);
@@ -434,6 +434,7 @@ public class WindowTabsComponent extends JBTabsImpl {
       ID tabGroup = Foundation.invoke(window, "tabGroup");
       Foundation.invoke(tabGroup, "removeWindow:", window);
       Foundation.invoke(tabGroup, "insertWindow:atIndex:", window, newIndex);
+      Foundation.invoke(tabGroup, "setSelectedWindow:", window);
     });
   }
 
@@ -447,6 +448,7 @@ public class WindowTabsComponent extends JBTabsImpl {
         ID tabGroup = Foundation.invoke(window, "tabGroup");
         ID tab = MacUtil.getWindowFromJavaWindow(movedFrame);
         Foundation.invoke(tabGroup, "insertWindow:atIndex:", tab, newIndex);
+        Foundation.invoke(tabGroup, "setSelectedWindow:", tab);
 
         ApplicationManager.getApplication()
           .invokeLater(() -> MacWinTabsHandlerV2.updateTabBarsAfterMove(movedFrame, myNativeWindow, newIndex));
@@ -455,7 +457,6 @@ public class WindowTabsComponent extends JBTabsImpl {
     else {
       info.setHidden(false);
       int oldIndex = getIndexOf(info);
-      select(info, true);
 
       if (oldIndex != newIndex) {
         reorderTab(info, newIndex);
