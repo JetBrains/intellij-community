@@ -136,7 +136,8 @@ public final class ActionUrl implements JDOMExternalizable {
       group.setForceShowAsPopup(Boolean.parseBoolean(element.getAttributeValue(FORCE_POPUP)));
       myComponent = group;
     }
-    myActionType = Integer.parseInt(element.getAttributeValue(ACTION_TYPE));
+    String actionTypeString = element.getAttributeValue(ACTION_TYPE);
+    myActionType = actionTypeString == null ? -1 : Integer.parseInt(actionTypeString);
     myAbsolutePosition = Integer.parseInt(element.getAttributeValue(POSITION));
     DefaultJDOMExternalizer.readExternal(this, element);
   }
