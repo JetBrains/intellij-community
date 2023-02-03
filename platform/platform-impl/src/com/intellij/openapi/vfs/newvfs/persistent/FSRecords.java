@@ -295,8 +295,9 @@ public final class FSRecords {
   }
 
   /**
-   * @return records (ids) freed in current session. Returns !empty list only in unit-tests, outside of testing records freeing in
-   * current session are marked by an apt flag, but not collected into free-list
+   * @return records (ids) freed in current session.
+   * Returns !empty list only in unit-tests -- outside of testing records freed in a current session are marked by REMOVED
+   * flag, but not collected into free-list
    */
   public static @NotNull IntList getNewFreeRecords() {
     return ourRecordAccessor.getNewFreeRecords();

@@ -598,6 +598,8 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
                             final int length,
                             final int redirectToId,
                             final ByteBuffer payload) {
+        //FIXME RC: this limit on padding capacity is actually the limit of main record size -- because if there is
+        //          X-sized record, it could require up to X-1 padding
         if (capacity < MIN_CAPACITY || capacity > MAX_CAPACITY) {
           throw new IllegalArgumentException("capacity(" + capacity + ") must be in [" + MIN_CAPACITY + ".." + MAX_CAPACITY + "]");
         }
