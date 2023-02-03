@@ -94,11 +94,6 @@ public final class SpellCheckerSettings implements PersistentStateComponent<Elem
     myRuntimeDisabledDictionariesNames = runtimeDisabledDictionariesNames;
   }
 
-  public boolean isDefaultAdvancedSettings() {
-    return myUseSingleDictionaryToSave == DEFAULT_USE_SINGLE_DICT &&
-           myDictionaryToSave == DEFAULT_DICTIONARY_TO_SAVE;
-  }
-
   @Override
   public Element getState() {
     if (myRuntimeDisabledDictionariesNames.isEmpty() &&
