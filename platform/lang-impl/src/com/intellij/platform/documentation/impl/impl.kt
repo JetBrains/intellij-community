@@ -15,7 +15,7 @@ import org.jetbrains.annotations.TestOnly
 
 internal fun DocumentationTarget.documentationRequest(): DocumentationRequest {
   ApplicationManager.getApplication().assertReadAccessAllowed()
-  return DocumentationRequest(createPointer(), presentation())
+  return DocumentationRequest(createPointer(), computePresentation())
 }
 
 @Internal

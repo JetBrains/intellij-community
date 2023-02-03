@@ -51,7 +51,7 @@ internal class KotlinDocumentationTarget(val element: PsiElement, private val or
         }
     }
 
-    override fun presentation(): TargetPresentation {
+    override fun computePresentation(): TargetPresentation {
         return targetPresentation(element)
     }
 

@@ -12,9 +12,9 @@ internal object EmptyDocumentationTarget : DocumentationTarget, Pointer<EmptyDoc
 
   override fun dereference(): EmptyDocumentationTarget = this
 
-  override fun presentation(): TargetPresentation = TargetPresentation.builder("").presentation()
+  override fun computePresentation(): TargetPresentation = TargetPresentation.builder("").presentation()
 
   override fun computeDocumentation(): DocumentationResult? = null
 
-  val request: DocumentationRequest = DocumentationRequest(this, presentation())
+  val request: DocumentationRequest = DocumentationRequest(this, computePresentation())
 }

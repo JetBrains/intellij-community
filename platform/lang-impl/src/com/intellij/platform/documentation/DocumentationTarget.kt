@@ -37,7 +37,7 @@ interface DocumentationTarget {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  fun presentation(): TargetPresentation
+  fun computePresentation(): TargetPresentation
 
   @Suppress("DEPRECATION") // deprecated JvmDefault
   val navigatable: Navigatable?

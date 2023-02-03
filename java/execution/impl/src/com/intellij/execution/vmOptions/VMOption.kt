@@ -26,7 +26,7 @@ data class VMOption(
 ) : Symbol, DocumentationTarget {
   override fun createPointer(): Pointer<out VMOption> = Pointer.hardPointer(this)
 
-  override fun presentation(): TargetPresentation {
+  override fun computePresentation(): TargetPresentation {
     return TargetPresentation.builder(variant.prefix() + optionName).icon(kind.icon()).presentation()
   }
 
@@ -53,7 +53,7 @@ data class VMOption(
       })
     return DocumentationResult.Companion.documentation(table.toString())
   }
-  
+
   companion object {
     /**
      * Create a new option specifying -D property

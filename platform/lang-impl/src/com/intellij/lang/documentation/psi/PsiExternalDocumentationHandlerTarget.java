@@ -50,7 +50,7 @@ final class PsiExternalDocumentationHandlerTarget implements DocumentationTarget
 
   @NotNull
   @Override
-  public TargetPresentation presentation() {
+  public TargetPresentation computePresentation() {
     return UtilKt.targetPresentation(myTargetElement);
   }
 

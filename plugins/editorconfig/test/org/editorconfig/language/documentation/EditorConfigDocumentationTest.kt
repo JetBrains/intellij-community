@@ -22,7 +22,7 @@ class EditorConfigDocumentationTest : BasePlatformTestCase() {
     val targets = IdeDocumentationTargetProvider.getInstance(project).documentationTargets(myFixture.editor, myFixture.file, offset)
     UsefulTestCase.assertSize(1, targets)
     val target = targets[0]
-    val text = target.presentation().presentableText
+    val text = target.computePresentation().presentableText
     assertEquals("indent_size", text)
     val doc = EditorConfigDocumentationProvider().generateDoc(element, originalElement)
     val expected = "number of whitespace symbols used for indents"

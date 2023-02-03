@@ -11,7 +11,7 @@ interface WebSymbolDocumentationTarget : DocumentationTarget {
 
   val symbol: WebSymbol
 
-  override fun presentation(): TargetPresentation {
+  override fun computePresentation(): TargetPresentation {
     return TargetPresentation.builder(symbol.name)
       .icon(symbol.icon)
       .presentation()
