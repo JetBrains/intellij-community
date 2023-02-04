@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -97,11 +98,12 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     rootModel.addContentEntry(root);
 
     // todo this should be moved to generic ModuleBuilder
-    if (myJdk != null) {
-      rootModel.setSdk(myJdk);
+    var projectSdk = ProjectRootManager.getInstance(rootModel.getProject()).getProjectSdk();
+    if (myJdk == null || myJdk == projectSdk) {
+      rootModel.inheritSdk();
     }
     else {
-      rootModel.inheritSdk();
+      rootModel.setSdk(myJdk);
     }
 
     if (isCreatingNewProject) {
