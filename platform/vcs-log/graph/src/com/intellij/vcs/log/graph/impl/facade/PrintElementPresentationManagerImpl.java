@@ -8,7 +8,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
+import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager;
 import com.intellij.vcs.log.graph.impl.print.ColorGetterByLayoutIndex;
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import org.jetbrains.annotations.NotNull;
@@ -18,14 +18,14 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
-class PrintElementManagerImpl<CommitId> implements PrintElementManager {
+class PrintElementPresentationManagerImpl<CommitId> implements PrintElementPresentationManager {
   @NotNull private final LinearGraph myLinearGraph;
   @NotNull private final ColorGetterByLayoutIndex<CommitId> myColorGetter;
   @NotNull private Selection mySelection = new Selection(Collections.emptySet());
 
-  PrintElementManagerImpl(@NotNull PermanentGraphInfo<CommitId> permanentGraphInfo,
-                          @NotNull LinearGraph linearGraph,
-                          @NotNull GraphColorManager<CommitId> colorManager) {
+  PrintElementPresentationManagerImpl(@NotNull PermanentGraphInfo<CommitId> permanentGraphInfo,
+                                      @NotNull LinearGraph linearGraph,
+                                      @NotNull GraphColorManager<CommitId> colorManager) {
     myLinearGraph = linearGraph;
     myColorGetter = new ColorGetterByLayoutIndex<>(linearGraph, permanentGraphInfo, colorManager);
   }

@@ -33,7 +33,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   @NotNull private final PermanentGraphInfo<CommitId> myPermanentGraph;
   @NotNull private final GraphColorManager<CommitId> myColorManager;
 
-  private PrintElementManagerImpl<CommitId> myPrintElementManager;
+  private PrintElementPresentationManagerImpl<CommitId> myPresentationManager;
   private PrintElementGeneratorImpl myPrintElementGenerator;
   private boolean myShowLongEdges = false;
 
@@ -74,13 +74,13 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
 
   void updatePrintElementGenerator() {
     LinearGraph linearGraph = myGraphController.getCompiledGraph();
-    myPrintElementManager = new PrintElementManagerImpl<>(myPermanentGraph, linearGraph, myColorManager);
+    myPresentationManager = new PrintElementPresentationManagerImpl<>(myPermanentGraph, linearGraph, myColorManager);
     GraphElementComparatorByLayoutIndex comparator = new GraphElementComparatorByLayoutIndex(nodeIndex -> {
       int nodeId = linearGraph.getNodeId(nodeIndex);
       if (nodeId < 0) return nodeId;
       return myPermanentGraph.getPermanentGraphLayout().getLayoutIndex(nodeId);
     });
-    myPrintElementGenerator = new PrintElementGeneratorImpl(linearGraph, myPrintElementManager, myShowLongEdges, comparator);
+    myPrintElementGenerator = new PrintElementGeneratorImpl(linearGraph, myPresentationManager, myShowLongEdges, comparator);
   }
 
   @NotNull
@@ -150,13 +150,13 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
       if (targetId == null) return null;
 
       if (action.getType() == GraphAction.Type.MOUSE_OVER) {
-        boolean selectionChanged = myPrintElementManager.setSelectedElement(affectedElement);
+        boolean selectionChanged = myPresentationManager.setSelectedElement(affectedElement);
         return new GraphAnswerImpl<>(getCursor(true), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null,
                                      false, selectionChanged);
       }
 
       if (action.getType() == GraphAction.Type.MOUSE_CLICK) {
-        boolean selectionChanged = myPrintElementManager.setSelectedElements(Collections.emptySet());
+        boolean selectionChanged = myPresentationManager.setSelectedElements(Collections.emptySet());
         return new GraphAnswerImpl<>(getCursor(false), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null,
                                      true, selectionChanged);
       }
@@ -175,10 +175,10 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
       LinearGraphController.LinearGraphAnswer answer = myGraphController.performLinearGraphAction(action);
       boolean selectionChanged;
       if (answer.getSelectedNodeIds() != null) {
-        selectionChanged = myPrintElementManager.setSelectedElements(answer.getSelectedNodeIds());
+        selectionChanged = myPresentationManager.setSelectedElements(answer.getSelectedNodeIds());
       }
       else {
-        selectionChanged = myPrintElementManager.setSelectedElements(Collections.emptySet());
+        selectionChanged = myPresentationManager.setSelectedElements(Collections.emptySet());
       }
 
       if (answer.getGraphChanges() != null) updatePrintElementGenerator();

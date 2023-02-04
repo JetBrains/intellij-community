@@ -13,7 +13,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.elements.GraphNode
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator
-import com.intellij.vcs.log.graph.api.printer.PrintElementManager
+import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
 import com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 internal class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: LinearGraph,
-                                                               private val printElementManager: PrintElementManager,
+                                                               private val presentationManager: PrintElementPresentationManager,
                                                                private val elementComparator: Comparator<GraphElement>,
                                                                private val longEdgeSize: Int,
                                                                private val visiblePartSize: Int,
@@ -35,10 +35,10 @@ internal class PrintElementGeneratorImpl @TestOnly constructor(private val linea
   private var recommendedWidth = 0
 
   constructor(graph: LinearGraph,
-              printElementManager: PrintElementManager,
+              presentationManager: PrintElementPresentationManager,
               showLongEdges: Boolean,
               elementComparator: Comparator<GraphElement>) :
-    this(graph, printElementManager, elementComparator,
+    this(graph, presentationManager, elementComparator,
          if (showLongEdges) VERY_LONG_EDGE_SIZE else LONG_EDGE_SIZE,
          if (showLongEdges) VERY_LONG_EDGE_PART_SIZE else LONG_EDGE_PART_SIZE,
          if (showLongEdges) LONG_EDGE_SIZE else Integer.MAX_VALUE)
@@ -269,23 +269,19 @@ internal class PrintElementGeneratorImpl @TestOnly constructor(private val linea
     private val result = ArrayList<PrintElementWithGraphElement>()
     private val nodes = ArrayList<PrintElementWithGraphElement>() // nodes at the end, to be drawn over the edges
     fun consumeNode(node: GraphNode, position: Int) {
-      nodes.add(SimplePrintElementImpl(rowIndex, position, node, printElementManager))
+      nodes.add(SimplePrintElementImpl(rowIndex, position, node, presentationManager))
     }
 
     fun consumeDownEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {
-      result.add(EdgePrintElementImpl(rowIndex, upPosition, downPosition, EdgePrintElement.Type.DOWN, edge, hasArrow,
-                                      printElementManager))
+      result.add(EdgePrintElementImpl(rowIndex, upPosition, downPosition, EdgePrintElement.Type.DOWN, edge, hasArrow, presentationManager))
     }
 
     fun consumeUpEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {
-      result.add(EdgePrintElementImpl(rowIndex, downPosition, upPosition, EdgePrintElement.Type.UP, edge, hasArrow,
-                                      printElementManager))
+      result.add(EdgePrintElementImpl(rowIndex, downPosition, upPosition, EdgePrintElement.Type.UP, edge, hasArrow, presentationManager))
     }
 
     fun consumeArrow(edge: GraphEdge, position: Int, arrowType: EdgePrintElement.Type) {
-      result.add(TerminalEdgePrintElement(rowIndex, position,
-                                          arrowType, edge,
-                                          printElementManager))
+      result.add(TerminalEdgePrintElement(rowIndex, position, arrowType, edge, presentationManager))
     }
 
     fun build(): Collection<PrintElementWithGraphElement> {

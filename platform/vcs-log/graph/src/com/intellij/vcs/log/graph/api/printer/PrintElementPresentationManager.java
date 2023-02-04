@@ -21,7 +21,7 @@ import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphEleme
 import org.jetbrains.annotations.NotNull;
 
 
-public interface PrintElementManager {
+public interface PrintElementPresentationManager {
 
   boolean isSelected(@NotNull PrintElementWithGraphElement printElement);
 

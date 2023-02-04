@@ -20,7 +20,7 @@ import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.elements.GraphNode
-import com.intellij.vcs.log.graph.api.printer.PrintElementManager
+import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
 import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
@@ -31,7 +31,7 @@ import org.junit.Test
 
 open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGenerator") {
 
-  class TestPrintElementManager : PrintElementManager {
+  class TestPrintElementPresentationManager : PrintElementPresentationManager {
 
     override fun isSelected(printElement: PrintElementWithGraphElement): Boolean {
       return false
@@ -62,7 +62,7 @@ open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGener
     val graphElementComparator = GraphElementComparatorByLayoutIndex(
       NotNullFunction { nodeIndex -> graphLayout.getLayoutIndex(nodeIndex!!) }
     )
-    val elementManager = TestPrintElementManager()
+    val elementManager = TestPrintElementPresentationManager()
     val printElementGenerator = PrintElementGeneratorImpl(graph, elementManager, graphElementComparator, longEdgeSize, visiblePartSize,
                                                           edgeWithArrowSize)
     val actual = printElementGenerator.asString(graph.nodesCount())
