@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -95,12 +96,13 @@ public class TerminalWorkingDirectoryManager {
 
   private static void updateWorkingDirectory(@NotNull Content content, @NotNull Data data) {
     JBTerminalWidget widget = TerminalToolWindowManager.getWidgetByContent(content);
+    TerminalWidget newWidget = widget != null ? widget.asNewWidget() : null;
     if (widget != null) {
-      data.myWorkingDirectory = getWorkingDirectory(widget, data.myContentName);
+      data.myWorkingDirectory = getWorkingDirectory(newWidget, data.myContentName);
     }
   }
 
-  public static @Nullable String getWorkingDirectory(@NotNull JBTerminalWidget widget, @Nullable String name) {
+  public static @Nullable String getWorkingDirectory(@NotNull TerminalWidget widget, @Nullable String name) {
     ProcessTtyConnector connector = ShellTerminalWidget.getProcessTtyConnector(widget.getTtyConnector());
     if (connector == null) return null;
     try {
@@ -128,6 +130,14 @@ public class TerminalWorkingDirectoryManager {
       LOG.warn("Timeout fetching cwd for " + name, e);
     }
     return null;
+  }
+
+  /**
+   * @deprecated use {@link #getWorkingDirectory(TerminalWidget, String)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public static @Nullable String getWorkingDirectory(@NotNull JBTerminalWidget widget, @Nullable String name) {
+    return getWorkingDirectory(widget.asNewWidget(), name);
   }
 
   private static boolean checkDirectory(@Nullable String directory) {

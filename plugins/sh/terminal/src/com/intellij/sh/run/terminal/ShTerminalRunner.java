@@ -90,7 +90,7 @@ final class ShTerminalRunner implements ShRunner {
       return null;
     }
 
-    String currentWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(shellTerminalWidget, null);
+    String currentWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(shellTerminalWidget.asNewWidget(), null);
     if (!FileUtil.pathsEqual(workingDirectory, currentWorkingDirectory)) {
       return null;
     }

@@ -23,7 +23,7 @@ private class MoveTerminalSessionToEditorAction : TerminalSessionContextMenuActi
   override fun actionPerformedInTerminalToolWindow(e: AnActionEvent, project: Project, content: Content) {
     val terminalToolWindowManager = TerminalToolWindowManager.getInstance(project)
     val terminalWidget = TerminalToolWindowManager.getWidgetByContent(content)!!
-    val file = TerminalSessionVirtualFileImpl(content.displayName, terminalWidget, terminalToolWindowManager.terminalRunner.settingsProvider)
+    val file = TerminalSessionVirtualFileImpl(content.displayName, terminalWidget.asNewWidget(), terminalToolWindowManager.terminalRunner.settingsProvider)
     file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, java.lang.Boolean.TRUE)
     FileEditorManager.getInstance(project).openFile(file, true).first()
     terminalWidget.listener = TerminalEditorWidgetListener(project, file)
