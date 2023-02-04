@@ -1,108 +1,81 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.graph.impl.facade;
+package com.intellij.vcs.log.graph.impl.facade
 
-import com.intellij.openapi.util.Comparing;
-import com.intellij.vcs.log.graph.GraphColorManager;
-import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphElement;
-import com.intellij.vcs.log.graph.api.elements.GraphNode;
-import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager;
-import com.intellij.vcs.log.graph.impl.print.ColorGetterByLayoutIndex;
-import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.Comparing
+import com.intellij.vcs.log.graph.GraphColorManager
+import com.intellij.vcs.log.graph.api.LinearGraph
+import com.intellij.vcs.log.graph.api.elements.GraphEdge
+import com.intellij.vcs.log.graph.api.elements.GraphElement
+import com.intellij.vcs.log.graph.api.elements.GraphNode
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
+import com.intellij.vcs.log.graph.impl.print.ColorGetterByLayoutIndex
+import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
+import java.util.*
 
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Set;
+internal class PrintElementPresentationManagerImpl<CommitId>(permanentGraphInfo: PermanentGraphInfo<CommitId>,
+                                                             private val linearGraph: LinearGraph,
+                                                             colorManager: GraphColorManager<CommitId>) : PrintElementPresentationManager {
+  private val colorGetter = ColorGetterByLayoutIndex(linearGraph, permanentGraphInfo, colorManager)
+  private var selection: Selection = Selection(linearGraph, emptySet())
 
-class PrintElementPresentationManagerImpl<CommitId> implements PrintElementPresentationManager {
-  @NotNull private final LinearGraph myLinearGraph;
-  @NotNull private final ColorGetterByLayoutIndex<CommitId> myColorGetter;
-  @NotNull private Selection mySelection = new Selection(Collections.emptySet());
-
-  PrintElementPresentationManagerImpl(@NotNull PermanentGraphInfo<CommitId> permanentGraphInfo,
-                                      @NotNull LinearGraph linearGraph,
-                                      @NotNull GraphColorManager<CommitId> colorManager) {
-    myLinearGraph = linearGraph;
-    myColorGetter = new ColorGetterByLayoutIndex<>(linearGraph, permanentGraphInfo, colorManager);
+  override fun isSelected(printElement: PrintElementWithGraphElement): Boolean {
+    return selection.isSelected(printElement)
   }
 
-  @Override
-  public boolean isSelected(@NotNull PrintElementWithGraphElement printElement) {
-    return mySelection.isSelected(printElement);
+  fun setSelectedElement(printElement: PrintElementWithGraphElement): Boolean {
+    return setSelection(Selection(linearGraph, printElement))
   }
 
-  boolean setSelectedElement(@NotNull PrintElementWithGraphElement printElement) {
-    return setSelection(new Selection(printElement));
+  fun setSelectedElements(selectedNodeId: Set<Int>): Boolean {
+    return setSelection(Selection(linearGraph, selectedNodeId))
   }
 
-  boolean setSelectedElements(@NotNull Set<Integer> selectedNodeId) {
-    return setSelection(new Selection(selectedNodeId));
+  private fun setSelection(newSelection: Selection): Boolean {
+    if (newSelection == selection) return false
+    selection = newSelection
+    return true
   }
 
-  private boolean setSelection(@NotNull Selection newSelection) {
-    if (newSelection.equals(mySelection)) return false;
-    mySelection = newSelection;
-    return true;
+  override fun getColorId(element: GraphElement): Int {
+    return colorGetter.getColorId(element)
   }
 
-  @Override
-  public int getColorId(@NotNull GraphElement element) {
-    return myColorGetter.getColorId(element);
-  }
+  class Selection private constructor(private val linearGraph: LinearGraph,
+                                      private val selectedPrintElement: PrintElementWithGraphElement?,
+                                      private val selectedNodeIds: Set<Int>) {
+    constructor(linearGraph: LinearGraph, selectedNodeId: Set<Int>) : this(linearGraph, null, selectedNodeId)
+    constructor(linearGraph: LinearGraph, printElement: PrintElementWithGraphElement) : this(linearGraph, printElement, emptySet<Int>())
 
-  public class Selection {
-    @Nullable private final PrintElementWithGraphElement mySelectedPrintElement;
-    @NotNull private final Set<Integer> mySelectedNodeIds;
+    fun isSelected(printElement: PrintElementWithGraphElement): Boolean {
+      if (printElement == selectedPrintElement) return true
 
-    public Selection(@NotNull Set<Integer> selectedNodeId) {
-      this(null, selectedNodeId);
-    }
-
-    public Selection(@NotNull PrintElementWithGraphElement printElement) {
-      this(printElement, Collections.emptySet());
-    }
-
-    private Selection(@Nullable PrintElementWithGraphElement printElement,
-                      @NotNull Set<Integer> nodeIds) {
-      mySelectedPrintElement = printElement;
-      mySelectedNodeIds = nodeIds;
-    }
-
-    public boolean isSelected(@NotNull PrintElementWithGraphElement printElement) {
-      if (printElement.equals(mySelectedPrintElement)) return true;
-
-      GraphElement graphElement = printElement.getGraphElement();
-      if (graphElement instanceof GraphNode) {
-        int nodeId = myLinearGraph.getNodeId(((GraphNode)graphElement).getNodeIndex());
-        return mySelectedNodeIds.contains(nodeId);
+      val graphElement = printElement.graphElement
+      if (graphElement is GraphNode) {
+        val nodeId = linearGraph.getNodeId(graphElement.nodeIndex)
+        return selectedNodeIds.contains(nodeId)
       }
-      if (graphElement instanceof GraphEdge) {
-        GraphEdge edge = (GraphEdge)graphElement;
-        boolean selected = edge.getTargetId() == null || mySelectedNodeIds.contains(edge.getTargetId());
-        selected &= edge.getUpNodeIndex() == null || mySelectedNodeIds.contains(myLinearGraph.getNodeId(edge.getUpNodeIndex()));
-        selected &= edge.getDownNodeIndex() == null || mySelectedNodeIds.contains(myLinearGraph.getNodeId(edge.getDownNodeIndex()));
-        return selected;
+      if (graphElement is GraphEdge) {
+        var selected = graphElement.targetId == null || selectedNodeIds.contains(graphElement.targetId)
+        selected = selected and
+          (graphElement.upNodeIndex == null || selectedNodeIds.contains(linearGraph.getNodeId(graphElement.upNodeIndex!!)))
+        selected = selected and
+          (graphElement.downNodeIndex == null || selectedNodeIds.contains(linearGraph.getNodeId(graphElement.downNodeIndex!!)))
+        return selected
       }
-
-      return false;
+      return false
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      Selection selection = (Selection)o;
-      return Objects.equals(mySelectedPrintElement, selection.mySelectedPrintElement) &&
-             Comparing.haveEqualElements(mySelectedNodeIds, selection.mySelectedNodeIds);
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other == null || javaClass != other.javaClass) return false
+      val selection = other as Selection
+      return selectedPrintElement == selection.selectedPrintElement &&
+             Comparing.haveEqualElements(selectedNodeIds, selection.selectedNodeIds)
     }
 
-    @Override
-    public int hashCode() {
-      return 31 * Objects.hashCode(mySelectedPrintElement) + Comparing.unorderedHashcode(mySelectedNodeIds);
+    override fun hashCode(): Int {
+      return 31 * Objects.hashCode(selectedPrintElement) + Comparing.unorderedHashcode(selectedNodeIds)
     }
   }
 }
