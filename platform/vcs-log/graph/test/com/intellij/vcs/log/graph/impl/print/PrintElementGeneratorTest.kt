@@ -49,7 +49,7 @@ open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGener
         return LinearGraphUtils.getNotNullNodeIndex(element)
       }
 
-      throw IllegalStateException("Incorrect graph element type: " + element)
+      throw IllegalStateException("Incorrect graph element type: $element")
     }
 
     override fun getGraphElementComparator(): Comparator<GraphElement> {
@@ -65,7 +65,7 @@ open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGener
     val graph = LinearGraphParser.parse(`in`)
     val graphLayout = GraphLayoutBuilder.build(graph) { o1, o2 -> o1.compareTo(o2) }
     val graphElementComparator = GraphElementComparatorByLayoutIndex(
-      NotNullFunction<Int, Int> { nodeIndex -> graphLayout.getLayoutIndex(nodeIndex!!) }
+      NotNullFunction { nodeIndex -> graphLayout.getLayoutIndex(nodeIndex!!) }
     )
     val elementManager = TestPrintElementManager(graphElementComparator)
     val printElementGenerator = PrintElementGeneratorImpl(graph, elementManager, longEdgeSize, visiblePartSize, edgeWithArrowSize)
@@ -97,14 +97,12 @@ open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGener
   @Test
   fun oneUpOneDown1() {
     val testName = "oneUpOneDown1"
-    runTest(loadText(testName + AbstractTestWithTwoTextFile.IN_POSTFIX), loadText(testName + AbstractTestWithTwoTextFile.OUT_POSTFIX), 7, 1,
-            10)
+    runTest(loadText(testName + IN_POSTFIX), loadText(testName + OUT_POSTFIX), 7, 1, 10)
   }
 
   @Test
   fun oneUpOneDown2() {
     val testName = "oneUpOneDown2"
-    runTest(loadText(testName + AbstractTestWithTwoTextFile.IN_POSTFIX), loadText(testName + AbstractTestWithTwoTextFile.OUT_POSTFIX), 10,
-            1, 10)
+    runTest(loadText(testName + IN_POSTFIX), loadText(testName + OUT_POSTFIX), 10, 1, 10)
   }
 }
