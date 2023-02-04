@@ -24,8 +24,10 @@ public final class LombokUtils {
     "androidx.annotation.NonNull",
     "androidx.annotation.RecentlyNonNull",
     "com.android.annotations.NonNull",
-    "com.google.firebase.database.annotations.NotNull", // Even though it's in a database package, it does mean semantically: "Check if never null at the language level", and not 'db column cannot be null'.
-    "com.mongodb.lang.NonNull", // Even though mongo is a DB engine, this semantically refers to language, not DB table designs (mongo is a document DB engine, so this isn't surprising perhaps).
+    "com.google.firebase.database.annotations.NotNull",
+    // Even though it's in a database package, it does mean semantically: "Check if never null at the language level", and not 'db column cannot be null'.
+    "com.mongodb.lang.NonNull",
+    // Even though mongo is a DB engine, this semantically refers to language, not DB table designs (mongo is a document DB engine, so this isn't surprising perhaps).
     "com.sun.istack.NotNull",
     "com.unboundid.util.NotNull",
     "edu.umd.cs.findbugs.annotations.NonNull",
@@ -509,8 +511,8 @@ public final class LombokUtils {
    * For example if {@code isBoolean} is true, then a field named {@code isRunning} would produce:<br />
    * {@code [isRunning, getRunning, isIsRunning, getIsRunning]}
    *
-   * @param fieldName     the name of the field.
-   * @param isBoolean     if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
+   * @param fieldName the name of the field.
+   * @param isBoolean if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
    */
   public static Collection<String> toAllGetterNames(@NotNull AccessorsInfo accessorsInfo, String fieldName, boolean isBoolean) {
     return toAllAccessorNames(accessorsInfo, fieldName, isBoolean, "is", "get");
@@ -522,8 +524,8 @@ public final class LombokUtils {
    * For example if {@code isBoolean} is true, then a field named {@code isRunning} would produce:<br />
    * {@code [setRunning, setIsRunning]}
    *
-   * @param fieldName     the name of the field.
-   * @param isBoolean     if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
+   * @param fieldName the name of the field.
+   * @param isBoolean if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
    */
   public static Collection<String> toAllSetterNames(@NotNull AccessorsInfo accessorsInfo, String fieldName, boolean isBoolean) {
     return toAllAccessorNames(accessorsInfo, fieldName, isBoolean, "set", "set");
@@ -535,8 +537,8 @@ public final class LombokUtils {
    * For example if {@code isBoolean} is true, then a field named {@code isRunning} would produce:<br />
    * {@code [withRunning, withIsRunning]}
    *
-   * @param fieldName     the name of the field.
-   * @param isBoolean     if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
+   * @param fieldName the name of the field.
+   * @param isBoolean if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
    */
   public static Collection<String> toAllWitherNames(@NotNull AccessorsInfo accessorsInfo, String fieldName, boolean isBoolean) {
     if (accessorsInfo.isFluent()) {
@@ -586,7 +588,8 @@ public final class LombokUtils {
   }
 
   private static String buildName(String prefix, String suffix, CapitalizationStrategy capitalizationStrategy) {
-    return prefix + capitalizationStrategy.capitalize(suffix);
+    CapitalizationStrategy strategy = null == capitalizationStrategy ? CapitalizationStrategy.defaultValue() : capitalizationStrategy;
+    return prefix + strategy.capitalize(suffix);
   }
 
   public static String camelCaseToConstant(String fieldName) {
