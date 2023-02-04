@@ -35,7 +35,7 @@ public class TerminalHandlerImpl extends TerminalHandlerBase {
     CloudTerminalRunner terminalRunner =
       new CloudTerminalRunner(project, presentableName, process, handlerBoundLater, deferTerminalSessionUntilFirstShown);
 
-    TerminalWidget widget = terminalRunner.createShellTerminalWidget(project, null, deferTerminalSessionUntilFirstShown);
+    TerminalWidget widget = terminalRunner.startShellTerminalWidget(project, null, deferTerminalSessionUntilFirstShown);
     myTerminalWidget = Objects.requireNonNull(JBTerminalWidget.asJediTermWidget(widget));
     myTerminalPanel = myTerminalWidget.getTerminalPanel();
     myCopyActionKeyListener = new MyCopyActionKeyListener();

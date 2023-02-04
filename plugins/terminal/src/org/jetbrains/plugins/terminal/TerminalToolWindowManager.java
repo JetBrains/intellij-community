@@ -269,7 +269,7 @@ public final class TerminalToolWindowManager implements Disposable {
     TerminalWidget widget = terminalWidget;
     if (widget == null) {
       String currentWorkingDir = terminalRunner.getCurrentWorkingDir(tabState);
-      widget = terminalRunner.createShellTerminalWidget(content, currentWorkingDir, deferSessionStartUntilUiShown);
+      widget = terminalRunner.startShellTerminalWidget(content, currentWorkingDir, deferSessionStartUntilUiShown);
       //TerminalArrangementManager.getInstance(myProject).assignCommandHistoryFile(terminalWidget, tabState);
       TerminalWorkingDirectoryManager.setInitialWorkingDirectory(content, currentWorkingDir);
     }
@@ -455,7 +455,7 @@ public final class TerminalToolWindowManager implements Disposable {
   public void split(@NotNull JBTerminalWidget widget, boolean vertically) {
     TerminalContainer container = getContainer(widget);
     String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget.asNewWidget(), container.getContent().getDisplayName());
-    TerminalWidget newWidget = myTerminalRunner.createShellTerminalWidget(container.getContent(), workingDirectory, true);
+    TerminalWidget newWidget = myTerminalRunner.startShellTerminalWidget(container.getContent(), workingDirectory, true);
     setupTerminalWidget(myToolWindow, newWidget, container.getContent());
     container.split(!vertically, newWidget);
   }

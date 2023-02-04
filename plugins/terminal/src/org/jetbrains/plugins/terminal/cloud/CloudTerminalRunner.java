@@ -40,10 +40,10 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
   }
 
   @Override
-  public @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent,
-                                                           @Nullable String currentWorkingDirectory,
-                                                           boolean deferSessionStartUntilUiShown) {
-    return super.createShellTerminalWidget(parent, currentWorkingDirectory, myDeferSessionUntilFirstShown);
+  public @NotNull TerminalWidget startShellTerminalWidget(@NotNull Disposable parent,
+                                                          @Nullable String currentWorkingDirectory,
+                                                          boolean deferSessionStartUntilUiShown) {
+    return super.startShellTerminalWidget(parent, currentWorkingDirectory, myDeferSessionUntilFirstShown);
   }
 
   @Override

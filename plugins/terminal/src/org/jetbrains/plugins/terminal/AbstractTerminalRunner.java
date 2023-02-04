@@ -116,36 +116,40 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   /**
-   * @deprecated use {@link #createShellTerminalWidget(Disposable, String, boolean)}
+   * @deprecated use {@link #startShellTerminalWidget(Disposable, String, boolean)}
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated(forRemoval = true)
   public @NotNull JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
                                                         @Nullable String currentWorkingDirectory,
                                                         boolean deferSessionStartUntilUiShown) {
-    JBTerminalWidget terminalWidget = new ShellTerminalWidget(myProject, mySettingsProvider, parent);
+    TerminalWidget terminalWidget = createShellTerminalWidget(parent, currentWorkingDirectory);
+    JBTerminalWidget jediTermWidget = JBTerminalWidget.asJediTermWidget(terminalWidget);
+    if (jediTermWidget == null) {
+      throw new IncompatibleWidgetException();
+    }
     scheduleOpenSessionInDirectory(terminalWidget, currentWorkingDirectory, deferSessionStartUntilUiShown);
-    return terminalWidget;
+    return jediTermWidget;
   }
 
-  public @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent,
-                                                           @Nullable String currentWorkingDirectory,
-                                                           boolean deferSessionStartUntilUiShown) {
-    if (Registry.is("ide.experimental.ui.new.terminal", false)) {
-      TerminalWidget widget = new TerminalWidgetImpl(myProject, mySettingsProvider, parent);
+  public @NotNull TerminalWidget startShellTerminalWidget(@NotNull Disposable parent,
+                                                          @Nullable String currentWorkingDirectory,
+                                                          boolean deferSessionStartUntilUiShown) {
+    try {
+      return createTerminalWidget(parent, currentWorkingDirectory, deferSessionStartUntilUiShown).asNewWidget();
+    }
+    catch (IncompatibleWidgetException e) {
+      TerminalWidget widget = createShellTerminalWidget(parent, currentWorkingDirectory);
       scheduleOpenSessionInDirectory(widget, currentWorkingDirectory, deferSessionStartUntilUiShown);
       return widget;
     }
-    return createTerminalWidget(parent, currentWorkingDirectory, deferSessionStartUntilUiShown).asNewWidget();
   }
 
-  /**
-   * @deprecated use {@link #scheduleOpenSessionInDirectory(TerminalWidget, String, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  protected void scheduleOpenSessionInDirectory(@NotNull JBTerminalWidget terminalWidget,
-                                                @Nullable String currentWorkingDirectory,
-                                                boolean deferSessionStartUntilUiShown) {
-    scheduleOpenSessionInDirectory(terminalWidget.asNewWidget(), currentWorkingDirectory, deferSessionStartUntilUiShown);
+  protected @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent, @Nullable String currentWorkingDirectory) {
+    if (Registry.is("ide.experimental.ui.new.terminal", false)) {
+      return new TerminalWidgetImpl(myProject, mySettingsProvider, parent);
+    }
+    return new ShellTerminalWidget(myProject, mySettingsProvider, parent).asNewWidget();
   }
 
   private void scheduleOpenSessionInDirectory(@NotNull TerminalWidget terminalWidget,
@@ -315,5 +319,11 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   @Deprecated(forRemoval = true)
   protected T createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
     return createProcess(directory);
+  }
+
+  private static class IncompatibleWidgetException extends RuntimeException {
+    private IncompatibleWidgetException() {
+      super("Please migrate from AbstractTerminalRunner.createTerminalWidget(Disposable, String, boolean) to AbstractTerminalRunner.createShellTerminalWidget");
+    }
   }
 }
