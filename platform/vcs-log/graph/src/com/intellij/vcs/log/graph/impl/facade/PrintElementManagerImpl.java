@@ -10,32 +10,24 @@ import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
 import com.intellij.vcs.log.graph.impl.print.ColorGetterByLayoutIndex;
-import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex;
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
 
 class PrintElementManagerImpl<CommitId> implements PrintElementManager {
-  @NotNull private final Comparator<GraphElement> myGraphElementComparator;
-  @NotNull private final ColorGetterByLayoutIndex<CommitId> myColorGetter;
   @NotNull private final LinearGraph myLinearGraph;
+  @NotNull private final ColorGetterByLayoutIndex<CommitId> myColorGetter;
   @NotNull private Selection mySelection = new Selection(Collections.emptySet());
 
-  PrintElementManagerImpl(@NotNull LinearGraph linearGraph,
-                          @NotNull PermanentGraphInfo<CommitId> myPermanentGraph,
+  PrintElementManagerImpl(@NotNull PermanentGraphInfo<CommitId> permanentGraphInfo,
+                          @NotNull LinearGraph linearGraph,
                           @NotNull GraphColorManager<CommitId> colorManager) {
     myLinearGraph = linearGraph;
-    myColorGetter = new ColorGetterByLayoutIndex<>(linearGraph, myPermanentGraph, colorManager);
-    myGraphElementComparator = new GraphElementComparatorByLayoutIndex(nodeIndex -> {
-      int nodeId = linearGraph.getNodeId(nodeIndex);
-      if (nodeId < 0) return nodeId;
-      return myPermanentGraph.getPermanentGraphLayout().getLayoutIndex(nodeId);
-    });
+    myColorGetter = new ColorGetterByLayoutIndex<>(linearGraph, permanentGraphInfo, colorManager);
   }
 
   @Override
@@ -60,12 +52,6 @@ class PrintElementManagerImpl<CommitId> implements PrintElementManager {
   @Override
   public int getColorId(@NotNull GraphElement element) {
     return myColorGetter.getColorId(element);
-  }
-
-  @NotNull
-  @Override
-  public Comparator<GraphElement> getGraphElementComparator() {
-    return myGraphElementComparator;
   }
 
   public class Selection {

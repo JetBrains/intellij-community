@@ -28,11 +28,10 @@ import com.intellij.vcs.log.graph.parser.LinearGraphParser
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.util.*
 
 open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGenerator") {
 
-  class TestPrintElementManager(private val myGraphElementComparator: Comparator<GraphElement>) : PrintElementManager {
+  class TestPrintElementManager : PrintElementManager {
 
     override fun isSelected(printElement: PrintElementWithGraphElement): Boolean {
       return false
@@ -51,10 +50,6 @@ open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGener
 
       throw IllegalStateException("Incorrect graph element type: $element")
     }
-
-    override fun getGraphElementComparator(): Comparator<GraphElement> {
-      return myGraphElementComparator
-    }
   }
 
   override fun runTest(`in`: String, out: String) {
@@ -67,8 +62,9 @@ open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGener
     val graphElementComparator = GraphElementComparatorByLayoutIndex(
       NotNullFunction { nodeIndex -> graphLayout.getLayoutIndex(nodeIndex!!) }
     )
-    val elementManager = TestPrintElementManager(graphElementComparator)
-    val printElementGenerator = PrintElementGeneratorImpl(graph, elementManager, longEdgeSize, visiblePartSize, edgeWithArrowSize)
+    val elementManager = TestPrintElementManager()
+    val printElementGenerator = PrintElementGeneratorImpl(graph, elementManager, graphElementComparator, longEdgeSize, visiblePartSize,
+                                                          edgeWithArrowSize)
     val actual = printElementGenerator.asString(graph.nodesCount())
     assertEquals(out, actual)
   }

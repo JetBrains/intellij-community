@@ -14,6 +14,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction;
+import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex;
 import com.intellij.vcs.log.graph.impl.print.PrintElementGeneratorImpl;
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import org.jetbrains.annotations.NotNull;
@@ -76,8 +77,14 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   }
 
   void updatePrintElementGenerator() {
-    myPrintElementManager = new PrintElementManagerImpl<>(myGraphController.getCompiledGraph(), myPermanentGraph, myColorManager);
-    myPrintElementGenerator = new PrintElementGeneratorImpl(myGraphController.getCompiledGraph(), myPrintElementManager, myShowLongEdges);
+    LinearGraph linearGraph = myGraphController.getCompiledGraph();
+    myPrintElementManager = new PrintElementManagerImpl<>(myPermanentGraph, linearGraph, myColorManager);
+    GraphElementComparatorByLayoutIndex comparator = new GraphElementComparatorByLayoutIndex(nodeIndex -> {
+      int nodeId = linearGraph.getNodeId(nodeIndex);
+      if (nodeId < 0) return nodeId;
+      return myPermanentGraph.getPermanentGraphLayout().getLayoutIndex(nodeId);
+    });
+    myPrintElementGenerator = new PrintElementGeneratorImpl(linearGraph, myPrintElementManager, myShowLongEdges, comparator);
   }
 
   @NotNull

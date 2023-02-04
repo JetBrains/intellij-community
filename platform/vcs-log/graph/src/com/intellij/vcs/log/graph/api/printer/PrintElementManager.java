@@ -20,14 +20,10 @@ import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Comparator;
 
 public interface PrintElementManager {
 
   boolean isSelected(@NotNull PrintElementWithGraphElement printElement);
 
   int getColorId(@NotNull GraphElement element);
-
-  @NotNull
-  Comparator<GraphElement> getGraphElementComparator();
 }
