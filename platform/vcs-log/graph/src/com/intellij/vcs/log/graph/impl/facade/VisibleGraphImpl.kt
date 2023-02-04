@@ -1,349 +1,223 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.graph.impl.facade;
+package com.intellij.vcs.log.graph.impl.facade
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.graph.*;
-import com.intellij.vcs.log.graph.actions.ActionController;
-import com.intellij.vcs.log.graph.actions.GraphAction;
-import com.intellij.vcs.log.graph.actions.GraphAnswer;
-import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
-import com.intellij.vcs.log.graph.api.elements.GraphElement;
-import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
-import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction;
-import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex;
-import com.intellij.vcs.log.graph.impl.print.PrintElementGeneratorImpl;
-import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.NotNullFunction
+import com.intellij.vcs.log.graph.*
+import com.intellij.vcs.log.graph.actions.ActionController
+import com.intellij.vcs.log.graph.actions.GraphAction
+import com.intellij.vcs.log.graph.actions.GraphAnswer
+import com.intellij.vcs.log.graph.api.LinearGraph
+import com.intellij.vcs.log.graph.api.elements.GraphEdge
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
+import com.intellij.vcs.log.graph.api.elements.GraphNodeType
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction
+import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAnswer
+import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex
+import com.intellij.vcs.log.graph.impl.print.PrintElementGeneratorImpl
+import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import java.awt.Cursor
 
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphController,
+                                       val permanentGraph: PermanentGraphInfo<CommitId>,
+                                       private val colorManager: GraphColorManager<CommitId>) : VisibleGraph<CommitId> {
+  private lateinit var presentationManager: PrintElementPresentationManagerImpl<CommitId>
+  private lateinit var printElementGenerator: PrintElementGeneratorImpl
+  private var isShowLongEdges = false
 
-import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.*;
-
-public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
-  @NotNull private final LinearGraphController myGraphController;
-  @NotNull private final PermanentGraphInfo<CommitId> myPermanentGraph;
-  @NotNull private final GraphColorManager<CommitId> myColorManager;
-
-  private PrintElementPresentationManagerImpl<CommitId> myPresentationManager;
-  private PrintElementGeneratorImpl myPrintElementGenerator;
-  private boolean myShowLongEdges = false;
-
-  public VisibleGraphImpl(@NotNull LinearGraphController graphController,
-                          @NotNull PermanentGraphInfo<CommitId> permanentGraph,
-                          @NotNull GraphColorManager<CommitId> colorManager) {
-    myGraphController = graphController;
-    myPermanentGraph = permanentGraph;
-    myColorManager = colorManager;
-    updatePrintElementGenerator();
+  init {
+    updatePrintElementGenerator()
   }
 
-  @Override
-  public int getVisibleCommitCount() {
-    return myGraphController.getCompiledGraph().nodesCount();
+  override fun getVisibleCommitCount() = graphController.compiledGraph.nodesCount()
+
+  override fun getRowInfo(visibleRow: Int): RowInfo<CommitId> {
+    val nodeId = graphController.compiledGraph.getNodeId(visibleRow)
+    assert(nodeId >= 0) // todo remake for all id
+    return RowInfoImpl(nodeId, visibleRow)
   }
 
-  @NotNull
-  @Override
-  public RowInfo<CommitId> getRowInfo(int visibleRow) {
-    int nodeId = myGraphController.getCompiledGraph().getNodeId(visibleRow);
-    assert nodeId >= 0; // todo remake for all id
-    return new RowInfoImpl(nodeId, visibleRow);
+  override fun getVisibleRowIndex(commitId: CommitId): Int? {
+    val nodeId = permanentGraph.permanentCommitsInfo.getNodeId(commitId)
+    return graphController.compiledGraph.getNodeIndex(nodeId)
   }
 
-  @Override
-  @Nullable
-  public Integer getVisibleRowIndex(@NotNull CommitId commitId) {
-    int nodeId = myPermanentGraph.getPermanentCommitsInfo().getNodeId(commitId);
-    return myGraphController.getCompiledGraph().getNodeIndex(nodeId);
+  override fun getActionController(): ActionController<CommitId> = ActionControllerImpl()
+
+  fun updatePrintElementGenerator() {
+    presentationManager = PrintElementPresentationManagerImpl(permanentGraph, linearGraph, colorManager)
+    val comparator = GraphElementComparatorByLayoutIndex(
+      NotNullFunction { nodeIndex: Int ->
+        val nodeId = linearGraph.getNodeId(nodeIndex)
+        if (nodeId < 0) return@NotNullFunction nodeId
+        permanentGraph.permanentGraphLayout.getLayoutIndex(nodeId)
+      })
+    printElementGenerator = PrintElementGeneratorImpl(linearGraph, presentationManager, isShowLongEdges, comparator)
   }
 
-  @NotNull
-  @Override
-  public ActionController<CommitId> getActionController() {
-    return new ActionControllerImpl();
+  fun buildSimpleGraphInfo(visibleRow: Int, visibleRange: Int): SimpleGraphInfo<CommitId> {
+    return SimpleGraphInfo.build(graphController.compiledGraph,
+                                 permanentGraph.permanentGraphLayout,
+                                 permanentGraph.permanentCommitsInfo,
+                                 permanentGraph.linearGraph.nodesCount(),
+                                 permanentGraph.branchNodeIds, visibleRow, visibleRange)
   }
 
-  void updatePrintElementGenerator() {
-    LinearGraph linearGraph = myGraphController.getCompiledGraph();
-    myPresentationManager = new PrintElementPresentationManagerImpl<>(myPermanentGraph, linearGraph, myColorManager);
-    GraphElementComparatorByLayoutIndex comparator = new GraphElementComparatorByLayoutIndex(nodeIndex -> {
-      int nodeId = linearGraph.getNodeId(nodeIndex);
-      if (nodeId < 0) return nodeId;
-      return myPermanentGraph.getPermanentGraphLayout().getLayoutIndex(nodeId);
-    });
-    myPrintElementGenerator = new PrintElementGeneratorImpl(linearGraph, myPresentationManager, myShowLongEdges, comparator);
+  override fun getRecommendedWidth(): Int {
+    return printElementGenerator.getRecommendedWidth()
   }
 
-  @NotNull
-  public SimpleGraphInfo<CommitId> buildSimpleGraphInfo(int visibleRow, int visibleRange) {
-    return SimpleGraphInfo.build(myGraphController.getCompiledGraph(),
-                                 myPermanentGraph.getPermanentGraphLayout(),
-                                 myPermanentGraph.getPermanentCommitsInfo(),
-                                 myPermanentGraph.getLinearGraph().nodesCount(),
-                                 myPermanentGraph.getBranchNodeIds(), visibleRow, visibleRange);
-  }
+  val linearGraph: LinearGraph
+    get() = graphController.compiledGraph
 
-  @Override
-  public int getRecommendedWidth() {
-    return myPrintElementGenerator.getRecommendedWidth();
-  }
-
-  public LinearGraph getLinearGraph() {
-    return myGraphController.getCompiledGraph();
-  }
-
-  @NotNull
-  public PermanentGraphInfo<CommitId> getPermanentGraph() {
-    return myPermanentGraph;
-  }
-
-  @Override
-  public String toString() {
-    Collection<CommitId> commits = new ArrayList<>();
-    for (int i = 0; i < getVisibleCommitCount(); i++) {
-      commits.add(getRowInfo(i).getCommit());
+  override fun toString(): String {
+    val commits = mutableListOf<CommitId>()
+    for (i in 0 until visibleCommitCount) {
+      commits.add(getRowInfo(i).commit)
     }
-    return "VisibleGraph[" + StringUtil.join(commits, ", ") + "]";
+    return "VisibleGraph[${commits.joinToString(", ")}]"
   }
 
-  private class ActionControllerImpl implements ActionController<CommitId> {
-
-    @Nullable
-    private Integer convertToNodeId(@Nullable Integer nodeIndex) {
-      if (nodeIndex == null) return null;
-      return myGraphController.getCompiledGraph().getNodeId(nodeIndex);
+  private inner class ActionControllerImpl : ActionController<CommitId> {
+    private fun convertToNodeId(nodeIndex: Int?): Int? {
+      return if (nodeIndex == null) null else graphController.compiledGraph.getNodeId(nodeIndex)
     }
 
-    @Nullable
-    private GraphAnswer<CommitId> performArrowAction(@NotNull LinearGraphAction action) {
-      PrintElementWithGraphElement affectedElement = action.getAffectedElement();
-      if (!(affectedElement instanceof EdgePrintElement)) return null;
-      EdgePrintElement edgePrintElement = (EdgePrintElement)affectedElement;
-      if (!edgePrintElement.hasArrow()) return null;
+    private fun performArrowAction(action: LinearGraphAction): GraphAnswer<CommitId>? {
+      val affectedElement = action.affectedElement
+      if (affectedElement !is EdgePrintElement) return null
 
-      GraphElement graphElement = affectedElement.getGraphElement();
-      if (!(graphElement instanceof GraphEdge)) return null;
-      GraphEdge edge = (GraphEdge)graphElement;
+      val edgePrintElement = affectedElement as EdgePrintElement
+      if (!edgePrintElement.hasArrow()) return null
 
-      Integer targetId = null;
-      if (edge.getType() == GraphEdgeType.NOT_LOAD_COMMIT) {
-        assert edgePrintElement.getType().equals(EdgePrintElement.Type.DOWN);
-        targetId = edge.getTargetId();
+      val edge = affectedElement.graphElement as? GraphEdge ?: return null
+
+      var targetId: Int? = null
+      if (edge.type == GraphEdgeType.NOT_LOAD_COMMIT) {
+        assert(edgePrintElement.type == EdgePrintElement.Type.DOWN)
+        targetId = edge.targetId
       }
-      if (edge.getType().isNormalEdge()) {
-        if (edgePrintElement.getType().equals(EdgePrintElement.Type.DOWN)) {
-          targetId = convertToNodeId(edge.getDownNodeIndex());
+      if (edge.type.isNormalEdge) {
+        targetId = if (edgePrintElement.type == EdgePrintElement.Type.DOWN) {
+          convertToNodeId(edge.downNodeIndex)
         }
         else {
-          targetId = convertToNodeId(edge.getUpNodeIndex());
+          convertToNodeId(edge.upNodeIndex)
         }
       }
-      if (targetId == null) return null;
+      if (targetId == null) return null
 
-      if (action.getType() == GraphAction.Type.MOUSE_OVER) {
-        boolean selectionChanged = myPresentationManager.setSelectedElement(affectedElement);
-        return new GraphAnswerImpl<>(getCursor(true), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null,
-                                     false, selectionChanged);
+      if (action.type == GraphAction.Type.MOUSE_OVER) {
+        val selectionChanged = presentationManager.setSelectedElement(affectedElement)
+        return GraphAnswerImpl(LinearGraphUtils.getCursor(true), permanentGraph.permanentCommitsInfo.getCommitId(targetId), null,
+                               false, selectionChanged)
       }
-
-      if (action.getType() == GraphAction.Type.MOUSE_CLICK) {
-        boolean selectionChanged = myPresentationManager.setSelectedElements(Collections.emptySet());
-        return new GraphAnswerImpl<>(getCursor(false), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null,
-                                     true, selectionChanged);
+      if (action.type == GraphAction.Type.MOUSE_CLICK) {
+        val selectionChanged = presentationManager.setSelectedElements(emptySet())
+        return GraphAnswerImpl(LinearGraphUtils.getCursor(false), permanentGraph.permanentCommitsInfo.getCommitId(targetId), null,
+                               true, selectionChanged)
       }
-
-      return null;
+      return null
     }
 
-    @NotNull
-    @Override
-    public GraphAnswer<CommitId> performAction(@NotNull GraphAction graphAction) {
-      LinearGraphAction action = convert(graphAction);
+    override fun performAction(graphAction: GraphAction): GraphAnswer<CommitId> {
+      val action = convert(graphAction)
+      val graphAnswer = performArrowAction(action)
+      if (graphAnswer != null) return graphAnswer
 
-      GraphAnswer<CommitId> graphAnswer = performArrowAction(action);
-      if (graphAnswer != null) return graphAnswer;
-
-      LinearGraphController.LinearGraphAnswer answer = myGraphController.performLinearGraphAction(action);
-      boolean selectionChanged;
-      if (answer.getSelectedNodeIds() != null) {
-        selectionChanged = myPresentationManager.setSelectedElements(answer.getSelectedNodeIds());
+      val answer = graphController.performLinearGraphAction(action)
+      val selectionChanged = if (answer.selectedNodeIds != null) {
+        presentationManager.setSelectedElements(answer.selectedNodeIds!!)
       }
       else {
-        selectionChanged = myPresentationManager.setSelectedElements(Collections.emptySet());
+        presentationManager.setSelectedElements(emptySet())
       }
-
-      if (answer.getGraphChanges() != null) updatePrintElementGenerator();
-      return convert(answer, selectionChanged);
+      if (answer.graphChanges != null) updatePrintElementGenerator()
+      return convert(answer, selectionChanged)
     }
 
-    @Override
-    public boolean areLongEdgesHidden() {
-      return !myShowLongEdges;
+    override fun areLongEdgesHidden() = !isShowLongEdges
+
+    override fun setLongEdgesHidden(longEdgesHidden: Boolean) {
+      isShowLongEdges = !longEdgesHidden
+      updatePrintElementGenerator()
     }
 
-    @Override
-    public void setLongEdgesHidden(boolean longEdgesHidden) {
-      myShowLongEdges = !longEdgesHidden;
-      updatePrintElementGenerator();
-    }
-
-    @NotNull
-    private LinearGraphAction convert(@NotNull GraphAction graphAction) {
-      PrintElementWithGraphElement printElement = null;
-      PrintElement affectedElement = graphAction.getAffectedElement();
-      if (affectedElement != null) {
-        if (affectedElement instanceof PrintElementWithGraphElement) {
-          printElement = (PrintElementWithGraphElement)affectedElement;
+    private fun convert(graphAction: GraphAction): LinearGraphAction {
+      val printElement = graphAction.affectedElement?.let { affectedElement ->
+        if (affectedElement is PrintElementWithGraphElement) {
+          affectedElement
         }
         else {
-          printElement = ContainerUtil.find(myPrintElementGenerator.getPrintElements(affectedElement.getRowIndex()),
-                                            it -> it.equals(affectedElement));
-          if (printElement == null) {
-            throw new IllegalStateException("Not found graphElement for this printElement: " + affectedElement);
-          }
+          printElementGenerator.getPrintElements(affectedElement.rowIndex).find { it == affectedElement }
+          ?: throw throw IllegalStateException("Not found graphElement for this printElement: $affectedElement")
         }
       }
-      return new LinearGraphActionImpl(printElement, graphAction.getType());
+      return LinearGraphActionImpl(printElement, graphAction.type)
     }
 
-    private GraphAnswer<CommitId> convert(@NotNull LinearGraphController.LinearGraphAnswer answer, boolean selectionChanged) {
-      final Runnable graphUpdater = answer.getGraphUpdater();
-      return new GraphAnswerImpl<>(answer.getCursorToSet(), null, graphUpdater == null ? null : () -> {
-        graphUpdater.run();
-        updatePrintElementGenerator();
-      }, false, selectionChanged);
-    }
-
-    @Override
-    public boolean isActionSupported(@NotNull GraphAction action) {
-      if (action.getType() == GraphAction.Type.BUTTON_COLLAPSE || action.getType() == GraphAction.Type.BUTTON_EXPAND) {
-        return !(myGraphController instanceof FilteredController);
+    private fun convert(answer: LinearGraphAnswer, selectionChanged: Boolean): GraphAnswer<CommitId> {
+      val updater = answer.graphUpdater?.let {
+        Runnable {
+          it.run()
+          updatePrintElementGenerator()
+        }
       }
+      return GraphAnswerImpl(answer.cursorToSet, null, updater, false, selectionChanged)
+    }
 
-      return ActionController.super.isActionSupported(action);
+    override fun isActionSupported(action: GraphAction): Boolean {
+      if (action.type == GraphAction.Type.BUTTON_COLLAPSE || action.type == GraphAction.Type.BUTTON_EXPAND) {
+        return graphController !is FilteredController
+      }
+      return super.isActionSupported(action)
     }
   }
 
-  private static final class GraphAnswerImpl<CommitId> implements GraphAnswer<CommitId> {
-    @Nullable private final Cursor myCursor;
-    @Nullable private final CommitId myCommitToJump;
-    @Nullable private final Runnable myUpdater;
-    private final boolean myDoJump;
-    private final boolean myIsRepaintRequired;
-
-    private GraphAnswerImpl(@Nullable Cursor cursor, @Nullable CommitId commitToJump, @Nullable Runnable updater, boolean doJump,
-                            boolean isRepaintRequired) {
-      myCursor = cursor;
-      myCommitToJump = commitToJump;
-      myUpdater = updater;
-      myDoJump = doJump;
-      myIsRepaintRequired = isRepaintRequired;
-    }
-
-    @Nullable
-    @Override
-    public Cursor getCursorToSet() {
-      return myCursor;
-    }
-
-    @Nullable
-    @Override
-    public CommitId getCommitToJump() {
-      return myCommitToJump;
-    }
-
-    @Nullable
-    @Override
-    public Runnable getGraphUpdater() {
-      return myUpdater;
-    }
-
-    @Override
-    public boolean doJump() {
-      return myDoJump;
-    }
-
-    @Override
-    public boolean isRepaintRequired() {
-      return myIsRepaintRequired;
-    }
+  private class GraphAnswerImpl<CommitId>(private val cursor: Cursor?,
+                                          private val commitToJump: CommitId?,
+                                          private val updater: Runnable?,
+                                          private val doJump: Boolean,
+                                          private val isRepaintRequired: Boolean) : GraphAnswer<CommitId> {
+    override fun getCursorToSet() = cursor
+    override fun getCommitToJump() = commitToJump
+    override fun getGraphUpdater() = updater
+    override fun doJump() = doJump
+    override fun isRepaintRequired() = isRepaintRequired
   }
 
-  public static class LinearGraphActionImpl implements LinearGraphAction {
-    @Nullable private final PrintElementWithGraphElement myAffectedElement;
-    @NotNull private final Type myType;
-
-    public LinearGraphActionImpl(@Nullable PrintElementWithGraphElement affectedElement, @NotNull Type type) {
-      myAffectedElement = affectedElement;
-      myType = type;
-    }
-
-    @Nullable
-    @Override
-    public PrintElementWithGraphElement getAffectedElement() {
-      return myAffectedElement;
-    }
-
-    @NotNull
-    @Override
-    public Type getType() {
-      return myType;
-    }
+  class LinearGraphActionImpl(private val affectedElement: PrintElementWithGraphElement?,
+                              private val type: GraphAction.Type) : LinearGraphAction {
+    override fun getAffectedElement() = affectedElement
+    override fun getType() = type
   }
 
-  private class RowInfoImpl implements RowInfo<CommitId> {
-    private final int myNodeId;
-    private final int myVisibleRow;
-
-    RowInfoImpl(int nodeId, int visibleRow) {
-      myNodeId = nodeId;
-      myVisibleRow = visibleRow;
+  private inner class RowInfoImpl(private val nodeId: Int, private val visibleRow: Int) : RowInfo<CommitId> {
+    override fun getCommit(): CommitId {
+      return permanentGraph.permanentCommitsInfo.getCommitId(nodeId)
     }
 
-    @NotNull
-    @Override
-    public CommitId getCommit() {
-      return myPermanentGraph.getPermanentCommitsInfo().getCommitId(myNodeId);
+    override fun getOneOfHeads(): CommitId {
+      val headNodeId = permanentGraph.permanentGraphLayout.getOneOfHeadNodeIndex(nodeId)
+      return permanentGraph.permanentCommitsInfo.getCommitId(headNodeId)
     }
 
-    @NotNull
-    @Override
-    public CommitId getOneOfHeads() {
-      int headNodeId = myPermanentGraph.getPermanentGraphLayout().getOneOfHeadNodeIndex(myNodeId);
-      return myPermanentGraph.getPermanentCommitsInfo().getCommitId(headNodeId);
+    override fun getPrintElements(): Collection<PrintElement> {
+      return printElementGenerator.getPrintElements(visibleRow)
     }
 
-    @NotNull
-    @Override
-    public Collection<? extends PrintElement> getPrintElements() {
-      return myPrintElementGenerator.getPrintElements(myVisibleRow);
+    override fun getRowType(): RowType {
+      return when (val nodeType = graphController.compiledGraph.getGraphNode(visibleRow).type) {
+        GraphNodeType.USUAL -> RowType.NORMAL
+        GraphNodeType.UNMATCHED -> RowType.UNMATCHED
+        else -> throw UnsupportedOperationException("Unsupported node type: $nodeType")
+      }
     }
 
-    @NotNull
-    @Override
-    public RowType getRowType() {
-      GraphNodeType nodeType = myGraphController.getCompiledGraph().getGraphNode(myVisibleRow).getType();
-      return switch (nodeType) {
-        case USUAL -> RowType.NORMAL;
-        case UNMATCHED -> RowType.UNMATCHED;
-        default -> throw new UnsupportedOperationException("Unsupported node type: " + nodeType);
-      };
-    }
-
-    @NotNull
-    @Override
-    public List<Integer> getAdjacentRows(boolean parent) {
-      return parent ? getDownNodes(myGraphController.getCompiledGraph(), myVisibleRow)
-                    : getUpNodes(myGraphController.getCompiledGraph(), myVisibleRow);
+    override fun getAdjacentRows(parent: Boolean): List<Int> {
+      return if (parent) LinearGraphUtils.getDownNodes(graphController.compiledGraph, visibleRow)
+      else LinearGraphUtils.getUpNodes(graphController.compiledGraph, visibleRow)
     }
   }
 }
