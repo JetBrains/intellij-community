@@ -16,10 +16,9 @@ public abstract class ExpensivePsiIntentionAction implements IntentionAction {
   private final long myPsiModificationCount;
 
   protected ExpensivePsiIntentionAction(@NotNull Project project) {
-    if (ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed()) {
-      // there is a lot of PSI computations and resolve going on here, ensure no freezes are reported
-      throw new IllegalStateException("Must be created in a background thread under the read action");
-    }
+    // there is a lot of PSI computations and resolve going on here, ensure no freezes are reported
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     myProject = project;
     myPsiModificationCount = PsiModificationTracker.getInstance(project).getModificationCount();
   }
