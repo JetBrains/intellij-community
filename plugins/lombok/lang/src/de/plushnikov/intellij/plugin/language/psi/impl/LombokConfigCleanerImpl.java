@@ -21,9 +21,15 @@ public class LombokConfigCleanerImpl extends ASTWrapperPsiElement implements Lom
     visitor.visitCleaner(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof LombokConfigVisitor) accept((LombokConfigVisitor)visitor);
     else super.accept(visitor);
+  }
+
+  @Override
+  public String getKey() {
+    return LombokConfigPsiUtil.getKey(this);
   }
 
 }
