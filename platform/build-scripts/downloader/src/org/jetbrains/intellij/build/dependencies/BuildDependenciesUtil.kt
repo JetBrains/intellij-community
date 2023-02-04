@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
 import com.google.common.io.MoreFiles
@@ -14,7 +14,6 @@ import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.nio.channels.FileChannel
-import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -30,7 +29,6 @@ import kotlin.io.path.listDirectoryEntries
 @ApiStatus.Internal
 object BuildDependenciesUtil {
   private val LOG = Logger.getLogger(BuildDependenciesUtil::class.java.name)
-  private val isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix")
   private val octal_0111 = "111".toInt(8)
 
   val isWindows = System.getProperty("os.name").lowercase().startsWith("windows")
@@ -233,6 +231,8 @@ object BuildDependenciesUtil {
   }
 
   private fun genericExtract(archiveFile: Path, archive: ArchiveContent, target: Path, stripRoot: Boolean) {
+    val isPosixFs = target.fileSystem.supportedFileAttributeViews().contains("posix")
+
     // avoid extra createDirectories calls
     val createdDirs: MutableSet<Path> = HashSet()
     val converter = EntryNameConverter(archiveFile, target, stripRoot)
@@ -274,7 +274,7 @@ object BuildDependenciesUtil {
         }
         else if (type == Entry.Type.FILE) {
           entry.inputStream.use { fs -> Files.copy(fs, entryPath, StandardCopyOption.REPLACE_EXISTING) }
-          if (isPosix && entry.isExecutable) {
+          if (isPosixFs && entry.isExecutable) {
             @Suppress("SpellCheckingInspection")
             Files.setPosixFilePermissions(entryPath, PosixFilePermissions.fromString("rwxr-xr-x"))
           }
