@@ -316,14 +316,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       @Override
       public void onResultUpdated(SubstringFinder.FindResult result) {
       }
-
-      @Override
-      public void nextFindResultItem(SubstringFinder.FindResult.FindItem item) {
-      }
-
-      @Override
-      public void prevFindResultItem(SubstringFinder.FindResult.FindItem item) {
-      }
     };
   }
 

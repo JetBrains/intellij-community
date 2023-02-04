@@ -6,8 +6,10 @@ import com.intellij.find.SearchReplaceComponent
 import com.intellij.find.SearchSession
 import com.intellij.find.editorHeaderActions.NextOccurrenceAction
 import com.intellij.find.editorHeaderActions.PrevOccurrenceAction
+import com.intellij.find.editorHeaderActions.StatusTextAction
 import com.intellij.find.editorHeaderActions.ToggleMatchCase
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalWidget
 import com.intellij.util.ui.JBUI
@@ -75,7 +77,7 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
       .buildFor(terminalWidget.project, terminalWidget.terminalPanel)
       .addPrimarySearchActions(PrevOccurrenceAction(),
                                NextOccurrenceAction())
-      .addExtraSearchActions(ToggleMatchCase())
+      .addExtraSearchActions(ToggleMatchCase(), StatusTextAction())
       .withCloseAction { close() }
       .withDataProvider(this)
       .build().also {
@@ -112,12 +114,21 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
 
     override fun onResultUpdated(results: SubstringFinder.FindResult?) {
       hasMatches = results != null && results.items.isNotEmpty()
-    }
-
-    override fun nextFindResultItem(selectedItem: SubstringFinder.FindResult.FindItem?) {
-    }
-
-    override fun prevFindResultItem(selectedItem: SubstringFinder.FindResult.FindItem?) {
+      if (results == null) {
+        searchComponent.setRegularBackground()
+        searchComponent.statusText = ""
+      }
+      else {
+        if (results.items.isEmpty()) {
+          searchComponent.setNotFoundBackground()
+          searchComponent.statusText = ApplicationBundle.message("editorsearch.matches", results.items.size)
+        }
+        else {
+          searchComponent.setRegularBackground()
+          searchComponent.statusText = ApplicationBundle.message("editorsearch.current.cursor.position",
+                                                                 results.selectedItem().index, results.items.size)
+        }
+      }
     }
 
     fun fireKeyPressedEvent(keyCode: Int) {
