@@ -36,6 +36,7 @@ class TerminalWidgetImpl(private val project: Project,
   }
 
   override fun connectToTty(ttyConnector: TtyConnector) {
+    ttyConnectorAccessor.ttyConnector = ttyConnector
     session.start(ttyConnector)
     blocksContainer.sizeTerminalToComponent()
   }
