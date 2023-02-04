@@ -94,6 +94,8 @@ final class VfsDependentEnum {
       try (DataInputStream input = new DataInputStream(new BufferedInputStream(Files.newInputStream(myFile)))) {
         long vfsVersion = DataInputOutputUtil.readTIME(input);
 
+        //TODO RC: I want to remove that staff (dependency on FSRecords()), but
+        //         I want to make sure VFS _rebuilds_ after that change
         if (vfsVersion != FSRecords.getCreationTimestamp()) {
           // vfs was rebuilt, so the list will be rebuilt
           deleteFile = true;

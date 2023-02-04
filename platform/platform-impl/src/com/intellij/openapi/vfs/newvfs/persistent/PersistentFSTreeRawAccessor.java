@@ -96,4 +96,47 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
     }
     return hasChildren.booleanValue();
   }
+
+  //@Override
+  //void doSaveChildren(final int parentId,
+  //                    final @NotNull ListResult toSave) throws IOException {
+  //  final List<? extends ChildInfo> children = toSave.children;
+  //  {
+  //    int prevId = parentId;
+  //    for (ChildInfo childInfo : children) {
+  //      final int childId = childInfo.getId();
+  //      if (childId <= 0) {
+  //        throw new IllegalArgumentException("ids must be >0 but got: " + childId + "; childInfo: " + childInfo + "; list: " + toSave);
+  //      }
+  //      if (childId == parentId) {
+  //        FSRecords.LOG.error("Cyclic parent-child relations. parentId=" + parentId + "; list: " + toSave);
+  //      }
+  //      else {
+  //        final int delta = childId - prevId;
+  //        if (prevId != parentId && delta <= 0) {
+  //          throw new IllegalArgumentException("The list must be sorted by (unique) id but got parentId: " +
+  //                                             parentId + "; delta: " + delta + "; childInfo: " + childInfo + "; prevId: " +
+  //                                             prevId + "; toSave: " + toSave);
+  //        }
+  //        prevId = childId;
+  //      }
+  //    }
+  //  }
+  //  myFSConnection.markDirty();
+  //  myAttributeAccessor.writeAttributeRaw(parentId, CHILDREN_ATTR, buffer -> {
+  //    DataInputOutputUtil.writeINT(buffer, children.size());
+  //
+  //    int prevId = parentId;
+  //    for (ChildInfo childInfo : children) {
+  //      final int childId = childInfo.getId();
+  //      if (childId == parentId) {
+  //        continue;//skip, already logged above
+  //      }
+  //      final int delta = childId - prevId;
+  //      DataInputOutputUtil.writeINT(buffer, delta);
+  //      prevId = childId;
+  //    }
+  //    return buffer;
+  //  });
+  //}
 }

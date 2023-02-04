@@ -43,16 +43,15 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 final public class PersistentFSConnection {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnection.class);
 
-  static final int RESERVED_ATTR_ID = FSRecords.bulkAttrReadSupport ? 1 : 0;
+  static final int RESERVED_ATTR_ID = 0;
   static final AttrPageAwareCapacityAllocationPolicy REASONABLY_SMALL = new AttrPageAwareCapacityAllocationPolicy();
-  private static final int FIRST_ATTR_ID_OFFSET = FSRecords.bulkAttrReadSupport ? RESERVED_ATTR_ID : 0;
 
   private static final boolean USE_GENTLE_FLUSHER = SystemProperties.getBooleanProperty("vfs.flushing.use-gentle-flusher", true);
 
 
   private final IntList myFreeRecords;
-  @NotNull
-  private final VfsDependentEnum myAttributesList;
+  //@NotNull
+  //private final VfsDependentEnum myAttributesList;
   @NotNull
   private final PersistentFSPaths myPersistentFSPaths;
 
@@ -108,9 +107,9 @@ final public class PersistentFSConnection {
     if (markDirty) {
       markDirty();
     }
-    myAttributesList = new VfsDependentEnum(getPersistentFSPaths(), "attrib", 1);
+    //myAttributesList = new VfsDependentEnum(getPersistentFSPaths(), "attrib", 1);
 
-    if (FSRecords.backgroundVfsFlush) {
+    if (FSRecords.BACKGROUND_VFS_FLUSH) {
       final ScheduledExecutorService scheduler = AppExecutorUtil.getAppScheduledExecutorService();
       flushingTask = USE_GENTLE_FLUSHER ?
                      new GentleVFSFlusher(scheduler) :
@@ -245,6 +244,18 @@ final public class PersistentFSConnection {
     }
   }
 
+  // must not be run under write lock to avoid other clients wait for read lock
+  private void flush() {
+    if (isDirty() && !HeavyProcessLatch.INSTANCE.isRunning()) {
+      try {
+        doForce();
+      }
+      catch (IOException e) {
+        handleError(e);
+      }
+    }
+  }
+
   public boolean isDirty() {
     return myDirty || ((Forceable)myNames).isDirty() || myAttributesStorage.isDirty() || myContents.isDirty() || myRecords.isDirty() ||
            myContentHashesEnumerator != null && myContentHashesEnumerator.isDirty();
@@ -313,8 +324,9 @@ final public class PersistentFSConnection {
   }
 
   int getAttributeId(@NotNull String attId) throws IOException {
+    return myEnumeratedAttributes.enumerate(attId);
     // do not invoke FSRecords.requestVfsRebuild under read lock to avoid deadlock
-    return myAttributesList.getIdRaw(attId) + FIRST_ATTR_ID_OFFSET;
+    //return myAttributesList.getIdRaw(attId) + FIRST_ATTR_ID_OFFSET;
   }
 
   @Contract("_->fail")

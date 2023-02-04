@@ -46,7 +46,9 @@ final class PersistentFSConnector {
   private static final AtomicInteger INITIALIZATION_COUNTER = new AtomicInteger();
   private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT = new StorageLockContext(false, true);
 
-  public static @NotNull PersistentFSConnection connect(@NotNull String cachesDir, int version, boolean useContentHashes,
+  public static @NotNull PersistentFSConnection connect(@NotNull String cachesDir,
+                                                        int version,
+                                                        boolean useContentHashes,
                                                         List<ConnectionInterceptor> interceptors) {
     ourOpenCloseLock.lock();
     try {
@@ -99,8 +101,8 @@ final class PersistentFSConnector {
     ScannableDataEnumeratorEx<String> names = null;
     boolean markDirty = false;
 
-    PersistentFSPaths persistentFSPaths = new PersistentFSPaths(cachesDir);
-    Path basePath = new File(cachesDir).getAbsoluteFile().toPath();
+    final PersistentFSPaths persistentFSPaths = new PersistentFSPaths(cachesDir);
+    final Path basePath = new File(cachesDir).getAbsoluteFile().toPath();
     try {
       Files.createDirectories(basePath);
     }
@@ -109,13 +111,13 @@ final class PersistentFSConnector {
     }
 
     final Path namesFile = basePath.resolve("names" + PersistentFSPaths.VFS_FILES_EXTENSION);
-    final Path attributesFile = basePath.resolve("attrib" + PersistentFSPaths.VFS_FILES_EXTENSION);
+    final Path attributesFile = basePath.resolve("attributes" + PersistentFSPaths.VFS_FILES_EXTENSION);
     final Path contentsFile = basePath.resolve("content" + PersistentFSPaths.VFS_FILES_EXTENSION);
     final Path contentsHashesFile = basePath.resolve("contentHashes" + PersistentFSPaths.VFS_FILES_EXTENSION);
     final Path recordsFile = basePath.resolve("records" + PersistentFSPaths.VFS_FILES_EXTENSION);
-    final Path enumeratedAttributesFile = basePath.resolve("enum_attrib" + PersistentFSPaths.VFS_FILES_EXTENSION);
+    final Path enumeratedAttributesFile = basePath.resolve("attributes_enums" + PersistentFSPaths.VFS_FILES_EXTENSION);
 
-    final File vfsDependentEnumBaseFile = persistentFSPaths.getVfsEnumBaseFile();
+    //final File vfsDependentEnumBaseFile = persistentFSPaths.getVfsEnumBaseFile();
 
     try {
       if (persistentFSPaths.getCorruptionMarkerFile().exists()) {
@@ -136,34 +138,42 @@ final class PersistentFSConnector {
 
       attributes = createAttributesStorage(attributesFile);
 
-      contents = new RefCountingContentStorageImpl(contentsFile,
-                                               CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
-                                               SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
-                                                 "FSRecords Content Write Pool"),
-                                               useContentHashes);
+      contents = new RefCountingContentStorageImpl(
+        contentsFile,
+        CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
+        SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Content Write Pool"),
+        useContentHashes
+      );
 
       // sources usually zipped with 4x ratio
-      contentHashesEnumerator = useContentHashes ? new ContentHashEnumerator(contentsHashesFile, PERSISTENT_FS_STORAGE_CONTEXT) : null;
-      if (contentHashesEnumerator != null) {
-        checkContentSanity(contents, contentHashesEnumerator);
+      if (useContentHashes) {
+        contentHashesEnumerator = new ContentHashEnumerator(contentsHashesFile, PERSISTENT_FS_STORAGE_CONTEXT);
+        checkStoragesAreConsistent(contents, contentHashesEnumerator);
+      }
+      else {
+        contentHashesEnumerator = null;
       }
 
-      SimpleStringPersistentEnumerator enumeratedAttributes = new SimpleStringPersistentEnumerator(enumeratedAttributesFile);
+      //TODO RC: since we bump FSRecords version anyway, I'd like to have completely new Enumerator here:
+      //         1. Without legacy issues with null vs 'null' strings
+      //         2. With explicit id in file
+      //         3. With CopyOnWrite concurrent strategy (hence very cheap .enumerate() for already enumerated values)
+      final SimpleStringPersistentEnumerator enumeratedAttributes = new SimpleStringPersistentEnumerator(enumeratedAttributesFile);
 
 
       records = PersistentFSRecordsStorageFactory.createStorage(recordsFile);
 
-      final boolean initial = records.recordsCount() == 0;
+      final boolean needInitialization = (records.recordsCount() == 0);
 
-      if (initial) {
-        // Create root record
+      if (needInitialization) {
+        // Create root record:
         final int rootRecordId = records.allocateRecord();
-        assert rootRecordId == FSRecords.ROOT_FILE_ID;
+        assert (rootRecordId == FSRecords.ROOT_FILE_ID)
+          : "First record created must have id=" + FSRecords.ROOT_FILE_ID + " but " + rootRecordId + " got";
         records.cleanRecord(rootRecordId);
 
         setCurrentVersion(records, attributes, contents, expectedVersion);
       }
-
       final int version = getVersion(records, attributes, contents);
       if (version != expectedVersion) {
         throw new IOException("FS repository version mismatch: actual=" + version + " expected=" + FSRecords.getVersion());
@@ -172,10 +182,10 @@ final class PersistentFSConnector {
       if (records.getConnectionStatus() != PersistentFSHeaders.SAFELY_CLOSED_MAGIC) {
         throw new IOException("FS repository wasn't safely shut down");
       }
-      if (initial) {
+      if (needInitialization) {
         markDirty = true;
       }
-      IntList freeRecords = new IntArrayList();
+      final IntList freeRecords = new IntArrayList();
       loadFreeRecordsAndInvertedNameIndex(records, freeRecords);
       return Pair.create(new PersistentFSConnection(persistentFSPaths,
                                                     records,
@@ -195,7 +205,7 @@ final class PersistentFSConnector {
 
         boolean deleted = FileUtil.delete(persistentFSPaths.getCorruptionMarkerFile());
         deleted &= IOUtil.deleteAllFilesStartingWith(namesFile);
-        if (FSRecords.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
+        if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
           deleted &= AttributesStorageOverBlobStorage.deleteStorageFiles(attributesFile);
         }
         else {
@@ -204,7 +214,7 @@ final class PersistentFSConnector {
         deleted &= AbstractStorage.deleteFiles(contentsFile);
         deleted &= IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
         deleted &= IOUtil.deleteAllFilesStartingWith(recordsFile);
-        deleted &= IOUtil.deleteAllFilesStartingWith(vfsDependentEnumBaseFile);
+        //deleted &= IOUtil.deleteAllFilesStartingWith(vfsDependentEnumBaseFile);
         deleted &= IOUtil.deleteAllFilesStartingWith(persistentFSPaths.getRootsBaseFile());
         deleted &= IOUtil.deleteAllFilesStartingWith(enumeratedAttributesFile);
 
@@ -223,7 +233,7 @@ final class PersistentFSConnector {
   }
 
   private static AbstractAttributesStorage createAttributesStorage(final Path attributesFile) throws IOException {
-    if (FSRecords.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
+    if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
       LOG.info("VFS uses new (streamlined) attributes storage");
       //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
       final DataLengthPlusFixedPercentStrategy allocationStrategy = new DataLengthPlusFixedPercentStrategy(128, 64, 30);
@@ -245,13 +255,13 @@ final class PersistentFSConnector {
     else {
       LOG.info("VFS uses regular attributes storage");
       return new AttributesStorageOld(
-        FSRecords.bulkAttrReadSupport,
-        FSRecords.inlineAttributes,
+        /*bulk attribute support: */false,
+        FSRecordsImpl.INLINE_ATTRIBUTES,
         new Storage(attributesFile, PersistentFSConnection.REASONABLY_SMALL) {
           @Override
           protected AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext context, @NotNull Path recordsFile)
             throws IOException {
-            return FSRecords.inlineAttributes && FSRecords.useSmallAttrTable
+            return FSRecordsImpl.INLINE_ATTRIBUTES && FSRecordsImpl.USE_SMALL_ATTR_TABLE
                    ? new CompactRecordsTable(recordsFile, context, false)
                    : super.createRecordsTable(context, recordsFile);
           }
@@ -261,7 +271,7 @@ final class PersistentFSConnector {
 
   @NotNull
   private static ScannableDataEnumeratorEx<String> createFileNamesEnumerator(final Path namesFile) throws IOException {
-    if (FSRecords.USE_FAST_NAMES_IMPLEMENTATION) {
+    if (FSRecordsImpl.USE_FAST_NAMES_IMPLEMENTATION) {
       LOG.info("VFS uses non-strict names enumerator");
       final ResizeableMappedFile mappedFile = new ResizeableMappedFile(
         namesFile,
@@ -278,8 +288,8 @@ final class PersistentFSConnector {
     }
   }
 
-  private static void checkContentSanity(@NotNull RefCountingContentStorage contents,
-                                         @NotNull ContentHashEnumerator contentHashesEnumerator) throws IOException {
+  private static void checkStoragesAreConsistent(@NotNull RefCountingContentStorage contents,
+                                                 @NotNull ContentHashEnumerator contentHashesEnumerator) throws IOException {
     int largestId = contentHashesEnumerator.getLargestId();
     int liveRecordsCount = contents.getRecordsCount();
     if (largestId != liveRecordsCount) {
@@ -287,8 +297,8 @@ final class PersistentFSConnector {
     }
   }
 
-  private static void loadFreeRecordsAndInvertedNameIndex(@NotNull PersistentFSRecordsStorage records,
-                                                          @NotNull IntList freeFileIds) throws IOException {
+  private static void loadFreeRecordsAndInvertedNameIndex(final @NotNull PersistentFSRecordsStorage records,
+                                                          final @NotNull IntList freeFileIds) throws IOException {
     final long startedAtNs = System.nanoTime();
     InvertedNameIndex.clear();
     records.processAllRecords((fileId, nameId, flags, parentId, corrupted) -> {
@@ -302,19 +312,20 @@ final class PersistentFSConnector {
     LOG.info(TimeoutUtil.getDurationMillis(startedAtNs) + " ms to load free records and inverted name index");
   }
 
-  private static int getVersion(PersistentFSRecordsStorage records,
-                                AbstractAttributesStorage attributes,
-                                RefCountingContentStorage contents) throws IOException {
+  /** @return consistent version of all 3 storages, or -1, if their versions are differ (i.e. inconsistent) */
+  private static int getVersion(final @NotNull PersistentFSRecordsStorage records,
+                                final @NotNull AbstractAttributesStorage attributes,
+                                final @NotNull RefCountingContentStorage contents) throws IOException {
     final int recordsVersion = records.getVersion();
     if (attributes.getVersion() != recordsVersion || contents.getVersion() != recordsVersion) return -1;
 
     return recordsVersion;
   }
 
-  private static void setCurrentVersion(PersistentFSRecordsStorage records,
-                                        AbstractAttributesStorage attributes,
-                                        RefCountingContentStorage contents,
-                                        int version) throws IOException {
+  private static void setCurrentVersion(final @NotNull PersistentFSRecordsStorage records,
+                                        final @NotNull AbstractAttributesStorage attributes,
+                                        final @NotNull RefCountingContentStorage contents,
+                                        final int version) throws IOException {
     records.setVersion(version);
     attributes.setVersion(version);
     contents.setVersion(version);

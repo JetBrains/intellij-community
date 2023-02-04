@@ -8,7 +8,9 @@ import java.io.File;
 import java.nio.file.Path;
 
 final class PersistentFSPaths {
+  @Deprecated
   @NonNls private static final String DEPENDENT_PERSISTENT_LIST_START_PREFIX = "vfs_enum_";
+
   @NonNls private static final String ROOTS_START_PREFIX = "roots_";
   static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
 
@@ -23,10 +25,12 @@ final class PersistentFSPaths {
     return new File(new File(myCachesDir), "corruption.marker");
   }
 
-  @NotNull File getVfsEnumBaseFile() {
-    return new File(new File(myCachesDir), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
-  }
+  //@NotNull File getVfsEnumBaseFile() {
+  //  return new File(new File(myCachesDir), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
+  //}
 
+  /** @deprecated remove as soon as {@link VfsDependentEnum} is removed */
+  @Deprecated
   @NotNull Path getVfsEnumFile(@NotNull String enumName) {
     return Path.of(myCachesDir).resolve(DEPENDENT_PERSISTENT_LIST_START_PREFIX + enumName + VFS_FILES_EXTENSION);
   }
