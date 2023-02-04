@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
+import org.jetbrains.kotlin.idea.caches.resolve.resolveMainReference
 import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
@@ -60,13 +61,7 @@ class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
         if (reference == selectorExpression && grandParent !is KtDotQualifiedExpression) return false
         if (parent.getStrictParentOfType<KtImportDirective>() != null) return false
 
-        val objectDeclaration = try {
-          reference.mainReference.resolve() as? KtObjectDeclaration ?: return false
-        } catch (e: Exception) {
-            throw KotlinExceptionWithAttachments("Unable to resolve reference", e)
-                .withPsiAttachment("reference.txt", reference)
-                .withPsiAttachment("file.kt", reference.containingFile)
-        }
+        val objectDeclaration = reference.resolveMainReference() as? KtObjectDeclaration ?: return false
         if (!objectDeclaration.isCompanion()) return false
         val referenceText = reference.text
         if (referenceText != objectDeclaration.name) return false

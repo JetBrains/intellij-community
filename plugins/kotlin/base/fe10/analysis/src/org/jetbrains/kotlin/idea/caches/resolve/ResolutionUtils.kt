@@ -4,6 +4,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -22,6 +24,7 @@ import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 fun KtElement.getResolutionFacade(): ResolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacade(this)
 
@@ -223,3 +226,12 @@ fun ResolutionFacade.resolveImportReference(
     DeprecationLevel.ERROR
 )
 fun KtElement.analyzeFully(): BindingContext = analyzeWithAllCompilerChecks().bindingContext
+
+fun KtReferenceExpression.resolveMainReference(): PsiElement? =
+    try {
+        mainReference.resolve()
+    } catch (e: Exception) {
+        throw KotlinExceptionWithAttachments("Unable to resolve reference", e)
+            .withPsiAttachment("reference.txt", this)
+            .withPsiAttachment("file.kt", containingFile)
+    }
