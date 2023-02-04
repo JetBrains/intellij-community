@@ -9,13 +9,12 @@ import com.intellij.vcs.log.graph.api.elements.GraphNode
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.api.printer.GraphColorGetter
 import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
-import com.intellij.vcs.log.graph.impl.print.ColorGetterByLayoutIndex
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 
-internal class PrintElementPresentationManagerImpl<CommitId>(permanentGraphInfo: PermanentGraphInfo<CommitId>,
+internal class PrintElementPresentationManagerImpl<CommitId>(private val permanentGraphInfo: PermanentGraphInfo<CommitId>,
                                                              private val linearGraph: LinearGraph,
-                                                             colorGetter: GraphColorGetter) : PrintElementPresentationManager {
-  private val colorGetterByLayoutIndex = ColorGetterByLayoutIndex(linearGraph, permanentGraphInfo, colorGetter)
+                                                             private val colorGetter: GraphColorGetter) : PrintElementPresentationManager {
   private var selection: Selection = Selection.FromNodeIds(linearGraph, emptySet())
 
   override fun isSelected(printElement: PrintElementWithGraphElement): Boolean {
@@ -37,7 +36,28 @@ internal class PrintElementPresentationManagerImpl<CommitId>(permanentGraphInfo:
   }
 
   override fun getColorId(element: GraphElement): Int {
-    return colorGetterByLayoutIndex.getColorId(element)
+    if (element is GraphNode) {
+      val nodeId: Int = linearGraph.getNodeId(element.nodeIndex)
+      return colorGetter.getNodeColor(nodeId, getLayoutIndex(nodeId))
+    }
+    val edge = element as GraphEdge
+    val normalEdge = LinearGraphUtils.asNormalEdge(edge)
+    if (normalEdge == null) {
+      val nodeId = linearGraph.getNodeId(LinearGraphUtils.getNotNullNodeIndex(edge))
+      return colorGetter.getNodeColor(nodeId, getLayoutIndex(nodeId))
+    }
+    val upNodeId = linearGraph.getNodeId(normalEdge.up)
+    val downNodeId = linearGraph.getNodeId(normalEdge.down)
+    val upLayoutIndex = getLayoutIndex(upNodeId)
+    val downLayoutIndex = getLayoutIndex(downNodeId)
+    if (upLayoutIndex >= downLayoutIndex) {
+      return colorGetter.getNodeColor(upNodeId, upLayoutIndex)
+    }
+    else return colorGetter.getNodeColor(downNodeId, downLayoutIndex)
+  }
+
+  private fun getLayoutIndex(nodeId: Int): Int {
+    return if (nodeId < 0) nodeId else permanentGraphInfo.permanentGraphLayout.getLayoutIndex(nodeId)
   }
 
   sealed class Selection {
