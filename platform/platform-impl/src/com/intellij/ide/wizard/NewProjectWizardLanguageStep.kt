@@ -3,9 +3,9 @@ package com.intellij.ide.wizard
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logLanguageAddAction
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logLanguageChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logLanguageFinished
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logLanguageAddAction
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logLanguageLoadAction
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -86,7 +87,11 @@ class NewProjectWizardLanguageStep(
   }
 
   override fun setupProject(project: Project) {
-    super.setupProject(project)
+    setupProject(project, null)
+  }
+
+  override fun setupProject(project: Project, model: ModifiableModuleModel?) {
+    super.setupProject(project, model)
 
     logLanguageFinished()
   }

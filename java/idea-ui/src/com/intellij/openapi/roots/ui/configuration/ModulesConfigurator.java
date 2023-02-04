@@ -7,7 +7,7 @@ import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.actions.ImportModuleAction;
-import com.intellij.ide.projectWizard.NewProjectWizard;
+import com.intellij.ide.projectWizard.NewProjectWizardFactory;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
@@ -38,7 +38,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
@@ -378,31 +377,49 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
 
   @Nullable
-  public List<Module> addModule(Component parent, boolean anImport, String defaultModuleName) {
-    if (myProject.isDefault()) return null;
-    final ProjectBuilder builder = runModuleWizard(parent, anImport, defaultModuleName);
-    if (builder != null ) {
-      final List<Module> modules = new ArrayList<>();
-      final List<Module> committedModules;
-      if (builder instanceof ProjectImportBuilder<?>) {
-        final ModifiableArtifactModel artifactModel =
-          myProjectStructureConfigurable.getArtifactsStructureConfigurable().getModifiableArtifactModel();
-        committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
-      }
-      else {
-        committedModules = builder.commit(myProject, myModuleModel, this);
-      }
-      if (committedModules != null) {
-        modules.addAll(committedModules);
-      }
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        for (Module module : modules) {
-          getOrCreateModuleEditor(module);
-        }
-      });
-      return modules;
+  private List<Module> addModule(@Nullable AbstractProjectWizard wizard) {
+    if (null == wizard) return null;
+
+    var modules = doAddModule(wizard);
+    Disposer.dispose(wizard.getDisposable());
+    return modules;
+  }
+
+  @Nullable
+  private List<Module> doAddModule(@Nullable AbstractProjectWizard wizard) {
+    var builder = getProjectBuilder(wizard);
+    if (null == builder) return null;
+
+    final List<Module> modules = new ArrayList<>();
+    final List<Module> committedModules;
+    if (builder instanceof ProjectImportBuilder<?>) {
+      var artifactModel = myProjectStructureConfigurable.getArtifactsStructureConfigurable().getModifiableArtifactModel();
+      committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
     }
-    return null;
+    else {
+      committedModules = builder.commit(myProject, myModuleModel, this);
+    }
+    if (committedModules != null) {
+      modules.addAll(committedModules);
+    }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      for (Module module : modules) {
+        getOrCreateModuleEditor(module);
+      }
+    });
+    return modules;
+  }
+
+  @Nullable
+  public List<Module> addImportModule(Component parent) {
+    if (myProject.isDefault()) return null;
+    return addModule(getImportModuleWizard(parent));
+  }
+
+  @Nullable
+  public List<Module> addNewModule(String defaultModuleName) {
+    if (myProject.isDefault()) return null;
+    return addModule(getNewModuleWizard(defaultModuleName));
   }
 
   private Module createModule(final ModuleBuilder builder) {
@@ -431,30 +448,34 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @Nullable
-  private ProjectBuilder runModuleWizard(Component dialogParent, boolean anImport, String defaultModuleName) {
-    AbstractProjectWizard wizard;
-    if (anImport) {
-      wizard = ImportModuleAction.selectFileAndCreateWizard(myProject, dialogParent);
-      if (wizard == null) return null;
-      if (wizard.getStepCount() == 0) {
-        ProjectBuilder builder = getProjectBuilder(wizard);
-        Disposer.dispose(wizard.getDisposable());
-        return builder;
+  private ProjectBuilder getProjectBuilder(@Nullable AbstractProjectWizard wizard) {
+    if (wizard == null) return null;
+
+    if (wizard.getStepCount() == 0) {
+      var builder = wizard.getProjectBuilder();
+      if (!builder.validate(myProject, myProject)) {
+        builder = null;
       }
+      Disposer.dispose(wizard.getDisposable());
+      return builder;
     }
-    else {
-      wizard = new NewProjectWizard(myProject, dialogParent, this, defaultModuleName);
-    }
+
     if (!wizard.showAndGet()) {
       return null;
     }
     return wizard.getBuilder(myProject);
   }
 
-  private ProjectBuilder getProjectBuilder(@NotNull AbstractProjectWizard wizard) {
-    ProjectBuilder builder = wizard.getProjectBuilder();
-    if (!builder.validate(myProject, myProject)) return null;
-    return builder;
+  @Nullable
+  private AbstractProjectWizard getImportModuleWizard(Component dialogParent) {
+    return ImportModuleAction.selectFileAndCreateWizard(myProject, dialogParent);
+  }
+
+  @NotNull
+  private AbstractProjectWizard getNewModuleWizard(String defaultModuleName) {
+    var wizard = NewProjectWizardFactory.Companion.create().create(myProject, this);
+    wizard.setDefaultModuleName(defaultModuleName);
+    return wizard;
   }
 
   public void deleteModules(@NotNull List<? extends ModuleEditor> selectedEditors) {

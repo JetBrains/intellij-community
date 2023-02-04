@@ -539,7 +539,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private void addModule(boolean anImport, String defaultModuleName) {
-    final List<Module> modules = myContext.myModulesConfigurator.addModule(myTree, anImport, defaultModuleName);
+    final List<Module> modules;
+    if (anImport) {
+      modules = myContext.myModulesConfigurator.addImportModule(myTree);
+    } else {
+      modules = myContext.myModulesConfigurator.addNewModule(defaultModuleName);
+    }
     if (modules != null && !modules.isEmpty()) {
       //new module wizard may add yet another SDK to the project
       myProjectStructureConfigurable.getProjectJdksModel().syncSdks();

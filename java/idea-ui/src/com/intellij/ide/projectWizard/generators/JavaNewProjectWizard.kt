@@ -6,6 +6,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logB
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.wizard.*
+import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.SegmentedButton
@@ -36,7 +37,11 @@ class JavaNewProjectWizard : LanguageNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      super.setupProject(project)
+      setupProject(project, null)
+    }
+
+    override fun setupProject(project: Project, model: ModifiableModuleModel?) {
+      super.setupProject(project, model)
 
       logBuildSystemFinished()
     }

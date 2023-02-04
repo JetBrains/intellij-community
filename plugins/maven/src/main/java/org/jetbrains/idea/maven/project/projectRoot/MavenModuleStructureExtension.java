@@ -14,6 +14,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.ide.highlighter.ModuleFileType.DOT_DEFAULT_EXTENSION;
+import static org.jetbrains.idea.maven.model.MavenConstants.SLASH_POM_XML;
+
 public class MavenModuleStructureExtension extends ModuleStructureExtension {
   private final Set<Module> myModulesToRemove = new HashSet<>();
   private final List<MavenProjectPathHolder> myMavenProjectsToIgnore = new ArrayList<>();
@@ -57,8 +60,8 @@ public class MavenModuleStructureExtension extends ModuleStructureExtension {
         // its content stays on the disk and the module is immediately re-imported.
         // To prevent it, we try to add its pom to ignore list
         var imlPath = moduleToRemove.getModuleFilePath();
-        if (imlPath.endsWith(".iml")) {
-          var pomPath = imlPath.substring(0, imlPath.length()-4) + "/pom.xml";
+        if (imlPath.endsWith(DOT_DEFAULT_EXTENSION)) {
+          var pomPath = imlPath.substring(0, imlPath.length() - DOT_DEFAULT_EXTENSION.length()) + SLASH_POM_XML;
           myMavenProjectsToIgnore.add(new NonExistingMavenProject(pomPath));
         }
       }

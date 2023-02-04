@@ -2368,6 +2368,10 @@
                         serviceImplementation="com.intellij.ide.starters.local.generator.AssetsProcessorImpl"
                         testServiceImplementation="com.intellij.ide.starters.local.generator.TestAssetsProcessorImpl"/>
 
+    <applicationService serviceInterface="com.intellij.ide.projectWizard.NewProjectWizardFactory"
+                        serviceImplementation="com.intellij.ide.projectWizard.NewProjectWizardFactoryImpl"
+                        testServiceImplementation="com.intellij.ide.projectWizard.TestNewProjectWizardFactoryImpl"/>
+
     <newProjectWizard.language implementation="com.intellij.ide.projectWizard.generators.JavaNewProjectWizard" order="first"/>
     <newProjectWizard.java.buildSystem implementation="com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizard"/>
 

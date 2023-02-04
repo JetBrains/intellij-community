@@ -38,8 +38,8 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
 
   override fun commitModule(project: Project, model: ModifiableModuleModel?): Module? {
     val step = panel!!.step
-    return detectCreatedModule(project) {
-      step.setupProject(project)
+    return detectCreatedModule(project, model) {
+      step.setupProject(project, model)
     }
   }
 
@@ -61,11 +61,17 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
   }
 
   companion object {
-    private fun detectCreatedModule(project: Project, action: () -> Unit): Module? {
-      val manager = ModuleManager.getInstance(project)
-      val modules = manager.modules
-      action()
-      return manager.modules.find { it !in modules }
+    private fun detectCreatedModule(project: Project, model: ModifiableModuleModel?, action: () -> Unit): Module? {
+      if (null == model) {
+        val manager = ModuleManager.getInstance(project)
+        val modules = manager.modules
+        action()
+        return manager.modules.find { it !in modules }
+      } else {
+        val modules = model.modules
+        action()
+        return model.modules.find { it !in modules }
+      }
     }
   }
 }
