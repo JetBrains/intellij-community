@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.*;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.UnimplementInterfaceAction;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
@@ -729,30 +730,34 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter, boolean excludingHierarchy) {
-    IntentionAction intentionAction;
     if (excludingHierarchy) {
-      intentionAction = new AbstractIntentionAction() {
+      final SetInspectionOptionFix myFix =
+        SetInspectionOptionFix.createFix(UnusedSymbolLocalInspectionBase.SHORT_NAME,
+                                         "myCheckParameterExcludingHierarchy",
+                                         JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false,
+                                         profileEntry -> profileEntry instanceof UnusedDeclarationInspectionBase
+                                                         ? ((UnusedDeclarationInspectionBase)profileEntry).getSharedLocalInspectionTool()
+                                                         : profileEntry);
+      return new AbstractIntentionAction() {
         @Override
         public @NotNull String getText() {
           return JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text");
         }
 
         @Override
-        public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-          SetInspectionOptionFix.createFix(UnusedSymbolLocalInspectionBase.SHORT_NAME,
-                                           "myCheckParameterExcludingHierarchy",
-                                           JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false,
-              profileEntry -> profileEntry instanceof UnusedDeclarationInspectionBase
-                     ? ((UnusedDeclarationInspectionBase)profileEntry).getSharedLocalInspectionTool()
-                     : profileEntry)
-            .applyFix(project, file);
+        public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+          myFix.applyFix(project, file);
+        }
+
+        @Override
+        public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+          return myFix.generatePreview(project, file, "members.");
         }
       };
     }
     else {
-      intentionAction = new SafeDeleteFix(parameter);
+      return new SafeDeleteFix(parameter);
     }
-    return intentionAction;
   }
 
   @NotNull

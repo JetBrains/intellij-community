@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -18,6 +18,7 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ObjectUtils;
@@ -98,11 +99,17 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
                                                        @NotNull ProblemDescriptor previewDescriptor) {
+    PsiElement element = previewDescriptor.getPsiElement();
+    return generatePreview(project, element, "");
+  }
+
+  @NotNull
+  public IntentionPreviewInfo generatePreview(@NotNull Project project, PsiElement element, String prefix) {
     InspectionToolWrapper<?, ?> tool =
-      InspectionProfileManager.getInstance(project).getCurrentProfile().getInspectionTool(myShortName, previewDescriptor.getPsiElement());
+      InspectionProfileManager.getInstance(project).getCurrentProfile().getInspectionTool(myShortName, element);
     if (tool == null) return IntentionPreviewInfo.EMPTY;
     OptPane pane = tool.getTool().getOptionsPane();
-    OptCheckbox control = ObjectUtils.tryCast(pane.findControl(myProperty), OptCheckbox.class);
+    OptCheckbox control = ObjectUtils.tryCast(pane.findControl(prefix + myProperty), OptCheckbox.class);
     if (control == null) return IntentionPreviewInfo.EMPTY;
     HtmlChunk label = HtmlChunk.text(control.label().label());
     HtmlChunk.Element checkbox = HtmlChunk.tag("input").attr("type", "checkbox").attr("readonly", "true");
