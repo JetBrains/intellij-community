@@ -6,9 +6,9 @@ import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class DefaultPropertyAccessorDetector {
+final class DefaultPropertyAccessorDetector {
 
-  public static @Nullable PropertyAccessorDetector.PropertyAccessorInfo getDefaultAccessorInfo(@NotNull PsiMethod method) {
+  static @Nullable PropertyAccessorDetector.PropertyAccessorInfo getDefaultAccessorInfo(@NotNull PsiMethod method) {
     if (PropertyUtilBase.isSimplePropertyGetter(method)) {
       return new PropertyAccessorDetector.PropertyAccessorInfo(PropertyUtilBase.getPropertyNameByGetter(method),
                                                                method.getReturnType(),
