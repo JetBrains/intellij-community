@@ -59,8 +59,6 @@ import static git4idea.history.GitCommitRequirements.DiffRenameLimit;
 public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
   private static final Logger LOG = Logger.getInstance(GitLogProvider.class);
   public static final Function<VcsRef, String> GET_TAG_NAME = ref -> ref.getType() == GitRefManager.TAG ? ref.getName() : null;
-
-
   public static final it.unimi.dsi.fastutil.Hash.Strategy<VcsRef> DONT_CONSIDER_SHA = new it.unimi.dsi.fastutil.Hash.Strategy<>() {
     @Override
     public int hashCode(@Nullable VcsRef ref) {
@@ -72,7 +70,8 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
     @Override
     public boolean equals(@Nullable VcsRef ref1, @Nullable VcsRef ref2) {
-      return ref1 == ref2 || (ref1 != null && ref2 != null && ref1.getName().equals(ref2.getName()) && ref1.getType().equals(ref2.getType()));
+      if (ref1 == ref2) return true;
+      return ref1 != null && ref2 != null && ref1.getName().equals(ref2.getName()) && ref1.getType().equals(ref2.getType());
     }
   };
 
@@ -140,7 +139,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       }
     }
 
-    List<VcsCommitMetadata> sortedCommits = computeWithSpan(myTracer, "sorting commits", span ->  {
+    List<VcsCommitMetadata> sortedCommits = computeWithSpan(myTracer, "sorting commits", span -> {
       span.setAttribute("rootName", root.getName());
       List<VcsCommitMetadata> commits = VcsLogSorter.sortByDateTopoOrder(allDetails);
       return ContainerUtil.getFirstItems(commits, requirements.getCommitCount());
@@ -153,17 +152,17 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     return new LogDataImpl(allRefs, GitBekParentFixer.fixCommits(sortedCommits));
   }
 
-  private void validateDataAndReportError(@NotNull final VirtualFile root,
-                                                 @NotNull final Set<? extends VcsRef> allRefs,
-                                                 @NotNull final List<? extends VcsCommitMetadata> sortedCommits,
-                                                 @NotNull final DetailedLogData firstBlockSyncData,
-                                                 @NotNull final Set<? extends VcsRef> manuallyReadBranches,
-                                                 @Nullable final Set<String> currentTagNames,
-                                                 @Nullable final DetailedLogData commitsFromTags) {
+  private void validateDataAndReportError(@NotNull VirtualFile root,
+                                          @NotNull Set<? extends VcsRef> allRefs,
+                                          @NotNull List<? extends VcsCommitMetadata> sortedCommits,
+                                          @NotNull DetailedLogData firstBlockSyncData,
+                                          @NotNull Set<? extends VcsRef> manuallyReadBranches,
+                                          @Nullable Set<String> currentTagNames,
+                                          @Nullable DetailedLogData commitsFromTags) {
     runWithSpan(myTracer, "validating data", span -> {
       span.setAttribute("rootName", root.getName());
 
-      final Set<Hash> refs = ContainerUtil.map2Set(allRefs, VcsRef::getCommitHash);
+      Set<Hash> refs = ContainerUtil.map2Set(allRefs, VcsRef::getCommitHash);
 
       PermanentGraphImpl.newInstance(sortedCommits, new GraphColorManager<>() {
         @Override
@@ -311,7 +310,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
   @Override
   @NotNull
-  public LogData readAllHashes(@NotNull VirtualFile root, @NotNull final Consumer<? super TimedVcsCommit> commitConsumer)
+  public LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<? super TimedVcsCommit> commitConsumer)
     throws VcsException {
     if (getRepository(root) == null) {
       return LogDataImpl.empty();
@@ -320,7 +319,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     List<String> parameters = new ArrayList<>(GitLogUtil.LOG_ALL);
     parameters.add("--date-order");
 
-    final GitBekParentFixer parentFixer = GitBekParentFixer.prepare(myProject, root);
+    GitBekParentFixer parentFixer = GitBekParentFixer.prepare(myProject, root);
     Set<VcsUser> userRegistry = new HashSet<>();
     Set<VcsRef> refs = new HashSet<>();
     GitLogUtil.readTimedCommits(myProject, root, parameters, new CollectConsumer<>(userRegistry), new CollectConsumer<>(refs),
@@ -396,8 +395,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
   @NotNull
   @Override
-  public Disposable subscribeToRootRefreshEvents(@NotNull final Collection<? extends VirtualFile> roots,
-                                                 @NotNull final VcsLogRefresher refresher) {
+  public Disposable subscribeToRootRefreshEvents(@NotNull Collection<? extends VirtualFile> roots, @NotNull VcsLogRefresher refresher) {
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, repository -> {
       VirtualFile root = repository.getRoot();
@@ -410,8 +408,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
   @NotNull
   @Override
-  public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull final VirtualFile root,
-                                                       @NotNull VcsLogFilterCollection filterCollection,
+  public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection,
                                                        int maxCount) throws VcsException {
     VcsLogRangeFilter rangeFilter = filterCollection.get(RANGE_FILTER);
     if (rangeFilter == null) {
@@ -435,10 +432,8 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   }
 
   @NotNull
-  private List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull final VirtualFile root,
-                                                        @NotNull VcsLogFilterCollection filterCollection,
-                                                        @Nullable VcsLogRangeFilter.RefRange range,
-                                                        int maxCount) throws VcsException {
+  private List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection,
+                                                        @Nullable VcsLogRangeFilter.RefRange range, int maxCount) throws VcsException {
 
     GitRepository repository = getRepository(root);
     if (repository == null) {
