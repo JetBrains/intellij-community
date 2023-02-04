@@ -7,16 +7,25 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiModifierList
 import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.kotlin.asJava.elements.*
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.test.Directives
-import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import kotlin.test.assertNotNull
 
 abstract class AbstractIdeLightClassesByFqNameTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
+
+    override fun setUp() {
+        super.setUp()
+        module.setupKotlinFacet {
+            // LanguageVersionSettingsProvider#computeProjectLanguageVersionSettings uses
+            // kotlin-dist-for-ide/kotlinc-dist-for-ide-from-sources/build.txt
+            // as languageVersion that could point to jpsPluginVersion from model.properties
+            // and could be slightly behind latest supported analysis version
+            settings.languageLevel = LanguageVersion.LATEST_STABLE
+        }
+    }
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         withCustomCompilerOptions(dataFile().readText(), project, module) {
             val ktFiles = files.filterIsInstance<KtFile>()
