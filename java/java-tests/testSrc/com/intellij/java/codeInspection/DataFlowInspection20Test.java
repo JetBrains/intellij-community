@@ -35,7 +35,7 @@ public class DataFlowInspection20Test extends DataFlowInspectionTestCase {
   public void testNestedRecordPatterns() {
     doTest();
   }
-  public void testSuspiciousLabelElementsJava19() {
+  public void testSuspiciousLabelElementsJava20() {
     doTest();
   }
   public void testForEachPattern() {

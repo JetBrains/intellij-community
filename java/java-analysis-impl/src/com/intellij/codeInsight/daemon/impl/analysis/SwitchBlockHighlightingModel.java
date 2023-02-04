@@ -1237,6 +1237,16 @@ public class SwitchBlockHighlightingModel {
       result.addAll(entry.getValue());
     }
 
+    // Find only one unconditional pattern, but not all, because if there are
+    // multiple unconditional patterns, they will all be found as duplicates
+    PsiCaseLabelElement unconditionalPattern =
+      PatternsInSwitchBlockHighlightingModel.findUnconditionalPatternForType(labelElements, switchModel.mySelectorType);
+    PsiElement defaultElement = SwitchUtils.findDefaultElement(switchBlock);
+    if (unconditionalPattern != null && defaultElement != null) {
+      result.add(unconditionalPattern);
+      result.add(defaultElement);
+    }
+
     PatternsInSwitchBlockHighlightingModel patternInSwitchModel =
       ObjectUtils.tryCast(switchModel, PatternsInSwitchBlockHighlightingModel.class);
     if (patternInSwitchModel == null) return result;
