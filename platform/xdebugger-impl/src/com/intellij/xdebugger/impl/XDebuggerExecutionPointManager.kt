@@ -46,24 +46,24 @@ internal class XDebuggerExecutionPointManager(project: Project,
   var executionPoint: ExecutionPoint? by executionPointState::value
   var gutterIconRenderer: GutterIconRenderer? by gutterIconRendererState::value
 
-  private val highlightState: StateFlow<ExecutionPointHighlight?>
+  private val presentationState: StateFlow<ExecutionPointPresentation?>
 
   init {
-    val highlightFlow: SharedFlow<ExecutionPointHighlight?> = executionPointState
+    val presentationFlow: SharedFlow<ExecutionPointPresentation?> = executionPointState
       .debounce(10.milliseconds)
       .map { executionPoint ->
         executionPoint?.let {
-          ExecutionPointHighlight(project, it)
+          ExecutionPointPresentation(project, it)
         }
       }.shareIn(coroutineScope, SharingStarted.Eagerly)
 
-    highlightFlow.onCompletion { emit(null) }
+    presentationFlow.onCompletion { emit(null) }
       .zipWithNext { oldValue, _ ->
         oldValue?.hideAndDispose()
       }.launchIn(coroutineScope)
 
     if (!ApplicationManager.getApplication().isUnitTestMode) {
-      highlightFlow.onCompletion { emit(null) }
+      presentationFlow.onCompletion { emit(null) }
         .map { it != null }.distinctUntilChanged()
         .dropWhile { !it }  // ignore initial 'false' value
         .onEach { hasHighlight ->
@@ -76,23 +76,23 @@ internal class XDebuggerExecutionPointManager(project: Project,
         }.launchIn(coroutineScope)
     }
 
-    highlightState = highlightFlow.stateIn(coroutineScope, SharingStarted.Eagerly, initialValue = null)
+    presentationState = presentationFlow.stateIn(coroutineScope, SharingStarted.Eagerly, initialValue = null)
 
-    with(highlightState.filterNotNull()) {
-      combine(activeSourceKindState, ExecutionPointHighlight::activeSourceKind::set).launchIn(coroutineScope)
-      combine(gutterIconRendererState, ExecutionPointHighlight::gutterIconRenderer::set).launchIn(coroutineScope)
+    with(presentationState.filterNotNull()) {
+      combine(activeSourceKindState, ExecutionPointPresentation::activeSourceKind::set).launchIn(coroutineScope)
+      combine(gutterIconRendererState, ExecutionPointPresentation::gutterIconRenderer::set).launchIn(coroutineScope)
 
-      combine(navigationRequestFlow) { highlight, _ -> highlight }
+      combine(navigationRequestFlow) { presentation, _ -> presentation }
         .debounce(10.milliseconds)
-        .onEach { highlight ->
-          highlight.navigateTo()
+        .onEach { presentation ->
+          presentation.navigateTo()
         }.launchIn(coroutineScope)
     }
   }
 
   @RequiresEdt
   fun isFullLineHighlighter(): Boolean {
-    return highlightState.value?.isFullLineHighlighter == true
+    return presentationState.value?.isFullLineHighlighter == true
   }
 
   fun showExecutionPosition() {
@@ -113,7 +113,7 @@ internal class ExecutionPoint(
   }
 }
 
-internal class ExecutionPointHighlight(project: Project, executionPoint: ExecutionPoint) {
+internal class ExecutionPointPresentation(project: Project, executionPoint: ExecutionPoint) {
   private val highlights: List<PositionHighlight?> = enumValues<XSourceKind>().map { sourceKind ->
     PositionHighlight.create(project, executionPoint, sourceKind)
   }
