@@ -391,13 +391,13 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
 
   private fun writeIcons(parent: Element) {
     for (actionId in iconCustomizations.keys) {
-      val action = Element(ELEMENT_ACTION)
-      action.setAttribute(ATTRIBUTE_ID, actionId)
       val icon = iconCustomizations[actionId]
       if (icon != null) {
+        val action = Element(ELEMENT_ACTION)
+        action.setAttribute(ATTRIBUTE_ID, actionId)
         action.setAttribute(ATTRIBUTE_ICON, icon)
+        parent.addContent(action)
       }
-      parent.addContent(action)
     }
   }
 
