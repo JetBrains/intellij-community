@@ -37,6 +37,11 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
     }
     searchComponentWrapper.addToCenter(searchComponent)
     searchComponentWrapper.border = JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 1, 0, 1)
+    val selectedText = terminalWidget.selectedText
+    if (selectedText != null) {
+      searchComponent.searchTextComponent.text = selectedText
+      searchComponent.searchTextComponent.selectAll()
+    }
   }
 
   fun getTerminalSearchComponent(): JediTermSearchComponent = terminalSearchComponent
