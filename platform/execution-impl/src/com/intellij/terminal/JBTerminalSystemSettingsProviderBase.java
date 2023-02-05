@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.CursorShape;
 import com.jediterm.terminal.TerminalColor;
@@ -31,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -54,13 +55,6 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
 
   @NotNull EditorColorsScheme getColorsScheme() {
     return myUiSettingsManager.getEditorColorsScheme();
-  }
-
-  @Override
-  public @NotNull TerminalActionPresentation getNewSessionActionPresentation() {
-    TerminalActionPresentation presentation = super.getNewSessionActionPresentation();
-    return new TerminalActionPresentation(IdeBundle.message("terminal.action.NewSession.text"),
-                                          presentation.getKeyStrokes());
   }
 
   @Override
@@ -124,13 +118,6 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
     TerminalActionPresentation presentation = super.getLineDownActionPresentation();
     return new TerminalActionPresentation(IdeBundle.message("terminal.action.LineDown.text"),
                                           presentation.getKeyStrokes());
-  }
-
-  @Override
-  public @NotNull TerminalActionPresentation getCloseSessionActionPresentation() {
-    List<KeyStroke> keyStrokes = ContainerUtil.concat(super.getCloseSessionActionPresentation().getKeyStrokes(),
-                                                      getKeyStrokesByActionId("CloseActiveTab"));
-    return new TerminalActionPresentation(IdeBundle.message("terminal.action.CloseSession.text"), keyStrokes);
   }
 
   @Override
@@ -289,5 +276,25 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
       return editorSettings.isBlinkCaret() ? CursorShape.BLINK_UNDERLINE : CursorShape.STEADY_UNDERLINE;
     }
     return editorSettings.isBlinkCaret() ? CursorShape.BLINK_VERTICAL_BAR : CursorShape.STEADY_VERTICAL_BAR;
+  }
+
+  /**
+   * @deprecated use {@link org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider#getNewTabActionPresentation()} instead
+   */
+  @Deprecated(forRemoval = true)
+  public @NotNull TerminalActionPresentation getNewSessionActionPresentation() {
+    return new TerminalActionPresentation("New Session", com.jediterm.terminal.ui.UIUtil.isMac
+                                                         ? KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.META_DOWN_MASK)
+                                                         : KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+  }
+
+  /**
+   * @deprecated use {@link org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider#getCloseTabActionPresentation()} instead
+   */
+  @Deprecated(forRemoval = true)
+  public @NotNull TerminalActionPresentation getCloseSessionActionPresentation() {
+    return new TerminalActionPresentation("Close Session", com.jediterm.terminal.ui.UIUtil.isMac
+                                                           ? KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.META_DOWN_MASK)
+                                                           : KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
   }
 }

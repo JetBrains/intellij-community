@@ -56,8 +56,18 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   private final TerminalModelListener myVfsRefreshModelListener;
   private volatile String myPrevPromptWhenCommandStarted;
 
+  /**
+   * @deprecated use {@link #ShellTerminalWidget(Project, JBTerminalSystemSettingsProvider, Disposable)} instead
+   */
+  @Deprecated(forRemoval = true)
   public ShellTerminalWidget(@NotNull Project project,
                              @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
+                             @NotNull Disposable parent) {
+    this(project, settingsProvider instanceof JBTerminalSystemSettingsProvider p ? p : new JBTerminalSystemSettingsProvider(), parent);
+  }
+
+  public ShellTerminalWidget(@NotNull Project project,
+                             @NotNull JBTerminalSystemSettingsProvider settingsProvider,
                              @NotNull Disposable parent) {
     super(project, settingsProvider, parent);
     myShellCommandHandlerHelper = new TerminalShellCommandHandlerHelper(this);
@@ -225,18 +235,23 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   @Override
+  public @NotNull JBTerminalSystemSettingsProvider getSettingsProvider() {
+    return (JBTerminalSystemSettingsProvider)super.getSettingsProvider();
+  }
+
+  @Override
   public List<TerminalAction> getActions() {
     List<TerminalAction> actions = new ArrayList<>(super.getActions());
     if (TerminalToolWindowManager.isInTerminalToolWindow(this)) {
       ContainerUtil.addIfNotNull(actions, TerminalActionUtil.createTerminalAction(this, RenameTerminalSessionActionKt.ACTION_ID, true));
     }
     JBTerminalWidgetListener listener = getListener();
-    JBTerminalSystemSettingsProviderBase settingsProvider = getSettingsProvider();
-    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getNewSessionActionPresentation(), l -> {
+    JBTerminalSystemSettingsProvider settingsProvider = getSettingsProvider();
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getNewTabActionPresentation(), l -> {
       l.onNewSession();
       return true;
     }).withMnemonicKey(KeyEvent.VK_T));
-    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getCloseSessionActionPresentation(), l -> {
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getCloseTabActionPresentation(), l -> {
       l.onSessionClosed();
       return true;
     }).withMnemonicKey(KeyEvent.VK_T));

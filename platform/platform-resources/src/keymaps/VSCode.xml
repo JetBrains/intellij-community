@@ -616,9 +616,6 @@
   <action id="BuildSolutionAction">
     <keyboard-shortcut first-keystroke="ctrl shift b"/>
   </action>
-  <action id="TerminalNewSession">
-    <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE"/>
-  </action>
   <action id="Terminal.SelectAll">
     <!-- default ctrl + a doesn't work, so we can add the second -->
     <keyboard-shortcut first-keystroke="ctrl a"/>

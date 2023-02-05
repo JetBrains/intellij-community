@@ -55,7 +55,11 @@
 
   <actions>
     <group id="TerminalToolwindowActionGroup">
-      <action id="TerminalNewSession" class="org.jetbrains.plugins.terminal.action.TerminalNewSessionAction"/>
+      <action id="Terminal.NewTab" class="org.jetbrains.plugins.terminal.action.TerminalNewTabAction">
+        <keyboard-shortcut first-keystroke="control shift T" keymap="$default"/>
+        <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE" keymap="VSCode" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE" keymap="VSCode OSX" replace-all="true"/>
+      </action>
       <action id="TerminalNewPredefinedSession" class="org.jetbrains.plugins.terminal.action.TerminalNewPredefinedSessionAction"/>
     </group>
   </actions>

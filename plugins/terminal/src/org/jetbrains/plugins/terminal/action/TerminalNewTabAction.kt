@@ -2,18 +2,30 @@
 package org.jetbrains.plugins.terminal.action
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 
-open class TerminalNewSessionAction : DumbAwareAction(
-  IdeBundle.messagePointer("action.DumbAware.TerminalView.text.new.session"),
-  IdeBundle.messagePointer("action.DumbAware.TerminalView.description.create.new.session"),
+open class TerminalNewTabAction : DumbAwareAction(
+  TerminalBundle.messagePointer("action.Terminal.NewTab.text"),
+  TerminalBundle.messagePointer("action.Terminal.NewTab.description"),
   AllIcons.General.Add) {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabled = e.project != null
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val terminalToolWindowManager = TerminalToolWindowManager.getInstance(project)
     terminalToolWindowManager.newTab(terminalToolWindowManager.toolWindow, null)
+  }
+
+  companion object {
+    const val ACTION_ID = "Terminal.NewTab"
   }
 }

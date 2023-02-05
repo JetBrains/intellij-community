@@ -128,7 +128,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift control H",          "ChangesView.ShelveSilently", "MethodHierarchy"},
       {"shift control M",          "EditorMatchBrace", "RInsertPipeAction"},
       {"shift control MINUS",      "CollapseAllRegions", "NotebookSplitCellAction"},
-      {"shift control T",          "GotoTest", "ServiceView.ShowServices"},
+      {"shift control T",          "GotoTest", "ServiceView.ShowServices", "Terminal.NewTab"},
       {"shift control TAB",        "Switcher", "Diff.FocusOppositePane"},
       {"shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase", "Markdown.Styling.CreateLink"},
       {"shift control V",          "PasteMultiple", "JupyterNotebookPasteCellAboveCommandModeAction"},
@@ -274,6 +274,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl H",             "ChangesView.ShelveSilently", "ReplaceInPath"},
       {"shift ctrl MINUS",         "Forward", "NotebookSplitCellAction"},
       {"shift ctrl S",             "SaveAll", "org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"},
+      {"shift ctrl T",             "GotoFile", "Terminal.NewTab"},
       {"shift ctrl alt DOWN",      "MoveStatementDown", "ResizeToolWindowDown"},
       {"shift ctrl alt K",         "Git.Commit.And.Push.Executor", "Hg.Commit.And.Push.Executor"},
       {"shift ctrl alt P",         "IntroduceFunctionalParameter", "ReformatWithPrettierAction", "VcsShowPrevChangeMarker"},
@@ -307,6 +308,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift meta 8",             "ActivateUnitTestsToolWindow", "EditorToggleColumnMode"},
       {"shift meta H",             "ChangesView.ShelveSilently", "ReplaceInPath"},
       {"shift meta R",             "WebInspector.Browser.Refresh", "Refactorings.QuickListPopupAction"},
+      {"shift meta T",             "GotoFile", "Terminal.NewTab"},
       {"meta alt W",               "ActivateWebToolWindow", "Vcs.UpdateProject"},
       {"shift meta S",             "SaveAll", "org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"},
       {"shift ctrl LEFT",          "Diff.PrevChange", "EditorLeftWithSelection"},
@@ -366,6 +368,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift control F6",         "ChangeTypeSignature", "PreviousTab"},
       {"shift control I",          "QuickImplementations", "XDebugger.Inspect"},
       {"shift control K",          "Vcs.Push", "FindPrevious"},
+      {"shift control T",          "GotoClass", "Terminal.NewTab"},
       {"shift control X",          "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
       {"shift ctrl alt LEFT",      "NextEditorTab", "Diff.NextChange"},
       {"shift ctrl alt RIGHT",     "PreviousEditorTab", "Diff.PrevChange"},
@@ -435,6 +438,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl DOWN",          "EditorUnSelectWord", "ShowContent"},
       {"shift meta K",             "Vcs.Push", "FindPrevious"},
       {"shift meta R",             "GotoFile", "WebInspector.Browser.Refresh"},
+      {"shift meta T",             "GotoClass", "Terminal.NewTab"},
       {"shift meta U",             "FindUsagesInFile", "ShelveChanges.UnshelveWithDialog", "Markdown.Styling.CreateLink"},
       {"shift meta X",             "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
       {"shift meta DIVIDE",        "CollapseAll", "CollapseAllRegions"},
@@ -472,7 +476,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore", "org.jetbrains.r.actions.RRunAction",
                                    "Terminal.SmartCommandExecution.Debug"},
       {"shift ctrl M",             "EditorSelectWord", "RInsertPipeAction"},
-      {"shift ctrl T",             "ReopenClosedTab", "ServiceView.ShowServices"},
+      {"shift ctrl T",             "ReopenClosedTab", "ServiceView.ShowServices", "Terminal.NewTab"},
       {"shift ctrl V",             "$Paste", "JupyterNotebookPasteCellAboveCommandModeAction"},
     }),
     Map.entry("Sublime Text (Mac OS X)", new String[][]{
@@ -506,7 +510,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift meta R",             "GotoSymbol", "WebInspector.Browser.Refresh"},
       {"shift meta ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore", "org.jetbrains.r.actions.RRunAction",
                                    "Terminal.SmartCommandExecution.Debug"},
-      {"shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},
+      {"shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices", "Terminal.NewTab"},
       {"shift meta V",             "$Paste", "JupyterNotebookPasteCellAboveCommandModeAction"},
     }),
     Map.entry("macOS System Shortcuts", new String[][]{
@@ -526,7 +530,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta alt I",               "Move", "RMarkdownNewChunk"},
       {"meta alt UP",              "Console.TableResult.PreviousPage", "NotebookSelectCellAboveAction", "PreviousOccurence"},
       {"shift alt SEMICOLON",      "ForceStepInto", SECOND_STROKE},
-      {"shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},
+      {"shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices", "Terminal.NewTab"},
     })
   );
   // @formatter:on

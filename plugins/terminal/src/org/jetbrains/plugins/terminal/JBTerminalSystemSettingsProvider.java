@@ -6,7 +6,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.jediterm.terminal.HyperlinkStyle;
 import com.jediterm.terminal.model.TerminalTypeAheadSettings;
+import com.jediterm.terminal.ui.TerminalActionPresentation;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.action.TerminalNewTabAction;
 
 import java.util.concurrent.TimeUnit;
 
@@ -60,5 +62,15 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
       TimeUnit.MILLISECONDS.toNanos(AdvancedSettings.getInt("terminal.type.ahead.latency.threshold")),
       TerminalTypeAheadSettings.DEFAULT.getTypeAheadStyle()
     );
+  }
+
+  public @NotNull TerminalActionPresentation getNewTabActionPresentation() {
+    return new TerminalActionPresentation(TerminalBundle.message("action.Terminal.NewTab.text"),
+                                          getKeyStrokesByActionId(TerminalNewTabAction.ACTION_ID));
+  }
+
+  public @NotNull TerminalActionPresentation getCloseTabActionPresentation() {
+    return new TerminalActionPresentation(TerminalBundle.message("action.Terminal.CloseTab.text"),
+                                          getKeyStrokesByActionId("Terminal.CloseTab"));
   }
 }

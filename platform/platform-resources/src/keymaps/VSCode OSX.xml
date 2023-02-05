@@ -723,9 +723,6 @@
   <action id="BuildSolutionAction">
     <keyboard-shortcut first-keystroke="meta shift b"/>
   </action>
-  <action id="TerminalNewSession">
-    <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE"/>
-  </action>
   <action id="Terminal.SelectAll">
     <keyboard-shortcut first-keystroke="meta a"/>
   </action>
