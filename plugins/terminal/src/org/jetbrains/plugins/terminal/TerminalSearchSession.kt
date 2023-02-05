@@ -75,9 +75,8 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
   private fun createSearchComponent(): SearchReplaceComponent {
     return SearchReplaceComponent
       .buildFor(terminalWidget.project, terminalWidget.terminalPanel)
-      .addPrimarySearchActions(PrevOccurrenceAction(),
-                               NextOccurrenceAction())
-      .addExtraSearchActions(ToggleMatchCase(), StatusTextAction())
+      .addExtraSearchActions(ToggleMatchCase())
+      .addPrimarySearchActions(StatusTextAction(), PrevOccurrenceAction(), NextOccurrenceAction())
       .withCloseAction { close() }
       .withDataProvider(this)
       .build().also {
