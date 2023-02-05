@@ -10,8 +10,8 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.refactoring.RefactoringBundle
 import org.intellij.images.fileTypes.ImageFileTypeManager
 import org.intellij.images.fileTypes.impl.SvgFileType
@@ -28,7 +28,7 @@ import kotlin.io.path.extension
 import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 
-internal class EditorFileDropHandler: CustomFileDropHandler() {
+internal class MarkdownFileDropHandler: CustomFileDropHandler() {
   override fun canHandle(transferable: Transferable, editor: Editor?): Boolean {
     if (editor == null || !editor.document.isWritable) {
       return false
@@ -36,16 +36,17 @@ internal class EditorFileDropHandler: CustomFileDropHandler() {
     if (!MarkdownCodeInsightSettings.getInstance().state.enableFilesDrop) {
       return false
     }
-    val file = PsiEditorUtil.getPsiFile(editor)
-    return file.language.isMarkdownLanguage()
+    val project = editor.project ?: return false
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+    return file != null && file.language.isMarkdownLanguage()
   }
 
   override fun handleDrop(transferable: Transferable, editor: Editor?, project: Project?): Boolean {
-    if (editor == null || project == null) {
+    if (editor == null || project == null || !editor.document.isWritable) {
       return false
     }
-    val file = PsiEditorUtil.getPsiFile(editor)
-    if (!file.language.isMarkdownLanguage() || !editor.document.isWritable) {
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+    if (file == null || !file.language.isMarkdownLanguage()) {
       return false
     }
     val files = FileCopyPasteUtil.getFiles(transferable)?.asSequence() ?: return false

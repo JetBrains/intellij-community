@@ -170,7 +170,7 @@
                          order="after MarkdownImagePasteProvider"
                          implementation="org.intellij.plugins.markdown.editor.paste.FileLinkPasteProvider"/>
     <customFileDropHandler id="MarkdownEditorFileDropHandler"
-                           implementation="org.intellij.plugins.markdown.editor.paste.EditorFileDropHandler"/>
+                           implementation="org.intellij.plugins.markdown.editor.paste.MarkdownFileDropHandler"/>
 
     <spellchecker.support language="Markdown"
                           implementationClass="org.intellij.plugins.markdown.spellchecking.MarkdownSpellcheckingStrategy"/>
