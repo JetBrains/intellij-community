@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Iconable
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
@@ -136,7 +137,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
           val filename = VfsPresentationUtil.getUniquePresentableNameForUI(project, file)
           component.isOpaque = false
           component.foreground = fg
-          component.text = filename
+          component.text = StringUtil.shortenTextWithEllipsis(filename, 60, 30)
         }
       }
     }
