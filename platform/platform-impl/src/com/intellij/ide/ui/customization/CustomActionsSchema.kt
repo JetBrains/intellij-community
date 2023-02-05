@@ -420,22 +420,8 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
   @ApiStatus.Internal
   fun initActionIcon(anAction: AnAction, actionId: String, actionManager: ActionManager) {
     LOG.assertTrue(anAction !is ActionStub)
-    var icon: Icon? = null
     val iconPath = iconCustomizations.get(actionId)
-    if (iconPath != null) {
-      val reuseFrom = actionManager.getAction(iconPath)
-      if (reuseFrom != null) {
-        icon = reuseFrom.templatePresentation.icon
-      }
-      else {
-        try {
-          icon = loadCustomIcon(iconPath)
-        }
-        catch (e: IOException) {
-          LOG.info(e.message)
-        }
-      }
-    }
+    var icon: Icon? = CustomizationUtil.getIconForPath(actionManager, iconPath)
 
     val presentation = anAction.templatePresentation
     val originalIcon = presentation.icon

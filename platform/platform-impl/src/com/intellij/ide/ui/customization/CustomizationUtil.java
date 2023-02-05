@@ -48,6 +48,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -60,6 +61,35 @@ public final class CustomizationUtil {
 
   private CustomizationUtil() {
   }
+
+  public static @Nullable Icon getOriginalIconFrom(@NotNull AnAction reuseFrom) {
+    Presentation presentation = reuseFrom.getTemplatePresentation();
+    Icon original = presentation.getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON);
+    if (original != null) return original;
+    return presentation.getIcon();
+  }
+
+  @Nullable
+  public static Icon getIconForPath(@NotNull ActionManager actionManager, @Nullable String iconPath) {
+    if (iconPath == null) {
+      return null;
+    }
+    AnAction reuseFrom = actionManager.getAction(iconPath);
+    if (reuseFrom != null) {
+      return getOriginalIconFrom(reuseFrom);
+    }
+    else {
+      try {
+        return CustomActionsSchema.loadCustomIcon(iconPath);
+      }
+      catch (IOException e) {
+        LOG.info(e.getMessage());
+        return null;
+      }
+    }
+  }
+
+
 
   public static ActionGroup correctActionGroup(final ActionGroup group,
                                                final CustomActionsSchema schema,

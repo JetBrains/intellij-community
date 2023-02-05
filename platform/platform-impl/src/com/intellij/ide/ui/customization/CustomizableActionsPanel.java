@@ -395,7 +395,7 @@ public class CustomizableActionsPanel {
 
     AnAction reuseFrom = actionManager.getAction(path);
     if (reuseFrom != null) {
-      node.setUserObject(Pair.create(value, reuseFrom.getTemplatePresentation().getIcon()));
+      node.setUserObject(Pair.create(value, CustomizationUtil.getOriginalIconFrom(reuseFrom)));
       schema.addIconCustomization(actionId, path);
     }
     else {
@@ -527,7 +527,11 @@ public class CustomizableActionsPanel {
               int newActionPosition = isGroupSelected ? node.getChildCount() : node.getParent().getIndex(node) + ind + 1;
               ActionUrl url = new ActionUrl(getGroupPath(new TreePath(node.getPath()), true), action, ADDED, newActionPosition);
               addCustomizedAction(url);
-              changePathInActionsTree(myActionsTree, url);
+              DefaultMutableTreeNode newNode = addPathToActionsTree(myActionsTree, url);
+              if (newNode != null && action instanceof String) {
+                Icon icon = CustomizationUtil.getIconForPath(ActionManager.getInstance(),mySelectedSchema.getIconPath((String)action));
+                newNode.setUserObject(Pair.create(action, icon));
+              }
             }
 
             ((DefaultTreeModel)myActionsTree.getModel()).reload();
