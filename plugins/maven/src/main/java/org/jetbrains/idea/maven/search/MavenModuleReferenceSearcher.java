@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.references.MavenModulePsiReference;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
+import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,10 +46,21 @@ class MavenModuleReferenceSearcher extends QueryExecutorBase<PsiReference, Refer
   private static List<PsiReference> getPomTagReferencesToDirectory(@Nullable XmlTag tag,
                                                                    @NotNull VirtualFile pomFile,
                                                                    @NotNull VirtualFile directory) {
+    try {
+      return doGetPomTagReferencesToDirectory(tag, pomFile, directory);
+    } catch (InvalidPathException ignored) {
+      return List.of();
+    }
+  }
+
+  @NotNull
+  private static List<PsiReference> doGetPomTagReferencesToDirectory(@Nullable XmlTag tag,
+                                                                     @NotNull VirtualFile pomFile,
+                                                                     @NotNull VirtualFile directory) {
     var references = new ArrayList<PsiReference>();
     if (null != tag) {
       var oldDirectoryPath = Paths.get(directory.getPath()).normalize();
-      var modulePath = tag.getValue().getText();
+      var modulePath = tag.getValue().getTrimmedText();
       var tmpPath = Paths.get(pomFile.getParent().getPath()).normalize();
       var referencedDirectoryPath = Paths.get(pomFile.getParent().getPath(), modulePath).normalize();
       if (referencedDirectoryPath.startsWith(oldDirectoryPath)) {
