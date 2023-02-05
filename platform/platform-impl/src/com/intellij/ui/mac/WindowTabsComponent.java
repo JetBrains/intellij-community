@@ -61,6 +61,8 @@ import java.util.*;
  * @author Alexander Lobas
  */
 public class WindowTabsComponent extends JBTabsImpl {
+  private static final String TITLE_LISTENER_KEY = "TitleListener";
+
   private static final int TAB_HEIGHT = 30;
 
   private static final Icon CLOSE_ICON = ExperimentalUI.isNewUI() ?
@@ -88,6 +90,13 @@ public class WindowTabsComponent extends JBTabsImpl {
       public @NotNull UiDecoration getDecoration() {
         //noinspection UseDPIAwareInsets
         return new UiDecoration(JBFont.medium(), new Insets(-1, myDropInfo == null ? 0 : -1, -1, -1));
+      }
+    });
+
+    Disposer.register(myParentDisposable, () -> {
+      int count = getTabCount();
+      for (int i = 0; i < count; i++) {
+        removeTitleListener(getTabAt(i));
       }
     });
 
@@ -247,6 +256,7 @@ public class WindowTabsComponent extends JBTabsImpl {
     for (int i = 0; i < count; i++) {
       TabInfo info = getTabAt(i);
       if (info.getObject() == tab) {
+        removeTitleListener(info);
         removeTab(info);
         recalculateIndexes();
         removed = true;
@@ -285,9 +295,14 @@ public class WindowTabsComponent extends JBTabsImpl {
 
     PropertyChangeListener listener = event -> info.setText((String)event.getNewValue()).setTooltipText((String)event.getNewValue());
     tabFrame.addPropertyChangeListener("title", listener);
-    Disposer.register(myParentDisposable, () -> tabFrame.removePropertyChangeListener("title", listener));
+    info.getComponent().putClientProperty(TITLE_LISTENER_KEY, listener);
 
     installTabDnd(info);
+  }
+
+  private static void removeTitleListener(@NotNull TabInfo info) {
+    PropertyChangeListener listener = (PropertyChangeListener)info.getComponent().getClientProperty(TITLE_LISTENER_KEY);
+    ((IdeFrameImpl)info.getObject()).removePropertyChangeListener("title", listener);
   }
 
   private void recalculateIndexes() {
