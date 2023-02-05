@@ -4,6 +4,7 @@ package com.intellij.terminal;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -123,7 +124,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
   @Override
   public @NotNull TerminalActionPresentation getFindActionPresentation() {
     return new TerminalActionPresentation(IdeBundle.message("terminal.action.Find.text"),
-                                          getKeyStrokesByActionId(IdeActions.ACTION_FIND));
+                                          getKeyStrokesByActionId("Terminal.Find", IdeActions.ACTION_FIND));
   }
 
   @NotNull
@@ -146,6 +147,14 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
       }
       return true;
     });
+  }
+
+  public static @NotNull List<KeyStroke> getKeyStrokesByActionId(@NotNull String actionId, @NotNull String failoverActionId) {
+    List<KeyStroke> strokes = getKeyStrokesByActionId(actionId);
+    if (strokes.isEmpty() && ActionManager.getInstance().getAction(actionId) == null) {
+      strokes = getKeyStrokesByActionId(failoverActionId);
+    }
+    return strokes;
   }
 
   public static @NotNull List<KeyStroke> getKeyStrokesByActionId(@NotNull String actionId) {
