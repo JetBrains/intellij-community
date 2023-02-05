@@ -25,7 +25,10 @@ import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
@@ -388,7 +391,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   @NotNull
   protected Icon getFallbackIcon(boolean enabled) {
-    return EmptyIcon.ICON_18;
+    Presentation p = getAction().getTemplatePresentation();
+    Icon icon = Objects.requireNonNullElse(p.getIcon(), AllIcons.Toolbar.Unknown);
+    if (enabled) return icon;
+    if (p.getDisabledIcon() != null) return p.getDisabledIcon();
+    return IconLoader.getDisabledIcon(icon);
   }
 
   public void updateIcon() {
