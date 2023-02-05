@@ -268,19 +268,9 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   @Override
-  protected @NotNull SearchComponent createSearchComponent() {
-    return new SearchComponent() {
+  protected @NotNull JediTermSearchComponent createSearchComponent() {
+    return new JediTermSearchComponent() {
       private final SearchTextField myTextField = new SearchTextField(false);
-
-      @Override
-      public @NotNull String getText() {
-        return myTextField.getText();
-      }
-
-      @Override
-      public boolean ignoreCase() {
-        return false;
-      }
 
       @Override
       public @NotNull JComponent getComponent() {
@@ -288,22 +278,26 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
         return myTextField;
       }
 
+      private void searchSettingsChanged(@NotNull JediTermSearchComponentListener listener) {
+        listener.searchSettingsChanged(myTextField.getText(), false);
+      }
+
       @Override
-      public void addSettingsChangedListener(@NotNull Runnable onChangeListener) {
+      public void addListener(@NotNull JediTermSearchComponentListener listener) {
         myTextField.addDocumentListener(new DocumentListener() {
           @Override
           public void insertUpdate(DocumentEvent e) {
-            onChangeListener.run();
+            searchSettingsChanged(listener);
           }
 
           @Override
           public void removeUpdate(DocumentEvent e) {
-            onChangeListener.run();
+            searchSettingsChanged(listener);
           }
 
           @Override
           public void changedUpdate(DocumentEvent e) {
-            onChangeListener.run();
+            searchSettingsChanged(listener);
           }
         });
       }

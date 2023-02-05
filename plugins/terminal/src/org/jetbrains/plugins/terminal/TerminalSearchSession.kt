@@ -15,8 +15,8 @@ import com.intellij.terminal.JBTerminalWidget
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.terminal.SubstringFinder
-import com.jediterm.terminal.ui.JediTermWidget
-import java.awt.event.KeyEvent
+import com.jediterm.terminal.ui.JediTermSearchComponent
+import com.jediterm.terminal.ui.JediTermSearchComponentListener
 import java.awt.event.KeyListener
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
@@ -39,12 +39,12 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
     searchComponentWrapper.border = JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 1, 0, 1)
   }
 
-  fun getTerminalSearchComponent(): JediTermWidget.SearchComponent = terminalSearchComponent
+  fun getTerminalSearchComponent(): JediTermSearchComponent = terminalSearchComponent
 
   private fun createFindModel(): FindModel {
-    return FindModel().also {
-      it.addObserver {
-        terminalSearchComponent.fireSettingsChanged()
+    return FindModel().also { findModel ->
+      findModel.addObserver {
+        terminalSearchComponent.eventMulticaster.searchSettingsChanged(findModel.stringToFind, !findModel.isCaseSensitive)
       }
     }
   }
@@ -56,15 +56,15 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
   override fun hasMatches(): Boolean = hasMatches
 
   override fun searchForward() {
-    terminalSearchComponent.fireKeyPressedEvent(KeyEvent.VK_UP)
+    terminalSearchComponent.eventMulticaster.selectNextFindResult()
   }
 
   override fun searchBackward() {
-    terminalSearchComponent.fireKeyPressedEvent(KeyEvent.VK_DOWN)
+    terminalSearchComponent.eventMulticaster.selectPrevFindResult()
   }
 
   override fun close() {
-    terminalSearchComponent.fireKeyPressedEvent(KeyEvent.VK_ESCAPE)
+    terminalSearchComponent.eventMulticaster.hideSearchComponent()
     IdeFocusManager.getInstance(terminalWidget.project).requestFocus(terminalWidget.terminalPanel, false)
   }
 
@@ -92,23 +92,17 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
       }
   }
 
-  private inner class MySearchComponent : JediTermWidget.SearchComponent {
-    private val settingsChangedListeners: CopyOnWriteArrayList<Runnable> = CopyOnWriteArrayList()
-    private val keyListeners: CopyOnWriteArrayList<KeyListener> = CopyOnWriteArrayList()
-
-    override fun getText(): String = findModel.stringToFind
-
-    override fun ignoreCase(): Boolean = !findModel.isCaseSensitive
+  private inner class MySearchComponent : JediTermSearchComponent {
+    private val listeners: MutableList<JediTermSearchComponentListener> = CopyOnWriteArrayList()
 
     override fun getComponent(): JComponent = searchComponentWrapper
 
-    override fun addSettingsChangedListener(onChangeListener: Runnable) {
-      settingsChangedListeners.add(onChangeListener)
+    override fun addListener(listener: JediTermSearchComponentListener) {
+      listeners.add(listener)
     }
 
     override fun addKeyListener(listener: KeyListener) {
       searchComponent.searchTextComponent.addKeyListener(listener)
-      keyListeners.add(listener)
     }
 
     override fun onResultUpdated(results: SubstringFinder.FindResult?) {
@@ -130,15 +124,29 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
       }
     }
 
-    fun fireKeyPressedEvent(keyCode: Int) {
-      for (keyListener in keyListeners) {
-        keyListener.keyPressed(KeyEvent(searchComponent.searchTextComponent, 0, System.currentTimeMillis(), 0, keyCode, ' '))
+    val eventMulticaster: JediTermSearchComponentListener = object: JediTermSearchComponentListener {
+      override fun searchSettingsChanged(textToFind: String, ignoreCase: Boolean) {
+        for (listener in listeners) {
+          listener.searchSettingsChanged(textToFind, ignoreCase)
+        }
       }
-    }
 
-    fun fireSettingsChanged() {
-      for (settingsChangedListener in settingsChangedListeners) {
-        settingsChangedListener.run()
+      override fun hideSearchComponent() {
+        for (listener in listeners) {
+          listener.hideSearchComponent()
+        }
+      }
+
+      override fun selectNextFindResult() {
+        for (listener in listeners) {
+          listener.selectNextFindResult()
+        }
+      }
+
+      override fun selectPrevFindResult() {
+        for (listener in listeners) {
+          listener.selectPrevFindResult()
+        }
       }
     }
   }

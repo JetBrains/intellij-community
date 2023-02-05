@@ -22,6 +22,7 @@ import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
 import com.jediterm.terminal.model.TerminalModelListener;
 import com.jediterm.terminal.model.TerminalTextBuffer;
+import com.jediterm.terminal.ui.JediTermSearchComponent;
 import com.jediterm.terminal.ui.TerminalAction;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -391,7 +392,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   @Override
-  protected @NotNull SearchComponent createSearchComponent() {
+  protected @NotNull JediTermSearchComponent createSearchComponent() {
     return new TerminalSearchSession(this).getTerminalSearchComponent();
   }
 }
