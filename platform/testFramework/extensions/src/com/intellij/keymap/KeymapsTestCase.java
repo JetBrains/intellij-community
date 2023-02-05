@@ -175,6 +175,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta L",                   "GotoLine", "Terminal.ClearBuffer"},
       {"meta N",                   "FileChooser.NewFolder", "Generate", "NewElement"},
       {"meta R",                   "Refresh", "Replace", "Rerun", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
+      {"meta T",                   "Terminal.NewTab", "Vcs.UpdateProject"},
       {"meta SLASH",               "CommentByLineComment", "FileChooserList.Root", "Graph.ActualSize"},
       {"meta UP",                  "ShowNavBar", "FileChooserList.LevelUp"},
       {"shift BACK_SPACE",         "EditorBackSpace", "UsageView.Include"},
@@ -203,6 +204,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta K",                   "CheckinProject", "Terminal.ClearBuffer"},
       {"meta R",                   "WebInspector.Browser.Refresh", "Replace", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
       {"meta SLASH",               "CommentByLineComment", "FileChooserList.Root", "Graph.ActualSize"},
+      {"meta T",                   "Terminal.NewTab", "Vcs.UpdateProject"},
       {"meta UP",                  "EditorScrollUp", "FileChooserList.LevelUp", "MethodOverloadSwitchUp"},
       {"shift control TAB",        "Switcher", "Diff.FocusOppositePane"},
       {"shift meta C",             "CopyPaths", "DatabaseView.CopyDdlAction", "WebInspector.Browser.Selection.Toggle", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
@@ -308,7 +310,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift meta 8",             "ActivateUnitTestsToolWindow", "EditorToggleColumnMode"},
       {"shift meta H",             "ChangesView.ShelveSilently", "ReplaceInPath"},
       {"shift meta R",             "WebInspector.Browser.Refresh", "Refactorings.QuickListPopupAction"},
-      {"shift meta T",             "GotoFile", "Terminal.NewTab"},
       {"meta alt W",               "ActivateWebToolWindow", "Vcs.UpdateProject"},
       {"shift meta S",             "SaveAll", "org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"},
       {"shift ctrl LEFT",          "Diff.PrevChange", "EditorLeftWithSelection"},
@@ -316,6 +317,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta K",                   "SECOND_STROKE_SHORTCUT", "Terminal.ClearBuffer"},
       {"meta R",                   "SECOND_STROKE_SHORTCUT", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
       {"meta E",                   "SECOND_STROKE_SHORTCUT", "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox"},
+      {"meta T",                   "SearchEverywhere", "Terminal.NewTab"},
     }),
     Map.entry("Default for XWin", new String[][]{
       {"ctrl SLASH",               "CommentByLineComment", "FileChooserList.Root", "Graph.ActualSize"},
@@ -438,7 +440,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl DOWN",          "EditorUnSelectWord", "ShowContent"},
       {"shift meta K",             "Vcs.Push", "FindPrevious"},
       {"shift meta R",             "GotoFile", "WebInspector.Browser.Refresh"},
-      {"shift meta T",             "GotoClass", "Terminal.NewTab"},
       {"shift meta U",             "FindUsagesInFile", "ShelveChanges.UnshelveWithDialog", "Markdown.Styling.CreateLink"},
       {"shift meta X",             "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
       {"shift meta DIVIDE",        "CollapseAll", "CollapseAllRegions"},
@@ -499,6 +500,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta P",                   "FileChooser.TogglePathBar", "GotoFile"},
       {"meta R",                   "FileStructurePopup", "Refresh", "Rerun", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
       {"meta SUBTRACT",            "CollapseAll", "CollapseExpandableComponent", "EditorDecreaseFontSize"},
+      {"meta T",                   "GotoFile", "Terminal.NewTab"},
       {"meta UP",                  "EditorTextStart", "FileChooserList.LevelUp"},
       {"meta V",                   "EditorPasteSimple", "Terminal.Paste", "JupyterNotebookPasteCellCommandModeAction"},
       {"meta alt DOWN",            "Console.TableResult.NextPage", "GotoDeclaration"},
@@ -510,7 +512,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift meta R",             "GotoSymbol", "WebInspector.Browser.Refresh"},
       {"shift meta ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore", "org.jetbrains.r.actions.RRunAction",
                                    "Terminal.SmartCommandExecution.Debug"},
-      {"shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices", "Terminal.NewTab"},
+      {"shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},
       {"shift meta V",             "$Paste", "JupyterNotebookPasteCellAboveCommandModeAction"},
     }),
     Map.entry("macOS System Shortcuts", new String[][]{
@@ -530,7 +532,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta alt I",               "Move", "RMarkdownNewChunk"},
       {"meta alt UP",              "Console.TableResult.PreviousPage", "NotebookSelectCellAboveAction", "PreviousOccurence"},
       {"shift alt SEMICOLON",      "ForceStepInto", SECOND_STROKE},
-      {"shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices", "Terminal.NewTab"},
+      {"shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},
     })
   );
   // @formatter:on

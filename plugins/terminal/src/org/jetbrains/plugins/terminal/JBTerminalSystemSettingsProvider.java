@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
+import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.terminal.HyperlinkStyle;
 import com.jediterm.terminal.model.TerminalTypeAheadSettings;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
@@ -71,6 +72,7 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
 
   public @NotNull TerminalActionPresentation getCloseTabActionPresentation() {
     return new TerminalActionPresentation(TerminalBundle.message("action.Terminal.CloseTab.text"),
-                                          getKeyStrokesByActionId("Terminal.CloseTab"));
+                                          ContainerUtil.concat(getKeyStrokesByActionId("Terminal.CloseTab"),
+                                                               getKeyStrokesByActionId("CloseActiveTab")));
   }
 }
