@@ -395,8 +395,10 @@ public class CustomizableActionsPanel {
 
     AnAction reuseFrom = actionManager.getAction(path);
     if (reuseFrom != null) {
-      node.setUserObject(Pair.create(value, CustomizationUtil.getOriginalIconFrom(reuseFrom)));
-      schema.addIconCustomization(actionId, path);
+      Icon toSet = CustomizationUtil.getOriginalIconFrom(reuseFrom);
+      Icon defaultIcon = CustomizationUtil.getOriginalIconFrom(action);
+      node.setUserObject(Pair.create(value, toSet));
+      schema.addIconCustomization(actionId, toSet != defaultIcon ? path : null);
     }
     else {
       Icon icon;
