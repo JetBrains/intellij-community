@@ -433,7 +433,7 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
     }
     presentation.icon = icon
     presentation.disabledIcon = if (icon == null) null else getDisabledIcon(icon)
-    anAction.isDefaultIcon = iconPath == null
+    anAction.isDefaultIcon = icon == originalIcon
   }
 }
 
