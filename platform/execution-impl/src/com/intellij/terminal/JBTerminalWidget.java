@@ -340,7 +340,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   @Override
   public Object getData(@NotNull String dataId) {
     if (SELECTED_TEXT_DATA_KEY.is(dataId)) {
-      return getSelectedText(getTerminalPanel());
+      return getSelectedText();
     }
     if (TERMINAL_DATA_KEY.is(dataId)) {
       return this;
@@ -364,6 +364,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   public @NotNull String getText() {
     return getText(getTerminalPanel());
+  }
+
+  public @Nullable String getSelectedText() {
+    return getSelectedText(getTerminalPanel());
   }
 
   static @NotNull String getText(@NotNull TerminalPanel terminalPanel) {
