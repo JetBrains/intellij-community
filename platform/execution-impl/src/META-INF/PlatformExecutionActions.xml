@@ -80,7 +80,12 @@
                  defaultValue="TRUE"
                  restartRequired="false"/>
 
-    <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarComponentService" preload="await" />
-    <postStartupActivity implementation="com.intellij.execution.runToolbar.RunToolbarInitializeService" order="last"/>
+    <postStartupActivity implementation="com.intellij.execution.runToolbar.RunToolbarInitializeService"/>
+
+    <actionConfigurationCustomizer implementation="com.intellij.execution.runToolbar.MyActionConfigurationCustomizer"/>
   </extensions>
+  <projectListeners>
+    <listener class="com.intellij.execution.runToolbar.RunToolbarComponentService$MyExecutionListener"
+              topic="com.intellij.execution.ExecutionListener"/>
+  </projectListeners>
 </idea-plugin>
