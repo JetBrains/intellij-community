@@ -36,6 +36,7 @@ import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
+import com.intellij.xdebugger.frame.CustomComponentEvaluator;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -131,10 +132,18 @@ public final class DebuggerUIUtil {
                                     @NotNull MouseEvent event,
                                     @NotNull Project project,
                                     @Nullable Editor editor) {
-    JPanel panel = new JPanel(new CardLayout());
-    final MultiContentTypeCallback callback = new MultiContentTypeCallback(panel, evaluator, project);
-    showValuePopup(event, project, editor, panel, callback::setObsolete);
-    evaluator.startEvaluation(callback); /*to make it really cancellable*/
+    if (evaluator instanceof CustomComponentEvaluator) {
+      JPanel panel = new JPanel(new CardLayout());
+      final MultiContentTypeCallback callback = new MultiContentTypeCallback(panel, (CustomComponentEvaluator)evaluator, project);
+      showValuePopup(event, project, editor, panel, callback::setObsolete);
+      evaluator.startEvaluation(callback); /*to make it really cancellable*/
+    }
+    else {
+      EditorTextField textArea = createTextViewer(XDebuggerUIConstants.getEvaluatingExpressionMessage(), project);
+      final FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textArea);
+      showValuePopup(event, project, editor, textArea, callback::setObsolete);
+      evaluator.startEvaluation(callback); /*to make it really cancellable*/
+    }
   }
 
   public static void showValuePopup(@NotNull MouseEvent event,
@@ -441,11 +450,11 @@ public final class DebuggerUIUtil {
   private static class MultiContentTypeCallback implements XFullValueEvaluator.XFullValueEvaluationCallback {
     private final AtomicBoolean myObsolete = new AtomicBoolean(false);
     private final JPanel myPanel;
-    private XFullValueEvaluator myEvaluator;
+    private CustomComponentEvaluator myEvaluator;
 
     private Project myProject;
 
-    MultiContentTypeCallback(final JPanel panel, XFullValueEvaluator evaluator, Project project) {
+    MultiContentTypeCallback(final JPanel panel, CustomComponentEvaluator evaluator, Project project) {
       myPanel = panel;
       myEvaluator = evaluator;
       myProject = project;
