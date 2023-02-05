@@ -19,6 +19,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.enumMapOf
 import com.intellij.util.resettableLazy
 import com.intellij.util.flow.zipWithNext
 import com.intellij.xdebugger.XSourcePosition
@@ -114,38 +115,57 @@ internal class ExecutionPoint(
 }
 
 internal class ExecutionPointPresentation(project: Project, executionPoint: ExecutionPoint) {
-  private val highlights: List<PositionHighlight?> = enumValues<XSourceKind>().map { sourceKind ->
-    PositionHighlight.create(project, executionPoint, sourceKind)
+  private val presentationMap = enumMapOf<XSourceKind, PositionPresentation?>().apply {
+    enumValues<XSourceKind>().associateWithTo(this) { sourceKind ->
+      PositionPresentation.create(project, executionPoint, sourceKind)
+    }
   }
-  private val navigators: List<PositionNavigator?> = enumValues<XSourceKind>().map { sourceKind ->
-    PositionNavigator.create(project, executionPoint, sourceKind)
-  }
+  private val presentations: Collection<PositionPresentation?> = presentationMap.values
 
-  private val mainPositionHighlight: PositionHighlight? get() = highlights[XSourceKind.MAIN.ordinal]
+  private val mainPositionHighlight: PositionHighlight? get() = presentationMap[XSourceKind.MAIN]?.highlight
 
   val isFullLineHighlighter: Boolean get() = mainPositionHighlight?.isFullLineHighlighter == true
 
   var activeSourceKind: XSourceKind by Delegates.observable(XSourceKind.MAIN) { _, _, newValue ->
-    highlights.forEach { it?.isActiveSourceKind = (newValue == it?.sourceKind) }
+    presentations.forEach { it?.highlight?.isActiveSourceKind = (newValue == it?.sourceKind) }
   }
 
   var gutterIconRenderer: GutterIconRenderer? by Delegates.observable(null) { _, _, newValue ->
-    highlights.forEach { it?.gutterIconRenderer = newValue }
+    presentations.forEach { it?.highlight?.gutterIconRenderer = newValue }
   }
 
   fun navigateTo() {
-    navigators[activeSourceKind.ordinal]?.navigateTo()
+    presentationMap[activeSourceKind]?.navigator?.navigateTo()
   }
 
   fun hideAndDispose() {
-    highlights.forEach { it?.hideAndDispose() }
-    navigators.forEach { it?.disposeDescriptor() }
+    presentations.forEach { it?.hideAndDispose() }
   }
 }
 
 
-private class PositionHighlight private constructor(
+private class PositionPresentation private constructor(
   val sourceKind: XSourceKind,
+  val highlight: PositionHighlight?,
+  val navigator: PositionNavigator,
+) {
+  fun hideAndDispose() {
+    highlight?.hideAndDispose()
+    navigator.disposeDescriptor()
+  }
+
+  companion object {
+    @RequiresEdt
+    fun create(project: Project, executionPoint: ExecutionPoint, sourceKind: XSourceKind): PositionPresentation? {
+      val sourcePosition = executionPoint.getSourcePosition(sourceKind) ?: return null
+      val highlight = PositionHighlight.create(project, sourcePosition, executionPoint.isTopFrame)
+      val navigator = PositionNavigator.create(project, sourcePosition, executionPoint.isTopFrame)
+      return PositionPresentation(sourceKind, highlight, navigator)
+    }
+  }
+}
+
+private class PositionHighlight private constructor(
   private val isTopFrame: Boolean,
   private val rangeHighlighter: RangeHighlighter,
 ) {
@@ -170,12 +190,11 @@ private class PositionHighlight private constructor(
 
   companion object {
     @RequiresEdt
-    fun create(project: Project, executionPoint: ExecutionPoint, sourceKind: XSourceKind): PositionHighlight? {
-      val sourcePosition = executionPoint.getSourcePosition(sourceKind) ?: return null
+    fun create(project: Project, sourcePosition: XSourcePosition, isTopFrame: Boolean): PositionHighlight? {
       val rangeHighlighter = createRangeHighlighter(project, sourcePosition) ?: return null
       rangeHighlighter.editorFilter = MarkupEditorFilter { it.editorKind == EditorKind.MAIN_EDITOR }
 
-      return PositionHighlight(sourceKind, executionPoint.isTopFrame, rangeHighlighter)
+      return PositionHighlight(isTopFrame, rangeHighlighter)
     }
 
     private fun createRangeHighlighter(project: Project, sourcePosition: XSourcePosition): RangeHighlighter? {
@@ -217,12 +236,11 @@ private class PositionNavigator(
   }
 
   companion object {
-    fun create(project: Project, executionPoint: ExecutionPoint, sourceKind: XSourceKind): PositionNavigator? {
-      val sourcePosition = executionPoint.getSourcePosition(sourceKind) ?: return null
+    fun create(project: Project, sourcePosition: XSourcePosition, isTopFrame: Boolean): PositionNavigator {
       val openFileDescriptor = createOpenFileDescriptor(project, sourcePosition).apply {
         isUseCurrentWindow = false //see IDEA-125645 and IDEA-63459
         isUsePreviewTab = true
-        setScrollType(scrollType(executionPoint.isTopFrame))
+        setScrollType(scrollType(isTopFrame))
       }
       return PositionNavigator(openFileDescriptor)
     }
