@@ -29,13 +29,13 @@ public class PresentationFactory {
   public final @NotNull Presentation getPresentation(@NotNull AnAction action) {
     Presentation presentation = myPresentations.get(action);
     boolean needUpdate = presentation != null && Boolean.TRUE.equals(presentation.getClientProperty(NEED_UPDATE_PRESENTATION));
-    if (presentation == null || !action.isDefaultIcon() || needUpdate) {
+    if (presentation == null || needUpdate) {
       Presentation templatePresentation = action.getTemplatePresentation();
       if (presentation == null) {
         presentation = templatePresentation.clone();
         presentation = ObjectUtils.notNull(myPresentations.putIfAbsent(action, presentation), presentation);
       }
-      if (!action.isDefaultIcon() || needUpdate) {
+      if (needUpdate) {
         presentation.setIcon(templatePresentation.getIcon());
         presentation.setDisabledIcon(templatePresentation.getDisabledIcon());
         if (needUpdate) {
