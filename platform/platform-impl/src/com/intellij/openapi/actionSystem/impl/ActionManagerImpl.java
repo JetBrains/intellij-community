@@ -12,6 +12,7 @@ import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.RawPluginDescriptor.ActionDescriptorAction;
 import com.intellij.ide.ui.customization.ActionUrl;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.idea.IdeaLogger;
@@ -73,6 +74,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("removal")
 public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   private static final ExtensionPointName<ActionConfigurationCustomizer> EP =
     new ExtensionPointName<>("com.intellij.actionConfigurationCustomizer");
@@ -506,14 +508,19 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
         }
       }
 
-      switch (descriptor.name) {
-        case ACTION_ELEMENT_NAME -> processActionElement(element, module, bundle, keymapManager, module.getClassLoader());
-        case GROUP_ELEMENT_NAME -> processGroupElement(element, module, bundle, keymapManager, module.getClassLoader());
-        case SEPARATOR_ELEMENT_NAME -> processSeparatorNode(null, element, module, bundle);
-        case REFERENCE_ELEMENT_NAME -> processReferenceNode(element, module, bundle);
-        case "unregister" -> processUnregisterNode(element, module);
-        case "prohibit" -> processProhibitNode(element, module);
-        default -> LOG.error(new PluginException("Unexpected name of element" + descriptor.name, module.getPluginId()));
+      if (descriptor instanceof ActionDescriptorAction d) {
+        processActionElement(d.className, element, module, bundle, keymapManager, module.getClassLoader());
+      }
+      else if (descriptor instanceof RawPluginDescriptor.ActionDescriptorGroup d) {
+        processGroupElement(d.className, d.id, element, module, bundle, keymapManager, module.getClassLoader());
+      }
+      else {
+        switch (descriptor.name) {
+          case separator -> processSeparatorNode(null, element, module, bundle);
+          case reference -> processReferenceNode(element, module, bundle);
+          case unregister -> processUnregisterNode(element, module);
+          case prohibit -> processProhibitNode(element, module);
+        }
       }
     }
     StartUpMeasurer.addPluginCost(module.getPluginId().getIdString(), "Actions", StartUpMeasurer.getCurrentTime() - startTime);
@@ -604,7 +611,6 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
   @Override
   public @NotNull JComponent createButtonToolbar(final @NotNull String actionPlace, final @NotNull ActionGroup messageActionGroup) {
-    //noinspection deprecation
     return new ButtonToolbarImpl(actionPlace, messageActionGroup);
   }
 
@@ -616,18 +622,13 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   /**
    * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of {@code AnAction}.
    */
-  private @Nullable AnAction processActionElement(@NotNull XmlElement element,
+  private @Nullable AnAction processActionElement(@NotNull String className,
+                                                  @NotNull XmlElement element,
                                                   @NotNull IdeaPluginDescriptorImpl module,
                                                   @Nullable ResourceBundle bundle,
                                                   @NotNull KeymapManager keymapManager,
                                                   @NotNull ClassLoader classLoader) {
-    String className = element.attributes.get(CLASS_ATTR_NAME);
-    if (className == null || className.isEmpty()) {
-      reportActionError(module, "action element should have specified \"class\" attribute");
-      return null;
-    }
-
-    // read ID and register loaded action
+    // read ID and register a loaded action
     String id = obtainActionId(element, className);
     synchronized (myLock) {
       if (myProhibitedActionIds.contains(id)) {
@@ -722,25 +723,14 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     }
   }
 
-  private AnAction processGroupElement(@NotNull XmlElement element,
+  private AnAction processGroupElement(@NotNull String className,
+                                       @Nullable String id,
+                                       @NotNull XmlElement element,
                                        @NotNull IdeaPluginDescriptorImpl module,
                                        @Nullable ResourceBundle bundle,
                                        @NotNull KeymapManagerEx keymapManager,
                                        @NotNull ClassLoader classLoader) {
-    String className = element.attributes.get(CLASS_ATTR_NAME);
-    if (className == null) {
-      // use default group if class isn't specified
-      className = "true".equals(element.attributes.get("compact"))
-                  ? DefaultCompactActionGroup.class.getName()
-                  : DefaultActionGroup.class.getName();
-    }
-
     try {
-      String id = element.attributes.get(ID_ATTR_NAME);
-      if (id != null && id.isEmpty()) {
-        reportActionError(module, "ID of the group cannot be an empty string");
-        return null;
-      }
       synchronized (myLock) {
         if (myProhibitedActionIds.contains(id)) {
           return null;
@@ -761,7 +751,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
           reportActionError(module, "class with name \"" + className + "\" should be instance of " + ActionGroup.class.getName());
           return null;
         }
-        if (element.children.size() != element.count(ADD_TO_GROUP_ELEMENT_NAME)) {  //
+        if (element.children.size() != element.count(ADD_TO_GROUP_ELEMENT_NAME)) {
           if (!(obj instanceof DefaultActionGroup)) {
             reportActionError(module, "class with name \"" + className + "\" should be instance of " + DefaultActionGroup.class.getName() +
                                         " because there are children specified");
@@ -844,16 +834,36 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       for (XmlElement child : element.children) {
         switch (child.name) {
           case ACTION_ELEMENT_NAME -> {
-            AnAction action = processActionElement(child, module, bundle, keymapManager, classLoader);
-            if (action != null) {
-              addToGroupInner(group, action, Constraints.LAST, module, isSecondary(child));
+            String childClassName = child.attributes.get(CLASS_ATTR_NAME);
+            if (childClassName == null || className.isEmpty()) {
+              reportActionError(module, "action element should have specified \"class\" attribute");
+            }
+            else {
+              AnAction action = processActionElement(childClassName, child, module, bundle, keymapManager, classLoader);
+              if (action != null) {
+                addToGroupInner(group, action, Constraints.LAST, module, isSecondary(child));
+              }
             }
           }
           case SEPARATOR_ELEMENT_NAME -> processSeparatorNode((DefaultActionGroup)group, child, module, bundle);
           case GROUP_ELEMENT_NAME -> {
-            AnAction action = processGroupElement(child, module, bundle, keymapManager, classLoader);
-            if (action != null) {
-              addToGroupInner(group, action, Constraints.LAST, module, false);
+            String childClassName = child.attributes.get(CLASS_ATTR_NAME);
+            if (childClassName == null) {
+              // use a default group if class isn't specified
+              childClassName = "true".equals(child.attributes.get("compact"))
+                               ? DefaultCompactActionGroup.class.getName()
+                               : DefaultActionGroup.class.getName();
+            }
+
+            String childId = child.attributes.get(ID_ATTR_NAME);
+            if (childId != null && childId.isEmpty()) {
+              reportActionError(module, "ID of the group cannot be an empty string");
+            }
+            else {
+              AnAction action = processGroupElement(childClassName, childId, child, module, bundle, keymapManager, classLoader);
+              if (action != null) {
+                addToGroupInner(group, action, Constraints.LAST, module, false);
+              }
             }
           }
           case ADD_TO_GROUP_ELEMENT_NAME -> processAddToGroupNode(group, child, module, isSecondary(child));
@@ -896,7 +906,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   }
 
   /**
-   * @param element description of link
+   * @param element description of a link
    */
   private void processAddToGroupNode(AnAction action, XmlElement element, @NotNull IdeaPluginDescriptor module, boolean secondary) {
     String name = action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName();
@@ -1015,7 +1025,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
   /**
    * @param parentGroup group which is the parent of the separator. It can be {@code null} in that
-   *                    case separator will be added to group described in the <add-to-group ....> sub element.
+   *                    case separator will be added to a group described in the <add-to-group ....> sub element.
    * @param element     XML element which represent separator.
    */
   private void processSeparatorNode(@Nullable DefaultActionGroup parentGroup,
@@ -1155,13 +1165,12 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
   @ApiStatus.Internal
   public static @Nullable String checkUnloadActions(@NotNull IdeaPluginDescriptorImpl module) {
-    List<RawPluginDescriptor.ActionDescriptor> descriptors = module.actions;
-    for (RawPluginDescriptor.ActionDescriptor descriptor : descriptors) {
+    for (RawPluginDescriptor.ActionDescriptor descriptor : module.actions) {
       XmlElement element = descriptor.element;
-      String elementName = descriptor.name;
-      if (!elementName.equals(ACTION_ELEMENT_NAME) &&
-          !(elementName.equals(GROUP_ELEMENT_NAME) && canUnloadGroup(element)) &&
-          !elementName.equals(REFERENCE_ELEMENT_NAME)) {
+      var elementName = descriptor.name;
+      if (elementName != ActionDescriptorName.action &&
+          !(elementName == ActionDescriptorName.group && canUnloadGroup(element)) &&
+          elementName != ActionDescriptorName.reference) {
         return "Plugin " + module + " is not unload-safe because of action element " + elementName;
       }
     }
@@ -1186,9 +1195,9 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       RawPluginDescriptor.ActionDescriptor descriptor = descriptors.get(i);
       XmlElement element = descriptor.element;
       switch (descriptor.name) {
-        case ACTION_ELEMENT_NAME -> unloadActionElement(element);
-        case GROUP_ELEMENT_NAME -> unloadGroupElement(element);
-        case REFERENCE_ELEMENT_NAME -> {
+        case action -> unloadActionElement(element);
+        case group -> unloadGroupElement(element);
+        case reference -> {
           AnAction action = processReferenceElement(element, module);
           if (action == null) {
             return;
@@ -1559,14 +1568,17 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   @Override
   public KeyboardShortcut getKeyboardShortcut(@NotNull String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
-    if (action == null) return null;
-    final ShortcutSet shortcutSet = action.getShortcutSet();
-    final Shortcut[] shortcuts = shortcutSet.getShortcuts();
-    for (final Shortcut shortcut : shortcuts) {
-      // Shortcut can be MouseShortcut here.
-      // For example IdeaVIM often assigns them
+    if (action == null) {
+      return null;
+    }
+
+    ShortcutSet shortcutSet = action.getShortcutSet();
+    Shortcut[] shortcuts = shortcutSet.getShortcuts();
+    for (Shortcut shortcut : shortcuts) {
+      // Shortcut can be a MouseShortcut here.
+      // For example, `IdeaVIM` often assigns them
       if (shortcut instanceof KeyboardShortcut) {
-        final KeyboardShortcut kb = (KeyboardShortcut)shortcut;
+        KeyboardShortcut kb = (KeyboardShortcut)shortcut;
         if (kb.getSecondKeyStroke() == null) {
           return (KeyboardShortcut)shortcut;
         }
@@ -1649,6 +1661,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
         DataContext context = getContextBy(contextComponent);
 
+        @SuppressWarnings("MagicConstant")
         AnActionEvent event = new AnActionEvent(
           inputEvent, context,
           place != null ? place : ActionPlaces.UNKNOWN,
