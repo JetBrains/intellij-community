@@ -33,6 +33,8 @@ abstract class ProjectTemplate : DisplayableSettingItem {
     abstract val id: String
     open val icon: Icon? = null
 
+    open fun isVisible() = true
+
     private val setsDefaultValues: List<SettingWithValue<*, *>>
         get() = listOf(KotlinPlugin.projectKind.reference withValue projectKind)
 
@@ -77,18 +79,12 @@ abstract class ProjectTemplate : DisplayableSettingItem {
             FullStackWebApplicationProjectTemplate,
             MultiplatformLibraryProjectTemplate,
             NativeApplicationProjectTemplate,
+            WasmApplicationProjectTemplate,
             FrontendApplicationProjectTemplate,
             ReactApplicationProjectTemplate,
             NodeJsApplicationProjectTemplate,
             ConsoleApplicationProjectTemplateWithSample
-        ).run {
-            // in IDE Registry is filled with default false value
-            // But in tests there is no registry, so true for tests
-            if (Registry.`is`("kotlin.wasm.wizard", true))
-                this + WasmApplicationProjectTemplate
-            else
-                this
-        } + extensionTemplates
+        ) + extensionTemplates
 
         private val extensionTemplates: List<ProjectTemplate>
             get() = mutableListOf<ProjectTemplate>().also { list ->
@@ -250,6 +246,10 @@ object WasmApplicationProjectTemplate : ProjectTemplate() {
     override val id = "simpleWasmApplication"
     override val icon: Icon
         get() = KotlinIcons.Wizard.WEB
+
+    override fun isVisible(): Boolean {
+        return Registry.`is`("kotlin.wasm.wizard")
+    }
 
     @NonNls
     override val suggestedProjectName: String = "myWasmApplication"
