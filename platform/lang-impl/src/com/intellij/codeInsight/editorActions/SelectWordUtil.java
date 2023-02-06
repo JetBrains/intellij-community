@@ -5,6 +5,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.project.DumbService;
@@ -269,11 +270,13 @@ public final class SelectWordUtil {
    * Returns if there is any expandable whitespace belonging to the given psiWhiteSpace
    * by any side of a caret at specified cursorPosition
    */
-  public static boolean canWhiteSpaceBeExpanded(PsiWhiteSpace psiWhiteSpace, int cursorPosition) {
-    Character charBeforeCursor = getCharBeforeCursorInPsiElement(psiWhiteSpace, cursorPosition);
+  public static boolean canWhiteSpaceBeExpanded(PsiWhiteSpace psiWhiteSpace, int cursorPosition, Caret caret) {
+    int beforeOffset = caret.hasSelection()? caret.getSelectionStart() : cursorPosition;
+    Character charBeforeCursor = getCharBeforeCursorInPsiElement(psiWhiteSpace, beforeOffset);
     if (charBeforeCursor != null && isExpandableWhiteSpace(charBeforeCursor)) return true;
 
-    Character charAfterCursor = getCharAfterCursorInPsiElement(psiWhiteSpace, cursorPosition);
+    int afterOffset = caret.hasSelection()? caret.getSelectionEnd() : cursorPosition;
+    Character charAfterCursor = getCharAfterCursorInPsiElement(psiWhiteSpace, afterOffset);
     if (charAfterCursor != null && isExpandableWhiteSpace(charAfterCursor)) return true;
 
     return false;

@@ -127,7 +127,7 @@ public class SelectWordHandler extends EditorActionHandler.ForEachCaret {
       }
     }
 
-    if (!(element instanceof PsiWhiteSpace && SelectWordUtil.canWhiteSpaceBeExpanded((PsiWhiteSpace) element, caretOffset))) {
+    if (!(element instanceof PsiWhiteSpace && SelectWordUtil.canWhiteSpaceBeExpanded((PsiWhiteSpace) element, caretOffset, caret))) {
       while (element instanceof PsiWhiteSpace || element != null && StringUtil.isEmptyOrSpaces(element.getText())) {
         while (element.getNextSibling() == null) {
           if (element instanceof PsiFile) return null;
