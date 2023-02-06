@@ -45,7 +45,7 @@ interface ProjectActivity {
 interface ProjectPostStartupActivity : ProjectActivity
 
 /**
- * `startupActivity` activity must be defined only by a core and requires approval by core team.
+ * `initProjectActivity` activity must be defined only by a core and requires approval by core team.
  */
 @Internal
 interface InitProjectActivity {
