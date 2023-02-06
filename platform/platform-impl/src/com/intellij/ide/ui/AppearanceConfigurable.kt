@@ -166,7 +166,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           var resetZoom: Cell<ActionLink>? = null
 
           val model = IdeScaleTransformer.Settings.createIdeScaleComboboxModel()
-          comboBox(model, SimpleListCellRenderer.create("") { it })
+          val zoomComboBox = comboBox(model, SimpleListCellRenderer.create("") { it })
             .bindItem({ settings.ideScale.percentStringValue }, { })
             .onChanged {
               IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, false)?.let { scale ->
@@ -175,6 +175,15 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 settings.fireUISettingsChanged()
               }
             }.gap(RightGap.SMALL)
+
+          try {
+            val zoomInString = KeymapUtil.getShortcutText("ZoomInIdeAction")
+            val zoomOutString = KeymapUtil.getShortcutText("ZoomOutIdeAction")
+            val resetScaleString = KeymapUtil.getShortcutText("ResetIdeScaleAction")
+
+            zoomComboBox.comment(message("combobox.ide.scale.comment.format", zoomInString, zoomOutString, resetScaleString))
+          }
+          catch (_: Throwable) {}
 
           resetZoom = link(message("ide.scale.reset.link")) {
             model.selectedItem = defaultScale.percentStringValue
