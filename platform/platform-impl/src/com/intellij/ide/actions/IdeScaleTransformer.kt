@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.layout.ValidationInfoBuilder
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
 import kotlin.math.abs
 
 @Service(Service.Level.APP)
@@ -70,14 +71,20 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
                                                                        UISettings.getInstance().presentationModeIdeScale.percentStringValue)
 
       fun validatePercentScaleInput(builder: ValidationInfoBuilder, comboBox: ComboBox<String>): ValidationInfo? {
-        val scale = scaleFromPercentStringValue(comboBox.item)
-                    ?: return builder.error(IdeBundle.message("presentation.mode.ide.scale.wrong.number.message"))
+        val message = validatePercentScaleInput(comboBox.item) ?: return null
+        return builder.error(message)
+      }
+
+      @Nls
+      fun validatePercentScaleInput(string: String): String? {
+        val scale = scaleFromPercentStringValue(string)
+                    ?: return IdeBundle.message("presentation.mode.ide.scale.wrong.number.message")
 
         if (scale.percentValue < PRESENTATION_MODE_MIN_SCALE.percentValue
             || scale.percentValue > PRESENTATION_MODE_MAX_SCALE.percentValue) {
-          return builder.error(IdeBundle.message("presentation.mode.ide.scale.out.of.range.number.message.format",
-                                                 PRESENTATION_MODE_MIN_SCALE.percentValue,
-                                                 PRESENTATION_MODE_MAX_SCALE.percentValue))
+          return IdeBundle.message("presentation.mode.ide.scale.out.of.range.number.message.format",
+                                   PRESENTATION_MODE_MIN_SCALE.percentValue,
+                                   PRESENTATION_MODE_MAX_SCALE.percentValue)
         }
 
         return null

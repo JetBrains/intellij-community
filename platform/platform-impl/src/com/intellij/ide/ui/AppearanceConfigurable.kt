@@ -166,8 +166,13 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       row(message("combobox.ide.scale.percent")) {
         comboBox(IdeScaleTransformer.Settings.regularScaleComboboxModel, SimpleListCellRenderer.create("") { it })
-          .bindItem( { settings.ideScale.percentStringValue },
-                     { IdeScaleTransformer.Settings.scaleFromPercentStringValue(it)?.let { scale -> settings.ideScale = scale } })
+          .bindItem( { settings.ideScale.percentStringValue }, { })
+          .onChanged {
+            IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item)?.let { scale ->
+              settings.ideScale = scale
+              settings.fireUISettingsChanged()
+            }
+          }
       }.layout(RowLayout.INDEPENDENT).topGap(TopGap.SMALL)
 
       row {
@@ -423,14 +428,21 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       group(message("group.presentation.mode")) {
         row(message("presentation.mode.ide.scale")) {
           comboBox(IdeScaleTransformer.Settings.presentationModeScaleComboboxModel, SimpleListCellRenderer.create("") { it })
-            .bindItem( { settings.presentationModeIdeScale.percentStringValue },
-                       { IdeScaleTransformer.Settings.scaleFromPercentStringValue(it)?.let {
-                         scale -> settings.presentationModeIdeScale = scale
-                       } })
+            .bindItem( { settings.presentationModeIdeScale.percentStringValue }, { })
             .applyToComponent {
               isEditable = true
             }
             .validationOnInput(IdeScaleTransformer.Settings::validatePercentScaleInput)
+            .onChanged {
+              if (IdeScaleTransformer.Settings.validatePercentScaleInput(it.item) != null) return@onChanged
+
+              IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item)?.let { scale ->
+                settings.presentationModeIdeScale = scale
+                if (settings.presentationMode) {
+                  settings.fireUISettingsChanged()
+                }
+              }
+            }
             .shouldUpdateLaF()
         }
       }
