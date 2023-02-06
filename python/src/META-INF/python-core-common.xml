@@ -23,6 +23,8 @@
     <listener
       class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
       topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
+    <listener class="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowModuleAttachListener"
+              topic="com.intellij.platform.ModuleAttachListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
