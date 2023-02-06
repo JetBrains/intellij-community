@@ -230,6 +230,10 @@ public class WindowTabsComponent extends JBTabsImpl {
     setSelectionChangeHandler((info, requestFocus, doChangeSelection) -> {
       IdeFrameImpl tabFrame = (IdeFrameImpl)info.getObject();
       if (tabFrame == myNativeWindow) {
+        TabInfo selectedInfo = getSelectedInfo();
+        if (selectedInfo != null && selectedInfo.getObject() == myNativeWindow) {
+          return ActionCallback.REJECTED;
+        }
         return doChangeSelection.run();
       }
       else {
