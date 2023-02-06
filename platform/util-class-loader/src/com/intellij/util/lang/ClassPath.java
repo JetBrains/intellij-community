@@ -77,7 +77,7 @@ public final class ClassPath {
     }
   }
 
-  interface ClassDataConsumer {
+  public interface ClassDataConsumer {
     boolean isByteBufferSupported(String name);
 
     Class<?> consumeClassData(String name, byte[] data, Loader loader) throws IOException;

@@ -41,7 +41,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   private static final ThreadLocal<Boolean> skipFindingResource = new ThreadLocal<>();
 
   protected final ClassPath classPath;
-  private final ClassLoadingLocks<String> classLoadingLocks;
+  private final ClassLoadingLocks classLoadingLocks;
   private final boolean isBootstrapResourcesAllowed;
   private final boolean isSystemClassLoader;
 
@@ -143,7 +143,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     classPath = new ClassPath(builder.files, builder, resourceFileFactory, mimicJarUrlConnection);
 
     isBootstrapResourcesAllowed = builder.isBootstrapResourcesAllowed;
-    classLoadingLocks = isParallelCapable ? new ClassLoadingLocks<>() : null;
+    classLoadingLocks = isParallelCapable ? new ClassLoadingLocks() : null;
   }
 
   protected UrlClassLoader(@NotNull ClassPath classPath) {
@@ -152,7 +152,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     this.classPath = classPath;
     isBootstrapResourcesAllowed = false;
     isSystemClassLoader = false;
-    classLoadingLocks = new ClassLoadingLocks<>();
+    classLoadingLocks = new ClassLoadingLocks();
   }
 
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
@@ -330,7 +330,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @Override
-  public @NotNull Enumeration<URL> findResources(@NotNull String name) throws IOException {
+  public @NotNull Enumeration<URL> findResources(@NotNull String name) {
     return classPath.getResources(name);
   }
 
