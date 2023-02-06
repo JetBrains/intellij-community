@@ -23,6 +23,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
@@ -783,6 +784,9 @@ public class ChangesViewManager implements ChangesViewEx,
         for (ChangesViewModifier extension : ChangesViewModifier.KEY.getExtensions(myProject)) {
           try {
             extension.modifyTreeModelBuilder(treeModelBuilder);
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
           }
           catch (Throwable t) {
             Logger.getInstance(ChangesViewToolWindowPanel.class).error(t);
