@@ -28,7 +28,7 @@ sealed interface EnvironmentKey {
   /**
    * The default value for a key.
    * If [defaultValue] for a key is empty, then the key has **no** default value,
-   * and [EnvironmentParametersService.getEnvironmentValue] may return `null`.
+   * and [EnvironmentParametersService.requestEnvironmentValue] enters in its error handling state.
    */
   val defaultValue: @NonNls String
 

@@ -16,7 +16,7 @@ class HeadlessEnvironmentParametersService(scope: CoroutineScope) : BaseEnvironm
     getModelFromFile()
   }
 
-  override suspend fun getEnvironmentValue(key: EnvironmentKey): String {
+  private suspend fun scanForEnvironmentValue(key: EnvironmentKey, onError: () -> String?): String? {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
       LOG.warn("Access to environment parameters in the IDE with UI must be delegated to the user")
     }
@@ -34,15 +34,25 @@ class HeadlessEnvironmentParametersService(scope: CoroutineScope) : BaseEnvironm
     }
 
     val valueAsDefault = key.defaultValue.ifEmpty { null }
-    if (valueAsDefault == null) {
-      throw CancellationException(
-        """Missing value for a key '${key.id}'
-          |Usage:
-          |${key.description.get()}
-          |""".trimMargin())
+    if (valueAsDefault != null) {
+      return valueAsDefault
     }
-    return valueAsDefault
+    return onError()
   }
+
+  override suspend fun requestEnvironmentValue(key: EnvironmentKey): String? = scanForEnvironmentValue(key) {
+    throw MissingEnvironmentKeyException(key)
+  }
+
+  override suspend fun getEnvironmentValueOrNull(key: EnvironmentKey): String? = scanForEnvironmentValue(key) {
+    null
+  }
+
+  class MissingEnvironmentKeyException(val key: EnvironmentKey) : CancellationException(
+    """Missing value for a key '${key.id}'
+      |Usage:
+      |${key.description.get()}
+      |""".trimMargin())
 
   private class EnvironmentKeyEntry {
     @Suppress("unused")

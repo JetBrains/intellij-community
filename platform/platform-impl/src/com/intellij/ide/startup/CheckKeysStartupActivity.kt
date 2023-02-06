@@ -3,13 +3,13 @@ package com.intellij.ide.startup
 
 import com.intellij.ide.environment.EnvironmentKeyRegistry
 import com.intellij.ide.environment.EnvironmentParametersService
+import com.intellij.ide.environment.impl.HeadlessEnvironmentParametersService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
-import kotlinx.coroutines.CancellationException
 
 class CheckKeysStartupActivity : ProjectPostStartupActivity {
   override suspend fun execute(project: Project) {
@@ -22,12 +22,10 @@ class CheckKeysStartupActivity : ProjectPostStartupActivity {
     var exceptionOccurred = false
     for (registry in blockingContext { EnvironmentKeyRegistry.EP_NAME.extensionList }) {
       for (requiredKey in registry.getRequiredKeys(project)) {
-        try {
-          environmentService.getEnvironmentValue(requiredKey)
-        }
-        catch (e: CancellationException) {
+        val value = environmentService.getEnvironmentValueOrNull(requiredKey)
+        if (value == null) {
           exceptionOccurred = true
-          messageBuilder.appendLine(e.message)
+          messageBuilder.appendLine(HeadlessEnvironmentParametersService.MissingEnvironmentKeyException(requiredKey).message)
         }
       }
     }

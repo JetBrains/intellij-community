@@ -13,7 +13,7 @@ abstract class BaseEnvironmentParametersService : EnvironmentParametersService {
   }
 
   protected fun checkKeyRegistered(key: EnvironmentKey) {
-    val isKeyRegistered = EnvironmentKeyRegistry.EP_NAME.lazySequence().any { it.getAllKeys().contains(key) }
+    val isKeyRegistered = EnvironmentKeyRegistry.EP_NAME.extensionList.any { it.getAllKeys().contains(key) }
     if (!isKeyRegistered) {
       LOG.warn("The key '${key.id}' is not registered in any 'com.intellij.ide.environment.EnvironmentKeyRegistry'. " +
                "It may lead to poor discoverability of this key and to worsened support from the IDE.")
