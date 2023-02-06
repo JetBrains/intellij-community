@@ -13,7 +13,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
@@ -35,7 +35,7 @@ class ToggleEssentialHighlightingAction : ToggleAction() {
   }
 }
 
-internal class EssentialHighlightingNotifier : ProjectPostStartupActivity {
+internal class EssentialHighlightingNotifier : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (EssentialHighlightingMode.isEnabled()) {
       notifyOnEssentialHighlightingMode(project)
