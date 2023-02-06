@@ -8,7 +8,6 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -32,7 +31,6 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.JavaBaseRefactoringSupportProvider;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
-import com.intellij.refactoring.introduceParameter.EnclosingMethodSelectionDialog;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.containers.ContainerUtil;
@@ -1149,22 +1147,6 @@ public final class CommonJavaRefactoringUtil {
       }
     }
     return enclosingMethods;
-  }
-
-  @Nullable
-  public static PsiMethod chooseEnclosingMethod(@NotNull PsiMethod method) {
-    final List<PsiMethod> validEnclosingMethods = getEnclosingMethods(method);
-    if (validEnclosingMethods.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
-      final EnclosingMethodSelectionDialog dialog = new EnclosingMethodSelectionDialog(method.getProject(), validEnclosingMethods);
-      if (!dialog.showAndGet()) {
-        return null;
-      }
-      method = dialog.getSelectedMethod();
-    }
-    else if (validEnclosingMethods.size() == 1) {
-      method = validEnclosingMethods.get(0);
-    }
-    return method;
   }
 
   private static boolean isLibraryInterfaceMethod(final PsiMethod method) {

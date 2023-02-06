@@ -3,8 +3,10 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -12,21 +14,26 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.JavaElementKind;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.CommonJavaRefactoringUtil;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
@@ -83,24 +90,21 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
 
     PsiMethod method = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiMethod.class);
     LOG.assertTrue(method != null);
-    method = CommonJavaRefactoringUtil.chooseEnclosingMethod(method);
-    if (method == null) return;
+    chooseEnclosingMethod(editor, method, m -> {
+      m = SuperMethodWarningUtil.checkSuperMethod(m);
+      if (m == null) return;
 
-    method = SuperMethodWarningUtil.checkSuperMethod(method);
-    if (method == null) return;
-
-    final List<ParameterInfoImpl> parameterInfos = getParameterInfos(method);
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[0]);
-      String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()));
-      var processor = JavaRefactoringFactory.getInstance(project)
-        .createChangeSignatureProcessor(method, false, modifier, method.getName(), method.getReturnType(), array, null, null, null, null);
-      processor.run();
-    }
-    else {
-      try {
+      final List<ParameterInfoImpl> parameterInfos = getParameterInfos(m);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[0]);
+        String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(m.getModifierList()));
+        var processor = JavaRefactoringFactory.getInstance(project)
+          .createChangeSignatureProcessor(m, false, modifier, m.getName(), m.getReturnType(), array, null, null, null, null);
+        processor.run();
+      }
+      else {
         JavaChangeSignatureDialog dialog =
-          JavaChangeSignatureDialog.createAndPreselectNew(project, method, parameterInfos, true, myReferenceExpression);
+          JavaChangeSignatureDialog.createAndPreselectNew(project, m, parameterInfos, true, myReferenceExpression);
         dialog.setParameterInfos(parameterInfos);
         if (dialog.showAndGet()) {
           final String varName = myReferenceExpression.getReferenceName();
@@ -108,8 +112,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
             if (info.isNew()) {
               final String newParamName = info.getName();
               if (!Comparing.strEqual(varName, newParamName)) {
-                final PsiExpression newExpr =
-                  JavaPsiFacade.getElementFactory(project).createExpressionFromText(newParamName, method);
+                final PsiExpression newExpr = JavaPsiFacade.getElementFactory(project).createExpressionFromText(newParamName, m);
                 WriteCommandAction.writeCommandAction(project).run(() -> {
                   final PsiReferenceExpression[] refs =
                     CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
@@ -123,9 +126,52 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
           }
         }
       }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+    });
+  }
+
+  private static void chooseEnclosingMethod(Editor editor, PsiMethod method, Consumer<PsiMethod> consumer) {
+    final List<PsiMethod> validEnclosingMethods = CommonJavaRefactoringUtil.getEnclosingMethods(method);
+    if (validEnclosingMethods.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
+      PsiElementListCellRenderer<PsiMethod> renderer = new PsiElementListCellRenderer<>() {
+        @Override
+        public String getElementText(PsiMethod method) {
+          return PsiFormatUtil.formatMethod(
+            method,
+            PsiSubstitutor.EMPTY,
+            PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+            PsiFormatUtilBase.SHOW_TYPE);
+        }
+
+        @Override
+        protected @Nullable String getContainerText(PsiMethod method, String name) {
+          return null;
+        }
+      };
+      ScopeHighlighter highlighter = new ScopeHighlighter(editor);
+      IPopupChooserBuilder<PsiMethod> builder = JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(validEnclosingMethods)
+        .setRenderer(renderer)
+        .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        .setTitle(QuickFixBundle.message("target.method.chooser.title"))
+        .setItemChosenCallback(consumer)
+        .setItemSelectedCallback(i -> {
+          highlighter.dropHighlight();
+          if (i == null) return;
+          PsiIdentifier identifier = i.getNameIdentifier();
+          if (identifier == null) return;
+          highlighter.highlight(identifier, Collections.singletonList(identifier));
+        })
+        .addListener(new JBPopupListener() {
+          @Override
+          public void onClosed(@NotNull LightweightWindowEvent event) {
+            highlighter.dropHighlight();
+          }
+        });
+      renderer.installSpeedSearch(builder);
+      builder.createPopup().showInBestPositionFor(editor);
+    }
+    else {
+      consumer.consume(validEnclosingMethods.get(0));
     }
   }
 
