@@ -42,9 +42,7 @@ class DesktopLayout(
     if (isNewUi) {
       info.isShowStripeButton = false
     }
-    else {
-      info.isSplit = task.sideTool
-    }
+    info.isSplit = task.sideTool
 
     info.toolWindowPaneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
     info.anchor = task.anchor
