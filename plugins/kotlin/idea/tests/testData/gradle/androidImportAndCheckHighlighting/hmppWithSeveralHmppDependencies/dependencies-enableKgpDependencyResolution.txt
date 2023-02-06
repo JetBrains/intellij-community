@@ -22,9 +22,7 @@ mpp-issue-bootstrap.p1.androidTest
     org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4 (TEST)
     org.slf4j:slf4j-api:1.7.36 (TEST)
     p1.commonMain (friend, TEST)
-    p1.commonMain (friend, TEST)
     p1.commonTest (refines, TEST)
-    p1.jvmAndAndroidMain (friend, TEST)
     p1.jvmAndAndroidMain (friend, TEST)
     p1.main (friend, TEST)
 
