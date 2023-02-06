@@ -90,7 +90,7 @@ public final class WSLUtil {
    * @deprecated Use {@link WslDistributionManager#getOrCreateDistributionByMsId(String)}
    */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static WSLDistribution getDistributionByMsId(@Nullable String name) {
     if (name == null) {
       return null;

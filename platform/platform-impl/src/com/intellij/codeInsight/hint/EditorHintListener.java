@@ -17,7 +17,7 @@ public interface EditorHintListener {
   /**
    * @deprecated use overloaded method below
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void hintShown(Project project, @NotNull LightweightHint hint, int flags) { }
 
   default void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {

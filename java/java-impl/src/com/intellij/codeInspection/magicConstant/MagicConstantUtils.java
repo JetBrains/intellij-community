@@ -120,7 +120,7 @@ public final class MagicConstantUtils {
   /**
    * @deprecated used {@link #getAllowedValues(PsiModifierListOwner, PsiType, PsiElement)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, @Nullable PsiType type) {
     return getAllowedValues(element, type, null);

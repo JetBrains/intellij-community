@@ -150,6 +150,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   /**
    * @deprecated Not used anymore.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public abstract @Nullable String getDefaultLightLaf();
 

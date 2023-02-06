@@ -11,6 +11,7 @@ import com.intellij.grazie.utils.text
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.ContainerUtil
 import org.apache.commons.text.similarity.LevenshteinDistance
+import org.jetbrains.annotations.ApiStatus
 import org.languagetool.JLanguageTool
 import org.languagetool.ResultCache
 import org.languagetool.Tag
@@ -39,6 +40,7 @@ object LangTool : GrazieStateLifecycle {
 
   internal fun globalIdPrefix(lang: Lang): String = "LanguageTool." + lang.remote.iso.name + "."
 
+  @ApiStatus.ScheduledForRemoval
   @Suppress("UNUSED_PARAMETER", "DeprecatedCallableAddReplaceWith")
   @Deprecated("use the other overload")
   fun getTool(lang: Lang, state: GrazieConfig.State): JLanguageTool {

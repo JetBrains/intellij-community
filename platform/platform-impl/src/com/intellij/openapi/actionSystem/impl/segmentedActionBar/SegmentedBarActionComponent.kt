@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAware
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Graphics2D
@@ -14,12 +15,14 @@ import javax.swing.JPanel
 open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, DumbAware {
 
   companion object {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use {@link SegmentedActionToolbarComponent#Companion#isCustomBar(Component)}",
                 ReplaceWith("SegmentedActionToolbarComponent.isCustomBar(component)"))
     fun isCustomBar(component: Component): Boolean {
       return SegmentedActionToolbarComponent.isCustomBar(component)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use {@link SegmentedActionToolbarComponent#Companion#paintButtonDecorations(Component)}",
                 ReplaceWith("SegmentedActionToolbarComponent.paintButtonDecorations(g, c, paint)"))
     fun paintButtonDecorations(g: Graphics2D, c: JComponent, paint: Paint): Boolean {

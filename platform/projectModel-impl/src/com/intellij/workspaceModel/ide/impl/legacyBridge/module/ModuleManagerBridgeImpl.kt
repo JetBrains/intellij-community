@@ -437,6 +437,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       get() = getMutableExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use ModuleBridgeUtils#findModuleEntity instead")
     fun EntityStorage.findModuleEntity(module: ModuleBridge) = moduleMap.getFirstEntity(module) as ModuleEntity?
 

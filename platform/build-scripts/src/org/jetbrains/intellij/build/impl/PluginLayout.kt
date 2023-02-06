@@ -298,6 +298,7 @@ class PluginLayout private constructor(
       layout.pluginXmlPatcher = { text, _ -> pluginXmlPatcher.apply(text) }
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "localizable resources are always put to the module JAR, so there is no need to call this method anymore")
     fun doNotCreateSeparateJarForLocalizableResources() {
     }

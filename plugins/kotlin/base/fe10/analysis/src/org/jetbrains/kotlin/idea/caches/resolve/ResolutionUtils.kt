@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -34,6 +35,7 @@ fun KtElement.getResolutionFacade(): ResolutionFacade = KotlinCacheService.getIn
  *
  * But for non-local declarations it ignores bodyResolveMode and uses LazyDeclarationResolver directly
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     message = "This function has unclear semantics. Please use either unsafeResolveToDescriptor or resolveToDescriptorIfAny instead",
     replaceWith = ReplaceWith("unsafeResolveToDescriptor")
@@ -221,6 +223,7 @@ fun ResolutionFacade.resolveImportReference(
 }
 
 @Suppress("DEPRECATION")
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "This method is going to be removed in 1.3.0 release",
     ReplaceWith("analyzeWithAllCompilerChecks().bindingContext"),

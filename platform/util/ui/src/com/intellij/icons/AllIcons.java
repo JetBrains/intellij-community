@@ -1284,9 +1284,10 @@ public class AllIcons {
       /** 16x16 */ public static final @NotNull Icon Safari = load("xml/browsers/safari.svg", -1768440962, 0);
       /** 16x16 */ public static final @NotNull Icon Yandex = load("xml/browsers/yandex.svg", -1968862051, 0);
 
-      /** @deprecated use {@link #Chrome} */
+      /** @deprecated to be removed (use {@link #Chrome}) */
       @SuppressWarnings("unused")
       @Deprecated
+      @ScheduledForRemoval
       public static final @NotNull Icon Chrome16 = Chrome;
     }
 

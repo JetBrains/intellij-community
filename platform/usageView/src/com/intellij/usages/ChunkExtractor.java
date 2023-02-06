@@ -174,7 +174,7 @@ public final class ChunkExtractor {
   /**
    * @deprecated use {@link #appendTextChunks(UsageInfo2UsageAdapter, CharSequence, int, int, boolean, List)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public TextChunk @NotNull [] createTextChunks(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,
                                                 @NotNull CharSequence chars,
                                                 int start,

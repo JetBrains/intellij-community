@@ -83,6 +83,7 @@ interface CodeVisionProvider<T> {
    * Calls on background BEFORE editor opening
    * @return ranges where placeholders should be when editor opens
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use getPlaceholderCollector")
   fun collectPlaceholders(editor: Editor): List<TextRange> = emptyList()
 

@@ -11,6 +11,7 @@ public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> 
   private volatile @Nullable T myValue;
 
   /** @deprecated please use {@link NullableLazyValue#volatileLazyNullable} instead */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   protected VolatileNullableLazyValue() { }
@@ -37,6 +38,7 @@ public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> 
   }
 
   /** @deprecated please use {@link NullableLazyValue#volatileLazyNullable} instead */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static @NotNull <T> VolatileNullableLazyValue<T> createValue(@NotNull Factory<? extends T> value) {

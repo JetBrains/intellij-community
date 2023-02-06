@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @deprecated V2 implementation doesn't allow customization of the tool window in plugins.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class AbstractDocToolWindowManager implements DocToolWindowManager {
 
   @Override

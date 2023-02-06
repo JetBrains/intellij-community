@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusOwner
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 private val testDescriptor by lazy { DefaultPluginDescriptor("test") }
@@ -69,6 +70,7 @@ fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Cla
 
 @Suppress("DeprecatedCallableAddReplaceWith")
 @TestOnly
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Pass parentDisposable")
 fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Class<T>, instance: T) {
   (this as ComponentManagerImpl).replaceComponentInstance(componentInterface, instance, null)

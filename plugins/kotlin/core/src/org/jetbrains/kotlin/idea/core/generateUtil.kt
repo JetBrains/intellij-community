@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.utils.IDEAPlatforms
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.utils.IDEAPluginsCompatibilityAPI
     message = "Use 'insertMembersAfterAndReformat()' instead",
     plugins = "Android IDEA plugin: AndroidCreateOnClickHandlerAction.java"
 )
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Use 'insertMembersAfterAndReformat()' instead",
     ReplaceWith("insertMembersAfterAndReformat(editor, classOrObject, declaration, anchor)")
@@ -22,6 +24,7 @@ fun <T : KtDeclaration> insertMember(editor: Editor?, classOrObject: KtClassOrOb
     return insertMembersAfterAndReformat(editor, classOrObject, declaration, anchor)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Use 'insertMembersAfter()' instead",
     ReplaceWith("insertMembersAfter(editor, classOrObject, members, anchor, getAnchor)")

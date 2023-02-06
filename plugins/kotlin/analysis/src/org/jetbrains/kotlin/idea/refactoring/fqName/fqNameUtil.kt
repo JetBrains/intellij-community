@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.refactoring.fqName
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -22,6 +23,7 @@ val KotlinType.fqName: FqName?
 )
 fun PsiElement.getKotlinFqName(): FqName? = this.kotlinFqName
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "For binary compatibility",
     replaceWith = ReplaceWith("this.isImported(importPath, skipAliasedImports)", "org.jetbrains.kotlin.idea.base.utils.fqname.isImported"),

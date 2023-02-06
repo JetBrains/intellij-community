@@ -522,6 +522,7 @@ public interface Application extends ComponentManager {
   void removeApplicationListener(@NotNull ApplicationListener listener);
 
   /** @deprecated use corresponding {@link Application#invokeLater} methods */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @NotNull ModalityInvokator getInvokator();
 

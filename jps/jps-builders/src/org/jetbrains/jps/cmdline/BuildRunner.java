@@ -124,7 +124,7 @@ public final class BuildRunner {
    * @deprecated Use {@link #runBuild(ProjectDescriptor, CanceledStatus, MessageHandler, BuildType, List, boolean)} instead.
    * constantSearch parameter is ignored
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void runBuild(ProjectDescriptor pd,
                        CanceledStatus cs,
                        @Nullable Callbacks.ConstantAffectionResolver constantSearch,

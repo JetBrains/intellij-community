@@ -49,7 +49,7 @@ public abstract class IdeaTestFixtureFactory {
   /**
    * @deprecated Use {@link #createLightFixtureBuilder(LightProjectDescriptor, String)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor) {
     String message = "Use createLightFixtureBuilder(LightProjectDescriptor, String) instead";
     Logger.getInstance(IdeaTestFixtureFactory.class).warn(new RuntimeException(message));

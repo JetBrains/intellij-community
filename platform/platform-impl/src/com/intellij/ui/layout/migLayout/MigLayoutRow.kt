@@ -507,6 +507,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     return row
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   @ApiStatus.Internal
   override fun radioButton(text: String, comment: String?): CellBuilder<JBRadioButton> {
@@ -515,6 +516,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     return result
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   override fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String?): CellBuilder<JBRadioButton> {
     return super.radioButton(text, prop, comment).also { attachSubRowsEnabled(it.component) }

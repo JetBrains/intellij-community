@@ -80,7 +80,7 @@ public class FontPreferences {
    */
   @Nullable
   @NlsSafe
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static String getFallbackName(@NotNull String fontName, int fontSize, @Nullable EditorColorsScheme fallbackScheme) {
     return getFallbackName(fontName, fallbackScheme);
   }

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 
@@ -14,6 +15,7 @@ interface LibraryDependenciesCache {
         fun getInstance(project: Project): LibraryDependenciesCache = project.service()
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(
         "Use 'getLibraryDependencies()' instead.",
         ReplaceWith("getLibraryDependencies(libraryInfo).let { it.libraries to it.sdk }")
