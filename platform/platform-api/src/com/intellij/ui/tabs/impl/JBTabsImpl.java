@@ -6,7 +6,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -32,7 +31,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBThinOverlappingScrollBar;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.hover.HoverListener;
-import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
@@ -485,8 +483,7 @@ public class JBTabsImpl extends JComponent
   }
 
   private @NotNull ActionToolbar createToolbar(ActionGroup group) {
-    final ActionToolbar toolbar =
-      ActionManagerEx.getInstanceEx().createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, group, true, text -> new ThinActionSeparator());
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, group, true);
     toolbar.setTargetComponent(this);
     toolbar.getComponent().setBorder(JBUI.Borders.empty());
     toolbar.getComponent().setOpaque(false);
@@ -2705,9 +2702,21 @@ public class JBTabsImpl extends JComponent
     ActionGroup tabActionGroup = selectedInfo != null ? selectedInfo.getTabPaneActions() : null;
     DefaultActionGroup entryPointActionGroup = getEntryPointActionGroup();
     if (tabActionGroup != null || entryPointActionGroup != null) {
-      ActionGroup group = tabActionGroup != null && entryPointActionGroup != null
-                          ? new DefaultActionGroup(tabActionGroup, entryPointActionGroup)
-                          : tabActionGroup != null ? tabActionGroup : entryPointActionGroup;
+      ActionGroup group;
+      if (tabActionGroup != null && entryPointActionGroup != null) {
+        if (!myMoreToolbar.getComponent().getBounds().isEmpty()
+            && tabActionGroup.getChildren(null).length != 0
+            // check that more toolbar and entry point toolbar are in the same row
+            && (!TabLayout.showPinnedTabsSeparately() || ContainerUtil.all(getTabs(), info -> !info.isPinned()))) {
+          group = new DefaultActionGroup(new FakeEmptyAction(), Separator.create(), tabActionGroup, Separator.create(), entryPointActionGroup);
+        }
+        else {
+          group = new DefaultActionGroup(tabActionGroup, Separator.create(), entryPointActionGroup);
+        }
+      }
+      else {
+        group = tabActionGroup != null ? tabActionGroup : entryPointActionGroup;
+      }
 
       if (myEntryPointToolbar != null && myEntryPointToolbar.getActionGroup().equals(group)) {
         // keep old toolbar to avoid blinking (actions need to be updated to be visible)
@@ -2734,17 +2743,20 @@ public class JBTabsImpl extends JComponent
            : JBUI.Borders.empty(0, 5, 0, 8);
   }
 
-  private static class ThinActionSeparator extends JComponent {
+  // Useful when you need to always show separator as first or last component of ActionToolbar
+  // Just put it as first or last action and any separator will not be counted as corner and will be shown
+  private static class FakeEmptyAction extends DumbAwareAction implements CustomComponentAction {
     @Override
-    protected void paintComponent(Graphics g) {
-      Graphics2D g2d = (Graphics2D)g;
-      g2d.setColor(JBUI.CurrentTheme.ActionButton.SEPARATOR_COLOR);
-      LinePainter2D.paint(g2d, 0, 0, 0, getHeight());
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      // do nothing
     }
 
     @Override
-    public Dimension getPreferredSize() {
-      return new JBDimension(1, 14);
+    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      JPanel panel = new JPanel();
+      Dimension size = new Dimension(0, 0);
+      panel.setPreferredSize(size);
+      return panel;
     }
   }
 
