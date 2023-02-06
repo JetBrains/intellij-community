@@ -155,6 +155,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     addVariablesAndWatches(session);
+
+    CustomActionsListener.subscribe(this, () -> initToolbars(session));
   }
 
   protected void initListeners(RunnerLayoutUi ui) {
@@ -301,8 +303,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     consoleContent.setHelpId(DefaultDebugExecutor.getDebugExecutorInstance().getHelpId());
     initToolbars(session);
-
-    CustomActionsListener.subscribe(this, () -> initToolbars(session));
 
     if (myEnvironment != null) {
       initLogConsoles(myEnvironment.getRunProfile(), myRunContentDescriptor, myConsole);
