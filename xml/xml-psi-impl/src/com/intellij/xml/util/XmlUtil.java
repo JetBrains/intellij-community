@@ -1050,7 +1050,7 @@ public final class XmlUtil {
     if (surelyUrl) return true;
     int protocolIndex = s.indexOf(":/");
     if (protocolIndex > 1 && !s.regionMatches(0, "classpath", 0, protocolIndex)) return true;
-    return ExternalResourceManager.getInstance().getResourceLocation(s, project) != s;
+    return !s.equals(ExternalResourceManager.getInstance().getResourceLocation(s, project));
   }
 
   public static String generateDocumentDTD(XmlDocument doc, boolean full) {
