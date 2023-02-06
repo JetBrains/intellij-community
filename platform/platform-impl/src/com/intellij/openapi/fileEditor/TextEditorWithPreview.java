@@ -447,9 +447,13 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
   protected AnAction @NotNull [] createTabActions() {
     return new AnAction[]{
-      getSingleChangeViewModeAction(),
+      //getSingleChangeViewModeAction(),
+      Separator.create(), //todo[konstantin.hudyakov] this separator will be hidden since toolbars can start with separator, but we need it according to mockups
+      getShowEditorAction(),
+      getShowEditorAndPreviewAction(),
+      getShowPreviewAction(),
       Separator.create(),
-      createTabViewModesPopupActionGroup()
+      //createTabViewModesPopupActionGroup()
     };
   }
 
