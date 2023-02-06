@@ -6,16 +6,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 
-interface DependencyProximityProvider {
+interface WebSymbolsContextSourceProximityProvider {
 
-  fun calculateProximity(project: Project, dir: VirtualFile, dependencies: Set<String>, dependenciesKind: DependenciesKind): Result
+  fun calculateProximity(project: Project, dir: VirtualFile, sourceNames: Set<String>, sourceKind: SourceKind): Result
 
   data class Result(val dependency2proximity: Map<String, Double> = emptyMap(),
                     val modificationTrackers: Collection<ModificationTracker> = emptyList())
 
-  enum class DependenciesKind {
+  enum class SourceKind {
     PackageManagerDependency,
-    IdeLibrary
+    IdeLibrary,
+    ProjectTool,
   }
 
   companion object {
@@ -23,17 +24,17 @@ interface DependencyProximityProvider {
     fun mergeProximity(a: Double?, b: Double): Double =
       a?.coerceAtMost(b) ?: b
 
-    private val EP_NAME = ExtensionPointName<DependencyProximityProvider>(
-      "com.intellij.webSymbols.dependencyProximityProvider")
+    private val EP_NAME = ExtensionPointName<WebSymbolsContextSourceProximityProvider>(
+      "com.intellij.webSymbols.contextSourceProximityProvider")
 
     internal fun calculateProximity(project: Project,
                                     dir: VirtualFile,
-                                    dependencies: Set<String>,
-                                    dependenciesKind: DependenciesKind): Result {
+                                    sourceNames: Set<String>,
+                                    sourceKind: SourceKind): Result {
       val dependency2proximity = mutableMapOf<String, Double>()
       val trackers = mutableSetOf<ModificationTracker>()
       EP_NAME.extensionList
-        .map { it.calculateProximity(project, dir, dependencies, dependenciesKind) }
+        .map { it.calculateProximity(project, dir, sourceNames, sourceKind) }
         .forEach {
           it.dependency2proximity.forEach { (name, proximity) ->
             dependency2proximity.merge(name, proximity, Companion::mergeProximity)
