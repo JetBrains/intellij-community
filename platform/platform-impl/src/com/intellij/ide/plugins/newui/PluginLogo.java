@@ -105,7 +105,7 @@ public final class PluginLogo {
     assert myPrepareToLoad != null;
     List<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>> descriptors = myPrepareToLoad;
     myPrepareToLoad = null;
-    runLoadTask(descriptors);
+    schedulePluginIconLoading(descriptors);
   }
 
   static @NotNull PluginLogoIconProvider getDefault() {
@@ -173,7 +173,7 @@ public final class PluginLogo {
     Pair<IdeaPluginDescriptor, LazyPluginLogoIcon> info = Pair.create(descriptor, lazyIcon);
 
     if (myPrepareToLoad == null) {
-      runLoadTask(Collections.singletonList(info));
+      schedulePluginIconLoading(Collections.singletonList(info));
     }
     else {
       myPrepareToLoad.add(info);
@@ -182,10 +182,15 @@ public final class PluginLogo {
     return lazyIcons;
   }
 
-  private static void runLoadTask(@NotNull List<? extends Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>> loadInfo) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+  private static void schedulePluginIconLoading(@NotNull List<? extends Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>> loadInfo) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isHeadlessEnvironment()) {
+      return;
+    }
+
+    app.executeOnPooledThread(() -> {
       for (Pair<IdeaPluginDescriptor, LazyPluginLogoIcon> info : loadInfo) {
-        if (ApplicationManager.getApplication().isDisposed()) {
+        if (app.isDisposed()) {
           return;
         }
         loadPluginIcons(info.first, info.second);
