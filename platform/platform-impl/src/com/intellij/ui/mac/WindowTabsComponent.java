@@ -436,7 +436,7 @@ public class WindowTabsComponent extends JBTabsImpl {
   private void moveTabToNewIndex(@NotNull IdeFrameImpl movedFrame, int newIndex) {
     for (int i = 0, count = getTabCount(); i < count; i++) {
       IdeFrameImpl tabFrame = (IdeFrameImpl)getTabAt(i).getObject();
-      if (tabFrame != movedFrame) {
+      if (tabFrame != myNativeWindow) {
         WindowTabsComponent tabsComponent =
           Objects.requireNonNull(MacWinTabsHandlerV2.getTabsComponent(MacWinTabsHandlerV2.getTabsContainer(tabFrame)));
         tabsComponent.reorderTabs(myIndexes);
