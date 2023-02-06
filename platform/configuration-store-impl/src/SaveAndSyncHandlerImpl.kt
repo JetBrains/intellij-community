@@ -158,19 +158,6 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
     val settings = GeneralSettings.getInstance()
 
-    generalSettingFlow(settings, GeneralSettings.PropertyNames.autoSaveIfInactive) { it.isAutoSaveIfInactive }
-      .filter { it }
-      .flatMapConcat {
-        generalSettingFlow(settings, GeneralSettings.PropertyNames.inactiveTimeout) { it.inactiveTimeout.seconds }
-      }
-      .distinctUntilChanged()
-      .flatMapConcat { delay ->
-        IdleTracker.getInstance().events.debounce(delay)
-      }
-      .collect {
-        executeOnIdle()
-      }
-
     if (LISTEN_DELAY >= (settings.inactiveTimeout.seconds)) {
       executeOnIdle()
     }
@@ -192,11 +179,24 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
         }
 
         override fun applicationActivated(ideFrame: IdeFrame) {
-          if (!ApplicationManager.getApplication().isDisposed && settings.isSyncOnFrameActivation) {
+          if (settings.isSyncOnFrameActivation) {
             scheduleRefresh()
           }
         }
       })
+
+    generalSettingFlow(settings, GeneralSettings.PropertyNames.autoSaveIfInactive) { it.isAutoSaveIfInactive }
+      .filter { it }
+      .flatMapConcat {
+        generalSettingFlow(settings, GeneralSettings.PropertyNames.inactiveTimeout) { it.inactiveTimeout.seconds }
+      }
+      .distinctUntilChanged()
+      .flatMapConcat { delay ->
+        IdleTracker.getInstance().events.debounce(delay)
+      }
+      .collect {
+        executeOnIdle()
+      }
   }
 
   private suspend fun executeOnIdle() {
