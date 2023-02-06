@@ -552,7 +552,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
       }
     }
 
-    static AttachToProcessItem createRecentAttachItem(AttachToProcessItem item,
+    public static AttachToProcessItem createRecentAttachItem(AttachToProcessItem item,
                                                       boolean isFirstInGroup,
                                                       List<XAttachDebugger> debuggers,
                                                       int selectedDebugger,
