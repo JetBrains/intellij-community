@@ -33,6 +33,8 @@ abstract class ProjectTemplate : DisplayableSettingItem {
     abstract val id: String
     open val icon: Icon? = null
 
+    open fun isVisible() = true
+
     private val setsDefaultValues: List<SettingWithValue<*, *>>
         get() = listOf(KotlinPlugin.projectKind.reference withValue projectKind)
 
