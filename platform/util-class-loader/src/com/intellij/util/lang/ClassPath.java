@@ -182,11 +182,9 @@ public final class ClassPath {
         Loader[] loaders = cache.getClassLoadersByPackageNameHash(packageNameHash);
         if (loaders != null) {
           for (Loader loader : loaders) {
-            if (loader.containsName(fileName)) {
-              Class<?> result = findClassInLoader(fileName, className, classDataConsumer, loader);
-              if (result != null) {
-                return result;
-              }
+            Class<?> result = findClassInLoader(fileName, className, classDataConsumer, loader);
+            if (result != null) {
+              return result;
             }
           }
         }
@@ -218,24 +216,9 @@ public final class ClassPath {
                                                    int initialLoaderIndex,
                                                    ClassDataConsumer classDataConsumer) throws IOException {
     for (int loaderIndex = initialLoaderIndex; ; loaderIndex++) {
-      boolean useCache = this.useCache;
-      Loader loader;
-      if (loaderIndex < lastLoaderProcessed.get()) {
-        loader = loaders.get(loaderIndex);
-        // searching in an already processed loader - do not use cache if detecting new classes is enabled
-        useCache = !isNewClassLoadingEnabled;
-      }
-      else {
-        loader = getLoaderSlowPath(loaderIndex);
-        // useCache doesn't matter - state on disk is checked as part of loader creation
-      }
-
+      Loader loader = loaderIndex < lastLoaderProcessed.get() ? loaders.get(loaderIndex) : getLoaderSlowPath(loaderIndex);
       if (loader == null) {
         return null;
-      }
-
-      if (useCache && !loader.containsName(fileName)) {
-        continue;
       }
 
       Class<?> result = findClassInLoader(fileName, className, classDataConsumer, loader);
@@ -267,14 +250,12 @@ public final class ClassPath {
         Loader[] loaders = cache.getLoadersByName(resourceName);
         if (loaders != null) {
           for (Loader loader : loaders) {
-            if (loader.containsName(resourceName)) {
-              Resource resource = loader.getResource(resourceName);
-              if (resource != null) {
-                if (loadedClasses != null) {
-                  loadedClasses.add(new AbstractMap.SimpleImmutableEntry<>(resourceName, loader.getPath()));
-                }
-                return resource;
+            Resource resource = loader.getResource(resourceName);
+            if (resource != null) {
+              if (loadedClasses != null) {
+                loadedClasses.add(new AbstractMap.SimpleImmutableEntry<>(resourceName, loader.getPath()));
               }
+              return resource;
             }
           }
         }
@@ -291,10 +272,6 @@ public final class ClassPath {
 
       Loader loader;
       while ((loader = getLoader(i++)) != null) {
-        if (useCache && !loader.containsName(resourceName)) {
-          continue;
-        }
-
         Resource resource = loader.getResource(resourceName);
         if (resource != null) {
           if (loadedClasses != null) {
@@ -401,7 +378,7 @@ public final class ClassPath {
     }
 
     if (fileAttributes.isDirectory()) {
-      return useCache
+      return useCache && !isNewClassLoadingEnabled
              ? FileLoader.createCachingFileLoader(file, cachePool, cachingCondition, isClassPathIndexEnabled, cache)
              : new FileLoader(file);
     }
@@ -472,10 +449,6 @@ public final class ClassPath {
         Loader loader;
         while (index < loaders.length) {
           loader = loaders[index++];
-          if (!loader.containsName(name)) {
-            resource = null;
-            continue;
-          }
           resource = loader.getResource(name);
           if (resource != null) {
             return true;
@@ -526,9 +499,6 @@ public final class ClassPath {
       try {
         Loader loader;
         while ((loader = classPath.getLoader(index++)) != null) {
-          if (classPath.useCache && !loader.containsName(name)) {
-            continue;
-          }
           resource = loader.getResource(name);
           if (resource != null) {
             return true;

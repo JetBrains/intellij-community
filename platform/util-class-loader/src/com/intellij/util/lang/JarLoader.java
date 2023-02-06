@@ -54,11 +54,6 @@ final class JarLoader implements Loader {
   }
 
   @Override
-  public boolean containsName(String name) {
-    return true;
-  }
-
-  @Override
   public @Nullable Class<?> findClass(String fileName, String className, ClassPath.ClassDataConsumer classConsumer) throws IOException {
     return zipFile.findClass(fileName, className, this, classConsumer);
   }
