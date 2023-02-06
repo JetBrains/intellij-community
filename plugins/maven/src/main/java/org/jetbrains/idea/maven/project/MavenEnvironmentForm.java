@@ -315,7 +315,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
         String typeId = targetEnvironmentConfiguration != null ? targetEnvironmentConfiguration.getTypeId() : null;
         TargetEnvironmentType<?> targetEnvironmentType = null;
         if (typeId != null) {
-          targetEnvironmentType = TargetEnvironmentType.EXTENSION_NAME.findFirstSafe(type -> type.getId() == typeId);
+          targetEnvironmentType = TargetEnvironmentType.EXTENSION_NAME.findFirstSafe(type -> type.getId().equals(typeId));
         }
         if (targetEnvironmentType != null) {
           // wrap the text to avoid label ellipsis
