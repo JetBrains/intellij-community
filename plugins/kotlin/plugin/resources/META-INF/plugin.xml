@@ -20,6 +20,21 @@ The plugin supports Kotlin 1.8 and lower.
 
   <!--suppress PluginXmlValidity -->
   <change-notes><![CDATA[
+    <h3>1.8.20-Beta</h3>
+    <ul>
+      <li>Language: experimental replacement of the Enum class `values()` function with the `entries` property, experimental lifting restrictions on secondary constructor bodies in value (inline) classes, experimental data objects</li>
+      <li>Kotlin/JVM: JVM IR for the kapt stub generation enabled by default</li>
+      <li>Kotlin/Native: bug fix for stack overflow when using regex with large input, improved output for Gradle errors in Xcode, new API for garbage collection statistics, Podspec generation in the new artifact DSL, dynamic framework linking without generating C-interop bindings</li>
+      <li>Kotlin Multiplatform: preview support for Gradle composite builds, experimental DSL for the new source set hierarchy</li>
+      <li>Kotlin/Wasm: experimental version of the new Kotlin/Wasm compiler backend</li>
+      <li>Kotlin/JS IR: alpha version of the K2 support, fully-qualified method name in source maps, declarations with non-minified names, the `dukat` integration removed, TypeScript definitions generated only on explicit Gradle action</li>
+      <li>Libraries: experimental support for the `AutoCloseable` interface and the `use()` extension function in the common standard library, experimental support for the Base64 encoding in the standard library, experimental support for the `@Volatile` annotation that works for both JVM and Kotlin/Native</li>
+      <li>Gradle: the new approach to incremental compilation enabled by default, new Gradle plugins alignment platform, compatibility with the Gradle 7.4, 7.5, and 7.6 releases, experimental ability to back up only updated files during incremental compilation, new property for adding a Git branch name to HTTP build reports</li>
+      <li>Maven: new `components.xml` to automatically compile Kotlin Maven projects, ability to set up kapt’s `aptMode`</li>
+      <li>Serialization: prototype of serialization plugin that works with the K2 compiler, prohibited implicit serializer customization via companion object</li>
+    </ul>
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.8.20-Beta">changelog</a>.
+    <br><br>
     <h3>1.8.0</h3>
     <ul>
       <li>Kotlin/JVM: removed old backend, the `-Xuse-old-backend` compiler option is no longer supported, support for Java 19 bytecode</li>
