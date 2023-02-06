@@ -469,9 +469,9 @@ public final class UITheme {
 
   private static boolean isOSCustomization(Map<String, Object> map) {
     return map.containsKey(OS_MACOS_KEY)
-        || map.containsKey(OS_WINDOWS_KEY)
-        || map.containsKey(OS_LINUX_KEY)
-        || map.containsKey(OS_DEFAULT_KEY);
+           || map.containsKey(OS_WINDOWS_KEY)
+           || map.containsKey(OS_LINUX_KEY)
+           || map.containsKey(OS_DEFAULT_KEY);
   }
 
   @SuppressWarnings("unchecked")
@@ -567,7 +567,7 @@ public final class UITheme {
       }
     }
     catch (Exception e) {
-      LOG.warn("Can't parse '" + value +"' for key '" + key + "'");
+      LOG.warn("Can't parse '" + value + "' for key '" + key + "'");
     }
 
     return value;
@@ -608,7 +608,8 @@ public final class UITheme {
           int alpha = Integer.parseInt(value.substring(6, 8), 16);
           return new ColorUIResource(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
         }
-        catch (Exception ignore) { }
+        catch (Exception ignore) {
+        }
         return null;
       }
     }
@@ -636,7 +637,8 @@ public final class UITheme {
     if (value.contains(".")) {
       try {
         return Float.parseFloat(value);
-      } catch (NumberFormatException e) {
+      }
+      catch (NumberFormatException e) {
         if (key != null) {
           LOG.warn("Can't parse: " + key + " = " + value);
         }
