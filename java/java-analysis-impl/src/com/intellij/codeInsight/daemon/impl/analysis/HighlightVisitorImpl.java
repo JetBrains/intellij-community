@@ -2032,11 +2032,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                                              @NotNull PsiType itemType) {
     if (!TypeConversionUtil.areTypesConvertible(itemType, patternType)) {
       add(HighlightUtil.createIncompatibleTypeHighlightInfo(itemType, patternType, pattern.getTextRange(), 0));
+      return;
     }
-    else if (JavaGenericsUtil.isUncheckedCast(patternType, itemType)) {
-      String message = JavaErrorBundle.message("unsafe.cast.in.instanceof", JavaHighlightUtil.formatType(itemType),
-                                               JavaHighlightUtil.formatType(patternType));
-      add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern).descriptionAndTooltip(message));
+    HighlightInfo.Builder error = PatternHighlightingModel.getUncheckedPatternConversionError(pattern);
+    if (error != null) {
+      add(error);
     }
     else {
       PatternHighlightingModel.createDeconstructionErrors(pattern, myHolder);

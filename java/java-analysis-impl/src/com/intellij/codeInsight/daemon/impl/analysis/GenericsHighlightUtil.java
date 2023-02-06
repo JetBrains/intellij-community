@@ -997,6 +997,10 @@ public final class GenericsHighlightUtil {
     if (checkTypeElement == null) return null;
     PsiType checkType = checkTypeElement.getType();
     if (HighlightingFeature.PATTERNS.isSufficient(languageLevel)) {
+      PsiPrimaryPattern pattern = expression.getPattern();
+      if (pattern != null) {
+        return PatternHighlightingModel.getUncheckedPatternConversionError(pattern);
+      }
       return isUnsafeCastInInstanceOf(checkTypeElement, checkType, expression.getOperand().getType());
     }
     return isIllegalForInstanceOf(checkType, checkTypeElement);

@@ -597,10 +597,9 @@ public class SwitchBlockHighlightingModel {
           holder.add(error);
           return;
         }
-        if (JavaGenericsUtil.isUncheckedCast(patternType, mySelectorType)) {
-          String message = JavaErrorBundle.message("unsafe.cast.in.instanceof", JavaHighlightUtil.formatType(mySelectorType),
-                                                   JavaHighlightUtil.formatType(patternType));
-          holder.add(createError(elementToReport, message).create());
+        HighlightInfo.Builder error = PatternHighlightingModel.getUncheckedPatternConversionError(elementToReport);
+        if (error != null) {
+          holder.add(error.create());
           return;
         }
         PsiDeconstructionPattern deconstructionPattern = JavaPsiPatternUtil.findDeconstructionPattern(elementToReport);

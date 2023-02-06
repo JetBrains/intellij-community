@@ -491,9 +491,9 @@ public final class JavaPsiPatternUtil {
    * @return a context type for the pattern; null, if it cannot be determined. This method can perform 
    * the inference for outer patterns if necessary.
    */
-  public static @Nullable PsiType getContextType(@NotNull PsiDeconstructionPattern pattern) {
+  public static @Nullable PsiType getContextType(@NotNull PsiPattern pattern) {
     PsiElement parent = pattern.getParent();
-    while (parent instanceof PsiParenthesizedPattern) {
+    while (parent instanceof PsiParenthesizedPattern || parent instanceof PsiGuardedPattern) {
       parent = parent.getParent();
     }
     if (parent instanceof PsiInstanceOfExpression) {
