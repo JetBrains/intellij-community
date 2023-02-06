@@ -78,6 +78,10 @@ private class IdeKotlinDeclarationProvider(
         return KotlinFileFacadeClassByPackageIndex.get(packageFqName.asString(), project, scope)
     }
 
+    override fun findInternalFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
+        return KotlinMultiFileClassPartIndex[facadeFqName.asString(), project, scope]
+    }
+
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
         return KotlinFileFacadeFqNameIndex.get(
             key = facadeFqName.asString(),
