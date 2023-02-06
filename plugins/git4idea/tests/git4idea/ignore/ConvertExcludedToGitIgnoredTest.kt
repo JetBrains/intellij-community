@@ -2,9 +2,9 @@
 package git4idea.ignore
 
 import com.intellij.configurationStore.saveSettings
-import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.roots.CompilerProjectExtension
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsApplicationSettings
@@ -35,8 +35,7 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
   override fun setUpProject() {
     super.setUpProject()
     // will create .idea directory
-    // setUpProject is executed in EDT
-    runBlockingUnderModalProgress {
+    runBlockingMaybeCancellable {
       saveSettings(project)
     }
   }

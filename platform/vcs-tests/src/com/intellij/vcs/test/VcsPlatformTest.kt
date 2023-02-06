@@ -59,9 +59,7 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
 
   @Throws(Exception::class)
   override fun setUp() {
-    runInEdtAndWait {
-      super.setUp()
-    }
+    super.setUp()
 
     VfsUtil.markDirtyAndRefresh(false, true, false, testRoot)
 
