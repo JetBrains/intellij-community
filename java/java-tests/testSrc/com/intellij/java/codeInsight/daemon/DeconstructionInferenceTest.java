@@ -140,6 +140,27 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  public void testWildcardTypeParameterBound() {
+    myFixture.configureByText("Test.java", """
+      public class Test {
+        interface BaseRecord<T> {}
+        record ExtendedRecord1<T extends CharSequence> (T a,T b) implements BaseRecord<T>{}
+        
+        public static void wildcardWiderBound0(BaseRecord<?> variable1) {
+           if (variable1 instanceof ExtendedRecord1(var a, var b)) {
+               System.out.println(a + " " + b.length());
+           }
+        }
+        public static void wildcardWiderBound1(BaseRecord<? extends String> variable1) {
+           if (variable1 instanceof ExtendedRecord1(var a, var b)) {
+               System.out.println(a + " " + b.trim());
+           }
+        }
+      }
+      """);
+    myFixture.checkHighlighting();
+  }
+
   public void testInvalid() {
     myFixture.configureByText("Test.java", """
       import java.util.List;

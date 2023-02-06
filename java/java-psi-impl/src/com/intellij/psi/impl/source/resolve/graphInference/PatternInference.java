@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.JavaVarTypeUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.PatternCandidateInfo;
@@ -34,9 +35,7 @@ public class PatternInference {
                                                             @Nullable PsiType type) {
     // JLS 18.5.5
     if (type == null) return resolveResult;
-    if (type instanceof PsiCapturedWildcardType) {
-      type = ((PsiCapturedWildcardType)type).getUpperBound();
-    }
+    type = JavaVarTypeUtil.getUpwardProjection(type);
     Project project = recordClass.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiClassType recordRawType = factory.createType(recordClass);
