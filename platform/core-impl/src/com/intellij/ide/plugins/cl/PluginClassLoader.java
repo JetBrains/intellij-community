@@ -163,7 +163,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
                            @Nullable ResolveScopeManager resolveScopeManager,
                            @Nullable String packagePrefix,
                            @NotNull List<String> libDirectories) {
-    super(files, classPath);
+    super(classPath);
 
     instanceId = instanceIdProducer.incrementAndGet();
 

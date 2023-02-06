@@ -29,6 +29,7 @@ import java.util.function.Predicate;
  * <p>
  * This classloader implementation is separate from {@link PathClassLoader} because it's used in runtime modules with JDK 1.8.
  */
+@SuppressWarnings("BlockingMethodInNonBlockingContext")
 public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataConsumer {
   private static final boolean isClassPathIndexEnabledGlobalValue = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
@@ -39,7 +40,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   private static final ThreadLocal<Boolean> skipFindingResource = new ThreadLocal<>();
 
-  private final List<Path> files;
   protected final ClassPath classPath;
   private final ClassLoadingLocks<String> classLoadingLocks;
   private final boolean isBootstrapResourcesAllowed;
@@ -55,7 +55,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
    */
   @SuppressWarnings("unused")
   final void appendToClassPathForInstrumentation(@NotNull String jar) {
-    addFiles(Collections.singletonList(Paths.get(jar)));
+    classPath.addFile(Paths.get(jar));
   }
 
   /**
@@ -139,18 +139,16 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     super(builder.parent);
 
     isSystemClassLoader = builder.isSystemClassLoader;
-    files = builder.files;
 
-    classPath = new ClassPath(files, builder, resourceFileFactory, mimicJarUrlConnection);
+    classPath = new ClassPath(builder.files, builder, resourceFileFactory, mimicJarUrlConnection);
 
     isBootstrapResourcesAllowed = builder.isBootstrapResourcesAllowed;
     classLoadingLocks = isParallelCapable ? new ClassLoadingLocks<>() : null;
   }
 
-  protected UrlClassLoader(@NotNull List<Path> files, @NotNull ClassPath classPath) {
+  protected UrlClassLoader(@NotNull ClassPath classPath) {
     super(null);
 
-    this.files = files;
     this.classPath = classPath;
     isBootstrapResourcesAllowed = false;
     isSystemClassLoader = false;
@@ -160,18 +158,22 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
   @Deprecated
   public final void addURL(@NotNull URL url) {
-    addFiles(Collections.singletonList(Paths.get(url.getPath())));
+    classPath.addFile(Paths.get(url.getPath()));
   }
 
+  /**
+   * @deprecated Do not use.
+   * Internal method, used via method handle by `configureUsingIdeaClassloader` (see ClassLoaderConfigurator).
+   */
   @ApiStatus.Internal
-  public final void addFiles(@NotNull List<? extends Path> files) {
+  @Deprecated
+  public final void addFiles(@NotNull List<Path> files) {
     classPath.addFiles(files);
-    this.files.addAll(files);
   }
 
   public final @NotNull List<URL> getUrls() {
     List<URL> result = new ArrayList<>();
-    for (Path file : files) {
+    for (Path file : classPath.getFiles()) {
       try {
         result.add(file.toUri().toURL());
       }
@@ -181,7 +183,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   public final @NotNull List<Path> getFiles() {
-    return Collections.unmodifiableList(files);
+    return classPath.getFiles();
   }
 
   public boolean hasLoadedClass(String name) {
@@ -369,7 +371,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   /**
-   * An interface for a pool to store internal caches that can be shared between different class loaders,
+   * An interface for a pool to store internal caches that can be shared between different class loaders
    * if they contain the same URLs in their class paths.
    * <p>
    * The implementation is subject to change; one shouldn't rely on it.
