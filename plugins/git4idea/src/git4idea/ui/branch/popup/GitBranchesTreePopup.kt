@@ -123,7 +123,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     DataManager.registerDataProvider(component, DataProvider { dataId ->
       when {
         POPUP_KEY.`is`(dataId) -> this
-        GitBranchActionsUtil.REPOSITORIES_KEY.`is`(dataId) -> treeStep.repositories
+        GitBranchActionsUtil.REPOSITORIES_KEY.`is`(dataId) -> treeStep.affectedRepositories
         else -> null
       }
     })
@@ -219,8 +219,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         }
 
         val nodeToExpand = when {
-          node is GitBranch && isChild() && treeStep.repositories.any { it.currentBranch == node } -> node
-          node is GitBranch && !isChild() && treeStep.repositories.all { it.currentBranch == node } -> node
+          node is GitBranch && isChild() && treeStep.affectedRepositories.any { it.currentBranch == node } -> node
+          node is GitBranch && !isChild() && treeStep.affectedRepositories.all { it.currentBranch == node } -> node
           node is BranchUnderRepository && node.repository.currentBranch == node.branch -> node
           node is BranchTypeUnderRepository -> node
           else -> null
@@ -287,7 +287,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   private fun toggleFavorite(userObject: Any?) {
     val branchUnderRepository = userObject as? BranchUnderRepository
     val branch = userObject as? GitBranch ?: branchUnderRepository?.branch ?: return
-    val repositories = branchUnderRepository?.repository?.let(::listOf) ?: treeStep.repositories
+    val repositories = branchUnderRepository?.repository?.let(::listOf) ?: treeStep.affectedRepositories
     val branchType = GitBranchType.of(branch)
     val branchManager = project.service<GitBranchManager>()
     val anyNotFavorite = repositories.any { repository -> !branchManager.isFavorite(branchType, repository, branch.name) }
@@ -366,7 +366,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         }
       }
 
-      val stepContext = GitBranchesTreePopupStep.createDataContext(project, treeStep.repositories)
+      val stepContext = GitBranchesTreePopupStep.createDataContext(project, treeStep.affectedRepositories)
       val resultContext =
         with(SimpleDataContext.builder().setParent(stepContext)) {
           actionContext.forEach { (key, value) -> add(key, value) }
@@ -687,7 +687,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         null -> ""
         is ItemPresentation -> value.presentableText.orEmpty()
         is GitBranch -> value.name
-        else -> getText(value, treeStep.treeModel, treeStep.repositories) ?: ""
+        else -> getText(value, treeStep.treeModel, treeStep.affectedRepositories) ?: ""
       }
     }
   }

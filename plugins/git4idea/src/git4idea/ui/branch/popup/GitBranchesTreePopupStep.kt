@@ -36,6 +36,8 @@ class GitBranchesTreePopupStep(internal val project: Project,
                                internal val repositories: List<GitRepository>,
                                private val isFirstStep: Boolean) : PopupStep<Any> {
 
+  internal val affectedRepositories get() = selectedRepository?.let(::listOf) ?: repositories
+
   private var finalRunnable: Runnable? = null
 
   override fun getFinalRunnable() = finalRunnable
@@ -49,7 +51,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
     if (ExperimentalUI.isNewUI() && isFirstStep) {
       val experimentalUIActionsGroup = ActionManager.getInstance().getAction(EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP) as? ActionGroup
       if (experimentalUIActionsGroup != null) {
-        topLevelItems.addAll(createTopLevelActionItems(experimentalUIActionsGroup, project, repositories).addSeparators())
+        topLevelItems.addAll(createTopLevelActionItems(experimentalUIActionsGroup, project, affectedRepositories).addSeparators())
         if (topLevelItems.isNotEmpty()) {
           topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
         }
@@ -58,7 +60,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
     val actionGroup = ActionManager.getInstance().getAction(TOP_LEVEL_ACTION_GROUP) as? ActionGroup
     if (actionGroup != null) {
       // get selected repo inside actions
-      topLevelItems.addAll(createTopLevelActionItems(actionGroup, project, repositories).addSeparators())
+      topLevelItems.addAll(createTopLevelActionItems(actionGroup, project, affectedRepositories).addSeparators())
       if (topLevelItems.isNotEmpty()) {
         topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
       }
@@ -119,7 +121,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
   }
 
   fun updateTreeModelIfNeeded(tree: Tree, pattern: String?) {
-    if (!isFirstStep || repositories.size == 1) return
+    if (!isFirstStep || affectedRepositories.size == 1) return
 
     val filterActive = !(pattern.isNullOrBlank() || pattern == "/")
     treeModel = createTreeModel(filterActive)
@@ -152,19 +154,19 @@ class GitBranchesTreePopupStep(internal val project: Project,
 
     if (branch != null) {
       val actionGroup = ActionManager.getInstance().getAction(BRANCH_ACTION_GROUP) as? ActionGroup ?: DefaultActionGroup()
-      return createActionStep(actionGroup, project, branchUnderRepository?.repository?.let(::listOf) ?: repositories, branch)
+      return createActionStep(actionGroup, project, branchUnderRepository?.repository?.let(::listOf) ?: affectedRepositories, branch)
     }
 
     if (selectedValue is PopupFactoryImpl.ActionItem) {
       if (!selectedValue.isEnabled) return FINAL_CHOICE
       val action = selectedValue.action
       if (action is ActionGroup && (!finalChoice || !selectedValue.isPerformGroup)) {
-        return createActionStep(action, project, repositories)
+        return createActionStep(action, project, affectedRepositories)
       }
       else {
         finalRunnable = Runnable {
           val place = if (isFirstStep) TOP_LEVEL_ACTION_PLACE else SINGLE_REPOSITORY_ACTION_PLACE
-          ActionUtil.invokeAction(action, createDataContext(project, repositories), place, null, null)
+          ActionUtil.invokeAction(action, createDataContext(project, affectedRepositories), place, null, null)
         }
       }
     }

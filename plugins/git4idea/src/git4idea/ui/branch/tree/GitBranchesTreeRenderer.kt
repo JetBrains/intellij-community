@@ -53,6 +53,8 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
 
   private val updateScaleHelper = UpdateScaleHelper()
 
+  private val affectedRepositories get() = selectedRepository?.let(::listOf) ?: repositories
+
   abstract fun hasRightArrow(nodeUserObject: Any?): Boolean
 
   private fun getBranchNameClipper(treeNode: Any?): SimpleColoredComponent.FragmentTextClipper? =
@@ -71,7 +73,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
     return when (value) {
       is GitBranchesTreeModel.BranchesPrefixGroup -> PlatformIcons.FOLDER_ICON
       is BranchUnderRepository -> getBranchIcon(value.branch, listOf(value.repository), isSelected)
-      is GitBranch -> getBranchIcon(value, repositories, isSelected)
+      is GitBranch -> getBranchIcon(value, affectedRepositories, isSelected)
       else -> null
     }
   }
@@ -100,7 +102,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       is PopupFactoryImpl.ActionItem -> KeymapUtil.getFirstKeyboardShortcutText(treeNode.action)
       is GitRepository -> GitBranchUtil.getDisplayableBranchText(treeNode)
       is GitLocalBranch -> {
-        treeNode.getCommonTrackedBranch(repositories)?.name
+        treeNode.getCommonTrackedBranch(affectedRepositories)?.name
       }
       else -> null
     }
@@ -143,11 +145,9 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
   private fun getIncomingOutgoingIconWithTooltip(branch: GitBranch): Pair<Icon?, String?> {
     val branchName = branch.name
     val incomingOutgoingManager = project.service<GitBranchIncomingOutgoingManager>()
-    val hasIncoming =
-      repositories.any { incomingOutgoingManager.hasIncomingFor(it, branchName) }
 
-    val hasOutgoing =
-      repositories.any { incomingOutgoingManager.hasOutgoingFor(it, branchName) }
+    val hasIncoming = affectedRepositories.any { incomingOutgoingManager.hasIncomingFor(it, branchName) }
+    val hasOutgoing = affectedRepositories.any { incomingOutgoingManager.hasOutgoingFor(it, branchName) }
 
     val tooltip = GitBranchPopupActions.LocalBranchActions.constructIncomingOutgoingTooltip(hasIncoming, hasOutgoing).orEmpty()
 
@@ -247,7 +247,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       foreground = JBUI.CurrentTheme.Tree.foreground(selected, true)
 
       clear()
-      val text = getText(userObject, treeModel, repositories).orEmpty()
+      val text = getText(userObject, treeModel, affectedRepositories).orEmpty()
 
       if (disabledAction) {
         append(text, SimpleTextAttributes.GRAYED_ATTRIBUTES)
