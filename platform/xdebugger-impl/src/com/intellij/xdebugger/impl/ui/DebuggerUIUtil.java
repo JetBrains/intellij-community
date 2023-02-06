@@ -146,7 +146,7 @@ public final class DebuggerUIUtil {
     }
   }
 
-  public static void showValuePopup(@NotNull MouseEvent event,
+   static void showValuePopup(@NotNull MouseEvent event,
                                     @NotNull Project project,
                                     @Nullable Editor editor,
                                     JComponent component,
