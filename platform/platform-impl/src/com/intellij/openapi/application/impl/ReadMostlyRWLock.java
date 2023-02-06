@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -31,16 +32,22 @@ import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.cancelAc
  * <br>
  * Based on paper <a href="http://mcg.cs.tau.ac.il/papers/ppopp2013-rwlocks.pdf">"NUMA-Aware Reader-Writer Locks" by Calciu, Dice, Lev, Luchangco, Marathe, Shavit.</a><br>
  * The elevator pitch explanation of the algorithm:<br>
- * Read lock: flips {@link Reader#readRequested} bit in its own thread local {@link Reader} structure and waits for writer to release its lock by checking {@link #writeRequested}.<br>
- * Write lock: sets global {@link #writeRequested} bit and waits for all readers (in global {@link #readers} list) to release their locks by checking {@link Reader#readRequested} for all readers.
+ * Read lock: flips {@link Reader#readRequested} bit in its own thread local {@link Reader} structure and waits for writer to release its lock by checking {@link #isWriteRequested()}.<br>
+ * Write lock: sets global {@link #isWriteRequested()} and waits for all readers (in global {@link #readers} list) to release their locks by checking {@link Reader#readRequested} for all readers.
  */
 final class ReadMostlyRWLock {
+
+  static final byte INITIAL = 0;
+  static final byte WRITE_REQUESTED = 1; // this writer is requesting or obtained the write access
+  static final byte WRITE_ACQUIRED = 2; // this writer obtained the write lock
+
   @NotNull final Thread writeThread;
-  private volatile boolean writeRequested;  // this writer is requesting or obtained the write access
   private final AtomicBoolean writeIntent = new AtomicBoolean(false);
-  private volatile boolean writeAcquired;   // this writer obtained the write lock
   // All reader threads are registered here. Dead readers are garbage collected in writeUnlock().
   private final ConcurrentList<Reader> readers = ContainerUtil.createConcurrentList();
+
+  @MagicConstant(intValues = {INITIAL, WRITE_REQUESTED, WRITE_ACQUIRED})
+  private volatile byte writeState;
 
   private volatile boolean writeSuspended;
   // time stamp (nanoTime) of the last check for dead reader threads in writeUnlock().
@@ -274,10 +281,10 @@ final class ReadMostlyRWLock {
     checkReadIsNotHeld("Write");
     assertInitialWriteState();
 
-    writeRequested = true;
+    writeState = WRITE_REQUESTED;
     for (int iter=0; ;iter++) {
       if (areAllReadersIdle()) {
-        writeAcquired = true;
+        writeState = WRITE_ACQUIRED;
         break;
       }
 
@@ -306,8 +313,7 @@ final class ReadMostlyRWLock {
 
   void writeUnlock() {
     checkWriteThreadAccess();
-    writeAcquired = false;
-    writeRequested = false;
+    writeState = INITIAL;
     List<Reader> dead;
     long current = System.nanoTime();
     if (current - deadReadersGCStamp > 1_000_000) {
@@ -360,17 +366,16 @@ final class ReadMostlyRWLock {
   }
 
   private void assertInitialWriteState() {
-    assert !isWriteRequested();
-    assert !isWriteAcquired();
+    assert writeState == INITIAL;
   }
 
   @VisibleForTesting
   boolean isWriteRequested() {
-    return writeRequested;
+    return writeState != INITIAL;
   }
 
   boolean isWriteAcquired() {
-    return writeAcquired;
+    return writeState == WRITE_ACQUIRED;
   }
 
   boolean isWriteIntentLocked() {
