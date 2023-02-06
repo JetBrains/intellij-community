@@ -60,13 +60,14 @@ public final class FSRecords {
   static final int MIN_REGULAR_FILE_ID = ROOT_FILE_ID + 1;
 
 
+
   /** singleton instance */
   private static volatile FSRecordsImpl impl;
 
 
   /** @return path to the directory there all VFS files are located */
   public static @NotNull String getCachesDir() {
-    String dir = System.getProperty("caches_dir");
+    final String dir = System.getProperty("caches_dir");
     return dir == null ? PathManager.getSystemPath() + "/caches/" : dir;
   }
 
@@ -122,7 +123,7 @@ public final class FSRecords {
   }
 
   public static long getNamesIndexModCount() {
-    return implOrFail().getNamesIndexModCount();
+    return implOrFail().getInvertedNameIndexModCount();
   }
 
 
@@ -237,23 +238,13 @@ public final class FSRecords {
     implOrFail().moveChildren(fromParentId, toParentId);
   }
 
-  //========== symlink manipulation: ========================================
-
-  static @Nullable String readSymlinkTarget(final int fileId) {
-    return implOrFail().readSymlinkTarget(fileId);
-  }
-
-  static void storeSymlinkTarget(final int fileId,
-                                 final @Nullable String symlinkTarget) {
-    implOrFail().storeSymlinkTarget(fileId, symlinkTarget);
-  }
-
-
+  //MAYBE RC: this method is better to be moved up, to VirtualFileSystem?
   static @Nullable VirtualFileSystemEntry findFileById(final int fileId,
                                                        final @NotNull VirtualDirectoryCache idToDirCache) {
     final FSRecordsImpl impl = implOrFail();
     //We climb up from fileId, collecting parentIds (path), until find a parent which is cached in idToDirCache.
     //  From that (grand)parent we climb down to fileId, resolving every child (findDescendantByIdPath).
+
     class ParentFinder implements ThrowableComputable<Void, Exception> {
       private @Nullable IntList path;
       private VirtualFileSystemEntry foundParent;
@@ -264,7 +255,9 @@ public final class FSRecords {
         while (true) {
           final int parentId = impl.getParent(currentId);
           if( path != null && (path.size() % 128 == 0 && path.contains(parentId))) {
-            LOG.error("Cyclic parent child relations in the database: fileId = " + fileId + ": path=" + path);
+            //circularity check is expensive: do it only once-in-a-while, as path became deep enough
+            //  to start to suspect something may be wrong.
+            LOG.error("Cyclic parent-child relations in the database: fileId = " + fileId + ": path=" + path);
             break;
           }
           foundParent = idToDirCache.getCachedDir(parentId);
@@ -272,9 +265,6 @@ public final class FSRecords {
             break;
           }
           if (parentId == NULL_FILE_ID) {
-            //RC: actually, we must throw exception here, since without foundParent following call to .findDescendantByIdPath()
-            //    would be just useless and produce NPE anyway -- but NPE is harder to trace then since it is farther from
-            //    the cause
             final String currentFileName = getName(currentId);
             throw new IllegalStateException(
               "file[" + fileId + "]: top parent (currentId: " + currentId + ", name: '" + currentFileName + "', parent: 0), " +
@@ -327,6 +317,18 @@ public final class FSRecords {
       LOG.assertTrue(file.getId() == fileId);
     }
     return file;
+  }
+
+
+  //========== symlink manipulation: ========================================
+
+  static @Nullable String readSymlinkTarget(final int fileId) {
+    return implOrFail().readSymlinkTarget(fileId);
+  }
+
+  static void storeSymlinkTarget(final int fileId,
+                                 final @Nullable String symlinkTarget) {
+    implOrFail().storeSymlinkTarget(fileId, symlinkTarget);
   }
 
 
@@ -541,7 +543,10 @@ public final class FSRecords {
 
   @TestOnly
   public static void checkFilenameIndexConsistency() {
-    FSRecordsImpl.checkFilenameIndexConsistency();
+    final FSRecordsImpl _impl = impl;
+    if(_impl != null && !_impl.isDisposed()) {
+      _impl.checkFilenameIndexConsistency();
+    }
   }
 
   @NotNull

@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.ide.startup.ServiceNotReadyException;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -69,8 +68,6 @@ import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_
  * <p>
  * TODO RC: maybe FSRecordsImpl methods should throw exceptions, and try...catch{handleError} should
  * be in FSRecords?
- * TODO RC: there should be 'public static final' constants? Should they be a property of implementation,
- * or in FSRecords?
  */
 @ApiStatus.Internal
 public final class FSRecordsImpl {
@@ -96,16 +93,23 @@ public final class FSRecordsImpl {
   private final @NotNull PersistentFSAttributeAccessor attributeAccessor;
   private final @NotNull PersistentFSTreeAccessor treeAccessor;
   private final @NotNull PersistentFSRecordAccessor recordAccessor;
+
+  /**
+   * Right now invertedNameIndex looks like a property of PersistentFSConnection -- but this is only because now it
+   * operates with fileId/nameId. Future index impls may work with name hashes instead of nameId -- say, because hash
+   * is a better way to identify strings if nameId is not unique. Such a version of index will require a name itself,
+   * as String, which is less available inside PersistentFSConnection.
+   */
+  private final @NotNull InvertedNameIndex invertedNameIndex;
+  private final AtomicLong invertedNameIndexModCount = new AtomicLong();
+
+
   private final int currentVersion;
 
-  private final AtomicLong namesIndexModCount = new AtomicLong();
 
   private final FineGrainedIdLock updateLock = new FineGrainedIdLock();
 
   private volatile boolean disposed = false;
-
-  //TODO RC: add InvertedNameIndex as instance field (make it an object first)
-
 
   private static int nextMask(final int value,
                               final int bits,
@@ -124,26 +128,26 @@ public final class FSRecordsImpl {
   private static int calculateVersion() {
     //bumped main version (59 -> 60) because of VfsDependentEnumerator removal, and filenames change
     final int mainVFSFormatVersion = 60;
-    return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.RECORDS_STORAGE_KIND.ordinal()),  /* acceptable range is [0..255] */ 8,
-                    nextMask(USE_CONTENT_HASHES,
-                    nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
-                    nextMask(false, // feel free to re-use
-                    nextMask(INLINE_ATTRIBUTES,
-                    nextMask(SystemProperties.getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
-                    nextMask(false, // feel free to re-use
-                    nextMask(USE_SMALL_ATTR_TABLE,
-                    nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
-                    nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
-                    nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
-                    nextMask(USE_FAST_NAMES_IMPLEMENTATION,
-                    nextMask(USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION,
-                    0)))))))))))));
+    return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorage.RECORDS_STORAGE_KIND.ordinal()),  /* acceptable range is [0..255] */ 8,
+           nextMask(USE_CONTENT_HASHES,
+           nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
+           nextMask(false, // feel free to re-use
+           nextMask(INLINE_ATTRIBUTES,
+           nextMask(SystemProperties.getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
+           nextMask(false, // feel free to re-use
+           nextMask(USE_SMALL_ATTR_TABLE,
+           nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
+           nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
+           nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
+           nextMask(USE_FAST_NAMES_IMPLEMENTATION,
+           nextMask(USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION,
+           0)))))))))))));
   }
 
   /**
    * Factory
    *
-   * @param storagesDirectoryPath
+   * @param storagesDirectoryPath directory there to put all FS-records files ('caches' directory)
    */
   static FSRecordsImpl connect(final @NotNull Path storagesDirectoryPath) throws UncheckedIOException {
     if (IOUtil.isSharedCachesEnabled()) {
@@ -151,20 +155,25 @@ public final class FSRecordsImpl {
     }
     try {
       final int currentVersion = calculateVersion();
+      final InvertedNameIndex invertedNameIndex = new InvertedNameIndex();
       final PersistentFSConnection connection = PersistentFSConnector.connect(
-        storagesDirectoryPath.toString(),//TODO RC: better to pass Path down the callstack, instead of String
+        storagesDirectoryPath,
         currentVersion,
-        USE_CONTENT_HASHES
+        USE_CONTENT_HASHES,
+        invertedNameIndex
       );
       final PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(USE_CONTENT_HASHES, connection);
       final PersistentFSAttributeAccessor attributeAccessor = new PersistentFSAttributeAccessor(connection);
       final PersistentFSTreeAccessor treeAccessor = new PersistentFSTreeAccessor(attributeAccessor, connection);
       final PersistentFSRecordAccessor recordAccessor = new PersistentFSRecordAccessor(contentAccessor, attributeAccessor, connection);
+
       try {
         treeAccessor.ensureLoaded();
+
         return new FSRecordsImpl(
           connection,
           contentAccessor, attributeAccessor, treeAccessor, recordAccessor,
+          invertedNameIndex,
           currentVersion
         );
       }
@@ -185,12 +194,15 @@ public final class FSRecordsImpl {
                        final @NotNull PersistentFSAttributeAccessor attributeAccessor,
                        final @NotNull PersistentFSTreeAccessor treeAccessor,
                        final @NotNull PersistentFSRecordAccessor recordAccessor,
+                       final @NotNull InvertedNameIndex invertedNameIndex,
                        final int currentVersion) {
     this.connection = connection;
     this.contentAccessor = contentAccessor;
     this.attributeAccessor = attributeAccessor;
     this.treeAccessor = treeAccessor;
     this.recordAccessor = recordAccessor;
+    this.invertedNameIndex = invertedNameIndex;
+
     this.currentVersion = currentVersion;
   }
 
@@ -199,6 +211,7 @@ public final class FSRecordsImpl {
   public synchronized void dispose() {
     if (!disposed) {
       PersistentFSConnector.disconnect(connection);
+      invertedNameIndex.clear();
       disposed = true;
     }
   }
@@ -230,17 +243,10 @@ public final class FSRecordsImpl {
     }
   }
 
-  //MAYBE RC: is this better in FSRecords? so FSRecordsImpl supplied correct directory in ctor?
-  public static @NotNull String getCachesDir() {
-    final String dir = System.getProperty("caches_dir");
-    return dir == null ? PathManager.getSystemPath() + "/caches/" : dir;
-  }
-
-
   //========== modifications counters: ========================================
 
-  public long getNamesIndexModCount() {
-    return namesIndexModCount.get();
+  public long getInvertedNameIndexModCount() {
+    return invertedNameIndexModCount.get();
   }
 
   int getLocalModCount() {
@@ -303,11 +309,9 @@ public final class FSRecordsImpl {
   }
 
   void deleteRecordRecursively(final int fileId) {
-    namesIndexModCount.incrementAndGet();
+    checkNotDisposed();
     try {
-      //ourConnection.incModCount(id) -> will be done anyway in .setFlags(FREE_RECORD)
       markAsDeletedRecursively(fileId);
-      checkNotDisposed();
       connection.markDirty();
     }
     catch (IOException e) {
@@ -320,13 +324,14 @@ public final class FSRecordsImpl {
       markAsDeletedRecursively(childId);
     }
 
-    checkNotDisposed();
     final int nameId = connection.getRecords().getNameId(fileId);
     if (PersistentFS.isDirectory(getFlags(fileId))) {
       treeAccessor.deleteDirectoryRecord(fileId);
     }
-    recordAccessor.addToFreeRecordsList(fileId);
-    InvertedNameIndex.updateFileName(fileId, NULL_NAME_ID, nameId);
+    recordAccessor.markRecordAsDeleted(fileId);
+
+    invertedNameIndex.updateFileName(fileId, NULL_NAME_ID, nameId);
+    invertedNameIndexModCount.incrementAndGet();
   }
 
 
@@ -460,7 +465,6 @@ public final class FSRecordsImpl {
         }
         checkNotDisposed();
         connection.markRecordAsModified(parentId);
-        checkNotDisposed();
         connection.markDirty();
         updateSymlinksForNewChildren(parent, children, toSave);
         treeAccessor.doSaveChildren(parentId, toSave);
@@ -486,29 +490,26 @@ public final class FSRecordsImpl {
 
     if (fromParentId == toParentId) return;
 
-    int minId = Math.min(fromParentId, toParentId);
-    int maxId = Math.max(fromParentId, toParentId);
+    final int minId = Math.min(fromParentId, toParentId);
+    final int maxId = Math.max(fromParentId, toParentId);
 
+    checkNotDisposed();
     updateLock.lock(minId);
     try {
       updateLock.lock(maxId);
       try {
         try {
           final ListResult children = list(fromParentId);
-
           if (LOG.isDebugEnabled()) {
             LOG.debug("Move children from " + fromParentId + " to " + toParentId + "; children = " + children);
           }
 
-          checkNotDisposed();
           connection.markRecordAsModified(toParentId);
           treeAccessor.doSaveChildren(toParentId, children);
 
-          checkNotDisposed();
           connection.markRecordAsModified(fromParentId);
           treeAccessor.doSaveChildren(fromParentId, new ListResult(Collections.emptyList(), fromParentId));
 
-          checkNotDisposed();
           connection.markDirty();
         }
         catch (ProcessCanceledException e) {
@@ -534,12 +535,15 @@ public final class FSRecordsImpl {
                                             final @NotNull ListResult oldChildren,
                                             final @NotNull ListResult newChildren) {
     // find children which are added to the list and call updateSymlinkInfoForNewChild() on them (once)
-    ContainerUtil.processSortedListsInOrder(oldChildren.children, newChildren.children, Comparator.comparingInt(ChildInfo::getId), true,
-                                            (childInfo, isOldInfo) -> {
-                                              if (!isOldInfo) {
-                                                updateSymlinkInfoForNewChild(parent, childInfo);
-                                              }
-                                            });
+    ContainerUtil.processSortedListsInOrder(
+      oldChildren.children, newChildren.children,
+      Comparator.comparingInt(ChildInfo::getId),
+      /*mergeEqualItems: */ true,
+      (childInfo, isOldInfo) -> {
+        if (!isOldInfo) {
+          updateSymlinkInfoForNewChild(parent, childInfo);
+        }
+      });
   }
 
   private void updateSymlinkInfoForNewChild(final @NotNull VirtualFile parent,
@@ -610,10 +614,10 @@ public final class FSRecordsImpl {
     }
   }
 
-  public static boolean processFilesWithNames(final @NotNull Set<String> names,
-                                              final @NotNull IntPredicate processor) {
+  public boolean processFilesWithNames(final @NotNull Set<String> names,
+                                       final @NotNull IntPredicate processor) {
     if (names.isEmpty()) return true;
-    return InvertedNameIndex.processFilesWithNames(names, processor);
+    return invertedNameIndex.processFilesWithNames(names, processor);
   }
 
 
@@ -732,12 +736,13 @@ public final class FSRecordsImpl {
                final int oldNameId) {
     try {
       checkNotDisposed();
-      namesIndexModCount.incrementAndGet();
       final int nameId = getNameId(name);
+
       connection.getRecords().setNameId(fileId, nameId);
-      checkNotDisposed();
       connection.markDirty();
-      InvertedNameIndex.updateFileName(fileId, nameId, oldNameId);
+
+      invertedNameIndex.updateFileName(fileId, nameId, oldNameId);
+      invertedNameIndexModCount.incrementAndGet();
     }
     catch (IOException e) {
       throw handleError(e);
@@ -749,7 +754,6 @@ public final class FSRecordsImpl {
     try {
       checkNotDisposed();
       if (connection.getRecords().setFlags(fileId, flags)) {
-        checkNotDisposed();
         connection.markDirty();
       }
     }
@@ -773,7 +777,6 @@ public final class FSRecordsImpl {
     try {
       checkNotDisposed();
       if (connection.getRecords().setLength(fileId, len)) {
-        checkNotDisposed();
         connection.markDirty();
       }
     }
@@ -797,7 +800,6 @@ public final class FSRecordsImpl {
     try {
       checkNotDisposed();
       if (connection.getRecords().setTimestamp(fileId, value)) {
-        checkNotDisposed();
         connection.markDirty();
       }
     }
@@ -835,8 +837,8 @@ public final class FSRecordsImpl {
       throw handleError(e);
     }
 
-    InvertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
-    namesIndexModCount.incrementAndGet();
+    invertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
+    invertedNameIndexModCount.incrementAndGet();
 
     return nameId;
   }
@@ -850,7 +852,6 @@ public final class FSRecordsImpl {
                           final boolean overwriteMissed) throws IOException {
     checkNotDisposed();
     connection.getRecords().fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
-    checkNotDisposed();
     connection.markDirty();
   }
 
@@ -1047,8 +1048,8 @@ public final class FSRecordsImpl {
   //========== diagnostic, sanity checks: ========================================
 
   @TestOnly
-  public static void checkFilenameIndexConsistency() {
-    InvertedNameIndex.checkConsistency();
+  void checkFilenameIndexConsistency() {
+    invertedNameIndex.checkConsistency();
   }
 
   void checkSanity() {

@@ -50,10 +50,7 @@ final class PersistentFSRecordAccessor {
     myFSConnection = connection;
   }
 
-  //RC: method name is a bit misleading, since really (in production) it doesn't add record to free-list
-  //    -- it does that only in unit-tests.
-  //    AFM: name like deleteRecord(id) would suit better
-  public void addToFreeRecordsList(int id) throws IOException {
+  public void markRecordAsDeleted(int id) throws IOException {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myNewFreeRecords.add(id);
     }
