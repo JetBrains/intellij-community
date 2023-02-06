@@ -5,9 +5,9 @@ class C {
 <selection><caret>    /**
      * comment
      */
-</selection>    fun bar() {
+    fun bar() {
     }
-
+</selection>
     fun baz() {
     }
 }

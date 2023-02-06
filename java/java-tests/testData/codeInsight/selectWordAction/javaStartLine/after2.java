@@ -1,5 +1,5 @@
 class C {
-<selection>    private void foo() {
+<selection><caret>    private void foo() {
         if (a) {
         }
     }

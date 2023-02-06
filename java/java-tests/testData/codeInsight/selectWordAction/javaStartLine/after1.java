@@ -1,5 +1,5 @@
 class C {
-<selection>    </selection>private void foo() {
+<selection><caret>    </selection>private void foo() {
         if (a) {
         }
     }
