@@ -1,8 +1,18 @@
 # Mermaid Changelog
 
 ## [Unreleased]
-- Add support for mind map diagrams
-- Add partial support for Mermaid.js `9.3.0`
+- [MERMAID-2](https://youtrack.jetbrains.com/issue/MERMAID-2/Handle-Mermaid-errors-in-preview) Added rendering of parsing errors in diagram preview
+- [MERMAID-9](https://youtrack.jetbrains.com/issue/MERMAID-9/Do-not-render-icons-in-mindmap-diagrams) Fixed rendering of non-existent icons in Mindmap diagram
+- [MERMAID-21](https://youtrack.jetbrains.com/issue/MERMAID-21/No-keyword-completion-between-class-definitions-in-class-diagram) Fixed keyword completion inside class diagrams
+- [MERMAID-15](https://youtrack.jetbrains.com/issue/MERMAID-15/Mermaid-diagrams-become-too-large-in-the-Preview) Fixed incorrect scaling of cached diagrams
+- Added Mermaid settings page
+
+## 0.0.7
+- Fix leaking enter handler inside braces
+
+## 0.0.6
+- Added support for mind map diagrams
+- Added partial support for Mermaid.js `9.3.0`
 - [IDEA-306720](https://youtrack.jetbrains.com/issue/IDEA-306720) Fixed incorrect caret position after pressing enter in class diagrams
 - [IDEA-307784](https://youtrack.jetbrains.com/issue/IDEA-307784) Support graph keyword for flowcharts
 - [IDEA-307891](https://youtrack.jetbrains.com/issue/IDEA-307891) Fixed parsing of object arrays in class diagrams
