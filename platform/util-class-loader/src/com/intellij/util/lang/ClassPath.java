@@ -46,7 +46,7 @@ public final class ClassPath {
   private static final AtomicLong classDefineTotalTime = new AtomicLong();
 
   private final List<Path> files;
-  private final @Nullable Function<Path, ResourceFile> resourceFileFactory;
+  private final @NotNull Function<Path, ResourceFile> resourceFileFactory;
   final boolean mimicJarUrlConnection;
   private final List<Loader> loaders = new ArrayList<>();
 
@@ -56,8 +56,6 @@ public final class ClassPath {
   private final Set<Path> processedPaths = new HashSet<>();
   private final ClasspathCache cache = new ClasspathCache();
 
-  // true implies that the .jar file will not be modified in the lifetime of the JarLoader
-  final boolean lockJars;
   private final boolean useCache;
   final boolean isClassPathIndexEnabled;
   private final @Nullable CachePoolImpl cachePool;
@@ -85,16 +83,10 @@ public final class ClassPath {
     Class<?> consumeClassData(String name, ByteBuffer data, Loader loader) throws IOException;
   }
 
-  @SuppressWarnings("unused")
-  public @Nullable Function<Path, ResourceFile> getResourceFileFactory() {
-    return resourceFileFactory;
-  }
-
   public ClassPath(@NotNull List<Path> files,
                    @NotNull UrlClassLoader.Builder configuration,
                    @Nullable Function<Path, ResourceFile> resourceFileFactory,
                    boolean mimicJarUrlConnection) {
-    lockJars = configuration.lockJars;
     useCache = configuration.useCache;
     cachePool = configuration.cachePool;
     cachingCondition = configuration.cachingCondition;
@@ -102,7 +94,12 @@ public final class ClassPath {
     this.mimicJarUrlConnection = mimicJarUrlConnection;
 
     this.files = new ArrayList<>(files.size());
-    this.resourceFileFactory = resourceFileFactory;
+    if (resourceFileFactory == null) {
+      this.resourceFileFactory = file -> new JdkZipResourceFile(file, configuration.lockJars);
+    }
+    else {
+      this.resourceFileFactory = resourceFileFactory;
+    }
     if (!files.isEmpty()) {
       for (int i = files.size() - 1; i >= 0; i--) {
         this.files.add(files.get(i));
@@ -125,7 +122,7 @@ public final class ClassPath {
 
   // in nanoseconds
   public static @NotNull Map<String, Long> getLoadingStats() {
-    Map<String, Long> result = new HashMap<>(5);
+    Map<String, Long> result = new HashMap<>(6);
     result.put("classLoadingTime", classLoading.timeCounter.get());
     result.put("classDefineTime", classDefineTotalTime.get());
     result.put("classRequests", (long)classLoading.requestCounter.get());
@@ -406,7 +403,7 @@ public final class ClassPath {
       return null;
     }
 
-    ResourceFile zipFile = resourceFileFactory == null ? new JdkZipResourceFile(file, lockJars) : resourceFileFactory.apply(file);
+    ResourceFile zipFile = resourceFileFactory.apply(file);
     JarLoader loader = new JarLoader(file, this, zipFile);
     if (useCache) {
       ClasspathCache.IndexRegistrar data = cachePool == null ? null : cachePool.loaderIndexCache.get(file);
