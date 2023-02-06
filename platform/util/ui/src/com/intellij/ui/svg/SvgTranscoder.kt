@@ -217,14 +217,7 @@ class SvgTranscoder private constructor(private var width: Float, private var he
   }
 
   override fun checkLoadExternalResource(resourceUrl: ParsedURL, documentUrl: ParsedURL?) {
-    // make sure that the archives comes from the same host as the document itself
-    if (documentUrl == null) {
-      throw SecurityException("NO_EXTERNAL_RESOURCE_ALLOWED")
-    }
-
-    val docHost = documentUrl.host
-    val externalResourceHost: String = resourceUrl.host
-    if (docHost != externalResourceHost && "data" != resourceUrl.protocol) {
+    if ("data" != resourceUrl.protocol) {
       throw SecurityException("NO_EXTERNAL_RESOURCE_ALLOWED")
     }
   }
