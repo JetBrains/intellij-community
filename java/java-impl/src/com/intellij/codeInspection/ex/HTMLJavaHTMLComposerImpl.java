@@ -143,7 +143,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   public void appendShortName(final RefEntity refElement, @NotNull StringBuilder buf) {
     if (refElement instanceof RefJavaElement) {
       String modifier = ((RefJavaElement)refElement).getAccessModifier();
-      if (modifier != PsiModifier.PACKAGE_LOCAL) {
+      if (!modifier.equals(PsiModifier.PACKAGE_LOCAL)) {
         buf.append(modifier);
         buf.append(HTMLComposerImpl.NBSP);
       }
