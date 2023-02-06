@@ -528,6 +528,15 @@
   <action id="UiInspector">
     <mouse-shortcut keystroke="control alt button1"/>
   </action>
+  <action id="ZoomInIdeAction">
+    <keyboard-shortcut first-keystroke="control alt EQUALS"/>
+  </action>
+  <action id="ZoomOutIdeAction">
+    <keyboard-shortcut first-keystroke="control alt MINUS"/>
+  </action>
+  <action id="ResetIdeScaleAction">
+    <keyboard-shortcut first-keystroke="control alt 0"/>
+  </action>
 
   <action id="MainMenuButton.ShowMenu" />
 </keymap>
