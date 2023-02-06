@@ -37,8 +37,7 @@ public final class ClassPath {
   static final boolean logLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
 
   // DCEVM support
-  private static final boolean isNewClassLoadingEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.new.classloading.enabled",
-                                                                                                  "false"));
+  private static final boolean isNewClassLoadingEnabled = false;
 
   private static final Collection<Map.Entry<String, Path>> loadedClasses;
 
