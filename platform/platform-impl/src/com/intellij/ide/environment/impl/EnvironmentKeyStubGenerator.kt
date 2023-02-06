@@ -30,6 +30,14 @@ class EnvironmentKeyStubGenerator : ModernApplicationStarter() {
 
 
   override suspend fun start(args: List<String>) {
+    performGeneration(args)
+
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().exit(false, true, false)
+    }
+  }
+
+  suspend fun performGeneration(args: List<String>) {
     val parsedArgs = parseCommandLine(args)
 
     val config = generateKeyConfig(!parsedArgs.noDescriptions)
@@ -47,10 +55,6 @@ class EnvironmentKeyStubGenerator : ModernApplicationStarter() {
       catch (e: FileAlreadyExistsException) {
         thisLogger().error("File already exists. No operations were performed.")
       }
-    }
-
-    withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().exit(false, true, false)
     }
   }
 
