@@ -210,9 +210,10 @@ public class SelectWordHandler extends EditorActionHandler.ForEachCaret {
 
   @Nullable
   private static PsiElement findElementAt(@NotNull final PsiFile file, final int caretOffset) {
-    PsiElement elementAt = file.findElementAt(caretOffset);
+    int offset = caretOffset > 0 && caretOffset == file.getTextLength()? caretOffset - 1 : caretOffset; // get element before caret if it is in the file end
+    PsiElement elementAt = file.findElementAt(offset);
     return elementAt != null && isLanguageExtension(file, elementAt)
-           ? file.getViewProvider().findElementAt(caretOffset, file.getLanguage())
+           ? file.getViewProvider().findElementAt(offset, file.getLanguage())
            : elementAt;
   }
 
