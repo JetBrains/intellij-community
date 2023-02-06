@@ -12,6 +12,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+/**
+ * Implements diff viewer that is embedded into the common diff panels.
+ * Such as used by {@link DiffManagerEx#showDiffBuiltin}, {@link DiffManager#createRequestPanel}
+ * and other {@link com.intellij.diff.impl.DiffRequestProcessor} implementations.
+ */
 public interface FrameDiffTool extends DiffTool {
   /**
    * Creates viewer for the given request. Clients should call {@link #canShow(DiffContext, DiffRequest)} first.
