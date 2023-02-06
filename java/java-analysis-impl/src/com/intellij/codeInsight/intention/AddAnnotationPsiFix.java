@@ -8,8 +8,8 @@ import com.intellij.codeInsight.ExternalAnnotationsManager.AnnotationPlace;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
-import com.intellij.codeInspection.OnTheFlyLocalFix;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 
-public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements OnTheFlyLocalFix {
+public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements LocalQuickFix {
   protected final String myAnnotation;
   final String[] myAnnotationsToRemove;
   @SafeFieldForPreview

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Function;
 
-public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityAction, Iconable {
+public class SetInspectionOptionFix implements LocalQuickFix, LowPriorityAction, Iconable {
   private final String myShortName;
   private final String myProperty;
   private final @IntentionName String myMessage;
@@ -72,6 +72,11 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
 
   @Override
   public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
+  public boolean availableInBatchMode() {
     return false;
   }
 
