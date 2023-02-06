@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.PluginException
@@ -39,11 +39,10 @@ class ClassLoaderConfigurator(
     @JvmField val files: List<Path>,
     @JvmField val libDirectories: MutableList<String>,
   ) {
-
     constructor(classLoader: PluginClassLoader) : this(
-      classLoader.classPath,
-      classLoader.files,
-      classLoader.libDirectories,
+      classPath = classLoader.classPath,
+      files = classLoader.files,
+      libDirectories = classLoader.libDirectories,
     )
   }
 
@@ -63,17 +62,14 @@ class ClassLoaderConfigurator(
     }
   }
 
-  fun configureDependency(
-    mainDescriptor: IdeaPluginDescriptorImpl,
-    moduleDescriptor: IdeaPluginDescriptorImpl,
-  ): Boolean {
+  fun configureDependency(mainDescriptor: IdeaPluginDescriptorImpl, moduleDescriptor: IdeaPluginDescriptorImpl): Boolean {
     assert(mainDescriptor != moduleDescriptor) { "$mainDescriptor != $moduleDescriptor" }
 
     val pluginId = mainDescriptor.pluginId
     assert(pluginId == moduleDescriptor.pluginId) { "pluginId '$pluginId' != moduleDescriptor.pluginId '${moduleDescriptor.pluginId}'"}
 
     val mainClassLoader = mainDescriptor.pluginClassLoader as PluginClassLoader
-    mainToClassPath[pluginId] = MainInfo(mainClassLoader)
+    mainToClassPath.put(pluginId, MainInfo(mainClassLoader))
 
     return configureModule(moduleDescriptor)
   }
@@ -102,10 +98,10 @@ class ClassLoaderConfigurator(
         if (!module.isUseIdeaClassLoader) {
           log.error("jarFiles is not set for $module")
         }
-        files = Collections.emptyList()!!
+        files = emptyList()
       }
 
-      val libDirectories: MutableList<String> = SmartList()
+      val libDirectories = SmartList<String>()
       val libDir = module.path.resolve("lib")
       if (Files.exists(libDir)) {
         libDirectories.add(libDir.toAbsolutePath().toString())
@@ -124,7 +120,7 @@ class ClassLoaderConfigurator(
         configureUsingIdeaClassloader(mainInfo.files, module)
       }
       else {
-        createPluginClassLoader(module, mainInfo = mainInfo, dependencies = dependencies)
+        createPluginClassLoader(module = module, mainInfo = mainInfo, dependencies = dependencies)
       }
       module.pluginClassLoader = mainDependentClassLoader
       configureDependenciesInOldFormat(module, mainDependentClassLoader)
@@ -304,7 +300,7 @@ private val log: Logger
 
 private fun createModuleResolveScopeManager(): PluginClassLoader.ResolveScopeManager {
   return PluginClassLoader.ResolveScopeManager { name, packagePrefix, _ ->
-    // force flag is ignored for module - e.g., RailsViewLineMarkerProvider is referenced
+    // the force flag is ignored for module - e.g., RailsViewLineMarkerProvider is referenced
     // as extension implementation in several modules
     if (!name.startsWith(packagePrefix) && !name.startsWith("com.intellij.ultimate.PluginVerifier")) "" else null
   }
@@ -324,7 +320,7 @@ private fun createScopeWithExtraPackage(customPackage: String): PluginClassLoade
   }
 }
 
-// package of module is not taken in account to support resolving of module libraries -
+// package of module is not taken in an account to support resolving of module libraries -
 // instead, only classes from plugin's modules (content or dependencies) are excluded.
 private fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDescriptorImpl,
                                                        pluginSet: PluginSet): PluginClassLoader.ResolveScopeManager? {
@@ -393,14 +389,14 @@ private fun createModuleContentBasedScope(descriptor: IdeaPluginDescriptorImpl):
     packagePrefixes.add("${item.requireDescriptor().packagePrefix!!}.")
   }
 
-  // force flag is ignored for module - e.g., RailsViewLineMarkerProvider is referenced as extension implementation in several modules
+  // the force flag is ignored for module - e.g., RailsViewLineMarkerProvider is referenced as extension implementation in several modules
   return PluginClassLoader.ResolveScopeManager { name, packagePrefix, _ ->
     if (name.startsWith(packagePrefix!!) || name.startsWith("com.intellij.ultimate.PluginVerifier")) {
       return@ResolveScopeManager null
     }
 
     // For a module, the referenced module doesn't have own classloader and is added directly to classpath,
-    // so, if name doesn't pass standard package prefix filter.
+    // so if name doesn't pass standard package prefix filter.
     // Check that it is not in content - if in content, then it means that class is not alien.
     for (prefix in packagePrefixes) {
       if (name.startsWith(prefix)) {
