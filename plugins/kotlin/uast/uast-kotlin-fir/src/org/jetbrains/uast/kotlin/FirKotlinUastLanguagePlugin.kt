@@ -26,7 +26,11 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
         get() = KotlinLanguage.INSTANCE
 
     override fun isFileSupported(fileName: String): Boolean {
-        return fileName.endsWith(".kt", false) || fileName.endsWith(".kts", false)
+        return when {
+            fileName.endsWith(".kt", false) -> true
+            fileName.endsWith(".kts", false) -> Registry.`is`("kotlin.k2.scripting.enabled", false)
+            else -> false
+        }
     }
 
     private val PsiElement.isJvmElement: Boolean
