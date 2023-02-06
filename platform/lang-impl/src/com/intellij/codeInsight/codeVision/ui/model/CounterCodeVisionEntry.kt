@@ -2,6 +2,8 @@ package com.intellij.codeInsight.codeVision.ui.model
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionEntryExtraActionModel
+import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 /**
@@ -9,11 +11,11 @@ import javax.swing.Icon
  * Pattern [{count} {text}]
  */
 class CounterCodeVisionEntry(val count: Int,
-                             val text: String,
+                             @Nls val text: String,
                              providerId: String,
                              icon: Icon?,
-                             longPresentation: String,
-                             tooltip: String,
+                             @Nls longPresentation: String,
+                             @NlsContexts.Tooltip tooltip: String,
                              extraActions: List<CodeVisionEntryExtraActionModel>) : CodeVisionEntry(providerId, icon, longPresentation,
                                                                                                     tooltip,
                                                                                                     extraActions)

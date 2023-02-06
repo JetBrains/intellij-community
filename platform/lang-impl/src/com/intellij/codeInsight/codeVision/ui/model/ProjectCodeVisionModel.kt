@@ -27,7 +27,7 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
   val hoveredEntry: Property<CodeVisionEntry?> = Property<CodeVisionEntry?>(null)
   val lensPopupActive: Property<Boolean> = Property(false)
 
-  val moreEntry: AdditionalCodeVisionEntry = AdditionalCodeVisionEntry(MORE_PROVIDER_ID, "More...")
+  val moreEntry: AdditionalCodeVisionEntry = AdditionalCodeVisionEntry(MORE_PROVIDER_ID, CodeVisionBundle.message("more"))
 
 
   private fun getCodeVisionHost() = CodeVisionInitializer.getInstance(project).getCodeVisionHost()
