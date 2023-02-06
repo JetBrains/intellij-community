@@ -217,24 +217,27 @@ public class PatternValidator extends LocalInspectionTool {
           e = expr;
         }
         final PsiModifierListOwner owner = ObjectUtils.tryCast(e, PsiModifierListOwner.class);
-        LocalQuickFix quickFix;
-        if (owner != null && PsiUtilEx.isLanguageAnnotationTarget(owner)) {
-          PsiAnnotation[] resolvedAnnos =
-            AnnotationUtilEx.getAnnotationFrom(owner, configuration.getAdvancedConfiguration().getPatternAnnotationPair(), true);
-          if (resolvedAnnos.length == 2 &&
-              annotations.length == 2 &&
-              Comparing.strEqual(resolvedAnnos[1].getQualifiedName(), annotations[1].getQualifiedName())) {
-            // both target and source annotated indirectly with the same anno
-            return;
-          }
+        List<LocalQuickFix> quickFixes = new SmartList<>();
+        if (holder.isOnTheFly()) {
+          if (owner != null && PsiUtilEx.isLanguageAnnotationTarget(owner)) {
+            PsiAnnotation[] resolvedAnnos =
+              AnnotationUtilEx.getAnnotationFrom(owner, configuration.getAdvancedConfiguration().getPatternAnnotationPair(), true);
+            if (resolvedAnnos.length == 2 &&
+                annotations.length == 2 &&
+                Comparing.strEqual(resolvedAnnos[1].getQualifiedName(), annotations[1].getQualifiedName())) {
+              // both target and source annotated indirectly with the same anno
+              return;
+            }
 
-          final String classname = configuration.getAdvancedConfiguration().getSubstAnnotationPair().first;
-          quickFix = AnnotateFix.canApplyOn(owner) ? AnnotateFix.create(e, classname) : new IntroduceVariableFix(false);
+            final String classname = configuration.getAdvancedConfiguration().getSubstAnnotationPair().first;
+            quickFixes.add(AnnotateFix.canApplyOn(owner) ? AnnotateFix.create(e, classname) : new IntroduceVariableFix(false));
+          }
+          else {
+            quickFixes.add(new IntroduceVariableFix(false));
+          }
         }
-        else {
-          quickFix = new IntroduceVariableFix(false);
-        }
-        holder.registerProblem(expr, IntelliLangBundle.message("inspection.pattern.validator.description"), quickFix);
+        holder.registerProblem(expr, IntelliLangBundle.message("inspection.pattern.validator.description"),
+                               quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     }
   }
