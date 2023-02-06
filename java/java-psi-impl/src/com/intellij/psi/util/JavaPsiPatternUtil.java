@@ -381,6 +381,7 @@ public final class JavaPsiPatternUtil {
       PsiDeconstructionPattern deconstructionPattern = (PsiDeconstructionPattern)deconstructionList.getParent();
       PsiType patternType = deconstructionPattern.getTypeElement().getType();
       if (patternType instanceof PsiClassType) {
+        patternType = PsiUtil.captureToplevelWildcards(patternType, pattern);
         PsiSubstitutor substitutor = ((PsiClassType)patternType).resolveGenerics().getSubstitutor();
         PsiType recordComponentType = recordComponent.getType();
         return JavaVarTypeUtil.getUpwardProjection(substitutor.substitute(recordComponentType));
