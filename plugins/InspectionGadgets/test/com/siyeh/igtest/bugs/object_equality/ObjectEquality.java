@@ -20,6 +20,7 @@ public class ObjectEquality {
     test(w1 <warning descr="Object values are compared using '!=', not 'equals()'">!=</warning> w2);
   }
 
+  // Numbers are handled separately by NumberEqualityInspection, so don't warn.
   void compareInt(int p1, int p2, Integer w1, Integer w2) {
     test(p1 == p2);
     test(p1 != p2);
@@ -31,6 +32,7 @@ public class ObjectEquality {
     test(w1 != w2);
   }
 
+  // Numbers are handled separately by NumberEqualityInspection, so don't warn.
   void compareDouble(double p1, double p2, Double w1, Double w2) {
     test(p1 == p2);
     test(p1 != p2);
@@ -42,7 +44,7 @@ public class ObjectEquality {
     test(w1 != w2);
   }
 
-  // The classes of the primitive wrappers are final, the intermediate class 'Number' isn't.
+  // Numbers are handled separately by NumberEqualityInspection, so don't warn.
   void compareNumbers(Double dbl, Integer i, Number num, Object obj) {
     test(<error descr="Operator '==' cannot be applied to 'java.lang.Double', 'java.lang.Integer'">dbl == i</error>);
     test(dbl == num);
