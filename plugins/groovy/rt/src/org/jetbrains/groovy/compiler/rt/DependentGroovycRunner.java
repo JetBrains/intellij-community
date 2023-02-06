@@ -129,7 +129,7 @@ public final class DependentGroovycRunner {
 
     int errorCount = 0;
     for (GroovyCompilerMessage message : compilerMessages) {
-      if (message.getCategory() == GroovyCompilerMessageCategories.ERROR) {
+      if (GroovyCompilerMessageCategories.ERROR.equals(message.getCategory())) {
         if (errorCount > 100) {
           continue;
         }
