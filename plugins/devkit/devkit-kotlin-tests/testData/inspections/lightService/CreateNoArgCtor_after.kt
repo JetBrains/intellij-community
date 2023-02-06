@@ -1,5 +1,3 @@
-package inspections.lightService
-
 import com.intellij.openapi.components.Service
 
 @Service(Service.Level.APP)

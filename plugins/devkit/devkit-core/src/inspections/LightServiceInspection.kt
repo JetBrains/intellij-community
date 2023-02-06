@@ -19,9 +19,9 @@ import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.containers.ContainerUtil
 import com.siyeh.ig.callMatcher.CallMatcher
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.inspections.quickfix.ReplaceWithGetInstanceCallFix
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
@@ -92,35 +92,36 @@ class LightServiceInspection : DevKitUastInspectionBase(UClass::class.java) {
       val level = getLevel(serviceAnnotation)
       val receiverType = node.receiver.getExpressionType() ?: return true
       val array = listOf(
-        MismatchReceivingChecker(Project::class.java.canonicalName, Level.APP, ::findGetInstanceProjectLevel,
-                                 "inspection.light.service.project.level.retrieved.as.application.level"),
-        MismatchReceivingChecker(Application::class.java.canonicalName, Level.PROJECT, ::findGetInstanceApplicationLevel,
-                                 "inspection.light.service.application.level.retrieved.as.project.level")
-      )
-      array.forEach { it.test(uClass, level, receiverType, toHighlight, holder) }
+        MismatchReceivingChecker(Project::class.java.canonicalName, Level.APP,
+                                 "inspection.light.service.application.level.retrieved.as.project.level"),
+        MismatchReceivingChecker(Application::class.java.canonicalName, Level.PROJECT,
+                                 "inspection.light.service.project.level.retrieved.as.application.level"))
+      val hasError = array.any { it.check(level, receiverType, toHighlight, holder) }
+      if (!hasError) checkIfCanBeReplacedWithGetInstance(uClass, receiverType, holder, toHighlight)
       return true
     }
   }, arrayOf(UClass::class.java, UQualifiedReferenceExpression::class.java))
 
-  data class MismatchReceivingChecker(val actualRetrievingClassName: String,
+  data class MismatchReceivingChecker(val retrievingClassName: String,
                                       val level: Level,
-                                      val getInstanceFinder: (uClass: UClass) -> UMethod?,
-                                      val mismatchRetrievingKey: @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) String) {
-    fun test(uClass: UClass, actualLevel: Level, receiverType: PsiType, toHighlight: PsiElement, holder: ProblemsHolder) {
-      if (receiverType.isInheritorOf(actualRetrievingClassName) && actualLevel == level) {
+                                      val mismatchRetrievingKey: @PropertyKey(resourceBundle = "messages.DevKitBundle") String) {
+    fun check(actualLevel: Level, receiverType: PsiType, toHighlight: PsiElement, holder: ProblemsHolder): Boolean {
+      if (receiverType.isInheritorOf(retrievingClassName) && actualLevel == level) {
         val retrievingMessage = DevKitBundle.message(mismatchRetrievingKey)
         holder.registerProblem(toHighlight, retrievingMessage)
-        getInstanceFinder(uClass)?.let { method ->
-          getCanBeReplacedMessage(method)?.let { message -> holder.registerProblem(toHighlight, message) }
-        }
+        return true
       }
+      return false
     }
+  }
 
-    private fun getCanBeReplacedMessage(method: UMethod): @Nls(capitalization = Nls.Capitalization.Sentence) String? {
-      val qualifiedName = method.getContainingUClass()?.qualifiedName ?: return null
-      val className = StringUtil.getShortName(qualifiedName)
-      return DevKitBundle.message("inspection.light.service.can.be.replaced.with", method.name, className)
-    }
+  private fun checkIfCanBeReplacedWithGetInstance(uClass: UClass, receiverType: PsiType, holder: ProblemsHolder, toHighlight: PsiElement) {
+    val isApplicationLevelService = receiverType.isInheritorOf(Application::class.java.canonicalName)
+    val method = if (isApplicationLevelService) findGetInstanceApplicationLevel(uClass) else findGetInstanceProjectLevel(uClass)
+    val qualifiedName = method?.getContainingUClass()?.qualifiedName ?: return
+    val serviceName = StringUtil.getShortName(qualifiedName)
+    val message = DevKitBundle.message("inspection.light.service.can.be.replaced.with", serviceName, method.name)
+    holder.registerProblem(toHighlight, message, ReplaceWithGetInstanceCallFix(serviceName, method.name, isApplicationLevelService))
   }
 
   private fun isInsideGetInstance(node: UExpression, uClass: UClass): Boolean {
@@ -169,8 +170,8 @@ class LightServiceInspection : DevKitUastInspectionBase(UClass::class.java) {
         val param = it.uastParameters[0]
         if (param.type.canonicalText != Project::class.java.canonicalName) return@find false
         val qualifiedRef = getReturnExpression(it)?.returnExpression as? UQualifiedReferenceExpression ?: return@find false
-        return@find COMPONENT_MANAGER_GET_SERVICE.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
-                    (qualifiedRef.receiver as? USimpleNameReferenceExpression)?.resolveToUElement() == param
+        COMPONENT_MANAGER_GET_SERVICE.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
+        (qualifiedRef.receiver as? USimpleNameReferenceExpression)?.resolveToUElement() == param
       }
   }
 
@@ -181,8 +182,8 @@ class LightServiceInspection : DevKitUastInspectionBase(UClass::class.java) {
       .filter { it.uastParameters.isEmpty() }
       .find {
         val qualifiedRef = getReturnExpression(it)?.returnExpression as? UQualifiedReferenceExpression ?: return@find false
-        return@find COMPONENT_MANAGER_GET_SERVICE.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
-                    qualifiedRef.receiver.getExpressionType()?.isInheritorOf(Application::class.java.canonicalName) == true
+        COMPONENT_MANAGER_GET_SERVICE.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
+        qualifiedRef.receiver.getExpressionType()?.isInheritorOf(Application::class.java.canonicalName) == true
       }
   }
 

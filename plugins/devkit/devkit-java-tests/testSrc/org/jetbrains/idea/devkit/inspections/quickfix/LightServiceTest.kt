@@ -11,6 +11,7 @@ class LightServiceTest : LightServiceTestBase() {
   private val MAKE_FINAL_FIX_NAME = "Make 'MyService' final"
   private val ANNOTATE_AS_SERVICE_FIX_NAME = "Annotate class 'MyService' as '@Service'"
   private val CREATE_CONSTRUCTOR_FIX_NAME = "Create constructor in 'MyService'"
+  private val REPLACE_WITH_GET_INSTANCE_FIX_NAME = "Replace with 'MyService.getInstance()' call"
 
   override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/lightService/"
 
@@ -30,5 +31,21 @@ class LightServiceTest : LightServiceTestBase() {
 
   fun testCreateNoArgCtor() {
     doTest(CREATE_CONSTRUCTOR_FIX_NAME)
+  }
+
+  fun testReplaceWithGetInstanceApplicationLevel() {
+    doTest(REPLACE_WITH_GET_INSTANCE_FIX_NAME)
+  }
+
+  fun testReplaceWithGetInstanceProjectLevel() {
+    doTest(REPLACE_WITH_GET_INSTANCE_FIX_NAME)
+  }
+
+  fun testApplicationLevelServiceAsProjectLevel() {
+    doTest()
+  }
+
+  fun testProjectLevelServiceAsApplicationLevel() {
+    doTest()
   }
 }
