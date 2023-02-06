@@ -1,7 +1,7 @@
 public class Test {
-<caret>  /**
-   *
-   */ 
+  /**
+<selection>   *<caret>
+</selection>   */
   void foo() {
     
   }

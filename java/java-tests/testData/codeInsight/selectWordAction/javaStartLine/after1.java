@@ -1,6 +1,6 @@
 class C {
-<selection>    private void foo() {
+<selection>    </selection>private void foo() {
         if (a) {
         }
     }
-</selection>}
+}

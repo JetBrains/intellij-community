@@ -5,8 +5,8 @@ class C {
                 System.out.println(0);
                 break;
             case 1:
-<caret>                System.out.println(1);
-
+                System.out.println(1);
+<caret>
                 break;
         }
     }

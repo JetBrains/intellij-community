@@ -1,5 +1,5 @@
 class C {
     private void foo() {
-        if (a) <selection>{ <caret> }</selection>
+        if (a) {<selection> <caret> </selection>}
     }
 }
