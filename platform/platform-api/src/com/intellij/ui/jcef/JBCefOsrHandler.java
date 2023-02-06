@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
-import javax.swing.event.AncestorListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
@@ -65,7 +64,7 @@ class JBCefOsrHandler implements CefRenderHandler {
       @Override
       public void ancestorAdded(AncestorEvent event) {
         // track got visible event
-        updateLocation();
+        if (myComponent.isShowing()) updateLocation();
       }
     });
 
