@@ -172,7 +172,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                 @NotNull AlignmentStrategy alignmentStrategy,
                                 int startOffset,
                                 @NotNull FormattingMode formattingMode) {
-    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, settings) : indent;
+    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, settings, javaSettings) : indent;
     IElementType elementType = child.getElementType();
     Alignment alignment = alignmentStrategy.getAlignment(elementType);
     PsiElement childPsi = child.getPsi();
@@ -238,7 +238,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                    @NotNull CommonCodeStyleSettings settings,
                                    @NotNull JavaCodeStyleSettings javaSettings,
                                    @NotNull FormattingMode formattingMode) {
-    final Indent indent = getDefaultSubtreeIndent(child, settings);
+    final Indent indent = getDefaultSubtreeIndent(child, settings, javaSettings);
     return newJavaBlock(child, settings, javaSettings, indent, null, AlignmentStrategy.getNullStrategy(), formattingMode);
   }
 
@@ -291,7 +291,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
 
   @Nullable
-  private static Indent getDefaultSubtreeIndent(@NotNull ASTNode child, @NotNull CommonCodeStyleSettings settings) {
+  private static Indent getDefaultSubtreeIndent(@NotNull ASTNode child,
+                                                @NotNull CommonCodeStyleSettings settings,
+                                                @NotNull JavaCodeStyleSettings javaSettings) {
     CommonCodeStyleSettings.IndentOptions indentOptions= getJavaIndentOptions(settings);
     final ASTNode parent = child.getTreeParent();
     final IElementType childNodeType = child.getElementType();
@@ -316,6 +318,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (parent.getPsi() instanceof PsiLambdaExpression && child instanceof PsiCodeBlock) {
         if (settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ||
             settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED2) {
+          return Indent.getNormalIndent();
+        }
+        return Indent.getNoneIndent();
+      }
+      if (parent.getPsi() instanceof PsiSwitchExpression &&
+          child instanceof PsiCodeBlock &&
+          !javaSettings.DOUBLY_SHIFTED_SWITCH_EXPRESSION_BODY) {
+        if (settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ||
+            settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED2) {
           return Indent.getNormalIndent();
         }
         return Indent.getNoneIndent();

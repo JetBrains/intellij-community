@@ -400,4 +400,100 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
     getSettings().BRACE_STYLE = braceStyle;
     doMethodTest(before, after);
   }
+
+  public void testSwitchExpression() {
+    String before = """
+      var x = switch (foo) {
+      		case "bar" ->
+      			{
+      				yield "2000";
+      			}
+      		default -> "n/a";
+      	};""";
+
+    String endOfLine = """
+      var x = switch (foo) {
+          case "bar" -> {
+              yield "2000";
+          }
+          default -> "n/a";
+      };""";
+
+    String nextLine = """
+      var x = switch (foo)
+              {
+                  case "bar" ->
+                  {
+                      yield "2000";
+                  }
+                  default -> "n/a";
+              };""";
+
+    String nextLineShifted = """
+      var x = switch (foo)
+              {
+              case "bar" ->
+                  {
+                  yield "2000";
+                  }
+              default -> "n/a";
+              };""";
+
+    String nextLineShiftedEach = """
+      var x = switch (foo)
+              {
+                  case "bar" ->
+                      {
+                          yield "2000";
+                      }
+                  default -> "n/a";
+              };""";
+
+    checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
+
+
+    getJavaSettings().DOUBLY_SHIFTED_SWITCH_EXPRESSION_BODY = false;
+
+
+    String endOfLine1Shifted = """
+      var x = switch (foo) {
+          case "bar" -> {
+              yield "2000";
+          }
+          default -> "n/a";
+      };""";
+
+    String nextLine1Shifted = """
+      var x = switch (foo)
+      {
+          case "bar" ->
+          {
+              yield "2000";
+          }
+          default -> "n/a";
+      };""";
+
+    String nextLineShifted1Shifted = """
+      var x = switch (foo)
+          {
+          case "bar" ->
+              {
+              yield "2000";
+              }
+          default -> "n/a";
+          };""";
+
+    String nextLineShiftedEach1Shifted = """
+      var x = switch (foo)
+          {
+              case "bar" ->
+                  {
+                      yield "2000";
+                  }
+              default -> "n/a";
+          };""";
+
+    checkFormatterWithDifferentBraceStyles(before, endOfLine1Shifted, nextLine1Shifted, nextLineShifted1Shifted,
+                                           nextLineShiftedEach1Shifted);
+  }
 }
