@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards;
 
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
@@ -28,8 +27,6 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.MavenImportUtil;
-import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
@@ -124,20 +121,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   @Override
   public @Nullable Module commitModule(@NotNull Project project, @Nullable ModifiableModuleModel model) {
-    setMavenModuleFilePath(project, getName());
     return super.commitModule(project, model);
-  }
-
-  private void setMavenModuleFilePath(@NotNull Project project, @NotNull String moduleName) {
-    if (myParentProject == null) return;
-    if (!MavenProjectImporter.isLegacyImportToTreeStructureEnabled(project)) return;
-
-    String parentModuleName = MavenImportUtil.getModuleName(myParentProject, project);
-    if (StringUtil.isNotEmpty(parentModuleName)) {
-      String moduleFilePath =
-        project.getBasePath() + File.separator + parentModuleName + "." + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
-      setModuleFilePath(moduleFilePath);
-    }
   }
 
   @Override
