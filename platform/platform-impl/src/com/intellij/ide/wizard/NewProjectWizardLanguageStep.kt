@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -87,11 +86,7 @@ class NewProjectWizardLanguageStep(
   }
 
   override fun setupProject(project: Project) {
-    setupProject(project, null)
-  }
-
-  override fun setupProject(project: Project, model: ModifiableModuleModel?) {
-    super.setupProject(project, model)
+    super.setupProject(project)
 
     logLanguageFinished()
   }

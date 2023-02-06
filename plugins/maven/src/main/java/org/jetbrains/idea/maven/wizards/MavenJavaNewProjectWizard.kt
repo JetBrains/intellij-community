@@ -10,10 +10,10 @@ import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard.MODIFIABLE_MODULE_MODEL_KEY
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
-import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
@@ -75,7 +75,7 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       setupArtifactIdUI(builder)
     }
 
-    override fun setupProject(project: Project, model: ModifiableModuleModel?) {
+    override fun setupProject(project: Project) {
       val builder = InternalMavenModuleBuilder().apply {
         moduleJdk = sdk
         name = parentStep.name
@@ -89,6 +89,7 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         isInheritGroupId = parentData?.mavenId?.groupId == groupId
         isInheritVersion = parentData?.mavenId?.version == version
       }
+      val model = context.getUserData(MODIFIABLE_MODULE_MODEL_KEY)
       builder.commit(project, model)
     }
 

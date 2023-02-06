@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.wizard
 
-import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.util.bindStorage
 import com.intellij.openapi.project.Project
@@ -72,11 +71,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
   }
 
   override fun setupProject(project: Project) {
-    setupProject(project, null)
-  }
-
-  override fun setupProject(project: Project, model: ModifiableModuleModel?) {
-    steps[step]?.setupProject(project, model)
+    steps[step]?.setupProject(project)
   }
 
   init {

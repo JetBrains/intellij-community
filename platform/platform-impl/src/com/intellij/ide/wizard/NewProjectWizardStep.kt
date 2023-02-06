@@ -2,7 +2,6 @@
 package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
@@ -82,7 +81,6 @@ interface NewProjectWizardStep {
    * [WizardContext.isCreatingNewProject].
    */
   fun setupProject(project: Project) {}
-  fun setupProject(project: Project, model: ModifiableModuleModel?) = setupProject(project)
 
   /**
    * See related doc for [NewProjectWizardStep.keywords].

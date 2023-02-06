@@ -386,7 +386,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @Nullable
-  private List<Module> doAddModule(@Nullable AbstractProjectWizard wizard) {
+  private List<Module> doAddModule(@NotNull AbstractProjectWizard wizard) {
     var builder = getProjectBuilder(wizard);
     if (null == builder) return null;
 

@@ -4,6 +4,7 @@ package com.intellij.ide.wizard
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.AbstractWizard.MODIFIABLE_MODULE_MODEL_KEY
 import com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter.Companion.NPW_PREFIX
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.ModifiableModuleModel
@@ -38,8 +39,9 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
 
   override fun commitModule(project: Project, model: ModifiableModuleModel?): Module? {
     val step = panel!!.step
+    step.context.putUserData(MODIFIABLE_MODULE_MODEL_KEY, model)
     return detectCreatedModule(project, model) {
-      step.setupProject(project, model)
+      step.setupProject(project)
     }
   }
 
