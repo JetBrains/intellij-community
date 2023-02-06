@@ -11,36 +11,38 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * Manages review toolwindow tabs and their content.
- * If [projectContext] is [null] UI for acquiring this context is shown (by [ReviewTabsComponentFactory.createEmptyTabContent]).
+ * If [reviewToolwindowViewModel.projectContext] is [null] UI for acquiring this context is shown (by [ReviewTabsComponentFactory.createEmptyTabContent]).
  *
- * When [projectContext] appears Review List will be shown (by [ReviewTabsComponentFactory.createReviewListComponent]),
+ * When [reviewToolwindowViewModel.projectContext] appears Review List will be shown (by [ReviewTabsComponentFactory.createReviewListComponent]),
  * and requests in [reviewTabsController] will be handled, according to described in [ReviewTab] [ReviewTab.id] logic.
  * So, new tabs will be shown using [ReviewTabsComponentFactory.createTabComponent].
+ *
+ * @see ReviewToolwindowDataKeys
  */
 @ApiStatus.Experimental
 fun <T : ReviewTab, C : ReviewToolwindowProjectContext> manageReviewToolwindowTabs(
   cs: CoroutineScope,
   contentManager: ContentManager,
-  projectContext: StateFlow<C?>,
+  reviewToolwindowViewModel: ReviewToolwindowViewModel<C>,
   reviewTabsController: ReviewTabsController<T>,
   tabComponentFactory: ReviewTabsComponentFactory<T, C>
 ) {
-  ReviewToolwindowTabsManager(cs, contentManager, projectContext, reviewTabsController, tabComponentFactory)
+  ReviewToolwindowTabsManager(cs, contentManager, reviewToolwindowViewModel, reviewTabsController, tabComponentFactory)
 }
 
 private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowProjectContext>(
   private val parentCs: CoroutineScope,
   private val contentManager: ContentManager,
-  private val projectContext: StateFlow<C?>,
+  private val reviewToolwindowViewModel: ReviewToolwindowViewModel<C>,
   private val reviewTabsController: ReviewTabsController<T>,
   private val tabComponentFactory: ReviewTabsComponentFactory<T, C>
 ) {
+  private val projectContext = reviewToolwindowViewModel.projectContext
   private val cs = parentCs.childScope(Dispatchers.Main)
 
   private val tabsSelector = object : ReviewToolwindowTabsContentSelector<T> {
@@ -56,6 +58,7 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
         ReviewToolwindowDataKeys.REVIEW_TABS_CONTROLLER.`is`(it) -> reviewTabsController
         ReviewToolwindowDataKeys.REVIEW_TABS_CONTENT_SELECTOR.`is`(it) -> tabsSelector
         ReviewToolwindowDataKeys.REVIEW_PROJECT_CONTEXT.`is`(it) -> projectContext.value
+        ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_VM.`is`(it) -> reviewToolwindowViewModel
         else -> null
       }
     }

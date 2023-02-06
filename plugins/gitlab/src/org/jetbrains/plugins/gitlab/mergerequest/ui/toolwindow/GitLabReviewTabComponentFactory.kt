@@ -19,9 +19,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.mapLatest
-import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
@@ -46,11 +44,10 @@ import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import javax.swing.*
 
-internal class GitLabReviewTabComponentFactory(private val project: Project) : ReviewTabsComponentFactory<GitLabReviewTab, GitLabToolwindowProjectContext> {
-  private val projectsManager = project.service<GitLabProjectsManager>()
-  private val accountManager = service<GitLabAccountManager>()
-  private val connectionManager = project.service<GitLabProjectConnectionManager>()
-
+internal class GitLabReviewTabComponentFactory(
+  private val project: Project,
+  private val toolwindowViewModel: GitLabToolwindowViewModel,
+) : ReviewTabsComponentFactory<GitLabReviewTab, GitLabToolwindowProjectContext> {
   override fun createReviewListComponent(cs: CoroutineScope,
                                          projectContext: GitLabToolwindowProjectContext): JComponent {
     val connection = projectContext.connection
@@ -69,7 +66,7 @@ internal class GitLabReviewTabComponentFactory(private val project: Project) : R
       repository = connection.repo.repository.projectPath.name,
       account = connection.account,
       avatarIconsProvider = avatarIconsProvider,
-      accountManager = accountManager,
+      accountManager = toolwindowViewModel.accountManager,
       tokenRefreshFlow = connection.tokenRefreshFlow,
       loaderSupplier = { filtersValue -> connection.projectData.mergeRequests.getListLoader(filtersValue.toSearchQuery()) }
     )
@@ -152,11 +149,14 @@ internal class GitLabReviewTabComponentFactory(private val project: Project) : R
 
   private fun createSelectorsComponent(cs: CoroutineScope): JComponent {
     // TODO: move vm creation to another place
-    val selectorVm = GitLabRepositoryAndAccountSelectorViewModel(cs, projectsManager, accountManager, onSelected = { mapping, account ->
-      withContext(cs.coroutineContext) {
-        connectionManager.openConnection(mapping, account)
+    val selectorVm = GitLabRepositoryAndAccountSelectorViewModel(
+      cs, toolwindowViewModel.projectsManager, toolwindowViewModel.accountManager,
+      onSelected = { mapping, account ->
+        withContext(cs.coroutineContext) {
+          toolwindowViewModel.connectionManager.openConnection(mapping, account)
+        }
       }
-    })
+    )
 
     val accountsDetailsProvider = GitLabAccountsDetailsProvider(cs) {
       // TODO: separate loader

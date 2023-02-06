@@ -3,10 +3,9 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.async.disposingMainScope
-import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.async.mapStateScoped
 import com.intellij.collaboration.ui.toolwindow.dontHideOnEmptyContent
 import com.intellij.collaboration.ui.toolwindow.manageReviewToolwindowTabs
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -15,7 +14,6 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 
 internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(toolWindow: ToolWindow) {
@@ -32,15 +30,14 @@ internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
     toolWindow.dontHideOnEmptyContent()
 
     val cs = toolWindow.contentManager.disposingMainScope()
-    val projectContext = project.service<GitLabProjectConnectionManager>().connectionState.mapStateScoped(cs) { ctxCs, connection ->
-      connection?.let { GitLabToolwindowProjectContext(project, ctxCs, connection) }
-    }
+    val toolwindowVm = GitLabToolwindowViewModel(project, cs)
 
     val tabsController = GitLabReviewTabsController()
-    val componentFactory = GitLabReviewTabComponentFactory(project)
+    val componentFactory = GitLabReviewTabComponentFactory(project, toolwindowVm)
 
-    manageReviewToolwindowTabs(cs, toolWindow.contentManager, projectContext, tabsController, componentFactory)
-    // TODO: introduce account changing action under gear
+    manageReviewToolwindowTabs(cs, toolWindow.contentManager, toolwindowVm, tabsController, componentFactory)
+
+    toolWindow.setAdditionalGearActions(DefaultActionGroup(GitLabSwitchProjectAndAccountAction()))
   }
 
   override fun shouldBeAvailable(project: Project): Boolean = false
