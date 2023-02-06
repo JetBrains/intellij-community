@@ -18,8 +18,6 @@ import com.intellij.ide.ui.*
 import com.intellij.ide.ui.UISettings.Companion.getPreferredFractionalMetricsValue
 import com.intellij.ide.ui.UISettings.Companion.shadowInstance
 import com.intellij.ide.ui.laf.SystemDarkThemeDetector.Companion.createDetector
-import com.intellij.ide.ui.laf.UiThemeProviderListManager.Companion.excludedThemes
-import com.intellij.ide.ui.laf.UiThemeProviderListManager.Companion.sortThemes
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo
@@ -77,6 +75,7 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
+import java.util.*
 import java.util.function.BooleanSupplier
 import java.util.function.Supplier
 import javax.swing.*
@@ -85,6 +84,8 @@ import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.UIResource
 import javax.swing.plaf.metal.DefaultMetalTheme
 import javax.swing.plaf.metal.MetalLookAndFeel
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 // A constant from Mac OS X implementation. See CPlatformWindow.WINDOW_ALPHA
 private const val WINDOW_ALPHA = "Window.alpha"
@@ -110,11 +111,14 @@ private const val INTER_SIZE = 13
        reportStatistic = false)
 class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposable {
   private val eventDispatcher = EventDispatcher.create(LafManagerListener::class.java)
-  private val lafList = SynchronizedClearableLazy {
+  private val lafMap = SynchronizedClearableLazy {
     runActivity("compute LaF list") {
-      computeLafList()
+      computeLafMap()
     }
   }
+  private val lafList
+    get() = lafMap.value.keys
+
   private val defaultDarkLaf = SynchronizedClearableLazy {
     val lafInfoFQN = ApplicationInfoEx.getInstanceEx().defaultDarkLaf
     (if (lafInfoFQN == null) null else createLafInfo(lafInfoFQN)) ?: DarculaLookAndFeelInfo()
@@ -207,9 +211,9 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     }
   }
 
-  private fun computeLafList(): List<LookAndFeelInfo> {
-    val lafList = ArrayList<LookAndFeelInfo>()
-    lafList.add(defaultDarkLaf.value)
+  private fun computeLafMap(): SortedMap<LookAndFeelInfo, TargetUIType> {
+    val map = TreeMap<LookAndFeelInfo, TargetUIType>(UiThemeProviderListManager.themesSortingComparator)
+    map.put(defaultDarkLaf.value, TargetUIType.CLASSIC)
     if (!SystemInfoRt.isMac) {
       for (laf in UIManager.getInstalledLookAndFeels()) {
         val name = laf.name
@@ -219,14 +223,13 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
             && !name.startsWith("Windows")
             && !"GTK+".equals(name, ignoreCase = true)
             && !name.startsWith("JGoodies")) {
-          lafList.add(laf)
+          map.put(laf, TargetUIType.CLASSIC)
         }
       }
     }
-    LafProvider.EP_NAME.forEachExtensionSafe { provider -> lafList.add(provider.lookAndFeelInfo) }
-    lafList.addAll(UiThemeProviderListManager.getInstance().getLaFs())
-    sortThemes(lafList)
-    return lafList
+    LafProvider.EP_NAME.forEachExtensionSafe { provider -> map.put(provider.lookAndFeelInfo, provider.targetUI) }
+    map.putAll(UiThemeProviderListManager.getInstance().getLaFsWithUITypes())
+    return map
   }
 
   @Suppress("removal")
@@ -382,7 +385,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     }
 
     if (themeId != null) {
-      for (l in lafList.value) {
+      for (l in lafList) {
         if (l is UIThemeBasedLookAndFeelInfo && l.theme.id == themeId) {
           return l
         }
@@ -421,30 +424,20 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     return element
   }
 
-  override fun getInstalledLookAndFeels(): Array<LookAndFeelInfo> = lafList.value.toTypedArray()
+  override fun getInstalledLookAndFeels(): Array<LookAndFeelInfo> = lafList.toTypedArray()
 
   override fun getLafComboBoxModel(): CollectionComboBoxModel<LafReference> = myLafComboBoxModel.value
 
-  private fun lafListWithoutExcluded(): List<LookAndFeelInfo> {
-    val excludedThemes = excludedThemes
-    return lafList.value.filter { !excludedThemes.contains(it.name) }
+  fun getLafListForTargetUI(targetUI: TargetUIType): List<LookAndFeelInfo> {
+    return lafMap.value.filterValues { it == targetUI }.keys.toList()
   }
 
   private val allReferences: List<LafReference>
     get() {
       val result = ArrayList<LafReference>()
-      var addSeparator = false
-      val lafNameOrder = UiThemeProviderListManager.lafNameOrder
-      val maxNameOrder = lafNameOrder.values.max()
-      for (info in lafListWithoutExcluded()) {
-        if (addSeparator) {
-          result.add(SEPARATOR)
-          addSeparator = false
-        }
-        result.add(createLafReference(info))
-        if (lafNameOrder.get(info.name) == maxNameOrder) {
-          addSeparator = true
-        }
+      for (group in ThemesListProvider.getInstance().getShownThemes()) {
+        if (!result.isEmpty()) result.add(SEPARATOR)
+        for (info in group) result.add(createLafReference(info))
       }
       return result
     }
@@ -489,7 +482,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
     // Use HighContrast theme for IDE in Windows if HighContrast desktop mode is set.
     if (SystemInfoRt.isWindows && Toolkit.getDefaultToolkit().getDesktopProperty("win.highContrast.on") == true) {
-      for (laf in lafList.value) {
+      for (laf in lafList) {
         if (laf is UIThemeBasedLookAndFeelInfo && HIGH_CONTRAST_THEME_ID == laf.theme.id) {
           return laf
         }
@@ -508,7 +501,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       defaultLightLaf!!.className == className -> defaultLightLaf
       defaultDarkLaf.value.className == className -> defaultDarkLaf.value
       else -> {
-        for (l in lafList.value) {
+        for (l in lafList) {
           if (l !is UIThemeBasedLookAndFeelInfo && className == l.className) {
             return l
           }
@@ -903,6 +896,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
         result = createDetector { systemIsDark: Boolean -> syncLaf(systemIsDark) }
         lafDetector = result
       }
+
       return result
     }
 
@@ -917,12 +911,10 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private inner class UiThemeEpListener : ExtensionPointListener<UIThemeProvider> {
     override fun extensionAdded(extension: UIThemeProvider, pluginDescriptor: PluginDescriptor) {
       val newLaF = UiThemeProviderListManager.getInstance().themeProviderAdded(extension) ?: return
-      val oldLaFs = lafList.value
-      val newLaFs: MutableList<LookAndFeelInfo> = ArrayList(oldLaFs.size + 1)
-      newLaFs.addAll(oldLaFs)
-      newLaFs.add(newLaF)
-      sortThemes(newLaFs)
-      lafList.value = newLaFs
+      val oldLaFsMap = lafMap.value
+      val newLaFsMap = TreeMap(oldLaFsMap)
+      newLaFsMap.put(newLaF, extension.targetUI)
+      lafMap.value = newLaFsMap
       updateLafComboboxModel()
 
       // when updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
@@ -949,13 +941,13 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       else {
         null
       }
-      val newLaFs: MutableList<LookAndFeelInfo> = ArrayList()
-      for (laf in lafList.value) {
-        if (laf !== oldLaF) {
-          newLaFs.add(laf)
+      val newLaFs = TreeMap<LookAndFeelInfo, TargetUIType>(lafMap.value.comparator())
+      for (laf in lafMap.value) {
+        if (laf.key !== oldLaF) {
+          newLaFs.put(laf.key, laf.value)
         }
       }
-      lafList.value = newLaFs
+      lafMap.value = newLaFs
       updateLafComboboxModel()
       if (defaultLaF != null) {
         setLookAndFeelImpl(defaultLaF, true, true)
@@ -1022,9 +1014,13 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
     private val lafGroups: ActionGroup
       get() {
+        val allLaFs =
+          if (ExperimentalUI.isNewUI()) getLafListForTargetUI(TargetUIType.NEW) + getLafListForTargetUI(TargetUIType.CLASSIC)
+          else getLafListForTargetUI(TargetUIType.CLASSIC)
+
         val lightLaFs = ArrayList<LookAndFeelInfo>()
         val darkLaFs = ArrayList<LookAndFeelInfo>()
-        for (lafInfo in lafListWithoutExcluded()) {
+        for (lafInfo in allLaFs) {
           if (lafInfo is UIThemeBasedLookAndFeelInfo && lafInfo.theme.isDark || lafInfo.name == DarculaLaf.NAME) {
             darkLaFs.add(lafInfo)
           }

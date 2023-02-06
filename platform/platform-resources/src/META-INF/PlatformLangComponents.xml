@@ -45,6 +45,9 @@
                         serviceImplementation="com.intellij.ide.ui.laf.LafManagerImpl"
                         headlessImplementation="com.intellij.ide.ui.laf.HeadlessLafManagerImpl"/>
 
+    <applicationService serviceInterface="com.intellij.ide.ui.ThemesListProvider"
+                        serviceImplementation="com.intellij.ide.ui.laf.ThemesListProviderImpl"/>
+
     <applicationService serviceInterface="com.intellij.openapi.wm.WindowManager"
                         serviceImplementation="com.intellij.openapi.wm.impl.WindowManagerImpl"
                         headlessImplementation="com.intellij.openapi.wm.impl.TestWindowManager" preload="notHeadless"/>

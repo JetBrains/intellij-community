@@ -44,6 +44,10 @@ public final class UIThemeProvider implements PluginAware {
   @Attribute("parentTheme")
   public @Nullable String parentTheme;
 
+  @Attribute("targetUI")
+  @NotNull
+  public TargetUIType targetUI = TargetUIType.CLASSIC;
+
   @ApiStatus.Internal
   public byte[] getThemeJson() throws IOException {
     String path = this.path;

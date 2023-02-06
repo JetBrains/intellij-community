@@ -4,14 +4,16 @@
 package com.intellij.ide.ui.laf
 
 import com.intellij.ide.ui.UITheme
+import com.intellij.ide.ui.TargetUIType
 import com.intellij.ide.ui.UIThemeProvider
-import com.intellij.ide.ui.laf.UiThemeProviderListManager.Companion.sortThemes
+import com.intellij.ide.ui.laf.UiThemeProviderListManager.Companion.themesSortingComparator
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
+import java.util.*
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.OutboundSemiGraph
 import javax.swing.UIManager.LookAndFeelInfo
@@ -55,35 +57,37 @@ internal class UiThemeProviderListManager {
       }
     }
 
-    val excludedThemes: List<String>
-      get() = if (ExperimentalUI.isNewUI()) emptyList() else listOf("Light", "Dark", "New Dark")
+    val themesSortingComparator = Comparator<LookAndFeelInfo> { t1, t2 ->
+      val n1 = t1.name
+      val n2 = t2.name
+      if (n1 == n2) {
+        return@Comparator 0
+      }
 
-    fun sortThemes(list: MutableList<out LookAndFeelInfo>) {
-      list.sortWith { t1, t2 ->
-        val n1 = t1.name
-        val n2 = t2.name
-        if (n1 == n2) {
-          return@sortWith 0
-        }
-
-        val o1 = lafNameOrder.get(n1)
-        val o2 = lafNameOrder.get(n2)
-        when {
-          o1 != null && o2 != null -> o1 - o2
-          o1 != null -> -1
-          o2 != null -> 1
-          else -> n1.compareTo(n2, ignoreCase = true)
-        }
+      val o1 = lafNameOrder.get(n1)
+      val o2 = lafNameOrder.get(n2)
+      when {
+        o1 != null && o2 != null -> o1 - o2
+        o1 != null -> -1
+        o2 != null -> 1
+        else -> n1.compareTo(n2, ignoreCase = true)
       }
     }
+
+    fun sortThemes(list: MutableList<out LookAndFeelInfo>) = list.sortWith(themesSortingComparator)
 
     private fun editorColorsManager() = EditorColorsManager.getInstance() as EditorColorsManagerImpl
   }
 
   @Volatile
-  private var lafList = computeList()
+  private var lafMap = computeMap()
 
-  fun getLaFs(): List<UIThemeBasedLookAndFeelInfo> = lafList
+  private val lafList
+    get() = lafMap.keys
+
+  fun getLaFs(): List<UIThemeBasedLookAndFeelInfo> = lafList.toList()
+
+  fun getLaFsWithUITypes(): Map<UIThemeBasedLookAndFeelInfo, TargetUIType> = lafMap
 
   fun findJetBrainsLightTheme(): UIThemeBasedLookAndFeelInfo? = findLaFById(DEFAULT_LIGHT_THEME_ID)
 
@@ -97,16 +101,28 @@ internal class UiThemeProviderListManager {
     val theme = provider.createTheme(parentTheme) ?: return null
     editorColorsManager().handleThemeAdded(theme)
     val newLaF = UIThemeBasedLookAndFeelInfo(theme)
-    lafList = lafList + newLaF
+    lafMap = lafMap + Pair(newLaF, provider.targetUI)
     return newLaF
   }
 
   fun themeProviderRemoved(provider: UIThemeProvider): UIThemeBasedLookAndFeelInfo? {
     val oldLaF = findLaFByProviderId(provider) ?: return null
 
-    lafList = lafList - oldLaF
+    lafMap = lafMap - oldLaF
     editorColorsManager().handleThemeRemoved(oldLaF.theme)
     return oldLaF
+  }
+
+  private operator fun <K, V> SortedMap<K, out V>.plus(pair: Pair<K, V>): SortedMap<K, V> {
+    val res = TreeMap(this)
+    res[pair.first] = pair.second
+    return res
+  }
+
+  private operator fun <K, V> SortedMap<K, out V>.minus(key: K): SortedMap<K, V> {
+    val res = TreeMap(this)
+    res.remove(key)
+    return res
   }
 
   private fun findLaFById(id: String) = lafList.find { it.theme.id == id }
@@ -126,6 +142,15 @@ private fun computeList(): List<UIThemeBasedLookAndFeelInfo> {
 
   sortThemes(themes)
   return themes
+}
+
+private fun computeMap(): SortedMap<UIThemeBasedLookAndFeelInfo, TargetUIType> {
+  val map = TreeMap<UIThemeBasedLookAndFeelInfo, TargetUIType>(themesSortingComparator)
+  UIThemeProvider.EP_NAME.processExtensions { provider, _ ->
+    val theme = UIThemeBasedLookAndFeelInfo(provider.createTheme() ?: return@processExtensions)
+    map[theme] = provider.targetUI
+  }
+  return map
 }
 
 private fun findParentTheme(themes: List<UIThemeBasedLookAndFeelInfo>, parentId: String?): UITheme? {
