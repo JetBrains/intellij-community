@@ -21,6 +21,6 @@ fun VirtualFileUrlManager.Companion.getInstance(project: Project): VirtualFileUr
 
 fun VirtualFileUrlManager.Companion.getGlobalInstance(): VirtualFileUrlManager = ApplicationManager.getApplication().service()
 
-fun VirtualFileUrl.isEqualOrParentOf(other: VirtualFileUrl): Boolean = FileUtil.startsWith(other.urlWithoutTrailingSlash, urlWithoutTrailingSlash)
+fun VirtualFileUrl.isEqualOrParentOf(other: VirtualFileUrl): Boolean = FileUtil.startsWith(other.url.removeSuffix("/"), url.removeSuffix("/"))
 
 fun VirtualFileUrl.toPath(): Path = Path.of(JpsPathUtil.urlToPath(url))
