@@ -38,15 +38,15 @@ internal class NavBarService(private val project: Project) : Disposable {
 
   @Suppress("DEPRECATION")
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val coroutineScope: CoroutineScope = project.coroutineScope.childScope(
+  private val cs: CoroutineScope = project.coroutineScope.childScope(
     Dispatchers.Default.limitedParallelism(1) // allows reasoning about the ordering
   )
 
   override fun dispose() {
-    coroutineScope.cancel()
+    cs.cancel()
   }
 
-  private val staticNavBarVm = StaticNavBarVmImpl(coroutineScope = coroutineScope,
+  private val staticNavBarVm = StaticNavBarVmImpl(coroutineScope = cs,
                                                   project = project,
                                                   initiallyVisible = UISettings.getInstance().isNavbarShown())
   private var floatingBarJob: Job? = null
@@ -60,7 +60,7 @@ internal class NavBarService(private val project: Project) : Disposable {
 
   val staticNavBarPanel: JComponent by lazy(LazyThreadSafetyMode.NONE) {
     EDT.assertIsEdt()
-    StaticNavBarPanel(coroutineScope, staticNavBarVm, project)
+    StaticNavBarPanel(cs, staticNavBarVm, project)
   }
 
   fun jumpToNavbar(dataContext: DataContext) {
@@ -83,7 +83,7 @@ internal class NavBarService(private val project: Project) : Disposable {
       return
     }
 
-    val job = coroutineScope.launch(ModalityState.current().asContextElement()) {
+    val job = cs.launch(ModalityState.current().asContextElement()) {
       val model = contextModel(dataContext, project).ifEmpty {
         defaultModel(project)
       }
