@@ -6,7 +6,7 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.mac.foundation.Foundation
@@ -76,7 +76,7 @@ object AccessibilityUtils {
     return retValue && isActive.value.booleanValue()
   }
 
-  internal class EnableScreenReaderSupportTask : ProjectPostStartupActivity {
+  internal class EnableScreenReaderSupportTask : ProjectActivity {
     override suspend fun execute(project: Project) {
       if (enable) {
         GeneralSettings.getInstance().isSupportScreenReaders = true

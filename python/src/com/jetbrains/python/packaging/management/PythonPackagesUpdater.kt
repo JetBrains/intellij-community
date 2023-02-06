@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.jetbrains.extensions.hasPython
 import com.jetbrains.python.packaging.PyPIPackageRanking
 import com.jetbrains.python.packaging.pip.PypiPackageCache
@@ -17,7 +17,7 @@ import java.time.Duration
 import java.time.Instant
 import kotlin.io.path.exists
 
-class PythonPackagesUpdater : ProjectPostStartupActivity {
+class PythonPackagesUpdater : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isUnitTestMode || !project.hasPython) return

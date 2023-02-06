@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 
 /**
- * @deprecated Use [ProjectPostStartupActivity]
+ * @deprecated Use [ProjectActivity]
  */
 @Obsolete
 interface StartupActivity {
@@ -37,9 +37,12 @@ interface StartupActivity {
  * @see StartupManager
  * @see com.intellij.ide.util.RunOnceUtil
  */
-interface ProjectPostStartupActivity {
+interface ProjectActivity {
   suspend fun execute(project: Project)
 }
+
+@Deprecated("Use ProjectActivity", level = DeprecationLevel.ERROR)
+interface ProjectPostStartupActivity : ProjectActivity
 
 /**
  * `startupActivity` activity must be defined only by a core and requires approval by core team.

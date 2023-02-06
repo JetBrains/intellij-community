@@ -36,7 +36,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.HintText
 import com.intellij.openapi.util.TextRange
@@ -62,7 +62,7 @@ import javax.swing.event.HyperlinkListener
 import kotlin.math.max
 import kotlin.math.min
 
-internal class InitCtrlMouseHandlerActivity : ProjectPostStartupActivity {
+internal class InitCtrlMouseHandlerActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (!Registry.`is`("documentation.v2.ctrl.mouse", true)) {
       return

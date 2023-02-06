@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.coroutineScope
 
 class WindowDressing : ProjectCloseListener, LightEditServiceListener {
@@ -16,7 +16,7 @@ class WindowDressing : ProjectCloseListener, LightEditServiceListener {
       get() = ActionManager.getInstance().getAction("OpenProjectWindows") as ProjectWindowActionGroup
   }
 
-  private class MyStartupActivity : ProjectPostStartupActivity {
+  private class MyStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
       coroutineScope {
         ActionManagerEx.withLazyActionManager(scope = this) {

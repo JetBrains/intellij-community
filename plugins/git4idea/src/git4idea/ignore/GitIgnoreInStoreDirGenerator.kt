@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG = logger<GitIgnoreInStoreDirGenerator>()
 
-private class GitIgnoreInStoreDirGeneratorActivity : ProjectPostStartupActivity {
+private class GitIgnoreInStoreDirGeneratorActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (!project.isDirectoryBased) {
       return

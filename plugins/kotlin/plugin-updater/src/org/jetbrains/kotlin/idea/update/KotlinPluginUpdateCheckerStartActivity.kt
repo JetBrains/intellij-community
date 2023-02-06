@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.KotlinPluginUpdater
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.util.application.isHeadlessEnvironment
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 
-class KotlinPluginUpdateCheckerStartActivity : ProjectPostStartupActivity {
+class KotlinPluginUpdateCheckerStartActivity : ProjectActivity {
     init {
         if (isUnitTestMode() || isHeadlessEnvironment()) {
             throw ExtensionNotApplicableException.create()

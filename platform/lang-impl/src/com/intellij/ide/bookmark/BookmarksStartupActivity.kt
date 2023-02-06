@@ -3,9 +3,9 @@ package com.intellij.ide.bookmark
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 
-internal class BookmarksStartupActivity : ProjectPostStartupActivity {
+internal class BookmarksStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       return

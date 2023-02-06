@@ -13,13 +13,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
 import java.nio.file.Path
 
 private val LOG = logger<WindowsDefenderCheckerActivity>()
 
-internal class WindowsDefenderCheckerActivity : ProjectPostStartupActivity {
+internal class WindowsDefenderCheckerActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()

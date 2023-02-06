@@ -13,7 +13,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.isAncestor
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
@@ -30,7 +30,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
 
 @VisibleForTesting
-class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
+class UnlinkedProjectStartupActivity : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     loadProjectIfSingleUnlinkedProjectFound(project)

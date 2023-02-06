@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -265,7 +265,7 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
     }
   }
 
-  internal class GitCommitTemplateTrackerStartupActivity : ProjectPostStartupActivity {
+  internal class GitCommitTemplateTrackerStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
       ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
         project.service<GitCommitTemplateTracker>().start()

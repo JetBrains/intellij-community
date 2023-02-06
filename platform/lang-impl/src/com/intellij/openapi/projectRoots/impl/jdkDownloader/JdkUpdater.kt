@@ -22,7 +22,7 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
@@ -52,7 +52,7 @@ private fun isEnabled(project: Project) = !project.isDefault &&
                                           !ApplicationManager.getApplication().isUnitTestMode &&
                                           !ApplicationManager.getApplication().isHeadlessEnvironment
 
-internal class JdkUpdaterStartup : ProjectPostStartupActivity {
+internal class JdkUpdaterStartup : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (!isEnabled(project)) {
       return

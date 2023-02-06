@@ -32,7 +32,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.isCorePlugin
 import com.intellij.openapi.startup.InitProjectActivity
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ModalityUiUtil
@@ -83,7 +83,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
           if (extension is DumbAware) {
             @Suppress("DEPRECATION")
             project.coroutineScope.launch {
-              if (extension is ProjectPostStartupActivity) {
+              if (extension is ProjectActivity) {
                 extension.execute(project)
               }
               else {
@@ -241,7 +241,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
           return@processExtensions
         }
 
-        if (activity is ProjectPostStartupActivity) {
+        if (activity is ProjectActivity) {
           val pluginId = pluginDescriptor.pluginId
           if (async) {
             @Suppress("DEPRECATION")
@@ -465,7 +465,7 @@ private fun scheduleBackgroundPostStartupActivities(project: Project) {
 private fun CoroutineScope.runBackgroundPostStartupActivities(activities: Sequence<Any>, project: Project) {
   for (activity in activities.filter { project !is LightEditCompatible || it is LightEditCompatible }) {
     try {
-      if (activity is ProjectPostStartupActivity) {
+      if (activity is ProjectActivity) {
         launch {
           activity.execute(project)
         }

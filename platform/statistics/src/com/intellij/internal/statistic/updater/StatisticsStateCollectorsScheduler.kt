@@ -10,7 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -29,7 +29,7 @@ internal class StatisticsStateCollectorsScheduler : ApplicationInitializedListen
     ApplicationManager.getApplication().service<FUStateUsagesLogger>() // init service
   }
 
-  internal class MyStartupActivity : ProjectPostStartupActivity {
+  internal class MyStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
       // smart mode is not available when LightEdit is active
       if (LightEdit.owns(project)) {

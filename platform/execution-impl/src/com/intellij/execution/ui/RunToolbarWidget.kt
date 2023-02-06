@@ -22,7 +22,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
@@ -714,7 +714,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
   }
 }
 
-private class ExecutionReasonableHistoryManager : ProjectPostStartupActivity {
+private class ExecutionReasonableHistoryManager : ProjectActivity {
   override suspend fun execute(project: Project) {
     project.messageBus.connect(project).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
       override fun processStartScheduled(executorId: String, env: ExecutionEnvironment) {

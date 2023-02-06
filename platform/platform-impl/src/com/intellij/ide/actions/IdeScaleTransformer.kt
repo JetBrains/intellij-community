@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
@@ -151,7 +151,7 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
   override fun dispose() {}
 }
 
-class IdeScalePostStartupActivity : ProjectPostStartupActivity {
+class IdeScalePostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     IdeScaleTransformer.setup()
     IdeScaleIndicatorManager.setup(project)

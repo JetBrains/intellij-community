@@ -9,7 +9,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.PathUtilRt
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoListener
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanel
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 
 /** TODO: merge [KotlinNativeABICompatibilityChecker] in the future with [UnsupportedAbiVersionNotificationPanelProvider], KT-34525 */
-internal class KotlinNativeABICompatibilityChecker : ProjectPostStartupActivity {
+internal class KotlinNativeABICompatibilityChecker : ProjectActivity {
     override suspend fun execute(project: Project) {
         KotlinNativeABICompatibilityCheckerService.getInstance(project).runActivity()
     }
