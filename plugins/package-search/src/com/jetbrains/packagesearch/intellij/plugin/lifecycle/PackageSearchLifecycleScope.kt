@@ -20,4 +20,4 @@ package com.jetbrains.packagesearch.intellij.plugin.lifecycle
 
 import kotlinx.coroutines.CoroutineScope
 
-internal class PackageSearchLifecycleScope(cs: CoroutineScope) : CoroutineScope by cs
+internal class PackageSearchLifecycleScope(val cs: CoroutineScope)
