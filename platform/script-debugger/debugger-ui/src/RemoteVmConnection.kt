@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger.connection
 
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -15,14 +14,11 @@ import com.intellij.util.io.socketConnection.ConnectionStatus
 import com.intellij.xdebugger.XDebuggerBundle
 import io.netty.bootstrap.Bootstrap
 import org.jetbrains.concurrency.*
-import org.jetbrains.debugger.ScriptDebuggerBundle
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
 import org.jetbrains.rpc.LOG
 import java.net.ConnectException
-import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import javax.swing.JList
