@@ -62,7 +62,7 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
   class Settings {
     companion object {
       private const val SCALING_STEP = 0.1f
-      private const val PRESENTATION_MODE_MIN_SCALE = 0.4f
+      private const val PRESENTATION_MODE_MIN_SCALE = 0.5f
       private const val PRESENTATION_MODE_MAX_SCALE = 4f
       val regularScaleOptions = listOf(1f, 1.1f, 1.25f, 1.5f, 1.75f, 2f)
       val regularScaleComboboxModel = CollectionComboBoxModel(regularScaleOptions.map { it.percentStringValue },
