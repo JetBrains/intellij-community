@@ -50,6 +50,7 @@ import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionAdapter
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.TreeExpansionEvent
@@ -103,7 +104,8 @@ internal class RecentProjectFilteringTree(
 
     treeComponent.setUI(FullRendererComponentTreeUI())
     treeComponent.setExpandableItemsEnabled(false)
-    UIUtil.setCursor(treeComponent, TREE_CURSOR)
+
+    treeComponent.addMouseMotionListener(MouseHoverListener(treeComponent))
 
     searchModel.updateStructure()
   }
@@ -402,9 +404,12 @@ internal class RecentProjectFilteringTree(
           isEnabled = isPathValid
         }
         if (isPathValid) {
-          buttonViewModel.prepareActionsButton(projectActions, rowHovered, AllIcons.Ide.Notification.Gear, AllIcons.Ide.Notification.GearHover)
-        } else {
-          buttonViewModel.prepareActionsButton(projectActions, rowHovered, AllIcons.Welcome.Project.Remove, AllIcons.Welcome.Project.RemoveHover)
+          buttonViewModel.prepareActionsButton(projectActions, rowHovered, AllIcons.Ide.Notification.Gear,
+                                               AllIcons.Ide.Notification.GearHover)
+        }
+        else {
+          buttonViewModel.prepareActionsButton(projectActions, rowHovered, AllIcons.Welcome.Project.Remove,
+                                               AllIcons.Welcome.Project.RemoveHover)
         }
 
         val toolTipPath = PathUtil.toSystemDependentName(item.projectPath)
@@ -440,7 +445,8 @@ internal class RecentProjectFilteringTree(
           append(item.displayName(), SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getListForeground())) // NON-NLS
         }
 
-        buttonViewModel.prepareActionsButton(projectGroupActions, rowHovered, AllIcons.Ide.Notification.Gear, AllIcons.Ide.Notification.GearHover)
+        buttonViewModel.prepareActionsButton(projectGroupActions, rowHovered, AllIcons.Ide.Notification.Gear,
+                                             AllIcons.Ide.Notification.GearHover)
 
         AccessibleContextUtil.setName(this, projectGroupNameLabel) // NON-NLS
         AccessibleContextUtil.setDescription(this, projectGroupNameLabel) // NON-NLS
@@ -530,7 +536,7 @@ internal class RecentProjectFilteringTree(
           isEnabled = false
         }
         toolTipText = null
-        cursor = TREE_CURSOR
+        cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
 
         projectProgressBar.apply {
           val fraction = progressIndicator.fraction
@@ -627,10 +633,22 @@ internal class RecentProjectFilteringTree(
     }
   }
 
+  private class MouseHoverListener(private val tree: Tree) : MouseMotionAdapter() {
+    override fun mouseMoved(e: MouseEvent) {
+      val point = e.point
+      val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
+      if (row != -1) {
+        UIUtil.setCursor(tree, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+      }
+      else {
+        UIUtil.setCursor(tree, Cursor.getDefaultCursor())
+      }
+    }
+  }
+
   companion object {
 
     private const val RENDERER_BORDER_SIZE = 4
-    private val TREE_CURSOR = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
 
     private fun createActionEvent(tree: Tree, inputEvent: InputEvent?): AnActionEvent {
       val dataContext = DataManager.getInstance().getDataContext(tree)
@@ -677,7 +695,7 @@ internal class RecentProjectFilteringTree(
   }
 }
 
-private class ActionsButton: SelectablePanel() {
+private class ActionsButton : SelectablePanel() {
 
   companion object {
     const val SIZE = 22
