@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.projectTemplates
 
+import com.intellij.openapi.util.registry.Registry
 import icons.KotlinBaseResourcesIcons
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -61,7 +62,7 @@ abstract class ProjectTemplate : DisplayableSettingItem {
         }
     }
 
-    protected inline fun <reified C: ModuleConfigurator> Module.withConfiguratorSettings(
+    protected inline fun <reified C : ModuleConfigurator> Module.withConfiguratorSettings(
         createSettings: ConfiguratorSettingsBuilder<C>.() -> Unit = {}
     ) = apply {
         check(configurator is C)
@@ -76,12 +77,18 @@ abstract class ProjectTemplate : DisplayableSettingItem {
             FullStackWebApplicationProjectTemplate,
             MultiplatformLibraryProjectTemplate,
             NativeApplicationProjectTemplate,
-            WasmApplicationProjectTemplate,
             FrontendApplicationProjectTemplate,
             ReactApplicationProjectTemplate,
             NodeJsApplicationProjectTemplate,
             ConsoleApplicationProjectTemplateWithSample
-        ) + extensionTemplates
+        ).run {
+            // in IDE Registry is filled with default false value
+            // But in tests there is no registry, so true for tests
+            if (Registry.`is`("kotlin.wasm.wizard", true))
+                this + WasmApplicationProjectTemplate
+            else
+                this
+        } + extensionTemplates
 
         private val extensionTemplates: List<ProjectTemplate>
             get() = mutableListOf<ProjectTemplate>().also { list ->
