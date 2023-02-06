@@ -71,7 +71,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     if (FileUtil.findFirstThatExist(pomXmlFile) == null) return
 
     val service = service<EnvironmentParametersService>()
-    val projectSelectionKey = runCatching { runBlockingCancellable { service.getEnvironmentValue(ProjectOpenKeyRegistry.PROJECT_OPEN_PROCESSOR) } }.getOrNull()
+    val projectSelectionKey = runBlockingCancellable { service.getEnvironmentValueOrNull(ProjectOpenKeyRegistry.PROJECT_OPEN_PROCESSOR) }
     if (projectSelectionKey != null && projectSelectionKey != "Maven") {
       // something else was selected to open the project
       return

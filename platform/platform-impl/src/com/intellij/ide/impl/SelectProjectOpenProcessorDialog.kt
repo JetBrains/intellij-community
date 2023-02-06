@@ -5,7 +5,6 @@ import com.intellij.ide.environment.EnvironmentParametersService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
@@ -63,7 +62,7 @@ class SelectProjectOpenProcessorDialog(
         app != null && app.isUnitTestMode -> testShowAndGetChoice(processors, file)
         else -> {
           val environmentService = service<EnvironmentParametersService>()
-          val id = environmentService.getEnvironmentValue(ProjectOpenKeyRegistry.PROJECT_OPEN_PROCESSOR)
+          val id = environmentService.requestEnvironmentValue(ProjectOpenKeyRegistry.PROJECT_OPEN_PROCESSOR)
           val processor = processors.find { it.name == id }
           if (processor != null) {
             return processor
