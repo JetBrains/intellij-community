@@ -751,7 +751,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
         @Override
         public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-          return myFix.generatePreview(project, file, "members.");
+          return myFix.generatePreview(project, file);
         }
       };
     }

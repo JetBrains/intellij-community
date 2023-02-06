@@ -102,19 +102,18 @@ public class SetInspectionOptionFix implements LocalQuickFix, LowPriorityAction,
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
-                                                       @NotNull ProblemDescriptor previewDescriptor) {
-    PsiElement element = previewDescriptor.getPsiElement();
-    return generatePreview(project, element, "");
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    return generatePreview(project, previewDescriptor.getPsiElement());
   }
 
   @NotNull
-  public IntentionPreviewInfo generatePreview(@NotNull Project project, PsiElement element, String prefix) {
+  public IntentionPreviewInfo generatePreview(@NotNull Project project, PsiElement element) {
     InspectionToolWrapper<?, ?> tool =
       InspectionProfileManager.getInstance(project).getCurrentProfile().getInspectionTool(myShortName, element);
     if (tool == null) return IntentionPreviewInfo.EMPTY;
-    OptPane pane = tool.getTool().getOptionsPane();
-    OptCheckbox control = ObjectUtils.tryCast(pane.findControl(prefix + myProperty), OptCheckbox.class);
+    InspectionProfileEntry inspection = myExtractor == null ? tool.getTool() : myExtractor.apply(tool.getTool());
+    OptPane pane = inspection.getOptionsPane();
+    OptCheckbox control = ObjectUtils.tryCast(pane.findControl(myProperty), OptCheckbox.class);
     if (control == null) return IntentionPreviewInfo.EMPTY;
     HtmlChunk label = HtmlChunk.text(control.label().label());
     HtmlChunk.Element checkbox = HtmlChunk.tag("input").attr("type", "checkbox").attr("readonly", "true");
