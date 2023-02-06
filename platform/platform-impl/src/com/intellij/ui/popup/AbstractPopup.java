@@ -1189,6 +1189,13 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       window.setBounds(bounds);
     }
 
+    if (LOG.isDebugEnabled()) {
+      GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
+      StringBuilder sb = new StringBuilder("Popup is shown with bounds " + bounds);
+      if (device != null) sb.append(" on screen with ID \"").append(device.getIDstring()).append("\"");
+      LOG.debug(sb.toString());
+    }
+
     WindowAction.setEnabledFor(myPopup.getWindow(), myResizable);
 
     myWindowListener = new MyWindowListener();
