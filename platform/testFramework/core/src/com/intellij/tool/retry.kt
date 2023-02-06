@@ -19,9 +19,9 @@ suspend fun <T> withRetryAsync(retries: Int = 3,
     catch (t: Throwable) {
       // print failure details only once for the sake of log cleanliness
       if (failureCount == 1) {
-        if (messageOnFailure.isNotBlank())
+        if (messageOnFailure.isNotBlank()) {
           System.err.println(messageOnFailure)
-
+        }
         t.printStackTrace()
       }
 
