@@ -34,7 +34,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
@@ -54,6 +56,7 @@ public final class RunContentBuilder extends RunTab {
 
   private final List<AnAction> myRunnerActions = new SmartList<>();
   private final ExecutionResult myExecutionResult;
+  private DefaultActionGroup toolbar = null;
 
   public RunContentBuilder(@NotNull ExecutionResult executionResult, @NotNull ExecutionEnvironment environment) {
     super(environment, getRunnerType(executionResult.getExecutionConsole()));
@@ -113,8 +116,12 @@ public final class RunContentBuilder extends RunTab {
     }
 
     AnAction[] restartActions = contentDescriptor.getRestartActions();
-    CustomActionsListener.subscribe(this, () -> initToolbars(restartActions, consoleActionsToMerge));
     initToolbars(restartActions, consoleActionsToMerge);
+    CustomActionsListener.subscribe(this, () -> {
+      DefaultActionGroup updatedToolbar = createActionToolbar(restartActions, consoleActionsToMerge);
+      toolbar.removeAll();
+      toolbar.addAll(updatedToolbar.getChildren(null));
+    });
 
     if (profile instanceof RunConfigurationBase) {
       if (console instanceof ObservableConsoleView && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -130,7 +137,7 @@ public final class RunContentBuilder extends RunTab {
   }
 
   private void initToolbars(AnAction @NotNull [] restartActions, AnAction @NotNull [] consoleActions) {
-    ActionGroup toolbar = createActionToolbar(restartActions, consoleActions);
+    toolbar = createActionToolbar(restartActions, consoleActions);
     if (UIExperiment.isNewDebuggerUIEnabled()) {
       var isVerticalToolbar = Registry.get("debugger.new.tool.window.layout.toolbar").isOptionEnabled("Vertical");
 
@@ -218,7 +225,7 @@ public final class RunContentBuilder extends RunTab {
   }
 
   @NotNull
-  private ActionGroup createActionToolbar(AnAction @NotNull [] restartActions, AnAction @NotNull [] consoleActions) {
+  private DefaultActionGroup createActionToolbar(AnAction @NotNull [] restartActions, AnAction @NotNull [] consoleActions) {
     boolean isNewLayout = UIExperiment.isNewDebuggerUIEnabled();
 
     String mainGroupId = isNewLayout ? RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP : RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP;
