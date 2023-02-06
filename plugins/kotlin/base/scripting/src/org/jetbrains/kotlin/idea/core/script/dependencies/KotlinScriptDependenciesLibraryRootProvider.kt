@@ -61,13 +61,13 @@ class KotlinScriptWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<
     override fun registerFileSets(entity: KotlinScriptLibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
         if (!scriptsAsEntities || !useWorkspaceFileContributor()) return // see KotlinScriptDependenciesLibraryRootProvider
         val (classes, sources) = entity.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
-        classes.mapNotNull { it.url.virtualFile }.forEach {
-            registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL, entity, RootData)
+        classes.forEach {
+            registrar.registerFileSet(it.url, WorkspaceFileKind.EXTERNAL, entity, RootData)
         }
 
         if (indexSourceRootsEagerly() || entity.indexSourceRoots) {
-            sources.mapNotNull { it.url.virtualFile }.forEach {
-                registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL_SOURCE, entity, RootSourceData)
+            sources.forEach {
+                registrar.registerFileSet(it.url, WorkspaceFileKind.EXTERNAL_SOURCE, entity, RootSourceData)
             }
         }
     }
