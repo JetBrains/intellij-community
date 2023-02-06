@@ -630,7 +630,8 @@ public class WindowTabsComponent extends JBTabsImpl {
     @Override
     public @Nullable Image startDropOver(@NotNull DockableContent<?> content, RelativePoint point) {
       Presentation presentation = content.getPresentation();
-      myDropTab = new TabInfo(new JLabel()).setText(presentation.getText());
+      myDropTab = new TabInfo(new JLabel()).setText(presentation.getText())
+        .setDefaultForeground(JBUI.CurrentTheme.MainWindow.Tab.foreground(true, false));
       return myDropImage = WindowTabsComponent.this.startDropOver(myDropTab, point);
     }
 
