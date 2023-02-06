@@ -38,10 +38,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.layout.editableValueMatches
 import com.intellij.ui.layout.not
-import com.intellij.ui.layout.or
-import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
@@ -176,12 +173,24 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       }.layout(RowLayout.INDEPENDENT).topGap(TopGap.SMALL)
 
       row {
+        var resetCustomFont: (() -> Unit)? = null
+
+        val useCustomCheckbox = checkBox(message("checkbox.override.default.laf.fonts"))
+          .gap(RightGap.SMALL)
+          .bindSelected(settings::overrideLafFonts) {
+            settings.overrideLafFonts = it
+          }
+          .onChanged { checkbox ->
+            if (!checkbox.isSelected) resetCustomFont?.invoke()
+          }
+          .shouldUpdateLaF()
+
         val fontFace = cell(FontComboBox())
-          .label(message("label.font.name"))
           .bind({ it.fontName }, { it, value -> it.fontName = value },
                 MutableProperty({ if (settings.overrideLafFonts) settings.fontFace else getDefaultFont().family },
                                 { settings.fontFace = it }))
           .shouldUpdateLaF()
+          .enabledIf(useCustomCheckbox.selected)
           .accessibleName(message("label.font.name"))
           .component
 
@@ -190,25 +199,18 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                          settings.fontSize)
           .label(message("label.font.size"))
           .shouldUpdateLaF()
+          .enabledIf(useCustomCheckbox.selected)
           .accessibleName(message("label.font.size"))
           .component
 
-        lateinit var resetCustomFont: Cell<ActionLink>
-        resetCustomFont = link(message("font.reset.link")) {
+        resetCustomFont = {
           val defaultFont = getDefaultFont()
           fontFace.fontName = defaultFont.family
           val fontSizeValue = defaultFont.size.toString()
           fontSize.selectedItem = fontSizeValue
           fontSize.editor.item = fontSizeValue
-          resetCustomFont.enabled(false)
-        }.enabledIf(fontFace.selectedValueMatches { value -> value?.toString() != getDefaultFont().family }
-                      or fontSize.editableValueMatches { value -> value != getDefaultFont().size.toString() })
+        }
       }.topGap(TopGap.SMALL)
-
-      onApply {
-        val defaultFont = getDefaultFont()
-        settings.overrideLafFonts = settings.fontFace != defaultFont.family || settings.fontSize != defaultFont.size
-      }
 
       group(message("title.accessibility")) {
         row {
