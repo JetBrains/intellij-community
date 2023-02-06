@@ -16,6 +16,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -116,4 +117,26 @@ class MavenProjectWizardTest : NewProjectWizardTestCase() {
     assertSize(0, mavenProjectsManager.ignoredFilesPaths)
   }
 
+  fun `test new maven module inherits project sdk by default`() {
+    // create project
+    val project = createProjectFromTemplate {
+      it.baseData!!.name = "project"
+      it.javaBuildSystemData!!.buildSystem = "Maven"
+      it.javaData!!.sdk = mySdk
+    }
+    assertModules(project, "project")
+
+    // create module
+    createModuleFromTemplate(project) {
+      it.languageData!!.language = "Java"
+      it.javaBuildSystemData!!.buildSystem = "Maven"
+      assertEquals("untitled", it.baseData!!.name)
+    }
+    assertModules(project, "project", "untitled")
+
+    // verify SKD is inherited
+    val module = ModuleManager.getInstance(project).findModuleByName("untitled")!!
+    val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
+    assertTrue(modifiableModel.isSdkInherited)
+  }
 }

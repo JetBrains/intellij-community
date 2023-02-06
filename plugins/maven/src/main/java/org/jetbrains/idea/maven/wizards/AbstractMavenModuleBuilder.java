@@ -12,6 +12,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.apache.commons.lang.StringUtils;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -96,7 +98,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
     // todo this should be moved to generic ModuleBuilder
     var projectSdk = ProjectRootManager.getInstance(rootModel.getProject()).getProjectSdk();
-    if (myJdk == null || myJdk == projectSdk) {
+    if (myJdk == null || equalSdks(myJdk, projectSdk)) {
       rootModel.inheritSdk();
     }
     else {
@@ -117,6 +119,16 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
                                    myInheritVersion, myArchetype, myPropertiesToCreateByArtifact,
                                    MavenProjectBundle.message("command.name.create.new.maven.module")).configure(project, root, false);
     });
+  }
+
+  private static boolean equalSdks(Sdk sdk1, Sdk sdk2) {
+    if (sdk1 == null && sdk2 == null) return true;
+    if (sdk1 == null || sdk2 == null) return false;
+    return sdk1.getSdkType() == sdk2.getSdkType()
+           && StringUtils.equals(sdk1.getName(), sdk2.getName())
+           && StringUtils.equals(sdk1.getVersionString(), sdk2.getVersionString())
+           && StringUtils.equals(sdk1.getHomePath(), sdk2.getHomePath())
+      ;
   }
 
   @Override
