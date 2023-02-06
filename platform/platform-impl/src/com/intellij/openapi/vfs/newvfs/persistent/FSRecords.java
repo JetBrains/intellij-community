@@ -265,10 +265,14 @@ public final class FSRecords {
             break;
           }
           if (parentId == NULL_FILE_ID) {
+            //TODO RC: personally I think here we should throw exception. But it seems the method .findFileById() is used in
+            //    an assumption it just returns null if 'incorrect' fileId is passed in.
+            //    Return to legacy behavior until I'll be able to fix it meaningfully
             final String currentFileName = getName(currentId);
-            throw new IllegalStateException(
+            LOG.info(
               "file[" + fileId + "]: top parent (currentId: " + currentId + ", name: '" + currentFileName + "', parent: 0), " +
               "is still not in the idToDirCache. path: " + path);
+            break;
           }
 
           currentId = parentId;
