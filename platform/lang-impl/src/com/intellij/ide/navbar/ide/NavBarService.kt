@@ -10,7 +10,6 @@ import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.ui.StaticNavBarPanel
 import com.intellij.ide.navbar.ui.showHint
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.*
@@ -30,21 +29,16 @@ import java.awt.Window
 import javax.swing.JComponent
 
 @Service(PROJECT)
-internal class NavBarService(private val project: Project) : Disposable {
+internal class NavBarService(private val project: Project, cs: CoroutineScope) {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): NavBarService = project.service()
   }
 
-  @Suppress("DEPRECATION")
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val cs: CoroutineScope = project.coroutineScope.childScope(
+  private val cs: CoroutineScope = cs.childScope(
     Dispatchers.Default.limitedParallelism(1) // allows reasoning about the ordering
   )
-
-  override fun dispose() {
-    cs.cancel()
-  }
 
   private val staticNavBarVm = StaticNavBarVmImpl(coroutineScope = cs,
                                                   project = project,
