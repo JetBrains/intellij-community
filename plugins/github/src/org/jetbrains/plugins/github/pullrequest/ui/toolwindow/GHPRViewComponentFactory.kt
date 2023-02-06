@@ -20,8 +20,9 @@ import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.ScrollableContentBorder
+import com.intellij.ui.Side
 import com.intellij.util.containers.TreeTraversal
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -240,9 +241,9 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       val controller = Controller(tree, model, commitsVm, diffBridge)
       ClientProperty.put(tree, GHPRCommitBrowserComponentController.KEY, controller)
 
-      return@createWithUpdatesStripe ScrollPaneFactory.createScrollPane(tree, true).apply {
-        border = JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
-      }
+      val scrollPane = ScrollPaneFactory.createScrollPane(tree, true)
+      ScrollableContentBorder.setup(scrollPane, Side.TOP_AND_BOTTOM, parent)
+      return@createWithUpdatesStripe scrollPane
     }
   }
 

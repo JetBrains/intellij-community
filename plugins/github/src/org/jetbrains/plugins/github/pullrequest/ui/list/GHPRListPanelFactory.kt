@@ -10,6 +10,8 @@ import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.ScrollableContentBorder
+import com.intellij.ui.Side
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
@@ -90,6 +92,7 @@ internal class GHPRListPanelFactory(private val project: Project,
     ).apply {
       if (listLoader.loading) startLoadingImmediately() else stopLoading()
     }
+    ScrollableContentBorder.setup(listLoaderPanel, Side.TOP, progressStripe)
     listLoader.addLoadingStateChangeListener(disposable) {
       if (listLoader.loading) progressStripe.startLoading() else progressStripe.stopLoading()
     }
