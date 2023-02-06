@@ -170,8 +170,8 @@ abstract class KtSymbolBasedDeclarationDescriptor(val context: Fe10WrapperContex
 }
 
 class KtSymbolBasedAnnotationDescriptor(
-    private val ktAnnotationCall: KtAnnotationApplication,
-    val context: Fe10WrapperContext
+    private val ktAnnotationCall: KtAnnotationApplicationWithArgumentsInfo,
+    val context: Fe10WrapperContext,
 ) : AnnotationDescriptor {
     override val type: KotlinType
         get() = context.implementationPlanned("ktAnnotationCall = $ktAnnotationCall")

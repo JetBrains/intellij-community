@@ -38,11 +38,16 @@ object UltraLightChecker {
         KotlinTestUtils.assertEqualsToFile(expectedTextFile, renderedResult)
     }
 
-    fun getJavaFileForTest(testDataPath: String): File {
-        val expectedTextFile = KotlinTestUtils.replaceExtension(File(testDataPath), "java")
+    fun getJavaFileForTest(testDataFile: File, suffixes: List<String> = listOf("descriptors")): File {
+        val expectedTextFile = suffixes.firstNotNullOfOrNull {
+            KotlinTestUtils.replaceExtension(testDataFile, "$it.java").takeIf(File::exists)
+        } ?: KotlinTestUtils.replaceExtension(testDataFile, "java")
+
         KotlinLightCodeInsightFixtureTestCaseBase.assertTrue(expectedTextFile.exists())
         return expectedTextFile
     }
+
+    fun getJavaFileForTest(testDataPath: String): File = getJavaFileForTest(File(testDataPath))
 
     fun renderLightClasses(testDataPath: String, lightClasses: List<PsiClass>): String {
         val extendedTypeRendererOld = PsiClassRenderer.extendedTypeRenderer

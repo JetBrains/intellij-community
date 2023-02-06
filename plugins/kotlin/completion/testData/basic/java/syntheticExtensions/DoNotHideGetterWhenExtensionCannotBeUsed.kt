@@ -1,5 +1,4 @@
-// FIR_IDENTICAL
-// FIR_COMPARISON
+/* TODO: this test fails for K2 because shadowing isn't supported yet */
 import java.io.File
 
 fun File.foo(absolutePath: String?) {

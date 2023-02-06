@@ -41,6 +41,7 @@ public enum MyBooleanEnum {
     @null TRUE
     @null FALSE
     private fun MyBooleanEnum() = UastEmptyExpression
+    public static fun getEntries() : kotlin.enums.EnumEntries<MyBooleanEnum> = UastEmptyExpression
     public static fun values() : MyBooleanEnum[] = UastEmptyExpression
     public static fun valueOf(name: java.lang.String) : MyBooleanEnum = UastEmptyExpression
 }
