@@ -153,7 +153,6 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     });
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
 
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
