@@ -258,22 +258,32 @@ public final class MavenProjectsTree {
     }
   }
 
-  public void setIgnoredState(List<? extends MavenProjectPathHolder> projects, boolean ignored) {
+  public void setIgnoredState(List<MavenProject> projects, boolean ignored) {
     setIgnoredState(projects, ignored, false);
   }
 
-  public void setIgnoredState(List<? extends MavenProjectPathHolder> projects, boolean ignored, boolean fromImport) {
-    doSetIgnoredState(projects, ignored, fromImport);
+  public void setIgnoredState(List<MavenProject> projects, boolean ignored, boolean fromImport) {
+    final List<String> pomPaths = ContainerUtil.map(projects, project -> project.getPath());
+    setIgnoredStateForPoms(pomPaths, ignored, fromImport);
   }
 
-  private void doSetIgnoredState(List<? extends MavenProjectPathHolder> projects, final boolean ignored, boolean fromImport) {
-    final List<String> paths = ContainerUtil.map(projects, project -> project.getPath());
+  @ApiStatus.Internal
+  public void setIgnoredStateForPoms(List<String> pomPaths, boolean ignored) {
+    doSetIgnoredState(pomPaths, ignored, false);
+  }
+
+  @ApiStatus.Internal
+  public void setIgnoredStateForPoms(List<String> pomPaths, boolean ignored, boolean fromImport) {
+    doSetIgnoredState(pomPaths, ignored, fromImport);
+  }
+
+  private void doSetIgnoredState(List<String> pomPaths, final boolean ignored, boolean fromImport) {
     doChangeIgnoreStatus(() -> {
       if (ignored) {
-        myIgnoredFilesPaths.addAll(paths);
+        myIgnoredFilesPaths.addAll(pomPaths);
       }
       else {
-        myIgnoredFilesPaths.removeAll(paths);
+        myIgnoredFilesPaths.removeAll(pomPaths);
       }
     }, fromImport);
   }
