@@ -4,6 +4,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
@@ -231,6 +232,7 @@ fun KtReferenceExpression.resolveMainReference(): PsiElement? =
     try {
         mainReference.resolve()
     } catch (e: Exception) {
+        if (e is ControlFlowException) throw e
         throw KotlinExceptionWithAttachments("Unable to resolve reference", e)
             .withPsiAttachment("reference.txt", this)
             .withPsiAttachment("file.kt", containingFile)
