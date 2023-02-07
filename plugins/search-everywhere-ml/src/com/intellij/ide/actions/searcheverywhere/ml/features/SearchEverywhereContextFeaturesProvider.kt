@@ -71,8 +71,8 @@ internal class SearchEverywhereContextFeaturesProvider {
 
     fun getGlobalUsageStatistics(stats: ActionsGlobalSummaryManager.ActionsGlobalTotalSummary) : List<EventPair<*>> {
       return arrayListOf<EventPair<*>>(
-        globalMaxUsage.with(stats.maxUsageCount),
-        globalMinUsage.with(stats.minUsageCount)
+        globalMaxUsage.with(stats.maxUsageCount()),
+        globalMinUsage.with(stats.minUsageCount())
       )
     }
   }

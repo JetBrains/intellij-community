@@ -766,14 +766,7 @@ public final class ActionsTree {
     return new RowData(shortcuts, abbreviations);
   }
 
-  private static final class RowData {
-    public final Shortcut[] shortcuts;
-    public final Set<String> abbreviations;
-
-    private RowData(Shortcut[] shortcuts, Set<String> abbreviations) {
-      this.shortcuts = shortcuts;
-      this.abbreviations = abbreviations;
-    }
+  private record RowData(Shortcut[] shortcuts, Set<String> abbreviations) {
   }
 
   @SuppressWarnings("UseJBColor")

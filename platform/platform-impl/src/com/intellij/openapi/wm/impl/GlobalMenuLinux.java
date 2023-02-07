@@ -1093,22 +1093,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
   }
 
-  private static final class QueuedEvent {
-    final int uid;
-    final int eventType;
-    final int rootId;
-    final long timeMs;
-
-    private QueuedEvent(int uid, int eventType, int rootId, long timeMs) {
-      this.uid = uid;
-      this.eventType = eventType;
-      this.rootId = rootId;
-      this.timeMs = timeMs;
-    }
-
-    static QueuedEvent of(int uid, int eventType, int rootId, long timeMs) {
-      return new QueuedEvent(uid, eventType, rootId, timeMs);
-    }
+  private record QueuedEvent(int uid, int eventType, int rootId, long timeMs) {
   }
 
   private class EventFilter {
@@ -1215,7 +1200,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
         else {
           // filter is closed
-          myQueued.add(QueuedEvent.of(uid, eventType, mi.rootPos, timeMs));
+          myQueued.add(new QueuedEvent(uid, eventType, mi.rootPos, timeMs));
           if (myTimer != null) {
             myTimer.restart();
           }
@@ -1230,7 +1215,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
       // filter is opened and first root appeared
       if (TRACE_EVENT_FILTER) _trace("EventFilter: close filter");
-      myQueued.add(QueuedEvent.of(uid, eventType, mi.rootPos, timeMs));
+      myQueued.add(new QueuedEvent(uid, eventType, mi.rootPos, timeMs));
       myClosedMs = timeMs;
       _startTimer();
       return false;

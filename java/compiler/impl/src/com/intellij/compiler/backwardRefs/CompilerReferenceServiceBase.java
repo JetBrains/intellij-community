@@ -625,14 +625,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     return myCompilationCount.longValue();
   }
 
-  protected static final class CompilerElementInfo {
-    public final ElementPlace place;
-    public final @NotNull List<@NotNull CompilerRef> searchElements;
-
-    public CompilerElementInfo(ElementPlace place, @NotNull List<@NotNull CompilerRef> searchElements) {
-      this.place = place;
-      this.searchElements = searchElements;
-    }
+  protected record CompilerElementInfo(ElementPlace place, @NotNull List<@NotNull CompilerRef> searchElements) {
   }
 
   protected static final class HierarchySearchKey {

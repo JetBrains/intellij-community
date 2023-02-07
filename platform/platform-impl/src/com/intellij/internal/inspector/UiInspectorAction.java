@@ -153,10 +153,10 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
         MouseEvent componentEvent = MouseEventAdapter.convert(me, component);
         UiInspectorPreciseContextProvider.UiInspectorInfo inspectorInfo = contextProvider.getUiInspectorContext(componentEvent);
         if (inspectorInfo != null) {
-          String name = ObjectUtils.chooseNotNull(inspectorInfo.name, "Click Info");
-          HierarchyTree.ComponentNode node = HierarchyTree.ComponentNode.createNamedNode(name, inspectorInfo.component);
-          if (inspectorInfo.component != null) inspectorInfo.component.doLayout();
-          node.setUserObject(inspectorInfo.values);
+          String name = ObjectUtils.chooseNotNull(inspectorInfo.name(), "Click Info");
+          HierarchyTree.ComponentNode node = HierarchyTree.ComponentNode.createNamedNode(name, inspectorInfo.component());
+          if (inspectorInfo.component() != null) inspectorInfo.component().doLayout();
+          node.setUserObject(inspectorInfo.values());
           return node;
         }
       }

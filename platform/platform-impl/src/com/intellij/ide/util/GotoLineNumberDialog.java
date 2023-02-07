@@ -154,13 +154,6 @@ public abstract class GotoLineNumberDialog extends DialogWrapper {
     return panel;
   }
 
-  protected static class Coordinates {
-    public final int row;
-    public final int column;
-
-    public Coordinates(int row, int column) {
-      this.row = row;
-      this.column = column;
-    }
+  record Coordinates(int row, int column) {
   }
 }

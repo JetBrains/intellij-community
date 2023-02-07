@@ -671,18 +671,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     }
   }
 
-  private static final class TemplateDocumentChange {
-    public final String newValue;
-    public final int startOffset;
-    public final int endOffset;
-    public final int segmentNumber;
-
-    private TemplateDocumentChange(String newValue, int startOffset, int endOffset, int segmentNumber) {
-      this.newValue = newValue;
-      this.startOffset = startOffset;
-      this.endOffset = endOffset;
-      this.segmentNumber = segmentNumber;
-    }
+  private record TemplateDocumentChange(String newValue, int startOffset, int endOffset, int segmentNumber) {
   }
 
   private void executeChanges(@NotNull List<TemplateDocumentChange> changes) {

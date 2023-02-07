@@ -107,24 +107,7 @@ final class ITNProxy {
     });
   }
 
-  static class ErrorBean {
-    final IdeaLoggingEvent event;
-    final String comment;
-    final String pluginId;
-    final String pluginName;
-    final String pluginVersion;
-    final String lastActionId;
-    final int previousException;
-
-    ErrorBean(IdeaLoggingEvent event, String comment, String pluginId, String pluginName, String pluginVersion, String lastActionId, int previousException) {
-      this.event = event;
-      this.comment = comment;
-      this.pluginId = pluginId;
-      this.pluginName = pluginName;
-      this.pluginVersion = pluginVersion;
-      this.lastActionId = lastActionId;
-      this.previousException = previousException;
-    }
+  record ErrorBean(IdeaLoggingEvent event, String comment, String pluginId, String pluginName, String pluginVersion, String lastActionId, int previousException) {
   }
 
   static void sendError(@Nullable Project project,

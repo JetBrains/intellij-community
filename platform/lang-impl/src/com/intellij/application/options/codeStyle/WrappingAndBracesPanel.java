@@ -125,15 +125,8 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     return ApplicationBundle.message("settings.code.style.tab.title.wrapping.and.braces");
   }
 
-  protected static class SettingsGroup {
-    public final String title;
-    public final Collection<String> commonCodeStyleSettingFieldNames;
-
-    public SettingsGroup(@NotNull String title,
+  protected record SettingsGroup(@NotNull String title,
                          @NotNull Collection<String> commonCodeStyleSettingFieldNames) {
-      this.title = title;
-      this.commonCodeStyleSettingFieldNames = commonCodeStyleSettingFieldNames;
-    }
   }
 
 

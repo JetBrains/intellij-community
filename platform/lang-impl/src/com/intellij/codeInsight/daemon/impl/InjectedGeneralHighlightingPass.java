@@ -310,10 +310,10 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     int injectionHostTextRangeStart = -1;
     for (InjectedLanguageUtil.TokenInfo token : tokens) {
       ProgressManager.checkCanceled();
-      TextRange range = token.rangeInsideInjectionHost;
+      TextRange range = token.rangeInsideInjectionHost();
       if (range.getLength() == 0) continue;
-      if (shredIndex != token.shredIndex) {
-        shredIndex = token.shredIndex;
+      if (shredIndex != token.shredIndex()) {
+        shredIndex = token.shredIndex();
         PsiLanguageInjectionHost.Shred shred = places.get(shredIndex);
         PsiLanguageInjectionHost host = shred.getHost();
         if (host == null) return;
@@ -321,7 +321,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
       }
       TextRange hostRange = range.shiftRight(injectionHostTextRangeStart);
 
-      addSyntaxInjectedFragmentInfo(myGlobalScheme, hostRange, token.textAttributesKeys, outInfos);
+      addSyntaxInjectedFragmentInfo(myGlobalScheme, hostRange, token.textAttributesKeys(), outInfos);
     }
   }
 

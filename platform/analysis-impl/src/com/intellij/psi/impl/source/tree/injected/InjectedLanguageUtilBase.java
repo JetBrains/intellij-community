@@ -97,21 +97,8 @@ public class InjectedLanguageUtilBase {
     return sb.toString();
   }
 
-  public static class TokenInfo {
-    @NotNull public final IElementType type;
-    @NotNull public final ProperTextRange rangeInsideInjectionHost;
-    public final int shredIndex;
-    public final TextAttributesKey @NotNull [] textAttributesKeys;
-
-    public TokenInfo(@NotNull IElementType type,
-                     @NotNull ProperTextRange rangeInsideInjectionHost,
-                     int shredIndex,
-                     TextAttributesKey @NotNull [] textAttributesKeys) {
-      this.type = type;
-      this.rangeInsideInjectionHost = rangeInsideInjectionHost;
-      this.shredIndex = shredIndex;
-      this.textAttributesKeys = textAttributesKeys;
-    }
+  public record TokenInfo(@NotNull IElementType type, @NotNull ProperTextRange rangeInsideInjectionHost, int shredIndex,
+                          TextAttributesKey @NotNull [] textAttributesKeys) {
   }
   static void setHighlightTokens(@NotNull PsiFile file, @NotNull List<TokenInfo> tokens) {
     file.putUserData(HIGHLIGHT_TOKENS, tokens);

@@ -521,14 +521,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
       }
     }
 
-    private static final class AppendChain {
-      final @NotNull PsiMethodCallExpression first;
-      final @NotNull PsiMethodCallExpression outermost;
-
-      private AppendChain(@NotNull PsiMethodCallExpression first, @NotNull PsiMethodCallExpression outermost) {
-        this.first = first;
-        this.outermost = outermost;
-      }
+    private record AppendChain(@NotNull PsiMethodCallExpression first, @NotNull PsiMethodCallExpression outermost) {
     }
 
     private static boolean areReferencesAllowed(@NotNull List<PsiElement> refs,

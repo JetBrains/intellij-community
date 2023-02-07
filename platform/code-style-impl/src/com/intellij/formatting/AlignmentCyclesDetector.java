@@ -25,23 +25,8 @@ public class AlignmentCyclesDetector {
   }
 
 
-  private static class OffsetPair {
+  private record OffsetPair(int first, int second) {
     private final static int MAX_VALUE = Integer.MAX_VALUE >>> 16;
-    private final int first;
-    private final int second;
-
-    private OffsetPair(int first, int second) {
-      this.first = first;
-      this.second = second;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj instanceof OffsetPair other) {
-        return other.first == first && other.second == second;
-      }
-      return false;
-    }
 
     @Override
     public int hashCode() {
@@ -51,11 +36,5 @@ public class AlignmentCyclesDetector {
       if (sum >= MAX_VALUE) sum = sum % MAX_VALUE;
       return sum * (sum + 1) / 2 + a;
     }
-
-    @Override
-    public String toString() {
-      return "(" + first + ", " + second + ")";
-    }
   }
-
 }

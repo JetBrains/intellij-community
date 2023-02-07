@@ -114,11 +114,11 @@ internal class SearchEverywhereActionFeaturesProvider :
     val globalSummary = service<ActionsGlobalSummaryManager>()
 
     val actionStats = globalSummary.getActionStatistics(actionId)
-    val maxUsageCount = globalSummary.totalSummary.maxUsageCount
+    val maxUsageCount = globalSummary.totalSummary.maxUsageCount()
     data.addAll(GLOBAL_STATISTICS_DEFAULT.getGlobalUsageStatistics(actionStats, maxUsageCount))
 
     val updatedActionStats = globalSummary.getUpdatedActionStatistics(actionId)
-    val updatedMaxUsageCount = globalSummary.updatedTotalSummary.maxUsageCount
+    val updatedMaxUsageCount = globalSummary.updatedTotalSummary.maxUsageCount()
     data.addAll(GLOBAL_STATISTICS_UPDATED.getGlobalUsageStatistics(updatedActionStats, updatedMaxUsageCount))
 
 

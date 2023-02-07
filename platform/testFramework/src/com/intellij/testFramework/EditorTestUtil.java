@@ -834,14 +834,7 @@ public final class EditorTestUtil {
   }
 
 
-  public static class CaretAndSelectionState {
-    public final List<CaretInfo> carets;
-    public final TextRange blockSelection;
-
-    public CaretAndSelectionState(List<CaretInfo> carets, @Nullable TextRange blockSelection) {
-      this.carets = carets;
-      this.blockSelection = blockSelection;
-    }
+  public record CaretAndSelectionState(List<CaretInfo> carets, @Nullable TextRange blockSelection) {
 
     /**
      * Returns true if current CaretAndSelectionState contains at least one caret or selection explicitly specified

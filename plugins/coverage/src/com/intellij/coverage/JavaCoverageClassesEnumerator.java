@@ -151,14 +151,7 @@ public abstract class JavaCoverageClassesEnumerator {
     progressIndicator.setFraction(myCurrentRootsCount / (double)myRootsCount);
   }
 
-  private static final class PackageData {
-    private final String packageVMName;
-    private final File[] children;
-
-    private PackageData(String packageVMName, File[] children) {
-      this.packageVMName = packageVMName;
-      this.children = children;
-    }
+  private record PackageData(String packageVMName, File[] children) {
   }
 
   @NotNull

@@ -502,27 +502,12 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     }
   }
 
-  private static final class CustomBooleanOptionInfo {
-    @NotNull final Class<? extends CustomCodeStyleSettings> settingClass;
-    @NotNull final String fieldName;
-    @NotNull @NlsContexts.Label final String title;
-    @Nullable @NlsContexts.Label final String groupName;
-    @Nullable final OptionAnchor anchor;
-    @Nullable final String anchorFieldName;
-
-    private CustomBooleanOptionInfo(@NotNull Class<? extends CustomCodeStyleSettings> settingClass,
+  private record CustomBooleanOptionInfo(@NotNull Class<? extends CustomCodeStyleSettings> settingClass,
                                     @NotNull String fieldName,
                                     @NotNull @NlsContexts.Label String title,
                                     @Nullable @NlsContexts.Label String groupName,
                                     @Nullable OptionAnchor anchor,
                                     @Nullable String anchorFieldName) {
-      this.settingClass = settingClass;
-      this.fieldName = fieldName;
-      this.title = title;
-      this.groupName = groupName;
-      this.anchor = anchor;
-      this.anchorFieldName = anchorFieldName;
-    }
   }
 
   private class CustomBooleanOptionKey<T extends CustomCodeStyleSettings> extends BooleanOptionKey {

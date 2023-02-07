@@ -94,28 +94,10 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
     StringContentIndentUtil.updateTimestamp(myEditor);
   }
 
-  private static final class StringContentIndent {
-
-    private final int column;
-    private final int startOffset;
-    // inclusive
-    private final int endOffset;
-
-    @Contract(pure = true)
-    private StringContentIndent(int column, int startOffset, int endOffset) {
-      this.column = column;
-      this.startOffset = startOffset;
-      this.endOffset = endOffset;
-    }
-
-    @Override
-    public String toString() {
-      return "StringContentIndent{" +
-             "column=" + column +
-             ", startOffset=" + startOffset +
-             ", endOffset=" + endOffset +
-             '}';
-    }
+  /**
+   * @param endOffset inclusive
+   */
+  private record StringContentIndent(int column, int startOffset, int endOffset) {
   }
 
   private static class StringContentIndentRenderer implements CustomHighlighterRenderer {

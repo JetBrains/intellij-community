@@ -42,7 +42,6 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -383,36 +382,10 @@ public final class RenameUtil {
     LOG.assertTrue(!(element instanceof PsiCompiledElement), element);
   }
 
-  private static class UsageOffset implements Comparable<UsageOffset> {
-    final int startOffset;
-    final int endOffset;
-    final String newText;
-
-    UsageOffset(int startOffset, int endOffset, String newText) {
-      this.startOffset = startOffset;
-      this.endOffset = endOffset;
-      this.newText = newText;
-    }
-
+  private record UsageOffset(int startOffset, int endOffset, String newText) implements Comparable<UsageOffset> {
     @Override
     public int compareTo(@NotNull final UsageOffset o) {
       return startOffset - o.startOffset;
-    }
-
-    @Contract(value = "null -> false", pure = true)
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      UsageOffset offset = (UsageOffset)o;
-      return startOffset == offset.startOffset &&
-             endOffset == offset.endOffset &&
-             Objects.equals(newText, offset.newText);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(startOffset, endOffset, newText);
     }
   }
 

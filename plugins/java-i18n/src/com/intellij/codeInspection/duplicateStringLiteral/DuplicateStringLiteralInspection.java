@@ -382,35 +382,8 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     }
   }
 
-  private static final class StringLiteralSearchQuery {
-    @NotNull
-    private final String stringToFind;
-    private final boolean ignorePropertyKeys;
-    private final int minStringLength;
-    private final boolean isOnFlySearch;
-
-    private StringLiteralSearchQuery(@NotNull String stringToFind, boolean ignorePropertyKeys, int minStringLength, boolean isOnFlySearch) {
-      this.stringToFind = stringToFind;
-      this.ignorePropertyKeys = ignorePropertyKeys;
-      this.minStringLength = minStringLength;
-      this.isOnFlySearch = isOnFlySearch;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      StringLiteralSearchQuery query = (StringLiteralSearchQuery)o;
-      return ignorePropertyKeys == query.ignorePropertyKeys &&
-             minStringLength == query.minStringLength &&
-             isOnFlySearch == query.isOnFlySearch &&
-             Objects.equals(stringToFind, query.stringToFind);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(stringToFind, ignorePropertyKeys, minStringLength, isOnFlySearch);
-    }
+  private record StringLiteralSearchQuery(@NotNull String stringToFind, boolean ignorePropertyKeys, int minStringLength,
+                                          boolean isOnFlySearch) {
   }
 
   private PsiExpression @Nullable [] getDuplicateLiteralsUnderProgress(@NotNull PsiElement literalExpression) {

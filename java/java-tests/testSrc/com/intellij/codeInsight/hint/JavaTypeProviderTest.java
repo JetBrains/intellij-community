@@ -208,8 +208,8 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
                              @Language("HTML") String expectedAdvancedHint) {
     EditorInfo info = new EditorInfo("class X{" + method + "}");
     PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText("X.java", JavaFileType.INSTANCE, info.getNewFileText());
-    assertEquals("Single selection must be specified", 1, info.caretState.carets.size());
-    TextRange selection = info.caretState.carets.get(0).selection;
+    assertEquals("Single selection must be specified", 1, info.caretState.carets().size());
+    TextRange selection = info.caretState.carets().get(0).selection;
     assertNotNull("No <selection>..</selection> in test data", selection);
     PsiExpression expression =
       PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiExpression.class);

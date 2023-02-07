@@ -2455,15 +2455,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     ObjectUtils.consumeIfNotNull(myReturnValueWatcher, MethodReturnValueWatcher::disable);
   }
 
-  private static class VirtualMachineData {
-    public final VirtualMachineProxyImpl vm;
-    public final RemoteConnection connection;
-    public final DebuggerManagerThreadImpl debuggerManagerThread;
-
-    private VirtualMachineData(VirtualMachineProxyImpl vm, RemoteConnection connection, DebuggerManagerThreadImpl debuggerManagerThread) {
-      this.vm = vm;
-      this.connection = connection;
-      this.debuggerManagerThread = debuggerManagerThread;
-    }
+  private record VirtualMachineData(VirtualMachineProxyImpl vm, RemoteConnection connection,
+                                    DebuggerManagerThreadImpl debuggerManagerThread) {
   }
 }

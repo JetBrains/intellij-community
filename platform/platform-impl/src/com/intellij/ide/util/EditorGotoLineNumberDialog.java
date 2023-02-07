@@ -22,7 +22,7 @@ public class EditorGotoLineNumberDialog extends GotoLineNumberDialog {
     Coordinates coordinates = getCoordinates();
     if (coordinates == null) return;
 
-    LogicalPosition position = new LogicalPosition(coordinates.row, coordinates.column);
+    LogicalPosition position = new LogicalPosition(coordinates.row(), coordinates.column());
     myEditor.getCaretModel().removeSecondaryCarets();
     myEditor.getCaretModel().moveToLogicalPosition(position);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
@@ -53,7 +53,7 @@ public class EditorGotoLineNumberDialog extends GotoLineNumberDialog {
 
   @Override
   protected int coordinatesToOffset(@NotNull Coordinates coordinates) {
-    LogicalPosition position = new LogicalPosition(coordinates.row, coordinates.column);
+    LogicalPosition position = new LogicalPosition(coordinates.row(), coordinates.column());
     return myEditor.logicalPositionToOffset(position);
   }
 

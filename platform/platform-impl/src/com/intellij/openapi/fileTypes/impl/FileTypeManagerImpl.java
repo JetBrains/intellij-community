@@ -1414,18 +1414,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           LOG.debug(newMatcher + " had a conflict between " + oldFtd + " and " + newFtd + " and the winner is ... ... ... " + result);
         }
       }
-      if (!result.approved && myConflictResultConsumer != null) {
+      if (!result.approved() && myConflictResultConsumer != null) {
         myConflictResultConsumer.accept(result);
       }
-      FileTypeWithDescriptor resolvedFtd = result.resolved;
+      FileTypeWithDescriptor resolvedFtd = result.resolved();
       FileType oldFileType = oldFtd == null ? null : oldFtd.fileType;
       if (!resolvedFtd.equals(oldFtd)) {
         myPatternsTable.addAssociation(newMatcher, resolvedFtd);
-        if (result.approved && oldFileType != null) {
+        if (result.approved() && oldFileType != null) {
           myRemovedMappingTracker.add(newMatcher, oldFileType.getName(), true);
         }
       }
-      else if (oldFileType instanceof AbstractFileType && result.approved) {
+      else if (oldFileType instanceof AbstractFileType && result.approved()) {
         myPatternsTable.addAssociation(newMatcher, newFtd);
       }
 

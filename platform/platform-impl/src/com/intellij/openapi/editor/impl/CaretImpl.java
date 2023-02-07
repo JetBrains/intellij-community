@@ -1501,18 +1501,13 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), getSelectionEnd()));
   }
 
-  private static final class VerticalInfo {
-    private final int y; // y coordinate of caret
-    private final int logicalLineY; // y coordinate of caret's logical line start
-    private final int logicalLineHeight; // height of caret's logical line
+  private record VerticalInfo(
+    int y, // y coordinate of caret
+    int logicalLineY, // y coordinate of caret's logical line start
+    int logicalLineHeight // height of caret's logical line
                                          // (If there are soft wraps, it's larger than a visual line's height.
                                          // it's also larger if caret is located at a custom fold region)
-
-    private VerticalInfo(int y, int logicalLineY, int logicalLineHeight) {
-      this.y = y;
-      this.logicalLineY = logicalLineY;
-      this.logicalLineHeight = logicalLineHeight;
-    }
+    ) {
   }
 
   final class PositionMarker extends RangeMarkerImpl {

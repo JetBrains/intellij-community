@@ -297,15 +297,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection imp
   }
 
   //<editor-fold desc="Helpers">
-  private static class Negated {
-    @NotNull final PsiExpression expression;
-    final boolean isEqual;
-
-    Negated(@NotNull PsiExpression expression, boolean isEqual) {
-      this.expression = expression;
-      this.isEqual = isEqual;
-    }
-
+  private record Negated(@NotNull PsiExpression expression, boolean isEqual) {
     @Nullable
     static Negated create(@Nullable PsiExpression maybeNegatedExpression) {
       boolean equal = true;
@@ -320,15 +312,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection imp
     }
   }
 
-  private static class NullCheck {
-    @NotNull final PsiExpression compared;
-    final boolean isEqual;
-
-    NullCheck(@NotNull PsiExpression compared, boolean isEqual) {
-      this.compared = compared;
-      this.isEqual = isEqual;
-    }
-
+  private record NullCheck(@NotNull PsiExpression compared, boolean isEqual) {
     @Nullable
     private static NullCheck create(@Nullable PsiExpression maybeNullCheckExpression) {
       final Negated n = Negated.create(maybeNullCheckExpression);
@@ -343,17 +327,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection imp
     }
   }
 
-  private static class EqualsCheck {
-    @NotNull final PsiExpression argument;
-    @NotNull final PsiExpression qualifier;
-    final boolean isEqual;
-
-    EqualsCheck(@NotNull PsiExpression argument, @NotNull PsiExpression qualifier, boolean isEqual) {
-      this.argument = argument;
-      this.qualifier = qualifier;
-      this.isEqual = isEqual;
-    }
-
+  private record EqualsCheck(@NotNull PsiExpression argument, @NotNull PsiExpression qualifier, boolean isEqual) {
     @Nullable
     private static EqualsCheck create(@Nullable PsiExpression maybeEqualsCheckExpression) {
       final Negated n = Negated.create(maybeEqualsCheckExpression);
