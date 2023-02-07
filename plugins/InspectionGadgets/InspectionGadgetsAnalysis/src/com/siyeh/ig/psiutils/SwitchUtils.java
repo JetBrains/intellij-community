@@ -298,7 +298,7 @@ public final class SwitchUtils {
 
   private static @Nullable PsiExpression findPossiblePatternOperand(@Nullable PsiExpression expression) {
     if (expression instanceof PsiInstanceOfExpression psiInstanceOfExpression) {
-      if (hasLeakingScope(psiInstanceOfExpression)) {
+      if (isUsedOutsideParentIf(psiInstanceOfExpression)) {
         return null;
       }
       return psiInstanceOfExpression.getOperand();
@@ -319,7 +319,7 @@ public final class SwitchUtils {
     return null;
   }
 
-  private static boolean hasLeakingScope(@NotNull PsiInstanceOfExpression expression) {
+  private static boolean isUsedOutsideParentIf(@NotNull PsiInstanceOfExpression expression) {
     PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(expression, PsiIfStatement.class);
     if (!PsiTreeUtil.isAncestor(ifStatement, expression, false)) {
       //something strange, return true as safe result
