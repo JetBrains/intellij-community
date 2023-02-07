@@ -395,6 +395,10 @@ suspend fun <R> closeOpenedProjectsIfFailAsync(action: suspend () -> R): R {
   return closeOpenedProjectsIfFailImpl({ closeProjectAsync() }, { action() })
 }
 
+fun <R> closeOpenedProjectsIfFail(action: () -> R): R {
+  return closeOpenedProjectsIfFailImpl({ closeProject() }, { action() })
+}
+
 private inline fun <R> closeOpenedProjectsIfFailImpl(closeProject: Project.() -> Unit, action: () -> R): R {
   val projectManager = ProjectManager.getInstance()
   val oldOpenedProjects = projectManager.openProjects.toHashSet()

@@ -7,7 +7,7 @@ import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.actions.ImportModuleAction;
-import com.intellij.ide.projectWizard.NewProjectWizardFactory;
+import com.intellij.ide.projectWizard.NewProjectWizard;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
@@ -43,6 +43,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.storage.MutableEntityStorage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -473,7 +474,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   @NotNull
   private AbstractProjectWizard getNewModuleWizard(String defaultModuleName) {
-    var wizard = NewProjectWizardFactory.Companion.create().create(myProject, this);
+    var wizardFactory = ApplicationManager.getApplication().getService(NewProjectWizardFactory.class);
+    var wizard = wizardFactory.create(myProject, this);
     wizard.setDefaultModuleName(defaultModuleName);
     return wizard;
   }
@@ -576,5 +578,19 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public StructureConfigurableContext getContext() {
     return myContext;
+  }
+
+  @ApiStatus.Internal
+  public interface NewProjectWizardFactory {
+    @NotNull NewProjectWizard create(@NotNull Project project, @NotNull ModulesProvider modulesProvider);
+  }
+
+  @ApiStatus.Internal
+  public static class NewProjectWizardFactoryImpl implements NewProjectWizardFactory {
+
+    @Override
+    public @NotNull NewProjectWizard create(@NotNull Project project, @NotNull ModulesProvider modulesProvider) {
+      return new NewProjectWizard(project, modulesProvider);
+    }
   }
 }
