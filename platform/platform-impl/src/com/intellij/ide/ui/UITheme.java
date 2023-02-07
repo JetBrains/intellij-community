@@ -10,7 +10,6 @@ import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.ui.Gray;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.DigestUtil;
 import com.intellij.util.ui.JBDimension;
@@ -127,7 +126,7 @@ public final class UITheme {
   private static @Nullable Map<String, Object> importMapFromParentTheme(@Nullable Map<String, Object> themeMap,
                                                                         @Nullable Map<String, Object> parentThemeMap) {
     if (parentThemeMap == null) return themeMap;
-    Map<String, Object> result = new HashMap<>(parentThemeMap);
+    Map<String, Object> result = new LinkedHashMap<>(parentThemeMap);
     if (themeMap != null) result.putAll(themeMap);
     return result;
   }
@@ -261,7 +260,14 @@ public final class UITheme {
     for (String key : namedColors) {
       Object value = map.get(key);
       if (value instanceof String && !((String)value).startsWith("#")) {
-        map.put(key, ObjectUtils.notNull(map.get(map.get(key)), Gray.TRANSPARENT));
+        Object delegateColor = map.get(value);
+        if (delegateColor != null) {
+          map.put(key, delegateColor);
+        }
+        else {
+          LOG.warn("Can't parse '" + value + "' for key '" + key + "'");
+          map.put(key, Gray.TRANSPARENT);
+        }
       }
     }
 
