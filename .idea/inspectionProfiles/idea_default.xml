@@ -1119,6 +1119,11 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="Clz" nameOfExprType="javax\.swing\.FocusManager" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="Don't use serializer(type)" description="Use Class.serizlizer(), it's faster" problemDescriptor="Use Class.serizlizer(), it's faster" text="$MethodCall$($Parameter$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="MethodCall" regexp="serializer" within="" contains="" />
+        <constraint name="Parameter" nameOfExprType="java\.lang\.Class" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="Double ' in without { in property value" description="A double single quote in a propery value without a parameter like &#10;{0} will be rendered as a doubled single quote in the result. When&#10;a parameter is present it will be rendered as a single single &#10;quote." suppressId="DoubleSingleQuote" text="$key$=$value$" recursive="true" caseInsensitive="true" type="Properties" search_injected="false">
         <constraint name="__context__" within="" contains="" />
         <constraint name="key" within="" contains="" />
