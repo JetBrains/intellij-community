@@ -10,9 +10,7 @@ import com.intellij.vcs.log.graph.GraphColorManagerImpl;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.HeadCommitsComparator;
 import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.graph.api.printer.GraphColorGetterFactory;
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
-import com.intellij.vcs.log.graph.impl.print.GraphColorGetterByHeadFactory;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NonNls;
@@ -49,13 +47,12 @@ public class DataPack extends DataPackBase {
     }
     else {
       refsModel = new RefsModel(refs, getHeads(commits), storage, providers);
-      GraphColorGetterFactory<Integer> colorGetterFactory = new GraphColorGetterByHeadFactory<>(new GraphColorManagerImpl(refsModel));
       Comparator<Integer> headCommitdComparator = new HeadCommitsComparator(refsModel, getRefManagerMap(providers),
                                                                             VcsLogStorageImpl.createHashGetter(storage));
       Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), storage);
 
       permanentGraph = computeWithSpan(TraceManager.INSTANCE.getTracer("vcs"), "building graph", (span) -> {
-        return PermanentGraphImpl.newInstance(commits, colorGetterFactory, headCommitdComparator, branches);
+        return PermanentGraphImpl.newInstance(commits, new GraphColorManagerImpl(refsModel), headCommitdComparator, branches);
       });
     }
 
