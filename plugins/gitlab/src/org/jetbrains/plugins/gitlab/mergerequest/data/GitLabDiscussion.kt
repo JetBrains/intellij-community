@@ -92,7 +92,7 @@ class LoadedGitLabDiscussion(
 
   override val canAddNotes: Boolean = mr.userPermissions.createNote
 
-  override val position: GitLabNoteDTO.Position? = discussionData.notes.first().position
+  override val position: GitLabNoteDTO.Position? = discussionData.notes.first().position?.takeIf { it.positionType == "text" }
 
   // a little cheat that greatly simplifies the implementation
   override val canResolve: Boolean = discussionData.notes.first().let { it.resolvable && it.userPermissions.resolveNote }
