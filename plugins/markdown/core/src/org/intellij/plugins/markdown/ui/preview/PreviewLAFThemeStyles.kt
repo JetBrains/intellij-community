@@ -1,11 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview
 
+import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.components.ScrollBarPainter
@@ -36,17 +38,21 @@ internal object PreviewLAFThemeStyles {
 
     val fontSize = JBCefApp.normalizeScaledSize(EditorUtil.getEditorFont().size + 1)
 
-    // For some reason background-color for ::-webkit-scrollbar-thumb
-    // doesn't work with [0..255] alpha values. Fortunately it works fine with [0..1] values.
-    // Default color from base stylesheets will be used, if the final value is null.
-    // (Generated rule will be invalid)
-    val scrollbarColor = scheme.getColor(ScrollBarPainter.THUMB_OPAQUE_BACKGROUND)?.let {
-      "rgba(${it.red}, ${it.blue}, ${it.green}, ${it.alpha / 255.0})"
-    }
-    // language=CSS
+    val scrollbarBackgroundColor = scheme.getRGBaColor(ScrollBarPainter.BACKGROUND)
+    val scrollbarTrackColor = scheme.getRGBaColor(ScrollBarPainter.TRACK_OPAQUE_BACKGROUND)
+    val scrollbarTrackColorHovered = scheme.getRGBaColor(ScrollBarPainter.TRACK_OPAQUE_HOVERED_BACKGROUND)
+    val scrollbarThumbColor = scheme.getRGBaColor(ScrollBarPainter.THUMB_OPAQUE_BACKGROUND)
+    val scrollbarThumbColorHovered = scheme.getRGBaColor(ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND)
+    val scrollbarThumbBorder = scheme.getRGBaColor(ScrollBarPainter.THUMB_OPAQUE_FOREGROUND)
+    val scrollbarThumbBorderHovered = scheme.getRGBaColor(ScrollBarPainter.THUMB_OPAQUE_HOVERED_FOREGROUND)
+
+    val scrollbarTrackSize = if (SystemInfo.isMac) "14px" else "10px"
+    val scrollbarThumbBorderSize = if (SystemInfo.isMac) "3px" else "1px"
+    val scrollbarThumbRadius = if (SystemInfo.isMac) "14px" else "0"
+
     val backgroundColor = scheme.defaultBackground.webRgba()
     // language=CSS
-    val styles = """
+    return """
     body {
         background-color: ${backgroundColor};
         font-size: ${fontSize}px !important;
@@ -80,15 +86,54 @@ internal object PreviewLAFThemeStyles {
       border-left: 2px solid ${linkActiveForeground.webRgba(alpha = 0.4)};
     }
     
-    ::-webkit-scrollbar-thumb {
-        background-color: $scrollbarColor;
-    }
-    
     blockquote, code, pre {
       background-color: ${markdownFenceBackground.webRgba(markdownFenceBackground.alpha / 255.0)};
     }
+    
+    ::-webkit-scrollbar {
+      width: $scrollbarTrackSize;
+      height: $scrollbarTrackSize;
+      background-color: $scrollbarBackgroundColor;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background-color:$scrollbarTrackColor;
+    }
+    
+    ::-webkit-scrollbar-track:hover {
+      background-color:$scrollbarTrackColorHovered;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background-color:$scrollbarThumbColor;
+      border-radius:$scrollbarThumbRadius;
+      border-width: $scrollbarThumbBorderSize;
+      border-style: solid;
+      border-color: $scrollbarTrackColor;
+      background-clip: padding-box;
+      outline: 1px solid $scrollbarThumbBorder;
+      outline-offset: -$scrollbarThumbBorderSize;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background-color:$scrollbarThumbColorHovered;
+      border-radius:$scrollbarThumbRadius;
+      border-width: $scrollbarThumbBorderSize;
+      border-style: solid;
+      border-color: $scrollbarTrackColor;
+      background-clip: padding-box;
+      outline: 1px solid $scrollbarThumbBorderHovered;
+      outline-offset: -$scrollbarThumbBorderSize;
+    }
+    
+    ::-webkit-scrollbar-button {
+      display:none;
+    }
+    
+    ::-webkit-scrollbar-corner {
+      background-color: $scrollbarBackgroundColor;
+    }
     """.trimIndent()
-    return styles
   }
 
   private fun obtainColorsScheme(): EditorColorsScheme {
@@ -102,6 +147,10 @@ internal object PreviewLAFThemeStyles {
 
   private fun Color.webRgba(alpha: Double = this.alpha.toDouble()): String {
     return "rgba($red, $green, $blue, $alpha)"
+  }
+
+  private fun EditorColorsScheme.getRGBaColor(key: ColorKey): String {
+    return (getColor(key) ?: key.defaultColor).let { "rgba(${it.red}, ${it.blue}, ${it.green}, ${it.alpha / 255.0})" }
   }
 
   /**
