@@ -1,37 +1,59 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.externalSystem.service;
+package com.intellij.openapi.externalSystem.service
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
-import com.intellij.openapi.externalSystem.service.project.ProjectRenameAware;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.ExternalSystemManager
+import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
+import com.intellij.openapi.externalSystem.service.project.ProjectRenameAware
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.startup.StartupActivity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-final class ExternalSystemStartupActivity implements StartupActivity.DumbAware {
-  @Override
-  public void runActivity(@NotNull Project project) {
-    ExternalProjectsManagerImpl.getInstance(project).init();
+internal class ExternalSystemStartupActivity : ProjectActivity {
+  override suspend fun execute(project: Project) {
+    blockingContext {
+      ExternalProjectsManagerImpl.getInstance(project).init()
+    }
 
-    ApplicationManager.getApplication().invokeLater(() -> {
-      ExternalSystemManager.EP_NAME.forEachExtensionSafe(manager -> {
-        if (manager instanceof StartupActivity) {
-          ((StartupActivity)manager).runActivity(project);
-        }
-      });
-
-      boolean isNewlyImportedProject = project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) == Boolean.TRUE;
-      boolean isNewlyCreatedProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE;
-      if (!isNewlyImportedProject && isNewlyCreatedProject) {
-        ExternalSystemManager.EP_NAME.forEachExtensionSafe(manager -> {
-          ExternalSystemUtil.refreshProjects(new ImportSpecBuilder(project, manager.getSystemId()).createDirectoriesForEmptyContentRoots());
-        });
+    // do not compute in EDT
+    val managers = ExternalSystemManager.EP_NAME.extensionList
+    withContext(Dispatchers.EDT) {
+      for (manager in managers) {
+        runCatching {
+          if (manager is StartupActivity) {
+            blockingContext {
+              (manager as StartupActivity).runActivity(project)
+            }
+          }
+          else {
+            (manager as ProjectActivity).execute(project)
+          }
+        }.getOrLogException(logger<ExternalSystemStartupActivity>())
       }
-      ProjectRenameAware.beAware(project);
-    }, project.getDisposed());
+
+      val isNewlyImportedProject = project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) == true
+      val isNewlyCreatedProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == true
+      if (!isNewlyImportedProject && isNewlyCreatedProject) {
+        for (manager in managers) {
+          runCatching {
+            blockingContext {
+              ExternalSystemUtil.refreshProjects(ImportSpecBuilder(project, manager.systemId).createDirectoriesForEmptyContentRoots())
+            }
+          }.getOrLogException(logger<ExternalSystemStartupActivity>())
+        }
+      }
+
+      blockingContext {
+        ProjectRenameAware.beAware(project)
+      }
+    }
   }
 }
