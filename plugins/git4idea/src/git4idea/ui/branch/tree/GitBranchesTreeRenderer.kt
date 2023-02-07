@@ -183,8 +183,8 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
     .addToRight(incomingOutgoingLabel)
     .andTransparent()
 
-  private val textPanel = JBUI.Panels.simplePanel()
-    .addToCenter(JPanel(GridBagLayout()).apply {
+  private val textPanel =
+    JPanel(GridBagLayout()).apply {
       isOpaque = false
 
       add(branchInfoPanel,
@@ -198,8 +198,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
             anchor = GridBagConstraints.LINE_END
             weightx = 2.0
           })
-    })
-    .andTransparent()
+    }
 
   private inner class MyMainPanel : BorderLayoutPanel() {
     init {
