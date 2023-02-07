@@ -4,6 +4,7 @@ package org.jetbrains.xxh3;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
@@ -24,6 +25,10 @@ public final class Xxh3 {
 
   public static long hash(byte[] input) {
     return Xxh3Impl.hash(input, ByteArrayAccess.INSTANCE, 0, input.length, 0);
+  }
+
+  public static long hash(InputStream inputStream, int length) {
+    return Xxh3Impl.hash(inputStream, new InputStreamAccess(), 0, length, 0);
   }
 
   public static long hash(byte[] input, int offset, int length) {
