@@ -141,7 +141,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
     final PsiClass psiClass = psiField.getContainingClass();
     if (null != psiClass) {
-      //cache signatures to speedup editing of big files, where getName goes in psi tree
+      //cache signatures to speed up editing of big files, where getName goes in psi tree
       List<MethodSignatureBackedByPsiMethod> ownSignatures = CachedValuesManager.getCachedValue(psiClass, () -> {
         List<MethodSignatureBackedByPsiMethod> signatures =
           ContainerUtil.map(PsiClassUtil.collectClassMethodsIntern(psiClass),

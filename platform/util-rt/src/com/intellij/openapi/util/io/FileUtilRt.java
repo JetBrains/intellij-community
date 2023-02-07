@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -115,7 +115,7 @@ public class FileUtilRt {
     if (separatorChar != '/') {
       path = path.replace(separatorChar, '/');
     }
-    // trying to speedup the common case when there are no "//" or "/."
+    // trying to speed up the common case when there are no "//" or "/."
     int index = -1;
     do {
       index = path.indexOf('/', index+1);

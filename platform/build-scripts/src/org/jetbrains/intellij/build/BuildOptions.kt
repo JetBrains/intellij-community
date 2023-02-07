@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
@@ -39,7 +39,7 @@ class BuildOptions {
      */
     const val OS_NONE = "none"
 
-    /** Pre-builds SVG icons for all SVG resource files to speedup icons loading at runtime  */
+    /** Pre-builds SVG icons for all SVG resource files to speed up icons loading at runtime  */
     const val SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
 
     /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used.  */
