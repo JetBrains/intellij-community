@@ -568,11 +568,12 @@ object IconLoader {
    */
   @JvmStatic
   fun getDarkIcon(icon: Icon, dark: Boolean): Icon {
-    var effectiveIcon = icon
-    if (effectiveIcon is RetrievableIcon) {
-      effectiveIcon = getOrigin(effectiveIcon)
-    }
-    return if (effectiveIcon is DarkIconProvider) effectiveIcon.getDarkIcon(dark) else effectiveIcon
+    return object : IconReplacer {
+      override fun replaceIcon(icon: Icon): Icon {
+        if (icon is DarkIconProvider) return icon.getDarkIcon(dark)
+        return super.replaceIcon(icon)
+      }
+    }.replaceIcon(icon)
   }
 
   fun detachClassLoader(classLoader: ClassLoader) {
