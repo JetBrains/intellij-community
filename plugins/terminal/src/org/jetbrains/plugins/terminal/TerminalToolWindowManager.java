@@ -564,6 +564,10 @@ public final class TerminalToolWindowManager implements Disposable {
     return toolWindow != null && TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId());
   }
 
+  public static boolean isTerminalToolWindow(@Nullable ToolWindow toolWindow) {
+    return toolWindow != null && TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId());
+  }
+
   private final class TerminalDockContainer implements DockContainer {
     @NotNull
     @Override
