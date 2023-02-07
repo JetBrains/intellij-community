@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.editor.impl.jcef
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -222,6 +224,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
       isGridVisible = OptionsManager.getInstance().options.editorOptions.gridOptions.isShowDefault
       isTransparencyChessboardVisible = OptionsManager.getInstance().options.editorOptions.transparencyChessboardOptions.isShowDefault
       setBorderVisible(ShowBorderAction.isBorderVisible())
+      reloadStyles()
     }
 
     myCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
@@ -236,6 +239,9 @@ class JCefImageViewer(private val myFile: VirtualFile,
     else {
       myBrowser.loadURL(VIEWER_URL)
     }
+
+    ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(EditorColorsManager.TOPIC,
+                                                                             EditorColorsListener { reloadStyles() })
   }
 
   @Serializable
@@ -284,7 +290,6 @@ class JCefImageViewer(private val myFile: VirtualFile,
       /*!* background of the scrollbar except button or resizer *!*/
       ::-webkit-scrollbar-track {
         background-color:$trackColor;
-        border-width: $thumbBorder solid red;
       }
       
       ::-webkit-scrollbar-track:hover {
@@ -318,6 +323,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
       ::-webkit-scrollbar-button {
         display:none;
       }
+      
       ::-webkit-scrollbar-corner {
         background-color: $background;
       }
@@ -326,7 +332,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
 
   private fun reloadStyles() {
     execute("""
-      loadScrollbarsStyle(${SCROLLBARS_STYLE_URL});
+      loadScrollbarsStyle('$SCROLLBARS_STYLE_URL');
     """.trimIndent())
   }
 }
