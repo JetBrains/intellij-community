@@ -179,7 +179,7 @@ final class PersistentFSConnector {
       }
       final int version = getVersion(recordsStorage, attributesStorage, contentsStorage);
       if (version != expectedVersion) {
-        throw new IOException("FS repository version mismatch: actual=" + version + " expected=" + FSRecords.getVersion());
+        throw new IOException("FS repository version mismatch: actual=" + version + " expected=" + expectedVersion);
       }
 
       if (recordsStorage.getConnectionStatus() != PersistentFSHeaders.SAFELY_CLOSED_MAGIC) {

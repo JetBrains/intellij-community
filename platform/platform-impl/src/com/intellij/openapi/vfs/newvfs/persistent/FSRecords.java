@@ -242,9 +242,10 @@ public final class FSRecords {
   static @Nullable VirtualFileSystemEntry findFileById(final int fileId,
                                                        final @NotNull VirtualDirectoryCache idToDirCache) {
     final FSRecordsImpl impl = implOrFail();
-    //We climb up from fileId, collecting parentIds (path), until find a parent which is cached in idToDirCache.
-    //  From that (grand)parent we climb down to fileId, resolving every child (findDescendantByIdPath).
 
+    //We climb up from fileId, collecting parentIds (=path), until find a parent which is cached in
+    // idToDirCache. From that (grand)parent we climb down (findDescendantByIdPath) to fileId,
+    // resolving every child via idToDirCache:
     class ParentFinder implements ThrowableComputable<Void, Exception> {
       private @Nullable IntList path;
       private VirtualFileSystemEntry foundParent;
@@ -265,9 +266,10 @@ public final class FSRecords {
             break;
           }
           if (parentId == NULL_FILE_ID) {
-            //TODO RC: personally I think here we should throw exception. But it seems the method .findFileById() is used in
-            //    an assumption it just returns null if 'incorrect' fileId is passed in.
-            //    Return to legacy behavior until I'll be able to fix it meaningfully
+            //TODO RC: personally I think here we should throw exception. But (it seems)
+            //    the method .findFileById() is used in an assumption it just returns null
+            //    if 'incorrect' fileId is passed in? -- so I keep legacy behavior until I'll
+            //    be able to understand it better, or fix calling code meaningfully
             final String currentFileName = getName(currentId);
             LOG.info(
               "file[" + fileId + "]: top parent (currentId: " + currentId + ", name: '" + currentFileName + "', parent: 0), " +
