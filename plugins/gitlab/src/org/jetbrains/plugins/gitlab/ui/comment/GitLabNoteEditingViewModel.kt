@@ -3,14 +3,19 @@ package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
 interface GitLabNoteEditingViewModel {
   val text: MutableStateFlow<String>
+  val focusRequests: Flow<Unit>
 
   val state: Flow<SubmissionState?>
+
+  fun requestFocus()
 
   fun submit()
 
@@ -33,8 +38,18 @@ class DelegatingGitLabNoteEditingViewModel(parentCs: CoroutineScope,
 
   override val text: MutableStateFlow<String> = MutableStateFlow(initialText)
 
+  private val _focusRequestsChannel = Channel<Unit>(1, BufferOverflow.DROP_OLDEST)
+  override val focusRequests: Flow<Unit>
+    get() = _focusRequestsChannel.receiveAsFlow()
+
   private val _state = MutableStateFlow<GitLabNoteEditingViewModel.SubmissionState?>(null)
   override val state: Flow<GitLabNoteEditingViewModel.SubmissionState?> = _state.asSharedFlow()
+
+  override fun requestFocus() {
+    cs.launch {
+      _focusRequestsChannel.send(Unit)
+    }
+  }
 
   override fun submit() {
     taskLauncher.launch {

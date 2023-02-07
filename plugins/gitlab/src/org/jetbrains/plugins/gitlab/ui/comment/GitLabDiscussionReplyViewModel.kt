@@ -34,6 +34,7 @@ class GitLabDiscussionReplyViewModelImpl(parentCs: CoroutineScope,
       onDoneIn(cs) {
         text.value = ""
       }
+      requestFocus()
     }
   }.modelFlow(cs, thisLogger())
 
