@@ -66,7 +66,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
     val throttlingWrapper = ThrottlingListenerWrapper(mockListener)
     myMockery!!.checking(object : Expectations() {
       init {
-        oneOf(mockListener).searchStarted(listOf(contributor1, contributor2))
+        oneOf(mockListener).searchStarted("test", listOf(contributor1, contributor2))
         oneOf(mockListener).elementsAdded(listOf(c1_e1, c1_e3, c1_e5, c1_e6, c2_e1, c2_e2, c2_e3, c2_e4, c1_e7, c1_e8))
         oneOf(mockListener).elementsRemoved(listOf(c2_e5, c2_e6))
         oneOf(mockListener).contributorFinished(contributor1, false)
@@ -75,7 +75,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
       }
     })
     with<SearchListener, Unit>(throttlingWrapper) {
-      searchStarted(listOf(contributor1, contributor2))
+      searchStarted("test", listOf(contributor1, contributor2))
       elementsAdded(listOf(c1_e1, c1_e2, c1_e3, c1_e4))
       elementsAdded(listOf(c1_e5, c1_e6))
       contributorWaits(contributor1) //wait event 1
@@ -102,7 +102,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
 
     myMockery!!.checking(object : Expectations() {
       init {
-        oneOf(mockListener).searchStarted(listOf(contributor1, contributor2))
+        oneOf(mockListener).searchStarted("test", listOf(contributor1, contributor2))
         oneOf(mockListener).elementsAdded(listOf(c1_e1, c1_e3, c1_e5, c1_e6, c2_e1, c2_e2, c2_e3, c2_e4))
         oneOf(mockListener).contributorWaits(contributor1)
         oneOf(mockListener).contributorWaits(contributor2)
@@ -114,7 +114,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
       }
     })
     with<SearchListener, Unit>(wfcWrapper) {
-      searchStarted(listOf(contributor1, contributor2))
+      searchStarted("test", listOf(contributor1, contributor2))
       elementsAdded(listOf(c1_e1, c1_e2, c1_e3, c1_e4))
       elementsAdded(listOf(c1_e5, c1_e6))
       contributorWaits(contributor1) //wait event 1
@@ -140,7 +140,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
     val executorService = Executors.newSingleThreadScheduledExecutor()
     myMockery!!.checking(object : Expectations() {
       init {
-        oneOf(mockListener).searchStarted(listOf(contributor1, contributor2))
+        oneOf(mockListener).searchStarted("test", listOf(contributor1, contributor2))
         oneOf(mockListener).elementsAdded(listOf(c1_e1, c1_e2, c1_e3, c2_e1, c2_e2, c2_e3))
         oneOf(mockListener).contributorWaits(contributor1)
         oneOf(mockListener).elementsRemoved(listOf(c1_e1, c1_e2))
@@ -154,7 +154,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
     val request1 = Runnable {
       SwingUtilities.invokeAndWait {
         with(throttlingWrapper) {
-          searchStarted(listOf(contributor1, contributor2))
+          searchStarted("test", listOf(contributor1, contributor2))
           elementsAdded(listOf(c1_e1, c1_e2, c1_e3, c1_e4))
           elementsRemoved(listOf(c1_e4))
           contributorWaits(contributor1)
@@ -207,7 +207,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
 
     myMockery!!.checking(object : Expectations() {
       init {
-        oneOf(mockListener).searchStarted(listOf(contributor1, contributor2, contributor3))
+        oneOf(mockListener).searchStarted("test", listOf(contributor1, contributor2, contributor3))
         oneOf(mockListener).elementsAdded(listOf(c1_e1, c1_e2, c1_e3, c2_e1, c2_e2, c2_e3))
         oneOf(mockListener).contributorFinished(contributor1, false)
         oneOf(mockListener).contributorWaits(contributor2)
@@ -219,7 +219,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
     })
 
     with(wfcWrapper) {
-      searchStarted(listOf(contributor1, contributor2, contributor3))
+      searchStarted("test", listOf(contributor1, contributor2, contributor3))
       elementsAdded(listOf(c1_e1, c1_e2, c1_e3))
       contributorFinished(contributor1, false)
       elementsAdded(listOf(c2_e1, c2_e2, c2_e3))
@@ -240,7 +240,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
 
     myMockery!!.checking(object : Expectations() {
       init {
-        oneOf(mockListener).searchStarted(listOf(contributor1, contributor2, contributor3))
+        oneOf(mockListener).searchStarted("test", listOf(contributor1, contributor2, contributor3))
         oneOf(mockListener).elementsAdded(listOf(c1_e1, c1_e2, c1_e3, c2_e1, c2_e2, c2_e3))
         oneOf(mockListener).contributorFinished(contributor1, false)
         oneOf(mockListener).elementsAdded(listOf(c2_e4, c2_e5, c2_e6, c3_e1, c3_e2, c3_e3))
@@ -253,7 +253,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
     val request1 = Runnable {
       SwingUtilities.invokeAndWait {
         with(wfcWrapper) {
-          searchStarted(listOf(contributor1, contributor2, contributor3))
+          searchStarted("test", listOf(contributor1, contributor2, contributor3))
           elementsAdded(listOf(c1_e1, c1_e2, c1_e3))
           contributorFinished(contributor1, false)
           elementsAdded(listOf(c2_e1, c2_e2, c2_e3))
@@ -288,7 +288,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
 
     myMockery!!.checking(object : Expectations() {
       init {
-        oneOf(mockListener).searchStarted(listOf(contributor1, contributor2, contributor3))
+        oneOf(mockListener).searchStarted("test", listOf(contributor1, contributor2, contributor3))
         oneOf(mockListener).elementsAdded(listOf(c1_e1, c1_e2, c1_e3, c2_e1, c2_e2, c2_e3))
         oneOf(mockListener).contributorFinished(contributor1, false)
         oneOf(mockListener).contributorFinished(contributor2, false)
@@ -300,7 +300,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
     })
 
     with(wfcWrapper) {
-      searchStarted(listOf(contributor1, contributor2, contributor3))
+      searchStarted("test", listOf(contributor1, contributor2, contributor3))
       elementsAdded(listOf(c1_e1, c1_e2, c1_e3))
       contributorFinished(contributor1, false)
       elementsAdded(listOf(c2_e1, c2_e2, c2_e3))
@@ -353,8 +353,8 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
   private fun doTestClearPreviousResults(mockListener: SearchListener, wrapper: SearchListener) {
     myMockery!!.checking(object : Expectations() {
       init {
-        oneOf(mockListener).searchStarted(listOf(contributor1))
-        oneOf(mockListener).searchStarted(listOf(contributor1))
+        oneOf(mockListener).searchStarted("test", listOf(contributor1))
+        oneOf(mockListener).searchStarted("test", listOf(contributor1))
         oneOf(mockListener).elementsAdded(listOf(c1_e5, c1_e6, c1_e7, c1_e8))
         oneOf(mockListener).contributorFinished(contributor1, true)
         oneOf(mockListener).searchFinished(mapOf(Pair(contributor1, true)))
@@ -362,10 +362,10 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
     })
 
     with(wrapper) {
-      searchStarted(listOf(contributor1))
+      searchStarted("test", listOf(contributor1))
       elementsAdded(listOf(c1_e1, c1_e2, c1_e3, c1_e4))
 
-      searchStarted(listOf(contributor1))
+      searchStarted("test", listOf(contributor1))
       elementsAdded(listOf(c1_e5, c1_e6, c1_e7, c1_e8))
       contributorFinished(contributor1, true)
       searchFinished(mapOf(Pair(contributor1, true)))

@@ -1270,8 +1270,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
 
     @Override
-    public void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
-      myExternalSearchListeners.forEach(listener -> listener.searchStarted(contributors));
+    public void searchStarted(@NotNull String pattern, @NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
+      myExternalSearchListeners.forEach(listener -> listener.searchStarted(pattern, contributors));
     }
 
     @Override
