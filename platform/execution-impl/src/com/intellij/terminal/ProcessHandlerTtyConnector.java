@@ -27,7 +27,7 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
   private final Charset myCharset;
 
   public ProcessHandlerTtyConnector(@NotNull ProcessHandler processHandler, @NotNull Charset charset) {
-    this(processHandler, charset, false);
+    this(processHandler, charset, true);
   }
 
   public ProcessHandlerTtyConnector(@NotNull ProcessHandler processHandler, @NotNull Charset charset, boolean destroyProcessOnClose) {

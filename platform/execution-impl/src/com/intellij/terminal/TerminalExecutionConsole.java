@@ -66,7 +66,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   public TerminalExecutionConsole(@NotNull Project project,
                                   @Nullable ProcessHandler processHandler,
                                   @NotNull JBTerminalSystemSettingsProviderBase settingsProvider) {
-    this(project, processHandler, settingsProvider, false);
+    this(project, processHandler, settingsProvider, true);
   }
 
   public TerminalExecutionConsole(@NotNull Project project,
@@ -77,7 +77,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   }
 
   public TerminalExecutionConsole(@NotNull Project project, int columns, int lines, @Nullable ProcessHandler processHandler) {
-    this(project, columns, lines, processHandler, getProvider(), false);
+    this(project, columns, lines, processHandler, getProvider(), true);
   }
 
   public TerminalExecutionConsole(@NotNull Project project,
