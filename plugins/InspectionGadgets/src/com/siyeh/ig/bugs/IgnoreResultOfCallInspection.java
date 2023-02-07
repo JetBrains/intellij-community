@@ -149,6 +149,12 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       .add("java.util.stream.IntStream",".*")
       .add("java.util.stream.LongStream",".*")
       .add("java.util.stream.Stream",".*")
+      .add("java.time.LocalTime","get|getLong|plus|minus")
+      .add("java.time.LocalDateTime","get|getLong|plus|minus")
+      .add("java.time.LocalDate","get|getLong|plus|minus")
+      .add("java.time.OffsetTime","get|getLong|plus|minus")
+      .add("java.time.OffsetDateTime","get|getLong|plus|minus")
+      .add("java.time.ZonedDateTime","get|getLong|plus|minus")
       .finishDefault();
   }
 
