@@ -232,4 +232,9 @@ class UnindexedFilesIndexer extends DumbModeTask {
   @NotNull Map<@NotNull IndexableFilesIterator, @NotNull Collection<@NotNull VirtualFile>> getProviderToFiles() {
     return providerToFiles;
   }
+
+  @Override
+  public String toString() {
+    return "UnindexedFilesIndexer[" + myProject.getName() + ", " + providerToFiles.size() + " iterators, reason: " + indexingReason + "]";
+  }
 }
