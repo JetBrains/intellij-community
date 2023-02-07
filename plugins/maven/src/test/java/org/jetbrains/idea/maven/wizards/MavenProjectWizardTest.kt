@@ -6,10 +6,12 @@ import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
 import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.useProject
 import com.intellij.testFramework.utils.module.assertModules
 import com.intellij.ui.UIBundle
@@ -87,8 +89,7 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
     }
   }
 
-  // TODO: fix project leak
-  fun `_test configurator creates module in project structure modifiable model`() {
+  fun `test configurator creates module in project structure modifiable model`() {
     createProjectFromTemplate {
       it.baseData!!.name = "project"
       it.languageData!!.language = "Java"
@@ -113,14 +114,23 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
       }
 
       assertEquals(setOf("untitled"), addedModules.map { it.name }.toSet())
-      val module = addedModules.single()
-      waitForMavenImporting(module)
 
-      assertEquals(setOf("project", "untitled"), modulesConfigurator.moduleModel.modules.map { it.name }.toSet())
+      var module: Module? = null
+      try {
+        module = addedModules.single()
+        waitForMavenImporting(module)
 
-      // verify there are no errors when the module is deleted
-      val editor = modulesConfigurator.getModuleEditor(module)
-      modulesConfigurator.deleteModules(listOf(editor))
+        assertEquals(setOf("project", "untitled"), modulesConfigurator.moduleModel.modules.map { it.name }.toSet())
+
+        // verify there are no errors when the module is deleted
+        val editor = modulesConfigurator.getModuleEditor(module)
+        modulesConfigurator.deleteModules(listOf(editor))
+      }
+      finally {
+        if (null != module) {
+          Disposer.dispose(module)
+        }
+      }
     }
   }
 }
