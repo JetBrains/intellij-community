@@ -3,6 +3,7 @@ package com.intellij.ui
 
 import com.intellij.feedback.new_ui.dialog.NewUIFeedbackDialog
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.Configurable
@@ -62,7 +63,7 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
     val uiSettingsChanged = isModified
     super.apply()
     if (uiSettingsChanged) {
-      UISettings.getInstance().fireUISettingsChanged()
+      LafManager.getInstance().applyDensity()
     }
   }
 }
