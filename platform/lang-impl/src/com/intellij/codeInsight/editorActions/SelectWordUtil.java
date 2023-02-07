@@ -271,6 +271,8 @@ public final class SelectWordUtil {
    * by any side of a caret at specified cursorPosition
    */
   public static boolean canWhiteSpaceBeExpanded(PsiWhiteSpace psiWhiteSpace, int cursorPosition, Caret caret) {
+    if (caret.hasSelection() && psiWhiteSpace.getTextRange().contains(caret.getSelectionRange())) return false;
+    
     int beforeOffset = caret.hasSelection()? caret.getSelectionStart() : cursorPosition;
     Character charBeforeCursor = getCharBeforeCursorInPsiElement(psiWhiteSpace, beforeOffset);
     if (charBeforeCursor != null && isExpandableWhiteSpace(charBeforeCursor)) return true;
