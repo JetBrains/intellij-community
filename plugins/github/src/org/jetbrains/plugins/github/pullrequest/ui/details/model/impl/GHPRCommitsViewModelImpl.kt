@@ -4,14 +4,19 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.GHCommit
+import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRCommitsViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.getResultFlow
 
 internal class GHPRCommitsViewModelImpl(
   scope: CoroutineScope,
-  commitsLoadingModel: GHSimpleLoadingModel<List<GHCommit>>
+  commitsLoadingModel: GHSimpleLoadingModel<List<GHCommit>>,
+  securityService: GHPRSecurityService
 ) : GHPRCommitsViewModel {
+  override val ghostUser: GHUser = securityService.ghostUser
+
   override val reviewCommits: StateFlow<List<GHCommit>> = commitsLoadingModel.getResultFlow()
     .map { commits -> commits ?: listOf() }
     .stateIn(scope, SharingStarted.Eagerly, listOf())

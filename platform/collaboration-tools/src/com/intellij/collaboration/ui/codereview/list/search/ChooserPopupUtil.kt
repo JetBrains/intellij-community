@@ -6,7 +6,10 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.ui.popup.PopupChooserBuilder
-import com.intellij.ui.*
+import com.intellij.ui.CollectionListModel
+import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.PopupState
@@ -15,6 +18,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import javax.swing.JList
+import javax.swing.ListCellRenderer
 import javax.swing.ListSelectionModel
 
 object ChooserPopupUtil {
@@ -29,6 +33,26 @@ object ChooserPopupUtil {
     @Suppress("UNCHECKED_CAST")
     val popup = PopupChooserBuilder(list)
       .setFilteringEnabled { presenter(it as T).shortText }
+      .setResizable(true)
+      .setMovable(true)
+      .setFilterAlwaysVisible(true)
+      .createPopup()
+
+    popupState.prepareToShow(popup)
+    return popup.showAndAwaitSubmission(list, point)
+  }
+
+  suspend fun <T> showChooserPopup(point: RelativePoint,
+                                   popupState: PopupState<JBPopup>,
+                                   items: List<T>,
+                                   filteringMapper: (T) -> String,
+                                   renderer: ListCellRenderer<T>): T? {
+    val listModel = CollectionListModel(items)
+    val list = createList(listModel, renderer)
+
+    @Suppress("UNCHECKED_CAST")
+    val popup = PopupChooserBuilder(list)
+      .setFilteringEnabled { filteringMapper(it as T) }
       .setResizable(true)
       .setMovable(true)
       .setFilterAlwaysVisible(true)
@@ -101,19 +125,14 @@ object ChooserPopupUtil {
     JBList(listModel).apply {
       visibleRowCount = 7
       selectionMode = ListSelectionModel.SINGLE_SELECTION
-      cellRenderer = object : ColoredListCellRenderer<T>() {
-        override fun customizeCellRenderer(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
-          val presentation = presenter(value)
-          icon = presentation.icon
-          append(presentation.shortText)
-          val fullText = presentation.fullText
-          if (fullText != null) {
-            append(" ")
-            append("($fullText)", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-          }
-          border = if (presentation.isSeparated) IdeBorderFactory.createBorder(SideBorder.BOTTOM) else null
-        }
-      }
+      cellRenderer = SimplePopupItemRenderer(presenter)
+    }
+
+  private fun <T> createList(listModel: CollectionListModel<T>, renderer: ListCellRenderer<T>): JBList<T> =
+    JBList(listModel).apply {
+      visibleRowCount = 7
+      selectionMode = ListSelectionModel.SINGLE_SELECTION
+      cellRenderer = renderer
     }
 
   private class ListLoadingListener<T>(private val listModel: CollectionListModel<T>,
@@ -158,19 +177,29 @@ object ChooserPopupUtil {
     val shortText: @Nls String
     val icon: Icon?
     val fullText: @Nls String?
-    val isSeparated: Boolean
 
     class Simple(override val shortText: String,
                  override val icon: Icon? = null,
-                 override val fullText: String? = null,
-                 override val isSeparated: Boolean = false)
+                 override val fullText: String? = null)
       : PopupItemPresentation
 
     class ToString(value: Any) : PopupItemPresentation {
       override val shortText: String = value.toString()
       override val icon: Icon? = null
       override val fullText: String? = null
-      override val isSeparated: Boolean = false
+    }
+  }
+
+  class SimplePopupItemRenderer<T>(private val presenter: (T) -> PopupItemPresentation) : ColoredListCellRenderer<T>() {
+    override fun customizeCellRenderer(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
+      val presentation = presenter(value)
+      icon = presentation.icon
+      append(presentation.shortText)
+      val fullText = presentation.fullText
+      if (fullText != null) {
+        append(" ")
+        append("($fullText)", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      }
     }
   }
 }

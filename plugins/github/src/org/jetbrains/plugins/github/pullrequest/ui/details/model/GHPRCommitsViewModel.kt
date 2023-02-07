@@ -3,8 +3,11 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.github.api.data.GHCommit
+import org.jetbrains.plugins.github.api.data.GHUser
 
 internal interface GHPRCommitsViewModel {
+  val ghostUser: GHUser
+
   val reviewCommits: StateFlow<List<GHCommit>>
   val selectedCommit: StateFlow<GHCommit?>
   val selectedCommitIndex: StateFlow<Int>

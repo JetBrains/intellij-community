@@ -194,7 +194,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                      dataProvider.detailsData,
                                                      dataProvider.reviewData,
                                                      disposable)
-      val commitsVm = GHPRCommitsViewModelImpl(scope, commitsLoadingModel)
+      val commitsVm = GHPRCommitsViewModelImpl(scope, commitsLoadingModel, dataContext.securityService)
 
       GHPRDetailsComponentFactory.create(project,
                                          scope,
