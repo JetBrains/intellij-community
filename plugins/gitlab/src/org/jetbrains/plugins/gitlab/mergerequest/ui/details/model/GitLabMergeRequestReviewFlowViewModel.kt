@@ -21,7 +21,7 @@ internal interface GitLabMergeRequestReviewFlowViewModel {
   val author: GitLabUserDTO
 
   val approvedBy: Flow<List<GitLabUserDTO>>
-  val reviewers: Flow<List<GitLabUserDTO>>
+  val reviewers: StateFlow<List<GitLabUserDTO>>
   val role: Flow<ReviewRole>
   val requestState: Flow<RequestState>
   val isApproved: StateFlow<Boolean>
@@ -41,6 +41,8 @@ internal interface GitLabMergeRequestReviewFlowViewModel {
 
   fun setMyselfAsReviewer()
 
+  fun removeReviewer(reviewer: GitLabUserDTO)
+
   //TODO: extract reviewers update VM
   suspend fun getPotentialReviewers(): List<GitLabUserDTO>
 }
@@ -58,7 +60,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   override val author: GitLabUserDTO = mergeRequest.author
   override val approvedBy: Flow<List<GitLabUserDTO>> = mergeRequest.approvedBy
-  override val reviewers: Flow<List<GitLabUserDTO>> = mergeRequest.reviewers
+  override val reviewers: StateFlow<List<GitLabUserDTO>> = mergeRequest.reviewers.stateIn(scope, SharingStarted.Lazily, emptyList())
   override val role: Flow<ReviewRole> = reviewers.map { reviewers ->
     when {
       author == currentUser -> ReviewRole.AUTHOR
@@ -107,6 +109,15 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   override fun setMyselfAsReviewer() = runAction {
     mergeRequest.setReviewers(listOf(currentUser)) // TODO: implement via CollectionDelta
+  }
+
+  override fun removeReviewer(reviewer: GitLabUserDTO) = runAction {
+    val newReviewers = mutableListOf<GitLabUserDTO>().apply {
+      addAll(reviewers.value)
+      remove(reviewer)
+    }
+
+    mergeRequest.setReviewers(newReviewers) // TODO: implement via CollectionDelta
   }
 
   private fun runAction(action: suspend () -> Unit) {

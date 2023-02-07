@@ -237,11 +237,13 @@ internal object GHPRStatusChecksComponentFactory {
       add(reviewStatusIconLabel)
       add(reviewerLabel)
 
-      PopupHandler.installPopupMenu(
-        this,
-        DefaultActionGroup(GHPRRemoveReviewerAction(scope, reviewFlowVm, reviewer).toAnAction()),
-        "GHPRReviewerStatus"
-      )
+      if (reviewState != ReviewState.ACCEPTED) {
+        PopupHandler.installPopupMenu(
+          this,
+          DefaultActionGroup(GHPRRemoveReviewerAction(scope, reviewFlowVm, reviewer).toAnAction()),
+          "GHPRReviewerStatus"
+        )
+      }
     }
   }
 

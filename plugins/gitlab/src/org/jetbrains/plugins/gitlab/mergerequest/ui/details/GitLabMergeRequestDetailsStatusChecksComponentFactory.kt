@@ -8,12 +8,16 @@ import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.collaboration.ui.codereview.details.ReviewState
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRemoveReviewerAction
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsInfoViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
 import javax.swing.JComponent
@@ -76,7 +80,7 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
       detailsReviewFlowVm.reviewerAndReviewState.collect { reviewerAndReview ->
         panel.removeAll()
         reviewerAndReview.forEach { (reviewer, reviewState) ->
-          panel.add(createReviewerReviewStatus(reviewer, reviewState, avatarIconsProvider))
+          panel.add(createReviewerReviewStatus(detailsReviewFlowVm, reviewer, reviewState, avatarIconsProvider))
         }
         panel.revalidate()
         panel.repaint()
@@ -87,6 +91,7 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
   }
 
   private fun createReviewerReviewStatus(
+    detailsReviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
     reviewer: GitLabUserDTO,
     reviewState: ReviewState,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>
@@ -103,6 +108,11 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
 
       add(reviewStatusIconLabel)
       add(reviewerLabel)
+
+      if (reviewState != ReviewState.ACCEPTED) {
+        val actionGroup = DefaultActionGroup(GitLabMergeRequestRemoveReviewerAction(detailsReviewFlowVm, reviewer).toAnAction())
+        PopupHandler.installPopupMenu(this, actionGroup, "GitLabMergeRequestReviewerStatus")
+      }
     }
   }
 }
