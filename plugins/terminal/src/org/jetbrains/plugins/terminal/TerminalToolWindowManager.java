@@ -108,6 +108,10 @@ public final class TerminalToolWindowManager implements Disposable {
                                         widget -> JBTerminalWidget.asJediTermWidget(widget));
   }
 
+  public @NotNull Set<TerminalWidget> getTerminalWidgets() {
+    return Collections.unmodifiableSet(myContainerByWidgetMap.keySet());
+  }
+
   private final List<Consumer<TerminalWidget>> myTerminalSetupHandlers = new CopyOnWriteArrayList<>();
 
   public void addNewTerminalSetupHandler(@NotNull Consumer<TerminalWidget> listener, @NotNull Disposable parentDisposable) {
@@ -404,7 +408,7 @@ public final class TerminalToolWindowManager implements Disposable {
 
       @Override
       public void split(boolean vertically) {
-        TerminalToolWindowManager.this.split(terminalWidget, vertically);
+        TerminalToolWindowManager.this.split(widget, vertically);
       }
 
       @Override
@@ -414,7 +418,7 @@ public final class TerminalToolWindowManager implements Disposable {
 
       @Override
       public void gotoNextSplitTerminal(boolean forward) {
-        TerminalToolWindowManager.this.gotoNextSplitTerminal(terminalWidget, forward);
+        TerminalToolWindowManager.this.gotoNextSplitTerminal(widget, forward);
       }
     });
     terminalWidget.getTerminalPanel().addFocusListener(new FocusAdapter() {
@@ -444,20 +448,29 @@ public final class TerminalToolWindowManager implements Disposable {
     return container.isSplitTerminal();
   }
 
-  public void gotoNextSplitTerminal(@NotNull JBTerminalWidget widget, boolean forward) {
+  public boolean isSplitTerminal(@NotNull TerminalWidget widget) {
     TerminalContainer container = getContainer(widget);
-    TerminalWidget next = container.getNextSplitTerminal(forward);
-    if (next != null) {
-      next.requestFocus();
+    return container != null && container.isSplitTerminal();
+  }
+
+  public void gotoNextSplitTerminal(@NotNull TerminalWidget widget, boolean forward) {
+    TerminalContainer container = getContainer(widget);
+    if (container != null) {
+      TerminalWidget next = container.getNextSplitTerminal(forward);
+      if (next != null) {
+        next.requestFocus();
+      }
     }
   }
 
-  public void split(@NotNull JBTerminalWidget widget, boolean vertically) {
+  public void split(@NotNull TerminalWidget widget, boolean vertically) {
     TerminalContainer container = getContainer(widget);
-    String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget.asNewWidget(), container.getContent().getDisplayName());
-    TerminalWidget newWidget = myTerminalRunner.startShellTerminalWidget(container.getContent(), workingDirectory, true);
-    setupTerminalWidget(myToolWindow, newWidget, container.getContent());
-    container.split(!vertically, newWidget);
+    if (container != null) {
+      String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget, container.getContent().getDisplayName());
+      TerminalWidget newWidget = myTerminalRunner.startShellTerminalWidget(container.getContent(), workingDirectory, true);
+      setupTerminalWidget(myToolWindow, newWidget, container.getContent());
+      container.split(!vertically, newWidget);
+    }
   }
 
   public void register(@NotNull TerminalContainer terminalContainer) {
@@ -542,6 +555,10 @@ public final class TerminalToolWindowManager implements Disposable {
   public static JBTerminalWidget getWidgetByContent(@NotNull Content content) {
     TerminalWidget data = content.getUserData(TERMINAL_WIDGET_KEY);
     return data != null ? JBTerminalWidget.asJediTermWidget(data) : null;
+  }
+
+  public static @Nullable TerminalWidget findWidgetByContent(@NotNull Content content) {
+    return content.getUserData(TERMINAL_WIDGET_KEY);
   }
 
   public static @Nullable AbstractTerminalRunner<?> getRunnerByContent(@NotNull Content content) {
