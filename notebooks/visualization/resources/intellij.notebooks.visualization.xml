@@ -107,6 +107,10 @@
       interface="org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputDataKeyExtractor"
       dynamic="true"/>
     <extensionPoint
+      qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.notebookObjectOutputDataKeyExtractor"
+      interface="org.jetbrains.plugins.notebooks.jupyter.editor.outputs.NotebookObjectOutputDataKeyExtractor"
+      dynamic="true"/>
+    <extensionPoint
       qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.notebookOutputComponentWrapper"
       interface="org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentWrapper"
       dynamic="true"/>
