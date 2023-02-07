@@ -1,26 +1,82 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.newTests
 
-import com.intellij.testFramework.UsefulTestCase
+import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.DevModeTweaksImpl
+import org.jetbrains.kotlin.gradle.newTests.testProperties.AndroidGradlePluginVersionTestsProperty
+import org.jetbrains.kotlin.gradle.newTests.testProperties.GradleVersionTestsProperty
+import org.jetbrains.kotlin.gradle.newTests.testProperties.KotlinGradlePluginVersionTestsProperty
+import org.jetbrains.kotlin.gradle.newTests.testProperties.SimpleProperties
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
+import java.io.File
 
-interface KotlinTestsResolvableProperty {
-    val id: String
-    val valuesByAcronyms: Map<String, String>
-    val defaultValue: String
-}
+class KotlinTestProperties private constructor(
+    val kotlinGradlePluginVersion: KotlinToolingVersion,
+    val gradleVersion: GradleVersion,
+    val agpVersion: String,
+    propertiesValuesById: Map<String, String>,
+) {
+    private val allPropertiesValuesById = propertiesValuesById.toMutableMap().apply {
+        put(KotlinGradlePluginVersionTestsProperty.id, kotlinGradlePluginVersion.toString())
+        put(GradleVersionTestsProperty.id, gradleVersion.version)
+        put(AndroidGradlePluginVersionTestsProperty.id, agpVersion)
+    }
 
-fun KotlinTestsResolvableProperty.resolveFromEnvironment(): String {
-    val acronymOrValue = System.getenv()[id.uppercase()] ?:
-        if (!UsefulTestCase.IS_UNDER_TEAMCITY)
-            return defaultValue
-        else
-            error("Error: can't find environment variable ${id.uppercase()} required for CI runs")
+    fun substituteKotlinTestPropertiesInText(text: String, sourceFile: File): String {
+        var result = text
+        allPropertiesValuesById.forEach { (key, value) ->
+            result = result.replace(Regex("""\{\s*\{\s*${key}\s*}\s*}""", RegexOption.IGNORE_CASE), value)
+        }
 
+        assertNoPatternsLeftUnsubstituted(result, sourceFile)
+        return result
+    }
 
-    if (acronymOrValue in valuesByAcronyms.keys) return valuesByAcronyms[acronymOrValue]!!
-    if (acronymOrValue in valuesByAcronyms.values) return acronymOrValue
+    private fun assertNoPatternsLeftUnsubstituted(text: String, sourceFile: File) {
+        if (!ANY_TEMPLATE_REGEX.containsMatchIn(text)) return
 
-    val availablePropertyValues = valuesByAcronyms.entries.joinToString(separator = ", ") { (acronym, value) -> "$acronym ($value)" }
-    error("Found value $acronymOrValue for environment variable $id, but it's not a valid acronym or value for this property\n" +
-                  "Available values: $availablePropertyValues")
+        // expected testdump files have txt-extension and use `{{ ... }}`-patterns for
+        // templating variable parts of outputs (e.g. version of KGP).
+        // Those patterns are substituted by specific [ModulePrinterContributor] and thus it's
+        // ok to have them unsubstituted here
+        if (sourceFile.extension == "txt") return
+
+        error(
+            """
+                |Not all '{{ ... }}' patterns were substituted in testdata.
+                |
+                |Available patterns: ${allPropertiesValuesById.keys}
+                |
+                |If you've introduced a new TestProperty, check that it is passed to KotlinTestPropertiesService
+                |(simple way to ensure that is to register it in the SimpleProperties)
+                | 
+                |Full text after substitution:
+                |  
+                |${text}
+            """.trimMargin()
+        )
+    }
+
+    companion object {
+        val ANY_TEMPLATE_REGEX = Regex("""\{\s*\{\s*.*\s*}\s*}""")
+
+        fun constructFromEnvironment(): KotlinTestProperties {
+            val devModeTweaks = DevModeTweaksImpl()
+
+            val agpVersion = devModeTweaks.overrideAgpVersion?.version
+                ?: AndroidGradlePluginVersionTestsProperty.resolveFromEnvironment()
+
+            val gradleVersionRaw = devModeTweaks.overrideGradleVersion?.version
+                ?: GradleVersionTestsProperty.resolveFromEnvironment()
+            val gradleVersion = GradleVersion.version(gradleVersionRaw)
+
+            val kgpVersionRaw = devModeTweaks.overrideKgpVersion?.version
+                ?: KotlinGradlePluginVersionTestsProperty.resolveFromEnvironment()
+            val kgpVersion = KotlinToolingVersion(kgpVersionRaw)
+
+            val simpleProperties = SimpleProperties(gradleVersion, kgpVersion)
+
+            return KotlinTestProperties(kgpVersion, gradleVersion, agpVersion, simpleProperties)
+        }
+    }
 }

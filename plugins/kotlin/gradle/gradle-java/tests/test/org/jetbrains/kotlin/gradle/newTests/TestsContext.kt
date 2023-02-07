@@ -3,8 +3,6 @@ package org.jetbrains.kotlin.gradle.newTests
 
 import com.intellij.openapi.project.Project
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.newTests.infra.KotlinTestProperties
-import org.jetbrains.kotlin.gradle.newTests.infra.computeTestDataDirectory
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.junit.runner.Description
 import java.io.File

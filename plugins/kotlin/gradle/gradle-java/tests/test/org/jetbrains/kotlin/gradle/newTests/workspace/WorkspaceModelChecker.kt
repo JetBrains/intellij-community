@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.gradle.workspace
+package org.jetbrains.kotlin.gradle.newTests.workspace
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.gradle.newTests.AbstractTestChecker
 import org.jetbrains.kotlin.gradle.newTests.KotlinMppTestsContext
 import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
-import org.jetbrains.kotlin.gradle.newTests.testFeatures.GeneralWorkspaceChecks
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
@@ -140,11 +140,3 @@ abstract class WorkspaceModelChecker<V : Any> : AbstractTestChecker<V>() {
             printer.println("- showing only modules matching ${configuration.includedModuleNames!!}")
     }
 }
-
-data class PrinterContext(
-    val printer: Printer,
-    val project: Project,
-    val projectRoot: File,
-    val testConfiguration: TestConfiguration,
-    val kotlinGradlePluginVersion: KotlinToolingVersion,
-)

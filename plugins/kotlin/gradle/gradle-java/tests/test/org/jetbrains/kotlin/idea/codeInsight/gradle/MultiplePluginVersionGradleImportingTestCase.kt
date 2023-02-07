@@ -14,8 +14,8 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
 import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.newTests.TestWithKotlinPluginAndGradleVersions
-import org.jetbrains.kotlin.gradle.workspace.OrderEntriesChecker
-import org.jetbrains.kotlin.gradle.workspace.checkWorkspaceModel
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
+import org.jetbrains.kotlin.gradle.newTests.workspace.checkWorkspaceModel
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_7_21
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_8_0
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
