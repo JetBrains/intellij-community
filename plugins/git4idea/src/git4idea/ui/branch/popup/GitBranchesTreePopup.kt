@@ -731,7 +731,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     @JvmStatic
     fun create(project: Project, selectedRepository: GitRepository?): JBPopup {
       val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
-      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, selectedRepository, repositories, true))
+      val selectedRepoIfNeeded = if (GitBranchActionsUtil.userWantsSyncControl(project)) null else selectedRepository
+      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, selectedRepoIfNeeded, repositories, true))
     }
 
     @JvmStatic
