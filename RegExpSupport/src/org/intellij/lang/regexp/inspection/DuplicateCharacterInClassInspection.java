@@ -7,6 +7,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +36,8 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
 
     @Override
     public void visitRegExpClass(RegExpClass regExpClass) {
+      PsiFile file = regExpClass.getContainingFile();
+      if (file == null || Boolean.TRUE.equals(file.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION))) return;
       final HashSet<Object> seen = new HashSet<>();
       for (RegExpClassElement element : regExpClass.getElements()) {
         checkForDuplicates(element, seen);
