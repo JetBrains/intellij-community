@@ -15,9 +15,10 @@
  */
 package com.siyeh.ig.logging;
 
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInsight.options.JavaIdentifierValidator;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -25,25 +26,21 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ui.CheckBox;
-import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.JavaLoggingUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.ui.TextField;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class LogStatementGuardedByLogConditionInspection extends BaseInspection {
 
@@ -65,17 +62,15 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final TextField loggerClassNameField = new TextField(this, "loggerClassName");
-    final ListTable table = new ListTable(new ListWrappingTableModel(Arrays.asList(logMethodNameList, logConditionMethodNameList),
-                                                                     InspectionGadgetsBundle.message("log.method.name"),
-                                                                     InspectionGadgetsBundle.message("log.condition.text")));
-    return new FormBuilder()
-      .addLabeledComponent(InspectionGadgetsBundle.message("logger.name.option"), loggerClassNameField)
-      .addComponentFillVertically(UiUtils.createAddRemovePanel(table), 0)
-      .addComponent(new CheckBox(InspectionGadgetsBundle.message("log.statement.guarded.by.log.condition.flag.all.unguarded.option"),
-                                 this, "flagAllUnguarded"))
-      .getPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      string("loggerClassName", InspectionGadgetsBundle.message("logger.name.option"),
+             new JavaClassValidator()),
+      table("",
+            stringList("logMethodNameList", InspectionGadgetsBundle.message("log.method.name"), new JavaIdentifierValidator()),
+            stringList("logConditionMethodNameList", InspectionGadgetsBundle.message("log.condition.text"))),
+      checkbox("flagAllUnguarded", InspectionGadgetsBundle.message("log.statement.guarded.by.log.condition.flag.all.unguarded.option"))
+    );
   }
 
   @Override

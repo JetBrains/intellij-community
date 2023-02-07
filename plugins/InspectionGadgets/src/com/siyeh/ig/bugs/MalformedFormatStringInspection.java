@@ -1,11 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -13,14 +12,15 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class MalformedFormatStringInspection extends BaseInspection {
   final List<String> classNames;
@@ -42,27 +42,12 @@ public class MalformedFormatStringInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    ListWrappingTableModel classTableModel =
-      new ListWrappingTableModel(classNames, InspectionGadgetsBundle.message("string.format.class.column.name"));
-    JPanel classChooserPanel = UiUtils.createAddRemoveTreeClassChooserPanel(
-        InspectionGadgetsBundle.message("string.format.choose.class"),
-        InspectionGadgetsBundle.message("string.format.class.label"),
-        new ListTable(classTableModel),
-        true);
-
-    ListWrappingTableModel methodTableModel =
-      new ListWrappingTableModel(methodNames, InspectionGadgetsBundle.message("string.format.class.method.name"));
-    JPanel methodPanel = UiUtils.createAddRemovePanel(
-      new ListTable(methodTableModel),
-      InspectionGadgetsBundle.message("string.format.class.method.label"),
-      true);
-
-    final InspectionOptionsPanel panel = new InspectionOptionsPanel();
-
-    panel.addGrowing(classChooserPanel);
-    panel.addGrowing(methodPanel);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("classNames", InspectionGadgetsBundle.message("string.format.class.label"),
+                 new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("string.format.choose.class"))),
+      stringList("methodNames", InspectionGadgetsBundle.message("string.format.class.method.label"))
+    );
   }
 
   @Override

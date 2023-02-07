@@ -1,12 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInsight.options.JavaIdentifierValidator;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -23,16 +23,15 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 
 public class LoggerInitializedWithForeignClassInspection extends BaseInspection {
@@ -76,17 +75,17 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final ListTable table = new ListTable(
-      new ListWrappingTableModel(Arrays.asList(loggerFactoryClassNames, loggerFactoryMethodNames),
-                                 InspectionGadgetsBundle.message("logger.factory.class.name"),
-                                 InspectionGadgetsBundle.message("logger.factory.method.name")));
-    final String title = InspectionGadgetsBundle.message("logger.initialized.with.foreign.options.title");
-    final var panel = new InspectionOptionsPanel(this);
-    panel.addGrowing(UiUtils.createAddRemoveTreeClassChooserPanel(table, title));
-    panel.addCheckbox(InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.super.class.option"), "ignoreSuperClass");
-    panel.addCheckboxEx(InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.non.public.classes.option"), "ignoreNonPublicClasses");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      table("",
+            stringList("loggerFactoryClassNames", InspectionGadgetsBundle.message("logger.factory.class.name"),
+                       new JavaClassValidator()),
+            stringList("loggerFactoryMethodNames", InspectionGadgetsBundle.message("logger.factory.method.name"),
+                       new JavaIdentifierValidator())),
+      checkbox("ignoreSuperClass", InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.super.class.option")),
+      checkbox("ignoreNonPublicClasses",
+               InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.non.public.classes.option"))
+    );
   }
 
   @Override
