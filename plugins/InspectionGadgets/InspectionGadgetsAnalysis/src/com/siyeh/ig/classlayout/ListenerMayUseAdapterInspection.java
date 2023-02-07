@@ -94,10 +94,9 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
       final PsiMethod[] methods = aClass.getMethods();
       if (methods.length > 0) {
         final PsiElement target = element.resolve();
-        if (!(target instanceof PsiClass)) {
+        if (!(target instanceof PsiClass interfaceClass)) {
           return;
         }
-        final PsiClass interfaceClass = (PsiClass)target;
         for (PsiMethod method : methods) {
           if (!ControlFlowUtils.isEmptyCodeBlock(method.getBody())) {
             continue;
@@ -148,10 +147,9 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
 
     private void checkReference(@NotNull PsiClass aClass, @NotNull PsiJavaCodeReferenceElement implementsReference) {
       final PsiElement target = implementsReference.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass implementsClass)) {
         return;
       }
-      final PsiClass implementsClass = (PsiClass)target;
       @NonNls final String className = implementsClass.getQualifiedName();
       if (className == null || !className.endsWith("Listener")) {
         return;

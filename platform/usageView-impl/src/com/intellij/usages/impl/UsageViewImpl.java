@@ -248,8 +248,7 @@ public class UsageViewImpl implements UsageViewEx {
                                       boolean almostAllChildrenExcluded,
                                       @NotNull Set<? super Node> nodes) {
         TreeNode parent = node.getParent();
-        if (parent == myRoot || !(parent instanceof GroupNode)) return;
-        GroupNode parentNode = (GroupNode)parent;
+        if (parent == myRoot || !(parent instanceof GroupNode parentNode)) return;
         List<Node> otherNodes;
         synchronized (parentNode) {
           otherNodes = ContainerUtil.filter(parentNode.getChildren(), n -> n.isExcluded() != almostAllChildrenExcluded);
@@ -832,8 +831,7 @@ public class UsageViewImpl implements UsageViewEx {
 
         TreePath path = event.getPath();
         Object component = path.getLastPathComponent();
-        if (component instanceof Node) {
-          Node node = (Node)component;
+        if (component instanceof Node node) {
           if (!myExpandingCollapsing && node.needsUpdate()) {
             List<Node> toUpdate = new ArrayList<>();
             checkNodeValidity(node, path, toUpdate);
@@ -851,8 +849,7 @@ public class UsageViewImpl implements UsageViewEx {
     TreeUIHelper.getInstance().installTreeSpeedSearch(myTree, o -> {
       Object value = o.getLastPathComponent();
       TreeCellRenderer renderer = myTree.getCellRenderer();
-      if (renderer instanceof UsageViewTreeCellRenderer) {
-        UsageViewTreeCellRenderer coloredRenderer = (UsageViewTreeCellRenderer)renderer;
+      if (renderer instanceof UsageViewTreeCellRenderer coloredRenderer) {
         return coloredRenderer.getPlainTextForNode(value);
       }
       return value == null ? null : value.toString();
@@ -1817,14 +1814,12 @@ public class UsageViewImpl implements UsageViewEx {
     Set<Usage> usages = getReadOnlyUsages();
     Set<VirtualFile> result = new HashSet<>();
     for (Usage usage : usages) {
-      if (usage instanceof UsageInFile) {
-        UsageInFile usageInFile = (UsageInFile)usage;
+      if (usage instanceof UsageInFile usageInFile) {
         VirtualFile file = usageInFile.getFile();
         if (file != null && file.isValid()) result.add(file);
       }
 
-      if (usage instanceof UsageInFiles) {
-        UsageInFiles usageInFiles = (UsageInFiles)usage;
+      if (usage instanceof UsageInFiles usageInFiles) {
         ContainerUtil.addAll(result, usageInFiles.getFiles());
       }
     }
@@ -1903,8 +1898,7 @@ public class UsageViewImpl implements UsageViewEx {
   @Nullable
   private Navigatable getNavigatableForNode(@NotNull DefaultMutableTreeNode node, boolean allowRequestFocus) {
     Object userObject = node.getUserObject();
-    if (userObject instanceof Navigatable) {
-      Navigatable navigatable = (Navigatable)userObject;
+    if (userObject instanceof Navigatable navigatable) {
       return navigatable.canNavigate() ? new Navigatable() {
         @Override
         public void navigate(boolean requestFocus) {
@@ -2146,8 +2140,7 @@ public class UsageViewImpl implements UsageViewEx {
       boolean globallyEnabled = !isSearchInProgress() && !DumbService.isDumb(myProject);
       for (int i = 0; i < getComponentCount(); ++i) {
         Component component = getComponent(i);
-        if (component instanceof JButton) {
-          JButton button = (JButton)component;
+        if (component instanceof JButton button) {
           Action action = button.getAction();
           if (action != null) {
             if (myNeedUpdateButtons) {

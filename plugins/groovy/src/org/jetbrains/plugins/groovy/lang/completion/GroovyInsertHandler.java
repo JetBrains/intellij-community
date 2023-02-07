@@ -46,8 +46,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       obj = ((GroovyResolveResult)obj).getElement();
     }
 
-    if (obj instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)obj;
+    if (obj instanceof PsiMethod method) {
       PsiParameter[] parameters = method.getParameterList().getParameters();
       Editor editor = context.getEditor();
       Document document = editor.getDocument();

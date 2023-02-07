@@ -78,8 +78,7 @@ public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {
     @Override
     public Integer getValue(final RadContainer component) {
       final LayoutManager layout = component.getLayout();
-      if (!(layout instanceof FlowLayout)) return null;
-      FlowLayout flowLayout = (FlowLayout)layout;
+      if (!(layout instanceof FlowLayout flowLayout)) return null;
       return flowLayout.getAlignment();
     }
 
@@ -109,8 +108,7 @@ public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {
 
     @Override public boolean isModified(final RadContainer component) {
       final LayoutManager layout = component.getLayout();
-      if (!(layout instanceof FlowLayout)) return false;
-      FlowLayout flowLayout = (FlowLayout)layout;
+      if (!(layout instanceof FlowLayout flowLayout)) return false;
       return flowLayout.getAlignment() != FlowLayout.CENTER;
     }
   }

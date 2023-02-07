@@ -358,9 +358,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
         return new StubUpdatingForwardIndexAccessor(extension);
       }
     }, mySerializationManager);
-    if (index.getStorage() instanceof TransientChangesIndexStorage) {
-      final TransientChangesIndexStorage<Integer, SerializedStubTree>
-        memStorage = (TransientChangesIndexStorage<Integer, SerializedStubTree>)index.getStorage();
+    if (index.getStorage() instanceof TransientChangesIndexStorage<Integer, SerializedStubTree> memStorage) {
       memStorage.addBufferingStateListener(new TransientChangesIndexStorage.BufferingStateListener() {
         @Override
         public void bufferingStateChanged(final boolean newState) {

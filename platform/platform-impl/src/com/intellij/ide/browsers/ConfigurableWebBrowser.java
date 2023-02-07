@@ -124,11 +124,10 @@ final class ConfigurableWebBrowser extends WebBrowser {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof ConfigurableWebBrowser)) {
+    if (!(o instanceof ConfigurableWebBrowser browser)) {
       return false;
     }
 
-    ConfigurableWebBrowser browser = (ConfigurableWebBrowser)o;
     return getId().equals(browser.getId()) &&
            family.equals(browser.family) &&
            active == browser.active &&

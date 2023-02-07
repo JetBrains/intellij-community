@@ -215,8 +215,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
   @Override
   public void setState(@NotNull FileEditorState state) {
-    if (state instanceof MyFileEditorState) {
-      final MyFileEditorState compositeState = (MyFileEditorState)state;
+    if (state instanceof MyFileEditorState compositeState) {
       if (compositeState.getFirstState() != null) {
         myEditor.setState(compositeState.getFirstState());
       }

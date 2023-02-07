@@ -418,8 +418,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
       private void clearEditorListeners() {
         final TableCellEditor editor = getCellEditor();
-        if (editor instanceof StringTableCellEditor) {
-          final StringTableCellEditor ed = (StringTableCellEditor)editor;
+        if (editor instanceof StringTableCellEditor ed) {
           ed.clearListeners();
         }
         else if (editor instanceof CodeFragmentTableCellEditorBase) {
@@ -441,8 +440,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
           }
         };
 
-        if (editor instanceof StringTableCellEditor) {
-          final StringTableCellEditor ed = (StringTableCellEditor)editor;
+        if (editor instanceof StringTableCellEditor ed) {
           ed.addDocumentListener(listener);
         }
         else if (editor instanceof CodeFragmentTableCellEditorBase) {

@@ -392,8 +392,7 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
 
   private static boolean tryConvertEndOfLineComment(PsiElement commentElement) {
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(commentElement.getLanguage());
-    if (commenter instanceof CodeDocumentationAwareCommenter) {
-      CodeDocumentationAwareCommenter docCommenter = (CodeDocumentationAwareCommenter) commenter;
+    if (commenter instanceof CodeDocumentationAwareCommenter docCommenter) {
       String lineCommentPrefix = commenter.getLineCommentPrefix();
       String blockCommentPrefix = commenter.getBlockCommentPrefix();
       String blockCommentSuffix = commenter.getBlockCommentSuffix();

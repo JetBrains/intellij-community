@@ -138,8 +138,7 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
 
   private static @NotNull PsiExpression getContainingExpression(@NotNull PsiExpression expression) {
     final PsiElement parent = expression.getParent();
-    if (parent instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
+    if (parent instanceof PsiBinaryExpression binaryExpression) {
       return !ComparisonUtils.isComparisonOperation(binaryExpression.getOperationTokenType())
              ? getContainingExpression(binaryExpression)
              : expression;

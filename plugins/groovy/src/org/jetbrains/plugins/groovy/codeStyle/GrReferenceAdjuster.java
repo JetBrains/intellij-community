@@ -144,8 +144,7 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
       return false;
     }
 
-    if (resolved instanceof PsiClass) {
-      final PsiClass clazz = (PsiClass)resolved;
+    if (resolved instanceof PsiClass clazz) {
       final String qName = clazz.getQualifiedName();
       if (qName != null && addImports && checkIsInnerClass(clazz, ref) && mayInsertImport(ref)) {
         final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();

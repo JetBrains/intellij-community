@@ -205,8 +205,7 @@ public class MissingAccessibleContextInspection extends DevKitUastInspectionBase
       if (result instanceof UObjectLiteralExpression) {
         panelClass = ((UObjectLiteralExpression)result).getDeclaration().getJavaPsi();
       }
-      else if (result instanceof UCallExpression) {
-        UCallExpression call = (UCallExpression)result;
+      else if (result instanceof UCallExpression call) {
         if (call.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
           UReferenceExpression ref = call.getClassReference();
           if (ref != null) {

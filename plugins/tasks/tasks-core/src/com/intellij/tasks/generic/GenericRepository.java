@@ -145,9 +145,8 @@ public class GenericRepository extends BaseRepositoryImpl {
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof GenericRepository)) return false;
+    if (!(o instanceof GenericRepository that)) return false;
     if (!super.equals(o)) return false;
-    GenericRepository that = (GenericRepository)o;
     if (!Objects.equals(getLoginUrl(), that.getLoginUrl())) return false;
     if (!Objects.equals(getTasksListUrl(), that.getTasksListUrl())) return false;
     if (!Objects.equals(getSingleTaskUrl(), that.getSingleTaskUrl())) return false;

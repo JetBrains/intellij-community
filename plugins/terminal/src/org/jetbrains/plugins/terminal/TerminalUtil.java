@@ -42,8 +42,7 @@ public final class TerminalUtil {
       });
       return !pidToChildPidsMap.get(shellPid).isEmpty();
     }
-    if (SystemInfo.isWindows && process instanceof WinPtyProcess) {
-      WinPtyProcess winPty = (WinPtyProcess)process;
+    if (SystemInfo.isWindows && process instanceof WinPtyProcess winPty) {
       try {
         String executable = FileUtil.toSystemIndependentName(StringUtil.notNullize(getExecutable(winPty)));
         int consoleProcessCount = winPty.getConsoleProcessCount();
@@ -56,8 +55,7 @@ public final class TerminalUtil {
         throw new IllegalStateException(e);
       }
     }
-    if (process instanceof WinConPtyProcess) {
-      WinConPtyProcess conPtyProcess = (WinConPtyProcess)process;
+    if (process instanceof WinConPtyProcess conPtyProcess) {
       try {
         String executable = FileUtil.toSystemIndependentName(StringUtil.notNullize(ContainerUtil.getFirstItem(conPtyProcess.getCommand())));
         int consoleProcessCount = conPtyProcess.getConsoleProcessCount();

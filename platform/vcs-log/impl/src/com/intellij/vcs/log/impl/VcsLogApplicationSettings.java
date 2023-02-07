@@ -44,8 +44,7 @@ public final class VcsLogApplicationSettings implements PersistentStateComponent
       }
       return (T)value;
     }
-    if (property instanceof TableColumnVisibilityProperty) {
-      TableColumnVisibilityProperty visibilityProperty = (TableColumnVisibilityProperty)property;
+    if (property instanceof TableColumnVisibilityProperty visibilityProperty) {
       Boolean isVisible = myState.COLUMN_ID_VISIBILITY.get(visibilityProperty.getName());
       if (isVisible != null) {
         return (T)isVisible;

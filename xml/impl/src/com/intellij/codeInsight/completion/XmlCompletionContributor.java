@@ -202,12 +202,11 @@ public final class XmlCompletionContributor extends CompletionContributor {
     PsiElement element = parameters.getPosition();
     if (!isXmlNameCompletion(parameters)) return;
     PsiElement parent = element.getParent();
-    if (!(parent instanceof XmlTag) ||
+    if (!(parent instanceof XmlTag tag) ||
         !(parameters.getOriginalFile() instanceof XmlFile)) {
       return;
     }
     result.stopHere();
-    final XmlTag tag = (XmlTag)parent;
     final String namespace = tag.getNamespace();
     final String prefix = result.getPrefixMatcher().getPrefix();
     final int pos = prefix.indexOf(':');
@@ -292,8 +291,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
     final PsiElementProcessor<PsiElement> processor = new PsiElementProcessor<>() {
       @Override
       public boolean execute(@NotNull final PsiElement element) {
-        if (element instanceof XmlEntityDecl) {
-          final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
+        if (element instanceof XmlEntityDecl xmlEntityDecl) {
           if (xmlEntityDecl.isInternalReference() || acceptSystemEntities) {
             final LookupElementBuilder _item = buildEntityLookupItem(xmlEntityDecl);
             if (_item != null) {

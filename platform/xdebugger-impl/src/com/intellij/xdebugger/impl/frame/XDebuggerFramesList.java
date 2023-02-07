@@ -64,8 +64,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       StringBuilder plainBuf = new StringBuilder();
       TextTransferable.ColoredStringBuilder coloredTextContainer = new TextTransferable.ColoredStringBuilder();
       for (Object value : items) {
-        if (value instanceof ItemWithSeparatorAbove) {
-          ItemWithSeparatorAbove item = (ItemWithSeparatorAbove)value;
+        if (value instanceof ItemWithSeparatorAbove item) {
           if (item.hasSeparatorAbove()) {
             String caption = " - " + StringUtil.notNullize(item.getCaptionAboveOf());
             plainBuf.append(caption).append('\n');
@@ -535,8 +534,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     }
 
     private static void updateHover(@NotNull Component component, @Nullable Point point) {
-      if (!(component instanceof XDebuggerFramesList)) return;
-      var list = ((XDebuggerFramesList)component);
+      if (!(component instanceof XDebuggerFramesList list)) return;
       var oldHoverIndex = getHoveredIndex(component);
       ClientProperty.put(list, HOVER_POSITION, null);
       ClientProperty.put(list, HOVER_BOUNDS, null);

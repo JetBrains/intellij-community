@@ -376,8 +376,7 @@ public final class PyResolveUtil {
     }
     // Forward references are allowed in annotations according to PEP 563
     PsiFile file = element.getContainingFile();
-    if (file instanceof PyFile) {
-      final PyFile pyFile = (PyFile)file;
+    if (file instanceof PyFile pyFile) {
       return pyFile.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON37) &&
              pyFile.hasImportFromFuture(FutureFeature.ANNOTATIONS) &&
              PsiTreeUtil.getParentOfType(element, PyAnnotation.class) != null;

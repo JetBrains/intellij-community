@@ -262,10 +262,9 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
   }
 
   private static boolean inFromImportParentheses(PsiElement statement, int offset) {
-    if (!(statement instanceof PyFromImportStatement)) {
+    if (!(statement instanceof PyFromImportStatement fromImportStatement)) {
       return false;
     }
-    PyFromImportStatement fromImportStatement = (PyFromImportStatement)statement;
     PsiElement leftParen = fromImportStatement.getLeftParen();
     if (leftParen != null && offset >= leftParen.getTextRange().getEndOffset()) {
       return true;

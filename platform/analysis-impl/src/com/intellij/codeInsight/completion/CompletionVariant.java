@@ -117,8 +117,7 @@ public class CompletionVariant {
   void addReferenceCompletions(PsiReference reference, PsiElement position, Set<? super LookupElement> set, final PsiFile file,
                                final CompletionData completionData){
     for (final CompletionVariantItem ce : myCompletionsList) {
-      if(ce.completion() instanceof ElementFilter){
-        final ElementFilter filter = (ElementFilter)ce.completion();
+      if(ce.completion() instanceof ElementFilter filter){
         completionData.completeReference(reference, position, set, ce.tailtype(), filter, this);
       }
     }

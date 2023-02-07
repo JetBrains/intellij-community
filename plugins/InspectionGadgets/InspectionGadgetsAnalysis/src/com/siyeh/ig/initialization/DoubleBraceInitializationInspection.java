@@ -54,27 +54,23 @@ public class DoubleBraceInitializationInspection extends BaseInspection implemen
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
-      if (!(element instanceof PsiAnonymousClass)) {
+      if (!(element instanceof PsiAnonymousClass aClass)) {
         return;
       }
-      final PsiAnonymousClass aClass = (PsiAnonymousClass)element;
       final PsiElement parent = aClass.getParent();
-      if (!(parent instanceof PsiNewExpression)) {
+      if (!(parent instanceof PsiNewExpression newExpression)) {
         return;
       }
-      final PsiNewExpression newExpression = (PsiNewExpression)parent;
       final PsiElement ancestor = PsiTreeUtil.skipParentsOfType(newExpression, PsiParenthesizedExpression.class);
       final String qualifierText;
       if (ancestor instanceof PsiVariable) {
         qualifierText = ((PsiVariable)ancestor).getName();
       }
-      else if (ancestor instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)ancestor;
+      else if (ancestor instanceof PsiAssignmentExpression assignmentExpression) {
         final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
-        if (!(lhs instanceof PsiReferenceExpression)) {
+        if (!(lhs instanceof PsiReferenceExpression referenceExpression)) {
           return;
         }
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
         final PsiElement target = referenceExpression.resolve();
         if (!(target instanceof PsiVariable)) {
           return;
@@ -103,8 +99,7 @@ public class DoubleBraceInitializationInspection extends BaseInspection implemen
       if (anchor == null) {
         return;
       }
-      if (anchor instanceof PsiMember) {
-        final PsiMember member = (PsiMember)anchor;
+      if (anchor instanceof PsiMember member) {
         final PsiClassInitializer newInitializer = factory.createClassInitializer();
         if (member.hasModifierProperty(PsiModifier.STATIC)) {
           final PsiModifierList modifierList = newInitializer.getModifierList();
@@ -141,10 +136,9 @@ public class DoubleBraceInitializationInspection extends BaseInspection implemen
             return;
           }
           final PsiElement expressionTarget = expression.resolve();
-          if (!(expressionTarget instanceof PsiMember)) {
+          if (!(expressionTarget instanceof PsiMember member)) {
             return;
           }
-          final PsiMember member = (PsiMember)expressionTarget;
           final PsiClass containingClass = member.getContainingClass();
           if (!InheritanceUtil.isInheritorOrSelf(target, containingClass, true)) {
             return;

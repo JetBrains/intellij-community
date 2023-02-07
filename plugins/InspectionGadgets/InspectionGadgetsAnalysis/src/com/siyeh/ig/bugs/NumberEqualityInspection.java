@@ -198,13 +198,11 @@ public class NumberEqualityInspection extends BaseInspection {
   private static PsiElement getElementMustContainNumberEquality(PsiElement element, boolean isNegated,
                                                                 boolean areBothOperandsComparedWithNull) {
     final PsiElement result;
-    if (element instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression ternary = (PsiConditionalExpression) element;
+    if (element instanceof PsiConditionalExpression ternary) {
       final PsiElement thenExpression = skipParenthesizedExprDown(ternary.getThenExpression());
       final PsiElement elseExpression = skipParenthesizedExprDown(ternary.getElseExpression());
       result = isNegated ^ areBothOperandsComparedWithNull ? thenExpression : elseExpression;
-    } else if (element instanceof PsiIfStatement) {
-      final PsiIfStatement ifStatement = (PsiIfStatement) element;
+    } else if (element instanceof PsiIfStatement ifStatement) {
       final PsiElement thenBranch = ifStatement.getThenBranch();
       final PsiElement elseBranch = ifStatement.getElseBranch();
       result = isNegated ^ areBothOperandsComparedWithNull ? thenBranch : elseBranch;

@@ -638,9 +638,7 @@ public final class GradleProjectResolverUtil {
       assert ownerModule != null;
 
       DataNode<? extends ExternalEntityData> depOwnerDataNode = null;
-      if (mergedDependency instanceof ExternalProjectDependency) {
-
-        final ExternalProjectDependency projectDependency = (ExternalProjectDependency)mergedDependency;
+      if (mergedDependency instanceof ExternalProjectDependency projectDependency) {
 
         Collection<ProjectDependencyInfo> projectDependencyInfos = new ArrayList<>();
         if (resolverCtx.getSettings() != null) {

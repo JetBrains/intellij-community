@@ -112,9 +112,8 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
     private void createUIComponents() {
         mainClass = new LabeledComponent<>();
         mainClass.setComponent(new EditorTextFieldWithBrowseButton(project, true, (declaration, place) -> {
-            if (declaration instanceof KtLightClass) {
-                KtLightClass aClass = (KtLightClass)declaration;
-                if (ConfigurationUtil.MAIN_CLASS.value(aClass)
+            if (declaration instanceof KtLightClass aClass) {
+              if (ConfigurationUtil.MAIN_CLASS.value(aClass)
                     && (PsiMethodUtil.findMainMethod(aClass) != null || place.getParent() != null)
                     && moduleSelector.findClass(((PsiClass)declaration).getQualifiedName()) != null) {
                     return JavaCodeFragment.VisibilityChecker.Visibility.VISIBLE;

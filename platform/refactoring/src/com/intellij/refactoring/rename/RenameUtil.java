@@ -186,8 +186,7 @@ public final class RenameUtil {
   }
 
   private static String getStringToReplace(PsiElement element, String newName, boolean nonJava, final RenamePsiElementProcessorBase theProcessor) {
-    if (element instanceof PsiMetaOwner) {
-      final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;
+    if (element instanceof PsiMetaOwner psiMetaOwner) {
       final PsiMetaData metaData = psiMetaOwner.getMetaData();
       if (metaData != null) {
         return metaData.getName();
@@ -320,8 +319,7 @@ public final class RenameUtil {
       TextRange replaceRange = TextRange.create(segment);
 
       // re-map usages to upper host from injected document to avoid duplicated replacements
-      while (document instanceof DocumentWindow) {
-        DocumentWindow documentWindow = (DocumentWindow)document;
+      while (document instanceof DocumentWindow documentWindow) {
         replaceRange = documentWindow.injectedToHost(replaceRange);
         document = documentWindow.getDelegate();
       }

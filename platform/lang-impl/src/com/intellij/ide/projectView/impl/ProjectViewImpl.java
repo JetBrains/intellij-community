@@ -940,8 +940,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     viewSelectionChanged();
 
     Object multicaster = EditorFactory.getInstance().getEventMulticaster();
-    if (multicaster instanceof EditorEventMulticasterEx) {
-      EditorEventMulticasterEx ex = (EditorEventMulticasterEx)multicaster;
+    if (multicaster instanceof EditorEventMulticasterEx ex) {
       ex.addFocusChangeListener(new FocusChangeListener() {
         @Override
         public void focusLost(@NotNull Editor editor, @NotNull FocusEvent event) {
@@ -1214,8 +1213,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     ProjectViewNode<?> descriptor = TreeUtil.getLastUserObject(ProjectViewNode.class, path);
     if (descriptor != null) {
       Object element = descriptor.getValue();
-      if (element instanceof PsiElement) {
-        PsiElement psiElement = (PsiElement)element;
+      if (element instanceof PsiElement psiElement) {
         if (!psiElement.isValid()) return null;
         return psiElement;
       }
@@ -1742,8 +1740,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     @Nullable
     private SimpleSelectInContext getSelectInContext(@Nullable FileEditor fileEditor) {
-      if (fileEditor instanceof TextEditor) {
-        TextEditor textEditor = (TextEditor)fileEditor;
+      if (fileEditor instanceof TextEditor textEditor) {
         PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(textEditor.getEditor().getDocument());
         return psiFile == null ? null : new EditorSelectInContext(psiFile, textEditor.getEditor());
       }

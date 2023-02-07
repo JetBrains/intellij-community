@@ -36,8 +36,7 @@ public abstract class TreeHoverListener extends HoverListener {
   private final AtomicInteger rowHolder = new AtomicInteger(-1);
 
   private void update(@NotNull Component component, @NotNull ToIntFunction<? super JTree> rowFunc) {
-    if (component instanceof JTree) {
-      JTree tree = (JTree)component;
+    if (component instanceof JTree tree) {
       int rowNew = rowFunc.applyAsInt(tree);
       int rowOld = rowHolder.getAndSet(rowNew);
       if (rowNew != rowOld) onHover(tree, rowNew);

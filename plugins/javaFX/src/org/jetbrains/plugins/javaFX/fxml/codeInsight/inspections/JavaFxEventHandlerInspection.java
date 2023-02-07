@@ -49,8 +49,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
       public void visitXmlAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue) {
         super.visitXmlAttributeValue(xmlAttributeValue);
         final PsiElement valueParent = xmlAttributeValue.getParent();
-        if (!(valueParent instanceof XmlAttribute)) return;
-        final XmlAttribute attribute = (XmlAttribute)valueParent;
+        if (!(valueParent instanceof XmlAttribute attribute)) return;
 
         final List<PsiMethod> eventHandlerMethods = getEventHandlerMethods(attribute);
         if (eventHandlerMethods.size() == 0) return;
@@ -140,8 +139,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
     final PsiReference reference = idValue.getReference();
     if (reference == null) return;
     final PsiElement element = reference.resolve();
-    if (!(element instanceof PsiField)) return;
-    final PsiField tagField = (PsiField)element;
+    if (!(element instanceof PsiField tagField)) return;
     if (tagField.hasModifierProperty(PsiModifier.STATIC) || !JavaFxPsiUtil.isVisibleInFxml(tagField)) return;
 
     final PsiType tagFieldType = tagField.getType();
@@ -206,8 +204,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
     @Override
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-      if (!(startElement instanceof XmlAttribute)) return;
-      final XmlAttribute attribute = (XmlAttribute)startElement;
+      if (!(startElement instanceof XmlAttribute attribute)) return;
 
       final List<PsiMethod> eventHandlerMethods = getEventHandlerMethods(attribute);
       if (eventHandlerMethods.size() != 1) return;

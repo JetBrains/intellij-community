@@ -170,8 +170,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
    */
   @Nullable
   private static StringBuilder getSignature(@NotNull PsiElement element, @Nullable StringBuilder buffer) {
-    if (element instanceof PsiNamedElement) {
-      PsiNamedElement named = (PsiNamedElement)element;
+    if (element instanceof PsiNamedElement named) {
       final String name = named.getName();
       if (StringUtil.isEmpty(name)) {
         return null;

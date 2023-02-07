@@ -169,18 +169,14 @@ public final class ClassUtils {
       return false;
     }
     final PsiFile containingFile1 = element1.getContainingFile();
-    if (!(containingFile1 instanceof PsiClassOwner)) {
+    if (!(containingFile1 instanceof PsiClassOwner containingJavaFile1)) {
       return false;
     }
-    final PsiClassOwner containingJavaFile1 =
-      (PsiClassOwner)containingFile1;
     final String packageName1 = containingJavaFile1.getPackageName();
     final PsiFile containingFile2 = element2.getContainingFile();
-    if (!(containingFile2 instanceof PsiClassOwner)) {
+    if (!(containingFile2 instanceof PsiClassOwner containingJavaFile2)) {
       return false;
     }
-    final PsiClassOwner containingJavaFile2 =
-      (PsiClassOwner)containingFile2;
     final String packageName2 = containingJavaFile2.getPackageName();
     return packageName1.equals(packageName2);
   }
@@ -272,10 +268,9 @@ public final class ClassUtils {
     if (parent == null || parent instanceof PsiFile) {
       return false;
     }
-    if (!(parent instanceof PsiClass)) {
+    if (!(parent instanceof PsiClass parentClass)) {
       return true;
     }
-    final PsiClass parentClass = (PsiClass)parent;
     return !parentClass.isInterface();
   }
 
@@ -434,17 +429,15 @@ public final class ClassUtils {
       if (field.equals(grandParent)) {
         return true;
       }
-      if (!(grandParent instanceof PsiAssignmentExpression)) {
+      if (!(grandParent instanceof PsiAssignmentExpression assignmentExpression)) {
         newOnlyAssignedToField = false;
         return false;
       }
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)grandParent;
       final PsiExpression lhs = assignmentExpression.getLExpression();
-      if (!(lhs instanceof PsiReferenceExpression)) {
+      if (!(lhs instanceof PsiReferenceExpression referenceExpression)) {
         newOnlyAssignedToField = false;
         return false;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
       final PsiElement target = referenceExpression.resolve();
       if (!field.equals(target)) {
         newOnlyAssignedToField = false;

@@ -38,8 +38,7 @@ public final class DomTarget extends DelegatePsiTarget implements PsiDeclaredTar
 
   @Nullable
   public static DomTarget getTarget(DomElement element, GenericDomValue nameElement) {
-    if (nameElement instanceof GenericAttributeValue) {
-      final GenericAttributeValue genericAttributeValue = (GenericAttributeValue)nameElement;
+    if (nameElement instanceof GenericAttributeValue genericAttributeValue) {
       final XmlAttributeValue attributeValue = genericAttributeValue.getXmlAttributeValue();
       if (attributeValue == null) {
         return null;

@@ -62,10 +62,9 @@ public class ConstantOnWrongSideOfComparisonInspection extends BaseInspection im
     @Override
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
-      if (!(element instanceof PsiBinaryExpression)) {
+      if (!(element instanceof PsiBinaryExpression expression)) {
         return;
       }
-      final PsiBinaryExpression expression = (PsiBinaryExpression)element;
       final PsiExpression rhs = expression.getROperand();
       if (rhs == null) {
         return;

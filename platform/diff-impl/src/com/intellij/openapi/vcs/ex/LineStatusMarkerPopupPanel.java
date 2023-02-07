@@ -177,8 +177,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
         @Override
         public void hintShown(@NotNull Editor newEditor, @NotNull LightweightHint newHint, int flags, @NotNull HintHint hintInfo) {
           // Ex: if popup re-shown by ToggleByWordDiffAction
-          if (newHint.getComponent() instanceof LineStatusMarkerPopupPanel) {
-            LineStatusMarkerPopupPanel newPopupPanel = (LineStatusMarkerPopupPanel)newHint.getComponent();
+          if (newHint.getComponent() instanceof LineStatusMarkerPopupPanel newPopupPanel) {
             if (newPopupPanel.getEditor().equals(newEditor)) {
               hint.hide();
             }

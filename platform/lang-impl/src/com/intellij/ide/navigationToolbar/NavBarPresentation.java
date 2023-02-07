@@ -166,8 +166,7 @@ public final class NavBarPresentation {
         return getErrorAttributes();
       }
     }
-    else if (object instanceof Project) {
-      Project project = (Project)object;
+    else if (object instanceof Project project) {
       Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(project).getModules());
       WolfTheProblemSolver problemSolver = WolfTheProblemSolver.getInstance(project);
       for (Module module : modules) {

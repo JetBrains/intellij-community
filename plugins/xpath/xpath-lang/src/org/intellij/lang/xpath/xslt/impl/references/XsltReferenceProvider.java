@@ -44,8 +44,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement e, @NotNull ProcessingContext context) {
     final PsiElement element = e.getParent();
-    if (element instanceof XmlAttribute) {
-      final XmlAttribute attribute = (XmlAttribute)element;
+    if (element instanceof XmlAttribute attribute) {
 
       CachedValue<PsiReference[]> cachedValue = attribute.getUserData(CACHED_XSLT_REFS);
       if (cachedValue == null) {
@@ -187,9 +186,8 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
         assert !super.isReferenceTo(element);
 
         if (element == myParam) return false;
-        if (!(element instanceof XsltParameter)) return false;
+        if (!(element instanceof XsltParameter param)) return false;
 
-        final XsltParameter param = ((XsltParameter)element);
         final String name = param.getName();
         if (name == null || !name.equals(myParam.getName())) return false;
 

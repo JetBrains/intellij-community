@@ -1577,8 +1577,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     for (Shortcut shortcut : shortcuts) {
       // Shortcut can be a MouseShortcut here.
       // For example, `IdeaVIM` often assigns them
-      if (shortcut instanceof KeyboardShortcut) {
-        KeyboardShortcut kb = (KeyboardShortcut)shortcut;
+      if (shortcut instanceof KeyboardShortcut kb) {
         if (kb.getSecondKeyStroke() == null) {
           return (KeyboardShortcut)shortcut;
         }

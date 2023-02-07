@@ -67,8 +67,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
    * contains 'default'. If the attribute is not defined, return the current value.
    */
   private static boolean shouldPreserveSpace(ASTNode node, boolean defaultValue) {
-    if (node.getPsi() instanceof XmlTag) {
-      XmlTag tag = (XmlTag)node.getPsi();
+    if (node.getPsi() instanceof XmlTag tag) {
       if (tag != null) {
         XmlAttribute spaceAttr = tag.getAttribute("xml:space");
         if (spaceAttr != null) {
@@ -123,8 +122,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     if (elementType == XmlTokenType.XML_START_TAG_START) return tagBeginWrap;
     if (elementType == XmlTokenType.XML_END_TAG_START) {
       final PsiElement parent = SourceTreeToPsiMap.treeElementToPsi(child.getTreeParent());
-      if (parent instanceof XmlTag) {
-        final XmlTag tag = (XmlTag)parent;
+      if (parent instanceof XmlTag tag) {
         if (canWrapTagEnd(tag)) {
           return getTagEndWrapping(tag);
         }

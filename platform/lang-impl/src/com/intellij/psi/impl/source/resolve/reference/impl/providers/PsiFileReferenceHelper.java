@@ -82,8 +82,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
 
     List<FileTargetContext> fileTargetContexts = new ArrayList<>();
     for (PsiFileSystemItem context : contexts) {
-      if (context instanceof VirtualPsiDirectory) {
-        VirtualPsiDirectory virtual = (VirtualPsiDirectory)context;
+      if (context instanceof VirtualPsiDirectory virtual) {
         fileTargetContexts.add(new FileTargetContext(virtual.getRoot(), virtual.getPathToCreate()));
       }
       else {

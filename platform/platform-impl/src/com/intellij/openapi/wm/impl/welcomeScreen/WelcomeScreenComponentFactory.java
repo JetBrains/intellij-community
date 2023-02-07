@@ -293,8 +293,7 @@ public final class WelcomeScreenComponentFactory {
     panel.setVisible(false);
     Topics.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, parentDisposable, types -> {
       BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
-      if (balloonLayout instanceof WelcomeBalloonLayoutImpl) {
-        WelcomeBalloonLayoutImpl welcomeBalloonLayout = (WelcomeBalloonLayoutImpl)balloonLayout;
+      if (balloonLayout instanceof WelcomeBalloonLayoutImpl welcomeBalloonLayout) {
         if (welcomeBalloonLayout.getLocationComponent() == null) {
           welcomeBalloonLayout.setLocationComponent(actionLink);
         }

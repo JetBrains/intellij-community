@@ -40,9 +40,8 @@ public class ChangeToOperatorInspection extends BaseInspection {
       @Override
       public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCall) {
         final GrExpression invokedExpression = methodCall.getInvokedExpression();
-        if (!(invokedExpression instanceof GrReferenceExpression)) return;
+        if (!(invokedExpression instanceof GrReferenceExpression referenceExpression)) return;
 
-        final GrReferenceExpression referenceExpression = (GrReferenceExpression)invokedExpression;
         if (referenceExpression.getDotTokenType() != GroovyTokenTypes.mDOT) return;
 
         final PsiElement highlightElement = referenceExpression.getReferenceNameElement();
@@ -105,8 +104,7 @@ public class ChangeToOperatorInspection extends BaseInspection {
       PsiElement call = descriptor.getPsiElement().getParent();
       if (call == null) return;
       call = call.getParent();
-      if (!(call instanceof GrMethodCall)) return;
-      GrMethodCall methodCall = (GrMethodCall) call;
+      if (!(call instanceof GrMethodCall methodCall)) return;
       GrExpression invokedExpression = methodCall.getInvokedExpression();
       if (!(invokedExpression instanceof GrReferenceExpression)) return;
 

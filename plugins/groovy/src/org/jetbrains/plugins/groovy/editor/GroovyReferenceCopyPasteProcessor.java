@@ -87,8 +87,7 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
       int endOffset = data.endOffset + bounds.getStartOffset();
       PsiElement element = file.findElementAt(startOffset);
 
-      if (element != null && element.getParent() instanceof GrReferenceElement && !PsiUtil.isThisOrSuperRef(element.getParent())) {
-        GrReferenceElement reference = (GrReferenceElement)element.getParent();
+      if (element != null && element.getParent() instanceof GrReferenceElement reference && !PsiUtil.isThisOrSuperRef(element.getParent())) {
         TextRange range = reference.getTextRange();
         if (range.getStartOffset() == startOffset && range.getEndOffset() == endOffset) {
           if (data.staticMemberName == null) {

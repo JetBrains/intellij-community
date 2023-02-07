@@ -45,8 +45,7 @@ class RangesAssert {
     buffer.append("'\n");
     buffer.append("model (").append(model.getClass()).append("): ").append(model);
 
-    if (model instanceof FormattingDocumentModelImpl) {
-      final FormattingDocumentModelImpl modelImpl = (FormattingDocumentModelImpl)model;
+    if (model instanceof FormattingDocumentModelImpl modelImpl) {
       buffer.append("Psi Tree:\n");
       final PsiFile file = modelImpl.getFile();
       final List<PsiFile> roots = file.getViewProvider().getAllFiles();

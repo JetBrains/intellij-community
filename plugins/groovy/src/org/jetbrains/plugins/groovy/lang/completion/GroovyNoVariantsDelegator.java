@@ -125,8 +125,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     else if (o instanceof PsiMethod) {
       return ((PsiMethod)o).getReturnType();
     }
-    else if (o instanceof PsiClass) {
-      final PsiClass psiClass = (PsiClass)o;
+    else if (o instanceof PsiClass psiClass) {
       return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
     }
     return null;

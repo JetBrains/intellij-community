@@ -117,10 +117,9 @@ public class PointlessIndexOfComparisonInspection extends BaseInspection {
       }
       final Object object =
         ExpressionUtils.computeConstantExpression(rhs);
-      if (!(object instanceof Integer)) {
+      if (!(object instanceof Integer integer)) {
         return false;
       }
-      final Integer integer = (Integer)object;
       final int constant = integer.intValue();
       final IElementType tokenType = sign.getTokenType();
       if (tokenType == null) {

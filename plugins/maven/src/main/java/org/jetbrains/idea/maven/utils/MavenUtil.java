@@ -441,8 +441,7 @@ public class MavenUtil {
     else {
       //set language level only for root pom
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
-      if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
-        JavaSdk javaSdk = (JavaSdk)sdk.getSdkType();
+      if (sdk != null && sdk.getSdkType() instanceof JavaSdk javaSdk) {
         JavaSdkVersion version = javaSdk.getVersion(sdk);
         String description = version == null ? null : version.getDescription();
         boolean shouldSetLangLevel = version != null && version.isAtLeast(JavaSdkVersion.JDK_1_6);

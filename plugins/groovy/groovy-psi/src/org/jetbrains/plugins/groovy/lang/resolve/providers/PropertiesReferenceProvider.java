@@ -37,8 +37,7 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     Object value = null;
 
-    if (element instanceof GrLiteral) {
-      GrLiteral literalExpression = (GrLiteral) element;
+    if (element instanceof GrLiteral literalExpression) {
       value = literalExpression.getValue();
     }
 

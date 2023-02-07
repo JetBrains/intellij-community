@@ -38,8 +38,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     for (RangeHighlighter marker : highlighters) {
       Object tooltipObject = marker.getErrorStripeTooltip();
       if (tooltipObject == null) continue;
-      if (tooltipObject instanceof HighlightInfo) {
-        HighlightInfo info = (HighlightInfo)tooltipObject;
+      if (tooltipObject instanceof HighlightInfo info) {
         if (info.getToolTip() != null && tooltips.add(info.getToolTip())) {
           infos.add(info);
         }

@@ -255,9 +255,7 @@ public class MatchOptions implements JDOMExternalizable {
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof MatchOptions)) return false;
-
-    final MatchOptions matchOptions = (MatchOptions)o;
+    if (!(o instanceof MatchOptions matchOptions)) return false;
 
     if (caseSensitiveMatch != matchOptions.caseSensitiveMatch) return false;
     if (looseMatching != matchOptions.looseMatching) return false;

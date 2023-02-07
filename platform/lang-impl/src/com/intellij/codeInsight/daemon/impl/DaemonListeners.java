@@ -266,8 +266,7 @@ public final class DaemonListeners implements Disposable {
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         boolean isDaemonShouldBeStopped = false;
         for (VFileEvent event : events) {
-          if (event instanceof VFilePropertyChangeEvent) {
-            VFilePropertyChangeEvent e = (VFilePropertyChangeEvent)event;
+          if (event instanceof VFilePropertyChangeEvent e) {
             String propertyName = e.getPropertyName();
             if (VirtualFile.PROP_NAME.equals(propertyName)) {
               fileRenamed(e);

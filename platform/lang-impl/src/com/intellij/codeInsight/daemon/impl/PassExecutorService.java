@@ -119,14 +119,12 @@ final class PassExecutorService implements Disposable {
     AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
 
     for (HighlightingPass pass : passes) {
-      if (pass instanceof EditorBoundHighlightingPass) {
-        EditorBoundHighlightingPass editorPass = (EditorBoundHighlightingPass)pass;
+      if (pass instanceof EditorBoundHighlightingPass editorPass) {
         // have to make ids unique for this document
         assignUniqueId(editorPass, id2Pass);
         editorBoundPasses.add(editorPass);
       }
-      else if (pass instanceof TextEditorHighlightingPass) {
-        TextEditorHighlightingPass tePass = (TextEditorHighlightingPass)pass;
+      else if (pass instanceof TextEditorHighlightingPass tePass) {
         assignUniqueId(tePass, id2Pass);
         documentBoundPasses.add(tePass);
       }

@@ -129,11 +129,10 @@ public final class ExpectedTypeUtils {
     @Override
     public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression initializer) {
       final PsiType type = initializer.getType();
-      if (!(type instanceof PsiArrayType)) {
+      if (!(type instanceof PsiArrayType arrayType)) {
         expectedType = null;
         return;
       }
-      final PsiArrayType arrayType = (PsiArrayType)type;
       expectedType = arrayType.getComponentType();
     }
 
@@ -260,15 +259,13 @@ public final class ExpectedTypeUtils {
     @Override
     public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
       final PsiElement parent = statement.getParent();
-      if (!(parent instanceof PsiSwitchLabeledRuleStatement)) {
+      if (!(parent instanceof PsiSwitchLabeledRuleStatement switchLabeledRuleStatement)) {
         return;
       }
-      final PsiSwitchLabeledRuleStatement switchLabeledRuleStatement = (PsiSwitchLabeledRuleStatement)parent;
       final PsiSwitchBlock block = switchLabeledRuleStatement.getEnclosingSwitchBlock();
-      if (!(block instanceof PsiSwitchExpression)) {
+      if (!(block instanceof PsiSwitchExpression switchExpression)) {
         return;
       }
-      final PsiSwitchExpression switchExpression = (PsiSwitchExpression)block;
       expectedType = switchExpression.getType();
     }
 
@@ -310,11 +307,10 @@ public final class ExpectedTypeUtils {
         return;
       }
       final PsiType iteratedValueType = iteratedValue.getType();
-      if (!(iteratedValueType instanceof PsiClassType)) {
+      if (!(iteratedValueType instanceof PsiClassType classType)) {
         expectedType = null;
         return;
       }
-      final PsiClassType classType = (PsiClassType)iteratedValueType;
       final PsiType[] parameters = classType.getParameters();
       final PsiClass iterableClass = ClassUtils.findClass(CommonClassNames.JAVA_LANG_ITERABLE, statement);
       if (iterableClass == null) {
@@ -411,8 +407,7 @@ public final class ExpectedTypeUtils {
     public void visitDeclarationStatement(@NotNull PsiDeclarationStatement declaration) {
       final PsiElement[] declaredElements = declaration.getDeclaredElements();
       for (PsiElement declaredElement : declaredElements) {
-        if (declaredElement instanceof PsiVariable) {
-          final PsiVariable variable = (PsiVariable)declaredElement;
+        if (declaredElement instanceof PsiVariable variable) {
           final PsiExpression initializer = variable.getInitializer();
           if (wrappedExpression.equals(initializer)) {
             expectedType = variable.getType();
@@ -449,14 +444,12 @@ public final class ExpectedTypeUtils {
     @NotNull
     private static JavaResolveResult findCalledMethod(PsiExpressionList expressionList) {
       final PsiElement parent = expressionList.getParent();
-      if (parent instanceof PsiCall) {
-        final PsiCall call = (PsiCall)parent;
+      if (parent instanceof PsiCall call) {
         return call.resolveMethodGenerics();
       }
       else if (parent instanceof PsiAnonymousClass) {
         final PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof PsiCallExpression) {
-          final PsiCallExpression callExpression = (PsiCallExpression)grandParent;
+        if (grandParent instanceof PsiCallExpression callExpression) {
           return callExpression.resolveMethodGenerics();
         }
       }
@@ -471,8 +464,7 @@ public final class ExpectedTypeUtils {
         final PsiElement element = resolveResult.getElement();
         PsiSubstitutor substitutor = resolveResult.getSubstitutor();
         final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-        if (element instanceof PsiField) {
-          final PsiField field = (PsiField)element;
+        if (element instanceof PsiField field) {
           if (!isAccessibleFrom(field, referenceExpression)) {
             return;
           }
@@ -483,11 +475,10 @@ public final class ExpectedTypeUtils {
           final PsiElementFactory factory = psiFacade.getElementFactory();
           expectedType = factory.createType(aClass, substitutor);
         }
-        else if (element instanceof PsiMethod) {
+        else if (element instanceof PsiMethod method) {
           final PsiElement parent = referenceExpression.getParent();
           final PsiType returnType;
-          if (parent instanceof PsiMethodCallExpression) {
-            final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent;
+          if (parent instanceof PsiMethodCallExpression methodCallExpression) {
             final PsiType type = methodCallExpression.getType();
             if (!PsiTypes.voidType().equals(type)) {
               returnType = findExpectedType(methodCallExpression, true);
@@ -499,7 +490,6 @@ public final class ExpectedTypeUtils {
           else {
             returnType = null;
           }
-          final PsiMethod method = (PsiMethod)element;
           final PsiClass methodContainingClass = method.getContainingClass();
           if (methodContainingClass == null) {
             return;
@@ -681,8 +671,7 @@ public final class ExpectedTypeUtils {
       public Object visitWildcardType(@NotNull PsiWildcardType wildcardType) {
         if (wildcardType.isExtends()) {
           final PsiType extendsBound = wildcardType.getExtendsBound();
-          if (extendsBound instanceof PsiClassType) {
-            final PsiClassType classType = (PsiClassType)extendsBound;
+          if (extendsBound instanceof PsiClassType classType) {
             final PsiClass aClass = classType.resolve();
             if (aClass != null && aClass.hasModifierProperty(PsiModifier.FINAL)) {
               modified = true;

@@ -44,9 +44,7 @@ public final class RecursionUtils {
         statement instanceof PsiDeclarationStatement) {
       return false;
     }
-    else if (statement instanceof PsiReturnStatement) {
-      final PsiReturnStatement returnStatement =
-        (PsiReturnStatement)statement;
+    else if (statement instanceof PsiReturnStatement returnStatement) {
       final PsiExpression returnValue = returnStatement.getReturnValue();
       if (returnValue != null) {
         if (expressionDefinitelyRecurses(returnValue, method)) {
@@ -76,9 +74,7 @@ public final class RecursionUtils {
         .getBody();
       return codeBlockMayReturnBeforeRecursing(body, method, false);
     }
-    else if (statement instanceof PsiBlockStatement) {
-      final PsiBlockStatement blockStatement =
-        (PsiBlockStatement)statement;
+    else if (statement instanceof PsiBlockStatement blockStatement) {
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
       return codeBlockMayReturnBeforeRecursing(codeBlock, method, false);
     }
@@ -459,9 +455,7 @@ public final class RecursionUtils {
         statement instanceof PsiAssertStatement) {
       return false;
     }
-    else if (statement instanceof PsiExpressionListStatement) {
-      final PsiExpressionListStatement expressionListStatement =
-        (PsiExpressionListStatement)statement;
+    else if (statement instanceof PsiExpressionListStatement expressionListStatement) {
       final PsiExpressionList expressionList =
         expressionListStatement.getExpressionList();
       if (expressionList == null) {
@@ -475,22 +469,16 @@ public final class RecursionUtils {
       }
       return false;
     }
-    else if (statement instanceof PsiExpressionStatement) {
-      final PsiExpressionStatement expressionStatement =
-        (PsiExpressionStatement)statement;
+    else if (statement instanceof PsiExpressionStatement expressionStatement) {
       final PsiExpression expression =
         expressionStatement.getExpression();
       return expressionDefinitelyRecurses(expression, method);
     }
-    else if (statement instanceof PsiDeclarationStatement) {
-      final PsiDeclarationStatement declaration =
-        (PsiDeclarationStatement)statement;
+    else if (statement instanceof PsiDeclarationStatement declaration) {
       final PsiElement[] declaredElements =
         declaration.getDeclaredElements();
       for (final PsiElement declaredElement : declaredElements) {
-        if (declaredElement instanceof PsiLocalVariable) {
-          final PsiLocalVariable variable =
-            (PsiLocalVariable)declaredElement;
+        if (declaredElement instanceof PsiLocalVariable variable) {
           final PsiExpression initializer = variable.getInitializer();
           if (expressionDefinitelyRecurses(initializer, method)) {
             return true;
@@ -502,9 +490,7 @@ public final class RecursionUtils {
     else if (statement instanceof PsiYieldStatement) {
       return expressionDefinitelyRecurses(((PsiYieldStatement)statement).getExpression(), method);
     }
-    else if (statement instanceof PsiReturnStatement) {
-      final PsiReturnStatement returnStatement =
-        (PsiReturnStatement)statement;
+    else if (statement instanceof PsiReturnStatement returnStatement) {
       final PsiExpression returnValue = returnStatement.getReturnValue();
       if (returnValue != null) {
         if (expressionDefinitelyRecurses(returnValue, method)) {

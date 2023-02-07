@@ -35,8 +35,7 @@ public class RelaxedHtmlFromRngElementDescriptor extends DelegatingRelaxedHtmlEl
 
   @Override
   public int compareTo(@NotNull Object o) {
-    if (!(o instanceof RelaxedHtmlFromRngElementDescriptor)) return 1;
-    final RelaxedHtmlFromRngElementDescriptor other = (RelaxedHtmlFromRngElementDescriptor)o;
+    if (!(o instanceof RelaxedHtmlFromRngElementDescriptor other)) return 1;
     if (other.isHtml && !isHtml) return -1;
     if (!other.isHtml && isHtml) return 1;
     return 0;

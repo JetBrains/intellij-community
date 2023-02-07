@@ -617,10 +617,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   protected PsiElement retrievePsiElement(Object element) {
-    if (element instanceof String) {
+    if (element instanceof String qName) {
       SourceScope scope = getSourceScope();
       Project project = getConfiguration().getProject();
-      String qName = (String)element;
       int idx = qName.indexOf(',');
       String className = idx > 0 ? qName.substring(0, idx) : qName;
       return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> JavaPsiFacade.getInstance(project).findClass(className, scope != null ? scope.getGlobalSearchScope() : GlobalSearchScope.projectScope(project)));

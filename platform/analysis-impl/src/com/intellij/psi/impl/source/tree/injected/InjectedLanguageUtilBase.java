@@ -123,8 +123,7 @@ public class InjectedLanguageUtilBase {
   }
 
   public static Place getShreds(@NotNull FileViewProvider viewProvider) {
-    if (!(viewProvider instanceof InjectedFileViewProvider)) return null;
-    InjectedFileViewProvider myFileViewProvider = (InjectedFileViewProvider)viewProvider;
+    if (!(viewProvider instanceof InjectedFileViewProvider myFileViewProvider)) return null;
     return getShreds(myFileViewProvider.getDocument());
   }
 
@@ -268,8 +267,7 @@ public class InjectedLanguageUtilBase {
             }
           }
         }
-        if (result.references != null && visitor instanceof InjectedReferenceVisitor) {
-          InjectedReferenceVisitor refVisitor = (InjectedReferenceVisitor)visitor;
+        if (result.references != null && visitor instanceof InjectedReferenceVisitor refVisitor) {
           for (Pair<ReferenceInjector, Place> pair : result.references) {
             Place place = pair.getSecond();
             if (place.isValid()) {

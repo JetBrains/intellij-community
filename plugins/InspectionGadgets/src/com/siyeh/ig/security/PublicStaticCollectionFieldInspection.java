@@ -96,10 +96,9 @@ public class PublicStaticCollectionFieldInspection extends BaseInspection {
       if (ExpressionUtils.isNullLiteral(initializer)) {
         return true;
       }
-      if (!(initializer instanceof PsiMethodCallExpression)) {
+      if (!(initializer instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)initializer;
       final PsiMethod method = methodCallExpression.resolveMethod();
       if (method == null || myMethodMatcher.matches(method)) {
         return true;

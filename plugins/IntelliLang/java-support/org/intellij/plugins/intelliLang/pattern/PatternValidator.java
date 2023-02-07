@@ -75,8 +75,7 @@ public class PatternValidator extends LocalInspectionTool {
           // this checks method arguments
           check(expression, holder, false);
         }
-        else if (element instanceof PsiNameValuePair) {
-          final PsiNameValuePair valuePair = (PsiNameValuePair)element;
+        else if (element instanceof PsiNameValuePair valuePair) {
           final String name = valuePair.getName();
           if (name == null || name.equals(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)) {
             // check whether @Subst complies with pattern
@@ -113,8 +112,7 @@ public class PatternValidator extends LocalInspectionTool {
       }
 
       private void check(@NotNull PsiExpression expression, ProblemsHolder holder, boolean isAnnotationValue) {
-        if (expression instanceof PsiConditionalExpression) {
-          final PsiConditionalExpression expr = (PsiConditionalExpression)expression;
+        if (expression instanceof PsiConditionalExpression expr) {
           PsiExpression e = expr.getThenExpression();
           if (e != null) {
             check(e, holder, isAnnotationValue);

@@ -942,9 +942,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     @Override
     public boolean shouldSelectCell(EventObject anEvent) {
-      if (!(anEvent instanceof MouseEvent)) return true;
-
-      MouseEvent e = (MouseEvent)anEvent;
+      if (!(anEvent instanceof MouseEvent e)) return true;
 
       int row = rowAtPoint(e.getPoint());
       if (row < 0 || row >= getRowCount()) return true;

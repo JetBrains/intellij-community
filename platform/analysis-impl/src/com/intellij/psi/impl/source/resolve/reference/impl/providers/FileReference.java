@@ -67,8 +67,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
 
   @Nullable
   public static FileReference findFileReference(@NotNull final PsiReference original) {
-    if (original instanceof PsiMultiReference) {
-      final PsiMultiReference multiReference = (PsiMultiReference)original;
+    if (original instanceof PsiMultiReference multiReference) {
       for (PsiReference reference : multiReference.getReferences()) {
         if (reference instanceof FileReference) {
           return (FileReference)reference;
@@ -200,9 +199,8 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
           // match filesystem roots
           result.add(new PsiElementResolveResult(getOriginalFile(context)));
         }
-        else if (context instanceof PsiDirectory && caseSensitivityApplies((PsiDirectory)context, caseSensitive)) {
+        else if (context instanceof PsiDirectory directory && caseSensitivityApplies((PsiDirectory)context, caseSensitive)) {
           // optimization: do not load all children into VFS
-          PsiDirectory directory = (PsiDirectory)context;
           PsiFileSystemItem child = directory.findFile(decoded);
           if (child == null) child = directory.findSubdirectory(decoded);
           if (child != null) {
@@ -413,14 +411,13 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   }
 
   public PsiElement bindToElement(@NotNull final PsiElement element, final boolean absolute) throws IncorrectOperationException {
-    if (!(element instanceof PsiFileSystemItem)) {
+    if (!(element instanceof PsiFileSystemItem fileSystemItem)) {
       throw new IncorrectOperationException("Cannot bind to element, should be instanceof PsiFileSystemItem: " + element);
     }
 
     // handle empty reference that resolves to current file
     if (getCanonicalText().isEmpty() && element == getElement().getContainingFile()) return getElement();
 
-    final PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)element;
     VirtualFile dstVFile = fileSystemItem.getVirtualFile();
     if (dstVFile == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
 

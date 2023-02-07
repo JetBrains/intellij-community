@@ -134,10 +134,9 @@ public abstract class SplitTextEditorProvider implements AsyncFileEditorProvider
 
   @Override
   public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
-    if (!(state instanceof SplitFileEditor.MyFileEditorState)) {
+    if (!(state instanceof SplitFileEditor.MyFileEditorState compositeState)) {
       return;
     }
-    final var compositeState = (SplitFileEditor.MyFileEditorState)state;
     writeFirstProviderState(compositeState.getFirstState(), project, targetElement);
     writeSecondProviderState(compositeState.getSecondState(), project, targetElement);
     writeSplitLayoutState(compositeState.getSplitLayout(), project, targetElement);

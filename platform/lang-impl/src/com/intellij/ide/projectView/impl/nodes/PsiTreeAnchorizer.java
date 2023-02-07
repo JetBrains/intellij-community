@@ -29,8 +29,7 @@ public class PsiTreeAnchorizer extends TreeAnchorizer {
   @NotNull
   @Override
   public Object createAnchor(@NotNull Object element) {
-    if (element instanceof PsiElement) {
-      PsiElement psi = (PsiElement)element;
+    if (element instanceof PsiElement psi) {
       return ReadAction.compute(() -> {
         if (!psi.isValid()) return psi;
         return SmartPointerManager.getInstance(psi.getProject()).createSmartPsiElementPointer(psi);

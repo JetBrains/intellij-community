@@ -278,8 +278,7 @@ public class DataManagerImpl extends DataManager {
 
     // Point inside JTabbedPane has special meaning. If point is inside tab bounds then
     // we construct DataContext by the component which corresponds to the (x, y) tab.
-    if (component instanceof JTabbedPane) {
-      JTabbedPane tabbedPane = (JTabbedPane)component;
+    if (component instanceof JTabbedPane tabbedPane) {
       int index = tabbedPane.getUI().tabForCoordinate(tabbedPane, x, y);
       return getDataContext(index != -1 ? tabbedPane.getComponentAt(index) : tabbedPane);
     }
@@ -365,8 +364,7 @@ public class DataManagerImpl extends DataManager {
   }
 
   public static @Nullable Editor validateEditor(Editor editor, Component contextComponent) {
-    if (contextComponent instanceof JComponent) {
-      final JComponent jComponent = (JComponent)contextComponent;
+    if (contextComponent instanceof JComponent jComponent) {
       if (jComponent.getClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY) != null) return null;
     }
 

@@ -128,10 +128,9 @@ public class MagicNumberInspection extends BaseInspection {
         return false;
       }
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiNewExpression)) {
+      if (!(parent instanceof PsiNewExpression newExpression)) {
         return false;
       }
-      final PsiNewExpression newExpression = (PsiNewExpression)parent;
       return TypeUtils.expressionHasTypeOrSubtype(newExpression,
                                                   CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER,
                                                   CommonClassNames.JAVA_UTIL_MAP,
@@ -166,15 +165,13 @@ public class MagicNumberInspection extends BaseInspection {
         PsiTreeUtil.getParentOfType(expression, PsiVariable.class, PsiAssignmentExpression.class);
       final PsiVariable variable;
       if (!(parent instanceof PsiVariable)) {
-        if (!(parent instanceof PsiAssignmentExpression)) {
+        if (!(parent instanceof PsiAssignmentExpression assignmentExpression)) {
           return false;
         }
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
         final PsiExpression lhs = assignmentExpression.getLExpression();
-        if (!(lhs instanceof PsiReferenceExpression)) {
+        if (!(lhs instanceof PsiReferenceExpression referenceExpression)) {
           return false;
         }
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
         final PsiElement target = referenceExpression.resolve();
         if (!(target instanceof PsiVariable)) {
           return false;

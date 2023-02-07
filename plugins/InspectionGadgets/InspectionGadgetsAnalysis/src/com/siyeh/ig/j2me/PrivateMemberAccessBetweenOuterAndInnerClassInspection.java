@@ -152,10 +152,9 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
       final PsiJavaCodeReferenceElement referenceElement =
         (PsiJavaCodeReferenceElement)element;
       final PsiElement target = referenceElement.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)target;
       final PsiElementFactory elementFactory =
         JavaPsiFacade.getElementFactory(project);
       final PsiMethod newConstructor = elementFactory.createConstructor();

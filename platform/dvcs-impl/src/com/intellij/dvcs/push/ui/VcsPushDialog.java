@@ -292,8 +292,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
       @Override
       public void onThrowable(@NotNull Throwable error) {
-        if (error instanceof PushController.HandlerException) {
-          PushController.HandlerException handlerException = (PushController.HandlerException)error;
+        if (error instanceof PushController.HandlerException handlerException) {
           Throwable cause = handlerException.getCause();
 
           String failedHandler = handlerException.getFailedHandlerName();

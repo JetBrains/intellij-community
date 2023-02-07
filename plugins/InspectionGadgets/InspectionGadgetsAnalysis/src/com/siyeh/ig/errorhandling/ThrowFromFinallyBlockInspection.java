@@ -108,8 +108,7 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
       if (finallyBlock == null) {
         return;
       }
-      if (exception instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)exception;
+      if (exception instanceof PsiReferenceExpression referenceExpression) {
         final PsiElement target = referenceExpression.resolve();
         if (target == null || !PsiTreeUtil.isAncestor(finallyBlock, target, true)) {
           // variable from outside finally block is thrown
@@ -123,11 +122,10 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
 
     private boolean isHidingOfPreviousException(PsiCodeBlock finallyBlock, PsiElement throwElement) {
       final PsiElement parent = finallyBlock.getParent();
-      if (!(parent instanceof PsiTryStatement)) {
+      if (!(parent instanceof PsiTryStatement tryStatement)) {
         // never reached
         return false;
       }
-      final PsiTryStatement tryStatement = (PsiTryStatement)parent;
       final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
       if (catchBlocks.length == 0) {
         return true;

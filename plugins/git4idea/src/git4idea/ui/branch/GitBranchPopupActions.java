@@ -174,8 +174,7 @@ public class GitBranchPopupActions {
 
   @Nullable
   private static AnAction createRepositoryRebaseAction(@NotNull AnAction rebaseAction, @NotNull GitRepository repository) {
-    if (!(rebaseAction instanceof GitOngoingOperationAction)) return null;
-    GitOngoingOperationAction ongoingAction = (GitOngoingOperationAction)rebaseAction;
+    if (!(rebaseAction instanceof GitOngoingOperationAction ongoingAction)) return null;
     DumbAwareAction repositoryAction = new MyOngoindOperationAnAction(ongoingAction, repository);
     repositoryAction.getTemplatePresentation().copyFrom(rebaseAction.getTemplatePresentation());
     return repositoryAction;

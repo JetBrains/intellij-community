@@ -213,8 +213,7 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
   public PyType getArgumentType(@NotNull TypeEvalContext context) {
     final PyType parameterType = getType(context);
 
-    if (parameterType instanceof PyCollectionType) {
-      final PyCollectionType collectionType = (PyCollectionType)parameterType;
+    if (parameterType instanceof PyCollectionType collectionType) {
 
       if (isPositionalContainer()) {
         return collectionType.getIteratedItemType();

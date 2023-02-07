@@ -760,8 +760,7 @@ public class PyDocumentationBuilder {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof DocstringFormatterRequest)) return false;
-      DocstringFormatterRequest structure = (DocstringFormatterRequest)o;
+      if (!(o instanceof DocstringFormatterRequest structure)) return false;
       return body.equals(structure.body) && fragments.equals(structure.fragments);
     }
 

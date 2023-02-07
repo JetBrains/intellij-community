@@ -5032,8 +5032,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       else {
         FoldRegion foldRegion = event.getCollapsedFoldRegion();
-        if (foldRegion instanceof CustomFoldRegion) {
-          CustomFoldRegion customFoldRegion = (CustomFoldRegion)foldRegion;
+        if (foldRegion instanceof CustomFoldRegion customFoldRegion) {
           ActionGroup group = customFoldRegion.getRenderer().getContextMenuGroup(customFoldRegion);
           if (group != null) return group;
         }

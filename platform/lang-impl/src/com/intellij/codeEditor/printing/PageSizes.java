@@ -59,10 +59,9 @@ final class PageSizes {
 
   public static String getName(Object item) {
     init();
-    if(!(item instanceof PageSize)) {
+    if(!(item instanceof PageSize pageSize)) {
       return null;
     }
-    PageSize pageSize = (PageSize)item;
     return pageSize.name;
   }
 

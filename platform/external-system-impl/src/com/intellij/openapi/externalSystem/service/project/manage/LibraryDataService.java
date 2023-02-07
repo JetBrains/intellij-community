@@ -182,8 +182,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       }
     }
 
-    if (model instanceof LibraryEx.ModifiableModelEx) {
-      LibraryEx.ModifiableModelEx modelEx = (LibraryEx.ModifiableModelEx)model;
+    if (model instanceof LibraryEx.ModifiableModelEx modelEx) {
       for (String excludedPath : excludedPaths) {
         String url = VfsUtil.getUrlForLibraryRoot(new File(excludedPath));
         String[] urls = modelEx.getExcludedRootUrls();

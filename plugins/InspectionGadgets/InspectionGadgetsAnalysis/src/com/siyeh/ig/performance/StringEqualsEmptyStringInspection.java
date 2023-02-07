@@ -75,12 +75,11 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
   }
 
   private static PsiExpression getCheckedExpression(boolean useIsEmpty, PsiExpression expression) {
-    if (useIsEmpty || !(expression instanceof PsiMethodCallExpression)) {
+    if (useIsEmpty || !(expression instanceof PsiMethodCallExpression callExpression)) {
       return expression;
     }
     // to replace stringBuffer.toString().equals("") with
     // stringBuffer.length() == 0
-    final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)expression;
     final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
     final String referenceName = methodExpression.getReferenceName();
     final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();

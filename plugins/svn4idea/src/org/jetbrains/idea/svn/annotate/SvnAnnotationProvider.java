@@ -277,8 +277,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
   @Override
   public VcsAnnotation createCacheable(FileAnnotation fileAnnotation) {
-    if (!(fileAnnotation instanceof SvnFileAnnotation)) return null;
-    final SvnFileAnnotation svnFileAnnotation = (SvnFileAnnotation)fileAnnotation;
+    if (!(fileAnnotation instanceof SvnFileAnnotation svnFileAnnotation)) return null;
     final AnnotationSourceSwitcher annotationSourceSwitcher = svnFileAnnotation.getAnnotationSourceSwitcher();
     if (annotationSourceSwitcher != null) {
       annotationSourceSwitcher.switchTo(AnnotationSource.LOCAL);

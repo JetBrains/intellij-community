@@ -78,10 +78,9 @@ public final class MouseWheelSmoothScroll {
 
     if (event.getSource() instanceof JScrollPane) {
       JViewport viewport = ((JScrollPane)event.getSource()).getViewport();
-      if (viewport.getView() instanceof Scrollable) {
+      if (viewport.getView() instanceof Scrollable scrollable) {
         int orientation = bar.getOrientation();
         boolean isVertical = orientation == Adjustable.VERTICAL;
-        Scrollable scrollable = (Scrollable)viewport.getView();
         int scroll = abs(event.getUnitsToScroll());
         Rectangle rect = viewport.getViewRect();
         int delta = 0;

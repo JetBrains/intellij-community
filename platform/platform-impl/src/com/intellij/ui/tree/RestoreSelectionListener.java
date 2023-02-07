@@ -22,8 +22,7 @@ public final class RestoreSelectionListener implements TreeSelectionListener {
       TreePath path = event.getOldLeadSelectionPath();
       if (path != null && null != path.getParentPath()) {
         Object source = event.getSource();
-        if (source instanceof JTree) {
-          JTree tree = (JTree)source;
+        if (source instanceof JTree tree) {
           if (tree.getSelectionModel().isSelectionEmpty()) {
             invokeLater(() -> {
               // restore selection later, because nodes are removed before they are inserted

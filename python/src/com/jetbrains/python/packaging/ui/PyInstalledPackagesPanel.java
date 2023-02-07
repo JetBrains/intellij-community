@@ -194,8 +194,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         @Override
         public boolean isSelected(AnActionEvent e) {
           final Sdk sdk = getSelectedSdk();
-          if (myPackageManagementService instanceof PythonPackageManagementServiceBridge) {
-            var bridge = (PythonPackageManagementServiceBridge)myPackageManagementService;
+          if (myPackageManagementService instanceof PythonPackageManagementServiceBridge bridge) {
             return sdk != null && bridge.isConda() && bridge.getUseConda();
           }
           return false;
@@ -204,8 +203,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         @Override
         public void setSelected(AnActionEvent e, boolean state) {
           final Sdk sdk = getSelectedSdk();
-          if (sdk == null || !(myPackageManagementService instanceof PythonPackageManagementServiceBridge)) return;
-          var bridge = (PythonPackageManagementServiceBridge)myPackageManagementService;
+          if (sdk == null || !(myPackageManagementService instanceof PythonPackageManagementServiceBridge bridge)) return;
           if (bridge.isConda()) {
             bridge.setUseConda(state);
           }
@@ -215,8 +213,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         @Override
         public boolean isVisible() {
           final Sdk sdk = getSelectedSdk();
-          if (myPackageManagementService instanceof PythonPackageManagementServiceBridge) {
-            var bridge = (PythonPackageManagementServiceBridge)myPackageManagementService;
+          if (myPackageManagementService instanceof PythonPackageManagementServiceBridge bridge) {
             return sdk != null && bridge.isConda();
           }
           return false;

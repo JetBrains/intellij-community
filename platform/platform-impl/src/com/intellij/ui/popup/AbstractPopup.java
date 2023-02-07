@@ -809,8 +809,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   public final void cancel() {
     InputEvent inputEvent = null;
     AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
-    if (event instanceof InputEvent && myPopup != null) {
-      InputEvent ie = (InputEvent)event;
+    if (event instanceof InputEvent ie && myPopup != null) {
       Window window = myPopup.getWindow();
       if (window != null && UIUtil.isDescendingFrom(ie.getComponent(), window)) {
         inputEvent = ie;
@@ -1629,8 +1628,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         myWindow.removeWindowListener(myWindowListener);
       }
 
-      if (myWindow instanceof RootPaneContainer) {
-        RootPaneContainer container = (RootPaneContainer)myWindow;
+      if (myWindow instanceof RootPaneContainer container) {
         JRootPane root = container.getRootPane();
         root.putClientProperty(KEY, null);
         if (root.getGlassPane() instanceof IdeGlassPaneImpl) {

@@ -185,12 +185,10 @@ public final class GroovyIntroduceParameterUtil {
   }
 
   public static void processChangedMethodCall(PsiElement element, GrIntroduceParameterSettings settings, Project project) {
-    if (!(element.getParent() instanceof GrMethodCallExpression)) {
+    if (!(element.getParent() instanceof GrMethodCallExpression methodCall)) {
       LOG.error(element.getParent());
       return;
     }
-
-    GrMethodCallExpression methodCall = (GrMethodCallExpression)element.getParent();
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
     final String name = settings.getName();

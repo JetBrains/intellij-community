@@ -170,10 +170,9 @@ public class ListIndexOfReplaceableByContainsInspection extends BaseInspection i
       }
       final Object object =
         ExpressionUtils.computeConstantExpression(rhs);
-      if (!(object instanceof Integer)) {
+      if (!(object instanceof Integer integer)) {
         return false;
       }
-      final Integer integer = (Integer)object;
       final int constant = integer.intValue();
       if (flipped) {
         if (constant == -1 && (JavaTokenType.NE.equals(tokenType) ||

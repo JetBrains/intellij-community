@@ -120,8 +120,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     List<PsiLiteralExpression> foundExpr = new SmartList<>();
     LowLevelSearchUtil.processTexts(text, 0, text.length(), searcher, offset -> {
       PsiElement element = file.findElementAt(offset);
-      if (element == null || !(element.getParent() instanceof PsiLiteralExpression)) return true;
-      PsiLiteralExpression expression = (PsiLiteralExpression)element.getParent();
+      if (element == null || !(element.getParent() instanceof PsiLiteralExpression expression)) return true;
       if (Comparing.equal(stringToFind, expression.getValue()) && shouldCheck(expression, ignorePropertyKeys)) {
         foundExpr.add(expression);
       }
@@ -182,9 +181,8 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
 
   private PsiExpression @NotNull [] getDuplicateLiterals(@NotNull Project project, @NotNull PsiLiteralExpression place, boolean isOnTheFly) {
     Object value = place.getValue();
-    if (!(value instanceof String)) return PsiExpression.EMPTY_ARRAY;
+    if (!(value instanceof String stringToFind)) return PsiExpression.EMPTY_ARRAY;
     if (!shouldCheck(place, IGNORE_PROPERTY_KEYS)) return PsiExpression.EMPTY_ARRAY;
-    String stringToFind = (String)value;
     if (stringToFind.isEmpty()) return PsiExpression.EMPTY_ARRAY;
     Map<StringLiteralSearchQuery, PsiExpression[]> map = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       Map<StringLiteralSearchQuery, PsiExpression[]> duplicates = ConcurrentFactoryMap.createMap(
@@ -206,8 +204,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     for (PsiExpression expr : foundExpr) {
       if (expr == originalExpression) continue;
       PsiElement parent = expr.getParent();
-      if (parent instanceof PsiField) {
-        final PsiField field = (PsiField)parent;
+      if (parent instanceof PsiField field) {
         if (field.getInitializer() == expr && field.hasModifierProperty(PsiModifier.STATIC)) {
           final PsiClass containingClass = field.getContainingClass();
           if (containingClass == null) continue;

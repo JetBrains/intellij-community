@@ -104,8 +104,7 @@ public final class FileReferenceCompletionImpl extends FileReferenceCompletion {
     List<Object> encodedVariants = new ArrayList<>(variants.length + additionalItems.size());
     for (int i = 0; i < candidates.length; i++) {
       final PsiElement element = candidates[i];
-      if (element instanceof PsiNamedElement) {
-        final PsiNamedElement psiElement = (PsiNamedElement)element;
+      if (element instanceof PsiNamedElement psiElement) {
         String name = psiElement.getName();
         final String encoded = reference.encode(name, psiElement);
         if (encoded == null) continue;

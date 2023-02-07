@@ -451,8 +451,7 @@ public class CustomizableActionsPanel {
     @Override
     protected void doOKAction() {
       Object selectedItem = myComboBox.getSelectedItem();
-      if (selectedItem instanceof ActionIconInfo) {
-        ActionIconInfo selectedInfo = (ActionIconInfo)selectedItem;
+      if (selectedItem instanceof ActionIconInfo selectedInfo) {
         if (setCustomIcon(mySelectedSchema, myNode, selectedInfo, getContentPane())) {
           myActionsTree.repaint();
           CustomActionsSchema.setCustomizationSchemaForCurrentProjects();

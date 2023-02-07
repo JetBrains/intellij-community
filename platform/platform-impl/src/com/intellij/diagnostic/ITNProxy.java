@@ -257,8 +257,7 @@ final class ITNProxy {
       append(builder, "error.redacted", Boolean.toString(true));
     }
 
-    if (eventData instanceof AbstractMessage) {
-      AbstractMessage messageObj = (AbstractMessage)eventData;
+    if (eventData instanceof AbstractMessage messageObj) {
       for (Attachment attachment : messageObj.getIncludedAttachments()) {
         append(builder, "attachment.name", attachment.getName());
         append(builder, "attachment.value", attachment.getEncodedBytes());

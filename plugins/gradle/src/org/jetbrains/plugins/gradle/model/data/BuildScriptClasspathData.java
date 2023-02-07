@@ -115,9 +115,7 @@ public final class BuildScriptClasspathData extends AbstractExternalEntityData {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof ClasspathEntry)) return false;
-
-      ClasspathEntry entry = (ClasspathEntry)o;
+      if (!(o instanceof ClasspathEntry entry)) return false;
 
       if (!classesFile.equals(entry.classesFile)) return false;
       if (!javadocFile.equals(entry.javadocFile)) return false;

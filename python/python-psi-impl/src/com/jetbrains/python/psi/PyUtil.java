@@ -84,16 +84,13 @@ public final class PyUtil {
                                                       boolean unfoldListLiterals, boolean unfoldStarExpressions) {
     // NOTE: this proliferation of instanceofs is not very beautiful. Maybe rewrite using a visitor.
     for (PyExpression exp : targets) {
-      if (exp instanceof PyParenthesizedExpression) {
-        final PyParenthesizedExpression parenExpr = (PyParenthesizedExpression)exp;
+      if (exp instanceof PyParenthesizedExpression parenExpr) {
         unfoldParentheses(new PyExpression[]{parenExpr.getContainedExpression()}, receiver, unfoldListLiterals, unfoldStarExpressions);
       }
-      else if (exp instanceof PyTupleExpression) {
-        final PyTupleExpression tupleExpr = (PyTupleExpression)exp;
+      else if (exp instanceof PyTupleExpression tupleExpr) {
         unfoldParentheses(tupleExpr.getElements(), receiver, unfoldListLiterals, unfoldStarExpressions);
       }
-      else if (exp instanceof PyListLiteralExpression && unfoldListLiterals) {
-        final PyListLiteralExpression listLiteral = (PyListLiteralExpression)exp;
+      else if (exp instanceof PyListLiteralExpression listLiteral && unfoldListLiterals) {
         unfoldParentheses(listLiteral.getElements(), receiver, true, unfoldStarExpressions);
       }
       else if (exp instanceof PyStarExpression && unfoldStarExpressions) {
@@ -274,8 +271,7 @@ public final class PyUtil {
       return false;
     }
     final ScopeOwner owner = ScopeUtil.getScopeOwner(target);
-    if (owner instanceof PyFunction) {
-      final PyFunction method = (PyFunction)owner;
+    if (owner instanceof PyFunction method) {
       if (method.getContainingClass() != null) {
         if (method.getStub() != null) {
           return true;
@@ -312,13 +308,11 @@ public final class PyUtil {
     if (condition instanceof PyParenthesizedExpression) {
       return isNameEqualsMain(((PyParenthesizedExpression)condition).getContainedExpression());
     }
-    if (condition instanceof PyBinaryExpression) {
-      PyBinaryExpression binaryExpression = (PyBinaryExpression)condition;
+    if (condition instanceof PyBinaryExpression binaryExpression) {
       if (binaryExpression.getOperator() == PyTokenTypes.OR_KEYWORD) {
         return isNameEqualsMain(binaryExpression.getLeftExpression()) || isNameEqualsMain(binaryExpression.getRightExpression());
       }
-      if (binaryExpression.getRightExpression() instanceof PyStringLiteralExpression) {
-        final PyStringLiteralExpression rhs = (PyStringLiteralExpression) binaryExpression.getRightExpression();
+      if (binaryExpression.getRightExpression() instanceof PyStringLiteralExpression rhs) {
         return binaryExpression.getOperator() == PyTokenTypes.EQEQ &&
                binaryExpression.getLeftExpression().getText().equals(PyNames.NAME) &&
                rhs.getStringValue().equals("__main__");
@@ -901,8 +895,7 @@ public final class PyUtil {
    */
   @Nullable
   public static PsiElement turnDirIntoInit(@Nullable PsiElement target) {
-    if (target instanceof PsiDirectory) {
-      final PsiDirectory dir = (PsiDirectory)target;
+    if (target instanceof PsiDirectory dir) {
       final PsiFile initStub = dir.findFile(PyNames.INIT_DOT_PYI);
       if (initStub != null && !PyiStubSuppressor.isIgnoredStub(initStub)) {
         return initStub;

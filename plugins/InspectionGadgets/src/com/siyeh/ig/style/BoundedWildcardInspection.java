@@ -112,8 +112,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)  {
       PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiTypeElement) || !element.isValid() || element.getParent() == null || !element.isPhysical()) return;
-      PsiTypeElement typeElement = (PsiTypeElement)element;
+      if (!(element instanceof PsiTypeElement typeElement) || !element.isValid() || element.getParent() == null || !element.isPhysical()) return;
 
       VarianceCandidate candidate = VarianceCandidate.findVarianceCandidate(typeElement);
       if (candidate == null) return;
@@ -440,14 +439,12 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     PsiExpression r = ((PsiAssignmentExpression)parent).getRExpression();
     if (!PsiTreeUtil.isAncestor(r, refElement, false)) return null;
     PsiExpression l = skipParensAndCastsDown(((PsiAssignmentExpression)parent).getLExpression());
-    if (!(l instanceof PsiReferenceExpression)) return null;
-    PsiReferenceExpression lExpression = (PsiReferenceExpression)l;
+    if (!(l instanceof PsiReferenceExpression lExpression)) return null;
     PsiExpression lQualifier = skipParensAndCastsDown(lExpression.getQualifierExpression());
     if (lQualifier != null && !(lQualifier instanceof PsiThisExpression)) return null;
     PsiElement resolved = lExpression.resolve();
-    if (!(resolved instanceof PsiField)) return null;
+    if (!(resolved instanceof PsiField field)) return null;
     // too expensive to search for usages of public field otherwise
-    PsiField field = (PsiField)resolved;
     if (!field.hasModifierProperty(PsiModifier.PRIVATE) &&
         !field.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) return null;
     PsiType type = r.getType();

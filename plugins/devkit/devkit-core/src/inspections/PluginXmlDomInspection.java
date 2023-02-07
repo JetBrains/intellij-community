@@ -220,8 +220,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       annotateListener((Listener)element, holder);
     }
 
-    if (element instanceof GenericDomValue) {
-      final GenericDomValue<?> domValue = (GenericDomValue<?>)element;
+    if (element instanceof GenericDomValue<?> domValue) {
       if (domValue.getConverter() instanceof PluginPsiClassConverter) {
         @SuppressWarnings("unchecked") GenericDomValue<PsiClass> psiClassDomValue = (GenericDomValue<PsiClass>)element;
         annotatePsiClassValue(psiClassDomValue, holder);
@@ -875,8 +874,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       }
 
       final PsiElement declaration = attributeDescription.getDeclaration(extension.getManager().getProject());
-      if (declaration instanceof PsiField) {
-        PsiField psiField = (PsiField)declaration;
+      if (declaration instanceof PsiField psiField) {
         if (psiField.isDeprecated()) {
           highlightDeprecated(
             attributeValue, DevKitBundle.message("inspections.plugin.xml.deprecated.attribute", attributeDescription.getName()),

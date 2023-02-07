@@ -110,10 +110,9 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       }
       final PsiFile file = referenceElement.getContainingFile();
       final PsiElement target = referenceElement.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)target;
       final String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName == null || !ImportUtils.nameCanBeImported(qualifiedName, referenceElement)) {
         return;
@@ -205,7 +204,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
 
     private void checkReference(PsiJavaCodeReferenceElement reference) {
       final PsiElement qualifier = reference.getQualifier();
-      if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
+      if (!(qualifier instanceof PsiJavaCodeReferenceElement qualifierReference)) {
         return;
       }
       final PsiElement parent = reference.getParent();
@@ -237,7 +236,6 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
           reportAsInformationInsideJavadoc = !ImportHelper.isAlreadyImported(containingFile, reference.getQualifiedName());
         }
       }
-      final PsiJavaCodeReferenceElement qualifierReference = (PsiJavaCodeReferenceElement)qualifier;
       final PsiElement qualifierTarget = qualifierReference.resolve();
       if (!(qualifierTarget instanceof PsiPackage)) {
         return;
@@ -251,10 +249,9 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(containingFile.getProject()).getResolveHelper();
       for (final PsiJavaCodeReferenceElement aReference : references) {
         final PsiElement referenceTarget = aReference.resolve();
-        if (!(referenceTarget instanceof PsiClass)) {
+        if (!(referenceTarget instanceof PsiClass aClass)) {
           continue;
         }
-        final PsiClass aClass = (PsiClass)referenceTarget;
         final String qualifiedName = aClass.getQualifiedName();
         if (qualifiedName == null) {
           continue;
@@ -297,8 +294,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
     private static void collectInnerClassNames(PsiJavaCodeReferenceElement reference,
                                                List<? super PsiJavaCodeReferenceElement> references) {
       PsiElement rParent = reference.getParent();
-      while (rParent instanceof PsiJavaCodeReferenceElement) {
-        final PsiJavaCodeReferenceElement parentReference = (PsiJavaCodeReferenceElement)rParent;
+      while (rParent instanceof PsiJavaCodeReferenceElement parentReference) {
         if (!reference.equals(parentReference.getQualifier())) {
           break;
         }

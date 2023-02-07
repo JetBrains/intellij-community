@@ -49,9 +49,8 @@ public final class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
                                            int row,
                                            int column) {
         setBorder(null);
-        if (!(value instanceof PluginDownloader)) return;
+        if (!(value instanceof PluginDownloader downloader)) return;
 
-        PluginDownloader downloader = (PluginDownloader)value;
         String pluginName = downloader.getPluginName();
         append(pluginName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
 

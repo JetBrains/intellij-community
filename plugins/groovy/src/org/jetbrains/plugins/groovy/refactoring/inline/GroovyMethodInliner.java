@@ -65,12 +65,11 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   @Nullable
   public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
     PsiElement element = reference.getElement();
-    if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) {
+    if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression call)) {
       final MultiMap<PsiElement, String> map = new MultiMap<>();
       map.putValue(element, GroovyRefactoringBundle.message("cannot.inline.reference.0", element.getText()));
       return map;
     }
-    GrCallExpression call = (GrCallExpression) element.getParent();
     Collection<GroovyInlineMethodUtil.ReferenceExpressionInfo> infos = GroovyInlineMethodUtil.collectReferenceInfo(myMethod);
     return collectConflicts(call, infos);
   }
@@ -109,11 +108,10 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   public void inlineUsage(@NotNull UsageInfo usage, @NotNull PsiElement referenced) {
     PsiElement element=usage.getElement();
 
-    if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) return;
+    if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression call)) return;
 
     final Editor editor = getCurrentEditorIfApplicable(element);
 
-    GrCallExpression call = (GrCallExpression) element.getParent();
     RangeMarker marker = inlineReferenceImpl(call, myMethod, isOnExpressionOrReturnPlace(call), GroovyInlineMethodUtil.isTailMethodCall(call), editor);
 
     // highlight replaced result
@@ -421,12 +419,11 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   */
   private static boolean isOnExpressionOrReturnPlace(@NotNull GrCallExpression call) {
     PsiElement parent = call.getParent();
-    if (!(parent instanceof GrVariableDeclarationOwner)) {
+    if (!(parent instanceof GrVariableDeclarationOwner owner)) {
       return true;
     }
 
     // tail calls in methods and closures
-    GrVariableDeclarationOwner owner = (GrVariableDeclarationOwner) parent;
     if (owner instanceof GrClosableBlock ||
         owner instanceof GrOpenBlock && owner.getParent() instanceof GrMethod) {
       GrStatement[] statements = ((GrCodeBlock) owner).getStatements();

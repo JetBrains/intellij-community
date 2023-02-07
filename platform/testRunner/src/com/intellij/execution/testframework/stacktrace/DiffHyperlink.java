@@ -122,9 +122,7 @@ public class DiffHyperlink implements Printable {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof DiffHyperlink)) return false;
-
-    DiffHyperlink hyperlink = (DiffHyperlink)o;
+    if (!(o instanceof DiffHyperlink hyperlink)) return false;
 
     if (!myActual.equals(hyperlink.myActual)) return false;
     if (!myExpected.equals(hyperlink.myExpected)) return false;

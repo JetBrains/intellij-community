@@ -41,11 +41,10 @@ public class HardwiredNamespacePrefix extends XPathInspection {
         return new Visitor(manager, isOnTheFly) {
             @Override
             protected void checkExpression(XPathExpression expression) {
-                if (!(expression instanceof XPathBinaryExpression)) {
+                if (!(expression instanceof XPathBinaryExpression expr)) {
                     return;
                 }
-                final XPathBinaryExpression expr = (XPathBinaryExpression)expression;
-                if (expr.getOperator() == XPathTokenTypes.EQ) {
+              if (expr.getOperator() == XPathTokenTypes.EQ) {
                     final XPathExpression lop = expr.getLOperand();
                     final XPathExpression rop = expr.getROperand();
 
@@ -85,11 +84,10 @@ public class HardwiredNamespacePrefix extends XPathInspection {
     }
 
     private static boolean isNameFunctionCall(XPathExpression op1) {
-        if (!(op1 instanceof XPathFunctionCall)) {
+        if (!(op1 instanceof XPathFunctionCall fc)) {
             return false;
         }
-        final XPathFunctionCall fc = (XPathFunctionCall)op1;
-        return "name".equals(fc.getFunctionName());
+      return "name".equals(fc.getFunctionName());
     }
 
   @Override

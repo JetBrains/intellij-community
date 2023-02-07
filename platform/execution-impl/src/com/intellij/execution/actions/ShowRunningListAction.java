@@ -92,8 +92,7 @@ final class ShowRunningListAction extends AnAction {
         builder.setClickHandler(new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
-            if (e.getSource() instanceof MouseEvent) {
-              MouseEvent mouseEvent = (MouseEvent)e.getSource();
+            if (e.getSource() instanceof MouseEvent mouseEvent) {
               Component component = mouseEvent.getComponent();
               component = SwingUtilities.getDeepestComponentAt(component, mouseEvent.getX(), mouseEvent.getY());
               Object value = ((JComponent)component).getClientProperty(KEY);

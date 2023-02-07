@@ -144,8 +144,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
       }
       else {
         PsiStatement[] statements = body.getStatements();
-        if (statements.length == 1 && statements[0] instanceof PsiSwitchLabeledRuleStatement) {
-          PsiSwitchLabeledRuleStatement statement = (PsiSwitchLabeledRuleStatement)statements[0];
+        if (statements.length == 1 && statements[0] instanceof PsiSwitchLabeledRuleStatement statement) {
           fixIsAvailable = SwitchUtils.isDefaultLabel(statement) && statement.getBody() instanceof PsiExpressionStatement;
         }
         else {

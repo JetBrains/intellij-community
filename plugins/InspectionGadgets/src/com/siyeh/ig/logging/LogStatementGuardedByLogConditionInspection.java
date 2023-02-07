@@ -178,15 +178,13 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
       if (statement == null) {
         return false;
       }
-      if (!(statement instanceof PsiExpressionStatement)) {
+      if (!(statement instanceof PsiExpressionStatement expressionStatement)) {
         return false;
       }
-      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
       final PsiExpression expression = expressionStatement.getExpression();
-      if (!(expression instanceof PsiMethodCallExpression)) {
+      if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String referenceName = methodExpression.getReferenceName();
       if (!methodName.equals(referenceName)) {
@@ -254,8 +252,7 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
 
     private boolean isLogGuardCheck(@Nullable PsiExpression expression, String logMethodName) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
-      if (expression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      if (expression instanceof PsiMethodCallExpression methodCallExpression) {
         final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
         if (!TypeUtils.expressionHasTypeOrSubtype(qualifier, loggerClassName)) {
@@ -269,8 +266,7 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
         final String conditionName = logConditionMethodNameList.get(index);
         return conditionName.startsWith(referenceName);
       }
-      else if (expression instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      else if (expression instanceof PsiPolyadicExpression polyadicExpression) {
         final PsiExpression[] operands = polyadicExpression.getOperands();
         for (PsiExpression operand : operands) {
           if (isLogGuardCheck(operand, logMethodName)) {

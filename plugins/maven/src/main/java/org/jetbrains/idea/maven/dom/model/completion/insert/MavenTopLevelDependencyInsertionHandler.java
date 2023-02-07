@@ -40,10 +40,9 @@ public class MavenTopLevelDependencyInsertionHandler implements InsertHandler<Lo
       return; // Don't brake the template.
     }
     Object object = item.getObject();
-    if (!(object instanceof MavenRepositoryArtifactInfo)) {
+    if (!(object instanceof MavenRepositoryArtifactInfo completionItem)) {
       return;
     }
-    MavenRepositoryArtifactInfo completionItem = (MavenRepositoryArtifactInfo)object;
     PsiFile contextFile = context.getFile();
     if (!(contextFile instanceof XmlFile)) return;
     Project project = context.getProject();

@@ -141,8 +141,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) return;
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) return;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

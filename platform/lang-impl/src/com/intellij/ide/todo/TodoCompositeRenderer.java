@@ -43,9 +43,7 @@ final class TodoCompositeRenderer implements TreeCellRenderer {
       myMultiLineRenderer.getTreeCellRendererComponent(tree, obj, selected, expanded, leaf, row, hasFocus);
       result = myMultiLineRenderer;
     }
-    else if (userObject instanceof NodeDescriptor && userObject instanceof HighlightedRegionProvider) {
-      NodeDescriptor descriptor = (NodeDescriptor)userObject;
-      HighlightedRegionProvider regionProvider = (HighlightedRegionProvider)userObject;
+    else if (userObject instanceof NodeDescriptor descriptor && userObject instanceof HighlightedRegionProvider regionProvider) {
       myColorTreeCellRenderer.getTreeCellRendererComponent(tree, obj, selected, expanded, leaf, row, hasFocus);
       for (HighlightedRegion region : regionProvider.getHighlightedRegions()) {
         myColorTreeCellRenderer.addHighlighter(region.startOffset, region.endOffset, region.textAttributes);

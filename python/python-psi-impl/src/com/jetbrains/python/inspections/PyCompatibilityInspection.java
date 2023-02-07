@@ -184,8 +184,7 @@ public class PyCompatibilityInspection extends PyInspection {
         .map(e -> e instanceof PyClass ? ((PyClass)e).findInitOrNew(false, context) : e)
         .orElse(null);
 
-      if (resolvedCallee instanceof PyFunction) {
-        final PyFunction function = (PyFunction)resolvedCallee;
+      if (resolvedCallee instanceof PyFunction function) {
         final PyClass containingClass = function.getContainingClass();
 
         final String functionName = PyUtil.isInitOrNewMethod(function) ? callee.getText() : function.getName();
@@ -211,8 +210,7 @@ public class PyCompatibilityInspection extends PyInspection {
                                          node);
         }
       }
-      else if (resolvedCallee instanceof PyTargetExpression) {
-        final PyTargetExpression target = (PyTargetExpression)resolvedCallee;
+      else if (resolvedCallee instanceof PyTargetExpression target) {
 
         if (!target.isQualified() &&
             PyNames.TYPE_LONG.equals(target.getName()) &&

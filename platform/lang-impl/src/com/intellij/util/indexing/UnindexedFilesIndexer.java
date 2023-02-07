@@ -187,8 +187,7 @@ class UnindexedFilesIndexer extends DumbModeTask {
 
   @Override
   public @Nullable UnindexedFilesIndexer tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
-    if (!(taskFromQueue instanceof UnindexedFilesIndexer)) return null;
-    UnindexedFilesIndexer otherIndexingTask = (UnindexedFilesIndexer)taskFromQueue;
+    if (!(taskFromQueue instanceof UnindexedFilesIndexer otherIndexingTask)) return null;
 
     Map<IndexableFilesIterator, Collection<VirtualFile>> largeMap =
       otherIndexingTask.providerToFiles.size() > providerToFiles.size() ? otherIndexingTask.providerToFiles : providerToFiles;

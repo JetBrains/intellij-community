@@ -85,8 +85,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
       return resolved;
     }
     for (PyParameter parameter : parameterList.getParameters()) {
-      if (parameter instanceof PyNamedParameter) {
-        final PyNamedParameter namedParameter = (PyNamedParameter)parameter;
+      if (parameter instanceof PyNamedParameter namedParameter) {
         if (namedParameter.isKeywordContainer() || namedParameter.isPositionalContainer()) {
           return namedParameter;
         }
@@ -142,8 +141,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
   @Override
   public String getUnresolvedDescription() {
     PyDocStringOwner owner = PsiTreeUtil.getParentOfType(getElement(), PyDocStringOwner.class);
-    if (owner instanceof PyFunction) {
-      PyFunction function = (PyFunction)owner;
+    if (owner instanceof PyFunction function) {
       return PyPsiBundle.message("unresolved.docstring.param.reference", function.getName(), getCanonicalText());
     }
     return null;

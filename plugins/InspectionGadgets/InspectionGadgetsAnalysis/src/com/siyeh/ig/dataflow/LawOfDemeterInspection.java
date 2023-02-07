@@ -97,14 +97,12 @@ public class LawOfDemeterInspection extends BaseInspection {
 
     public boolean violatesLawOfDemeter(PsiExpression expression) {
       final PsiElement qualifier = PsiUtil.skipParenthesizedExprUp(expression);
-      if (qualifier instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
+      if (qualifier instanceof PsiReferenceExpression referenceExpression) {
         final PsiElement target = referenceExpression.resolve();
         if (target instanceof PsiParameter) {
           return false;
         }
-        else if (target instanceof PsiField) {
-          final PsiField field = (PsiField)target;
+        else if (target instanceof PsiField field) {
           if (field.hasModifierProperty(PsiModifier.STATIC)) {
             return false;
           }
@@ -124,8 +122,7 @@ public class LawOfDemeterInspection extends BaseInspection {
           return violatesLawOfDemeter(definition);
         }
       }
-      else if (qualifier instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)qualifier;
+      else if (qualifier instanceof PsiMethodCallExpression methodCallExpression) {
         if (isCallToSuspiciousMethod(methodCallExpression)) {
           return true;
         }

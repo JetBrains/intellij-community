@@ -435,8 +435,7 @@ public class BugzillaRepository extends BaseRepositoryImpl {
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
 
-    if (!(o instanceof BugzillaRepository)) return false;
-    BugzillaRepository repository = (BugzillaRepository)o;
+    if (!(o instanceof BugzillaRepository repository)) return false;
 
     if (!Objects.equals(myProductName, repository.getProductName())) return false;
     if (!Objects.equals(myComponentName, repository.getComponentName())) return false;

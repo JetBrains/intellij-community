@@ -40,12 +40,10 @@ public class GroovyEditorTextProvider implements EditorTextProvider {
     String result = "";
     PsiElement element = findExpressionInner(elementAtCaret, true);
     if (element != null) {
-      if (element instanceof GrReferenceExpression) {
-        final GrReferenceExpression reference = (GrReferenceExpression)element;
+      if (element instanceof GrReferenceExpression reference) {
         if (reference.getQualifier() == null) {
           final PsiElement resolved = reference.resolve();
-          if (resolved instanceof PsiEnumConstant) {
-            final PsiEnumConstant enumConstant = (PsiEnumConstant)resolved;
+          if (resolved instanceof PsiEnumConstant enumConstant) {
             final PsiClass enumClass = enumConstant.getContainingClass();
             if (enumClass != null) {
               result = enumClass.getName() + "." + enumConstant.getName();

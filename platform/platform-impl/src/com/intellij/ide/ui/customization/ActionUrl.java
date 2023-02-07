@@ -245,10 +245,9 @@ public final class ActionUrl implements JDOMExternalizable {
 
   @Override
   public boolean equals(Object object) {
-    if (!(object instanceof ActionUrl)) {
+    if (!(object instanceof ActionUrl url)) {
       return false;
     }
-    ActionUrl url = (ActionUrl)object;
     Object comp = myComponent instanceof Pair ? ((Pair<?, ?>)myComponent).first : myComponent;
     Object thatComp = url.myComponent instanceof Pair ? ((Pair<?, ?>)url.myComponent).first : url.myComponent;
     return Comparing.equal(comp, thatComp)

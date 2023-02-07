@@ -133,8 +133,7 @@ public final class CustomizationUtil {
       }
     }
     for (int i = 0; i < reorderedChildren.size(); i++) {
-      if (reorderedChildren.get(i) instanceof ActionGroup) {
-        final ActionGroup groupToCorrect = (ActionGroup)reorderedChildren.get(i);
+      if (reorderedChildren.get(i) instanceof ActionGroup groupToCorrect) {
         final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "", rootGroupName, false);
         reorderedChildren.set(i, correctedAction);
       }
@@ -248,9 +247,7 @@ public final class CustomizationUtil {
 
   @Nullable
   private static TreePath getTreePath(final int positionInPath, final List<String> path, final Object root) {
-    if (!(root instanceof DefaultMutableTreeNode)) return null;
-
-    final DefaultMutableTreeNode treeNode = ((DefaultMutableTreeNode)root);
+    if (!(root instanceof DefaultMutableTreeNode treeNode)) return null;
 
     final String pathElement;
     if (path.size() > positionInPath) {
@@ -379,8 +376,7 @@ public final class CustomizationUtil {
     else if (obj instanceof Separator) {
       text = "-------------";
     }
-    else if (obj instanceof QuickList) {
-      QuickList quickList = (QuickList)obj;
+    else if (obj instanceof QuickList quickList) {
       text = quickList.getDisplayName();
       if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
         description = quickList.getActionId();

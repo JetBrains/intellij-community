@@ -467,8 +467,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
         for (Proxy proxy : proxies) {
           if (isRealProxy(proxy)) {
             SocketAddress address = proxy.address();
-            if (address instanceof InetSocketAddress) {
-              InetSocketAddress inetSocketAddress = (InetSocketAddress)address;
+            if (address instanceof InetSocketAddress inetSocketAddress) {
               if (Proxy.Type.SOCKS.equals(proxy.type())) {
                 result.add(pair(JavaProxyProperty.SOCKS_HOST, inetSocketAddress.getHostString()));
                 result.add(pair(JavaProxyProperty.SOCKS_PORT, String.valueOf(inetSocketAddress.getPort())));

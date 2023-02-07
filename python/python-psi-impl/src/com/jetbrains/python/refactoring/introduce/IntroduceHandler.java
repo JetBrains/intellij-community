@@ -295,8 +295,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       return;
     }
 
-    if (singleElementSelection && element1 instanceof PyStringLiteralExpression) {
-      final PyStringLiteralExpression literal = (PyStringLiteralExpression)element1;
+    if (singleElementSelection && element1 instanceof PyStringLiteralExpression literal) {
       // Currently introduce for substrings of a multi-part string literals is not supported
       if (literal.getStringNodes().size() > 1) {
         showCannotPerformError(project, editor);

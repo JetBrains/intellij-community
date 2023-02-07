@@ -45,11 +45,10 @@ public final class GrHighlightUtil {
     PsiTreeUtil.processElements(scope, new PsiElementProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element) {
-        if (!(element instanceof GrReferenceExpression) || ((GrReferenceExpression)element).isQualified()) {
+        if (!(element instanceof GrReferenceExpression ref) || ((GrReferenceExpression)element).isQualified()) {
           return true;
         }
 
-        GrReferenceExpression ref = (GrReferenceExpression)element;
         if (isWriteAccess(ref)) {
           PsiElement target = ref.resolve();
           if (target instanceof GrVariable && ((GrVariable)target).getInitializerGroovy() != null ||
@@ -96,9 +95,8 @@ public final class GrHighlightUtil {
     }
 
     final PsiType type = qualifier.getType();
-    if (type instanceof PsiClassType &&
+    if (type instanceof PsiClassType classType &&
         !(qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof GroovyScriptClass)) {
-      final PsiClassType classType = (PsiClassType)type;
       final PsiClass psiClass = classType.resolve();
       if (psiClass instanceof GroovyScriptClass) {
         return true;

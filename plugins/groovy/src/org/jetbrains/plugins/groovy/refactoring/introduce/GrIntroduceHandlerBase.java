@@ -549,8 +549,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @Nullable
   public static GrVariable findVariable(@NotNull GrStatement statement) {
-    if (!(statement instanceof GrVariableDeclaration)) return null;
-    final GrVariableDeclaration variableDeclaration = (GrVariableDeclaration)statement;
+    if (!(statement instanceof GrVariableDeclaration variableDeclaration)) return null;
     final GrVariable[] variables = variableDeclaration.getVariables();
 
     GrVariable var = null;
@@ -572,9 +571,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @Nullable
   public static GrExpression findExpression(GrStatement selectedExpr) {
-    if (!(selectedExpr instanceof GrExpression)) return null;
+    if (!(selectedExpr instanceof GrExpression selected)) return null;
 
-    GrExpression selected = (GrExpression)selectedExpr;
     while (selected instanceof GrParenthesizedExpression) selected = ((GrParenthesizedExpression)selected).getOperand();
 
     return selected;
@@ -696,8 +694,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @Nullable
   public static GrVariable resolveLocalVar(@Nullable GrExpression expression) {
-    if (expression instanceof GrReferenceExpression) {
-      final GrReferenceExpression ref = (GrReferenceExpression)expression;
+    if (expression instanceof GrReferenceExpression ref) {
 
       final PsiElement resolved = ref.resolve();
       if (PsiUtil.isLocalVariable(resolved)) {

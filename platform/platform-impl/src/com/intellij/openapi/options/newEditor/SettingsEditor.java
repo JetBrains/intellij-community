@@ -291,8 +291,7 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
     });
 
     for (ConfigurableGroup group : groups) {
-      if (group instanceof MutableConfigurableGroup) {
-        MutableConfigurableGroup mutable = (MutableConfigurableGroup)group;
+      if (group instanceof MutableConfigurableGroup mutable) {
         Disposer.register(this, mutable);
         mutable.addListener(createReloadListener(groups));
       }

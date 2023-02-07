@@ -112,8 +112,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
       }
       return qualifiedRef;
     }
-    else if (element instanceof PsiMember) {
-      PsiMember member = (PsiMember)element;
+    else if (element instanceof PsiMember member) {
       final PsiClass psiClass = member.getContainingClass();
       if (psiClass == null) throw new IncorrectOperationException();
 

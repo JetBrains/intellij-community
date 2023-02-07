@@ -105,9 +105,8 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
     private static KotlinPsiElementMemberChooserObject[] collectPropertyMembers(PsiClass container) {
         var result = new ArrayList<KotlinPsiElementMemberChooserObject>();
 
-        if (container instanceof KtLightClassForFacade) {
-            var facadeClass = (KtLightClassForFacade) container;
-            for (var file : facadeClass.getFiles()) {
+        if (container instanceof KtLightClassForFacade facadeClass) {
+          for (var file : facadeClass.getFiles()) {
                 for (var declaration : file.getDeclarations()) {
                     ProgressManager.checkCanceled();
                     if (declaration instanceof KtProperty) {

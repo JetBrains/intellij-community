@@ -139,8 +139,7 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
     }
 
     final SettingsEditor<ExternalSystemRunConfiguration> editor = super.getConfigurationEditor();
-    if (editor instanceof SettingsEditorGroup) {
-      final SettingsEditorGroup group = (SettingsEditorGroup)editor;
+    if (editor instanceof SettingsEditorGroup group) {
       //noinspection unchecked
       group.addEditor(GradleBundle.message("gradle.settings.title"), new GradleDebugSettingsEditor());
     }

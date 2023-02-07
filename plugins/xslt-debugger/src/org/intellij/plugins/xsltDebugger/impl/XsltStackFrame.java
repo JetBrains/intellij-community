@@ -142,8 +142,7 @@ public class XsltStackFrame extends XStackFrame {
 
     @Override
     public void computeChildren(@NotNull XCompositeNode node) {
-      if (myVariable.getValue().getValue() instanceof Value.NodeSet) {
-        final Value.NodeSet set = (Value.NodeSet)myVariable.getValue().getValue();
+      if (myVariable.getValue().getValue() instanceof Value.NodeSet set) {
         final XValueChildrenList list = new XValueChildrenList();
         for (final Value.Node n : set.getNodes()) {
           list.add(n.myXPath, new NodeValue(n));

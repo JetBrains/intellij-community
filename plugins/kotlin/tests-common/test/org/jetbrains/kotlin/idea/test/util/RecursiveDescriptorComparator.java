@@ -97,9 +97,8 @@ public class RecursiveDescriptorComparator {
                 child.pushIndent();
             }
 
-            if (descriptor instanceof ClassDescriptor) {
-                ClassDescriptor klass = (ClassDescriptor) descriptor;
-                appendSubDescriptors(descriptor, module, klass.getDefaultType().getMemberScope(), klass.getConstructors(), child);
+            if (descriptor instanceof ClassDescriptor klass) {
+              appendSubDescriptors(descriptor, module, klass.getDefaultType().getMemberScope(), klass.getConstructors(), child);
                 MemberScope staticScope = klass.getStaticScope();
                 if (!DescriptorUtils.getAllDescriptors(staticScope).isEmpty()) {
                     child.println();
@@ -143,11 +142,10 @@ public class RecursiveDescriptorComparator {
                 printer.printWithNoIndent(StringsKt.trimStart(content, Printer.LINE_SEPARATOR.toCharArray()));
             }
         }
-        else if (conf.checkPropertyAccessors && descriptor instanceof PropertyDescriptor) {
+        else if (conf.checkPropertyAccessors && descriptor instanceof PropertyDescriptor propertyDescriptor) {
             printer.printlnWithNoIndent();
             printer.pushIndent();
-            PropertyDescriptor propertyDescriptor = (PropertyDescriptor) descriptor;
-            PropertyGetterDescriptor getter = propertyDescriptor.getGetter();
+          PropertyGetterDescriptor getter = propertyDescriptor.getGetter();
             if (getter != null) {
                 printer.println(conf.renderer.render(getter));
             }

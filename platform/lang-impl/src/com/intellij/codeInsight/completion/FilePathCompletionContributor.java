@@ -271,8 +271,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
       return null;
     }
 
-    if (original instanceof PsiMultiReference) {
-      final PsiMultiReference multiReference = (PsiMultiReference)original;
+    if (original instanceof PsiMultiReference multiReference) {
       for (PsiReference reference : multiReference.getReferences()) {
         if (reference instanceof FileReference) {
           if (((FileReference)reference).getFileReferenceSet().supportsExtendedCompletion()) {

@@ -90,10 +90,9 @@ public final class PyCythonExtensionWarning {
       return true;
     }
     final RunConfiguration configuration = selectedConfiguration.getConfiguration();
-    if (!(configuration instanceof AbstractPythonRunConfiguration)) {
+    if (!(configuration instanceof AbstractPythonRunConfiguration runConfiguration)) {
       return true;
     }
-    AbstractPythonRunConfiguration runConfiguration = (AbstractPythonRunConfiguration)configuration;
     // Temporarily disable notification for Remote interpreters
     return PythonSdkUtil.isRemote(runConfiguration.getSdk());
   }
@@ -110,10 +109,9 @@ public final class PyCythonExtensionWarning {
         throw new ExecutionException(PyBundle.message("debugger.cython.python.run.configuration.should.be.selected"));
       }
       final RunConfiguration configuration = selectedConfiguration.getConfiguration();
-      if (!(configuration instanceof AbstractPythonRunConfiguration)) {
+      if (!(configuration instanceof AbstractPythonRunConfiguration runConfiguration)) {
         throw new ExecutionException(PyBundle.message("debugger.cython.python.run.configuration.should.be.selected"));
       }
-      AbstractPythonRunConfiguration runConfiguration = (AbstractPythonRunConfiguration)configuration;
       final String interpreterPath = runConfiguration.getInterpreterPath();
       final String helpersPath = PythonHelpersLocator.getHelpersRoot().getPath();
 

@@ -119,9 +119,8 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     if (scriptFile == null) return null;
 
     final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(scriptFile);
-    if (!(psiFile instanceof GroovyFile)) return null;
+    if (!(psiFile instanceof GroovyFile groovyFile)) return null;
 
-    final GroovyFile groovyFile = (GroovyFile)psiFile;
     if (groovyFile.isScript()) {
       return GroovyScriptUtil.getScriptType(groovyFile).getRunner();
     }
@@ -236,8 +235,7 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
       return new RefactoringElementAdapter() {
         @Override
         protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
-          if (newElement instanceof GroovyFile) {
-            GroovyFile file = (GroovyFile)newElement;
+          if (newElement instanceof GroovyFile file) {
             setScriptPath(ScriptFileUtil.getScriptFilePath(file.getVirtualFile()));
           }
         }

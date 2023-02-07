@@ -41,9 +41,8 @@ public final class KotlinDescriptorIconProvider {
     }
 
     private static Icon getVisibilityIcon(@NotNull DeclarationDescriptor descriptor) {
-        if (descriptor instanceof DeclarationDescriptorWithVisibility) {
-            DeclarationDescriptorWithVisibility descriptorWithVisibility = (DeclarationDescriptorWithVisibility) descriptor;
-            DescriptorVisibility visibility = descriptorWithVisibility.getVisibility().normalize();
+        if (descriptor instanceof DeclarationDescriptorWithVisibility descriptorWithVisibility) {
+          DescriptorVisibility visibility = descriptorWithVisibility.getVisibility().normalize();
             if (visibility == DescriptorVisibilities.PUBLIC) {
                 return PlatformIcons.PUBLIC_ICON;
             }
@@ -77,9 +76,8 @@ public final class KotlinDescriptorIconProvider {
         if (descriptor instanceof PackageFragmentDescriptor || descriptor instanceof PackageViewDescriptor) {
             return AllIcons.Nodes.Package;
         }
-        if (descriptor instanceof FunctionDescriptor) {
-            FunctionDescriptor functionDescriptor = (FunctionDescriptor) descriptor;
-            if (functionDescriptor.getExtensionReceiverParameter() != null) {
+        if (descriptor instanceof FunctionDescriptor functionDescriptor) {
+          if (functionDescriptor.getExtensionReceiverParameter() != null) {
                 return Modality.ABSTRACT == getModalitySafe(functionDescriptor)
                        ? KotlinIcons.ABSTRACT_EXTENSION_FUNCTION
                        : KotlinIcons.EXTENSION_FUNCTION;
@@ -94,9 +92,8 @@ public final class KotlinDescriptorIconProvider {
                 return KotlinIcons.FUNCTION;
             }
         }
-        if (descriptor instanceof ClassDescriptor) {
-            ClassDescriptor classDescriptor = (ClassDescriptor) descriptor;
-            return switch (classDescriptor.getKind()) {
+        if (descriptor instanceof ClassDescriptor classDescriptor) {
+          return switch (classDescriptor.getKind()) {
                 case INTERFACE -> KotlinIcons.INTERFACE;
                 case ENUM_CLASS, ENUM_ENTRY -> KotlinIcons.ENUM;
                 case ANNOTATION_CLASS -> KotlinIcons.ANNOTATION;

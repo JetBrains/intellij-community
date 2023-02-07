@@ -254,11 +254,10 @@ public class VarType implements Type {  // TODO: optimize switch
       return true;
     }
 
-    if (!(o instanceof VarType)) {
+    if (!(o instanceof VarType vt)) {
       return false;
     }
 
-    VarType vt = (VarType)o;
     return getType() == vt.getType() && getArrayDim() == vt.getArrayDim() && Objects.equals(getValue(), vt.getValue());
   }
 

@@ -81,8 +81,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
                                         int row,
                                         boolean hasFocus) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-        if (node.getUserObject() instanceof Class) {
-          Class cls = (Class)node.getUserObject();
+        if (node.getUserObject() instanceof Class cls) {
           if (cls != null) {
             @NlsSafe String name = cls.getName();
             append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);

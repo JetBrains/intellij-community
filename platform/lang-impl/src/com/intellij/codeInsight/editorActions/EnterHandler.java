@@ -290,8 +290,7 @@ public class EnterHandler extends BaseEnterHandler {
   }
 
   private static boolean isDocComment(final PsiElement element, final CodeDocumentationAwareCommenter commenter) {
-    if (!(element instanceof PsiComment)) return false;
-    PsiComment comment = (PsiComment) element;
+    if (!(element instanceof PsiComment comment)) return false;
     return commenter.isDocumentationComment(comment);
   }
 

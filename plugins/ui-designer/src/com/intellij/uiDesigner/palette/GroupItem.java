@@ -140,8 +140,7 @@ public final class GroupItem implements Cloneable, PaletteGroup {
 
   @Override
   public void handleDrop(Project project, PaletteItem droppedItem, int index) {
-    if (droppedItem instanceof ComponentItem) {
-      ComponentItem componentItem = (ComponentItem) droppedItem;
+    if (droppedItem instanceof ComponentItem componentItem) {
       Palette palette = Palette.getInstance(project);
       int oldIndex = myItems.indexOf(componentItem);
       if (oldIndex >= 0) {

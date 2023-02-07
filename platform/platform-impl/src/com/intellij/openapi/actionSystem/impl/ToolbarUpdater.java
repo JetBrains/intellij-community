@@ -154,9 +154,8 @@ public abstract class ToolbarUpdater implements Activatable {
 
     @Override
     public boolean equals(Object obj) {
-      if (!(obj instanceof MyUpdateRunnable)) return false;
+      if (!(obj instanceof MyUpdateRunnable that)) return false;
 
-      MyUpdateRunnable that = (MyUpdateRunnable)obj;
       if (myHash != that.myHash) return false;
 
       ToolbarUpdater updater1 = myUpdaterRef.get();

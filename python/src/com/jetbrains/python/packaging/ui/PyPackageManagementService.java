@@ -334,8 +334,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   private static PyPackageInstallationErrorDescription createDescription(@NotNull ExecutionException e,
                                                                          @Nullable Sdk sdk,
                                                                          @Nullable String packageName) {
-    if (e instanceof PyExecutionException) {
-      final PyExecutionException ee = (PyExecutionException)e;
+    if (e instanceof PyExecutionException ee) {
       final String stdout = ee.getStdout();
       final String stdoutCause = findErrorCause(stdout);
       final String stderrCause = findErrorCause(ee.getStderr());

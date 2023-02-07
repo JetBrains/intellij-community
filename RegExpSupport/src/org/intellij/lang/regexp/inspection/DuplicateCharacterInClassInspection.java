@@ -41,8 +41,7 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
     }
 
     private void checkForDuplicates(RegExpClassElement element, Set<Object> seen) {
-      if (element instanceof RegExpChar) {
-        final RegExpChar regExpChar = (RegExpChar)element;
+      if (element instanceof RegExpChar regExpChar) {
         final int value = regExpChar.getValue();
         if (value != -1 && !seen.add(value)) {
           myHolder.registerProblem(regExpChar,
@@ -50,8 +49,7 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
                                    new DuplicateCharacterInClassFix(regExpChar));
         }
       }
-      else if (element instanceof RegExpSimpleClass) {
-        final RegExpSimpleClass regExpSimpleClass = (RegExpSimpleClass)element;
+      else if (element instanceof RegExpSimpleClass regExpSimpleClass) {
         final RegExpSimpleClass.Kind kind = regExpSimpleClass.getKind();
         if (!seen.add(kind)) {
           final String text = regExpSimpleClass.getText();

@@ -23,8 +23,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
       return null;
     }
     for (PropertyChangeListener listener : component.getPropertyChangeListeners()) {
-      if (listener instanceof MnemonicWrapper) {
-        MnemonicWrapper<?> wrapper = (MnemonicWrapper<?>)listener;
+      if (listener instanceof MnemonicWrapper<?> wrapper) {
         wrapper.run(); // update mnemonics immediately
         return wrapper;
       }

@@ -120,8 +120,7 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
     @Nullable
     private static PsiArrayAccessExpression getLhsArrayAccessExpression(PsiForStatement forStatement) {
       PsiStatement body = forStatement.getBody();
-      while (body instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
+      while (body instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
         final PsiStatement[] statements = codeBlock.getStatements();
         if (statements.length == 2) {
@@ -134,15 +133,13 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
           return null;
         }
       }
-      if (!(body instanceof PsiExpressionStatement)) {
+      if (!(body instanceof PsiExpressionStatement expressionStatement)) {
         return null;
       }
-      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)body;
       final PsiExpression expression = expressionStatement.getExpression();
-      if (!(expression instanceof PsiAssignmentExpression)) {
+      if (!(expression instanceof PsiAssignmentExpression assignmentExpression)) {
         return null;
       }
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
       final PsiExpression lhs = assignmentExpression.getLExpression();
       final PsiExpression deparenthesizedExpression = PsiUtil.skipParenthesizedExprDown(lhs);
       if (!(deparenthesizedExpression instanceof PsiArrayAccessExpression)) {
@@ -154,8 +151,7 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
     @Nullable
     private static PsiArrayAccessExpression getRhsArrayAccessExpression(PsiForStatement forStatement) {
       PsiStatement body = forStatement.getBody();
-      while (body instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
+      while (body instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
         final PsiStatement[] statements = codeBlock.getStatements();
         if (statements.length == 1 || statements.length == 2) {
@@ -166,26 +162,22 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
         }
       }
       final PsiExpression arrayAccessExpression;
-      if (body instanceof PsiDeclarationStatement) {
-        final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)body;
+      if (body instanceof PsiDeclarationStatement declarationStatement) {
         final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
         if (declaredElements.length != 1) {
           return null;
         }
         final PsiElement declaredElement = declaredElements[0];
-        if (!(declaredElement instanceof PsiVariable)) {
+        if (!(declaredElement instanceof PsiVariable variable)) {
           return null;
         }
-        final PsiVariable variable = (PsiVariable)declaredElement;
         arrayAccessExpression = variable.getInitializer();
       }
-      else if (body instanceof PsiExpressionStatement) {
-        final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)body;
+      else if (body instanceof PsiExpressionStatement expressionStatement) {
         final PsiExpression expression = expressionStatement.getExpression();
-        if (!(expression instanceof PsiAssignmentExpression)) {
+        if (!(expression instanceof PsiAssignmentExpression assignmentExpression)) {
           return null;
         }
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
         arrayAccessExpression = assignmentExpression.getRExpression();
       }
       else {
@@ -210,16 +202,14 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
         return buildExpressionText(max, plusOne, commentTracker);
       }
       final Object minConstant = ExpressionUtils.computeConstantExpression(min);
-      if (minConstant instanceof Number) {
-        final Number minNumber = (Number)minConstant;
+      if (minConstant instanceof Number minNumber) {
         final int minValue = plusOne ? minNumber.intValue() - 1 : minNumber.intValue();
         if (minValue == 0) {
           return buildExpressionText(max, false, commentTracker);
         }
         if (max instanceof PsiLiteralExpression) {
           final Object maxConstant = ExpressionUtils.computeConstantExpression(max);
-          if (maxConstant instanceof Number) {
-            final Number number = (Number)maxConstant;
+          if (maxConstant instanceof Number number) {
             return String.valueOf(number.intValue() - minValue);
           }
         }
@@ -259,8 +249,7 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
         }
         return buildExpressionText(initialValue, plusOne, commentTracker);
       }
-      else if (expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+      else if (expression instanceof PsiBinaryExpression binaryExpression) {
         final PsiExpression lhs = binaryExpression.getLOperand();
         final PsiExpression rhs = binaryExpression.getROperand();
         final String rhsText = buildOffsetText(rhs, variable, limitExpression, plusOne, commentTracker);
@@ -313,13 +302,11 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
     }
 
     private static boolean bodyIsArrayCopy(PsiStatement body, PsiVariable variable) {
-      if (body instanceof PsiExpressionStatement) {
-        final PsiExpressionStatement exp = (PsiExpressionStatement)body;
+      if (body instanceof PsiExpressionStatement exp) {
         final PsiExpression expression = exp.getExpression();
         return expressionIsArrayCopy(expression, variable);
       }
-      else if (body instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
+      else if (body instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
         final PsiStatement[] statements = codeBlock.getStatements();
         if (statements.length == 1) {
@@ -327,19 +314,17 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
         }
         else if (statements.length == 2) {
           final PsiStatement statement = statements[0];
-          if (!(statement instanceof PsiDeclarationStatement)) {
+          if (!(statement instanceof PsiDeclarationStatement declarationStatement)) {
             return false;
           }
-          final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;
           final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
           if (declaredElements.length != 1) {
             return false;
           }
           final PsiElement declaredElement = declaredElements[0];
-          if (!(declaredElement instanceof PsiVariable)) {
+          if (!(declaredElement instanceof PsiVariable localVariable)) {
             return false;
           }
-          final PsiVariable localVariable = (PsiVariable)declaredElement;
           final PsiExpression initializer = localVariable.getInitializer();
           if (!ExpressionUtils.isOffsetArrayAccess(initializer, variable)) {
             return false;
@@ -355,10 +340,9 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
       if (strippedExpression == null) {
         return false;
       }
-      if (!(strippedExpression instanceof PsiAssignmentExpression)) {
+      if (!(strippedExpression instanceof PsiAssignmentExpression assignment)) {
         return false;
       }
-      final PsiAssignmentExpression assignment = (PsiAssignmentExpression)strippedExpression;
       final IElementType tokenType = assignment.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.EQ)) {
         return false;

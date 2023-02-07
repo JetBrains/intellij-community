@@ -727,8 +727,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     refManager.iterate(new RefVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity elem) {
-        if (elem instanceof RefElement) {
-          RefElement refElement = (RefElement)elem;
+        if (elem instanceof RefElement refElement) {
           entitiesWithParents.put(refElement, refElement.getInReferences());
           if (refElement.getInReferences().isEmpty() || refElement.getInReferences().contains(refElement)) {
             roots.add(refElement);

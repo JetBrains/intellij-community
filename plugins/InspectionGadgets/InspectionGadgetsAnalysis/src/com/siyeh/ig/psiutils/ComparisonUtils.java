@@ -57,10 +57,9 @@ public final class ComparisonUtils {
   }
 
   public static boolean isComparison(@Nullable PsiExpression expression) {
-    if (!(expression instanceof PsiPolyadicExpression)) {
+    if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) {
       return false;
     }
-    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
     final IElementType tokenType = polyadicExpression.getOperationTokenType();
     return isComparisonOperation(tokenType);
   }
@@ -78,10 +77,9 @@ public final class ComparisonUtils {
    * @return true, when this is an expression of the form {@code a == b} or {@code a != b}, false otherwise.
    */
   public static boolean isEqualityComparison(@NotNull PsiExpression expression) {
-    if (!(expression instanceof PsiPolyadicExpression)) {
+    if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) {
       return false;
     }
-    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
     final IElementType tokenType = polyadicExpression.getOperationTokenType();
     return tokenType.equals(JavaTokenType.EQEQ) || tokenType.equals(JavaTokenType.NE);
   }

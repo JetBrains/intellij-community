@@ -759,8 +759,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       if (super.shouldBeShowing(value)) {
         return true;
       }
-      if (value instanceof FolderWrapper && mySpeedSearch.isHoldingFilter()) {
-        FolderWrapper folderWrapper = (FolderWrapper)value;
+      if (value instanceof FolderWrapper folderWrapper && mySpeedSearch.isHoldingFilter()) {
         for (RunnerAndConfigurationSettings configuration : folderWrapper.myConfigurations) {
           if (mySpeedSearch.shouldBeShowing(configuration.getName() + configuration.getConfiguration().getPresentableType()) ) {
             return true;

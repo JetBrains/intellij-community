@@ -210,8 +210,7 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
   }
 
   private static boolean isSingleService(ServiceViewItem item) {
-    if (item instanceof ServiceNode) {
-      ServiceNode node = (ServiceNode)item;
+    if (item instanceof ServiceNode node) {
       if (!node.isChildrenInitialized() || !node.isLoaded()) {
         return false;
       }

@@ -41,11 +41,10 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
 
   @Override
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
-    if (!(element instanceof Extension)) {
+    if (!(element instanceof Extension extension)) {
       return;
     }
 
-    Extension extension = (Extension)element;
     ExtensionPoint extensionPoint = extension.getExtensionPoint();
     if (extensionPoint == null ||
         !DomUtil.hasXml(extensionPoint.getBeanClass())) {

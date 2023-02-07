@@ -132,8 +132,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   @NotNull
   private IntentionPreviewInfo doPreview(@NotNull Project project, PsiElement element, @Nullable Editor editor) {
     PsiFile file = element.getContainingFile();
-    if (!(file instanceof XmlFile)) return IntentionPreviewInfo.EMPTY;
-    XmlFile xmlFile = (XmlFile)file;
+    if (!(file instanceof XmlFile xmlFile)) return IntentionPreviewInfo.EMPTY;
     List<String> namespaces = getNamespaces(element, xmlFile);
     String namespace = namespaces.isEmpty() ? "" : namespaces.get(0);
     new MyStringToAttributeProcessor(element, project, editor, xmlFile)
@@ -357,8 +356,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
     @Override
     public boolean isAcceptableMetaData(final PsiMetaData metaData, final String url) {
-      if (metaData instanceof XmlNSDescriptorImpl) {
-        final XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)metaData;
+      if (metaData instanceof XmlNSDescriptorImpl nsDescriptor) {
 
         final XmlElementDescriptor descriptor = nsDescriptor.getElementDescriptor(searchFor(), url);
         return descriptor != null && !(descriptor instanceof AnyXmlElementDescriptor);

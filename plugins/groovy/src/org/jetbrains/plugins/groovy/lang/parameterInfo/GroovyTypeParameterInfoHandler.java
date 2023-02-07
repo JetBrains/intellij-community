@@ -68,8 +68,7 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
     final GrTypeArgumentList parameterList = ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), GrTypeArgumentList.class);
 
     if (parameterList != null) {
-      if (!(parameterList.getParent() instanceof GrCodeReferenceElement)) return null;
-      final GrCodeReferenceElement ref = ((GrCodeReferenceElement)parameterList.getParent());
+      if (!(parameterList.getParent() instanceof GrCodeReferenceElement ref)) return null;
 
       final PsiElement resolved = ref.resolve();
       if (!(resolved instanceof PsiTypeParameterListOwner)) return null;

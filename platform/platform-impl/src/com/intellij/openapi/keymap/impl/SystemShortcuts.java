@@ -156,10 +156,9 @@ public final class SystemShortcuts {
     Map<KeyboardShortcut, String> result = null;
     final Shortcut[] actionShortcuts = computeOnEdt(() -> keymap.getShortcuts(actionId));
     for (Shortcut sc : actionShortcuts) {
-      if (!(sc instanceof KeyboardShortcut)) {
+      if (!(sc instanceof KeyboardShortcut ksc)) {
         continue;
       }
-      final KeyboardShortcut ksc = (KeyboardShortcut)sc;
       for (@NotNull KeyStroke sks : myKeyStroke2SysShortcut.keySet()) {
         if (ksc.getFirstKeyStroke().equals(sks) || sks.equals(ksc.getSecondKeyStroke())) {
           if (result == null) result = new HashMap<>();

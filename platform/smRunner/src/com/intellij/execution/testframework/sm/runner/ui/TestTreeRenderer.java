@@ -45,12 +45,10 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
     myDurationOffset = 0;
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
     final Object userObj = node.getUserObject();
-    if (userObj instanceof SMTRunnerNodeDescriptor) {
-      final SMTRunnerNodeDescriptor desc = (SMTRunnerNodeDescriptor)userObj;
+    if (userObj instanceof SMTRunnerNodeDescriptor desc) {
       final SMTestProxy testProxy = desc.getElement();
 
-      if (testProxy instanceof SMTestProxy.SMRootTestProxy) {
-        SMTestProxy.SMRootTestProxy rootTestProxy = (SMTestProxy.SMRootTestProxy) testProxy;
+      if (testProxy instanceof SMTestProxy.SMRootTestProxy rootTestProxy) {
         if (rootTestProxy.isLeaf()) {
           TestsPresentationUtil.formatRootNodeWithoutChildren(rootTestProxy, this);
         } else {

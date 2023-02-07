@@ -120,8 +120,7 @@ public class ScriptSupport {
       final ErrorCollector errorCollector = e.getErrorCollector();
       final List<? extends Message> errors = errorCollector.getErrors();
       for (Message error : errors) {
-        if (error instanceof SyntaxErrorMessage) {
-          final SyntaxErrorMessage syntaxError = (SyntaxErrorMessage)error;
+        if (error instanceof SyntaxErrorMessage syntaxError) {
           final SyntaxException cause = syntaxError.getCause();
           throw new MalformedPatternException(cause.getLocalizedMessage());
         }

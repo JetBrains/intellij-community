@@ -251,8 +251,7 @@ public class PyTypeModelBuilder {
     myVisited.put(type, null); //mark as evaluating
 
     TypeModel result = null;
-    if (type instanceof PyTypedDictType) {
-      PyTypedDictType typedDictType = (PyTypedDictType)type;
+    if (type instanceof PyTypedDictType typedDictType) {
       if (typedDictType.isInferred()) {
         return build(new PyCollectionTypeImpl(typedDictType.getPyClass(), false,
                                               typedDictType.getElementTypes()), allowUnions);
@@ -274,8 +273,7 @@ public class PyTypeModelBuilder {
     else if (type instanceof PyNamedTupleType) {
       result = NamedType.nameOrAny(type);
     }
-    else if (type instanceof PyTupleType) {
-      final PyTupleType tupleType = (PyTupleType)type;
+    else if (type instanceof PyTupleType tupleType) {
 
       final List<PyType> elementTypes = tupleType.isHomogeneous()
                                         ? Collections.singletonList(tupleType.getIteratedItemType())
@@ -285,8 +283,7 @@ public class PyTypeModelBuilder {
       final List<TypeModel> elementModels = ContainerUtil.map(elementTypes, elementType -> build(elementType, true));
       result = new TupleType(elementModels, tupleType.isHomogeneous(), useTypingAlias);
     }
-    else if (type instanceof PyCollectionType) {
-      final PyCollectionType asCollection = (PyCollectionType)type;
+    else if (type instanceof PyCollectionType asCollection) {
       final List<TypeModel> elementModels = new ArrayList<>();
       for (PyType elementType : asCollection.getElementTypes()) {
         elementModels.add(build(elementType, true));
@@ -297,8 +294,7 @@ public class PyTypeModelBuilder {
         result = new CollectionOf(collectionType, elementModels, useTypingAlias);
       }
     }
-    else if (type instanceof PyUnionType && allowUnions) {
-      final PyUnionType unionType = (PyUnionType)type;
+    else if (type instanceof PyUnionType unionType && allowUnions) {
       final Collection<PyType> unionMembers = unionType.getMembers();
       final Pair<List<PyLiteralType>, List<PyType>> literalsAndOthers = extractLiterals(unionType);
       final Ref<PyType> optionalType = getOptionalType(unionType);

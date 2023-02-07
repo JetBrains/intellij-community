@@ -152,8 +152,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     while (!breakCondition(current)) {
       final PsiElement position = current;
       current = current.getParent();
-      if (current instanceof YAMLSequence) {
-        YAMLSequence array = (YAMLSequence)current;
+      if (current instanceof YAMLSequence array) {
         final List<YAMLSequenceItem> expressions = array.getItems();
         int idx = -1;
         for (int i = 0; i < expressions.size(); i++) {

@@ -37,8 +37,7 @@ public class AlignmentCyclesDetector {
 
     @Override
     public boolean equals(Object obj) {
-      if (obj instanceof OffsetPair) {
-        OffsetPair other = (OffsetPair)obj;
+      if (obj instanceof OffsetPair other) {
         return other.first == first && other.second == second;
       }
       return false;

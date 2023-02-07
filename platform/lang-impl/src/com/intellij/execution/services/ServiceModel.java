@@ -348,8 +348,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
 
   private void serviceStructureChanged(ServiceEvent e) {
     ServiceViewItem item = findItem(e.target, e.contributorClass);
-    if (item instanceof ServiceNode) {
-      ServiceNode node = (ServiceNode)item;
+    if (item instanceof ServiceNode node) {
       updateServiceViewDescriptor(node, e.target);
       node.reloadChildren();
     }

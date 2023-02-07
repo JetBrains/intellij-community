@@ -23,9 +23,8 @@ public final class LargeFileRegexSearchNotificationProvider implements EditorNot
   public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                  @NotNull VirtualFile file) {
     return fileEditor -> {
-      if (!(fileEditor instanceof LargeFileEditor)) return null;
+      if (!(fileEditor instanceof LargeFileEditor largeFileEditor)) return null;
 
-      LargeFileEditor largeFileEditor = (LargeFileEditor)fileEditor;
       Editor editor = largeFileEditor.getEditor();
 
       if (editor.getUserData(HIDDEN_KEY) != null) return null;

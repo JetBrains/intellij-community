@@ -65,8 +65,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
   @Override
   public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
     writeGridConstraints(writer, child);
-    if (child.getCustomLayoutConstraints() instanceof GridBagConstraints) {
-      GridBagConstraints gbc = (GridBagConstraints)child.getCustomLayoutConstraints();
+    if (child.getCustomLayoutConstraints() instanceof GridBagConstraints gbc) {
       writer.startElement(UIFormXmlConstants.ELEMENT_GRIDBAG);
       try {
         if (!gbc.insets.equals(new Insets(0, 0, 0, 0))) {
@@ -442,8 +441,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
 
     @Override
     public Insets getValue(final RadComponent component) {
-      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
-        final GridBagConstraints gbc = (GridBagConstraints)component.getCustomLayoutConstraints();
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints gbc) {
         return gbc.insets;
       }
       return new Insets(0, 0, 0, 0);
@@ -451,8 +449,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
 
     @Override
     protected void setValueImpl(final RadComponent component, final Insets value) throws Exception {
-      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
-        final GridBagConstraints cellConstraints = (GridBagConstraints)component.getCustomLayoutConstraints();
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints cellConstraints) {
         cellConstraints.insets = value;
 
         GridBagLayout layout = (GridBagLayout)component.getParent().getLayout();
@@ -485,8 +482,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
 
     @Override
     public Double getValue(final RadComponent component) {
-      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
-        GridBagConstraints gbc = (GridBagConstraints)component.getCustomLayoutConstraints();
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints gbc) {
         return myIsWeightX ? gbc.weightx : gbc.weighty;
       }
       return 0.0;
@@ -494,8 +490,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
 
     @Override
     protected void setValueImpl(final RadComponent component, final Double value) throws Exception {
-      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
-        GridBagConstraints gbc = (GridBagConstraints)component.getCustomLayoutConstraints();
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints gbc) {
         if (myIsWeightX) {
           gbc.weightx = value.doubleValue();
         }
@@ -544,8 +539,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
 
     @Override
     public Integer getValue(final RadComponent component) {
-      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
-        GridBagConstraints gbc = (GridBagConstraints)component.getCustomLayoutConstraints();
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints gbc) {
         return myIsIpadX ? gbc.ipadx : gbc.ipady;
       }
       return 0;
@@ -553,8 +547,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
 
     @Override
     protected void setValueImpl(final RadComponent component, final Integer value) throws Exception {
-      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
-        GridBagConstraints gbc = (GridBagConstraints)component.getCustomLayoutConstraints();
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints gbc) {
         if (myIsIpadX) {
           gbc.ipadx = value.intValue();
         }

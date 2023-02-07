@@ -209,9 +209,8 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
   @Override
   public boolean equals(final Object o) {
     if (!super.equals(o)) return false;
-    if (!(o instanceof PivotalTrackerRepository)) return false;
+    if (!(o instanceof PivotalTrackerRepository that)) return false;
 
-    final PivotalTrackerRepository that = (PivotalTrackerRepository)o;
     if (getProjectId() != null ? !getProjectId().equals(that.getProjectId()) : that.getProjectId() != null) return false;
     return true;
   }

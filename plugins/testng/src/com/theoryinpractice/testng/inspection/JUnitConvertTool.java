@@ -218,8 +218,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
         @Override
         public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
           PsiExpression expression = statement.getExpression();
-          if (expression instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
+          if (expression instanceof PsiMethodCallExpression methodCall) {
             if (methodCall.getArgumentList().getExpressionCount() == 1) {
               PsiMethod resolved = methodCall.resolveMethod();
               if (resolved != null && "junit.framework.TestCase".equals(resolved.getContainingClass().getQualifiedName()) &&

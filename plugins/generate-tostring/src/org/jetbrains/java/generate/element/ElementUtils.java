@@ -42,9 +42,8 @@ public final class ElementUtils {
         List<FieldElement> fieldElementList = new ArrayList<>();
 
         for (PsiMember member : members) {
-            if (member instanceof PsiField) {
-                PsiField field = (PsiField) member;
-                FieldElement fe = ElementFactory.newFieldElement(field, useAccessors);
+            if (member instanceof PsiField field) {
+              FieldElement fe = ElementFactory.newFieldElement(field, useAccessors);
                 if (selectedNotNullMembers.contains(member)) {
                     fe.setNotNull(true);
                 }
@@ -65,9 +64,8 @@ public final class ElementUtils {
         List<MethodElement> methodElementList = new ArrayList<>();
 
         for (PsiMember member : members) {
-            if (member instanceof PsiMethod) {
-                PsiMethod method = (PsiMethod) member;
-                MethodElement me = ElementFactory.newMethodElement(method);
+            if (member instanceof PsiMethod method) {
+              MethodElement me = ElementFactory.newMethodElement(method);
                 methodElementList.add(me);
             }
         }

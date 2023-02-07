@@ -64,8 +64,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
       return;
     }
     ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
-    if (renderer instanceof TrafficLightRenderer) {
-      TrafficLightRenderer tlr = (TrafficLightRenderer) renderer;
+    if (renderer instanceof TrafficLightRenderer tlr) {
       EditorMarkupModelImpl markupModelImpl = (EditorMarkupModelImpl) editorMarkupModel;
       tlr.refresh(markupModelImpl);
       markupModelImpl.repaintTrafficLightIcon();

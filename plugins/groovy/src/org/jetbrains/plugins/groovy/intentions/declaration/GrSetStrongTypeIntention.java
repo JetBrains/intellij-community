@@ -193,8 +193,7 @@ public class GrSetStrongTypeIntention extends Intention {
       int nameElementOffset;
 
       final PsiClassType typeToUse = TypesUtil.createType("Abc", parent);
-      if (elementToBuildTemplateOn instanceof GrVariableDeclaration) {
-        GrVariableDeclaration decl = (GrVariableDeclaration)elementToBuildTemplateOn;
+      if (elementToBuildTemplateOn instanceof GrVariableDeclaration decl) {
         decl.setType(typeToUse);
         nameElementOffset = decl.getModifierList().getTextRange().getEndOffset() - elementToBuildTemplateOn.getTextRange().getStartOffset();
       }

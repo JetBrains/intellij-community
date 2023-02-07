@@ -90,9 +90,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
-    if (!(o instanceof JiraRepository)) return false;
-
-    JiraRepository repository = (JiraRepository)o;
+    if (!(o instanceof JiraRepository repository)) return false;
 
     if (!Objects.equals(mySearchQuery, repository.getSearchQuery())) return false;
     if (!Objects.equals(myJiraVersion, repository.getJiraVersion())) return false;

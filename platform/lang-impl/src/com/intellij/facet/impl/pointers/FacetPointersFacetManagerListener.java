@@ -16,8 +16,7 @@ public class FacetPointersFacetManagerListener implements FacetManagerListener {
   @Override
   public void facetAdded(@NotNull Facet facet) {
     FacetPointersManager manager = FacetPointersManager.getInstance(myProject);
-    if (manager instanceof FacetPointersManagerImpl) {
-      FacetPointersManagerImpl managerImpl = (FacetPointersManagerImpl)manager;
+    if (manager instanceof FacetPointersManagerImpl managerImpl) {
       managerImpl.refreshPointers();
     }
   }
@@ -25,8 +24,7 @@ public class FacetPointersFacetManagerListener implements FacetManagerListener {
   @Override
   public void beforeFacetRenamed(@NotNull Facet facet) {
     FacetPointersManager manager = FacetPointersManager.getInstance(myProject);
-    if (manager instanceof FacetPointersManagerImpl) {
-      FacetPointersManagerImpl managerImpl = (FacetPointersManagerImpl)manager;
+    if (manager instanceof FacetPointersManagerImpl managerImpl) {
       final FacetPointerImpl pointer = managerImpl.get(FacetPointersManager.constructId(facet));
       if (pointer != null) {
         pointer.refresh();
@@ -37,8 +35,7 @@ public class FacetPointersFacetManagerListener implements FacetManagerListener {
   @Override
   public void facetRenamed(@NotNull final Facet facet, @NotNull final String oldName) {
     FacetPointersManager manager = FacetPointersManager.getInstance(myProject);
-    if (manager instanceof FacetPointersManagerImpl) {
-      FacetPointersManagerImpl managerImpl = (FacetPointersManagerImpl)manager;
+    if (manager instanceof FacetPointersManagerImpl managerImpl) {
       managerImpl.refreshPointers();
     }
   }

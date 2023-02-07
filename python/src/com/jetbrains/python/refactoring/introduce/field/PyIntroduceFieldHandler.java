@@ -125,8 +125,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
       super.visitPyReferenceExpression(node);
       final PsiElement result = node.getReference().resolve();
       if (result != null && PsiTreeUtil.getParentOfType(result, ScopeOwner.class) == myScope) {
-        if (result instanceof PyParameter && myScope instanceof PyFunction) {
-          final PyFunction function = (PyFunction)myScope;
+        if (result instanceof PyParameter && myScope instanceof PyFunction function) {
           final PyParameter[] parameters = function.getParameterList().getParameters();
           if (parameters.length > 0 && result == parameters[0]) {
             final PyFunction.Modifier modifier = function.getModifier();
@@ -224,9 +223,8 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   }
 
   private static boolean isAssignedLocalVariable(PsiElement element) {
-    if (element instanceof PyTargetExpression && element.getParent() instanceof PyAssignmentStatement &&
+    if (element instanceof PyTargetExpression && element.getParent() instanceof PyAssignmentStatement stmt &&
         PsiTreeUtil.getParentOfType(element, PyFunction.class) != null) {
-      PyAssignmentStatement stmt = (PyAssignmentStatement) element.getParent();
       if (stmt.getTargets().length == 1) {
         return true;
       }

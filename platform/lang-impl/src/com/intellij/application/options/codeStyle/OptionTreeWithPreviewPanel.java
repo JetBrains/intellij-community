@@ -260,8 +260,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       return;
     }
     Object o = treePath.getLastPathComponent();
-    if (o instanceof MyToggleTreeNode) {
-      MyToggleTreeNode node = (MyToggleTreeNode)o;
+    if (o instanceof MyToggleTreeNode node) {
       if (!node.isEnabled()) return;
       node.setSelected(!node.isSelected());
       int row = myOptionsTree.getRowForPath(treePath);
@@ -431,8 +430,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
                                                   boolean leaf, int row, boolean hasFocus) {
       Color background = RenderingUtil.getBackground(tree, isSelected);
       Color foreground = RenderingUtil.getForeground(tree, isSelected);
-      if (value instanceof MyToggleTreeNode) {
-        MyToggleTreeNode treeNode = (MyToggleTreeNode)value;
+      if (value instanceof MyToggleTreeNode treeNode) {
 
         JToggleButton button = myCheckBox;
         button.setSelected(treeNode.isSelected);

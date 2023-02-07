@@ -162,8 +162,7 @@ public class SubtractionInCompareToInspection extends BaseInspection {
 
     private boolean isSafeOperand(PsiExpression operand) {
       operand = PsiUtil.skipParenthesizedExprDown(operand);
-      if (operand instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
+      if (operand instanceof PsiMethodCallExpression methodCallExpression) {
         return methodMatcher.matches(methodCallExpression);
       }
       return ExpressionUtils.getArrayFromLengthExpression(operand) != null;

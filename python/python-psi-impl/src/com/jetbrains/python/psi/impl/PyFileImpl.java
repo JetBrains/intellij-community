@@ -67,17 +67,15 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
       final StubElement stub = getStub();
       processDeclarations(PyPsiUtils.collectAllStubChildren(PyFileImpl.this, stub), element -> {
-        if (element instanceof PsiNamedElement &&
+        if (element instanceof PsiNamedElement namedElement &&
             !(element instanceof PyKeywordArgument) &&
             !(stub == null && element.getParent() instanceof PyImportElement)) {
-          final PsiNamedElement namedElement = (PsiNamedElement)element;
           myNamedElements.computeIfAbsent(namedElement.getName(), __ -> new ArrayList<>()).add(namedElement);
         }
         if (element instanceof PyImportedNameDefiner) {
           myImportedNameDefiners.add((PyImportedNameDefiner)element);
         }
-        if (element instanceof PyFromImportStatement) {
-          final PyFromImportStatement fromImportStatement = (PyFromImportStatement)element;
+        if (element instanceof PyFromImportStatement fromImportStatement) {
           final PyStarImportElement starImportElement = fromImportStatement.getStarImportElement();
           if (starImportElement != null) {
             myImportedNameDefiners.add(starImportElement);
@@ -86,8 +84,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
             Collections.addAll(myImportedNameDefiners, fromImportStatement.getImportElements());
           }
         }
-        else if (element instanceof PyImportStatement) {
-          final PyImportStatement importStatement = (PyImportStatement)element;
+        else if (element instanceof PyImportStatement importStatement) {
           Collections.addAll(myImportedNameDefiners, importStatement.getImportElements());
         }
         return true;
@@ -103,8 +100,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         if (!processor.process(child)) {
           return false;
         }
-        if (child instanceof PyExceptPart) {
-          final PyExceptPart part = (PyExceptPart)child;
+        if (child instanceof PyExceptPart part) {
           if (!processDeclarations(PyPsiUtils.collectAllStubChildren(part, part.getStub()), processor)) {
             return false;
           }
@@ -343,8 +339,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public List<PyStatement> getStatements() {
     List<PyStatement> stmts = new ArrayList<>();
     for (PsiElement child : getChildren()) {
-      if (child instanceof PyStatement) {
-        PyStatement statement = (PyStatement)child;
+      if (child instanceof PyStatement statement) {
         stmts.add(statement);
       }
     }
@@ -533,8 +528,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       if (PyNames.ALL.equals(node.getName())) {
         myFoundDunderAll = true;
         final PyExpression value = node.findAssignedValue();
-        if (value instanceof PyBinaryExpression) {
-          final PyBinaryExpression binaryExpression = (PyBinaryExpression)value;
+        if (value instanceof PyBinaryExpression binaryExpression) {
           if (binaryExpression.isOperator("+")) {
             processSubList(getStringListFromValue(binaryExpression.getLeftExpression()));
             processSubList(getStringListFromValue(binaryExpression.getRightExpression()));

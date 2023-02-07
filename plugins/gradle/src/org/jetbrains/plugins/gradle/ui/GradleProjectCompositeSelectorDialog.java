@@ -131,11 +131,9 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
 
       @Override
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        if (!(value instanceof CheckedTreeNode)) return;
-        CheckedTreeNode node = (CheckedTreeNode)value;
+        if (!(value instanceof CheckedTreeNode node)) return;
 
-        if (!(node.getUserObject() instanceof Pair)) return;
-        Pair pair = (Pair)node.getUserObject();
+        if (!(node.getUserObject() instanceof Pair pair)) return;
 
         ColoredTreeCellRenderer renderer = getTextRenderer();
         renderer.setIcon(myExternalSystemUiAware.getProjectIcon());

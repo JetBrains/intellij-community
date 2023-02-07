@@ -77,9 +77,7 @@ public final class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMe
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof GrGdkMethodImpl)) return false;
-
-    GrGdkMethodImpl that = (GrGdkMethodImpl)o;
+    if (!(o instanceof GrGdkMethodImpl that)) return false;
 
     if (myMethod != null ? !myMethod.equals(that.myMethod) : that.myMethod != null) return false;
     if (hasModifierProperty(PsiModifier.STATIC) != that.hasModifierProperty(PsiModifier.STATIC)) return false;

@@ -260,8 +260,7 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
 
       Map<String, Attribute> set = new HashMap<>(options.size());
       for (Content option : options) {
-        if (option instanceof Element) {
-          Element el = (Element)option;
+        if (option instanceof Element el) {
           Attribute nameAttr = el.getAttribute("name");
           Attribute valueAttr = el.getAttribute("value");
           if (nameAttr != null && valueAttr != null) {

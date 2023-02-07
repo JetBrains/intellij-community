@@ -67,8 +67,7 @@ class RescannedRootsUtil {
     List<VirtualFile> filesFromIndexableSetContributors = new ArrayList<>();
 
     ProjectFileIndex index = ProjectFileIndex.getInstance(project);
-    if (!(index instanceof ProjectFileIndexImpl)) return Collections.emptyList();
-    ProjectFileIndexImpl fileIndex = (ProjectFileIndexImpl)index;
+    if (!(index instanceof ProjectFileIndexImpl fileIndex)) return Collections.emptyList();
     ArrayList<IndexableIteratorBuilder> result = new ArrayList<>();
     Iterator<VirtualFile> iterator = reincludedRoots.iterator();
     VirtualFileUrlManager urlManager = ApplicationManager.getApplication().getService(VirtualFileUrlManager.class);

@@ -891,8 +891,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
           if (value instanceof UsageNode) {
             Usage usage = ((UsageNode)value).getUsage();
-            if (usage instanceof UsageInfoAdapter) {
-              UsageInfoAdapter adapter = (UsageInfoAdapter)usage;
+            if (usage instanceof UsageInfoAdapter adapter) {
               file = adapter.getPath();
               if (adapter.isValid()) {
                 selectedUsagePromises.add(adapter.getMergedInfosAsync());

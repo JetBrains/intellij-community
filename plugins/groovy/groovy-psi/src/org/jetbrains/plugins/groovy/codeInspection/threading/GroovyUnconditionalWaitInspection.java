@@ -77,16 +77,13 @@ public class GroovyUnconditionalWaitInspection extends BaseInspection {
           return;
         }
 
-        if (!(statement instanceof GrMethodCallExpression)) {
+        if (!(statement instanceof GrMethodCallExpression methodCallExpression)) {
           continue;
         }
-        final GrMethodCallExpression methodCallExpression =
-            (GrMethodCallExpression) statement;
         final GrExpression methodExpression = methodCallExpression.getInvokedExpression();
-        if (!(methodExpression instanceof GrReferenceExpression)) {
+        if (!(methodExpression instanceof GrReferenceExpression reference)) {
           return;
         }
-        final GrReferenceExpression reference = (GrReferenceExpression) methodExpression;
         final String name = reference.getReferenceName();
         if (!"wait".equals(name)) {
           return;

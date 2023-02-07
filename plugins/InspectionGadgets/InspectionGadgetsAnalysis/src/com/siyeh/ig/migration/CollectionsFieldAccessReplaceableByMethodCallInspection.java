@@ -66,17 +66,15 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection extends Bas
         return getUntypedCollectionsMethodCallText(referenceName);
       }
       final PsiType type = ExpectedTypeUtils.findExpectedType(referenceExpression, false);
-      if (!(type instanceof PsiClassType)) {
+      if (!(type instanceof PsiClassType classType)) {
         return getUntypedCollectionsMethodCallText(referenceName);
       }
-      final PsiClassType classType = (PsiClassType)type;
       final PsiType[] parameterTypes = classType.getParameters();
       boolean useTypeParameter = false;
       final String[] canonicalTexts = new String[parameterTypes.length];
       for (int i = 0, parameterTypesLength = parameterTypes.length; i < parameterTypesLength; i++) {
         final PsiType parameterType = parameterTypes[i];
-        if (parameterType instanceof PsiWildcardType) {
-          final PsiWildcardType wildcardType = (PsiWildcardType)parameterType;
+        if (parameterType instanceof PsiWildcardType wildcardType) {
           final PsiType bound = wildcardType.getBound();
           if (bound != null) {
             if (!bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
@@ -124,10 +122,9 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection extends Bas
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiReferenceExpression)) {
+      if (!(element instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
       final String newMethodCallText = getCollectionsMethodCallText(referenceExpression);
       PsiReplacementUtil.replaceExpression(referenceExpression, "java.util." + newMethodCallText);
     }
@@ -163,10 +160,9 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection extends Bas
         return;
       }
       final PsiElement target = expression.resolve();
-      if (!(target instanceof PsiField)) {
+      if (!(target instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)target;
       final PsiClass containingClass = field.getContainingClass();
       if (containingClass == null) {
         return;

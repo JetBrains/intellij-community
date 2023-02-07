@@ -35,8 +35,7 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
       super.visitRegExpClass(regExpClass);
       final RegExpClassElement[] elements = regExpClass.getElements();
       for (RegExpClassElement element : elements) {
-        if (element instanceof RegExpCharRange) {
-          final RegExpCharRange range = (RegExpCharRange)element;
+        if (element instanceof RegExpCharRange range) {
           final int from = range.getFrom().getValue();
           final RegExpChar to = range.getTo();
           if (from != -1 && to != null && from == to.getValue()) {
@@ -48,8 +47,7 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
       if (regExpClass.isNegated()) {
         if (elements.length == 1) {
           final RegExpClassElement element = elements[0];
-          if (element instanceof RegExpSimpleClass) {
-            final RegExpSimpleClass simpleClass = (RegExpSimpleClass)element;
+          if (element instanceof RegExpSimpleClass simpleClass) {
             final String text = getInverseSimpleClassText(simpleClass);
             if (text != null) {
               // [^\d] -> \D

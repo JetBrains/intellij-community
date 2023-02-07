@@ -111,8 +111,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     XmlUtil.processXmlElements(contentSpecElement, new PsiElementProcessor(){
       @Override
       public boolean execute(@NotNull PsiElement child){
-        if (child instanceof XmlToken) {
-          final XmlToken token = (XmlToken)child;
+        if (child instanceof XmlToken token) {
 
           if (token.getTokenType() == XmlTokenType.XML_NAME) {
             final String text = child.getText();

@@ -30,10 +30,9 @@ public class ReplaceFormatStringWithConcatenationIntention extends Intention {
   @Override
   protected PsiElementPredicate getElementPredicate() {
     return element -> {
-      if (!(element instanceof PsiMethodCallExpression)) {
+      if (!(element instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
       if (!MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_STRING, TypeUtils.getStringType(element),
                                           "format", (PsiType[])null)) {
         return false;
@@ -53,10 +52,9 @@ public class ReplaceFormatStringWithConcatenationIntention extends Intention {
       return -1;
     }
     final Object value = ExpressionUtils.computeConstantExpression(expression);
-    if (!(value instanceof String)) {
+    if (!(value instanceof String string)) {
       return -1;
     }
-    final String string = (String)value;
     int index = string.indexOf('%');
     final int length = string.length();
     int count = 0;
@@ -78,10 +76,9 @@ public class ReplaceFormatStringWithConcatenationIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element) {
-    if (!(element instanceof PsiMethodCallExpression)) {
+    if (!(element instanceof PsiMethodCallExpression methodCallExpression)) {
       return;
     }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
     CommentTracker commentTracker = new CommentTracker();

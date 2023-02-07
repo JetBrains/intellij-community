@@ -94,8 +94,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if (!(obj instanceof DfaMemoryStateImpl)) return false;
-    DfaMemoryStateImpl that = (DfaMemoryStateImpl)obj;
+    if (!(obj instanceof DfaMemoryStateImpl that)) return false;
     if (myCachedHash != null && that.myCachedHash != null && !myCachedHash.equals(that.myCachedHash)) return false;
     return myEphemeral == that.myEphemeral && myStack.equals(that.myStack) &&
            getNonTrivialEqClasses().equals(that.getNonTrivialEqClasses()) &&
@@ -424,8 +423,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
       }
       // ordering like a < b may affect types of the variables: in this case merge both types and ordering
-      if (diff instanceof UpdateVariableMergePatch) {
-        UpdateVariableMergePatch updateVar = (UpdateVariableMergePatch)diff;
+      if (diff instanceof UpdateVariableMergePatch updateVar) {
         DfaVariableValue var = updateVar.myValue;
         DfaVariableValue otherVar;
         DistinctPairSet.DistinctPair pair = ((DropOrderingMergePatch)mySingleDiff).myPair;
@@ -502,8 +500,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public boolean isSuperStateOf(@NotNull DfaMemoryState other) {
-    if (!(other instanceof DfaMemoryStateImpl)) return false;
-    DfaMemoryStateImpl that = (DfaMemoryStateImpl)other;
+    if (!(other instanceof DfaMemoryStateImpl that)) return false;
     if (myEphemeral && !that.myEphemeral) return false;
     if (myStack.size() != that.myStack.size()) return false;
     for (int i = 0; i < myStack.size(); i++) {
@@ -777,8 +774,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaBinOpValue) {
       return propagateRangeBack(ObjectUtils.tryCast(dfType, DfIntegralType.class), (DfaBinOpValue)value);
     }
-    if (value instanceof DfaVariableValue) {
-      DfaVariableValue var = (DfaVariableValue)value;
+    if (value instanceof DfaVariableValue var) {
       DfType type = getDfType(var);
       DfType result = type.meet(dfType);
       if (result.equals(type)) return true;
@@ -834,8 +830,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public boolean applyContractCondition(@NotNull DfaCondition condition) {
-    if (condition instanceof DfaRelation) {
-      DfaRelation relation = (DfaRelation)condition;
+    if (condition instanceof DfaRelation relation) {
       if (relation.isEquality()) {
         checkEphemeral(relation.getLeftOperand(), relation.getRightOperand());
         checkEphemeral(relation.getRightOperand(), relation.getLeftOperand());
@@ -846,9 +841,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public boolean areEqual(@NotNull DfaValue value1, @NotNull DfaValue value2) {
-    if (value1 instanceof DfaBinOpValue && value2 instanceof DfaBinOpValue) {
-      DfaBinOpValue binOp1 = (DfaBinOpValue)value1;
-      DfaBinOpValue binOp2 = (DfaBinOpValue)value2;
+    if (value1 instanceof DfaBinOpValue binOp1 && value2 instanceof DfaBinOpValue binOp2) {
       return binOp1.getOperation() == binOp2.getOperation() &&
              areEqual(binOp1.getLeft(), binOp2.getLeft()) &&
              areEqual(binOp1.getRight(), binOp2.getRight());
@@ -920,13 +913,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private boolean applyBinOpRelations(DfaValue left, RelationType type, DfaValue right) {
     if (type != RelationType.LT && type != RelationType.GT && type != RelationType.NE && type != RelationType.EQ) return true;
-    if (!(left instanceof DfaBinOpValue)) {
+    if (!(left instanceof DfaBinOpValue binOp)) {
       if (right instanceof DfaBinOpValue) {
         return applyBinOpRelations(right, type.getFlipped(), left);
       }
       return true;
     }
-    DfaBinOpValue binOp = (DfaBinOpValue)left;
     LongRangeBinOp op = binOp.getOperation();
     if (op != LongRangeBinOp.PLUS && op != LongRangeBinOp.MINUS) return true;
     DfaVariableValue leftLeft = binOp.getLeft();
@@ -1193,8 +1185,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
    * @return true if value might be unstable, false otherwise
    */
   private boolean isUnstableValue(DfaValue value) {
-    if (!(value instanceof DfaVariableValue)) return false;
-    DfaVariableValue var = (DfaVariableValue)value;
+    if (!(value instanceof DfaVariableValue var)) return false;
     return !var.alwaysEqualsToItself(getDfType(var));
   }
 
@@ -1296,8 +1287,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaVariableValue) {
       return canonicalize((DfaVariableValue)value);
     }
-    if (value instanceof DfaWrappedValue) {
-      DfaWrappedValue boxedValue = (DfaWrappedValue)value;
+    if (value instanceof DfaWrappedValue boxedValue) {
       DfaValue canonicalized = canonicalize(boxedValue.getWrappedValue());
       if (canonicalized == boxedValue.getWrappedValue()) return boxedValue;
       return myFactory.getWrapperFactory().createWrapper(boxedValue.getDfType(), boxedValue.getSpecialField(), canonicalized);
@@ -1684,8 +1674,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       QualifierStatus status = myMap.get(qualifier.getID());
       if (status == null) {
         status = calculate(qualifier);
-        if (status != QualifierStatus.SHOULD_FLUSH_ALWAYS && qualifier instanceof DfaVariableValue) {
-          DfaVariableValue qualifierVar = (DfaVariableValue)qualifier;
+        if (status != QualifierStatus.SHOULD_FLUSH_ALWAYS && qualifier instanceof DfaVariableValue qualifierVar) {
           if (myClosure ? qualifierVar.canBeCapturedInClosure() : qualifierVar.isFlushableByCalls()) {
             DfaVariableValue qualifierQualifier = qualifierVar.getQualifier();
             if (shouldFlush(qualifierQualifier, qualifierVar.containsCalls())) {

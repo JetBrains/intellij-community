@@ -55,11 +55,10 @@ public final class FocusUtil {
   }
 
   public static Component getDefaultComponentInPanel(Component component) {
-    if (!(component instanceof JPanel)) {
+    if (!(component instanceof JPanel container)) {
       return null;
     }
 
-    JPanel container = (JPanel)component;
     FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
     if (policy == null) {
       return container;

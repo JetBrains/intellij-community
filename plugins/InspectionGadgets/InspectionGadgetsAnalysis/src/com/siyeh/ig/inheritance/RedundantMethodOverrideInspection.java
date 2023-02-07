@@ -283,8 +283,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       final PsiStatement statement = statements[0];
       final PsiExpression expression;
       if (PsiTypes.voidType().equals(method.getReturnType())) {
-        if (statement instanceof PsiExpressionStatement) {
-          final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+        if (statement instanceof PsiExpressionStatement expressionStatement) {
           expression = expressionStatement.getExpression();
         }
         else {
@@ -292,18 +291,16 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
         }
       }
       else {
-        if (statement instanceof PsiReturnStatement) {
-          final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
+        if (statement instanceof PsiReturnStatement returnStatement) {
           expression = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
         }
         else {
           return false;
         }
       }
-      if (!(expression instanceof PsiMethodCallExpression)) {
+      if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       if (!MethodCallUtils.isSuperMethodCall(methodCallExpression, method)) {
         return false;
       }

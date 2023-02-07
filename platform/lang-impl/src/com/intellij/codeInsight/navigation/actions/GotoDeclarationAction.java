@@ -254,8 +254,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     }
 
     // if no references found in injected fragment, try outer document
-    if (editor instanceof EditorWindow) {
-      EditorWindow window = (EditorWindow)editor;
+    if (editor instanceof EditorWindow window) {
       return findTargetElementsNoVS(project, window.getDelegate(), window.getDocument().injectedToHost(offset), lookupAccepted);
     }
 

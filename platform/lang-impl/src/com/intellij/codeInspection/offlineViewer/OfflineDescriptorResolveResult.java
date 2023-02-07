@@ -136,8 +136,7 @@ public final class OfflineDescriptorResolveResult {
                                                                                       QuickFix<?> @NotNull [] fixes,
                                                                                       @NotNull Project project) {
     InspectionManager inspectionManager = InspectionManager.getInstance(project);
-    if (element instanceof RefElement) {
-      RefElement refElement = (RefElement)element;
+    if (element instanceof RefElement refElement) {
       if(refElement.getPsiElement() instanceof PsiFile) {
         PsiElement targetElement = findTargetElementFromOfflineDescriptor((PsiFile)refElement.getPsiElement(), offlineDescriptor, project);
         if(targetElement != null) {

@@ -149,8 +149,7 @@ public final class TestDataLineMarkerProvider extends LineMarkerProviderDescript
       if (value != null) {
         final Project project = owner.getProject();
         final Object constantValue = value.evaluate();
-        if (constantValue instanceof String) {
-          String path = (String)constantValue;
+        if (constantValue instanceof String path) {
           if (path.contains(TestFrameworkConstants.CONTENT_ROOT_VARIABLE)) {
             final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
             final VirtualFile file = owner.getContainingFile().getVirtualFile();

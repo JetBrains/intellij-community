@@ -51,8 +51,7 @@ public class GlassPanel extends JComponent {
         final Area area = getComponentArea(surfaceComponent, lightComponent, 1);
         if (area == null) continue;
 
-        if (lightComponent instanceof JLabel) {
-          final JLabel label = (JLabel)lightComponent;
+        if (lightComponent instanceof JLabel label) {
           final Component labelFor = label.getLabelFor();
           if (labelFor instanceof JComponent) {
             final Area labelForArea = getComponentArea(surfaceComponent, (JComponent)labelFor, 1);

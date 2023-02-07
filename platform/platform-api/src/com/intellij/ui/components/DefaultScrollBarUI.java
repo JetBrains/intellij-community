@@ -391,8 +391,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
       if (isTrackClickable()) return false;
       // redispatch current event to the view
       Container parent = myScrollBar.getParent();
-      if (parent instanceof JScrollPane) {
-        JScrollPane pane = (JScrollPane)parent;
+      if (parent instanceof JScrollPane pane) {
         Component view = pane.getViewport().getView();
         if (view != null) {
           Point point = event.getLocationOnScreen();

@@ -303,12 +303,11 @@ final class ServiceViewDragHelper {
 
     private EventContext getEventContext(Point point) {
       TreePath path = myTree.getPathForLocation(point.x, point.y);
-      if (path == null || !(path.getLastPathComponent() instanceof ServiceViewItem)) return null;
+      if (path == null || !(path.getLastPathComponent() instanceof ServiceViewItem item)) return null;
 
       Rectangle cellBounds = myTree.getPathBounds(path);
       if (cellBounds == null) return null;
 
-      ServiceViewItem item = (ServiceViewItem)path.getLastPathComponent();
       ServiceViewDescriptor viewDescriptor = item.getViewDescriptor();
       if (!(viewDescriptor instanceof ServiceViewDnDDescriptor)) return null;
 

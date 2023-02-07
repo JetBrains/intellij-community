@@ -291,8 +291,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement psiElement = descriptor.getPsiElement();
-      if (!(psiElement instanceof XmlTag)) return;
-      XmlTag xmlTag = (XmlTag)psiElement;
+      if (!(psiElement instanceof XmlTag xmlTag)) return;
 
 
       choosePropertiesFileAndExtract(project, Collections.singletonList(xmlTag), selection -> {
@@ -455,8 +454,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof XmlTag)) return;
-      XmlTag tag = (XmlTag)element;
+      if (!(element instanceof XmlTag tag)) return;
 
       doFix(project, myPropertiesFile, Collections.singletonList(tag));
     }

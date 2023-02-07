@@ -55,8 +55,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> 
     }
 
     Component component = myRenderer != null ? myRenderer.getListCellRendererComponent(list, value, index, selected, hasFocus) : new JBLabel();
-    if (component instanceof JLabel) {
-      JLabel label = (JLabel)component;
+    if (component instanceof JLabel label) {
       label.setIcon(myIcon);
       if (myText != null) label.setText(myText);
       if (myForeground != null) label.setForeground(myForeground);

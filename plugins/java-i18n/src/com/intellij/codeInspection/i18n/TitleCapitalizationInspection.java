@@ -117,8 +117,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     if (arg instanceof UInjectionHost) {
       return Value.of((UInjectionHost)arg);
     }
-    if (arg instanceof UCallExpression) {
-      UCallExpression call = (UCallExpression)arg;
+    if (arg instanceof UCallExpression call) {
       UExpression returnValue = StringFlowUtil.getReturnValue(call);
       if (arg.equals(returnValue)) {
         return null;
@@ -187,16 +186,14 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       if (element instanceof PsiLiteralExpression) {
         return (PsiLiteralExpression)element;
       }
-      if (element instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
+      if (element instanceof PsiMethodCallExpression call) {
         final PsiMethod method = call.resolveMethod();
         final PsiExpression returnValue = PropertyUtilBase.getGetterReturnExpression(method);
         if (returnValue != null) {
           return ObjectUtils.tryCast(returnValue, PsiLiteralExpression.class);
         }
       }
-      if (element instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+      if (element instanceof PsiReferenceExpression referenceExpression) {
         final PsiVariable variable = ObjectUtils.tryCast(referenceExpression.resolve(), PsiVariable.class);
         if (variable == null) return null;
         if (variable.hasModifierProperty(PsiModifier.FINAL)) {
@@ -217,8 +214,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
                                            element);
         literal.replace(newExpression);
       }
-      if (element instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression call = (PsiMethodCallExpression)element;
+      if (element instanceof PsiMethodCallExpression call) {
         final Property property = getPropertyArgument(call);
         Value value = Value.of(property, call.getArgumentList().getExpressionCount() > 1);
         if (value == null) return;
@@ -246,8 +242,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
         copyLiteral.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(newLiteral, null));
         return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, file.getName(), parent.getText(), copyParent.getText());
       }
-      if (element instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression call = (PsiMethodCallExpression)element;
+      if (element instanceof PsiMethodCallExpression call) {
         final Property property = getPropertyArgument(call);
         Value value = Value.of(property, call.getArgumentList().getExpressionCount() > 1);
         if (value == null) return IntentionPreviewInfo.EMPTY;

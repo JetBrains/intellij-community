@@ -142,8 +142,7 @@ public final class PyCodeFragmentUtil {
     }
     // Hack for including inner assert type instructions that can point to elements outside of the selected scope
     for (Instruction instruction : graph) {
-      if (instruction instanceof ReadWriteInstruction) {
-        final ReadWriteInstruction readWriteInstruction = (ReadWriteInstruction)instruction;
+      if (instruction instanceof ReadWriteInstruction readWriteInstruction) {
         if (readWriteInstruction.getAccess().isAssertTypeAccess()) {
           boolean innerAssertType = true;
           for (Instruction next : readWriteInstruction.allSucc()) {
@@ -219,8 +218,7 @@ public final class PyCodeFragmentUtil {
 
     final Set<PsiElement> subGraphElements = getSubGraphElements(subGraph);
     for (PsiElement element : subGraphElements) {
-      if (element instanceof PyFromImportStatement) {
-        final PyFromImportStatement fromImportStatement = (PyFromImportStatement)element;
+      if (element instanceof PyFromImportStatement fromImportStatement) {
         if (fromImportStatement.getStarImportElement() != null) {
           starImports++;
         }
@@ -407,8 +405,7 @@ public final class PyCodeFragmentUtil {
   private static List<Instruction> getReadInstructions(@NotNull List<Instruction> subGraph) {
     final List<Instruction> result = new ArrayList<>();
     for (Instruction instruction : subGraph) {
-      if (instruction instanceof ReadWriteInstruction) {
-        final ReadWriteInstruction readWriteInstruction = (ReadWriteInstruction)instruction;
+      if (instruction instanceof ReadWriteInstruction readWriteInstruction) {
         if (readWriteInstruction.getAccess().isReadAccess()) {
           result.add(readWriteInstruction);
         }
@@ -421,8 +418,7 @@ public final class PyCodeFragmentUtil {
   private static List<Instruction> getWriteInstructions(@NotNull List<Instruction> subGraph) {
     final List<Instruction> result = new ArrayList<>();
     for (Instruction instruction : subGraph) {
-      if (instruction instanceof ReadWriteInstruction) {
-        final ReadWriteInstruction readWriteInstruction = (ReadWriteInstruction)instruction;
+      if (instruction instanceof ReadWriteInstruction readWriteInstruction) {
         if (readWriteInstruction.getAccess().isWriteAccess()) {
           result.add(readWriteInstruction);
         }

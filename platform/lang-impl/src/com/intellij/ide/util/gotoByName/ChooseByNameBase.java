@@ -688,8 +688,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   private static Set<KeyStroke> getShortcuts(@NotNull String actionId) {
     Set<KeyStroke> result = new HashSet<>();
     for (Shortcut shortcut : KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts()) {
-      if (shortcut instanceof KeyboardShortcut) {
-        KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
+      if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
         result.add(keyboardShortcut.getFirstKeyStroke());
       }
     }
@@ -1610,8 +1609,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
                             @NotNull Collection<? super Usage> usages,
                             @NotNull List<? super PsiElement> targets) {
       for (Object o : matchElementsArray) {
-        if (o instanceof PsiElement) {
-          PsiElement element = (PsiElement)o;
+        if (o instanceof PsiElement element) {
           if (element.getTextRange() != null) {
             usages.add(new MyUsageInfo2UsageAdapter(element, false));
           }
@@ -1666,9 +1664,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof MyUsageInfo2UsageAdapter)) return false;
-
-      MyUsageInfo2UsageAdapter adapter = (MyUsageInfo2UsageAdapter)o;
+      if (!(o instanceof MyUsageInfo2UsageAdapter adapter)) return false;
 
       if (mySeparateGroup != adapter.mySeparateGroup) return false;
       if (!myElement.equals(adapter.myElement)) return false;

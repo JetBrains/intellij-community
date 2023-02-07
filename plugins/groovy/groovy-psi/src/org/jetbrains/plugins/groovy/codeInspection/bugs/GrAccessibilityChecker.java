@@ -54,8 +54,7 @@ public class GrAccessibilityChecker {
   @SuppressWarnings("MagicConstant")
   static GroovyFix[] buildFixes(PsiElement location, GroovyResolveResult resolveResult) {
     final PsiElement element = resolveResult.getElement();
-    if (!(element instanceof PsiMember)) return GroovyFix.EMPTY_ARRAY;
-    final PsiMember refElement = (PsiMember)element;
+    if (!(element instanceof PsiMember refElement)) return GroovyFix.EMPTY_ARRAY;
 
     if (refElement instanceof PsiCompiledElement) return GroovyFix.EMPTY_ARRAY;
 

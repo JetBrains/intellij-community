@@ -201,9 +201,7 @@ public final class UITheme {
       };
 
       Object palette = theme.icons.get("ColorPalette");
-      if (palette instanceof Map) {
-        @SuppressWarnings("rawtypes")
-        Map colors = (Map)palette;
+      if (palette instanceof @SuppressWarnings("rawtypes")Map colors) {
         for (Object o : colors.keySet()) {
           String colorKey = o.toString();
           PaletteScope scope = paletteScopeManager.getScope(colorKey);
@@ -213,8 +211,7 @@ public final class UITheme {
 
           String key = toColorString(colorKey, theme.isDark());
           Object v = colors.get(colorKey);
-          if (v instanceof String) {
-            String value = (String)v;
+          if (v instanceof String value) {
             Object namedColor = theme.colors != null ? theme.colors.get(value) : null;
             if (namedColor instanceof String) {
               value = (String)namedColor;

@@ -133,9 +133,8 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
             methods.add(method);
           }
         }
-        else if (qualifier instanceof PsiReferenceExpression) {
+        else if (qualifier instanceof PsiReferenceExpression referenceExpression) {
           // consider field assigned if method is called on it.
-          final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
           final PsiElement target = referenceExpression.resolve();
           if (target instanceof PsiField) {
             assignedFields.add((PsiField)target);
@@ -146,10 +145,9 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
     }
 
     private static PsiVariable resolveVariable(PsiExpression expression, @Nullable PsiParameter requiredQualifier) {
-      if (!(expression instanceof PsiReferenceExpression)) {
+      if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
         return null;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(referenceExpression.getQualifierExpression());
       final PsiElement target = referenceExpression.resolve();
       if (requiredQualifier == null) {
@@ -164,10 +162,9 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
     }
 
     private static PsiField resolveFieldOfGetter(PsiExpression expression, @NotNull PsiParameter requiredQualifier) {
-      if (!(expression instanceof PsiMethodCallExpression)) {
+      if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
         return null;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiExpression qualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
       if (!ExpressionUtils.isReferenceTo(qualifier, requiredQualifier)) {
         return null;

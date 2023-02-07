@@ -44,8 +44,7 @@ public class TreeTableTree extends Tree {
   public void updateUI() {
     super.updateUI();
     TreeCellRenderer tcr = super.getCellRenderer();
-    if (tcr instanceof DefaultTreeCellRenderer) {
-      DefaultTreeCellRenderer dtcr = (DefaultTreeCellRenderer)tcr;
+    if (tcr instanceof DefaultTreeCellRenderer dtcr) {
       dtcr.setTextSelectionColor(UIUtil.getTableSelectionForeground());
       dtcr.setBackgroundSelectionColor(UIUtil.getTableSelectionBackground(true));
     }

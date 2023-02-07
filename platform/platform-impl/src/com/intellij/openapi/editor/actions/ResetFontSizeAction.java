@@ -147,10 +147,9 @@ public final class ResetFontSizeAction extends EditorAction {
   public void update(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (e.getPlace().equals(ActionPlaces.POPUP) && editor != null) {
-      if (!(editor instanceof EditorEx)) {
+      if (!(editor instanceof EditorEx editorEx)) {
         return;
       }
-      EditorEx editorEx = (EditorEx)editor;
       Strategy strategy = getStrategy(editorEx);
       float toReset = strategy.getFontSize();
       //noinspection DialogTitleCapitalization

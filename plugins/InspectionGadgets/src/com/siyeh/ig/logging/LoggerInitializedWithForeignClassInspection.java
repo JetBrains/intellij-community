@@ -165,10 +165,9 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiClassObjectAccessExpression)) {
+      if (!(element instanceof PsiClassObjectAccessExpression classObjectAccessExpression)) {
         return;
       }
-      final PsiClassObjectAccessExpression classObjectAccessExpression = (PsiClassObjectAccessExpression)element;
       PsiReplacementUtil.replaceExpression(classObjectAccessExpression, newClassName + ".class", new CommentTracker());
     }
   }
@@ -179,8 +178,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     public void visitClassObjectAccessExpression(@NotNull PsiClassObjectAccessExpression expression) {
       super.visitClassObjectAccessExpression(expression);
       PsiElement parent = expression.getParent();
-      if (parent instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
+      if (parent instanceof PsiReferenceExpression referenceExpression) {
         if (!expression.equals(referenceExpression.getQualifierExpression())) {
           return;
         }
@@ -189,10 +187,9 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
           return;
         }
         final PsiElement grandParent = referenceExpression.getParent();
-        if (!(grandParent instanceof PsiMethodCallExpression)) {
+        if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
           return;
         }
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
         final PsiExpressionList list = methodCallExpression.getArgumentList();
         if (!list.isEmpty()) {
           return;

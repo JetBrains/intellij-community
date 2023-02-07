@@ -13,9 +13,8 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode;
 public class KtFunctionPsiElementCellRenderer extends DefaultPsiElementCellRenderer {
     @Override
     public String getElementText(PsiElement element) {
-        if (element instanceof KtNamedFunction) {
-            KtNamedFunction function = (KtNamedFunction) element;
-            DeclarationDescriptor descriptor = ResolutionUtils.unsafeResolveToDescriptor(function, BodyResolveMode.PARTIAL);
+        if (element instanceof KtNamedFunction function) {
+          DeclarationDescriptor descriptor = ResolutionUtils.unsafeResolveToDescriptor(function, BodyResolveMode.PARTIAL);
             return DescriptorRenderer.SHORT_NAMES_IN_TYPES.render(descriptor);
         }
         return super.getElementText(element);

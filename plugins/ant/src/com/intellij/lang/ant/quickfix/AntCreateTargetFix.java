@@ -59,8 +59,7 @@ public class AntCreateTargetFix implements LocalQuickFix {
     final PsiFile containingFile = psiElement.getContainingFile();
 
     Navigatable result = null;
-    if (containingFile instanceof XmlFile) {
-      final XmlFile xmlFile = (XmlFile)containingFile;
+    if (containingFile instanceof XmlFile xmlFile) {
       final XmlTag rootTag = xmlFile.getRootTag();
       if (rootTag != null) {
         final XmlTag propTag = rootTag.createChildTag(TAG_NAME, rootTag.getNamespace(), "", false);

@@ -47,8 +47,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, marker -> {
       ProgressManager.checkCanceled();
       Object tt = marker.getErrorStripeTooltip();
-      if (!(tt instanceof HighlightInfo)) return true;
-      HighlightInfo info = (HighlightInfo)tt;
+      if (!(tt instanceof HighlightInfo info)) return true;
       return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
              || info.getHighlighter() == null
              || processor.process(info);

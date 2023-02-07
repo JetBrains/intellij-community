@@ -189,9 +189,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof NodeState)) return false;
-
-      NodeState state = (NodeState)o;
+      if (!(o instanceof NodeState state)) return false;
 
       if (isValid != state.isValid) return false;
       if (isSuppressed != state.isSuppressed) return false;

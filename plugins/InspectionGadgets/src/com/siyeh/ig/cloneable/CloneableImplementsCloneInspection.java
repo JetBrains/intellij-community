@@ -122,10 +122,9 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiClass)) {
+      if (!(parent instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)parent;
       @NonNls final StringBuilder methodText = new StringBuilder();
       final JavaCodeStyleSettings codeStyleSettings = JavaCodeStyleSettings.getInstance(aClass.getContainingFile());
       if (PsiUtil.isLanguageLevel5OrHigher(aClass) && codeStyleSettings.INSERT_OVERRIDE_ANNOTATION) {

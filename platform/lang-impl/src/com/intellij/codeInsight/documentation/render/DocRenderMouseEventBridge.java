@@ -104,11 +104,9 @@ class DocRenderMouseEventBridge implements EditorMouseListener, EditorMouseMotio
     Point mousePoint = mouseEvent.getPoint();
     Editor editor = event.getEditor();
     FoldRegion foldRegion = event.getCollapsedFoldRegion();
-    if (foldRegion instanceof CustomFoldRegion) {
-      CustomFoldRegion cfr = (CustomFoldRegion)foldRegion;
+    if (foldRegion instanceof CustomFoldRegion cfr) {
       CustomFoldRegionRenderer r = cfr.getRenderer();
-      if (r instanceof DocRenderer) {
-        DocRenderer renderer = (DocRenderer)r;
+      if (r instanceof DocRenderer renderer) {
         Rectangle relativeBounds = renderer.getEditorPaneBoundsWithinRenderer(cfr.getWidthInPixels(), cfr.getHeightInPixels());
         Point location = cfr.getLocation();
         assert location != null;

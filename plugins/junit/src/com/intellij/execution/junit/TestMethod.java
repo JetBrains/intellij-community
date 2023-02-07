@@ -60,8 +60,7 @@ public class TestMethod extends TestObject {
   public RefactoringElementListener getListener(final PsiElement element) {
     UElement uElement = UastContextKt.toUElement(element);
     JUnitConfiguration configuration = getConfiguration();
-    if (uElement instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)uElement;
+    if (uElement instanceof PsiMethod method) {
       if (!method.getName().equals(configuration.getPersistentData().getMethodName())) return null;
       //noinspection ConstantConditions
       if (!method.getContainingClass().equals(configuration.myClass.getPsiElement())) return null;

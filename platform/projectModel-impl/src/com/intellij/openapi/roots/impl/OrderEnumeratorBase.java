@@ -256,8 +256,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     }
 
     boolean exported = !(entry instanceof JdkOrderEntry);
-    if (entry instanceof ExportableOrderEntry) {
-      ExportableOrderEntry exportableEntry = (ExportableOrderEntry)entry;
+    if (entry instanceof ExportableOrderEntry exportableEntry) {
       if (shouldAdd == OrderEnumerationHandler.AddDependencyType.DEFAULT) {
         final DependencyScope scope = exportableEntry.getScope();
         boolean forTestCompile = scope.isForTestCompile() ||
@@ -278,8 +277,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
       if (myExportedOnly) return ProcessEntryAction.SKIP;
       if (myRecursivelyExportedOnly && !firstLevel) return ProcessEntryAction.SKIP;
     }
-    if (myRecursively && entry instanceof ModuleOrderEntry) {
-      ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
+    if (myRecursively && entry instanceof ModuleOrderEntry moduleOrderEntry) {
       final Module depModule = moduleOrderEntry.getModule();
       if (depModule != null && shouldProcessRecursively(customHandlers)) {
         return ProcessEntryAction.RECURSE(depModule);

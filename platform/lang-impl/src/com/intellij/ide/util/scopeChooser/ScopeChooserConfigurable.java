@@ -247,8 +247,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   @Override
   protected boolean wasObjectStored(Object editableObject) {
-    if (editableObject instanceof NamedScope) {
-      NamedScope scope = (NamedScope)editableObject;
+    if (editableObject instanceof NamedScope scope) {
       final String scopeId = scope.getScopeId();
       return myLocalScopesManager.getScope(scopeId) != null || mySharedScopesManager.getScope(scopeId) != null;
     }
@@ -483,8 +482,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       if (selectionPath != null) {
         MyNode node = (MyNode)selectionPath.getLastPathComponent();
         NamedConfigurable<?> configurable = node.getConfigurable();
-        if (configurable instanceof ScopeConfigurable) {
-          final ScopeConfigurable scopeConfigurable = (ScopeConfigurable)configurable;
+        if (configurable instanceof ScopeConfigurable scopeConfigurable) {
           PackageSet set = scopeConfigurable.getEditableObject().getValue();
           if (set != null) {
             if (scopeConfigurable.getHolder() == mySharedScopesManager) {

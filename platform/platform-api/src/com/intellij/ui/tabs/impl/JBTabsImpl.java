@@ -3368,8 +3368,7 @@ public class JBTabsImpl extends JComponent
   private void applyResetComponents() {
     for (int i = 0; i < getComponentCount(); i++) {
       final Component each = getComponent(i);
-      if (each instanceof JComponent) {
-        final JComponent jc = (JComponent)each;
+      if (each instanceof JComponent jc) {
         if (!UIUtil.isClientPropertyTrue(jc, LAYOUT_DONE)) {
           layout(jc, new Rectangle(0, 0, 0, 0));
         }
@@ -3618,8 +3617,7 @@ public class JBTabsImpl extends JComponent
       // Note: Unlike a JTabbedPane, JBTabsImpl has many more child types than just pages.
       // So we wrap TabLabel instances with their corresponding AccessibleTabPage, while
       // leaving other types of children untouched.
-      if (accessibleChild instanceof TabLabel) {
-        TabLabel label = (TabLabel)accessibleChild;
+      if (accessibleChild instanceof TabLabel label) {
         return myInfo2Page.get(label.getInfo());
       }
       return accessibleChild;

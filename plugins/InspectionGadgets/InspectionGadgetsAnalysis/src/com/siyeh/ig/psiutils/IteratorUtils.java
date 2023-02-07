@@ -78,7 +78,7 @@ public final class IteratorUtils {
           expression.getMethodExpression();
         final PsiExpression qualifier =
           methodExpression.getQualifierExpression();
-        if (!(qualifier instanceof PsiReferenceExpression)) {
+        if (!(qualifier instanceof PsiReferenceExpression referenceExpression)) {
           if (target != null) {
             return;
           }
@@ -89,8 +89,6 @@ public final class IteratorUtils {
           }
         }
         else {
-          final PsiReferenceExpression referenceExpression =
-            (PsiReferenceExpression)qualifier;
           final PsiElement element = referenceExpression.resolve();
           if (target == null || !target.equals(element)) {
             return;

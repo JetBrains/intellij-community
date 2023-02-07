@@ -130,8 +130,7 @@ public abstract class CodeBlockSurrounder {
         ((PsiAssignmentExpression)parent).getRExpression() == myExpression) {
       return ParentContext.ASSIGNMENT;
     }
-    if (parent instanceof PsiLocalVariable) {
-      PsiLocalVariable var = (PsiLocalVariable)parent;
+    if (parent instanceof PsiLocalVariable var) {
       if (!var.getTypeElement().isInferredType() || PsiTypesUtil.isDenotableType(var.getType(), parent)) {
         return ParentContext.ASSIGNMENT;
       }
@@ -245,8 +244,7 @@ public abstract class CodeBlockSurrounder {
       if (parent instanceof PsiLambdaExpression) {
         return new LambdaCodeBlockSurrounder(expression, (PsiLambdaExpression)parent);
       }
-      if (parent instanceof PsiPolyadicExpression) {
-        PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+      if (parent instanceof PsiPolyadicExpression polyadicExpression) {
         IElementType type = polyadicExpression.getOperationTokenType();
         if (type.equals(JavaTokenType.ANDAND) && polyadicExpression.getOperands()[0] != cur) {
           PsiElement conditionParent = PsiUtil.skipParenthesizedExprUp(polyadicExpression.getParent());
@@ -316,9 +314,8 @@ public abstract class CodeBlockSurrounder {
     }
     if (parent instanceof PsiResourceVariable) {
       PsiResourceList list = tryCast(parent.getParent(), PsiResourceList.class);
-      if (list != null && list.getParent() instanceof PsiTryStatement) {
+      if (list != null && list.getParent() instanceof PsiTryStatement tryStatement) {
         Iterator<PsiResourceListElement> iterator = list.iterator();
-        PsiTryStatement tryStatement = (PsiTryStatement)list.getParent();
         if (iterator.hasNext() && iterator.next() == parent && tryStatement.getCatchBlocks().length == 0 
             && tryStatement.getFinallyBlock() == null) {
           return forStatement(tryStatement, expression);
@@ -779,8 +776,7 @@ public abstract class CodeBlockSurrounder {
         (PsiConditionalExpression)PsiUtil.skipParenthesizedExprDown(upstreamResult.getExpression()));
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(ternary.getParent());
       PsiStatement statement = upstreamResult.getAnchor();
-      if (parent instanceof PsiLocalVariable) {
-        PsiLocalVariable variable = (PsiLocalVariable)parent;
+      if (parent instanceof PsiLocalVariable variable) {
         variable.normalizeDeclaration();
         PsiDeclarationStatement declaration = (PsiDeclarationStatement)variable.getParent();
         PsiAssignmentExpression assignment = ExpressionUtils.splitDeclaration(declaration, project);

@@ -268,8 +268,7 @@ public class TaintAnalyzer {
     PsiType type = target == null ? null : PsiUtil.getTypeByPsiElement(target);
     if (type == null) return null;
     if (target instanceof PsiClass) return null;
-    if (target instanceof PsiModifierListOwner) {
-      PsiModifierListOwner owner = (PsiModifierListOwner)target;
+    if (target instanceof PsiModifierListOwner owner) {
       TaintValue taintValue = TaintValueFactory.INSTANCE.fromModifierListOwner(owner);
       if (taintValue == TaintValue.UNKNOWN) taintValue = TaintValueFactory.of(owner);
       if (taintValue != TaintValue.UNKNOWN) return taintValue;

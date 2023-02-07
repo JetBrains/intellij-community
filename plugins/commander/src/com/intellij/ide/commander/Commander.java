@@ -506,8 +506,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
 
     final AbstractTreeNode parentNode = builder.getParentNode();
     final Object parentElement = parentNode != null? parentNode.getValue() : null;
-    if (parentElement instanceof PsiDirectory) {
-      final PsiDirectory directory = (PsiDirectory) parentElement;
+    if (parentElement instanceof PsiDirectory directory) {
       element.setAttribute(ATTRIBUTE_URL, directory.getVirtualFile().getUrl());
     }
     else if (parentElement instanceof PsiClass) {

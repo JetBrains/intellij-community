@@ -102,13 +102,12 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
       }
       final PsiParameter lastParameter = parameters[parameters.length - 1];
       final PsiType type = lastParameter.getType();
-      if (!(type instanceof PsiArrayType) || type instanceof PsiEllipsisType) {
+      if (!(type instanceof PsiArrayType arrayType) || type instanceof PsiEllipsisType) {
         return;
       }
       if (NullableNotNullManager.isNullable(lastParameter)) {
         return;
       }
-      final PsiArrayType arrayType = (PsiArrayType)type;
       final PsiType componentType = arrayType.getComponentType();
       if (ignoreMultiDimensionalArrayParameters && componentType instanceof PsiArrayType) {
         // don't report when it is multidimensional array

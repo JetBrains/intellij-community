@@ -34,8 +34,7 @@ public final class GantUtils {
   public static GrArgumentLabel[] getScriptTargets(GroovyFile file) {
     ArrayList<GrArgumentLabel> labels = new ArrayList<>();
     for (PsiElement child : file.getChildren()) {
-      if (child instanceof GrMethodCallExpression) {
-        GrMethodCallExpression call = (GrMethodCallExpression)child;
+      if (child instanceof GrMethodCallExpression call) {
         GrNamedArgument[] arguments = call.getNamedArguments();
         if (arguments.length == 1) {
           GrArgumentLabel label = arguments[0].getLabel();

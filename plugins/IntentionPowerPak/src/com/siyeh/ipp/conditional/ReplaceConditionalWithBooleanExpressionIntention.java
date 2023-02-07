@@ -35,10 +35,9 @@ public class ReplaceConditionalWithBooleanExpressionIntention extends Intention 
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiConditionalExpression)) {
+        if (!(element instanceof PsiConditionalExpression conditionalExpression)) {
           return false;
         }
-        final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
         final PsiType type = conditionalExpression.getType();
         return PsiTypes.booleanType().equals(type) || type != null && type.equalsToText(JAVA_LANG_BOOLEAN);
       }

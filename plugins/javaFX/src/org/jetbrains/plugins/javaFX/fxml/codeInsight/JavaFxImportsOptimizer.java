@@ -149,8 +149,7 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     }
 
     private void appendClassName(PsiElement declaration) {
-      if (declaration instanceof PsiClass) {
-        final PsiClass psiClass = (PsiClass)declaration;
+      if (declaration instanceof PsiClass psiClass) {
         final String ownerClassQN = getTopmostOwnerClassQualifiedName(psiClass);
         if (ownerClassQN != null) {
           appendClassName(ownerClassQN);

@@ -97,8 +97,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
 
   @Nullable
   private static QualifiedName resolveOriginalSuperClassQName(@NotNull PyExpression superClassExpression) {
-    if (superClassExpression instanceof PyReferenceExpression) {
-      final PyReferenceExpression reference = (PyReferenceExpression)superClassExpression;
+    if (superClassExpression instanceof PyReferenceExpression reference) {
       final String referenceName = reference.getName();
 
       if (referenceName == null) {

@@ -402,8 +402,7 @@ public class VcsNotifier {
     }
     @Nls StringBuilder content = new StringBuilder();
     for (Exception e : errors) {
-      if (e instanceof VcsException) {
-        VcsException vcsException = (VcsException)e;
+      if (e instanceof VcsException vcsException) {
         for (String message : vcsException.getMessages()) {
           content.append(message.replace(LINE_SEPARATOR, BR)).append(BR);
         }

@@ -163,8 +163,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
         for (PsiElement element : docComment.getChildren()) {
           //if it's anything other than a doc token, then it must stay
           if (element instanceof PsiWhiteSpace) continue;
-          if (!(element instanceof PsiDocToken)) return;
-          PsiDocToken docToken = (PsiDocToken)element;
+          if (!(element instanceof PsiDocToken docToken)) return;
           if (docToken.getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA && !docToken.getText().trim().isEmpty()) {
             return;
           }

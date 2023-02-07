@@ -94,8 +94,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       Disposer.register(this, (Disposable)model);
     }
     foreground = Invoker.forEventDispatchThread(this);
-    if (model instanceof InvokerSupplier) {
-      InvokerSupplier supplier = (InvokerSupplier)model;
+    if (model instanceof InvokerSupplier supplier) {
       background = supplier.getInvoker();
     }
     else {
@@ -544,8 +543,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       Node loaded = new Node(object, LeafState.get(object, model));
       if (loaded.leafState == LeafState.ALWAYS || isObsolete()) return loaded;
 
-      if (model instanceof ChildrenProvider) {
-        ChildrenProvider<?> provider = (ChildrenProvider<?>)model;
+      if (model instanceof ChildrenProvider<?> provider) {
         List<?> children = provider.getChildren(object);
         if (children == null) throw new ProcessCanceledException(); // cancel this command
         loaded.children = load(children.size(), index -> children.get(index));

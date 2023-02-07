@@ -101,10 +101,9 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
-      if (!(element instanceof PsiIfStatement)) {
+      if (!(element instanceof PsiIfStatement ifStatement)) {
         return;
       }
-      final PsiIfStatement ifStatement = (PsiIfStatement)element;
       if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(ifStatement)) {
         for (PsiIfStatement ifStatementInChain : getAllConditionalBranches(ifStatement)) {
           replaceCastsWithPatternVariable(ifStatementInChain);
@@ -191,8 +190,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       breakTarget = PsiTreeUtil.getParentOfType(ifStatement, PsiLoopStatement.class, PsiSwitchStatement.class);
       if (breakTarget != null) {
         final PsiElement parent = breakTarget.getParent();
-        if (parent instanceof PsiLabeledStatement) {
-          final PsiLabeledStatement labeledStatement = (PsiLabeledStatement)parent;
+        if (parent instanceof PsiLabeledStatement labeledStatement) {
           newLabel = labeledStatement.getLabelIdentifier().getText();
           breakTarget = labeledStatement;
         }
@@ -333,8 +331,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   }
 
   private static void extractCaseExpressions(PsiExpression expression, PsiExpression switchExpression, IfStatementBranch branch) {
-    if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression methodCallExpression) {
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       final PsiExpression argument = arguments[0];
@@ -351,8 +348,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     else if (expression instanceof PsiInstanceOfExpression) {
       branch.addCaseExpression(expression);
     }
-    else if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    else if (expression instanceof PsiPolyadicExpression polyadicExpression) {
       final PsiExpression[] operands = polyadicExpression.getOperands();
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (JavaTokenType.OROR.equals(tokenType)) {
@@ -373,8 +369,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         }
       }
     }
-    else if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+    else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
       final PsiExpression contents = parenthesizedExpression.getExpression();
       extractCaseExpressions(contents, switchExpression, branch);
     }
@@ -395,11 +390,9 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
   @NonNls
   private static String getCaseLabelText(PsiExpression expression, boolean castToInt) {
-    if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+    if (expression instanceof PsiReferenceExpression referenceExpression) {
       final PsiElement target = referenceExpression.resolve();
-      if (target instanceof PsiEnumConstant) {
-        final PsiEnumConstant enumConstant = (PsiEnumConstant)target;
+      if (target instanceof PsiEnumConstant enumConstant) {
         return enumConstant.getName();
       }
     }
@@ -590,8 +583,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     PsiIfStatement currentIfInChain = ifStatement;
     while (currentIfInChain != null) {
       final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(currentIfInChain.getCondition());
-      if (condition instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
+      if (condition instanceof PsiPolyadicExpression polyadicExpression) {
         if (JavaTokenType.OROR.equals(polyadicExpression.getOperationTokenType())) {
           if (ContainerUtil.exists(polyadicExpression.getOperands(), (operand) -> hasUnconditionalPatternCheck(type, operand))) {
             return true;
@@ -637,8 +629,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
   private static PsiExpression findNullCheckedOperand(PsiIfStatement ifStatement) {
     final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
-    if (condition instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
+    if (condition instanceof PsiPolyadicExpression polyadicExpression) {
       if (JavaTokenType.OROR.equals(polyadicExpression.getOperationTokenType())) {
         for (PsiExpression operand : polyadicExpression.getOperands()) {
           final PsiExpression nullCheckedExpression = SwitchUtils.findNullCheckedOperand(PsiUtil.skipParenthesizedExprDown(operand));

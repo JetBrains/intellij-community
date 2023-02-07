@@ -33,8 +33,7 @@ final class ShAnnotator implements Annotator {
         mark(node.getPsi(), holder, COMPOSED_VARIABLE);
       }
     }
-    else if (o instanceof ShSubshellCommand) {
-      ShSubshellCommand subshellCommand = (ShSubshellCommand)o;
+    else if (o instanceof ShSubshellCommand subshellCommand) {
       mark(subshellCommand.getLeftParen(), holder, SUBSHELL_COMMAND);
       mark(subshellCommand.getRightParen(), holder, SUBSHELL_COMMAND);
     }

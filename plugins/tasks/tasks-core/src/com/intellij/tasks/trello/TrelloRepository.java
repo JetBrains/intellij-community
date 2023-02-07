@@ -365,8 +365,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
       @Override
       public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
         // pass
-        if (request instanceof HttpRequestWrapper) {
-          final HttpRequestWrapper wrapper = (HttpRequestWrapper)request;
+        if (request instanceof HttpRequestWrapper wrapper) {
           try {
             wrapper.setURI(new URIBuilder(wrapper.getURI())
                              .addParameter("token", myPassword)

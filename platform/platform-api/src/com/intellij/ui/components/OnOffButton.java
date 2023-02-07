@@ -90,14 +90,13 @@ public class OnOffButton extends JToggleButton {
 
     @Override
     public void paint(Graphics g, JComponent c) {
-      if (!(c instanceof OnOffButton)) return;
+      if (!(c instanceof OnOffButton button)) return;
 
       int toggleArc = JBUIScale.scale(3);
       int buttonArc = JBUIScale.scale(5);
       int vGap = JBUIScale.scale(3);
       int hGap = JBUIScale.scale(3);
 
-      OnOffButton button = (OnOffButton)c;
       Dimension size = button.getSize();
       int w = size.width - 2 * vGap;
       int h = size.height - 2 * hGap;

@@ -42,8 +42,7 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
     // Optimization. Check if there are any forms at all.
     boolean formsFound = false;
     for (AbstractTreeNode<?> node : children) {
-      if (node.getValue() instanceof PsiFile) {
-        PsiFile file = (PsiFile)node.getValue();
+      if (node.getValue() instanceof PsiFile file) {
         if (file.getFileType() == GuiFormFileType.INSTANCE) {
           formsFound = true;
           break;
@@ -122,8 +121,7 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
     List<BasePsiNode<? extends PsiElement>> result = new ArrayList<>();
     Set<PsiFile> psiFiles = new HashSet<>(forms);
     for (final AbstractTreeNode<?> child : children) {
-      if (child instanceof BasePsiNode) {
-        BasePsiNode<? extends PsiElement> treeNode = (BasePsiNode<? extends PsiElement>)child;
+      if (child instanceof BasePsiNode<? extends PsiElement> treeNode) {
         if (psiFiles.contains(treeNode.getValue())) {
           result.add(treeNode);
         }
@@ -158,8 +156,7 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
     private static PsiElement[] collectFormPsiElements(Collection<? extends AbstractTreeNode<?>> selected) {
       Set<PsiElement> result = new HashSet<>();
       for(AbstractTreeNode<?> node: selected) {
-        if (node.getValue() instanceof Form) {
-          Form form = (Form)node.getValue();
+        if (node.getValue() instanceof Form form) {
           result.add(form.getClassToBind());
           ContainerUtil.addAll(result, form.getFormFiles());
         }

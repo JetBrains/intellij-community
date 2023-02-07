@@ -73,8 +73,7 @@ public abstract class ThreeStateCheckboxAction extends AnAction implements Custo
   @Override
   public void updateCustomComponent(@NotNull JComponent component,
                                     @NotNull Presentation presentation) {
-    if (component instanceof ThreeStateCheckBox) {
-      ThreeStateCheckBox checkBox = (ThreeStateCheckBox)component;
+    if (component instanceof ThreeStateCheckBox checkBox) {
       CheckboxAction.updateCheckboxPresentation(checkBox, presentation);
 
       ThreeStateCheckBox.State property = presentation.getClientProperty(STATE_PROPERTY);

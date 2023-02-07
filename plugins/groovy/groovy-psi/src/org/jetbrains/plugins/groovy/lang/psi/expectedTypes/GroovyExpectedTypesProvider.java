@@ -301,8 +301,7 @@ public final class GroovyExpectedTypesProvider {
 
     private void checkExitPoint() {
       final PsiElement element = PsiTreeUtil.getParentOfType(myExpression, PsiMethod.class, GrClosableBlock.class);
-      if (element instanceof GrMethod) {
-        final GrMethod method = (GrMethod)element;
+      if (element instanceof GrMethod method) {
         ControlFlowUtils.visitAllExitPoints(method.getBlock(), new ControlFlowUtils.ExitPointVisitor() {
           @Override
           public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {

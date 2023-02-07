@@ -407,8 +407,7 @@ public final class ActionsTree {
   @Nullable
   private String getPath(DefaultMutableTreeNode node, boolean presentable) {
     final Object userObject = node.getUserObject();
-    if (userObject instanceof String) {
-      String actionId = (String)userObject;
+    if (userObject instanceof String actionId) {
 
       final TreeNode parent = node.getParent();
       if (parent instanceof DefaultMutableTreeNode) {

@@ -176,9 +176,8 @@ public final class VcsLogUiUtil {
       if (place == null) return ActionCallback.DONE;
 
       Object value = place.getPath(PLACE_KEY);
-      if (!(value instanceof CommitId)) return ActionCallback.REJECTED;
+      if (!(value instanceof CommitId commitId)) return ActionCallback.REJECTED;
 
-      CommitId commitId = (CommitId)value;
       ActionCallback callback = new ActionCallback();
 
       ListenableFuture<Boolean> future = VcsLogNavigationUtil.jumpToCommit(myUi, commitId.getHash(), commitId.getRoot(),

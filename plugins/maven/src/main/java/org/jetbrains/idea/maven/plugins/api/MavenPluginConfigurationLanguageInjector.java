@@ -28,9 +28,7 @@ public final class MavenPluginConfigurationLanguageInjector implements LanguageI
 
   @Override
   public void getLanguagesToInject(@NotNull final PsiLanguageInjectionHost host, @NotNull final InjectedLanguagePlaces injectionPlacesRegistrar) {
-    if (!(host instanceof XmlText)) return;
-
-    final XmlText xmlText = (XmlText)host;
+    if (!(host instanceof XmlText xmlText)) return;
 
     if (!MavenPluginParamInfo.isSimpleText(xmlText)) return;
 

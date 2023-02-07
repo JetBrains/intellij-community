@@ -115,10 +115,9 @@ public class SharedThreadLocalRandomInspection extends BaseInspection {
         return false;
       }
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       return !myMethodMatcher.matches(methodCallExpression);
     }
 
@@ -127,19 +126,17 @@ public class SharedThreadLocalRandomInspection extends BaseInspection {
       if (parent instanceof PsiVariable) {
         return (PsiVariable)parent;
       }
-      if (!(parent instanceof PsiAssignmentExpression)) {
+      if (!(parent instanceof PsiAssignmentExpression assignmentExpression)) {
         return null;
       }
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
       final PsiExpression rhs = assignmentExpression.getRExpression();
       if (!PsiTreeUtil.isAncestor(rhs, expression, false)) {
         return null;
       }
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
-      if (!(lhs instanceof PsiReferenceExpression)) {
+      if (!(lhs instanceof PsiReferenceExpression referenceExpression)) {
         return null;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
       final PsiElement target = referenceExpression.resolve();
       if (!(target instanceof PsiVariable)) {
         return null;

@@ -138,8 +138,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
         component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       }
       if (component != null) {
-        if (component instanceof JComponent) {
-          JComponent jComp = (JComponent)component;
+        if (component instanceof JComponent jComp) {
           jComp.putClientProperty(CLICK_INFO, getClickInfoNode(me, jComp));
           jComp.putClientProperty(CLICK_INFO_POINT, me.getPoint());
         }
@@ -203,8 +202,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
           return Pair.create(clickInfo, rendererComponent);
         }
       }
-      if (component instanceof JTable) {
-        JTable table = (JTable)component;
+      if (component instanceof JTable table) {
         int row = table.rowAtPoint(me.getPoint());
         int column = table.columnAtPoint(me.getPoint());
         if (row != -1 && column != -1) {

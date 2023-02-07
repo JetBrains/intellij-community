@@ -32,10 +32,9 @@ public class ObscureThrownExceptionsIntention extends MutablyNamedIntention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element) {
-    if (!(element instanceof PsiReferenceList)) {
+    if (!(element instanceof PsiReferenceList referenceList)) {
       return;
     }
-    final PsiReferenceList referenceList = (PsiReferenceList)element;
     final PsiClassType[] types = referenceList.getReferencedTypes();
     final PsiClass commonSuperClass = findCommonSuperClass(types);
     if (commonSuperClass == null) {

@@ -68,8 +68,7 @@ class FileTypeInfo {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof FileTypeInfo)) return false;
-    final FileTypeInfo info = (FileTypeInfo)o;
+    if (!(o instanceof FileTypeInfo info)) return false;
     return myFileType == info.myFileType
            && myDialect == info.myDialect
            && myContext == info.myContext;

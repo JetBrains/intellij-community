@@ -228,10 +228,9 @@ class InspectionRunner {
     InspectionToolWrapper<?,?> toolWrapper = inspectionProfile.getInspectionTool(RedundantSuppressInspectionBase.SHORT_NAME, myPsiFile);
     Language fileLanguage = myPsiFile.getLanguage();
     InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(fileLanguage);
-    if (!(suppressor instanceof RedundantSuppressionDetector)) {
+    if (!(suppressor instanceof RedundantSuppressionDetector redundantSuppressionDetector)) {
       return;
     }
-    RedundantSuppressionDetector redundantSuppressionDetector = (RedundantSuppressionDetector)suppressor;
     Set<String> activeTools = new HashSet<>();
     for (LocalInspectionToolWrapper tool : toolWrappers) {
       if (tool.runForWholeFile()) {

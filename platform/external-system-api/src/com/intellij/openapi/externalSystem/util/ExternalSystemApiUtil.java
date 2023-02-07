@@ -760,8 +760,7 @@ public final class ExternalSystemApiUtil {
 
   public static @NotNull FileChooserDescriptor getExternalProjectConfigDescriptor(@NotNull ProjectSystemId systemId) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(systemId);
-    if (manager instanceof ExternalSystemUiAware) {
-      ExternalSystemUiAware uiAware = ((ExternalSystemUiAware)manager);
+    if (manager instanceof ExternalSystemUiAware uiAware) {
       FileChooserDescriptor descriptor = uiAware.getExternalProjectConfigDescriptor();
       if (descriptor != null) {
         return descriptor;

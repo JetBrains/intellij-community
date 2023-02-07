@@ -55,8 +55,7 @@ public final class EclipseClasspathStorageProvider implements ClasspathStoragePr
   public void assertCompatible(@NotNull final ModuleRootModel model) throws ConfigurationException {
     final String moduleName = model.getModule().getName();
     for (OrderEntry entry : model.getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry) {
-        final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
+      if (entry instanceof LibraryOrderEntry libraryEntry) {
         if (libraryEntry.isModuleLevel()) {
           final Library library = libraryEntry.getLibrary();
           if (library == null ||

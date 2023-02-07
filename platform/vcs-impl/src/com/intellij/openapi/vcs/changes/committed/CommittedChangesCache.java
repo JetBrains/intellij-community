@@ -129,8 +129,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   public boolean isMaxCountSupportedForProject() {
     for (AbstractVcs vcs : ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()) {
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
-      if (provider instanceof CachingCommittedChangesProvider) {
-        final CachingCommittedChangesProvider cachingProvider = (CachingCommittedChangesProvider)provider;
+      if (provider instanceof CachingCommittedChangesProvider cachingProvider) {
         if (!cachingProvider.isMaxCountSupported()) {
           return false;
         }

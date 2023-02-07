@@ -58,8 +58,7 @@ public interface MavenCompilerExtension {
                                 Module module,
                                 MavenProject mavenProject,
                                 List<String> compilerArgs) {
-    if (compilerOptions instanceof JpsJavaCompilerOptions) {
-      JpsJavaCompilerOptions javaCompilerOptions = (JpsJavaCompilerOptions)compilerOptions;
+    if (compilerOptions instanceof JpsJavaCompilerOptions javaCompilerOptions) {
 
       CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(module.getProject());
       compilerConfiguration.setAdditionalOptions(javaCompilerOptions, module, compilerArgs);

@@ -179,8 +179,7 @@ public class UseCoupleInspection extends DevKitUastInspectionBase implements Cle
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-      if (element instanceof PsiTypeElement) {
-        PsiTypeElement typeElement = (PsiTypeElement)element;
+      if (element instanceof PsiTypeElement typeElement) {
         PsiClassType type1 = (PsiClassType)typeElement.getType();
         PsiType[] parameters = type1.getParameters();
         if (parameters.length != 2) {

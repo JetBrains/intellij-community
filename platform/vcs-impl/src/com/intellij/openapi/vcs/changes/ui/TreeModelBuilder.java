@@ -509,9 +509,8 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     }
 
     if (parent instanceof ChangesBrowserModuleNode &&
-        childUserObject instanceof FilePath) {
+        childUserObject instanceof FilePath childPath) {
       FilePath parentPath = ((ChangesBrowserModuleNode)parent).getModuleRoot();
-      FilePath childPath = (FilePath)childUserObject;
       if (!parentPath.equals(childPath)) return null;
 
       parent.remove(0);

@@ -108,8 +108,7 @@ public class XValueHint extends AbstractValueHint {
 
     VirtualFile file;
     ConsoleView consoleView = ConsoleViewImpl.CONSOLE_VIEW_IN_EDITOR_VIEW.get(editor);
-    if (consoleView instanceof LanguageConsoleView) {
-      LanguageConsoleView console = ((LanguageConsoleView)consoleView);
+    if (consoleView instanceof LanguageConsoleView console) {
       file = console.getHistoryViewer() == editor ? console.getVirtualFile() : null;
     }
     else {

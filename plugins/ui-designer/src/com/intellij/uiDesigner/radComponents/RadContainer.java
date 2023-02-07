@@ -171,8 +171,7 @@ public class RadContainer extends RadComponent implements IContainer {
     myDelegeeLayout = layout;
     getDelegee().setLayout(layout);
 
-    if (layout instanceof AbstractLayout) {
-      AbstractLayout aLayout = (AbstractLayout)layout;
+    if (layout instanceof AbstractLayout aLayout) {
       for (int i = 0; i < getComponentCount(); i++) {
         final RadComponent c = getComponent(i);
         aLayout.addLayoutComponent(c.getDelegee(), c.getConstraints());

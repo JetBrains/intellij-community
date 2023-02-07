@@ -140,8 +140,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   protected void update(@NotNull final PresentationData presentation) {
     ApplicationManager.getApplication().runReadAction(() -> {
       final Object object = getValue();
-      if (object instanceof PsiNamedElement) {
-        final PsiNamedElement value = (PsiNamedElement)object;
+      if (object instanceof PsiNamedElement value) {
         if (value instanceof PsiQualifiedNamedElement &&
             (myStateBean.myFlattenPackages && value.getContainingFile() == null || getParent() instanceof CoverageListRootNode)) {
           presentation.setPresentableText(((PsiQualifiedNamedElement)value).getQualifiedName());

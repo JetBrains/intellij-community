@@ -330,8 +330,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
     }
 
     private static boolean isHardcodedException(PsiExpression expression) {
-      if (!(expression instanceof PsiMethodCallExpression)) return false;
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      if (!(expression instanceof PsiMethodCallExpression call)) return false;
       if (STREAM_COLLECT.test(call)) {
         PsiMethodCallExpression collector =
           ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]), PsiMethodCallExpression.class);

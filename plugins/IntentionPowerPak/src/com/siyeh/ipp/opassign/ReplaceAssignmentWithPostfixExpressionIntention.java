@@ -43,10 +43,9 @@ public class ReplaceAssignmentWithPostfixExpressionIntention extends MutablyName
     CommentTracker commentTracker = new CommentTracker();
     final String lhsText = commentTracker.text(lhs);
     final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression());
-    if (!(rhs instanceof PsiBinaryExpression)) {
+    if (!(rhs instanceof PsiBinaryExpression binaryExpression)) {
       return;
     }
-    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)rhs;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     if (JavaTokenType.PLUS.equals(tokenType)) {
       PsiReplacementUtil.replaceExpression(assignmentExpression, lhsText + "++", commentTracker);

@@ -37,8 +37,7 @@ public class GroovyBlockStatementsSelectioner extends ExtendWordSelectionHandler
   public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
 
-    if (e instanceof GrCodeBlock) {
-      GrCodeBlock block = ((GrCodeBlock)e);
+    if (e instanceof GrCodeBlock block) {
       int startOffset = findOpeningBrace(block);
       int endOffset = findClosingBrace(block, startOffset);
       TextRange range = new TextRange(startOffset, endOffset);

@@ -526,8 +526,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   @Nullable
   @Override
   public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
-    if (settingsStep instanceof ProjectSettingsStep) {
-      final ProjectSettingsStep projectSettingsStep = (ProjectSettingsStep)settingsStep;
+    if (settingsStep instanceof ProjectSettingsStep projectSettingsStep) {
       if (myProjectId != null) {
         final ModuleNameLocationSettings nameLocationSettings = settingsStep.getModuleNameLocationSettings();
         String artifactId = myProjectId.getArtifactId();

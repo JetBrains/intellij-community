@@ -164,8 +164,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   updateValue(pair, newInsets, row, column);
                   changed.set(true);
                 }
-              } else if (value instanceof UIUtil.GrayFilter) {
-                UIUtil.GrayFilter f = (UIUtil.GrayFilter)value;
+              } else if (value instanceof UIUtil.GrayFilter f) {
                 String oldFilter = String.format("%d,%d,%d", f.getBrightness(), f.getContrast(), f.getAlpha());
                 UIUtil.GrayFilter newValue = editGrayFilter(key.toString(), oldFilter);
                 if (newValue != null) {
@@ -180,8 +179,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   setValueAt(newValue, row, column);
                   changed.set(true);
                 }
-              } else if (value instanceof Dimension) {
-                Dimension d = (Dimension)value;
+              } else if (value instanceof Dimension d) {
                 String oldDimension = String.format("%d,%d", d.width, d.height);
                 Dimension newDimension = editDimension(key.toString(), oldDimension);
                 if (newDimension != null) {
@@ -225,8 +223,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
             }
             final JLabel label = new JLabel(value == null ? "" : value.toString());
             final JPanel panel = simplePanel(label);
-            if (value instanceof Color) {
-              final Color c = (Color)value;
+            if (value instanceof Color c) {
               label.setText(String.format("  [%d,%d,%d] #%s", c.getRed(), c.getGreen(), c.getBlue(), StringUtil.toUpperCase(ColorUtil.toHex(c))));
               Color fg = ColorUtil.isDark(c) ? Gray.xFF : Gray.x00;
               label.setForeground(fg);

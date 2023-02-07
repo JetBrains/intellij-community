@@ -55,8 +55,7 @@ public final class FavoriteTreeNodeDescriptor extends PresentableNodeDescriptor<
       if (nodeElement instanceof PsiDirectory) {
         return VfsUtilCore.getRelativeLocation(((PsiDirectory)nodeElement).getVirtualFile(), project.getBaseDir());
       }
-      if (nodeElement instanceof PsiFile) {
-        final PsiFile containingFile = (PsiFile)nodeElement;
+      if (nodeElement instanceof PsiFile containingFile) {
         return VfsUtilCore.getRelativeLocation(containingFile.getVirtualFile(), project.getBaseDir());
       }
     }
@@ -64,8 +63,7 @@ public final class FavoriteTreeNodeDescriptor extends PresentableNodeDescriptor<
     if (nodeElement instanceof LibraryGroupElement) {
       return ((LibraryGroupElement)nodeElement).getModule().getName();
     }
-    if (nodeElement instanceof NamedLibraryElement) {
-      final NamedLibraryElement namedLibraryElement = ((NamedLibraryElement)nodeElement);
+    if (nodeElement instanceof NamedLibraryElement namedLibraryElement) {
       final Module module = namedLibraryElement.getModule();
       return (module != null ? module.getName() : "") + ":" + namedLibraryElement.getOrderEntry().getPresentableName();
     }
@@ -98,8 +96,7 @@ public final class FavoriteTreeNodeDescriptor extends PresentableNodeDescriptor<
   @Nullable
   public FavoriteTreeNodeDescriptor getFavoritesRoot() {
     FavoriteTreeNodeDescriptor descriptor = this;
-    while (descriptor != null && descriptor.getParentDescriptor() instanceof FavoriteTreeNodeDescriptor) {
-      FavoriteTreeNodeDescriptor parent = (FavoriteTreeNodeDescriptor)descriptor.getParentDescriptor();
+    while (descriptor != null && descriptor.getParentDescriptor() instanceof FavoriteTreeNodeDescriptor parent) {
       if (parent != null && parent.getParentDescriptor() == null) {
         return descriptor;
       }

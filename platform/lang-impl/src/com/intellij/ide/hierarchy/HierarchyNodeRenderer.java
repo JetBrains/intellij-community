@@ -33,8 +33,7 @@ public final class HierarchyNodeRenderer extends NodeRenderer {
                                     boolean selected, boolean expanded, boolean leaf,
                                     int row, boolean hasFocus) {
     Object userObject = TreeUtil.getUserObject(value);
-    if (userObject instanceof HierarchyNodeDescriptor) {
-      HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)userObject;
+    if (userObject instanceof HierarchyNodeDescriptor descriptor) {
       var tagIconAndText = TagManager.getTagIconAndText(descriptor.getPsiElement());
       descriptor.getHighlightedText().customize(this);
       setIcon(IconUtil.rowIcon(tagIconAndText.first, fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus)));

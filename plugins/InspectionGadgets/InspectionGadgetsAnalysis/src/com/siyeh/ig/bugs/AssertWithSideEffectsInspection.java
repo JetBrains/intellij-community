@@ -144,10 +144,9 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
 
     private void checkExpression(PsiExpression operand) {
       operand = PsiUtil.skipParenthesizedExprDown(operand);
-      if (!(operand instanceof PsiReferenceExpression)) {
+      if (!(operand instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)operand;
       final PsiElement target = referenceExpression.resolve();
       if (target instanceof PsiField) {
         mutatedField = ((PsiField)target).getName();

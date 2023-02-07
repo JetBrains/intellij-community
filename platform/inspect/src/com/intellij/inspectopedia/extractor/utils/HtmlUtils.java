@@ -129,11 +129,10 @@ public final class HtmlUtils {
     }
 
     private static boolean isBlockElement(@NotNull Node node) {
-        if (!(node instanceof Element))
+        if (!(node instanceof Element element))
             return false;
 
-        final Element element = (Element) node;
-        return element.tagName().equals("list") ||
+      return element.tagName().equals("list") ||
                 (element.tagName().equals("code") && element.attr("style").equals("block")) ||
                 isBr(node);
     }

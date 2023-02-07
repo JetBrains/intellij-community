@@ -262,8 +262,7 @@ public final class DocStringUtil {
 
   @Nullable
   public static String getAttributeDocComment(@NotNull PyTargetExpression attr) {
-    if (attr.getParent() instanceof PyAssignmentStatement) {
-      final PyAssignmentStatement assignment = (PyAssignmentStatement)attr.getParent();
+    if (attr.getParent() instanceof PyAssignmentStatement assignment) {
       final PsiElement prevSibling = PyPsiUtils.getPrevNonWhitespaceSibling(assignment);
       if (prevSibling instanceof PsiComment && prevSibling.getText().startsWith("#:")) {
         return prevSibling.getText().substring(2);
@@ -278,10 +277,9 @@ public final class DocStringUtil {
       return false;
     }
     final PsiElement prevElement = PyPsiUtils.getPrevNonCommentSibling(parent, true);
-    if (prevElement instanceof PyAssignmentStatement) {
+    if (prevElement instanceof PyAssignmentStatement assignmentStatement) {
       if (expr.getText().contains("type:")) return true;
 
-      final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)prevElement;
       final ScopeOwner scope = PsiTreeUtil.getParentOfType(prevElement, ScopeOwner.class);
       if (scope instanceof PyClass || scope instanceof PyFile) {
         return true;

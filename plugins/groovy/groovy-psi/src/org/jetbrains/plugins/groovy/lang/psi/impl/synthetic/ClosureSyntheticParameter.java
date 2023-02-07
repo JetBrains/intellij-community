@@ -103,8 +103,7 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ClosureSyntheticParameter)) return false;
-    ClosureSyntheticParameter parameter = (ClosureSyntheticParameter)o;
+    if (!(o instanceof ClosureSyntheticParameter parameter)) return false;
     // Closure parameter is uniquely identified by the closure itself
     return Objects.equals(myClosure, parameter.myClosure);
   }

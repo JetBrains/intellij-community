@@ -60,8 +60,7 @@ public class ImportStaticIntention extends Intention {
     if (name == null) return;
 
     final PsiFile containingFile = element.getContainingFile();
-    if (!(containingFile instanceof GroovyFile)) return;
-    final GroovyFile file = (GroovyFile)containingFile;
+    if (!(containingFile instanceof GroovyFile file)) return;
     file.accept(new GroovyRecursiveElementVisitor() {
       @Override
       public void visitReferenceExpression(@NotNull GrReferenceExpression expression) {

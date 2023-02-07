@@ -37,10 +37,9 @@ public class PropertyValueSetToItselfInspection extends BaseInspection {
         return;
       }
       final PsiExpression argument = arguments1[0];
-      if (!(argument instanceof PsiMethodCallExpression)) {
+      if (!(argument instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)argument;
       if (!methodCallExpression.getArgumentList().isEmpty()) {
         return;
       }

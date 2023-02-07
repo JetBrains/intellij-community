@@ -738,8 +738,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
                   @Override
                   public void lookAndFeelChanged(@NotNull LafManager source) {
-                    if (!(source.getCurrentLookAndFeel() instanceof UIThemeBasedLookAndFeelInfo)) return;
-                    UIThemeBasedLookAndFeelInfo themeInfo = (UIThemeBasedLookAndFeelInfo)source.getCurrentLookAndFeel();
+                    if (!(source.getCurrentLookAndFeel() instanceof UIThemeBasedLookAndFeelInfo themeInfo)) return;
 
                     if (themeInfo.getName().contains("Solarized")) {
                       if (isDark && themeInfo.getTheme().isDark() || !isDark && !themeInfo.getTheme().isDark()) {

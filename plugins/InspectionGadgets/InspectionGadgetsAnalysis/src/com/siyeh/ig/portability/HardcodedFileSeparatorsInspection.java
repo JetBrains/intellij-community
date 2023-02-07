@@ -213,14 +213,12 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
         final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
         if (parent != null) {
           final PsiElement grandParent = parent.getParent();
-          if (grandParent instanceof PsiMethodCallExpression) {
-            final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+          if (grandParent instanceof PsiMethodCallExpression methodCallExpression) {
             if (MethodCallUtils.isCallToRegexMethod(methodCallExpression) || myMethodMatcher.matches(methodCallExpression)) {
               return;
             }
           }
-          else if (grandParent instanceof PsiNewExpression) {
-            final PsiNewExpression newExpression = (PsiNewExpression)grandParent;
+          else if (grandParent instanceof PsiNewExpression newExpression) {
             if (TypeUtils.expressionHasTypeOrSubtype(newExpression, "javax.swing.ImageIcon")) {
               return;
             }

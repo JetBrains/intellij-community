@@ -203,8 +203,7 @@ public class GenerateToStringWorker {
    */
   private void afterCreateToStringMethod(PsiMethod method, Map<String, String> params, TemplateResource template) {
     PsiFile containingFile = clazz.getContainingFile();
-    if (containingFile instanceof PsiJavaFile) {
-      final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
+    if (containingFile instanceof PsiJavaFile javaFile) {
       if (params.get("autoImportPackages") != null) {
         // keep this for old user templates
         autoImportPackages(javaFile, params.get("autoImportPackages"));

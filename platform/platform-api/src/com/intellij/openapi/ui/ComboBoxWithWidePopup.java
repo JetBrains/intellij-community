@@ -31,8 +31,7 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
 
   @Override
   public void setRenderer(ListCellRenderer<? super E> renderer) {
-    if (renderer instanceof SimpleColoredComponent) {
-      SimpleColoredComponent scc = (SimpleColoredComponent)renderer;
+    if (renderer instanceof SimpleColoredComponent scc) {
       scc.getIpad().top = scc.getIpad().bottom = 0;
     }
     super.setRenderer(new AdjustingListCellRenderer(renderer));
@@ -70,9 +69,8 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
 
     @Override
     public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
-      if (index == -1 && value instanceof String && !isValid()) {
+      if (index == -1 && value instanceof String stringValue && !isValid()) {
         int minLength = getMinLength();
-        String stringValue = (String)value;
 
         if (getSize().width == 0) {
           if (stringValue.length() > minLength) {

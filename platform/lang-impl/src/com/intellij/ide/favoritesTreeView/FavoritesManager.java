@@ -522,15 +522,13 @@ public final class FavoritesManager implements PersistentStateComponent<Element>
           return true;
         }
       }
-      if (element instanceof NamedLibraryElement) {
-        NamedLibraryElement namedLibraryElement = (NamedLibraryElement)element;
+      if (element instanceof NamedLibraryElement namedLibraryElement) {
         final VirtualFile[] files = namedLibraryElement.getOrderEntry().getRootFiles(OrderRootType.CLASSES);
         if (ArrayUtil.find(files, vFile) > -1) {
           return true;
         }
       }
-      if (element instanceof ModuleGroup) {
-        ModuleGroup group = (ModuleGroup)element;
+      if (element instanceof ModuleGroup group) {
         final Collection<Module> modules = group.modulesInGroup(myProject, true);
         for (Module module : modules) {
           ModuleRootManager.getInstance(module).getFileIndex().iterateContent(contentIterator);

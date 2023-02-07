@@ -264,8 +264,7 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   private static @Nullable VirtualFile getFile(@NotNull Object node) {
-    if (!(((DefaultMutableTreeNode)node).getUserObject() instanceof FileNodeDescriptor)) return null;
-    FileNodeDescriptor descriptor = (FileNodeDescriptor)((DefaultMutableTreeNode)node).getUserObject();
+    if (!(((DefaultMutableTreeNode)node).getUserObject() instanceof FileNodeDescriptor descriptor)) return null;
     if (descriptor.getElement().getFile() == null) return null;
     return descriptor.getElement().getFile();
   }

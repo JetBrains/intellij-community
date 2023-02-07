@@ -199,8 +199,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void copyTo(@NotNull final FontPreferences preferences) {
-    if (preferences instanceof ModifiableFontPreferences) {
-      ModifiableFontPreferences modifiablePreferences = (ModifiableFontPreferences)preferences;
+    if (preferences instanceof ModifiableFontPreferences modifiablePreferences) {
       modifiablePreferences.setEffectiveFontFamilies(myEffectiveFontFamilies);
       modifiablePreferences.setRealFontFamilies(myRealFontFamilies);
       modifiablePreferences.setTemplateFontSize(myTemplateFontSize);

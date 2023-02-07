@@ -664,8 +664,7 @@ public final class TreeUtil {
     final Component comp =
       tree.getCellRenderer().getTreeCellRendererComponent(tree, path.getLastPathComponent(), true, true, false, row, false);
 
-    if (comp instanceof SimpleColoredComponent) {
-      final SimpleColoredComponent renderer = (SimpleColoredComponent)comp;
+    if (comp instanceof SimpleColoredComponent renderer) {
       final Dimension scrollableSize = renderer.computePreferredSize(true);
       bounds.width = scrollableSize.width;
     }
@@ -1209,8 +1208,7 @@ public final class TreeUtil {
 
   @ApiStatus.Experimental
   public static void invalidateCacheAndRepaint(@Nullable TreeUI ui) {
-    if (ui instanceof BasicTreeUI) {
-      BasicTreeUI basic = (BasicTreeUI)ui;
+    if (ui instanceof BasicTreeUI basic) {
       if (null == getField(BasicTreeUI.class, ui, JTree.class, "tree")) {
         LOG.warn(new IllegalStateException("tree is not properly initialized yet"));
         return;
@@ -1762,8 +1760,7 @@ public final class TreeUtil {
    */
   public static @NotNull Promise<TreePath> promiseVisit(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
     TreeModel model = tree.getModel();
-    if (model instanceof TreeVisitor.Acceptor) {
-      TreeVisitor.Acceptor acceptor = (TreeVisitor.Acceptor)model;
+    if (model instanceof TreeVisitor.Acceptor acceptor) {
       return acceptor.accept(visitor);
     }
     if (model == null) return Promises.rejectedPromise("tree model is not set");

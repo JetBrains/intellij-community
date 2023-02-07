@@ -34,8 +34,7 @@ public class Form implements Navigatable, Iterable<PsiElement> {
   }
 
   public boolean equals(Object object) {
-    if (object instanceof Form){
-      Form form = (Form)object;
+    if (object instanceof Form form){
       return myFormFiles.equals(form.myFormFiles) && myClassToBind.equals(form.myClassToBind);
     } else {
       return false;

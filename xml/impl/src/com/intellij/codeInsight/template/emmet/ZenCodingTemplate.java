@@ -127,8 +127,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
         break;
       }
     }
-    while (node instanceof FilterNode) {
-      FilterNode filterNode = (FilterNode)node;
+    while (node instanceof FilterNode filterNode) {
       String suffix = filterNode.getFilter();
       for (ZenCodingGenerator generator : generators) {
         if (generator.isMyContext(callback, wrapping)) {
@@ -146,8 +145,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   private static List<ZenCodingFilter> getFilters(ZenCodingNode node, PsiElement context) {
     List<ZenCodingFilter> result = new ArrayList<>();
 
-    while (node instanceof FilterNode) {
-      FilterNode filterNode = (FilterNode)node;
+    while (node instanceof FilterNode filterNode) {
       String filterSuffix = filterNode.getFilter();
       for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {
         if (filter.isMyContext(context) && filter.getSuffix().equals(filterSuffix)) {

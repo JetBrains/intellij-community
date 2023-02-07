@@ -19,9 +19,8 @@ import java.util.LinkedHashSet;
 public final class GroovyImportHelper {
 
   public static boolean isImplicitlyImported(PsiElement element, String expectedName, GroovyFile file) {
-    if (!(element instanceof PsiClass)) return false;
+    if (!(element instanceof PsiClass psiClass)) return false;
 
-    final PsiClass psiClass = (PsiClass)element;
     if (!expectedName.equals(psiClass.getName())) return false;
 
     final String qname = psiClass.getQualifiedName();

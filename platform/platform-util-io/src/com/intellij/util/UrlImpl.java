@@ -147,18 +147,16 @@ public final class UrlImpl implements Url {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof UrlImpl)) return false;
+    if (!(o instanceof UrlImpl url)) return false;
 
-    UrlImpl url = (UrlImpl)o;
     return StringUtil.equals(scheme, url.scheme) && StringUtil.equals(authority, url.authority) && getPath().equals(url.getPath()) && StringUtil.equals(parameters, url.parameters);
   }
 
   @Override
   public boolean equalsIgnoreCase(@Nullable Url o) {
     if (this == o) return true;
-    if (!(o instanceof UrlImpl)) return false;
+    if (!(o instanceof UrlImpl url)) return false;
 
-    UrlImpl url = (UrlImpl)o;
     return StringUtil.equalsIgnoreCase(scheme, url.scheme) &&
            StringUtil.equalsIgnoreCase(authority, url.authority) &&
            getPath().equalsIgnoreCase(url.getPath()) &&

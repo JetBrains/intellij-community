@@ -101,8 +101,7 @@ public class UnnecessaryReturnInspection extends BaseInspection implements Clean
     }
     final PsiElement methodParent = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
     PsiCodeBlock codeBlock = null;
-    if (methodParent instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)methodParent;
+    if (methodParent instanceof PsiMethod method) {
       codeBlock = method.getBody();
       if (isInConstructorRef != null) {
         isInConstructorRef.set(method.isConstructor());
@@ -111,11 +110,10 @@ public class UnnecessaryReturnInspection extends BaseInspection implements Clean
         return false;
       }
     }
-    else if (methodParent instanceof PsiLambdaExpression) {
+    else if (methodParent instanceof PsiLambdaExpression lambdaExpression) {
       if (isInConstructorRef != null) {
         isInConstructorRef.set(false);
       }
-      final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)methodParent;
       if (checkReturnType && !PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) {
         return false;
       }

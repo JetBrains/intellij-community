@@ -131,9 +131,8 @@ public class ProjectPatternProvider extends PatternDialectProvider {
     else if (node instanceof LibraryNode) {
       return new FilePatternPackageSet(node.toString(), recursively ? "*/" : "*", false);
     }
-    else if (node instanceof FileNode) {
+    else if (node instanceof FileNode fNode) {
       if (recursively) return null;
-      FileNode fNode = (FileNode)node;
       final PsiFile file = (PsiFile)fNode.getPsiElement();
       if (file == null) return null;
       final VirtualFile virtualFile = file.getVirtualFile();

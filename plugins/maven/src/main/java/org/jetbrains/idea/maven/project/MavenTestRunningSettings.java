@@ -48,9 +48,7 @@ public class MavenTestRunningSettings {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof MavenTestRunningSettings)) return false;
-
-    MavenTestRunningSettings settings = (MavenTestRunningSettings)o;
+    if (!(o instanceof MavenTestRunningSettings settings)) return false;
 
     if (myPassArgLine != settings.myPassArgLine) return false;
     if (myPassEnvironmentVariables != settings.myPassEnvironmentVariables) return false;

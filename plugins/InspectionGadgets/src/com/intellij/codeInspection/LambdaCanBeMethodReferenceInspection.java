@@ -127,8 +127,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     if (functionalInterfaceType == null) return null;
     // Do not suggest for annotated lambda, as annotation will be lost during the conversion
     if (ContainerUtil.or(parameters, LambdaCanBeMethodReferenceInspection::hasAnnotation)) return null;
-    if (methodRefCandidate instanceof PsiNewExpression) {
-      final PsiNewExpression newExpression = (PsiNewExpression)methodRefCandidate;
+    if (methodRefCandidate instanceof PsiNewExpression newExpression) {
       if (newExpression.getAnonymousClass() != null || newExpression.getArrayInitializer() != null) {
         return null;
       }
@@ -137,8 +136,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     final String methodReferenceText = createMethodReferenceText(methodRefCandidate, functionalInterfaceType, parameters);
     if (methodReferenceText != null) {
       LOG.assertTrue(methodRefCandidate != null);
-      if (!(methodRefCandidate instanceof PsiCallExpression)) return methodRefCandidate;
-      PsiCallExpression callExpression = (PsiCallExpression)methodRefCandidate;
+      if (!(methodRefCandidate instanceof PsiCallExpression callExpression)) return methodRefCandidate;
       final PsiMethod method = callExpression.resolveMethod();
       if (method != null) {
         if (!isSimpleCall(parameters, callExpression, method)) {
@@ -247,8 +245,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     if (expression == null) {
       return null;
     }
-    if (expression instanceof PsiNewExpression) {
-      PsiNewExpression newExpression = (PsiNewExpression)expression;
+    if (expression instanceof PsiNewExpression newExpression) {
       if (newExpression.getQualifier() != null ||
           newExpression.getAnonymousClass() != null ||
           newExpression.getArrayInitializer() != null) {
@@ -275,8 +272,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       if (!isMethodReferenceArgCandidate(((PsiInstanceOfExpression)expression).getOperand())) return null;
       return new MethodReferenceCandidate(expression, true, javaSettings.REPLACE_INSTANCEOF_AND_CAST);
     }
-    else if (expression instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
+    else if (expression instanceof PsiBinaryExpression binOp) {
       PsiExpression comparedWithNull = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getValueComparedWithNull(binOp));
       if (isMethodReferenceArgCandidate(comparedWithNull)) {
         return new MethodReferenceCandidate(expression, true, javaSettings.REPLACE_NULL_CHECK);
@@ -389,8 +385,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
   static @Nullable @NonNls String createMethodReferenceText(final PsiElement element,
                                                  final PsiType functionalInterfaceType,
                                                  final PsiVariable[] parameters) {
-    if (element instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
+    if (element instanceof PsiMethodCallExpression methodCall) {
 
       JavaResolveResult result = methodCall.resolveMethodGenerics();
       final PsiMethod psiMethod = (PsiMethod)result.getElement();
@@ -422,8 +417,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
         }
       }
     }
-    else if (element instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binOp = (PsiBinaryExpression)element;
+    else if (element instanceof PsiBinaryExpression binOp) {
       PsiExpression operand = ExpressionUtils.getValueComparedWithNull(binOp);
       if(operand != null && isSoleParameter(parameters, operand)) {
         IElementType tokenType = binOp.getOperationTokenType();
@@ -447,8 +441,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
         }
       }
     }
-    else if (element instanceof PsiTypeCastExpression) {
-      PsiTypeCastExpression castExpression = (PsiTypeCastExpression)element;
+    else if (element instanceof PsiTypeCastExpression castExpression) {
       if(isSoleParameter(parameters, castExpression.getOperand())) {
         PsiTypeElement type = castExpression.getCastType();
         if (type != null && !PsiUtilCore.hasErrorElementChild(type)) {

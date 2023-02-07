@@ -76,12 +76,10 @@ public final class WinDockDelegate implements SystemDock.Delegate {
 
     int i = 0;
     for (final var action : actions) {
-      if (!(action instanceof ReopenProjectAction)) {
+      if (!(action instanceof ReopenProjectAction reopenProjectAction)) {
         LOG.debug("Failed to convert an action \"" + action + "\" to Jump Task: the action is not ReopenProjectAction");
         continue;
       }
-
-      final ReopenProjectAction reopenProjectAction = (ReopenProjectAction)action;
 
       final @SystemIndependent String projectPath = reopenProjectAction.getProjectPath();
       final @SystemDependent String projectPathSystem = PathUtil.toSystemDependentName(projectPath);

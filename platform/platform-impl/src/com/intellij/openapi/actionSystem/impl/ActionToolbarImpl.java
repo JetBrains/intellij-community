@@ -1242,8 +1242,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myMinimumButtonSize = JBDimension.create(myMinimumButtonSizeFunction.get(), true);
     for (int i = getComponentCount() - 1; i >= 0; i--) {
       final Component component = getComponent(i);
-      if (component instanceof ActionButton) {
-        final ActionButton button = (ActionButton)component;
+      if (component instanceof ActionButton button) {
         button.setMinimumButtonSize(myMinimumButtonSizeFunction);
       }
       else if (component instanceof JLabel && LOADING_LABEL.equals(component.getName())) {

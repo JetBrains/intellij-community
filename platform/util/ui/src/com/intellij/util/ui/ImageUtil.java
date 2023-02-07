@@ -99,8 +99,7 @@ public final class ImageUtil {
    */
   @NotNull
   public static BufferedImage createImage(Graphics g, double width, double height, int type, @NotNull PaintUtil.RoundingMode rm) {
-    if (g instanceof Graphics2D) {
-      Graphics2D g2d = (Graphics2D)g;
+    if (g instanceof Graphics2D g2d) {
       if (JreHiDpiUtil.isJreHiDPI(g2d)) {
         return RetinaImage.create(g2d, width, height, type, rm);
       }
@@ -122,8 +121,7 @@ public final class ImageUtil {
 
   @NotNull
   public static BufferedImage toBufferedImage(@NotNull Image image, boolean inUserSize, boolean ensureOneComponent) {
-    if (image instanceof JBHiDPIScaledImage) {
-      JBHiDPIScaledImage jbImage = (JBHiDPIScaledImage)image;
+    if (image instanceof JBHiDPIScaledImage jbImage) {
       Image delegate = jbImage.getDelegate();
       if (delegate != null) image = delegate;
       if (inUserSize) {
@@ -297,8 +295,7 @@ public final class ImageUtil {
 
   @NotNull
   public static BufferedImage clipImage(@NotNull BufferedImage image, @NotNull Shape clip) {
-    if (image instanceof JBHiDPIScaledImage) {
-      JBHiDPIScaledImage scaledImage = (JBHiDPIScaledImage)image;
+    if (image instanceof JBHiDPIScaledImage scaledImage) {
       Image delegate = scaledImage.getDelegate();
       if (delegate == null) return doClipImage(scaledImage, clip);
       BufferedImage clippedImage = doClipImage(toBufferedImage(delegate), clip);

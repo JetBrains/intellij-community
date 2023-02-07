@@ -84,8 +84,7 @@ public final class SourceRootIconProvider {
   public static class DirectoryProvider extends IconProvider implements DumbAware {
     @Override
     public Icon getIcon(@NotNull final PsiElement element, final int flags) {
-      if (element instanceof PsiDirectory) {
-        final PsiDirectory psiDirectory = (PsiDirectory)element;
+      if (element instanceof PsiDirectory psiDirectory) {
         return getDirectoryIcon(psiDirectory.getVirtualFile(), psiDirectory.getProject());
       }
       return null;

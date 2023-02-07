@@ -212,9 +212,8 @@ class GrChageSignatureUsageSearcher {
             new DefaultConstructorImplicitUsageInfo((GrMethod)element, ((GrMethod)element).getContainingClass(), method);
           result.add(implicitUsageInfo);
         }
-        else if (element instanceof PsiClass) {
+        else if (element instanceof PsiClass psiClass) {
           LOG.assertTrue(method.isConstructor());
-          final PsiClass psiClass = (PsiClass)element;
           if (psiClass instanceof GrAnonymousClassDefinition) {
             result.add(new GrMethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions, method));
             continue;

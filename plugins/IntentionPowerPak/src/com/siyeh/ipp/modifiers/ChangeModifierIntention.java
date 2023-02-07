@@ -351,8 +351,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   private static void changeModifier(PsiModifierList modifierList, AccessModifier modifier, boolean hasConflicts) {
     Project project = modifierList.getProject();
     PsiElement parent = modifierList.getParent();
-    if (parent instanceof PsiMethod && hasConflicts) {
-      PsiMethod method = (PsiMethod)parent;
+    if (parent instanceof PsiMethod method && hasConflicts) {
       //no myPrepareSuccessfulSwingThreadCallback means that the conflicts when any, won't be shown again
       var csp = JavaRefactoringFactory.getInstance(project).createChangeSignatureProcessor(
                                                                    method,
@@ -385,13 +384,11 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
 
   @Nullable
   private static MultiMap<PsiElement, String> checkForConflicts(@NotNull PsiMember member, AccessModifier modifier) {
-    if (member instanceof PsiClass && modifier == AccessModifier.PUBLIC) {
-      final PsiClass aClass = (PsiClass)member;
+    if (member instanceof PsiClass aClass && modifier == AccessModifier.PUBLIC) {
       final PsiElement parent = aClass.getParent();
-      if (!(parent instanceof PsiJavaFile)) {
+      if (!(parent instanceof PsiJavaFile javaFile)) {
         return MultiMap.empty();
       }
-      final PsiJavaFile javaFile = (PsiJavaFile)parent;
       final String name = FileUtilRt.getNameWithoutExtension(javaFile.getName());
       final String className = aClass.getName();
       if (name.equals(className)) {

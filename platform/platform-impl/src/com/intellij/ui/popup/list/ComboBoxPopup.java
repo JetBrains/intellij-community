@@ -167,8 +167,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
                                                   boolean cellHasFocus) {
       //noinspection unchecked
       Component component = myContext.getRenderer().getListCellRendererComponent(list, (T)value, index, isSelected, cellHasFocus);
-      if (component instanceof JComponent && !(component instanceof JSeparator || component instanceof TitledSeparator)) {
-        JComponent jComponent = (JComponent)component;
+      if (component instanceof JComponent jComponent && !(component instanceof JSeparator || component instanceof TitledSeparator)) {
         if (!(component instanceof GroupedElementsRenderer.MyComponent)) {
           jComponent.setBorder(COMBO_ITEM_BORDER);
         }

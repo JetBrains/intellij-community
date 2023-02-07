@@ -144,8 +144,7 @@ public class PyStackFrame extends XStackFrame {
     for (int i = 0; i < children.size(); i++) {
       XValue value = children.getValue(i);
       String name = children.getName(i);
-      if (value instanceof PyDebugValue) {
-        PyDebugValue pyValue = (PyDebugValue)value;
+      if (value instanceof PyDebugValue pyValue) {
 
         restoreValueDescriptor(pyValue);
 

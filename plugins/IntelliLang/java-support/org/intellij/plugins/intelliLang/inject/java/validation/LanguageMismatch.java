@@ -103,14 +103,12 @@ public class LanguageMismatch extends LocalInspectionTool {
                   return;
                 }
               }
-              else if (var instanceof PsiExpressionList) {
-                final PsiExpressionList list = (PsiExpressionList)var;
+              else if (var instanceof PsiExpressionList list) {
                 if (!ArrayUtil.contains(expression, list.getExpressions())) {
                   return;
                 }
               }
-              else if (var instanceof PsiAssignmentExpression) {
-                final PsiAssignmentExpression a = (PsiAssignmentExpression)var;
+              else if (var instanceof PsiAssignmentExpression a) {
                 if (a.getRExpression() != expression) {
                   return;
                 }

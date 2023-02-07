@@ -89,8 +89,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
       }
       if (ignoreCantWrap) {
         final PsiType thrownType = exception.getType();
-        if (thrownType instanceof PsiClassType) {
-          final PsiClassType classType = (PsiClassType)thrownType;
+        if (thrownType instanceof PsiClassType classType) {
           final PsiClass exceptionClass = classType.resolve();
           if (exceptionClass != null) {
             final PsiMethod[] constructors = exceptionClass.getConstructors();
@@ -162,10 +161,9 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
               return true;
             }
             final PsiElement grandParent = parent.getParent();
-            if (!(grandParent instanceof PsiMethodCallExpression)) {
+            if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
               return true;
             }
-            final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
             final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
             final PsiExpression[] arguments = argumentList.getExpressions();
             for (PsiExpression argument : arguments) {

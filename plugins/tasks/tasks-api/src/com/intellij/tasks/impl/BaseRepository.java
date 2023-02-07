@@ -115,10 +115,8 @@ public abstract class BaseRepository extends TaskRepository {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof BaseRepository)) return false;
+    if (!(o instanceof BaseRepository that)) return false;
     if (!super.equals(o)) return false;
-
-    BaseRepository that = (BaseRepository)o;
 
     if (!Objects.equals(getUrl(), that.getUrl())) return false;
     if (!Objects.equals(getPassword(), that.getPassword())) return false;

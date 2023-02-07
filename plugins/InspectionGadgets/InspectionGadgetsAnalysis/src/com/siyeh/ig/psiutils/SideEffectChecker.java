@@ -98,8 +98,7 @@ public final class SideEffectChecker {
     if (e instanceof PsiLocalVariable) return true;
 
     PsiReferenceExpression ref = null;
-    if (e instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)e;
+    if (e instanceof PsiAssignmentExpression assignment) {
       ref = tryCast(PsiUtil.skipParenthesizedExprDown(assignment.getLExpression()), PsiReferenceExpression.class);
     }
     if (e instanceof PsiUnaryExpression) {

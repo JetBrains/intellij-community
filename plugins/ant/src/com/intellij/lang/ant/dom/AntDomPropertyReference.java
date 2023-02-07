@@ -121,8 +121,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
           }
         }
       }
-      else if (provider instanceof AntDomProperty) {
-        final AntDomProperty antProperty = (AntDomProperty)provider;
+      else if (provider instanceof AntDomProperty antProperty) {
         if (antProperty.equals(AntDomReferenceBase.toDomElement(resolve))) {
           String envPrefix = antProperty.getEnvironment().getValue();
           if (envPrefix != null) {
@@ -152,8 +151,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
   public boolean isReferenceTo(@NotNull PsiElement element) {
     // optimization to exclude obvious variants
     final DomElement domElement = AntDomReferenceBase.toDomElement(element);
-    if (domElement instanceof AntDomProperty) {
-      final AntDomProperty prop = (AntDomProperty)domElement;
+    if (domElement instanceof AntDomProperty prop) {
       final String propName = prop.getName().getRawText();
       if (propName != null && prop.getPrefix().getRawText() == null && prop.getEnvironment().getRawText() == null) {
         // if only 'name' attrib is specified

@@ -238,8 +238,7 @@ public final class CreateResourceBundleDialogComponent {
     }
     for (PsiElement element : myDirectory.getChildren()) {
       if (element instanceof PsiFile) {
-        if (element instanceof PropertiesFile) {
-          PropertiesFile propertiesFile = (PropertiesFile)element;
+        if (element instanceof PropertiesFile propertiesFile) {
           final String propertiesFileName = propertiesFile.getName();
           if (files.contains(propertiesFileName)) {
             return PropertiesBundle.message("create.resource.bundle.some.of.files.already.exist.error");

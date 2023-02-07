@@ -61,8 +61,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
 
     final TypeEvalContext context = TypeEvalContext.userInitiated(originalElement.getProject(), originalElement.getContainingFile());
 
-    if (element instanceof PyFunction) {
-      final PyFunction function = (PyFunction)element;
+    if (element instanceof PyFunction function) {
       final HtmlBuilder result = new HtmlBuilder();
 
       final PyClass cls = function.getContainingClass();
@@ -419,8 +418,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
                                            boolean link,
                                            @NotNull TypeEvalContext context) {
     if (link) {
-      if (expression instanceof PyReferenceExpression) {
-        final PyReferenceExpression referenceExpression = (PyReferenceExpression)expression;
+      if (expression instanceof PyReferenceExpression referenceExpression) {
         if (!referenceExpression.isQualified()) {
           final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 

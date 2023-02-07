@@ -120,8 +120,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
               popup.setCaption(((AttachToProcessItem)item).getSelectedDebugger().getDebuggerSelectedTitle());
             }
 
-            if (item instanceof AttachHostItem) {
-              AttachHostItem hostItem = (AttachHostItem)item;
+            if (item instanceof AttachHostItem hostItem) {
               String attachHostName = hostItem.getText(project);
               attachHostName = StringUtil.shortenTextWithEllipsis(attachHostName, 50, 0);
 
@@ -679,8 +678,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
 
     @Override
     public PopupStep onChosen(AttachItem selectedValue, boolean finalChoice) {
-      if (selectedValue instanceof AttachToProcessItem) {
-        AttachToProcessItem attachToProcessItem = (AttachToProcessItem)selectedValue;
+      if (selectedValue instanceof AttachToProcessItem attachToProcessItem) {
         if (finalChoice) {
           addToRecent(myProject, attachToProcessItem);
           return doFinalStep(() -> attachToProcessItem.startDebugSession(myProject));
@@ -690,8 +688,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
         }
       }
 
-      if (selectedValue instanceof AttachHostItem) {
-        AttachHostItem attachHostItem = (AttachHostItem)selectedValue;
+      if (selectedValue instanceof AttachHostItem attachHostItem) {
         return new AsyncPopupStep() {
           @Override
           public PopupStep call() {

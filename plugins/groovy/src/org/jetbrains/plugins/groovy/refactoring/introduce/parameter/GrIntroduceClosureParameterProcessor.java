@@ -235,9 +235,8 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
       final PsiElement element = instruction.getElement();
       if (element instanceof GrVariable && element != var) continue;
-      if (!(element instanceof GrReferenceExpression)) continue;
+      if (!(element instanceof GrReferenceExpression ref)) continue;
 
-      final GrReferenceExpression ref = (GrReferenceExpression)element;
       if (ref.isQualified() || ref.resolve() != var) continue;
 
       final BitSet prev = writes.get(instruction.num());
@@ -539,8 +538,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   }
 
   private static void processChangedMethodCall(PsiElement element, GrIntroduceParameterSettings settings) {
-    if (element.getParent() instanceof GrMethodCallExpression) {
-      GrMethodCallExpression methodCall = (GrMethodCallExpression)element.getParent();
+    if (element.getParent() instanceof GrMethodCallExpression methodCall) {
 
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(settings.getProject());
       GrExpression expression = factory.createExpressionFromText(settings.getName(), null);

@@ -193,8 +193,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF) {
             ReferencesSearch.search(variable, searchScope).forEach(psiReference -> {
               PsiElement element = psiReference.getElement();
-              if (element instanceof PsiExpression) {
-                PsiExpression refExpression = (PsiExpression)element;
+              if (element instanceof PsiExpression refExpression) {
                 places.add(refExpression);
                 if (!myUnparsable) {
                   myUnparsable = checkUnparsableReference(refExpression);
@@ -241,8 +240,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() == Configuration.DfaOption.OFF) return true;
           PsiElement e = expression.resolve();
           if (e instanceof PsiVariable) {
-            if (e instanceof PsiParameter) {
-              PsiParameter p = (PsiParameter)e;
+            if (e instanceof PsiParameter p) {
               PsiElement declarationScope = p.getDeclarationScope();
               PsiMethod method = declarationScope instanceof PsiMethod ? (PsiMethod)declarationScope : null;
               PsiParameterList parameterList = method == null ? null : method.getParameterList();
@@ -418,10 +416,9 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
     }
 
     private static List<TextRange> getTextBlockInjectedArea(PsiLanguageInjectionHost host) {
-      if (!(host instanceof PsiLiteralExpression)) {
+      if (!(host instanceof PsiLiteralExpression literalExpression)) {
         return null;
       }
-      final PsiLiteralExpression literalExpression = (PsiLiteralExpression)host;
       if (!literalExpression.isTextBlock()) {
         return null;
       }
@@ -470,8 +467,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
 
   private static boolean checkUnparsableReference(PsiExpression refExpression) {
     PsiElement parent = refExpression.getParent();
-    if (parent instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+    if (parent instanceof PsiAssignmentExpression assignmentExpression) {
       IElementType operation = assignmentExpression.getOperationTokenType();
       if (assignmentExpression.getLExpression() == refExpression && JavaTokenType.PLUSEQ.equals(operation)) {
         return true;

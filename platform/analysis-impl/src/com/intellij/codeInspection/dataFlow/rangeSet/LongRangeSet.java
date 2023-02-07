@@ -192,8 +192,7 @@ public abstract class LongRangeSet {
       if (mod < 2) return lrType.fullRange();
       return modRange(lrType.min(), lrType.max(), mod, 1).plus(constVal, lrType);
     }
-    if (this instanceof Point && other instanceof ModRange) {
-      ModRange modRange = (ModRange)other;
+    if (this instanceof Point && other instanceof ModRange modRange) {
       long value = ((Point)this).myValue;
       if (value % modRange.myMod == 0) {
         return modRange(lrType.min(), lrType.max(), modRange.myMod, modRange.myBits);
@@ -1227,8 +1226,7 @@ public abstract class LongRangeSet {
         long from = ((Range)other).myFrom;
         long to = ((Range)other).myTo;
         if (to < myFrom || from > myTo) return this;
-        if (other instanceof ModRange) {
-          ModRange modRange = (ModRange)other;
+        if (other instanceof ModRange modRange) {
           long newBits = ~modRange.myBits;
           if (modRange.myMod < 64) {
             newBits &= (1L << modRange.myMod) - 1;
@@ -1580,8 +1578,7 @@ public abstract class LongRangeSet {
 
     @Override
     public @NotNull LongRangeSet subtract(@NotNull LongRangeSet other) {
-      if (other instanceof Point) {
-        Point p = (Point)other;
+      if (other instanceof Point p) {
         if (p.myValue == myFrom) {
           return modRange(myFrom + 1, myTo, myMod, myBits);
         }
@@ -1589,8 +1586,7 @@ public abstract class LongRangeSet {
           return modRange(myFrom, myTo - 1, myMod, myBits);
         }
       }
-      if (other instanceof Range && !(other instanceof ModRange)) {
-        Range r = (Range)other;
+      if (other instanceof Range r && !(other instanceof ModRange)) {
         if (r.myFrom <= myFrom && r.myTo >= myFrom && r.myTo < myTo) {
           return modRange(r.myTo + 1, myTo, myMod, myBits);
         }
@@ -1638,8 +1634,7 @@ public abstract class LongRangeSet {
       if (intersection instanceof Range || intersection instanceof Point) {
         long bits = myBits;
         int mod = myMod;
-        if (other instanceof ModRange) {
-          ModRange modRange = (ModRange)other;
+        if (other instanceof ModRange modRange) {
           int lcm = lcm(modRange.myMod);
           if (lcm <= Long.SIZE) {
             bits = widenBits(lcm) & modRange.widenBits(lcm);
@@ -1660,8 +1655,7 @@ public abstract class LongRangeSet {
       if (other instanceof Point) {
         return contains(((Point)other).myValue);
       }
-      if (other instanceof ModRange) {
-        ModRange modRange = (ModRange)other;
+      if (other instanceof ModRange modRange) {
         int lcm = lcm(modRange.myMod);
         if (lcm <= Long.SIZE && (modRange.widenBits(lcm) & widenBits(lcm)) == 0) return false;
       }
@@ -1678,8 +1672,7 @@ public abstract class LongRangeSet {
     @NotNull
     @Override
     public LongRangeSet join(@NotNull LongRangeSet other) {
-      if (other instanceof ModRange) {
-        ModRange modRange = (ModRange)other;
+      if (other instanceof ModRange modRange) {
         int lcm = lcm(modRange.myMod);
         if (lcm <= Long.SIZE) {
           long bits = widenBits(lcm) | modRange.widenBits(lcm);
@@ -1714,8 +1707,7 @@ public abstract class LongRangeSet {
 
     @Override
     public boolean contains(@NotNull LongRangeSet other) {
-      if (other instanceof ModRange) {
-        ModRange modRange = (ModRange)other;
+      if (other instanceof ModRange modRange) {
         if (modRange.myFrom < myFrom || modRange.myTo > myTo) return false;
         int lcm = lcm(modRange.myMod);
         if (lcm <= Long.SIZE) {

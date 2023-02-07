@@ -96,8 +96,7 @@ public final class StatementExtractor {
 
   @NotNull
   private static Node foldNode(@NotNull Node node, @NotNull PsiExpression expression, @NotNull PsiExpression parent) {
-    if (parent instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression polyadic = (PsiPolyadicExpression)parent;
+    if (parent instanceof PsiPolyadicExpression polyadic) {
       IElementType type = polyadic.getOperationTokenType();
       boolean and;
       if (type == JavaTokenType.ANDAND) {
@@ -114,8 +113,7 @@ public final class StatementExtractor {
       if (index == 0) return node;
       return new Cond(parent, parent, index, and ? node : EMPTY, and ? EMPTY : node);
     }
-    if (parent instanceof PsiConditionalExpression) {
-      PsiConditionalExpression ternary = (PsiConditionalExpression)parent;
+    if (parent instanceof PsiConditionalExpression ternary) {
       if (expression == ternary.getThenExpression()) {
         return new Cond(ternary, ternary.getCondition(), -1, node, EMPTY);
       }

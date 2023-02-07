@@ -461,8 +461,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     List<FileStructureNodeProvider> fileStructureNodeProviders = new ArrayList<>();
     if (myTreeActionsOwner != null) {
       for (Filter filter : myTreeModel.getFilters()) {
-        if (filter instanceof FileStructureFilter) {
-          FileStructureFilter fsFilter = (FileStructureFilter)filter;
+        if (filter instanceof FileStructureFilter fsFilter) {
           myTreeActionsOwner.setActionIncluded(fsFilter, true);
           fileStructureFilters.add(fsFilter);
         }
@@ -1008,8 +1007,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       List<SpeedSearchObjectWithWeight> elements = SpeedSearchObjectWithWeight.findElement(s, this);
       SpeedSearchObjectWithWeight best = ContainerUtil.getFirstItem(elements);
       if (best == null) return null;
-      if (myInitialElement instanceof PsiElement) {
-        PsiElement initial = (PsiElement)myInitialElement;
+      if (myInitialElement instanceof PsiElement initial) {
         // find children of the initial element
         SpeedSearchObjectWithWeight bestForParent = find(initial, elements, FileStructurePopup::isParent);
         if (bestForParent != null) return bestForParent.node;

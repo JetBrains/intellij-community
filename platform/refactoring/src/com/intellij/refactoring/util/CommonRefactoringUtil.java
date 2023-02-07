@@ -175,8 +175,7 @@ public final class CommonRefactoringUtil {
     boolean seenNonWritablePsiFilesWithoutVirtualFile = false;
 
     for (PsiElement element : elements) {
-      if (element instanceof PsiDirectory) {
-        final PsiDirectory dir = (PsiDirectory)element;
+      if (element instanceof PsiDirectory dir) {
         final VirtualFile vFile = dir.getVirtualFile();
         if (vFile.getFileSystem().isReadOnly()) {
           failed.add(vFile);

@@ -111,8 +111,7 @@ public final class PostfixTemplateStorage extends SimpleModificationTracker impl
       for (PostfixTemplate template : entry.getValue()) {
         PostfixTemplateProvider provider = template.getProvider();
         if (provider != null) {
-          if (template instanceof PostfixChangedBuiltinTemplate) {
-            PostfixChangedBuiltinTemplate changedBuiltinTemplate = (PostfixChangedBuiltinTemplate)template;
+          if (template instanceof PostfixChangedBuiltinTemplate changedBuiltinTemplate) {
             String builtin = changedBuiltinTemplate.getBuiltinTemplate().getId();
             element.addContent(writeTemplate(changedBuiltinTemplate.getDelegate(), provider, builtin));
           }

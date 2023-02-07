@@ -227,8 +227,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
       if (component == null) return;
       Object item = component.getUserObject();
 
-      if (!(item instanceof BlockTreeNode)) return;
-      BlockTreeNode descriptor = (BlockTreeNode)item;
+      if (!(item instanceof BlockTreeNode descriptor)) return;
 
       int blockStart = descriptor.getBlock().getTextRange().getStartOffset();
       PsiFile file = myRootElement.getContainingFile();

@@ -117,8 +117,7 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final PsiElement resolved = resolve();
-    if (resolved instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod) resolved;
+    if (resolved instanceof PsiMethod method) {
       final String oldName = getReferenceName();
       if (!method.getName().equals(oldName)) { //was property reference to accessor
         if (PropertyUtilBase.isSimplePropertyAccessor(method)) {

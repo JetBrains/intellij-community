@@ -76,8 +76,7 @@ public class HtmlReferenceProvider extends PsiReferenceProvider {
   protected static boolean isAcceptableAttributeValue(PsiElement element) {
     final PsiElement parent = element.getParent();
 
-    if (parent instanceof XmlAttribute) {
-      XmlAttribute xmlAttribute = (XmlAttribute) parent;
+    if (parent instanceof XmlAttribute xmlAttribute) {
       @NonNls final String attrName = xmlAttribute.getName();
       XmlTag tag = xmlAttribute.getParent();
       if (tag == null) return false;
@@ -169,8 +168,7 @@ public class HtmlReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof XmlAttribute)) return PsiReference.EMPTY_ARRAY;
-    final XmlAttribute attribute = (XmlAttribute)parent;
+    if (!(parent instanceof XmlAttribute attribute)) return PsiReference.EMPTY_ARRAY;
     final String localName = attribute.getLocalName();
 
     if (element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) {

@@ -173,10 +173,9 @@ abstract class UndoRedo {
   private static Map<DocumentReference, Set<ActionChangeRange>> decompose(@NotNull UndoableGroup group, boolean isRedo) {
     Map<DocumentReference, Set<ActionChangeRange>> reference2Ranges = new HashMap<>();
     for (UndoableAction action : group.getActions()) {
-      if (!(action instanceof AdjustableUndoableAction)) {
+      if (!(action instanceof AdjustableUndoableAction adjustable)) {
         continue;
       }
-      AdjustableUndoableAction adjustable = (AdjustableUndoableAction)action;
       DocumentReference[] affected = adjustable.getAffectedDocuments();
       if (affected == null) {
         continue;

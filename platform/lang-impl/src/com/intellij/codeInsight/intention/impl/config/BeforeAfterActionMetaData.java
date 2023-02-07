@@ -62,15 +62,13 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
     for (FileType fileType : fileTypes) {
       final List<FileNameMatcher> matchers = FileTypeManager.getInstance().getAssociations(fileType);
       for (final FileNameMatcher matcher : matchers) {
-        if (matcher instanceof ExactFileNameMatcher) {
-          final ExactFileNameMatcher exactFileNameMatcher = (ExactFileNameMatcher)matcher;
+        if (matcher instanceof ExactFileNameMatcher exactFileNameMatcher) {
           final String fileName = StringUtil.trimStart(exactFileNameMatcher.getFileName(), ".");
           String resourcePath = getResourceLocation(prefix + "." + fileName + suffix);
           URL resource = myLoader.getResource(resourcePath);
           if (resource != null) urls.add(new ResourceTextDescriptor(myLoader, resourcePath));
         }
-        else if (matcher instanceof ExtensionFileNameMatcher) {
-          final ExtensionFileNameMatcher extensionFileNameMatcher = (ExtensionFileNameMatcher)matcher;
+        else if (matcher instanceof ExtensionFileNameMatcher extensionFileNameMatcher) {
           final String extension = extensionFileNameMatcher.getExtension();
           for (int i = 0; ; i++) {
             String resourcePath = getResourceLocation(prefix + "." + extension + (i == 0 ? "" : Integer.toString(i))

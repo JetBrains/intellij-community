@@ -72,8 +72,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       final SmartList<DomElementProblemDescriptor> list = new SmartList<>();
       final DomGenericInfo info = element.getGenericInfo();
       for (final AbstractDomChildrenDescription description : info.getChildrenDescriptions()) {
-        if (description instanceof DomCollectionChildDescription && description.getValues(element).isEmpty()) {
-          final DomCollectionChildDescription childDescription = (DomCollectionChildDescription)description;
+        if (description instanceof DomCollectionChildDescription childDescription && description.getValues(element).isEmpty()) {
           final Required annotation = description.getAnnotation(Required.class);
           if (annotation != null && annotation.value()) {
             list.add(holder.createProblem(element, childDescription, XmlDomBundle.message("dom.inspections.child.tag.0.should.be.defined", ((DomCollectionChildDescription)description).getXmlElementName())));

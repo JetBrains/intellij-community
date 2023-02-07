@@ -102,18 +102,15 @@ public class InfiniteLoopStatementInspection extends BaseInspection {
         PsiElement parent = PsiTreeUtil.findFirstParent(statement, element -> element instanceof PsiMethod ||
                                                                               element instanceof PsiLambdaExpression ||
                                                                               element instanceof PsiAnonymousClass);
-        if (parent instanceof PsiMethod) {
-          PsiMethod method = (PsiMethod)parent;
+        if (parent instanceof PsiMethod method) {
           if (method.hasModifier(JvmModifier.PRIVATE)) {
             PsiClass aClass = method.getContainingClass();
             boolean allUsagesAreInThreadStart = StreamEx.ofTree((PsiElement)aClass, element -> StreamEx.of(element.getChildren()))
               .filter(element -> {
-                if (element instanceof PsiMethodCallExpression) {
-                  PsiMethodCallExpression call = (PsiMethodCallExpression)element;
+                if (element instanceof PsiMethodCallExpression call) {
                   return call.getMethodExpression().isReferenceTo(method);
                 }
-                if (element instanceof PsiMethodReferenceExpression) {
-                  PsiMethodReferenceExpression methodReference = (PsiMethodReferenceExpression)element;
+                if (element instanceof PsiMethodReferenceExpression methodReference) {
                   return methodReference.isReferenceTo(method);
                 }
                 return false;

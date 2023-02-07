@@ -453,8 +453,7 @@ public class HighlightInfo implements Segment {
   @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if (!(obj instanceof HighlightInfo)) return false;
-    HighlightInfo info = (HighlightInfo)obj;
+    if (!(obj instanceof HighlightInfo info)) return false;
 
     return info.getSeverity() == getSeverity() &&
            info.startOffset == startOffset &&

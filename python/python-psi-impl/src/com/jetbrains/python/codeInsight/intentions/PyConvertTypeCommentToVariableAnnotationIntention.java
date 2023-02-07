@@ -95,15 +95,13 @@ public final class PyConvertTypeCommentToVariableAnnotationIntention extends PyB
 
   private static @NotNull Map<PyTargetExpression, String> mapTargetsToAnnotations(@NotNull PsiComment typeComment) {
     final PsiElement parent = typeComment.getParent();
-    if (parent instanceof PyAssignmentStatement) {
-      final PyAssignmentStatement assignment = (PyAssignmentStatement)parent;
+    if (parent instanceof PyAssignmentStatement assignment) {
       final PyExpression[] rawTargets = assignment.getRawTargets();
       if (rawTargets.length == 1) {
         return mapTargetsToAnnotations(rawTargets[0], typeComment);
       }
     }
-    else if (parent instanceof PyForPart) {
-      final PyForPart forPart = (PyForPart)parent;
+    else if (parent instanceof PyForPart forPart) {
       final PyExpression target = forPart.getTarget();
       if (target != null) {
         return mapTargetsToAnnotations(target, typeComment);

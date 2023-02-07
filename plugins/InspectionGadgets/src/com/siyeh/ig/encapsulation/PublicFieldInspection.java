@@ -96,8 +96,7 @@ public class PublicFieldInspection extends BaseInspection {
           return;
         }
         if (ignoreEnums) {
-          if (type instanceof PsiClassType) {
-            final PsiClassType classType = (PsiClassType)type;
+          if (type instanceof PsiClassType classType) {
             final PsiClass aClass = classType.resolve();
             if (aClass != null && aClass.isEnum()) {
               return;

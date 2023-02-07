@@ -686,8 +686,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
     @Override
     public boolean equals(final Object object) {
-      if (!(object instanceof Data)) return false;
-      final Data second = (Data)object;
+      if (!(object instanceof Data second)) return false;
       return Objects.equals(TEST_OBJECT, second.TEST_OBJECT) &&
              Objects.equals(getMainClassName(), second.getMainClassName()) &&
              Objects.equals(getPackageName(), second.getPackageName()) &&

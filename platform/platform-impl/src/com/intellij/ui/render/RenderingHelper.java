@@ -77,8 +77,7 @@ public final class RenderingHelper {
   }
 
   private static int getExpandableHintIndex(@NotNull JComponent component) {
-    if (component instanceof ComponentWithExpandableItems) {
-      ComponentWithExpandableItems<?> c = (ComponentWithExpandableItems<?>)component;
+    if (component instanceof ComponentWithExpandableItems<?> c) {
       Collection<?> items = c.getExpandableItemsHandler().getExpandedItems();
       Object item = items.isEmpty() ? null : items.iterator().next();
       if (item instanceof Integer) return (Integer)item;

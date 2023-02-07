@@ -107,8 +107,7 @@ public class PyMoveSymbolProcessor {
     if (belongsToSomeMovedElement(usage)) {
       return;
     }
-    if (usage instanceof PyQualifiedExpression) {
-      final PyQualifiedExpression qualifiedExpr = (PyQualifiedExpression)usage;
+    if (usage instanceof PyQualifiedExpression qualifiedExpr) {
       if (myMovedElement instanceof PyClass && PyNames.INIT.equals(qualifiedExpr.getName())) {
         return;
       }

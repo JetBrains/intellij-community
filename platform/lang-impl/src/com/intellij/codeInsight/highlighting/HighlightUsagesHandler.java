@@ -243,8 +243,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   public static Pair<PsiElement, TextRange> getNameIdentifierRangeInCurrentRoot(@NotNull PsiFile file, @NotNull PsiElement element) {
     if (element instanceof PomTargetPsiElement) {
       final PomTarget target = ((PomTargetPsiElement)element).getTarget();
-      if (target instanceof PsiDeclaredTarget) {
-        final PsiDeclaredTarget declaredTarget = (PsiDeclaredTarget)target;
+      if (target instanceof PsiDeclaredTarget declaredTarget) {
         final TextRange range = declaredTarget.getNameIdentifierRange();
         if (range != null) {
           if (range.getStartOffset() < 0 || range.getLength() <= 0) {

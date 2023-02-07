@@ -21,8 +21,7 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
       UsageType usageType = ((UsageWithType)usage).getUsageType();
       return usageType == null ? null : new UsageTypeGroup(usageType);
     }
-    if (usage instanceof PsiElementUsage) {
-      PsiElementUsage elementUsage = (PsiElementUsage)usage;
+    if (usage instanceof PsiElementUsage elementUsage) {
 
       PsiElement element = elementUsage.getElement();
       UsageType usageType = getUsageType(element, targets);
@@ -33,8 +32,7 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
 
       if (usageType != null) return new UsageTypeGroup(usageType);
 
-      if (usage instanceof ReadWriteAccessUsage) {
-        ReadWriteAccessUsage u = (ReadWriteAccessUsage)usage;
+      if (usage instanceof ReadWriteAccessUsage u) {
         if (u.isAccessedForWriting()) return new UsageTypeGroup(UsageType.WRITE);
         if (u.isAccessedForReading()) return new UsageTypeGroup(UsageType.READ);
       }
@@ -107,8 +105,7 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
 
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof UsageTypeGroup)) return false;
-      final UsageTypeGroup usageTypeGroup = (UsageTypeGroup)o;
+      if (!(o instanceof UsageTypeGroup usageTypeGroup)) return false;
       return myUsageType.equals(usageTypeGroup.myUsageType);
     }
 

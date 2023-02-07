@@ -133,11 +133,10 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
       String text = StreamEx.ofReversed(operands)
         .map(expression -> ParenthesesUtils.getText(expression, PsiPrecedenceUtil.AND_PRECEDENCE)).joining(and ? " && " : " || ");
       PsiExpression expression = JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(text, context);
-      if (!(expression instanceof PsiPolyadicExpression)) {
+      if (!(expression instanceof PsiPolyadicExpression expressionToAnalyze)) {
         LOG.error("Unexpected expression type: " + expression.getClass().getName(), new Attachment("reversed.txt", text));
         return ArrayUtilRt.EMPTY_INT_ARRAY;
       }
-      PsiPolyadicExpression expressionToAnalyze = (PsiPolyadicExpression)expression;
       List<PsiExpression> reversedOperands = Arrays.asList(expressionToAnalyze.getOperands());
       Map<PsiExpression, ThreeState> values = computeOperandValues(expressionToAnalyze);
       return StreamEx.ofKeys(values, ThreeState.fromBoolean(and)::equals)

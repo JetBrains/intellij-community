@@ -491,8 +491,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     if (that.myListPopup instanceof WizardPopup) {
       Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS).getShortcuts();
       for (Shortcut shortcut : shortcuts) {
-        if (shortcut instanceof KeyboardShortcut) {
-          KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
+        if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
           if (keyboardShortcut.getSecondKeyStroke() == null) {
             ((WizardPopup)that.myListPopup).registerAction("activateSelectedElement", keyboardShortcut.getFirstKeyStroke(), new AbstractAction() {
               @Override
@@ -637,8 +636,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     if (shortcuts == null) return;
 
     for (var shortcut : shortcuts.getShortcuts()) {
-      if (shortcut instanceof KeyboardShortcut) {
-        KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
+      if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
         ((WizardPopup)that.myListPopup).registerAction(IntentionShortcutUtils.getWrappedActionId(intention),
                                                        keyboardShortcut.getFirstKeyStroke(),
                                                        new AbstractAction() {

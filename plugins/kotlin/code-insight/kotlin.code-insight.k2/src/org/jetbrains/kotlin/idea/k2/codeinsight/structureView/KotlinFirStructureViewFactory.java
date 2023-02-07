@@ -24,12 +24,11 @@ final class KotlinFirStructureViewFactory implements PsiStructureViewFactory {
             Collections.singletonList(new KotlinFirInheritedMembersNodeProvider());
     @Override
     public StructureViewBuilder getStructureViewBuilder(@NotNull PsiFile psiFile) {
-        if (!(psiFile instanceof KtFile)) {
+        if (!(psiFile instanceof KtFile file)) {
             return null;
         }
 
-        KtFile file = (KtFile) psiFile;
-        return new TreeBasedStructureViewBuilder() {
+      return new TreeBasedStructureViewBuilder() {
             @Override
             public @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor) {
                 return new KotlinStructureViewModel(file, editor, new KotlinFirStructureViewElement(file, file, false)) {

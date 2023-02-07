@@ -80,8 +80,7 @@ public final class EditorUtil {
   }
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
-    if (editor instanceof EditorImpl) {
-      EditorImpl editorImpl = (EditorImpl)editor;
+    if (editor instanceof EditorImpl editorImpl) {
       int lineEndOffset = line >= editorImpl.getVisibleLineCount()
                           ? editor.getDocument().getTextLength() : new VisualLinesIterator(editorImpl, line).getVisualLineEndOffset();
       return editor.offsetToVisualPosition(lineEndOffset, true, true).column;

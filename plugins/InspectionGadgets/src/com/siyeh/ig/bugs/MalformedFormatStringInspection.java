@@ -83,8 +83,7 @@ public class MalformedFormatStringInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     final Object value = infos[0];
-    if (value instanceof Exception) {
-      final Exception exception = (Exception)value;
+    if (value instanceof Exception exception) {
       final String message = exception.getMessage();
       if (message != null) {
         return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.illegal", message);
@@ -173,8 +172,7 @@ public class MalformedFormatStringInspection extends BaseInspection {
         final PsiType argumentType = argument.getType();
         if (argumentType instanceof PsiArrayType) {
           final PsiArrayInitializerExpression arrayInitializer;
-          if (argument instanceof PsiNewExpression) {
-            final PsiNewExpression newExpression = (PsiNewExpression)argument;
+          if (argument instanceof PsiNewExpression newExpression) {
             arrayInitializer = newExpression.getArrayInitializer();
           }
           else if (argument instanceof PsiArrayInitializerExpression) {
@@ -219,11 +217,9 @@ public class MalformedFormatStringInspection extends BaseInspection {
 
     private static PsiExpression resolveIfPossible(PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
-      if (expression instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+      if (expression instanceof PsiReferenceExpression referenceExpression) {
         final PsiElement target = referenceExpression.resolve();
-        if (target instanceof PsiVariable && target.getContainingFile() == expression.getContainingFile()) {
-          final PsiVariable variable = (PsiVariable)target;
+        if (target instanceof PsiVariable variable && target.getContainingFile() == expression.getContainingFile()) {
           final PsiExpression initializer = variable.getInitializer();
           if (initializer != null) {
             return initializer;

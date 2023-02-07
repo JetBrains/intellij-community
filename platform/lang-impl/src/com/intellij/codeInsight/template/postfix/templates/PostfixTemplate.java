@@ -191,8 +191,7 @@ public abstract class PostfixTemplate {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof PostfixTemplate)) return false;
-    PostfixTemplate template = (PostfixTemplate)o;
+    if (!(o instanceof PostfixTemplate template)) return false;
     return Objects.equals(myId, template.myId) &&
            Objects.equals(myPresentableName, template.myPresentableName) &&
            Objects.equals(myKey, template.myKey) &&

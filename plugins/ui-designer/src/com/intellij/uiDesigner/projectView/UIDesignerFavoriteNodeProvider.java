@@ -76,8 +76,7 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
   public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
-    if (element instanceof Form){
-      Form form = (Form) element;
+    if (element instanceof Form form){
       return form.containsFile(vFile);
     }
     return false;
@@ -122,8 +121,7 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   @Nullable @NonNls
   public String getElementUrl(Object element) {
-    if (element instanceof Form) {
-      Form form = (Form)element;
+    if (element instanceof Form form) {
       return form.getClassToBind().getQualifiedName();
     }
     return null;
@@ -131,8 +129,7 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
   public String getElementModuleName(final Object element) {
-    if (element instanceof Form) {
-      Form form = (Form)element;
+    if (element instanceof Form form) {
       final Module module = ModuleUtil.findModuleForPsiElement(form.getClassToBind());
       return module != null ? module.getName() : null;
     }

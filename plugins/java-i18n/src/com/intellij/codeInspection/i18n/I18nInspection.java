@@ -475,9 +475,8 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     PsiElement psiVar = uVar.getSourcePsi();
     PsiElement psi = passThrough.getSourcePsi();
     if (psi != null && psiVar != null) {
-      if (psiVar instanceof PsiLocalVariable) {
+      if (psiVar instanceof PsiLocalVariable local) {
         // Java
-        PsiLocalVariable local = (PsiLocalVariable)psiVar;
         PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
         if (codeBlock instanceof PsiCodeBlock) {
           List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, codeBlock);
@@ -524,8 +523,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
           return true;
         }
       }
-      if (ref.getUastParent() instanceof UQualifiedReferenceExpression) {
-        UQualifiedReferenceExpression parent = (UQualifiedReferenceExpression)ref.getUastParent();
+      if (ref.getUastParent() instanceof UQualifiedReferenceExpression parent) {
         if (STRING_BUILDER_TO_STRING.methodMatches(target)) {
           UExpression receiver = parent.getReceiver();
           if (receiver instanceof UResolvable) {
@@ -888,8 +886,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
   private static boolean isSafeStringMethod(UExpression expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
     UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
-    if (parent instanceof UBinaryExpression) {
-      UBinaryExpression binOp = (UBinaryExpression)parent;
+    if (parent instanceof UBinaryExpression binOp) {
       if (STRING_COMPARISON_OPS.contains(binOp.getOperator())) {
         UResolvable left = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand()), UResolvable.class);
         UResolvable right = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getRightOperand()), UResolvable.class);
@@ -899,8 +896,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     }
     if (!(parent instanceof UQualifiedReferenceExpression)) return false;
     UExpression selector = ((UQualifiedReferenceExpression)parent).getSelector();
-    if (!(selector instanceof UCallExpression)) return false;
-    UCallExpression call = (UCallExpression)selector;
+    if (!(selector instanceof UCallExpression call)) return false;
     if (STRING_EQUALS.uCallMatches(call)) {
       final List<UExpression> expressions = call.getValueArguments();
       if (expressions.size() != 1) return false;
@@ -930,8 +926,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     }
     if (parent instanceof UCallExpression) {
       UElement parentOfNew = UastUtils.skipParenthesizedExprUp(parent.getUastParent());
-      if (parentOfNew instanceof ULocalVariable) {
-        final ULocalVariable newVariable = (ULocalVariable)parentOfNew;
+      if (parentOfNew instanceof ULocalVariable newVariable) {
         if (annotatedAsNonNls(newVariable.getPsi())) {
           return true;
         }
@@ -948,8 +943,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
   private static boolean isNonNlsCall(UResolvable qualifier, Set<? super PsiModifierListOwner> nonNlsTargets) {
     final PsiElement resolved = qualifier.resolve();
-    if (resolved instanceof PsiModifierListOwner) {
-      final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)resolved;
+    if (resolved instanceof PsiModifierListOwner modifierListOwner) {
       if (annotatedAsNonNls(modifierListOwner)) {
         return true;
       }

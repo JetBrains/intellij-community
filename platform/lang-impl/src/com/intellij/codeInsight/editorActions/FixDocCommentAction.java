@@ -102,10 +102,9 @@ public class FixDocCommentAction extends EditorAction {
     }
 
     Commenter c = LanguageCommenters.INSTANCE.forLanguage(language);
-    if (!(c instanceof CodeDocumentationAwareCommenter)) {
+    if (!(c instanceof CodeDocumentationAwareCommenter commenter)) {
       return;
     }
-    final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)c;
     final Runnable task;
     if (pair.second == null || pair.second.getTextRange().isEmpty()) {
       task = () -> generateComment(pair.first, editor, docProvider, commenter, project);
