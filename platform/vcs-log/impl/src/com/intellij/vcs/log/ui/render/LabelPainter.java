@@ -7,9 +7,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,7 +41,6 @@ public class LabelPainter {
   private static final int MAX_LENGTH = 22;
   private static final String TWO_DOTS = "..";
   private static final String SEPARATOR = "/";
-  private static final JBColor TEXT_COLOR = CurrentBranchComponent.TEXT_COLOR;
 
   private final @NotNull JComponent myComponent;
   private final @NotNull LabelIconCache myIconCache;
@@ -76,7 +73,7 @@ public class LabelPainter {
                                int availableWidth,
                                @NotNull List<? extends RefGroup> refGroups) {
     myBackground = background;
-    myForeground = isSelected ? foreground : TEXT_COLOR;
+    myForeground = foreground;
 
     updateHeight();
     FontMetrics metrics = myComponent.getFontMetrics(getReferenceFont());
