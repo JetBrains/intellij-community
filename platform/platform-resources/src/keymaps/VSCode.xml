@@ -601,6 +601,7 @@
   </action>
   <action id="ShowPopupMenu">
     <keyboard-shortcut first-keystroke="shift f10"/>
+    <keyboard-shortcut first-keystroke="CONTEXT_MENU"/>
   </action>
   <action id="QuickJavaDoc">
     <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="ctrl i"/>
