@@ -294,7 +294,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     List<IntentionAction> fixes = getQuickFixes(key, descriptor, emptyActionRegistered);
     HighlightInfo.Builder builder = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip, element, fixes, key, getColorsScheme(), severityRegistrar);
     if (builder == null) return;
-    registerQuickFixes(builder, fixes, shortName);
+    TextRange quickFixTextRange = descriptor instanceof ProblemDescriptorWithQuickFixTextRange
+                                  ? ((ProblemDescriptorWithQuickFixTextRange)descriptor).getQuickFixTextRange()
+                                  : null;
+    registerQuickFixes(builder, fixes, shortName, quickFixTextRange);
 
     PsiFile context = getTopLevelFileInBaseLanguage(element, file.getProject());
     PsiFile myContext = getTopLevelFileInBaseLanguage(file, file.getProject());
@@ -355,7 +358,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         builder.escapedToolTip(toolTip);
       }
       if (start != end || info.startOffset == info.endOffset) {
-        registerQuickFixes(builder, fixes, shortName);
+        registerQuickFixes(builder, fixes, shortName, null);
         HighlightInfo patched = builder.createUnconditionally();
         patched.markFromInjection();
         outInfos.add(patched);
@@ -379,10 +382,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private static void registerQuickFixes(@NotNull HighlightInfo.Builder builder,
                                          @NotNull List<? extends IntentionAction> quickFixes,
-                                         @NotNull String shortName) {
+                                         @NotNull String shortName,
+                                         @Nullable TextRange quickFixTextRange) {
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     for (IntentionAction quickFix : quickFixes) {
-      builder.registerFix(quickFix, null, HighlightDisplayKey.getDisplayNameByKey(key), null, key);
+      builder.registerFix(quickFix, null, HighlightDisplayKey.getDisplayNameByKey(key), quickFixTextRange, key);
     }
   }
 
