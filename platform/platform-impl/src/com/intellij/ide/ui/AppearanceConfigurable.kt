@@ -176,7 +176,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
         resetZoom = link(message("ide.scale.reset.link")) {
           model.selectedItem = 1f.percentStringValue
-        }.apply { visible(UISettingsUtils.currentIdeScale != 1f) }
+        }.apply { visible(settings.ideScale != 1f) }
       }.layout(RowLayout.INDEPENDENT).topGap(TopGap.SMALL)
 
       row {
