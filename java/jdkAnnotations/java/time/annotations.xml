@@ -155,6 +155,39 @@
       <val name="to" val="999999999"/>
     </annotation>
   </item>
+  <item name='java.time.LocalDate java.time.LocalDate from(java.time.temporal.TemporalAccessor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDate java.time.LocalDate parse(java.lang.CharSequence)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalDate java.time.LocalDate parse(java.lang.CharSequence, java.time.format.DateTimeFormatter)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalDate java.time.temporal.ValueRange range(java.time.temporal.TemporalField)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalDate java.time.LocalDate with(java.time.temporal.TemporalAdjuster)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalDate java.time.LocalDate with(java.time.temporal.TemporalField, long)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalDate java.time.LocalDate plus(long, java.time.temporal.TemporalUnit)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalDate java.time.LocalDate plus(java.time.temporal.TemporalAmount)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalDate java.time.LocalDate minus(long, java.time.temporal.TemporalUnit)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalDate java.time.LocalDate minus(java.time.temporal.TemporalAmount)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.time.LocalDate int get(java.time.temporal.TemporalField) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -511,6 +544,30 @@
   <item name='java.time.LocalDateTime int get(java.time.temporal.TemporalField) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.time.LocalDateTime java.time.temporal.ValueRange range(java.time.temporal.TemporalField)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime with(java.time.temporal.TemporalAdjuster)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime with(java.time.temporal.TemporalField, long)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime truncatedTo(java.time.temporal.TemporalUnit)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime plus(java.time.temporal.TemporalAmount)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime plus(long, java.time.temporal.TemporalUnit)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime minus(java.time.temporal.TemporalAmount)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime minus(long, java.time.temporal.TemporalUnit)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.time.LocalDateTime java.time.LocalDateTime truncatedTo(java.time.temporal.TemporalUnit) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -641,6 +698,60 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.time.LocalTime R query(java.time.temporal.TemporalQuery<R>) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime now()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime now(java.time.ZoneId)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime now(java.time.Clock)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime ofInstant(java.time.Instant, java.time.ZoneId)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime from(java.time.temporal.TemporalAccessor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime parse(java.lang.CharSequence)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime parse(java.lang.CharSequence, java.time.format.DateTimeFormatter)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalTime java.time.temporal.ValueRange range(java.time.temporal.TemporalField)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime with(java.time.temporal.TemporalField, long)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime with(java.time.temporal.TemporalAdjuster)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime plus(java.time.temporal.TemporalAmount)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime plus(long, java.time.temporal.TemporalUnit)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime minus(java.time.temporal.TemporalAmount)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalTime java.time.LocalTime minus(long, java.time.temporal.TemporalUnit)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.LocalTime java.time.temporal.Temporal adjustInto(java.time.temporal.Temporal)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.time.Month int getValue()'>
@@ -901,6 +1012,116 @@
       <val name="to" val="999999999"/>
     </annotation>
   </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime from(java.time.temporal.TemporalAccessor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime parse(java.lang.CharSequence)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime parse(java.lang.CharSequence, java.time.format.DateTimeFormatter)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.temporal.ValueRange range(java.time.temporal.TemporalField)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime with(java.time.temporal.TemporalAdjuster)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime with(java.time.temporal.TemporalField, long)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime plus(java.time.temporal.TemporalAmount)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime plus(long, java.time.temporal.TemporalUnit)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime minus(java.time.temporal.TemporalAmount)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime minus(long, java.time.temporal.TemporalUnit)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime plusYears(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime plusMonths(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime plusWeeks(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime plusDays(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime plusHours(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime plusMinutes(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime plusSeconds(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime plusNanos(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime minusYears(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime minusMonths(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime minusWeeks(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime minusDays(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime minusHours(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime minusMinutes(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime minusSeconds(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.ZonedDateTime java.time.ZonedDateTime minusNanos(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.time.OffsetDateTime java.time.OffsetDateTime of(int, int, int, int, int, int, int, java.time.ZoneOffset)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="value" val="&quot;_,_,_,_,_,_,_,_-&gt;new&quot;"/>
@@ -1057,6 +1278,60 @@
   <item name='java.time.OffsetDateTime R query(java.time.temporal.TemporalQuery<R>) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.time.OffsetDateTime java.time.OffsetDateTime from(java.time.temporal.TemporalAccessor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetDateTime java.time.OffsetDateTime parse(java.lang.CharSequence)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetDateTime java.time.OffsetDateTime parse(java.lang.CharSequence, java.time.format.DateTimeFormatter)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetDateTime java.time.temporal.ValueRange range(java.time.temporal.TemporalField)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetDateTime java.time.OffsetDateTime with(java.time.temporal.TemporalAdjuster)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetDateTime java.time.OffsetDateTime with(java.time.temporal.TemporalField, long)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetDateTime java.time.OffsetDateTime plus(java.time.temporal.TemporalAmount)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetDateTime java.time.OffsetDateTime plus(long, java.time.temporal.TemporalUnit)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetDateTime java.time.OffsetDateTime minus(java.time.temporal.TemporalAmount)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetDateTime java.time.OffsetDateTime minus(long, java.time.temporal.TemporalUnit)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetDateTime java.time.temporal.Temporal adjustInto(java.time.temporal.Temporal)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetDateTime java.time.Instant toInstant()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.OffsetDateTime boolean isAfter(java.time.OffsetDateTime)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.OffsetDateTime boolean isBefore(java.time.OffsetDateTime)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.OffsetDateTime boolean isEqual(java.time.OffsetDateTime)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.time.OffsetTime java.time.OffsetTime of(int, int, int, int, java.time.ZoneOffset) 0'>
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="0"/>
@@ -1136,6 +1411,33 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.time.OffsetTime R query(java.time.temporal.TemporalQuery<R>) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetTime java.time.OffsetTime from(java.time.temporal.TemporalAccessor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetTime java.time.OffsetTime parse(java.lang.CharSequence)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetTime java.time.OffsetTime with(java.time.temporal.TemporalAdjuster)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetTime java.time.OffsetTime with(java.time.temporal.TemporalField, long)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetTime java.time.OffsetTime plus(java.time.temporal.TemporalAmount)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetTime java.time.OffsetTime plus(long, java.time.temporal.TemporalUnit)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetTime java.time.OffsetTime minus(java.time.temporal.TemporalAmount)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetTime java.time.OffsetTime minus(long, java.time.temporal.TemporalUnit)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.time.OffsetTime java.time.temporal.Temporal adjustInto(java.time.temporal.Temporal)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
 </root>
