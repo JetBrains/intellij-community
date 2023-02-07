@@ -51,13 +51,16 @@ class GitLabMergeRequestChangesImpl(
   override val commits: List<GitLabCommitDTO> = mergeRequest.commits.asReversed()
 
   private val parsedChanges = cs.async(start = CoroutineStart.LAZY) {
-    val mergeBaseSha = mergeRequest.diffRefs.baseSha ?: error("Missing merge base revision")
-    loadChanges(mergeBaseSha, commits)
+    loadChanges(commits)
   }
 
   override suspend fun getParsedChanges(): GitParsedChangesBundle = parsedChanges.await()
 
-  private suspend fun loadChanges(mergeBaseSha: String, commits: List<GitLabCommitDTO>): GitParsedChangesBundle {
+  private suspend fun loadChanges(commits: List<GitLabCommitDTO>): GitParsedChangesBundle {
+    val repository = projectMapping.remote.repository
+    val baseSha = mergeRequest.diffRefs.startSha
+    val mergeBaseSha = mergeRequest.diffRefs.baseSha ?: error("Missing merge base revision")
+
     val commitsWithPatches = withContext(Dispatchers.IO) {
       coroutineScope {
         commits.map { commit ->
@@ -72,8 +75,7 @@ class GitLabMergeRequestChangesImpl(
     val headPatches = withContext(Dispatchers.IO) {
       api.loadMergeRequestDiffs(glProject, mergeRequest).body()!!.map(GitLabDiffDTO::toPatch)
     }
-    val project = projectMapping.remote.repository.project
-    return GitParsedChangesBundleImpl(project, projectMapping.remote.repository.root, mergeBaseSha, commitsWithPatches, headPatches)
+    return GitParsedChangesBundleImpl(repository.project, repository.root, baseSha, mergeBaseSha, commitsWithPatches, headPatches)
   }
 
   override suspend fun ensureAllRevisionsFetched() {

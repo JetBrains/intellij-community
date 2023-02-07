@@ -16,6 +16,7 @@ import java.util.*
 
 class GitParsedChangesBundleImpl(private val project: Project,
                                  private val vcsRoot: VirtualFile,
+                                 private val baseRef: String,
                                  private val mergeBaseSha: String,
                                  commits: List<GitCommitShaWithPatches>,
                                  private val headPatches: List<FilePatch>)
@@ -74,7 +75,9 @@ class GitParsedChangesBundleImpl(private val project: Project,
             fileHistoriesByLastKnownFilePath[afterPath] = fileHistory
           }
 
-          _diffDataByChange[change] = GitChangeDiffData.Commit(commitSha, patch.filePath, patch, fileHistory)
+          patch.beforeVersionId = previousCommitSha
+          patch.afterVersionId = commitSha
+          _diffDataByChange[change] = GitChangeDiffData.Commit(patch, fileHistory)
         }
       }
       changesByCommits[commitWithPatches.sha] = commitChanges
@@ -96,8 +99,10 @@ class GitParsedChangesBundleImpl(private val project: Project,
           LOG.debug("Unable to find file history for cumulative patch for $filePath")
           continue
         }
+        patch.beforeVersionId = baseRef
+        patch.afterVersionId = headSha
 
-        _diffDataByChange[change] = GitChangeDiffData.Cumulative(headSha, filePath, patch, fileHistory)
+        _diffDataByChange[change] = GitChangeDiffData.Cumulative(patch, fileHistory)
       }
     }
   }
@@ -116,7 +121,9 @@ class GitParsedChangesBundleImpl(private val project: Project,
       changes.add(change)
 
       if (patch is TextFilePatch) {
-        _diffDataByChange[change] = GitChangeDiffData.Cumulative(headSha, patch.filePath, patch, SinglePatchGitFileHistory(patch))
+        patch.beforeVersionId = baseRef
+        patch.afterVersionId = headSha
+        _diffDataByChange[change] = GitChangeDiffData.Cumulative(patch, SinglePatchGitFileHistory(patch))
       }
     }
   }
@@ -138,8 +145,8 @@ class GitParsedChangesBundleImpl(private val project: Project,
 
   companion object {
     private val LOG = logger<GitParsedChangesBundle>()
-
-    private val FilePatch.filePath
-      get() = (afterName ?: beforeName)!!
   }
 }
+
+val FilePatch.filePath: String
+  get() = (afterName ?: beforeName)!!

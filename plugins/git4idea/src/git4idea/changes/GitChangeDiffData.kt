@@ -7,9 +7,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 
-sealed class GitChangeDiffData(val commitSha: String, val filePath: String,
-                               private val patch: TextFilePatch,
-                               protected val fileHistory: GitFileHistory) {
+sealed class GitChangeDiffData(val patch: TextFilePatch, protected val fileHistory: GitFileHistory) {
 
   val diffRanges: List<Range> by lazy(LazyThreadSafetyMode.NONE) {
     patch.hunks.map(PatchHunkUtil::getRange)
@@ -22,20 +20,19 @@ sealed class GitChangeDiffData(val commitSha: String, val filePath: String,
     return fileHistory.contains(commitSha, filePath)
   }
 
-  class Commit(commitSha: String, filePath: String, patch: TextFilePatch, fileHistory: GitFileHistory)
-    : GitChangeDiffData(commitSha, filePath, patch, fileHistory) {
+  class Commit(patch: TextFilePatch, fileHistory: GitFileHistory) : GitChangeDiffData(patch, fileHistory) {
 
     fun mapPosition(fromCommitSha: String,
                     side: Side, line: Int): DiffLineLocation? {
 
-      val comparison = fileHistory.compare(fromCommitSha, commitSha)
+      val comparison = fileHistory.compare(fromCommitSha, patch.afterVersionId!!)
       if (comparison == 0) return DiffLineLocation(side, line)
       if (comparison < 0) {
-        val patches = fileHistory.getPatches(fromCommitSha, commitSha, false, true)
+        val patches = fileHistory.getPatches(fromCommitSha, patch.afterVersionId!!, false, true)
         return transferLine(patches, side, line, false)
       }
       else {
-        val patches = fileHistory.getPatches(commitSha, fromCommitSha, true, false)
+        val patches = fileHistory.getPatches(patch.afterVersionId!!, fromCommitSha, true, false)
         return transferLine(patches, side, line, true)
       }
     }
@@ -80,6 +77,5 @@ sealed class GitChangeDiffData(val commitSha: String, val filePath: String,
     private fun reverseRange(range: Range) = Range(range.start2, range.end2, range.start1, range.end1)
   }
 
-  class Cumulative(commitSha: String, filePath: String, patch: TextFilePatch, fileHistory: GitFileHistory)
-    : GitChangeDiffData(commitSha, filePath, patch, fileHistory)
+  class Cumulative(patch: TextFilePatch, fileHistory: GitFileHistory) : GitChangeDiffData(patch, fileHistory)
 }

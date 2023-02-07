@@ -46,7 +46,7 @@ fun GitChangeDiffData.getDiffComputer(): DiffUserDataKeysEx.DiffComputer {
 
     if (!isValidRanges(text1, text2, lineOffsets1, lineOffsets2, diffRanges)) {
       // TODO: exception with attachments
-      error("Invalid diff line ranges for $filePath in $commitSha")
+      error("Invalid diff line ranges for ${patch.filePath} in ${patch.afterVersionId!!}")
     }
     val iterable = DiffIterableUtil.create(diffRanges, lineOffsets1.lineCount,
                                            lineOffsets2.lineCount)

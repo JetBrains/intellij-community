@@ -69,7 +69,8 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
 
   override fun createChangesProvider(progressIndicator: ProgressIndicator,
                                      pullRequestId: GHPRIdentifier,
-                                     mergeBaseOid: String,
+                                     baseRef: String,
+                                     mergeBaseRef: String,
                                      commits: Pair<GHCommit, Graph<GHCommit>>): CompletableFuture<GitParsedChangesBundle> {
     val prDiffRequest = progressManager.submitIOTask(ProgressWrapper.wrap(progressIndicator)) {
       requestExecutor.execute(it, GithubApiRequests.Repos.PullRequests.getDiff(ghRepository, pullRequestId.number))
@@ -79,7 +80,7 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
       val (lastCommit, graph) = commits
       val commitsDiffsRequests = LinkedHashMap<GHCommit, CompletableFuture<String>>()
       for (commit in Traverser.forGraph(graph).depthFirstPostOrder(lastCommit)) {
-        commitsDiffsRequests[commit] = loadCommitDiff(ProgressWrapper.wrap(it), mergeBaseOid, commit.oid)
+        commitsDiffsRequests[commit] = loadCommitDiff(ProgressWrapper.wrap(it), mergeBaseRef, commit.oid)
       }
 
       val commitsList = commitsDiffsRequests.map {(commit, request) ->
@@ -90,7 +91,7 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
       val prPatches = readAllPatches(prDiffRequest.joinCancellable())
       it.checkCanceled()
 
-      GitParsedChangesBundleImpl(project, gitRemote.repository.root, mergeBaseOid, commitsList, prPatches) as GitParsedChangesBundle
+      GitParsedChangesBundleImpl(project, gitRemote.repository.root, baseRef, mergeBaseRef, commitsList, prPatches) as GitParsedChangesBundle
     }.logError(LOG, "Error occurred while building changes from commits")
   }
 

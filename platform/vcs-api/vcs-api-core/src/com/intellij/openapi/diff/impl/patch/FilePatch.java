@@ -1,14 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class FilePatch {
   private @Nullable String myBeforeName;
   private @Nullable String myAfterName;
-  @Nullable private @Nls String myBeforeVersionId;
-  @Nullable private @Nls String myAfterVersionId;
+  @Nullable private String myBeforeVersionId;
+  @Nullable private String myAfterVersionId;
   // store file mode in 6 digit format a.e. 100655, -1 means file mode was not changed in the patch
   private int myNewFileMode = -1;
 
@@ -43,20 +43,20 @@ public abstract class FilePatch {
   }
 
   @Nullable
-  public @Nls String getBeforeVersionId() {
+  public @NlsSafe String getBeforeVersionId() {
     return myBeforeVersionId;
   }
 
-  public void setBeforeVersionId(@Nullable @Nls String beforeVersionId) {
+  public void setBeforeVersionId(@Nullable @NlsSafe String beforeVersionId) {
     myBeforeVersionId = beforeVersionId;
   }
 
   @Nullable
-  public @Nls String getAfterVersionId() {
+  public @NlsSafe String getAfterVersionId() {
     return myAfterVersionId;
   }
 
-  public void setAfterVersionId(@Nullable @Nls String afterVersionId) {
+  public void setAfterVersionId(@Nullable @NlsSafe String afterVersionId) {
     myAfterVersionId = afterVersionId;
   }
 

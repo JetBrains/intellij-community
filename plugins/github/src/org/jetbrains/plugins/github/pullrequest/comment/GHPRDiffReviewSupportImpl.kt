@@ -12,6 +12,7 @@ import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import git4idea.changes.GitChangeDiffData
+import git4idea.changes.filePath
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
@@ -75,7 +76,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
 
     loadReviewThreads(viewer)
 
-    val createCommentParametersHelper = GHPRCreateDiffCommentParametersHelper(diffData.commitSha, diffData.filePath)
+    val createCommentParametersHelper = GHPRCreateDiffCommentParametersHelper(diffData.patch.afterVersionId!!, diffData.patch.filePath)
     val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
                                                            viewer, repositoryDataService.remoteCoordinates.repository,
                                                            reviewDataProvider,
