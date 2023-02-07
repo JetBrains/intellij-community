@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.workspace
+package org.jetbrains.kotlin.gradle.newTests.testFeatures.checkers.orderEntries
 
 import com.intellij.openapi.module.Module
+import org.jetbrains.kotlin.gradle.newTests.workspace.PrinterContext
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.konan.target.Family
