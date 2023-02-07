@@ -1193,7 +1193,7 @@ public class CommonCodeStyleSettings {
     return mySoftMargins.getValues();
   }
 
-  void setSoftMargins(List<Integer> values) {
+  public void setSoftMargins(List<Integer> values) {
     mySoftMargins.setValues(values);
   }
 }
