@@ -108,17 +108,20 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
     if (parent instanceof URLClassLoader) {
       URL[] urls = ((URLClassLoader)parent).getURLs();
-      configuration.files = new ArrayList<>(urls.length);
+      // LinkedHashSet is used to remove duplicates
+      Set<Path> files = new LinkedHashSet<>(urls.length);
       for (URL url : urls) {
-        configuration.files.add(Paths.get(url.getPath()));
+        files.add(Paths.get(url.getPath()));
       }
+      configuration.files = files;
     }
     else {
       String[] parts = System.getProperty("java.class.path").split(System.getProperty("path.separator"));
-      configuration.files = new ArrayList<>(parts.length);
+      Set<Path> files = new LinkedHashSet<>(parts.length);
       for (String s : parts) {
-        configuration.files.add(Paths.get(s));
+        files.add(Paths.get(s));
       }
+      configuration.files = files;
     }
 
     configuration.isSystemClassLoader = true;
@@ -558,7 +561,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   public static final class Builder {
-    List<Path> files = Collections.emptyList();
+    Collection<Path> files = Collections.emptyList();
     ClassLoader parent;
     boolean lockJars = true;
     boolean useCache = true;

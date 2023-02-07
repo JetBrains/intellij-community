@@ -84,7 +84,7 @@ public final class ClassPath {
     Class<?> consumeClassData(String name, ByteBuffer data, Loader loader) throws IOException;
   }
 
-  public ClassPath(@NotNull List<Path> files,
+  public ClassPath(@NotNull Collection<Path> files,
                    @NotNull UrlClassLoader.Builder configuration,
                    @Nullable Function<Path, ResourceFile> resourceFileFactory,
                    boolean mimicJarUrlConnection) {
