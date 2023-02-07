@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -129,7 +129,7 @@ public class IntentionDescriptionPanel {
       final String description = StringUtil.isEmpty(url.getText()) ?
                                  CodeInsightBundle.message("under.construction.string") :
                                  SearchUtil.markup(SettingsUtil.wrapWithPoweredByMessage(url.getText(), actionMetaData.getLoader()), filter);
-      
+
       DescriptionEditorPaneKt.readHTML(myDescriptionBrowser, description);
 
       showUsages(myBeforePanel, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore());

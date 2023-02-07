@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.generation.actions;
 
@@ -39,8 +39,8 @@ public abstract class PresentableActionHandlerBasedAction extends BaseCodeInsigh
     event.getPresentation().copyFrom(getTemplatePresentation());
     applyTextOverride(event);
     super.update(event);
-    
-    // for Undo to show the correct action name, we remember it here to return from getCommandName(), which lack context of AnActionEvent 
+
+    // for Undo to show the correct action name, we remember it here to return from getCommandName(), which lack context of AnActionEvent
     myCurrentActionName = event.getPresentation().getText();
   }
 
@@ -48,7 +48,7 @@ public abstract class PresentableActionHandlerBasedAction extends BaseCodeInsigh
   protected void update(@NotNull Presentation presentation, @NotNull Project project,
                         @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext, @Nullable String actionPlace) {
     // avoid evaluating isValidFor several times unnecessary
-    
+
     CodeInsightActionHandler handler = getValidHandler(editor, file);
     presentation.setEnabled(handler != null);
     if (handler instanceof ContextAwareActionHandler && !ActionPlaces.isMainMenuOrActionSearch(actionPlace)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -48,7 +48,7 @@ public class MainPassesRunner {
   private final InspectionProfile myInspectionProfile;
 
   public MainPassesRunner(@NotNull Project project,
-                          @NlsContexts.DialogTitle @NotNull String title, 
+                          @NlsContexts.DialogTitle @NotNull String title,
                           @Nullable InspectionProfile inspectionProfile) {
     myProject = project;
     myTitle = title;
@@ -116,7 +116,7 @@ public class MainPassesRunner {
               daemonIndicator.cancel();
             }
           });
-  
+
           runMainPasses(file, result, daemonIndicator);
           break;
         }
@@ -162,9 +162,9 @@ public class MainPassesRunner {
       try {
         InspectionProfile currentProfile = myInspectionProfile;
         settings.setAutoReparseDelay(0);
-        Function<InspectionProfile, InspectionProfileWrapper> profileProvider = 
-          p -> currentProfile == null 
-               ? new InspectionProfileWrapper((InspectionProfileImpl)p) 
+        Function<InspectionProfile, InspectionProfileWrapper> profileProvider =
+          p -> currentProfile == null
+               ? new InspectionProfileWrapper((InspectionProfileImpl)p)
                : new InspectionProfileWrapper(currentProfile, ((InspectionProfileImpl)p).getProfileManager());
         InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile, profileProvider, () -> {
           List<HighlightInfo> infos = codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator);

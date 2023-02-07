@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,7 +40,7 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
     myLoader = loader;
     myDescriptionDirectoryName = descriptionDirectoryName;
   }
-  
+
   public BeforeAfterActionMetaData(@NotNull TextDescriptor description,
                                    TextDescriptor @NotNull [] exampleUsagesBefore,
                                    TextDescriptor @NotNull [] exampleUsagesAfter) {

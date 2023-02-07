@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.Objects;
 
 /**
- * Represents a postfix template. 
+ * Represents a postfix template.
  * Postfix template is a live template that is applicable to a specific code fragment, e.g. "sout" template:
  * <br>
  * <code>
