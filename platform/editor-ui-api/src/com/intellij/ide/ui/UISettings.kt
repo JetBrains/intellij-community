@@ -212,6 +212,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.compactTreeIndents = value
     }
 
+  var compactMode: Boolean
+    get() = uiDensity == UIDensity.COMPACT
+    set(value) {
+      uiDensity = if (value) UIDensity.COMPACT else UIDensity.DEFAULT
+    }
+
   var uiDensity: UIDensity
     get() = state.uiDensity
     set(value) {

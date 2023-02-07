@@ -32,6 +32,11 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
     }
 
     indent {
+      row {
+        checkBox(IdeBundle.message("checkbox.compact.mode"))
+          .bindSelected(UISettings.getInstance()::compactMode)
+        comment(IdeBundle.message("checkbox.compact.mode.description"))
+      }
       if (SystemInfo.isWindows || SystemInfo.isXWindow) {
         row {
           checkBox(IdeBundle.message("checkbox.main.menu.separate.toolbar"))
