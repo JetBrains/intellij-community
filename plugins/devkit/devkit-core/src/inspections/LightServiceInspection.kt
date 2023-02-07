@@ -54,8 +54,9 @@ class LightServiceInspection : DevKitUastInspectionBase(UClass::class.java) {
         }
         val ctorToHighlight = ctorWithProjectParam.getAnchorPsi() ?: return true
         if (ctorWithProjectParam != null) {
-          val request = annotationRequest(Service::class.java.canonicalName, constantAttribute(DEFAULT_REFERENCED_METHOD_NAME,
-                                                                                               "com.intellij.openapi.components.Service.Level.PROJECT"))
+          val projectLevelFqn = "${Service.Level::class.java.canonicalName}.${Service.Level.PROJECT}"
+          val request = annotationRequest(Service::class.java.canonicalName,
+                                          constantAttribute(DEFAULT_REFERENCED_METHOD_NAME, projectLevelFqn))
           val actions = createAddAnnotationActions(node.javaPsi, request)
           val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), holder.file)
 
