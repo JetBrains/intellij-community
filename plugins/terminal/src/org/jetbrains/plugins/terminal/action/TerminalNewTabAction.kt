@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.action
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
@@ -16,13 +17,13 @@ open class TerminalNewTabAction : DumbAwareAction(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project != null
+    val toolWindow = e.dataContext.getData(PlatformDataKeys.TOOL_WINDOW)
+    e.presentation.isEnabled = TerminalToolWindowManager.isTerminalToolWindow(toolWindow) && e.project != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val terminalToolWindowManager = TerminalToolWindowManager.getInstance(project)
-    terminalToolWindowManager.newTab(terminalToolWindowManager.toolWindow, null)
+    TerminalToolWindowManager.getInstance(project).createLocalShellWidget(null, null)
   }
 
   companion object {
