@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.scale.JBUIScale;
@@ -79,7 +80,7 @@ public class LabelPainter {
 
     updateHeight();
     FontMetrics metrics = myComponent.getFontMetrics(getReferenceFont());
-    myGreyBackground = calculateGreyBackground(refGroups, background, isSelected, myCompact);
+    myGreyBackground = ExperimentalUI.isNewUI() ? null : calculateGreyBackground(refGroups, background, isSelected, myCompact);
     Pair<List<Pair<String, LabelIcon>>, Integer> presentation =
       calculatePresentation(refGroups, metrics, myGreyBackground != null ? myGreyBackground : myBackground,
                             availableWidth, myCompact);
