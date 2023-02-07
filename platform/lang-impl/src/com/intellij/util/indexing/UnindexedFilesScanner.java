@@ -560,8 +560,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
     Ref<StatusMark> markRef = new Ref<>();
     try {
-      ((GistManagerImpl)GistManager.getInstance()).
-        runWithMergingDependentCacheInvalidations(() -> scanAndUpdateUnindexedFiles(projectIndexingHistory, indicator, markRef));
+      scanAndUpdateUnindexedFiles(projectIndexingHistory, indicator, markRef);
     }
     catch (Throwable e) {
       projectIndexingHistory.setWasInterrupted(true);
