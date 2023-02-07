@@ -2149,9 +2149,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
       @Override
       public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          throw new RuntimeException("Must not update actions in EDT");
-        }
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
         return true;
       }
     };

@@ -145,6 +145,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     Future<?> readAction1 = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         assertFalse(application.isDispatchThread());
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
+
         application.runReadAction(() -> {
           read1Acquired.set(true);
           LOG.debug("read lock1 acquired");
@@ -172,6 +174,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     Future<?> readAction2 = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         assertFalse(application.isDispatchThread());
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
+
         while (!aboutToAcquireWrite.get()) checkTimeout();
         // make sure EDT called writelock
         while (!application.myLock.writeRequested) checkTimeout();
@@ -194,6 +198,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     Future<?> checkThread = ApplicationManager.getApplication().executeOnPooledThread(()->{
       try {
         assertFalse(application.isDispatchThread());
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
+
         while (!aboutToAcquireWrite.get()) checkTimeout();
         while (!read1Acquired.get()) checkTimeout();
         // make sure EDT called writelock
@@ -376,6 +382,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       try {
         assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
         assertFalse(ApplicationManager.getApplication().isDispatchThread());
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
+
         for (int i=0; i<100;i++) {
           SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> TimeoutUtil.sleep(20)));
           ApplicationManager.getApplication().runReadAction(() -> TimeoutUtil.sleep(20));
@@ -398,6 +406,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           try {
             assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
             assertFalse(ApplicationManager.getApplication().isDispatchThread());
+            ApplicationManager.getApplication().assertIsNonDispatchThread();
           }
           catch (Exception e) {
             exception = e;

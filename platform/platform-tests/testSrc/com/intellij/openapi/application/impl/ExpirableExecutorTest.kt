@@ -21,7 +21,7 @@ class ExpirableExecutorTest : LightPlatformTestCase() {
   private suspend fun checkBackgroundCoroutine(executor: Executor) {
     val appExecutor = ExpirableExecutor.on(executor)
     GlobalScope.async(appExecutor.coroutineDispatchingContext()) {
-      assertFalse(ApplicationManager.getApplication().isDispatchThread)
+      ApplicationManager.getApplication().assertIsNonDispatchThread()
     }.join()
   }
 

@@ -29,7 +29,7 @@ public class CompletionAutoPopupTester {
   }
 
   public void runWithAutoPopupEnabled(@NotNull ThrowableRunnable<Throwable> r) throws Throwable {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, true);
     try {
       r.run();
@@ -80,9 +80,8 @@ public class CompletionAutoPopupTester {
         committed.set(true);
       });
     })));
-    assert !ApplicationManager.getApplication().isWriteAccessAllowed();
-    assert !ApplicationManager.getApplication().isReadAccessAllowed();
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessNotAllowed();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     long start = System.currentTimeMillis();
     while (!committed.get()) {
       if (System.currentTimeMillis() - start >= 20000) {

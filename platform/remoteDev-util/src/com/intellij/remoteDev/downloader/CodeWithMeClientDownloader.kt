@@ -5,6 +5,7 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.internal.statistic.StructuredIdeActivity
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
@@ -251,7 +252,7 @@ object CodeWithMeClientDownloader {
   @ApiStatus.Experimental
   fun downloadClientAndJdk(clientBuildVersion: String,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
-    require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     val jdkBuild = if (isClientWithBundledJre(clientBuildVersion)) null else {
       // Obsolete since 2022.3. Now the client has JRE bundled in
@@ -291,7 +292,7 @@ object CodeWithMeClientDownloader {
   fun downloadClientAndJdk(clientBuildVersion: String,
                            jreBuild: String?,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
-    require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     val sessionInfo = createSessionInfo(clientBuildVersion, jreBuild, true)
     return downloadClientAndJdk(sessionInfo, progressIndicator)
@@ -302,7 +303,7 @@ object CodeWithMeClientDownloader {
    */
   fun downloadClientAndJdk(sessionInfoResponse: CodeWithMeSessionInfoProvider,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
-    require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
     LOG.info("Downloading Thin Client in $tempDir...")
@@ -498,7 +499,7 @@ object CodeWithMeClientDownloader {
   }
 
   private fun downloadWithRetries(url: URI, path: Path, progressIndicator: ProgressIndicator) {
-    require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     @Suppress("LocalVariableName")
     val MAX_ATTEMPTS = 5

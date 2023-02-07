@@ -115,7 +115,8 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     dumbService.queueTask(new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
-        assert !ApplicationManager.application.dispatchThread
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
+
         edt {
           dumbService.runWhenSmart {
             invocations++
@@ -163,7 +164,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         started.set(true)
-        assert !ApplicationManager.application.dispatchThread
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
         try {
           ProgressIndicatorUtils.withTimeout(20_000) {
             def index = FileBasedIndex.getInstance() as FileBasedIndexImpl

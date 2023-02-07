@@ -179,7 +179,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         runPostStartupActivities(async = true)
       }
       if (app.isUnitTestMode) {
-        LOG.assertTrue(app.isDispatchThread)
+        ApplicationManager.getApplication().assertIsDispatchThread();
         waitAndProcessInvocationEventsInIdeEventQueue(this)
       }
     }
