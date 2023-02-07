@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 import ppp.prefixFun2
 import ppp.prefixProp2
 

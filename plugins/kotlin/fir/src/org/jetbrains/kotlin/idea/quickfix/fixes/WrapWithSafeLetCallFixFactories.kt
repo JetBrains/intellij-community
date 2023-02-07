@@ -156,9 +156,9 @@ object WrapWithSafeLetCallFixFactories {
         val calleeName = calleeExpression?.text ?: return null
         val callSite = callExpression.parent as? KtQualifiedExpression ?: callExpression
         val functionalVariableSymbol = (calleeExpression.resolveCall()?.singleCallOrNull<KtSimpleVariableAccessCall>())?.symbol ?: return false
-        val localScope = callExpression.containingKtFile.getScopeContextForPosition(callSite)
+        val localScope = callExpression.containingKtFile.getScopeContextForPosition(callSite).getCompositeScope()
         // If no symbol in the local scope contains the called symbol, then the symbol must be a member symbol.
-        return localScope.scopes.getCallableSymbols { it.identifierOrNullIfSpecial == calleeName }.any { it == functionalVariableSymbol }
+        return localScope.getCallableSymbols { it.identifierOrNullIfSpecial == calleeName }.any { it == functionalVariableSymbol }
     }
 
     val forUnsafeInfixCall = diagnosticFixFactory(KtFirDiagnostic.UnsafeInfixCall::class) { diagnostic ->
@@ -204,9 +204,9 @@ object WrapWithSafeLetCallFixFactories {
             ?: nullableExpression?.surroundingExpression
     ): List<KotlinApplicatorBasedQuickFix<KtExpression, Input>> {
         if (nullableExpression == null || surroundingExpression == null) return emptyList()
-        val existingNames =
-            nullableExpression.containingKtFile.getScopeContextForPosition(nullableExpression).scopes.getPossibleCallableNames()
-                .mapNotNull { it.identifierOrNullIfSpecial }
+        val scope = nullableExpression.containingKtFile.getScopeContextForPosition(nullableExpression).getCompositeScope()
+        val existingNames = scope.getPossibleCallableNames().mapNotNull { it.identifierOrNullIfSpecial }
+
         // Note, the order of the candidate matters. We would prefer the default `it` so the generated code won't need to declare the
         // variable explicitly.
         val candidateNames = listOfNotNull("it", getDeclaredParameterNameForArgument(nullableExpression))

@@ -3,8 +3,10 @@
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.idea.references.KtReference
 
@@ -14,3 +16,5 @@ internal fun KtAnalysisSession.getStaticScope(reference: KtReference): KtScope? 
         is KtPackageSymbol -> symbol.getPackageScope()
         else -> null
     }
+
+data class KtSymbolWithContainingScopeKind<T: KtSymbol>(val symbol: T, val scopeKind: KtScopeKind?)

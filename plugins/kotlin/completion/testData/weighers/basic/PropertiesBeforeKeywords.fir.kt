@@ -18,5 +18,7 @@ class Test(val br2 = 12) {
 
 // "br" function is before other elements because of exact prefix match
 
-// ORDER: br, br4, br5, br2, br3, brf, br1, break
+// ORDER: br, br5, br4, br2, br3, brf, br1, break
 // SELECTED: 0
+
+// in K2 the closer the local scope is, the higher priority it has

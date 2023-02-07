@@ -18,8 +18,8 @@ fun test(listParam: Int) {
 // ORDER: listLocalVal
 // ORDER: listParam
 // ORDER: listThisFileVal
-// ORDER: listImportedVal
 // ORDER: listThisFileFun
+// ORDER: listImportedVal
 // ORDER: listImportedFun
 // ORDER: "listMatch ="
 // ORDER: "listMatch = false"

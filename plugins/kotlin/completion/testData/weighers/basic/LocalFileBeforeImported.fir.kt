@@ -12,11 +12,13 @@ val some = foo<caret>
 // "foo" is before other elements because of exact prefix match
 
 // ORDER: foo
+// ORDER: foo3FromSimpleImport
 // ORDER: foo6Var
 // ORDER: foo5CurentFile
 // ORDER: foo4FromSamePackage
-// ORDER: foo3FromSimpleImport
 // ORDER: foo2FromStarImport
 // ORDER: foo1NotImported
 // INVOCATION_COUNT: 2
 // SELECTED: 0
+
+// in K2 explicit simple-importing scope has higher priority than package scope

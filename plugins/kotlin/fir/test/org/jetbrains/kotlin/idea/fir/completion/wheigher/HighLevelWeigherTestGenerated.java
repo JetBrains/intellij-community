@@ -327,6 +327,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../completion/testData/weighers/basic/parameterNameAndType/ImportedFirst.kt");
         }
 
+        @TestMetadata("LocalClass.kt")
+        public void testLocalClass() throws Exception {
+            runTest("../completion/testData/weighers/basic/parameterNameAndType/LocalClass.kt");
+        }
+
         @TestMetadata("MoreWordsMatchFirst.kt")
         public void testMoreWordsMatchFirst() throws Exception {
             runTest("../completion/testData/weighers/basic/parameterNameAndType/MoreWordsMatchFirst.kt");
@@ -458,6 +463,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
         @TestMetadata("LambdaSignature.kt")
         public void testLambdaSignature() throws Exception {
             runTest("../completion/testData/weighers/basic/LambdaSignature.kt");
+        }
+
+        @TestMetadata("LocalClass.kt")
+        public void testLocalClass() throws Exception {
+            runTest("../completion/testData/weighers/basic/LocalClass.kt");
         }
 
         @TestMetadata("LocalFileBeforeImported.kt")

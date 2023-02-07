@@ -28,7 +28,7 @@ internal class FirPackageCompletionContributor(
             .filterNot { it.fqName.isExcludedFromAutoImport(project, originalKtFile) }
             .forEach { packageSymbol ->
                 val element = lookupElementFactory.createPackagePartLookupElement(packageSymbol.fqName)
-                with(Weighers) { applyWeighsToLookupElement(weighingContext, element, packageSymbol) }
+                with(Weighers) { applyWeighsToLookupElement(weighingContext, element, packageSymbol, scopeKind = null) }
                 sink.addElement(element)
             }
     }

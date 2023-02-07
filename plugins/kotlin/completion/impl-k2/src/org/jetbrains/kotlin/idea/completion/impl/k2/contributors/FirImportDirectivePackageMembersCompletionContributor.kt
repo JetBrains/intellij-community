@@ -23,7 +23,7 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
 
         scope.getClassifierSymbols(scopeNameFilter)
             .filter { visibilityChecker.isVisible(it) }
-            .forEach { addClassifierSymbolToCompletion(it, weighingContext, ImportStrategy.DoNothing) }
+            .forEach { addClassifierSymbolToCompletion(it, weighingContext, scopeKind = null, ImportStrategy.DoNothing) }
 
         scope.getCallableSymbols(scopeNameFilter)
             .filter { visibilityChecker.isVisible(it) }
@@ -31,7 +31,8 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
                 addCallableSymbolToCompletion(
                     weighingContext,
                     it,
-                    CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier)
+                    CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
+                    scopeKind = null,
                 )
             }
     }

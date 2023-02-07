@@ -49,7 +49,7 @@ internal open class FirClassifierCompletionContributor(
             .getClassifierSymbols(scopeNameFilter)
             .filter { filterClassifiers(it) }
             .filter { visibilityChecker.isVisible(it) }
-            .forEach { addClassifierSymbolToCompletion(it, context, ImportStrategy.DoNothing) }
+            .forEach { addClassifierSymbolToCompletion(it, context, scopeKind = null, ImportStrategy.DoNothing) }
     }
 
     private fun KtAnalysisSession.completeWithoutReceiver(
@@ -64,10 +64,10 @@ internal open class FirClassifierCompletionContributor(
             scopeNameFilter,
             visibilityChecker
         )
-            .filter { filterClassifiers(it) }
-            .forEach { classifierSymbol ->
+            .filter { filterClassifiers(it.symbol) }
+            .forEach { (classifierSymbol, scopeKind) ->
                 availableFromScope += classifierSymbol
-                addClassifierSymbolToCompletion(classifierSymbol, context, getImportingStrategy(classifierSymbol))
+                addClassifierSymbolToCompletion(classifierSymbol, context, scopeKind, getImportingStrategy(classifierSymbol))
             }
 
         if (prefixMatcher.prefix.isNotEmpty()) {
@@ -78,7 +78,7 @@ internal open class FirClassifierCompletionContributor(
             )
                 .filter { it !in availableFromScope && filterClassifiers(it) }
                 .forEach { classifierSymbol ->
-                    addClassifierSymbolToCompletion(classifierSymbol, context, getImportingStrategy(classifierSymbol))
+                    addClassifierSymbolToCompletion(classifierSymbol, context, scopeKind = null, getImportingStrategy(classifierSymbol))
                 }
         }
     }
