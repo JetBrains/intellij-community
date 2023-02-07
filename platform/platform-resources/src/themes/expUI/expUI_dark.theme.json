@@ -560,7 +560,8 @@
       "Log.Commit": {
         "currentBranchBackground": "#1c2433",
         "unmatchedForeground": "Grey7",
-        "hoveredBackground": "#FFFFFFED"
+        "hoveredBackground": "#FFFFFFED",
+        "Reference.foreground": "Grey7"
       },
       "FileHistory.Commit.selectedBranchBackground": "#1c2433",
       "MarkerPopup": {

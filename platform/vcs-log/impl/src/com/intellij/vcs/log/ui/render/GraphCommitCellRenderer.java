@@ -233,9 +233,15 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       SimpleTextAttributes style = myGraphTable.applyHighlighters(this, row, column, hasFocus, isSelected);
 
       Collection<VcsRef> refs = cell.getRefsToThisCommit();
-      Color labelForeground = isSelected
-                             ? Objects.requireNonNull(myGraphTable.getBaseStyle(row, column, hasFocus, isSelected).getForeground())
-                             : CurrentBranchComponent.TEXT_COLOR;
+      Color labelForeground;
+      if (ExperimentalUI.isNewUI()) {
+        labelForeground = JBColor.namedColor("VersionControl.Log.Commit.Reference.foreground", CurrentBranchComponent.TEXT_COLOR);
+      }
+      else {
+        labelForeground = isSelected
+                          ? Objects.requireNonNull(myGraphTable.getBaseStyle(row, column, hasFocus, isSelected).getForeground())
+                          : CurrentBranchComponent.TEXT_COLOR;
+      }
 
       append(""); // appendTextPadding wont work without this
       if (myReferencePainter.isLeftAligned()) {
