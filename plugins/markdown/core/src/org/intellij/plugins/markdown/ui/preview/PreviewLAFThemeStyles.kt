@@ -40,8 +40,8 @@ internal object PreviewLAFThemeStyles {
     // doesn't work with [0..255] alpha values. Fortunately it works fine with [0..1] values.
     // Default color from base stylesheets will be used, if the final value is null.
     // (Generated rule will be invalid)
-    val scrollbarColor = scheme.getColor(ScrollBarPainter.THUMB_OPAQUE_BACKGROUND)?.apply {
-      "rgba($red, $blue, $green, ${alpha / 255.0})"
+    val scrollbarColor = scheme.getColor(ScrollBarPainter.THUMB_OPAQUE_BACKGROUND)?.let {
+      "rgba(${it.red}, ${it.blue}, ${it.green}, ${it.alpha / 255.0})"
     }
     // language=CSS
     val backgroundColor = scheme.defaultBackground.webRgba()
