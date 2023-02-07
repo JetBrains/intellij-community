@@ -117,7 +117,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     // highlight replaced result
     if (marker != null) {
       Project project = referenced.getProject();
-      TextRange range = TextRange.create(marker);
+      TextRange range = marker.getTextRange();
       GroovyRefactoringUtil.highlightOccurrencesByRanges(project, editor, new TextRange[]{range});
 
       WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));

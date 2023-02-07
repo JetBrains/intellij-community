@@ -122,7 +122,7 @@ public final class FileStatusMap implements Disposable {
         return document.createRangeMarker(scope);
       }
       if (old == WHOLE_FILE_DIRTY_MARKER) return old;
-      TextRange oldRange = TextRange.create(old);
+      TextRange oldRange = old.getTextRange();
       TextRange union = scope.union(oldRange);
       if (old.isValid() && union.equals(oldRange)) {
         return old;
@@ -243,7 +243,7 @@ public final class FileStatusMap implements Disposable {
     if (marker == WHOLE_FILE_DIRTY_MARKER) {
       return file == null ? null : file.getTextRange();
     }
-    return marker.isValid() ? TextRange.create(marker) : new TextRange(0, document.getTextLength());
+    return marker.isValid() ? marker.getTextRange() : new TextRange(0, document.getTextLength());
   }
 
   private static void assertRegisteredPass(int passId, @NotNull FileStatus status) {

@@ -325,7 +325,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     RangeHighlighter[] highlighters = ((HighlightManagerImpl)HighlightManager.getInstance(editor.getProject())).getHighlighters(editor);
     int caretOffset = editor.getCaretModel().getOffset();
     for (RangeHighlighter highlighter : highlighters) {
-      if (TextRange.create(highlighter).grown(1).contains(caretOffset)) {
+      if (highlighter.getTextRange().grown(1).contains(caretOffset)) {
         return true;
       }
     }
@@ -347,7 +347,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     int j = 0;
     while (i < highlighters.length && j < rangesToHighlight.size()) {
       RangeHighlighter highlighter = highlighters[i];
-      TextRange highlighterRange = TextRange.create(highlighter);
+      TextRange highlighterRange = highlighter.getTextRange();
       TextRange refRange = rangesToHighlight.get(j);
       if (refRange.equals(highlighterRange) &&
           highlighter.getLayer() == HighlighterLayer.SELECTION - 1 &&

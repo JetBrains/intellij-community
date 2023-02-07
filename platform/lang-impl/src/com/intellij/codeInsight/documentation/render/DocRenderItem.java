@@ -326,7 +326,7 @@ public final class DocRenderItem {
       PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(Objects.requireNonNull(editor.getProject()));
       PsiFile file = psiDocumentManager.getPsiFile(editor.getDocument());
       if (file != null) {
-        return findInlineDocumentation(file, TextRange.create(highlighter));
+        return findInlineDocumentation(file, highlighter.getTextRange());
       }
     }
     return null;

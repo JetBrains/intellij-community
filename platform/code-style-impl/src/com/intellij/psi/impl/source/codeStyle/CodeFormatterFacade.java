@@ -250,7 +250,7 @@ public class CodeFormatterFacade {
     for (FormatTextRange range : textRanges) {
       RangeMarker marker = markers[i];
       if (marker != null) {
-        range.setTextRange(TextRange.create(marker));
+        range.setTextRange(marker.getTextRange());
         marker.dispose();
       }
       i++;

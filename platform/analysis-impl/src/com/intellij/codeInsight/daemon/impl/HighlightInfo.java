@@ -894,7 +894,7 @@ public class HighlightInfo implements Segment {
       throw new RuntimeException("info not applied yet");
     }
     if (!highlighter.isValid()) return "";
-    return highlighter.getDocument().getText(TextRange.create(highlighter));
+    return highlighter.getDocument().getText(highlighter.getTextRange());
   }
 
   /**
