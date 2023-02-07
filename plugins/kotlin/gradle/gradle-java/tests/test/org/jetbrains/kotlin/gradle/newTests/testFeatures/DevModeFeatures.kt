@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.gradle.newTests.testFeatures
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.gradle.newTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.newTests.TestFeature
-import org.jetbrains.kotlin.gradle.newTests.infra.testProperties.AndroidGradlePluginVersionTestsProperty
-import org.jetbrains.kotlin.gradle.newTests.infra.testProperties.GradleVersionTestsProperty
-import org.jetbrains.kotlin.gradle.newTests.infra.testProperties.KotlinGradlePluginVersionTestsProperty
+import org.jetbrains.kotlin.gradle.newTests.testProperties.AndroidGradlePluginVersionTestsProperty
+import org.jetbrains.kotlin.gradle.newTests.testProperties.GradleVersionTestsProperty
+import org.jetbrains.kotlin.gradle.newTests.testProperties.KotlinGradlePluginVersionTestsProperty
 import org.jetbrains.kotlin.gradle.newTests.writeAccess
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import java.io.File

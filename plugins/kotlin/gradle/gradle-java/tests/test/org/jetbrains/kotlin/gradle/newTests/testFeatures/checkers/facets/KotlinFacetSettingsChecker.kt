@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.workspace
+package org.jetbrains.kotlin.gradle.newTests.testFeatures.checkers.facets
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
@@ -7,13 +7,14 @@ import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
-import org.jetbrains.kotlin.gradle.newTests.testFeatures.KotlinFacetSettingsChecksConfiguration
+import org.jetbrains.kotlin.gradle.newTests.workspace.*
+import org.jetbrains.kotlin.gradle.newTests.workspace.indented
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.konan.isNative
 import kotlin.reflect.KProperty1
 
-private typealias FacetField = KProperty1<KotlinFacetSettings, *>
+internal typealias FacetField = KProperty1<KotlinFacetSettings, *>
 
 object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChecksConfiguration>() {
     override fun createDefaultConfiguration(): KotlinFacetSettingsChecksConfiguration = KotlinFacetSettingsChecksConfiguration()

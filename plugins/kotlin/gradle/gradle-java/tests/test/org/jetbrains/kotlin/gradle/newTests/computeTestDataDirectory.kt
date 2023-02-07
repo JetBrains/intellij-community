@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.newTests.infra
+package org.jetbrains.kotlin.gradle.newTests
 
 import com.intellij.testFramework.TestDataPath
 import com.intellij.util.text.nullize
@@ -101,4 +101,4 @@ private fun getTestFolderName(description: Description): String {
 
 // expected pattern:
 //      testFoo[1.8.20-dev-3308, Gradle 7.5.1, AGP 7.4.0, any other string for describing versions]
-private val testNamePattern = """test([^\[].*)\[.*\]""".toRegex()
+private val testNamePattern = """test([^\[].*)\[.*]""".toRegex()

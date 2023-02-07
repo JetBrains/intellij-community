@@ -1,12 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.newTests.testFeatures
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.gradle.newTests.testFeatures.checkers.highlighting
 
-import com.intellij.lang.annotation.HighlightSeverity
-import org.jetbrains.kotlin.gradle.newTests.*
+import org.jetbrains.kotlin.gradle.newTests.AbstractTestChecker
+import org.jetbrains.kotlin.gradle.newTests.KotlinMppTestsContext
 import org.jetbrains.kotlin.idea.codeInsight.gradle.HighlightingCheck
 import java.io.File
 
-internal object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>() {
+object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>() {
     override fun createDefaultConfiguration() = HighlightingCheckConfiguration()
 
     override fun preprocessFile(origin: File, text: String): String? {
@@ -65,27 +65,3 @@ internal object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfi
     private const val HIGHLIGHTING_CONFIGURATION_LINE_PREFIX = "// - "
     private const val HIGHLIGHTING_CONFIGURATION_FOOTER = "//endregion"
 }
-
-class HighlightingCheckConfiguration {
-    // NB: for now, skipping highlighting disables line markers as well
-    var skipCodeHighlighting: Boolean = false
-    var hideLineMarkers: Boolean = false
-    var hideHighlightsBelow: HighlightSeverity = HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING
-}
-
-interface HighlightingCheckDsl {
-    var TestConfigurationDslScope.skipHighlighting: Boolean
-        get() = configuration.skipCodeHighlighting
-        set(value) { configuration.skipCodeHighlighting = value }
-
-    var TestConfigurationDslScope.hideLineMarkers: Boolean
-        get() = configuration.hideLineMarkers
-        set(value) { configuration.hideLineMarkers = value }
-
-    var TestConfigurationDslScope.hideHighlightsBelow: HighlightSeverity
-        get() = configuration.hideHighlightsBelow
-        set(value) { configuration.hideHighlightsBelow = value }
-}
-
-private val TestConfigurationDslScope.configuration
-    get() = writeAccess.getConfiguration(HighlightingChecker)

@@ -1,9 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.workspace
+package org.jetbrains.kotlin.gradle.newTests.testFeatures.checkers
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.newTests.workspace.PrinterContext
+import org.jetbrains.kotlin.gradle.newTests.workspace.WorkspaceModelChecker
+import org.jetbrains.kotlin.gradle.newTests.workspace.indented
 import org.jetbrains.kotlin.idea.base.facet.externalSystemTestRunTasks
 
 object TestTasksChecker : WorkspaceModelChecker<Unit>() {
