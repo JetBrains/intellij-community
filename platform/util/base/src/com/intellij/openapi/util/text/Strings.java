@@ -812,7 +812,7 @@ public final class Strings {
    * <li>to implement "Sentinel" pattern; in that case use {@link String#String(String)} constructor to create the sentinel instance.</li>
    * </ul>
    */
-  @SuppressWarnings("StringEquality")
+  @SuppressWarnings({"StringEquality", "StringEqualitySSR"})
   public static boolean areSameInstance(@Nullable String s1, @Nullable String s2) {
     return s1 == s2;
   }
