@@ -121,7 +121,7 @@ private fun adjustModulesPanel(contentPanel: JPanel): JPanel {
         })
         add(Box.createHorizontalGlue())
         add(LinkLabel<Any>(LearnBundle.message("modules.panel.switch.ui"), null) { _, _ ->
-          Registry.get("ide.experimental.ui").setValue(false)
+          Registry.get("ide.experimental.ui").setValue(true)
         })
       })
     })

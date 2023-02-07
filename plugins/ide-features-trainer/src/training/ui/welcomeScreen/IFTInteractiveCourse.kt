@@ -42,7 +42,7 @@ private class IFTInteractiveCoursePanel : InteractiveCoursePanel(IFTInteractiveC
         contentType = "text/html"
         addHyperlinkListener(object : HyperlinkAdapter() {
           override fun hyperlinkActivated(e: HyperlinkEvent) {
-            Registry.get("ide.experimental.ui").setValue(false)
+            Registry.get("ide.experimental.ui").setValue(true)
           }
         })
         editorKit = HTMLEditorKitBuilder.simple()

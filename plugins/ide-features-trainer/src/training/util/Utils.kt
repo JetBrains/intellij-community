@@ -139,7 +139,7 @@ val switchOnExperimentalLessons: Boolean
   get() = Registry.`is`("ift.experimental.lessons", false)
 
 val enableLessonsAndPromoters: Boolean
-  get() = !ExperimentalUI.isNewUI() || Registry.`is`("ift.enable.in.new.ui", false)
+  get() = ExperimentalUI.isNewUI() || Registry.`is`("ift.enable.in.old.ui", false)
 
 fun invokeActionForFocusContext(action: AnAction) {
   DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
