@@ -675,14 +675,14 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     }
     if (newDensity == UIDensity.COMPACT) {
       // main toolbar
-      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(34, 34).asUIResource())
+      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), cmSize(34, 34))
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), 16)
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarFontKey(), Supplier { JBFont.medium() })
-      defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), JBUI.size(44, 34).asUIResource())
+      defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), cmSize(44, 34))
       // tool window stripes
-      defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), JBUI.size(32, 32).asUIResource())
+      defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), cmSize(32, 32))
       defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSizeKey(), 16)
-      defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPaddingKey(), JBUI.insets(4).asUIResource())
+      defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPaddingKey(), cmInsets(4))
       // Run Widget
       defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), 26)
       defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 4)
@@ -692,13 +692,13 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       // lists
       defaults.put("List.rowHeight", 24)
       // status bar
-      defaults.put(JBUI.CurrentTheme.StatusBar.Widget.insetsKey(), JBUI.insets(4, 8, 3, 8).asUIResource())
-      defaults.put(JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsetsKey(), JBUI.insets(1, 0, 1, 4).asUIResource())
+      defaults.put(JBUI.CurrentTheme.StatusBar.Widget.insetsKey(), cmInsets(4, 8, 3, 8))
+      defaults.put(JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsetsKey(), cmInsets(1, 0, 1, 4))
       defaults.put(JBUI.CurrentTheme.StatusBar.fontKey(), Supplier { JBFont.medium() })
       // separate navbar
-      defaults.put(JBUI.CurrentTheme.NavBar.itemInsetsKey(), JBUI.insets(2).asUIResource())
+      defaults.put(JBUI.CurrentTheme.NavBar.itemInsetsKey(), cmInsets(2))
       // editor tabs
-      defaults.put("EditorTabs.tabInsets", JBInsets(1, 12, 1, 8).asUIResource())
+      defaults.put("EditorTabs.tabInsets", cmInsets(1, 12, 1, 8))
       defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), Supplier { JBFont.medium() })
       // toolwindows
       defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), 32)
@@ -708,6 +708,14 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       defaults.put(JBUI.CurrentTheme.VersionControl.Log.verticalPaddingKey(), 4)
     }
   }
+  
+  private fun cmSize(width: Int, height: Int): Dimension = Dimension(width, height)
+
+  @Suppress("UseDPIAwareInsets")
+  private fun cmInsets(all: Int): Insets = Insets(all, all, all, all)
+
+  @Suppress("UseDPIAwareInsets")
+  private fun cmInsets(top: Int, left: Int, bottom: Int, right: Int): Insets = Insets(top, left, bottom, right)
 
   private fun updateEditorSchemeIfNecessary(oldLaf: LookAndFeelInfo?, processChangeSynchronously: Boolean) {
     if (oldLaf is TempUIThemeBasedLookAndFeelInfo || myCurrentLaf is TempUIThemeBasedLookAndFeelInfo) {
