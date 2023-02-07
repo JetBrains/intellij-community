@@ -82,7 +82,31 @@
     "Orange8": "#F0AC81",
     "Orange9": "#F5BD98",
     "Orange10": "#FACEAF",
-    "Orange11": "#FFDFC7"
+    "Orange11": "#FFDFC7",
+
+    "Purple1": "#2F2936",
+    "Purple2": "#433358",
+    "Purple3": "#583D7A",
+    "Purple4": "#6C469C",
+    "Purple5": "#8150BE",
+    "Purple6": "#955AE0",
+    "Purple7": "#A571E6",
+    "Purple8": "#B589EC",
+    "Purple9": "#C4A0F3",
+    "Purple10": "#D4B8F9",
+    "Purple11": "#E4CEFF",
+
+    "Teal1": "#1D3838",
+    "Teal2": "#1E4D4A",
+    "Teal3": "#20635D",
+    "Teal4": "#21786F",
+    "Teal5": "#238E82",
+    "Teal6": "#24A394",
+    "Teal7": "#42B1A4",
+    "Teal8": "#60C0B5",
+    "Teal9": "#7DCEC5",
+    "Teal10": "#9BDDD6",
+    "Teal11": "#B9EBE6"
   },
 
   "ui": {
