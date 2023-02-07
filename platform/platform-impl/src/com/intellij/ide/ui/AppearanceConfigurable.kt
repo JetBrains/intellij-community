@@ -149,7 +149,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"))
           .bindSelected(syncThemeProperty)
           .visible(lafManager.autodetectSupported)
-          .gap(RightGap.SMALL)
 
         theme.enabledIf(syncCheckBox.selected.not())
         cell(lafManager.settingsToolbar)
@@ -162,14 +161,22 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       }.layout(RowLayout.INDEPENDENT)
 
       row(message("combobox.ide.scale.percent")) {
-        comboBox(IdeScaleTransformer.Settings.regularScaleComboboxModel, SimpleListCellRenderer.create("") { it })
+        var resetZoom: Cell<ActionLink>? = null
+
+        val model = IdeScaleTransformer.Settings.createIdeScaleComboboxModel()
+        comboBox(model, SimpleListCellRenderer.create("") { it })
           .bindItem( { settings.ideScale.percentStringValue }, { })
           .onChanged {
             IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item)?.let { scale ->
+              resetZoom?.visible(scale != 1f)
               settings.ideScale = scale
               settings.fireUISettingsChanged()
             }
-          }
+          }.gap(RightGap.SMALL)
+
+        resetZoom = link(message("ide.scale.reset.link")) {
+          model.selectedItem = 1f.percentStringValue
+        }.apply { visible(UISettingsUtils.currentIdeScale != 1f) }
       }.layout(RowLayout.INDEPENDENT).topGap(TopGap.SMALL)
 
       row {
@@ -429,7 +436,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       group(message("group.presentation.mode")) {
         row(message("presentation.mode.ide.scale")) {
-          comboBox(IdeScaleTransformer.Settings.presentationModeScaleComboboxModel, SimpleListCellRenderer.create("") { it })
+          comboBox(IdeScaleTransformer.Settings.createPresentationModeScaleComboboxModel(), SimpleListCellRenderer.create("") { it })
             .bindItem( { settings.presentationModeIdeScale.percentStringValue }, { })
             .applyToComponent {
               isEditable = true

@@ -65,10 +65,13 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
       private const val PRESENTATION_MODE_MIN_SCALE = 0.5f
       private const val PRESENTATION_MODE_MAX_SCALE = 4f
       val regularScaleOptions = listOf(1f, 1.1f, 1.25f, 1.5f, 1.75f, 2f)
-      val regularScaleComboboxModel = CollectionComboBoxModel(regularScaleOptions.map { it.percentStringValue },
-                                                              UISettings.getInstance().ideScale.percentStringValue)
-      val presentationModeScaleComboboxModel = CollectionComboBoxModel(regularScaleOptions.map { it.percentStringValue },
-                                                                       UISettings.getInstance().presentationModeIdeScale.percentStringValue)
+      fun createIdeScaleComboboxModel() =
+        CollectionComboBoxModel(regularScaleOptions.map { it.percentStringValue },
+                                UISettings.getInstance().ideScale.percentStringValue)
+
+      fun createPresentationModeScaleComboboxModel() =
+        CollectionComboBoxModel(regularScaleOptions.map { it.percentStringValue },
+                                UISettings.getInstance().presentationModeIdeScale.percentStringValue)
 
       fun validatePercentScaleInput(builder: ValidationInfoBuilder, comboBox: ComboBox<String>): ValidationInfo? {
         val message = validatePercentScaleInput(comboBox.item) ?: return null
@@ -110,7 +113,7 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
                                                  UISettings.getInstance().presentationMode)
 
       private fun scaleWithIndexShift(indexShift: Int, scale: Float, isPresentation: Boolean): Float? {
-        return if (isPresentation){
+        return if (isPresentation) {
           (scale + indexShift * SCALING_STEP).takeIf { it > 0 }
         }
         else {
