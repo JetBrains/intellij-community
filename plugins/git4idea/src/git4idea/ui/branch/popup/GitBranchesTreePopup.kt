@@ -373,7 +373,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         }
       }
 
-      val stepContext = GitBranchesTreePopupStep.createDataContext(project, treeStep.affectedRepositories)
+      val stepContext = GitBranchesTreePopupStep.createDataContext(project, treeStep.selectedRepository, treeStep.affectedRepositories)
       val resultContext =
         with(SimpleDataContext.builder().setParent(stepContext)) {
           actionContext.forEach { (key, value) -> add(key, value) }
