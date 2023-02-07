@@ -190,13 +190,13 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       add(branchInfoPanel,
           GridBagConstraints().apply {
             anchor = GridBagConstraints.LINE_START
-            weightx = 1.0
+            weightx = 0.0
           })
 
       add(secondaryLabel,
           GridBagConstraints().apply {
             anchor = GridBagConstraints.LINE_END
-            weightx = 2.0
+            weightx = 0.75
           })
     }
 
