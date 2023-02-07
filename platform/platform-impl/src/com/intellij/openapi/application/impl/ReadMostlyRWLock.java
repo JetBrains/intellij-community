@@ -246,8 +246,7 @@ final class ReadMostlyRWLock {
 
     for (int iter=0; ;iter++) {
       if (writeIntent.compareAndSet(false, true)) {
-        assert !isWriteRequested();
-        assert !isWriteAcquired();
+        assertInitialWriteState();
 
         break;
       }
@@ -264,8 +263,7 @@ final class ReadMostlyRWLock {
   void writeIntentUnlock() {
     checkWriteThreadAccess();
 
-    assert !isWriteAcquired();
-    assert !isWriteRequested();
+    assertInitialWriteState();
 
     writeIntent.set(false);
     LockSupport.unpark(writeThread);
@@ -274,8 +272,7 @@ final class ReadMostlyRWLock {
   void writeLock() {
     checkWriteThreadAccess();
     checkReadIsNotHeld("Write");
-    assert !isWriteRequested();
-    assert !isWriteAcquired();
+    assertInitialWriteState();
 
     writeRequested = true;
     for (int iter=0; ;iter++) {
@@ -360,6 +357,11 @@ final class ReadMostlyRWLock {
     }
 
     return true;
+  }
+
+  private void assertInitialWriteState() {
+    assert !isWriteRequested();
+    assert !isWriteAcquired();
   }
 
   @VisibleForTesting
