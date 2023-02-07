@@ -348,9 +348,16 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     val toolbarGroup = DefaultActionGroup(GitBranchPopupFetchAction(javaClass), settingsGroup)
     return am.createActionToolbar(TOP_LEVEL_ACTION_PLACE, toolbarGroup, true)
       .apply {
-        targetComponent = this@GitBranchesTreePopup.component
+        targetComponent = component
         setReservePlaceAutoPopupIcon(false)
         component.isOpaque = false
+        DataManager.registerDataProvider(component, DataProvider { dataId ->
+          when {
+            POPUP_KEY.`is`(dataId) -> this@GitBranchesTreePopup
+            GitBranchActionsUtil.REPOSITORIES_KEY.`is`(dataId) -> treeStep.repositories
+            else -> null
+          }
+        })
       }
   }
 
