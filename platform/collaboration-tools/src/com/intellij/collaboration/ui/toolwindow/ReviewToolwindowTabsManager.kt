@@ -6,7 +6,6 @@ import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.*
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -55,8 +54,11 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
   }
 
   init {
-    refreshReviewListOnTabSelection()
-    refreshListOnToolwindowShow()
+    toolwindow.refreshReviewListOnSelection { content ->
+      val reviewListVm = content.getUserData(REVIEW_LIST_VIEW_MODEL) ?: return@refreshReviewListOnSelection
+
+      reviewListVm.refresh()
+    }
 
     contentManager.addDataProvider {
       when {
@@ -174,40 +176,6 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
       setDisposer(disposable)
       modifier(this, disposable.disposingMainScope())
     }
-  }
-
-  private fun refreshReviewListOnTabSelection() {
-    contentManager.addContentManagerListener(object : ContentManagerListener {
-      override fun selectionChanged(event: ContentManagerEvent) {
-        if (event.operation == ContentManagerEvent.ContentOperation.add) {
-          // tab selected
-          handleTabSelection(event.content)
-        }
-      }
-    })
-  }
-
-  private fun refreshListOnToolwindowShow() {
-    val bus = toolwindow.project.messageBus.connect(cs)
-    bus.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-      override fun toolWindowShown(toolWindow: ToolWindow) {
-        if (toolWindow.id == this@ReviewToolwindowTabsManager.toolwindow.id) {
-          val selectedContent = toolWindow.contentManager.selectedContent
-          if (selectedContent != null) {
-            handleTabSelection(selectedContent)
-          }
-        }
-      }
-    })
-  }
-
-  /**
-   * If review list is selected, refresh it, do nothing otherwise.
-   */
-  private fun handleTabSelection(content: Content) {
-    val reviewListVm = content.getUserData(REVIEW_LIST_VIEW_MODEL) ?: return
-
-    reviewListVm.refresh()
   }
 
   companion object {

@@ -1,21 +1,24 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.collaboration.ui.toolwindow.refreshReviewListOnSelection
+import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.content.Content
-import com.intellij.ui.content.ContentManager
 import com.intellij.util.ui.UIUtil
 import git4idea.remote.hosting.knownRepositories
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys.PULL_REQUESTS_LIST_CONTROLLER
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
@@ -33,10 +36,19 @@ internal class MultiTabGHPRToolWindowRepositoryContentController(
   private val repositoryManager: GHHostedRepositoriesManager,
   private val projectSettings: GithubPullRequestsProjectUISettings,
   private val dataContext: GHPRDataContext,
-  private val contentManager: ContentManager
+  toolwindow: ToolWindow
 ) : GHPRToolWindowRepositoryContentController {
+  private val contentManager = toolwindow.contentManager
 
   override val repository: GHRepositoryCoordinates = dataContext.repositoryDataService.repositoryCoordinates
+
+  init {
+    toolwindow.refreshReviewListOnSelection { content ->
+      val dataContext = DataManager.getInstance().getDataContext(content.component)
+      val tabsContentSelector = PULL_REQUESTS_LIST_CONTROLLER.getData(dataContext) ?: return@refreshReviewListOnSelection
+      tabsContentSelector.refreshList()
+    }
+  }
 
   override fun createPullRequest(requestFocus: Boolean) {
     val content = contentManager.contents.find {

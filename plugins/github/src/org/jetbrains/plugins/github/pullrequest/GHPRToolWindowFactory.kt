@@ -62,7 +62,7 @@ internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
       service<GHAccountManager>(),
       project.service<GHRepositoryConnectionManager>(),
       project.service<GithubPullRequestsProjectUISettings>(),
-      toolWindow.contentManager
+      toolWindow
     )
 
     ClientProperty.put(toolWindow.component, GHPRToolWindowContentController.KEY, controller)

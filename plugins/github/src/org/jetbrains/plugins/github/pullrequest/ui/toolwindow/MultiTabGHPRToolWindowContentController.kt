@@ -9,7 +9,7 @@ import com.intellij.collaboration.util.URIUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.content.ContentManager
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.StateFlow
@@ -35,10 +35,11 @@ internal class MultiTabGHPRToolWindowContentController(parentDisposable: Disposa
                                                        private val accountManager: GHAccountManager,
                                                        private val connectionManager: GHRepositoryConnectionManager,
                                                        private val settings: GithubPullRequestsProjectUISettings,
-                                                       private val contentManager: ContentManager)
+                                                       private val toolwindow: ToolWindow)
   : GHPRToolWindowLoginController, GHPRToolWindowContentController {
 
   private val cs = DisposingScope(parentDisposable, SupervisorJob() + Dispatchers.Main.immediate)
+  private val contentManager = toolwindow.contentManager
 
   override val loginController: GHPRToolWindowLoginController = this
   private val singleRepoAndAccountState: StateFlow<Pair<GHGitRepositoryMapping, GithubAccount>?> =
@@ -147,7 +148,7 @@ internal class MultiTabGHPRToolWindowContentController(parentDisposable: Disposa
       repositoriesManager,
       settings,
       conn.dataContext,
-      contentManager).apply {
+      toolwindow).apply {
       viewList(focused)
     }
   }
