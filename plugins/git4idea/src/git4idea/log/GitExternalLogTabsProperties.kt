@@ -36,11 +36,13 @@ class GitExternalLogTabsProperties : PersistentStateComponent<GitExternalLogTabs
   }
 
   class State {
+    @Suppress("PropertyName")
     @XMap
     var TAB_STATES: MutableMap<String, TabState> = TreeMap()
   }
 
   class TabState : VcsLogUiPropertiesImpl.State() {
+    @Suppress("PropertyName")
     @XCollection
     var RECENT_FILTERS: MutableMap<String, MutableList<RecentGroup>> = HashMap()
   }

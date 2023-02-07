@@ -4,6 +4,7 @@ package com.intellij.vcs.log.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.Comparing
+import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
@@ -23,40 +24,46 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
   }
 
   override fun createProperties(id: String): MainVcsLogUiProperties {
-    _state.TAB_STATES.putIfAbsent(id, MyState())
+    _state.tabStates.putIfAbsent(id, MyState())
     return MyVcsLogUiPropertiesImpl(id)
   }
 
   fun addTab(tabId: String, location: VcsLogTabLocation) {
-    _state.OPEN_GENERIC_TABS[tabId] = location
+    _state.openTabs[tabId] = location
   }
 
   fun removeTab(tabId: String) {
-    _state.OPEN_GENERIC_TABS.remove(tabId)
+    _state.openTabs.remove(tabId)
   }
 
   fun resetState(tabId: String) {
-    _state.TAB_STATES.remove(tabId)
+    _state.tabStates.remove(tabId)
   }
 
   val tabs: Map<String, VcsLogTabLocation>
-    get() = _state.OPEN_GENERIC_TABS
+    get() = _state.openTabs
 
   fun getRecentlyFilteredGroups(filterName: String): List<List<String>> {
-    return getRecentGroup(_state.RECENT_FILTERS, filterName)
+    return getRecentGroup(_state.recentFilters, filterName)
   }
 
   fun addRecentlyFilteredGroup(filterName: String, values: Collection<String>) {
-    addRecentGroup(_state.RECENT_FILTERS, filterName, values)
+    addRecentGroup(_state.recentFilters, filterName, values)
   }
 
   class State {
-    var TAB_STATES: MutableMap<String, MyState> = TreeMap()
-    var OPEN_GENERIC_TABS = LinkedHashMap<String, VcsLogTabLocation>()
-    var RECENT_FILTERS: MutableMap<String, MutableList<RecentGroup>> = HashMap()
+    @get:OptionTag("TAB_STATES")
+    var tabStates: MutableMap<String, MyState> = TreeMap()
+
+    @get:OptionTag("OPEN_GENERIC_TABS")
+    var openTabs = LinkedHashMap<String, VcsLogTabLocation>()
+
+    @get:OptionTag("RECENT_FILTERS")
+    var recentFilters: MutableMap<String, MutableList<RecentGroup>> = HashMap()
   }
 
   class RecentGroup(values: Collection<String>) {
+    @Suppress("PropertyName")
     @XCollection
     var FILTER_VALUES: MutableList<String> = values.toMutableList()
 
@@ -73,19 +80,19 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
   }
 
   private inner class MyVcsLogUiPropertiesImpl(private val id: String) : VcsLogUiPropertiesImpl<MyState>(appSettings) {
-    override val logUiState = _state.TAB_STATES.getOrPut(id) { MyState() }
+    override val logUiState = _state.tabStates.getOrPut(id) { MyState() }
 
     override fun <T : Any> get(property: VcsLogUiProperty<T>): T {
       if (property is CustomBooleanTabProperty) {
         @Suppress("UNCHECKED_CAST")
-        return (logUiState.CUSTOM_BOOLEAN_PROPERTIES[property.getName()] ?: property.defaultValue(id)) as T
+        return (logUiState.customBooleanProperties[property.getName()] ?: property.defaultValue(id)) as T
       }
       return super.get(property)
     }
 
     override fun <T : Any> set(property: VcsLogUiProperty<T>, value: T) {
       if (property is CustomBooleanTabProperty) {
-        logUiState.CUSTOM_BOOLEAN_PROPERTIES[property.getName()] = value as Boolean
+        logUiState.customBooleanProperties[property.getName()] = value as Boolean
         onPropertyChanged(property)
         return
       }
@@ -97,17 +104,18 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
     }
 
     override fun addRecentlyFilteredGroup(filterName: String, values: Collection<String>) {
-      addRecentGroup(_state.RECENT_FILTERS, filterName, values)
+      addRecentGroup(_state.recentFilters, filterName, values)
     }
 
     override fun getRecentlyFilteredGroups(filterName: String): List<List<String>> {
-      return getRecentGroup(_state.RECENT_FILTERS, filterName)
+      return getRecentGroup(_state.recentFilters, filterName)
     }
   }
 
   @Tag("State")
   class MyState : VcsLogUiPropertiesImpl.State() {
-    var CUSTOM_BOOLEAN_PROPERTIES: MutableMap<String, Boolean> = HashMap()
+    @get:OptionTag("CUSTOM_BOOLEAN_PROPERTIES")
+    var customBooleanProperties: MutableMap<String, Boolean> = HashMap()
   }
 
   open class CustomBooleanTabProperty(name: @NonNls String) : VcsLogUiProperty<Boolean>(name) {

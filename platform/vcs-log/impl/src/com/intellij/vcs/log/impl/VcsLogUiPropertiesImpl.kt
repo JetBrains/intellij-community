@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.impl
 
 import com.intellij.util.EventDispatcher
+import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterProperty
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
@@ -22,15 +23,15 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
     }
     val state = logUiState
     val result: Any = when (property) {
-      is VcsLogHighlighterProperty -> state.HIGHLIGHTERS[property.id] ?: true
-      is TableColumnWidthProperty -> state.COLUMN_ID_WIDTH[property.name] ?: -1
-      CommonUiProperties.SHOW_DETAILS -> state.SHOW_DETAILS_IN_CHANGES
-      MainVcsLogUiProperties.SHOW_LONG_EDGES -> state.LONG_EDGES_VISIBLE
-      CommonUiProperties.SHOW_ROOT_NAMES -> state.SHOW_ROOT_NAMES
-      MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES -> state.SHOW_ONLY_AFFECTED_CHANGES
-      MainVcsLogUiProperties.BEK_SORT_TYPE -> PermanentGraph.SortType.values()[state.BEK_SORT_TYPE]
-      MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE -> logUiState.TEXT_FILTER_SETTINGS.MATCH_CASE
-      MainVcsLogUiProperties.TEXT_FILTER_REGEX -> logUiState.TEXT_FILTER_SETTINGS.REGEX
+      is VcsLogHighlighterProperty -> state.highlighters[property.id] ?: true
+      is TableColumnWidthProperty -> state.columnIdWidth[property.name] ?: -1
+      CommonUiProperties.SHOW_DETAILS -> state.isShowDetails
+      MainVcsLogUiProperties.SHOW_LONG_EDGES -> state.isShowLongEdges
+      CommonUiProperties.SHOW_ROOT_NAMES -> state.isShowRootNames
+      MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES -> state.isShowOnlyAffectedChanges
+      MainVcsLogUiProperties.BEK_SORT_TYPE -> PermanentGraph.SortType.values()[state.bekSortType]
+      MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE -> logUiState.textFilterSettings.isMatchCase
+      MainVcsLogUiProperties.TEXT_FILTER_REGEX -> logUiState.textFilterSettings.isRegex
       else -> throw UnsupportedOperationException("Property $property does not exist")
     }
     @Suppress("UNCHECKED_CAST")
@@ -44,15 +45,15 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
     }
 
     when (property) {
-      CommonUiProperties.SHOW_DETAILS -> logUiState.SHOW_DETAILS_IN_CHANGES = value as Boolean
-      MainVcsLogUiProperties.SHOW_LONG_EDGES -> logUiState.LONG_EDGES_VISIBLE = value as Boolean
-      CommonUiProperties.SHOW_ROOT_NAMES -> logUiState.SHOW_ROOT_NAMES = value as Boolean
-      MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES -> logUiState.SHOW_ONLY_AFFECTED_CHANGES = value as Boolean
-      MainVcsLogUiProperties.BEK_SORT_TYPE -> logUiState.BEK_SORT_TYPE = (value as PermanentGraph.SortType).ordinal
-      MainVcsLogUiProperties.TEXT_FILTER_REGEX -> logUiState.TEXT_FILTER_SETTINGS.REGEX = value as Boolean
-      MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE -> logUiState.TEXT_FILTER_SETTINGS.MATCH_CASE = value as Boolean
-      is VcsLogHighlighterProperty -> logUiState.HIGHLIGHTERS[(property as VcsLogHighlighterProperty).id] = value as Boolean
-      is TableColumnWidthProperty -> logUiState.COLUMN_ID_WIDTH[property.getName()] = value as Int
+      CommonUiProperties.SHOW_DETAILS -> logUiState.isShowDetails = value as Boolean
+      MainVcsLogUiProperties.SHOW_LONG_EDGES -> logUiState.isShowLongEdges = value as Boolean
+      CommonUiProperties.SHOW_ROOT_NAMES -> logUiState.isShowRootNames = value as Boolean
+      MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES -> logUiState.isShowOnlyAffectedChanges = value as Boolean
+      MainVcsLogUiProperties.BEK_SORT_TYPE -> logUiState.bekSortType = (value as PermanentGraph.SortType).ordinal
+      MainVcsLogUiProperties.TEXT_FILTER_REGEX -> logUiState.textFilterSettings.isRegex = value as Boolean
+      MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE -> logUiState.textFilterSettings.isMatchCase = value as Boolean
+      is VcsLogHighlighterProperty -> logUiState.highlighters[(property as VcsLogHighlighterProperty).id] = value as Boolean
+      is TableColumnWidthProperty -> logUiState.columnIdWidth[property.getName()] = value as Int
       else -> throw UnsupportedOperationException("Property $property does not exist")
     }
     onPropertyChanged(property)
@@ -71,15 +72,15 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
 
   override fun saveFilterValues(filterName: String, values: List<String>?) {
     if (values != null) {
-      logUiState.FILTERS[filterName] = values
+      logUiState.filters[filterName] = values
     }
     else {
-      logUiState.FILTERS.remove(filterName)
+      logUiState.filters.remove(filterName)
     }
   }
 
   override fun getFilterValues(filterName: String): List<String>? {
-    return logUiState.FILTERS[filterName]
+    return logUiState.filters[filterName]
   }
 
   override fun addChangeListener(listener: PropertiesChangeListener) {
@@ -93,20 +94,40 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
   }
 
   open class State {
-    var SHOW_DETAILS_IN_CHANGES = true
-    var LONG_EDGES_VISIBLE = false
-    var BEK_SORT_TYPE = 0
-    var SHOW_ROOT_NAMES = false
-    var SHOW_ONLY_AFFECTED_CHANGES = false
-    var HIGHLIGHTERS: MutableMap<String, Boolean> = TreeMap()
-    var FILTERS: MutableMap<String, List<String>> = TreeMap()
-    var TEXT_FILTER_SETTINGS: TextFilterSettings = TextFilterSettings()
-    var COLUMN_ID_WIDTH: MutableMap<String, Int> = HashMap()
+    @get:OptionTag("SHOW_DETAILS_IN_CHANGES")
+    var isShowDetails = true
+
+    @get:OptionTag("LONG_EDGES_VISIBLE")
+    var isShowLongEdges = false
+
+    @get:OptionTag("BEK_SORT_TYPE")
+    var bekSortType = 0
+
+    @get:OptionTag("SHOW_ROOT_NAMES")
+    var isShowRootNames = false
+
+    @get:OptionTag("SHOW_ONLY_AFFECTED_CHANGES")
+    var isShowOnlyAffectedChanges = false
+
+    @get:OptionTag("HIGHLIGHTERS")
+    var highlighters: MutableMap<String, Boolean> = TreeMap()
+
+    @get:OptionTag("FILTERS")
+    var filters: MutableMap<String, List<String>> = TreeMap()
+
+    @get:OptionTag("TEXT_FILTER_SETTINGS")
+    var textFilterSettings: TextFilterSettings = TextFilterSettings()
+
+    @get:OptionTag("COLUMN_ID_WIDTH")
+    var columnIdWidth: MutableMap<String, Int> = HashMap()
   }
 
   class TextFilterSettings {
-    var REGEX = false
-    var MATCH_CASE = false
+    @get:OptionTag("REGEX")
+    var isRegex = false
+
+    @get:OptionTag("MATCH_CASE")
+    var isMatchCase = false
   }
 
   companion object {

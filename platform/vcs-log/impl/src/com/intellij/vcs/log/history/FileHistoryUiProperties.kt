@@ -4,6 +4,7 @@ package com.intellij.vcs.log.history
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.util.EventDispatcher
+import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.vcs.log.impl.CommonUiProperties
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogUiProperties
@@ -36,13 +37,13 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
     }
 
     val result: Any = when (property) {
-      is TableColumnWidthProperty -> _state.COLUMN_ID_WIDTH[property.name] ?: -1
+      is TableColumnWidthProperty -> _state.columnIdWidth[property.name] ?: -1
       is TableColumnVisibilityProperty -> isColumnVisible(property)
       CommonUiProperties.COLUMN_ID_ORDER -> getColumnOrder()
-      CommonUiProperties.SHOW_DETAILS -> _state.SHOW_DETAILS
-      SHOW_ALL_BRANCHES -> _state.SHOW_OTHER_BRANCHES
-      CommonUiProperties.SHOW_DIFF_PREVIEW -> _state.SHOW_DIFF_PREVIEW
-      CommonUiProperties.SHOW_ROOT_NAMES -> _state.SHOW_ROOT_NAMES
+      CommonUiProperties.SHOW_DETAILS -> _state.isShowDetails
+      SHOW_ALL_BRANCHES -> _state.isShowOtherBranches
+      CommonUiProperties.SHOW_DIFF_PREVIEW -> _state.isShowDiffPreview
+      CommonUiProperties.SHOW_ROOT_NAMES -> _state.isShowRootNames
       else -> throw UnsupportedOperationException("Unknown property $property")
     }
     @Suppress("UNCHECKED_CAST")
@@ -50,7 +51,7 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
   }
 
   private fun isColumnVisible(visibilityProperty: TableColumnVisibilityProperty): Boolean {
-    val isVisible = _state.COLUMN_ID_VISIBILITY[visibilityProperty.name]
+    val isVisible = _state.columnIdVisibility[visibilityProperty.name]
     if (isVisible != null) return isVisible
 
     // visibility is not set, so we will get it from current/default order
@@ -62,7 +63,7 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
   }
 
   private fun getColumnOrder(): List<String> {
-    val order = _state.COLUMN_ID_ORDER
+    val order = _state.columnIdOrder
     if (order.isNullOrEmpty()) return listOf(Root, Author, Date, Commit).map { it.id }
     return order
   }
@@ -82,13 +83,13 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
 
     @Suppress("UNCHECKED_CAST")
     when (property) {
-      CommonUiProperties.SHOW_DETAILS -> _state.SHOW_DETAILS = value as Boolean
-      SHOW_ALL_BRANCHES -> _state.SHOW_OTHER_BRANCHES = value as Boolean
-      CommonUiProperties.COLUMN_ID_ORDER -> _state.COLUMN_ID_ORDER = value as List<String>
-      is TableColumnWidthProperty -> _state.COLUMN_ID_WIDTH[property.getName()] = value as Int
-      is TableColumnVisibilityProperty -> _state.COLUMN_ID_VISIBILITY[property.getName()] = value as Boolean
-      CommonUiProperties.SHOW_DIFF_PREVIEW -> _state.SHOW_DIFF_PREVIEW = value as Boolean
-      CommonUiProperties.SHOW_ROOT_NAMES -> _state.SHOW_ROOT_NAMES = value as Boolean
+      CommonUiProperties.SHOW_DETAILS -> _state.isShowDetails = value as Boolean
+      SHOW_ALL_BRANCHES -> _state.isShowOtherBranches = value as Boolean
+      CommonUiProperties.COLUMN_ID_ORDER -> _state.columnIdOrder = value as List<String>
+      is TableColumnWidthProperty -> _state.columnIdWidth[property.getName()] = value as Int
+      is TableColumnVisibilityProperty -> _state.columnIdVisibility[property.getName()] = value as Boolean
+      CommonUiProperties.SHOW_DIFF_PREVIEW -> _state.isShowDiffPreview = value as Boolean
+      CommonUiProperties.SHOW_ROOT_NAMES -> _state.isShowRootNames = value as Boolean
       else -> throw UnsupportedOperationException("Unknown property $property")
     }
     eventDispatcher.multicaster.onPropertyChanged(property)
@@ -126,13 +127,26 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
   }
 
   class State {
-    var SHOW_DETAILS = false
-    var SHOW_OTHER_BRANCHES = false
-    var COLUMN_ID_WIDTH: MutableMap<String, Int> = HashMap()
-    var COLUMN_ID_ORDER: List<String>? = ArrayList()
-    var COLUMN_ID_VISIBILITY: MutableMap<String, Boolean> = HashMap()
-    var SHOW_DIFF_PREVIEW = true
-    var SHOW_ROOT_NAMES = false
+    @get:OptionTag("SHOW_DETAILS")
+    var isShowDetails = false
+
+    @get:OptionTag("SHOW_OTHER_BRANCHES")
+    var isShowOtherBranches = false
+
+    @get:OptionTag("COLUMN_ID_WIDTH")
+    var columnIdWidth: MutableMap<String, Int> = HashMap()
+
+    @get:OptionTag("COLUMN_ID_ORDER")
+    var columnIdOrder: List<String>? = ArrayList()
+
+    @get:OptionTag("COLUMN_ID_VISIBILITY")
+    var columnIdVisibility: MutableMap<String, Boolean> = HashMap()
+
+    @get:OptionTag("SHOW_DIFF_PREVIEW")
+    var isShowDiffPreview = true
+
+    @get:OptionTag("SHOW_ROOT_NAMES")
+    var isShowRootNames = false
   }
 
   companion object {
