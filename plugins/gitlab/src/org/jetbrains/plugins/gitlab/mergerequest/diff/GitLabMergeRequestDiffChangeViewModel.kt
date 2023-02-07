@@ -21,7 +21,7 @@ import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionViewModelImpl
 import kotlin.coroutines.cancellation.CancellationException
 
-private typealias DiscussionsFlow = Flow<List<DiffMappedValue<GitLabDiscussionViewModel>>>
+private typealias DiscussionsFlow = Flow<Collection<DiffMappedValue<GitLabDiscussionViewModel>>>
 
 interface GitLabMergeRequestDiffChangeViewModel {
   val discussions: DiscussionsFlow

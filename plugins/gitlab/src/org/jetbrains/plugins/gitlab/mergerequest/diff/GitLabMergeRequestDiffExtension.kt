@@ -3,25 +3,18 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff
 
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.ui.codereview.diff.DiffMappedValue
-import com.intellij.collaboration.ui.codereview.diff.viewer.SimpleOnesideDiffViewerInlaysController
-import com.intellij.collaboration.ui.codereview.diff.viewer.TwosideDiffViewerInlaysController
-import com.intellij.collaboration.ui.codereview.diff.viewer.UnifiedDiffViewerInlaysController
+import com.intellij.collaboration.ui.codereview.diff.viewer.controlInlaysIn
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffExtension
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
-import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
-import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
+import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffInlayComponentsFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionViewModel
@@ -33,12 +26,14 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
     val project = context.project ?: return
 
+    if(viewer !is DiffViewerBase) return
+
     val connection = context.getUserData(GitLabProjectConnection.KEY) ?: return
     val reviewVm = context.getUserData(GitLabMergeRequestDiffReviewViewModel.KEY) ?: return
 
     val change = request.getUserData(ChangeDiffRequestProducer.CHANGE_KEY) ?: return
 
-    val discussions: Flow<List<DiffMappedValue<GitLabDiscussionViewModel>>> =
+    val discussions: Flow<Collection<DiffMappedValue<GitLabDiscussionViewModel>>> =
       reviewVm.getViewModelFor(change).flatMapLatest { it?.discussions!! }.catch { LOG.warn(it) }
 
     val cs = DisposingMainScope(viewer)
@@ -51,14 +46,7 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
         project, inlayCs, avatarIconsProvider, discussionVm
       )
     }
-    when (viewer) {
-      is SimpleOnesideDiffViewer ->
-        SimpleOnesideDiffViewerInlaysController(cs, discussions, GitLabDiscussionViewModel::id, discussionComponentFactory, viewer)
-      is UnifiedDiffViewer ->
-        UnifiedDiffViewerInlaysController(cs, discussions, GitLabDiscussionViewModel::id, discussionComponentFactory, viewer)
-      is TwosideTextDiffViewer ->
-        TwosideDiffViewerInlaysController(cs, discussions, GitLabDiscussionViewModel::id, discussionComponentFactory, viewer)
-      else -> return
-    }
+
+    viewer.controlInlaysIn(cs, discussions, GitLabDiscussionViewModel::id, discussionComponentFactory)
   }
 }

@@ -5,7 +5,7 @@ import com.intellij.diff.util.Side
 
 typealias DiffLineLocation = Pair<Side, Int>
 
-class DiffMappedValue<V>(val location: DiffLineLocation, val value: V) {
+class DiffMappedValue<out V>(val location: DiffLineLocation, val value: V) {
   val side: Side = location.first
   val lineIndex: Int = location.second
 }
