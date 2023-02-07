@@ -2,11 +2,10 @@
 package com.intellij.collaboration.ui.toolwindow
 
 import com.intellij.collaboration.async.disposingMainScope
+import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.ui.content.Content
-import com.intellij.ui.content.ContentFactory
-import com.intellij.ui.content.ContentManager
+import com.intellij.ui.content.*
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
  * Manages review toolwindow tabs and their content.
  * If [reviewToolwindowViewModel.projectContext] is [null] UI for acquiring this context is shown (by [ReviewTabsComponentFactory.createEmptyTabContent]).
  *
- * When [reviewToolwindowViewModel.projectContext] appears Review List will be shown (by [ReviewTabsComponentFactory.createReviewListComponent]),
+ * When [reviewToolwindowViewModel.projectContext] appears Review List will be shown (by [ReviewTabsComponentFactory.createReviewListComponentDescriptor]),
  * and requests in [reviewTabsController] will be handled, according to described in [ReviewTab] [ReviewTab.id] logic.
  * So, new tabs will be shown using [ReviewTabsComponentFactory.createTabComponent].
  *
@@ -101,6 +100,15 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
         }
       }
     }
+
+    contentManager.addContentManagerListener(object : ContentManagerListener {
+      override fun selectionChanged(event: ContentManagerEvent) {
+        if (event.operation == ContentManagerEvent.ContentOperation.add) {
+          // tab selected
+          handleTabSelection(event.content)
+        }
+      }
+    })
   }
 
   private fun selectExistedTabOrCreate(context: C, reviewTab: T): Content {
@@ -135,7 +143,10 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
   private fun createReviewListContent(context: C): Content = createDisposableContent { content, contentCs ->
     content.isCloseable = false
     content.displayName = context.projectName
-    content.component = tabComponentFactory.createReviewListComponent(contentCs, context)
+
+    val reviewListDescriptor = tabComponentFactory.createReviewListComponentDescriptor(contentCs, context)
+    content.component = reviewListDescriptor.component
+    content.putUserData(REVIEW_LIST_VIEW_MODEL, reviewListDescriptor.viewModel)
   }
 
 
@@ -169,8 +180,20 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
     }
   }
 
+  /**
+   * If review list is selected, refresh it, do nothing otherwise.
+   */
+  private fun handleTabSelection(content: Content) {
+    val reviewListVm = content.getUserData(REVIEW_LIST_VIEW_MODEL) ?: return
+
+    reviewListVm.refresh()
+  }
+
   companion object {
     @JvmStatic
     private val REVIEW_TAB: Key<ReviewTab> = Key.create("com.intellij.collaboration.toolwindow.review.tab")
+
+    @JvmStatic
+    private val REVIEW_LIST_VIEW_MODEL: Key<ReviewListViewModel> = Key.create("com.intellij.collaboration.toolwindow.review.tab.list.vm")
   }
 }

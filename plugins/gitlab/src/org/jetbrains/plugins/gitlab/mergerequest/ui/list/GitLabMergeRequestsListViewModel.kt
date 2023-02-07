@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 
 import com.intellij.collaboration.api.page.SequentialListLoader
 import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.util.childScope
 import kotlinx.coroutines.CancellationException
@@ -18,7 +19,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsF
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel.ListDataUpdate
 
-internal interface GitLabMergeRequestsListViewModel {
+internal interface GitLabMergeRequestsListViewModel : ReviewListViewModel {
   val filterVm: GitLabMergeRequestsFiltersViewModel
   val avatarIconsProvider: IconsProvider<GitLabUserDTO>
   val accountManager: GitLabAccountManager
@@ -34,7 +35,7 @@ internal interface GitLabMergeRequestsListViewModel {
 
   fun requestMore()
 
-  fun reset()
+  override fun refresh()
 
   sealed interface ListDataUpdate {
     class NewBatch(val newList: List<GitLabMergeRequestDetails>, val batch: List<GitLabMergeRequestDetails>) : ListDataUpdate
@@ -94,14 +95,12 @@ internal class GitLabMergeRequestsListViewModelImpl(
         .drop(1) // Skip initial emit
         .collect {
           doReset()
-          requestMore()
         }
     }
 
     scope.launch {
       tokenRefreshFlow.collect {
         doReset()
-        requestMore()
       }
     }
   }
@@ -131,7 +130,7 @@ internal class GitLabMergeRequestsListViewModelImpl(
     }
   }
 
-  override fun reset() {
+  override fun refresh() {
     scope.launch {
       doReset()
     }
@@ -142,5 +141,7 @@ internal class GitLabMergeRequestsListViewModelImpl(
     listState.clear()
     _errorState.value = null
     _listDataFlow.emit(ListDataUpdate.Clear)
+
+    requestMore()
   }
 }

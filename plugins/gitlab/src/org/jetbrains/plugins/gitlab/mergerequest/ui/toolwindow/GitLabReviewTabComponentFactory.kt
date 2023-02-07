@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
-import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.ui.toolwindow.ReviewListTabComponentDescriptor
 import com.intellij.collaboration.ui.toolwindow.ReviewTabsComponentFactory
 import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindVisibility
@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.mapLatest
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
@@ -31,13 +30,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffMode
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestDetailsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModelImpl
-import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModelImpl
-import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsPersistentFiltersHistory
-import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModelImpl
-import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsPanelFactory
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.awt.BorderLayout
@@ -48,36 +40,11 @@ internal class GitLabReviewTabComponentFactory(
   private val project: Project,
   private val toolwindowViewModel: GitLabToolwindowViewModel,
 ) : ReviewTabsComponentFactory<GitLabReviewTab, GitLabToolwindowProjectContext> {
-  override fun createReviewListComponent(cs: CoroutineScope,
-                                         projectContext: GitLabToolwindowProjectContext): JComponent {
-    val connection = projectContext.connection
-    val avatarIconsProvider: IconsProvider<GitLabUserDTO> = projectContext.avatarIconProvider
-
-    val filterVm: GitLabMergeRequestsFiltersViewModel = GitLabMergeRequestsFiltersViewModelImpl(
-      cs,
-      currentUser = connection.currentUser,
-      historyModel = GitLabMergeRequestsFiltersHistoryModel(GitLabMergeRequestsPersistentFiltersHistory()),
-      avatarIconsProvider = avatarIconsProvider,
-      projectData = connection.projectData
-    )
-    val listVm: GitLabMergeRequestsListViewModel = GitLabMergeRequestsListViewModelImpl(
-      cs,
-      filterVm = filterVm,
-      repository = connection.repo.repository.projectPath.name,
-      account = connection.account,
-      avatarIconsProvider = avatarIconsProvider,
-      accountManager = toolwindowViewModel.accountManager,
-      tokenRefreshFlow = connection.tokenRefreshFlow,
-      loaderSupplier = { filtersValue -> connection.projectData.mergeRequests.getListLoader(filtersValue.toSearchQuery()) }
-    )
-    return GitLabMergeRequestsPanelFactory().create(project, cs, listVm).also {
-      DataManager.registerDataProvider(it) { dataId ->
-        when {
-          GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> projectContext.filesController
-          else -> null
-        }
-      }
-    }
+  override fun createReviewListComponentDescriptor(
+    cs: CoroutineScope,
+    projectContext: GitLabToolwindowProjectContext
+  ): ReviewListTabComponentDescriptor {
+    return GitLabReviewListTabComponentDescriptor(project, cs, toolwindowViewModel.accountManager, projectContext)
   }
 
   override fun createTabComponent(cs: CoroutineScope,

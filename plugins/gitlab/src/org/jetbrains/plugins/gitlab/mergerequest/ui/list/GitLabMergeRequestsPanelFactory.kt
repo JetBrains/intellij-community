@@ -112,9 +112,6 @@ internal class GitLabMergeRequestsPanelFactory {
               }
             }
             GitLabMergeRequestsListViewModel.ListDataUpdate.Clear -> {
-              if (isShowing) {
-                listVm.requestMore()
-              }
             }
           }
         }
