@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotesContainer
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 
 interface GitLabDiscussionReplyViewModel {
 
@@ -21,14 +21,20 @@ interface GitLabDiscussionReplyViewModel {
 
 class GitLabDiscussionReplyViewModelImpl(parentCs: CoroutineScope,
                                          currentUser: GitLabUserDTO,
-                                         notesContainer: GitLabNotesContainer)
+                                         discussion: GitLabDiscussion)
   : GitLabDiscussionReplyViewModel {
 
   private val cs = parentCs.childScope()
 
   private val isWriting = MutableStateFlow(false)
   override val newNoteVm: Flow<NewGitLabNoteViewModel?> = isWriting.mapScoped {
-    if (it) NewGitLabNoteViewModelImpl(cs, currentUser, notesContainer) else null
+    if (!it) return@mapScoped null
+    val cs = this
+    DelegatingGitLabNoteEditingViewModel(cs, "", discussion::addNote).forNewNote(currentUser).apply {
+      onDoneIn(cs) {
+        text.value = ""
+      }
+    }
   }.modelFlow(cs, thisLogger())
 
   override fun startWriting() {

@@ -13,8 +13,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel.LoadingState
-import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModelImpl
+import org.jetbrains.plugins.gitlab.ui.comment.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 interface GitLabMergeRequestTimelineViewModel {
@@ -81,7 +80,12 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
       val discussions = it.getOrNull()
       if (discussions != null && discussions.canAddNotes) {
         coroutineScope {
-          val editVm = NewGitLabNoteViewModelImpl(this, currentUser, discussions)
+          val cs = this
+          val editVm = DelegatingGitLabNoteEditingViewModel(cs, "", discussions::addNote).forNewNote(currentUser).apply {
+            onDoneIn(cs) {
+              text.value = ""
+            }
+          }
           emit(editVm)
           awaitCancellation()
         }

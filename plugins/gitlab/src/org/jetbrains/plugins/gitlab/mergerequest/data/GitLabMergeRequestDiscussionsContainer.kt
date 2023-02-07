@@ -12,14 +12,18 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.addNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestDiscussions
 
-interface GitLabMergeRequestDiscussionsContainer: GitLabNotesContainer {
+interface GitLabMergeRequestDiscussionsContainer {
   val userDiscussions: Flow<Collection<GitLabDiscussion>>
   val systemDiscussions: Flow<Collection<GitLabDiscussionDTO>>
+
+  val canAddNotes: Boolean
+
+  suspend fun addNote(body: String)
 }
 
 private val LOG = logger<GitLabMergeRequestDiscussionsContainer>()

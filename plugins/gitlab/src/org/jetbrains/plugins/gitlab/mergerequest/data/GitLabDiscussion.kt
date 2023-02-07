@@ -19,11 +19,12 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.changeMergeRequestD
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.createReplyNote
 import java.util.*
 
-interface GitLabDiscussion : GitLabNotesContainer {
+interface GitLabDiscussion {
   val id: String
 
   val createdAt: Date
   val notes: Flow<List<GitLabNote>>
+  val canAddNotes: Boolean
 
   val position: GitLabNoteDTO.Position?
 
@@ -31,6 +32,8 @@ interface GitLabDiscussion : GitLabNotesContainer {
   val resolved: Flow<Boolean>
 
   suspend fun changeResolvedState()
+
+  suspend fun addNote(body: String)
 }
 
 private val LOG = logger<GitLabDiscussion>()
