@@ -2,15 +2,12 @@
 package com.intellij.serialization
 
 import com.amazon.ion.IonType
-import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import gnu.trove.THashSet
 import java.lang.reflect.ParameterizedType
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
 
-// marker value of collection that skipped because empty
+// marker value of a collection that skipped because empty
 private const val EMPTY_SKIPPED_COLLECTION = 0
 
 private const val EMPTY_JAVA_LIST = 1
@@ -106,11 +103,17 @@ internal class CollectionBinding(type: ParameterizedType, context: BindingInitia
       return when (collectionClass) {
         HashSet::class.java -> HashSet()
         ArrayList::class.java -> ArrayList()
-        THashSet::class.java -> THashSet()
+        THashSet::class.java -> HashSet()
         SmartList::class.java -> SmartList()
         else -> {
+          val constructor = collectionClass.getDeclaredConstructor()
+          try {
+            constructor.setAccessible(true)
+          }
+          catch (ignored: SecurityException) {
+          }
           @Suppress("UNCHECKED_CAST")
-          ReflectionUtil.newInstance(collectionClass, false) as MutableCollection<Any?>
+          return constructor.newInstance() as MutableCollection<Any?>
         }
       }
     }

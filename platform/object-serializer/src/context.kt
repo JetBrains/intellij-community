@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.SmartList
 import java.lang.reflect.Constructor
 
-// not fully initialized object may be passed (only created instance without properties) if object has PropertyMapping annotation
+// not fully initialized object may be passed (only created instance without properties) if an object has PropertyMapping annotation
 typealias BeanConstructed = (instance: Any) -> Any
 
 class NonDefaultConstructorInfo(val names: List<String>, val constructor: Constructor<*>)
@@ -14,7 +14,7 @@ class NonDefaultConstructorInfo(val names: List<String>, val constructor: Constr
 typealias PropertyMappingProvider = (beanClass: Class<*>) -> NonDefaultConstructorInfo?
 
 data class ReadConfiguration(val allowAnySubTypes: Boolean = false,
-                             // loadClass for now doesn't support map or collection as host object
+                             // loadClass for now doesn't support a map or collection as a host object
                              val loadClass: ((name: String, hostObject: Any) -> Class<*>?)? = null,
                              val beanConstructed: BeanConstructed? = null,
                              val resolvePropertyMapping: PropertyMappingProvider? = null)
@@ -38,11 +38,14 @@ internal interface ReadContext {
   val configuration: ReadConfiguration
 
   /**
-   * Each call will reset previously allocated result. For sub readers it is not a problem, because you must use [createSubContext] for this case.
+   * Each call will reset a previously allocated result.
+   * For sub readers it is not a problem, because you must use [createSubContext] for this case.
    */
   fun allocateByteArrayOutputStream(): BufferExposingByteArrayOutputStream
 
   fun createSubContext(reader: ValueReader): ReadContext
+
+  fun checkCancelled()
 
   val errors: ReadErrors
 }

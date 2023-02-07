@@ -30,11 +30,11 @@ internal class ExternalSystemStartupActivity : ProjectActivity {
         runCatching {
           if (manager is StartupActivity) {
             blockingContext {
-              (manager as StartupActivity).runActivity(project)
+              manager.runActivity(project)
             }
           }
-          else {
-            (manager as ProjectActivity).execute(project)
+          else if (manager is ProjectActivity) {
+            manager.execute(project)
           }
         }.getOrLogException(logger<ExternalSystemStartupActivity>())
       }

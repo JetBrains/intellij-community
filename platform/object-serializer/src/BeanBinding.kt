@@ -1,13 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.serialization
 
 import com.amazon.ion.IonReader
 import com.amazon.ion.IonType
 import com.amazon.ion.system.IonReaderBuilder
-import it.unimi.dsi.fastutil.objects.Object2IntMap
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import java.lang.reflect.Type
+import java.util.concurrent.CancellationException
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.javaConstructor
@@ -82,6 +85,9 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
       try {
         binding.serialize(obj, property, context)
       }
+      catch (e: CancellationException) {
+        throw e
+      }
       catch (e: Exception) {
         throw SerializationException("Cannot serialize property (property=$property, binding=$binding, beanClass=${beanClass.name})", e)
       }
@@ -150,6 +156,9 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
         val binding = bindings.get(bindingIndex)
         try {
           initArgs[argIndex] = binding.deserialize(subReadContext, hostObject)
+        }
+        catch (e: CancellationException) {
+          throw e
         }
         catch (e: Exception) {
           throw SerializationException("Cannot deserialize parameter value (fieldName=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=${beanClass.name})", e)
@@ -270,6 +279,9 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
         binding.deserialize(instance, accessors.get(bindingIndex), context)
       }
       catch (e: SerializationException) {
+        throw e
+      }
+      catch (e: CancellationException) {
         throw e
       }
       catch (e: Exception) {
