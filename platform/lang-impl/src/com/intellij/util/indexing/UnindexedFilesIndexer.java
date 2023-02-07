@@ -35,12 +35,12 @@ import java.util.*;
  */
 class UnindexedFilesIndexer extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesIndexer.class);
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final FileBasedIndexImpl myIndex;
-  private final Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles;
+  private final @NotNull Map<@NotNull IndexableFilesIterator, @NotNull Collection<@NotNull VirtualFile>> providerToFiles;
   private final @NonNls @NotNull String indexingReason;
 
-  UnindexedFilesIndexer(Project project,
+  UnindexedFilesIndexer(@NotNull Project project,
                         @NonNls @NotNull String indexingReason) {
     this(project, Collections.emptyMap(), indexingReason);
   }
@@ -50,8 +50,8 @@ class UnindexedFilesIndexer extends DumbModeTask {
    * <p>
    * if providerToFiles is not empty, providerToFiles files will be indexed in the first order, then files reported by FileBasedIndexImpl#getFilesToUpdate
    */
-  UnindexedFilesIndexer(Project project,
-                        Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles,
+  UnindexedFilesIndexer(@NotNull Project project,
+                        @NotNull Map<@NotNull IndexableFilesIterator, @NotNull Collection<@NotNull VirtualFile>> providerToFiles,
                         @NonNls @NotNull String indexingReason) {
     myProject = project;
     myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
@@ -229,7 +229,7 @@ class UnindexedFilesIndexer extends DumbModeTask {
   }
 
   @TestOnly
-  Map<IndexableFilesIterator, Collection<VirtualFile>> getProviderToFiles() {
+  @NotNull Map<@NotNull IndexableFilesIterator, @NotNull Collection<@NotNull VirtualFile>> getProviderToFiles() {
     return providerToFiles;
   }
 }
