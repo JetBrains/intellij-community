@@ -85,9 +85,9 @@ suspend fun GitLabApi.addNote(
   return loadGQLResponse(request, CreateNoteResult::class.java, "createNote")
 }
 
-private class CreateNoteResult(note: NoteHolder, errors: List<String>?)
+private class CreateNoteResult(note: NoteHolder?, errors: List<String>?)
   : GitLabGraphQLMutationResultDTO<GitLabDiscussionDTO>(errors) {
-  override val value = note.discussion
+  override val value = note?.discussion
 }
 
 private class NoteHolder(val discussion: GitLabDiscussionDTO)
