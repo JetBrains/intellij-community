@@ -326,10 +326,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     return (JBTerminalSystemSettingsProviderBase)mySettingsProvider;
   }
 
-  public void moveDisposable(@NotNull Disposable newParent) {
-    Disposer.register(newParent, this);
-  }
-
   public void notifyStarted() {
     if (myListener != null) {
       myListener.onTerminalStarted();
