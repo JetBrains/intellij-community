@@ -538,12 +538,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return myContext.myModulesConfigurator.getFacetsConfigurator();
   }
 
-  private void addModule(boolean anImport, String defaultModuleName) {
+  private void addModule(boolean anImport) {
     final List<Module> modules;
     if (anImport) {
       modules = myContext.myModulesConfigurator.addImportModule(myTree);
     } else {
-      modules = myContext.myModulesConfigurator.addNewModule(defaultModuleName);
+      modules = myContext.myModulesConfigurator.addNewModule();
     }
     if (modules != null && !modules.isEmpty()) {
       //new module wizard may add yet another SDK to the project
@@ -1084,14 +1084,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-      String defaultModuleName = "untitled";
-      if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(myProject) && getSelectedNode() instanceof ModuleGroupNodeImpl selectedNode) {
-        ModuleGroup group = selectedNode.getModuleGroup();
-        if (!group.getGroupPathList().isEmpty()) {
-          defaultModuleName = StringUtil.join(group.getGroupPathList(), ".") + ".untitled";
-        }
-      }
-      addModule(myImport, defaultModuleName);
+      addModule(myImport);
     }
   }
 

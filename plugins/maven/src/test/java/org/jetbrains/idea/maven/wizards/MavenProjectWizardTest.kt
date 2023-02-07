@@ -101,7 +101,7 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
 
       val projectStructureConfigurable = ProjectStructureConfigurable.getInstance(project)
       val modulesConfigurator = projectStructureConfigurable.context.modulesConfigurator
-      val addedModules = withWizard({ modulesConfigurator.addNewModule("untitled")!! }) {
+      val addedModules = withWizard({ modulesConfigurator.addNewModule()!! }) {
         this as ProjectTypeStep
         assertTrue(setSelectedTemplate(UIBundle.message("label.project.wizard.module.generator.name"), null))
         val step = customStep as NewProjectWizardStep

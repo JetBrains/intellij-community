@@ -96,8 +96,8 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
   fun <R> withWizard(action: () -> R, configure: Step.() -> Unit): R {
     Disposer.newDisposable().use { disposable ->
       val factory = object : NewProjectWizardFactory {
-        override fun create(project: Project, modulesProvider: ModulesProvider): NewProjectWizard {
-          return object : NewProjectWizard(project, modulesProvider) {
+        override fun create(project: Project?, modulesProvider: ModulesProvider): NewProjectWizard {
+          return object : NewProjectWizard(project, modulesProvider, null) {
             override fun showAndGet(): Boolean {
               while (true) {
                 val currentStep = currentStepObject

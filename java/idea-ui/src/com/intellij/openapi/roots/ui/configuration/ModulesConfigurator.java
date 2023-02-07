@@ -418,9 +418,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @Nullable
-  public List<Module> addNewModule(String defaultModuleName) {
+  public List<Module> addNewModule() {
     if (myProject.isDefault()) return null;
-    return addModule(getNewModuleWizard(defaultModuleName));
+    return addModule(getNewModuleWizard());
   }
 
   private Module createModule(final ModuleBuilder builder) {
@@ -473,11 +473,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @NotNull
-  private AbstractProjectWizard getNewModuleWizard(String defaultModuleName) {
+  private AbstractProjectWizard getNewModuleWizard() {
     var wizardFactory = ApplicationManager.getApplication().getService(NewProjectWizardFactory.class);
-    var wizard = wizardFactory.create(myProject, this);
-    wizard.setDefaultModuleName(defaultModuleName);
-    return wizard;
+    return wizardFactory.create(myProject, this);
   }
 
   public void deleteModules(@NotNull List<? extends ModuleEditor> selectedEditors) {
@@ -582,15 +580,15 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   @ApiStatus.Internal
   public interface NewProjectWizardFactory {
-    @NotNull NewProjectWizard create(@NotNull Project project, @NotNull ModulesProvider modulesProvider);
+    @NotNull NewProjectWizard create(@Nullable Project project, @NotNull ModulesProvider modulesProvider);
   }
 
   @ApiStatus.Internal
   public static class NewProjectWizardFactoryImpl implements NewProjectWizardFactory {
 
     @Override
-    public @NotNull NewProjectWizard create(@NotNull Project project, @NotNull ModulesProvider modulesProvider) {
-      return new NewProjectWizard(project, modulesProvider);
+    public @NotNull NewProjectWizard create(@Nullable Project project, @NotNull ModulesProvider modulesProvider) {
+      return new NewProjectWizard(project, modulesProvider, null);
     }
   }
 }
