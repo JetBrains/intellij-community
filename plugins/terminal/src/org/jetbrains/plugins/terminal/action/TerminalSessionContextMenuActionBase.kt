@@ -6,12 +6,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
 import com.intellij.ui.content.Content
-import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 
 abstract class TerminalSessionContextMenuActionBase : ToolWindowContextMenuActionBase() {
   final override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
     val project = e.project
-    if (project != null && TerminalToolWindowFactory.TOOL_WINDOW_ID == toolWindow.id && content != null) {
+    if (project != null && TerminalToolWindowManager.isTerminalToolWindow(toolWindow) && content != null) {
       updateInTerminalToolWindow(e, project, content)
     }
     else {
@@ -23,7 +23,7 @@ abstract class TerminalSessionContextMenuActionBase : ToolWindowContextMenuActio
 
   final override fun actionPerformed(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
     val project = e.project
-    if (project != null && TerminalToolWindowFactory.TOOL_WINDOW_ID == toolWindow.id && content != null) {
+    if (project != null && TerminalToolWindowManager.isTerminalToolWindow(toolWindow) && content != null) {
       actionPerformedInTerminalToolWindow(e, project, content)
     }
   }

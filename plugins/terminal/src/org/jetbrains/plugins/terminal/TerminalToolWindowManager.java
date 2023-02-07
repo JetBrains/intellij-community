@@ -135,7 +135,7 @@ public final class TerminalToolWindowManager implements Disposable {
       .subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
         @Override
         public void toolWindowShown(@NotNull ToolWindow toolWindow) {
-          if (TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId()) && myToolWindow == toolWindow &&
+          if (isTerminalToolWindow(toolWindow) && myToolWindow == toolWindow &&
               toolWindow.isVisible() && toolWindow.getContentManager().isEmpty()) {
             // open a new session if all tabs were closed manually
             createNewSession(myTerminalRunner, null, true, true);
@@ -561,7 +561,7 @@ public final class TerminalToolWindowManager implements Disposable {
   public static boolean isInTerminalToolWindow(@NotNull JBTerminalWidget widget) {
     DataContext dataContext = DataManager.getInstance().getDataContext(widget.getTerminalPanel());
     ToolWindow toolWindow = dataContext.getData(PlatformDataKeys.TOOL_WINDOW);
-    return toolWindow != null && TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId());
+    return isTerminalToolWindow(toolWindow);
   }
 
   public static boolean isTerminalToolWindow(@Nullable ToolWindow toolWindow) {
