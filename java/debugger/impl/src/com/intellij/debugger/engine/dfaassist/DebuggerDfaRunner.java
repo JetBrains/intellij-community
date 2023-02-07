@@ -24,13 +24,13 @@ import com.intellij.debugger.jdi.StackFrameProxyEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.xdebugger.impl.dfaassist.DfaResult;
 import com.sun.jdi.*;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -63,7 +63,7 @@ public class DebuggerDfaRunner {
   }
 
   @NotNull
-  public DebuggerDfaRunner.DfaResult computeHints() {
+  public DfaResult computeHints() {
     if (PsiModificationTracker.getInstance(myProject).getModificationCount() != myModificationStamp) {
       return DfaResult.EMPTY;
     }
@@ -345,18 +345,5 @@ public class DebuggerDfaRunner {
       constraint = constraint.arrayOf();
     }
     return constraint;
-  }
-
-  public static class DfaResult {
-    static final @NotNull DfaResult EMPTY = new DfaResult(null, Map.of(), Set.of());
-    public final @Nullable PsiFile file;
-    public final @NotNull Map<PsiElement, DfaHint> hints;
-    public final @NotNull Collection<TextRange> unreachable;
-
-    DfaResult(@Nullable PsiFile file, @NotNull Map<PsiElement, DfaHint> hints, @NotNull Collection<TextRange> unreachable) {
-      this.file = file;
-      this.hints = hints;
-      this.unreachable = unreachable;
-    }
   }
 }
