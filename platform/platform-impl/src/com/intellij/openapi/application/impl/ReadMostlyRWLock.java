@@ -65,7 +65,7 @@ final class ReadMostlyRWLock {
     Reader(@NotNull Thread readerThread) {
       thread = readerThread;
     }
-    
+
     private ProcessingContext processingContext;
 
     @Override
