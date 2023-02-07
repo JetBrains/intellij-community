@@ -45,7 +45,6 @@ project.kotlinJvmOnly.test
 
 
 Test configuration:
-- hiding following roots: resources, android-specific roots, generated
 - hiding source modules matching .*ios.*
 - hiding following standard dependencies: stdlib, sdk, self
 - dependencies order is not checked

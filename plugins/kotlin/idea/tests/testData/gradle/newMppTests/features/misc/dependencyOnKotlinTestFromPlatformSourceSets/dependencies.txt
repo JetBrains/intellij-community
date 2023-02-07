@@ -41,7 +41,5 @@ my-app.linuxX64Test
 
 
 Test configuration:
-- hiding following roots: resources, android-specific roots, generated
-- showing only following facet fields: targetPlatform
 - hiding following standard dependencies: stdlib, Kotlin/Native distribution, sdk, self
 - dependencies order is not checked
