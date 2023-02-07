@@ -809,6 +809,10 @@ private fun readInclude(
 }
 
 private fun checkConditionalIncludeIsSupported(attribute: String, builder: PluginDescriptorBuilder) {
+  // Android Studio: allow conditional includes in our own plugins and tests during transition to K2
+  val vendor = builder.vendor
+  if (vendor != null && (vendor.contains("Google") || vendor.contains("Android"))) return
+  if (java.lang.Boolean.getBoolean("idea.is.unit.test")) return
   if (builder.id !in K2_ALLOWED_PLUGIN_IDS) {
     throw IllegalArgumentException("$attribute of 'include' is not supported")
   }
