@@ -18,7 +18,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.stream.Stream;
 
 public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implements ProblemDescriptor {
@@ -286,8 +285,8 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   }
 
   @Override
-  public LocalQuickFix @Nullable [] getFixes() {
-    var fixes = Objects.requireNonNull(super.getFixes());
+  public LocalQuickFix @NotNull [] getFixes() {
+    var fixes = super.getFixes();
     return fixes.length == 0 ? LocalQuickFix.EMPTY_ARRAY : (LocalQuickFix[])fixes;
   }
 }

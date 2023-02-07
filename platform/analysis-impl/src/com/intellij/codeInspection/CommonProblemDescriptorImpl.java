@@ -42,7 +42,7 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
   }
 
   @Override
-  public QuickFix<?> @Nullable [] getFixes() {
+  public QuickFix<?> @NotNull [] getFixes() {
     return myFixes == null ? QuickFix.EMPTY_ARRAY : myFixes;
   }
 
