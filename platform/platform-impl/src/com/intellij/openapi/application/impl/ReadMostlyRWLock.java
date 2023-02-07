@@ -36,8 +36,7 @@ import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.cancelAc
  */
 final class ReadMostlyRWLock {
   @NotNull final Thread writeThread;
-  @VisibleForTesting
-  volatile boolean writeRequested;  // this writer is requesting or obtained the write access
+  private volatile boolean writeRequested;  // this writer is requesting or obtained the write access
   private final AtomicBoolean writeIntent = new AtomicBoolean(false);
   private volatile boolean writeAcquired;   // this writer obtained the write lock
   // All reader threads are registered here. Dead readers are garbage collected in writeUnlock().
@@ -147,7 +146,7 @@ final class ReadMostlyRWLock {
       status.readRequested = false;
       status.processingContext = null;
     }
-    if (writeRequested) {
+    if (isWriteRequested()) {
       LockSupport.unpark(writeThread);  // parked by writeLock()
     }
   }
@@ -170,7 +169,7 @@ final class ReadMostlyRWLock {
 
   private void throwIfImpatient(Reader status) throws ApplicationUtil.CannotRunReadActionException {
     // when client explicitly runs in non-cancelable block do not throw from within nested read actions
-    if (status.impatientReads && writeRequested && !ProgressManager.getInstance().isInNonCancelableSection()) {
+    if (status.impatientReads && isWriteRequested() && !ProgressManager.getInstance().isInNonCancelableSection()) {
       throw ApplicationUtil.CannotRunReadActionException.create();
     }
   }
@@ -229,9 +228,9 @@ final class ReadMostlyRWLock {
 
   private boolean tryReadLock(Reader status) {
     throwIfImpatient(status);
-    if (!writeRequested) {
+    if (!isWriteRequested()) {
       status.readRequested = true;
-      if (!writeRequested) {
+      if (!isWriteRequested()) {
         return true;
       }
       status.readRequested = false;
@@ -247,7 +246,7 @@ final class ReadMostlyRWLock {
 
     for (int iter=0; ;iter++) {
       if (writeIntent.compareAndSet(false, true)) {
-        assert !writeRequested;
+        assert !isWriteRequested();
         assert !isWriteAcquired();
 
         break;
@@ -266,7 +265,7 @@ final class ReadMostlyRWLock {
     checkWriteThreadAccess();
 
     assert !isWriteAcquired();
-    assert !writeRequested;
+    assert !isWriteRequested();
 
     writeIntent.set(false);
     LockSupport.unpark(writeThread);
@@ -275,7 +274,7 @@ final class ReadMostlyRWLock {
   void writeLock() {
     checkWriteThreadAccess();
     checkReadIsNotHeld("Write");
-    assert !writeRequested;
+    assert !isWriteRequested();
     assert !isWriteAcquired();
 
     writeRequested = true;
@@ -363,6 +362,11 @@ final class ReadMostlyRWLock {
     return true;
   }
 
+  @VisibleForTesting
+  boolean isWriteRequested() {
+    return writeRequested;
+  }
+
   boolean isWriteAcquired() {
     return writeAcquired;
   }
@@ -396,7 +400,7 @@ final class ReadMostlyRWLock {
   public String toString() {
     return "ReadMostlyRWLock{" +
            "writeThread=" + writeThread +
-           ", writeRequested=" + writeRequested +
+           ", writeRequested=" + isWriteRequested() +
            ", writeIntended=" + writeIntent.get() +
            ", writeAcquired=" + isWriteAcquired() +
            ", implicitRead=" + allowImplicitRead +
