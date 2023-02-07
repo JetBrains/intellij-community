@@ -31,11 +31,8 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
         .comment(IdeBundle.message("checkbox.enable.new.ui.description"))
     }
 
-    row { browserLink(IdeBundle.message("new.ui.blog.changes.and.issues"), "https://youtrack.jetbrains.com/articles/IDEA-A-156/Main-changes-and-known-issues") }
-    row { link(IdeBundle.message("new.ui.submit.feedback")) { NewUIFeedbackDialog(null, false).show() } }
-
-    if (SystemInfo.isWindows || SystemInfo.isXWindow) {
-      group(IdeBundle.message("new.ui.settings.group.name")) {
+    indent {
+      if (SystemInfo.isWindows || SystemInfo.isXWindow) {
         row {
           checkBox(IdeBundle.message("checkbox.main.menu.separate.toolbar"))
             .bindSelected(UISettings.getInstance()::separateMainMenu)
@@ -47,6 +44,9 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
         }
       }
     }
+
+    row { browserLink(IdeBundle.message("new.ui.blog.changes.and.issues"), "https://youtrack.jetbrains.com/articles/IDEA-A-156/Main-changes-and-known-issues") }
+    row { link(IdeBundle.message("new.ui.submit.feedback")) { NewUIFeedbackDialog(null, false).show() } }
   }
 
   override fun getHelpTopic(): String? {
