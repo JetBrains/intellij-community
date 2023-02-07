@@ -3,37 +3,10 @@ package org.jetbrains.kotlin.gradle.newTests.testFeatures
 
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.gradle.newTests.TestConfigurationDslScope
-import org.jetbrains.kotlin.gradle.newTests.TestFeature
 import org.jetbrains.kotlin.gradle.newTests.writeAccess
+import org.jetbrains.kotlin.gradle.workspace.OrderEntriesChecker
 
-object OrderEntriesFilteringTestFeature : TestFeature<OrderEntriesFilteringConfiguration> {
-    override fun renderConfiguration(configuration: OrderEntriesFilteringConfiguration): List<String> {
-        val hiddenStandardDependencies = buildList<String> {
-            if (configuration.hideStdlib) add("stdlib")
-            if (configuration.hideKotlinTest) add("kotlin-test")
-            if (configuration.hideKonanDist) add("Kotlin/Native distribution")
-            if (configuration.hideSdkDependency) add("sdk")
-            if (configuration.hideSelfDependency) add ("self")
-        }
-
-        return buildList {
-            if (hiddenStandardDependencies.isNotEmpty())
-                add("hiding following standard dependencies: ${hiddenStandardDependencies.joinToString()}")
-
-            if (configuration.excludeDependencies != null) {
-                add("hiding dependencies matching ${configuration.excludeDependencies.toString()}")
-            }
-
-            if (configuration.sortDependencies) {
-                add("dependencies order is not checked")
-            }
-        }
-    }
-
-    override fun createDefaultConfiguration(): OrderEntriesFilteringConfiguration = OrderEntriesFilteringConfiguration()
-}
-
-class OrderEntriesFilteringConfiguration {
+class OrderEntriesChecksConfiguration {
     var excludeDependencies: Regex? = null
     var onlyDependencies: Regex? = null
 
@@ -57,10 +30,10 @@ class OrderEntriesFilteringConfiguration {
     val hideSdkDependency: Boolean = true
 }
 
-private val TestConfigurationDslScope.config: OrderEntriesFilteringConfiguration
-    get() = writeAccess.getConfiguration(OrderEntriesFilteringTestFeature)
+private val TestConfigurationDslScope.config: OrderEntriesChecksConfiguration
+    get() = writeAccess.getConfiguration(OrderEntriesChecker)
 
-interface OrderEntriesFilteringSupport {
+interface OrderEntriesChecksDsl {
     var TestConfigurationDslScope.hideStdlib: Boolean
         get() = config.hideStdlib
         set(value) { config.hideStdlib = value }

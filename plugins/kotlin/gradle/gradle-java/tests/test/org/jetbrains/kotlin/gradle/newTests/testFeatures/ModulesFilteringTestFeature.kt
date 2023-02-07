@@ -2,23 +2,18 @@
 package org.jetbrains.kotlin.gradle.newTests.testFeatures
 
 import org.intellij.lang.annotations.Language
+import org.jetbrains.kotlin.gradle.newTests.AbstractTestChecker
 import org.jetbrains.kotlin.gradle.newTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.newTests.TestFeature
 import org.jetbrains.kotlin.gradle.newTests.writeAccess
 
-object FilterModulesTestFeature : TestFeature<ModulesFilteringConfiguration> {
-    override fun renderConfiguration(configuration: ModulesFilteringConfiguration): List<String> = buildList {
-        if (configuration.excludedModuleNames != null) add("hiding source modules matching ${configuration.excludedModuleNames!!}")
-        if (configuration.includedModuleNames != null) add("showing only source modules matching ${configuration.includedModuleNames!!}")
-
-        if (configuration.hideTestModules) add("hiding test source modules")
-        if (configuration.hideProductionModules) add("hiding production source modules")
-    }
-
-    override fun createDefaultConfiguration(): ModulesFilteringConfiguration = ModulesFilteringConfiguration()
+// Architectural oddity: used directly by [WorkspaceModelChecker], doesn't need to be installed explicitly
+// because all specific checkers inherit [WorkspaceModelChecker]
+object GeneralWorkspaceChecks : TestFeature<WorkspaceChecksGeneralConfiguration> {
+    override fun createDefaultConfiguration(): WorkspaceChecksGeneralConfiguration = WorkspaceChecksGeneralConfiguration()
 }
 
-class ModulesFilteringConfiguration {
+class WorkspaceChecksGeneralConfiguration {
     // includedModuleNames == null -> use default (include everything), but
     // includedModuleNames == emptySet() -> don't include anything (hide all modules)
     //
@@ -28,21 +23,32 @@ class ModulesFilteringConfiguration {
 
     var hideTestModules: Boolean = false
     var hideProductionModules: Boolean = false
+
+    var disableCheckers: Set<AbstractTestChecker<*>>? = null
+    var onlyCheckers: Set<AbstractTestChecker<*>>? = null
 }
 
-private val TestConfigurationDslScope.config: ModulesFilteringConfiguration
-    get() = writeAccess.getConfiguration(FilterModulesTestFeature)
+private val TestConfigurationDslScope.config: WorkspaceChecksGeneralConfiguration
+    get() = writeAccess.getConfiguration(GeneralWorkspaceChecks)
 
-interface ModulesFilteringDsl {
+interface WorkspaceChecksDsl : OrderEntriesChecksDsl, KotlinFacetSettingsChecksDsl, ContentRootsChecksDsl {
     fun TestConfigurationDslScope.onlyModules(@Language("RegExp") regex: String) {
-        val config = config
         require(config.excludedModuleNames == null) { "'onlyModules' is mutually exclusive with 'excludeModules'" }
         config.includedModuleNames = regex.toRegex()
     }
 
     fun TestConfigurationDslScope.excludeModules(@Language("RegExp") regex: String) {
-        val config = config
         require(config.includedModuleNames == null) { "'onlyModules' is mutually exclusive with 'excludeModules'" }
         config.excludedModuleNames = regex.toRegex()
+    }
+
+    fun TestConfigurationDslScope.onlyCheckers(vararg checkers: AbstractTestChecker<*>) {
+        require(config.disableCheckers == null) { "'onlyCheckers' is mutually exclusive with 'disableCheckers'" }
+        config.onlyCheckers = checkers.toSet()
+    }
+
+    fun TestConfigurationDslScope.disableCheckers(vararg checkers: AbstractTestChecker<*>) {
+        require(config.onlyCheckers == null) { "'onlyCheckers' is mutually exclusive with 'disableCheckers'" }
+        config.disableCheckers = checkers.toSet()
     }
 }

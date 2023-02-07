@@ -3,35 +3,21 @@ package org.jetbrains.kotlin.gradle.newTests.testFeatures
 
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.gradle.newTests.TestConfigurationDslScope
-import org.jetbrains.kotlin.gradle.newTests.TestFeature
 import org.jetbrains.kotlin.gradle.newTests.writeAccess
+import org.jetbrains.kotlin.gradle.workspace.KotlinFacetSettingsChecker
 import kotlin.reflect.KProperty1
 
 private typealias FacetField = KProperty1<KotlinFacetSettings, *>
 
-object FacetSettingsFilteringTestFeature : TestFeature<FacetSettingsFilteringConfiguration> {
-    override fun renderConfiguration(configuration: FacetSettingsFilteringConfiguration): List<String> {
-        return buildList {
-            if (configuration.excludedFacetFields != null)
-                add("excluding following facet fields: ${configuration.excludedFacetFields!!.joinToString { it.name } }")
-            if (configuration.includedFacetFields != null) {
-                add("showing only following facet fields: ${configuration.includedFacetFields!!.joinToString { it.name } }")
-            }
-        }
-    }
-
-    override fun createDefaultConfiguration(): FacetSettingsFilteringConfiguration = FacetSettingsFilteringConfiguration()
-}
-
-class FacetSettingsFilteringConfiguration {
+class KotlinFacetSettingsChecksConfiguration {
     var excludedFacetFields: Set<FacetField>? = null
     var includedFacetFields: Set<FacetField>? = null
 }
 
-private val TestConfigurationDslScope.config: FacetSettingsFilteringConfiguration
-    get() = writeAccess.getConfiguration(FacetSettingsFilteringTestFeature)
+private val TestConfigurationDslScope.config: KotlinFacetSettingsChecksConfiguration
+    get() = writeAccess.getConfiguration(KotlinFacetSettingsChecker)
 
-interface FacetSettingsFilteringDsl {
+interface KotlinFacetSettingsChecksDsl {
     fun TestConfigurationDslScope.onlyFacetFields(vararg fields: FacetField) {
         require(config.excludedFacetFields == null) { "onlyFields is mutually exclusive with exceptFields" }
         config.includedFacetFields = fields.toSet()

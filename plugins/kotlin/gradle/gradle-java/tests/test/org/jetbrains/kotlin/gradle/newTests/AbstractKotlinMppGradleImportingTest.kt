@@ -9,6 +9,10 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.VfsTestUtil
 import org.jetbrains.kotlin.gradle.newTests.testFeatures.*
 import org.jetbrains.kotlin.gradle.newTests.infra.*
+import org.jetbrains.kotlin.gradle.workspace.ContentRootsChecker
+import org.jetbrains.kotlin.gradle.workspace.KotlinFacetSettingsChecker
+import org.jetbrains.kotlin.gradle.workspace.OrderEntriesChecker
+import org.jetbrains.kotlin.gradle.workspace.TestTasksChecker
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
@@ -28,15 +32,19 @@ import java.io.PrintStream
 @RunWith(KotlinMppTestsJUnit4Runner::class)
 @TestDataPath("\$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
 abstract class AbstractKotlinMppGradleImportingTest :
-    GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl, HighlightingCheckDsl,
+    GradleImportingTestCase(), WorkspaceChecksDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl, HighlightingCheckDsl,
     TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl {
 
-    internal val testFeatures = listOf<TestFeature<*>>(
+    internal val installedFeatures = listOf<TestFeature<*>>(
         GradleProjectsPublishingTestsFeature,
         LinkedProjectPathsTestsFeature,
-        HighlightingCheckTestFeature,
         NoErrorEventsDuringImportFeature,
-        WorkspaceModelChecksFeature
+
+        HighlightingChecker,
+        ContentRootsChecker,
+        KotlinFacetSettingsChecker,
+        OrderEntriesChecker,
+        TestTasksChecker,
     )
 
     private val context: KotlinMppTestsContextImpl = KotlinMppTestsContextImpl()
@@ -68,7 +76,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
     }
 
     private fun KotlinMppTestsContextImpl.doTest() {
-        testFeatures.forEach { feature -> with(feature) { context.beforeTestExecution() } }
+        installedFeatures.forEach { feature -> with(feature) { context.beforeTestExecution() } }
         createProjectSubFile(
             "local.properties",
             """
@@ -79,11 +87,27 @@ abstract class AbstractKotlinMppGradleImportingTest :
 
         configureByFiles()
 
-        testFeatures.forEach { feature -> with(feature) { context.beforeImport() } }
+        installedFeatures.forEach { feature -> with(feature) { context.beforeImport() } }
 
         importProject()
 
-        testFeatures.forEach { feature -> with(feature) { context.afterImport() } }
+        installedFeatures.forEach { feature ->
+            with(feature) {
+                if (feature !is AbstractTestChecker<*> || isCheckerEnabled(feature)) context.afterImport()
+            }
+        }
+    }
+
+    private fun KotlinMppTestsContextImpl.isCheckerEnabled(checker: AbstractTestChecker<*>): Boolean {
+        // Temporary mute TEST_TASKS checks due to issues with hosts on CI. See KT-56332
+        if (checker is TestTasksChecker) return false
+
+        val config = testConfiguration.getConfiguration(GeneralWorkspaceChecks)
+        return when {
+            config.disableCheckers != null -> checker !in config.disableCheckers!!
+            config.onlyCheckers != null -> checker in config.onlyCheckers!!
+            else -> true
+        }
     }
 
     final override fun findJdkPath(): String {
@@ -128,13 +152,16 @@ abstract class AbstractKotlinMppGradleImportingTest :
                         clearTextFromDiagnosticMarkup(FileUtil.loadFile(it, /* convertLineSeparators = */ true)),
                         it
                     )
+                    val preprocessedText = installedFeatures.fold(text) { currentText, nextFeature ->
+                        nextFeature.preprocessFile(it, currentText) ?: currentText
+                    }
                     val relativeToRoot = it.path.substringAfter(rootDir.path + File.separator)
-                    val virtualFile = createProjectSubFile(relativeToRoot, text)
+                    val virtualFile = createProjectSubFile(relativeToRoot, preprocessedText)
                     if (rootForProjectCopy != null) {
                         val output = File(rootForProjectCopy, relativeToRoot)
                         output.parentFile.mkdirs()
                         output.createNewFile()
-                        output.writeText(text)
+                        output.writeText(preprocessedText)
                     }
 
                     // Real file with expected testdata allows to throw nicer exceptions in
@@ -198,14 +225,14 @@ abstract class AbstractKotlinMppGradleImportingTest :
     }
 
     class TestFeaturesBeforeAfterJUnit4Adapter : KotlinBeforeAfterTestRuleWithTarget {
-        private val testFeaturesCompletedSetUp: MutableList<TestFeature<*>> = mutableListOf()
+        private val testFeaturesCompletedSetUp: MutableList<TestFeatureWithSetUpTearDown<*>> = mutableListOf()
 
         override fun before(target: Any) {
             require(target is AbstractKotlinMppGradleImportingTest) {
                 "TeatFeaturesBeforeAfterJUnit4Adapter can only be used in inheritors of AbstractKotlinMppGradleImportingTest"
             }
             testFeaturesCompletedSetUp.clear()
-            target.testFeatures.forEach {
+            target.installedFeatures.filterIsInstance<TestFeatureWithSetUpTearDown<*>>().forEach {
                 it.additionalSetUp()
                 testFeaturesCompletedSetUp += it
             }

@@ -20,8 +20,6 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 internal object GradleProjectsPublishingTestsFeature : TestFeature<ProjectsToPublish> {
-    override fun renderConfiguration(configuration: ProjectsToPublish): List<String> = emptyList()
-
     override fun createDefaultConfiguration(): ProjectsToPublish = ProjectsToPublish(mutableSetOf())
 
     override fun KotlinMppTestsContext.beforeImport() {

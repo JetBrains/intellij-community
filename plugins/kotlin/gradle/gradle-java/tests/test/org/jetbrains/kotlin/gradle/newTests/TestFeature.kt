@@ -6,21 +6,6 @@ import java.io.File
 interface TestFeature<V : Any> {
     fun createDefaultConfiguration(): V
 
-    /**
-     * Renders human-readable description of test feature' configuration. It will be
-     * rendered in the testdata
-     *
-     * General guidelines:
-     * - return one or more strings. Each string will be rendered as a separate line, so it's
-     *   a good idea go group related information together, and separate less related ones
-     * - try to keep it short and informative, akin to commit message titles: 'hide stdlib', 'show order entries scopes'
-     */
-    fun renderConfiguration(configuration: V): List<String> = emptyList()
-
-    // Happens after main setUp executed, order with other 'before'-methods coming
-    // from JUnit rules is not defined (don't mix them)
-    fun additionalSetUp() { }
-
     fun KotlinMppTestsContext.beforeTestExecution() { }
 
     fun KotlinMppTestsContext.beforeImport() { }
@@ -28,11 +13,44 @@ interface TestFeature<V : Any> {
     fun preprocessFile(origin: File, text: String): String? = null
 
     fun KotlinMppTestsContext.afterImport() { }
+}
 
-    // Happens before setUp executed, order with other 'after'-methods coming
-    // from JUnit rules is not defined (don't mix them)
-    //
-    // Lifecycle-wise it's not very different from afterImport, but it is guaranteed to be executed
-    // if additionalSetUp has been executed, while afterImport doesn't have this guarantee
+/**
+ * Provides an additional hooks into setUp and tearDown
+ *
+ * Important properties/guarantees:
+ * - those features can be configured only in `installedFeatures` directly in the test runner
+ *   (see [AbstractKotlinMppGradleImportingTest.installedFeatures]), **not** in the
+ *   `TestConfiguration`-DSL block. This is because TestConfiguration is instantiated at
+ *   the test execution phase (`doTest`) that happens after setUp
+ *
+ * - [additionalSetUp] is executed after the main JUnit's setUp executed, order with other
+ *   'before'-methods coming from JUnit rules is not defined (please avoid mixing them)
+ *
+ * - [additionalTearDown] is executed before the JUnit's tearDown is executed, order with other
+ *   'after'-methods coming from JUnit rules is not defined (please avoid mixing them)
+ *
+ * - [additionalTearDown] is guaranteed to be executed if respective [additionalSetUp] was executed
+ *   (difference from [TestFeature.afterImport] that happens effectively at the same stage of test's lifecyle,
+ *   but doesn't have that guarantee)
+ */
+interface TestFeatureWithSetUpTearDown<V : Any> : TestFeature<V> {
+    fun additionalSetUp() { }
+
     fun additionalTearDown() {}
+}
+
+/**
+ * Simplified API to implement for cases when you just want to launch some
+ * checks after the project is set up, imported and ready to be used
+ */
+abstract class AbstractTestChecker<V : Any> : TestFeature<V> {
+    abstract fun KotlinMppTestsContext.check(additionalTestClassifier: String? = null)
+
+    final override fun KotlinMppTestsContext.afterImport() {
+        check()
+    }
+
+    final override fun KotlinMppTestsContext.beforeTestExecution() { }
+    final override fun KotlinMppTestsContext.beforeImport() { }
 }

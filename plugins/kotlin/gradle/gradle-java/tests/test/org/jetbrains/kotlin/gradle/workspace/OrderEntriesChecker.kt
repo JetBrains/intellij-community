@@ -1,24 +1,54 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.workspace
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
-import org.jetbrains.kotlin.gradle.newTests.testFeatures.OrderEntriesFilteringTestFeature
+import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.OrderEntriesChecksConfiguration
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 
-internal class OrderEntryPrinterContributor : ModulePrinterContributor {
+object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfiguration>() {
+    override fun createDefaultConfiguration(): OrderEntriesChecksConfiguration = OrderEntriesChecksConfiguration()
+
+    override val classifier: String = "dependencies"
+
+    override fun renderTestConfigurationDescription(testConfiguration: TestConfiguration): List<String> {
+        val configuration = testConfiguration.getConfiguration(OrderEntriesChecker)
+
+        val hiddenStandardDependencies = buildList<String> {
+            if (configuration.hideStdlib) add("stdlib")
+            if (configuration.hideKotlinTest) add("kotlin-test")
+            if (configuration.hideKonanDist) add("Kotlin/Native distribution")
+            if (configuration.hideSdkDependency) add("sdk")
+            if (configuration.hideSelfDependency) add("self")
+        }
+
+        return buildList {
+            if (hiddenStandardDependencies.isNotEmpty())
+                add("hiding following standard dependencies: ${hiddenStandardDependencies.joinToString()}")
+
+            if (configuration.excludeDependencies != null) {
+                add("hiding dependencies matching ${configuration.excludeDependencies.toString()}")
+            }
+
+            if (configuration.sortDependencies) {
+                add("dependencies order is not checked")
+            }
+        }
+    }
+
     override fun PrinterContext.process(module: Module) = with(printer) {
         val orderEntries = runReadAction { ModuleRootManager.getInstance(module).orderEntries }
         val filteredEntries = orderEntries.filterNot { shouldRemoveOrderEntry(it) }
         if (filteredEntries.isEmpty()) return
 
-        val testConfig = testConfiguration.getConfiguration(OrderEntriesFilteringTestFeature)
+        val testConfig = testConfiguration.getConfiguration(OrderEntriesChecker)
 
         val dependsOnModules = module.implementedModules.toSet()
         val friendModules: Collection<ModuleInfo> = module.sourceModuleInfos.singleOrNull()
@@ -71,7 +101,7 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
     }
 
     private fun PrinterContext.shouldRemoveOrderEntry(entry: OrderEntry): Boolean {
-        val config = this.testConfiguration.getConfiguration(OrderEntriesFilteringTestFeature)
+        val config = this.testConfiguration.getConfiguration(OrderEntriesChecker)
 
         // NB: so far, we hide self-dependencies and SDK dependencies unconditionally
         return config.hideSdkDependency && isSelfDependency(entry) ||
@@ -111,7 +141,12 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
     private fun PrinterContext.presentableNameWithoutVersion(orderEntry: OrderEntry): String =
         orderEntry.presentableName
             // Be careful not to use KGP_VERSION placeholder for 3rd-party libraries (e.g. those that try to align versioning with Kotlin)
-            .let { if ("org.jetbrains.kotlin" in it || "Kotlin/Native" in it) it.replace(kotlinGradlePluginVersion.toString(), "{{KGP_VERSION}}") else it }
+            .let {
+                if ("org.jetbrains.kotlin" in it || "Kotlin/Native" in it) it.replace(
+                    kotlinGradlePluginVersion.toString(),
+                    "{{KGP_VERSION}}"
+                ) else it
+            }
             .removePrefix("${project.name}.")
             .removePrefix("Gradle: ")
 
@@ -142,34 +177,31 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
         return sourceModuleInfos.singleOrNull()
     }
 
+    private val STDLIB_MODULES = setOf(
+        "org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}}",
+        "org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}}",
+        "org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}}",
+        "org.jetbrains:annotations:13.0",
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}}",
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}}",
+    )
 
+    // Old import: Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+    // KGP based import: Kotlin/Native: stdlib (COMPILE)
+    private val NATIVE_STDLIB_PREFIX_OLD_IMPORT: String = "Kotlin/Native {{KGP_VERSION}} - stdlib"
+    private val NATIVE_STDLIB_KGP_BASED_IMPORT: String = "Kotlin/Native: stdlib"
 
-    companion object {
-        private val STDLIB_MODULES = setOf(
-            "org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}}",
-            "org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}}",
-            "org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}}",
-            "org.jetbrains:annotations:13.0",
-            "org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}}",
-            "org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}}",
-        )
-        // Old import: Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
-        // KGP based import: Kotlin/Native: stdlib (COMPILE)
-        private val NATIVE_STDLIB_PREFIX_OLD_IMPORT: String = "Kotlin/Native {{KGP_VERSION}} - stdlib"
-        private val NATIVE_STDLIB_KGP_BASED_IMPORT: String = "Kotlin/Native: stdlib"
+    private val KOTLIN_TEST_MODULES = setOf(
+        "org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}}",
+        "org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}}",
 
-        private val KOTLIN_TEST_MODULES = setOf(
-            "org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}}",
-            "org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}}",
+        "org.jetbrains.kotlin:kotlin-test-js:{{KGP_VERSION}}",
 
-            "org.jetbrains.kotlin:kotlin-test-js:{{KGP_VERSION}}",
+        "jetbrains.kotlin:kotlin-test:{{KGP_VERSION}}",
+        "jetbrains.kotlin:kotlin-test-junit:{{KGP_VERSION}}",
+        "hamcrest:hamcrest-core:1.3",
+        "junit:4.13.2"
+    )
 
-            "jetbrains.kotlin:kotlin-test:{{KGP_VERSION}}",
-            "jetbrains.kotlin:kotlin-test-junit:{{KGP_VERSION}}",
-            "hamcrest:hamcrest-core:1.3",
-            "junit:4.13.2"
-        )
-
-        private val NATIVE_DISTRIBUTION_LIBRARY_PATTERN = "^Kotlin/Native.*".toRegex()
-    }
+    private val NATIVE_DISTRIBUTION_LIBRARY_PATTERN = "^Kotlin/Native.*".toRegex()
 }

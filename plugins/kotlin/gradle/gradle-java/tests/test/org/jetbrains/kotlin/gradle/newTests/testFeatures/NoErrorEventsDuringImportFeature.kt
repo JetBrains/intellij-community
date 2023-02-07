@@ -3,35 +3,36 @@ package org.jetbrains.kotlin.gradle.newTests.testFeatures
 
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import org.jetbrains.kotlin.gradle.newTests.KotlinMppTestsContext
-import org.jetbrains.kotlin.gradle.newTests.TestFeature
+import org.jetbrains.kotlin.gradle.newTests.TestFeatureWithSetUpTearDown
 import org.jetbrains.kotlin.idea.codeInsight.gradle.ImportStatusCollector
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
-internal object NoErrorEventsDuringImportFeature : TestFeature<Unit> {
-    private val importStatusCollector = ImportStatusCollector()
+internal object NoErrorEventsDuringImportFeature : TestFeatureWithSetUpTearDown<Unit> {
+    private var importStatusCollector: ImportStatusCollector? = null
 
     override fun createDefaultConfiguration() { }
 
     override fun additionalSetUp() {
+        importStatusCollector = ImportStatusCollector()
         ExternalSystemProgressNotificationManager
             .getInstance()
-            .addNotificationListener(importStatusCollector)
+            .addNotificationListener(importStatusCollector!!)
     }
 
     override fun additionalTearDown() {
         ExternalSystemProgressNotificationManager
             .getInstance()
-            .removeNotificationListener(importStatusCollector)
+            .removeNotificationListener(importStatusCollector!!)
     }
 
     override fun KotlinMppTestsContext.afterImport() {
-        checkImportErrors(testDataDirectoryProvider.testDataDirectory())
+        checkImportErrors(testDataDirectory)
     }
 
     fun checkImportErrors(testDataDirectory: File) {
         val expectedFailure = File(testDataDirectory, "importErrors.txt")
-        val buildErrors = importStatusCollector.buildErrors
+        val buildErrors = importStatusCollector!!.buildErrors
         when {
             !expectedFailure.exists() && buildErrors.isEmpty() -> return
 
