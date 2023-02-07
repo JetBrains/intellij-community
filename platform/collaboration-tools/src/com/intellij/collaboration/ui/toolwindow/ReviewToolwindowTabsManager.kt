@@ -5,6 +5,8 @@ import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.*
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -26,21 +28,22 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 fun <T : ReviewTab, C : ReviewToolwindowProjectContext> manageReviewToolwindowTabs(
   cs: CoroutineScope,
-  contentManager: ContentManager,
+  toolwindow: ToolWindow,
   reviewToolwindowViewModel: ReviewToolwindowViewModel<C>,
   reviewTabsController: ReviewTabsController<T>,
   tabComponentFactory: ReviewTabsComponentFactory<T, C>
 ) {
-  ReviewToolwindowTabsManager(cs, contentManager, reviewToolwindowViewModel, reviewTabsController, tabComponentFactory)
+  ReviewToolwindowTabsManager(cs, toolwindow, reviewToolwindowViewModel, reviewTabsController, tabComponentFactory)
 }
 
 private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowProjectContext>(
-  private val parentCs: CoroutineScope,
-  private val contentManager: ContentManager,
+  parentCs: CoroutineScope,
+  private val toolwindow: ToolWindow,
   private val reviewToolwindowViewModel: ReviewToolwindowViewModel<C>,
   private val reviewTabsController: ReviewTabsController<T>,
   private val tabComponentFactory: ReviewTabsComponentFactory<T, C>
 ) {
+  private val contentManager = toolwindow.contentManager
   private val projectContext = reviewToolwindowViewModel.projectContext
   private val cs = parentCs.childScope(Dispatchers.Main)
 
@@ -52,6 +55,9 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
   }
 
   init {
+    refreshReviewListOnTabSelection()
+    refreshListOnToolwindowShow()
+
     contentManager.addDataProvider {
       when {
         ReviewToolwindowDataKeys.REVIEW_TABS_CONTROLLER.`is`(it) -> reviewTabsController
@@ -100,15 +106,6 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
         }
       }
     }
-
-    contentManager.addContentManagerListener(object : ContentManagerListener {
-      override fun selectionChanged(event: ContentManagerEvent) {
-        if (event.operation == ContentManagerEvent.ContentOperation.add) {
-          // tab selected
-          handleTabSelection(event.content)
-        }
-      }
-    })
   }
 
   private fun selectExistedTabOrCreate(context: C, reviewTab: T): Content {
@@ -149,7 +146,6 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
     content.putUserData(REVIEW_LIST_VIEW_MODEL, reviewListDescriptor.viewModel)
   }
 
-
   private fun createTabContent(context: C, reviewTab: T): Content = createDisposableContent { content, contentCs ->
     content.isCloseable = true
     content.displayName = reviewTab.displayName
@@ -178,6 +174,31 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
       setDisposer(disposable)
       modifier(this, disposable.disposingMainScope())
     }
+  }
+
+  private fun refreshReviewListOnTabSelection() {
+    contentManager.addContentManagerListener(object : ContentManagerListener {
+      override fun selectionChanged(event: ContentManagerEvent) {
+        if (event.operation == ContentManagerEvent.ContentOperation.add) {
+          // tab selected
+          handleTabSelection(event.content)
+        }
+      }
+    })
+  }
+
+  private fun refreshListOnToolwindowShow() {
+    val bus = toolwindow.project.messageBus.connect(cs)
+    bus.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun toolWindowShown(toolWindow: ToolWindow) {
+        if (toolWindow.id == this@ReviewToolwindowTabsManager.toolwindow.id) {
+          val selectedContent = toolWindow.contentManager.selectedContent
+          if (selectedContent != null) {
+            handleTabSelection(selectedContent)
+          }
+        }
+      }
+    })
   }
 
   /**
