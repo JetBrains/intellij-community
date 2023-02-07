@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.codeInspection.ex.InspectionToolsSupplier
+import com.intellij.codeInspection.inspectionProfile.YamlProfileUtils.createProfileCopy
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.io.toNioPath
@@ -173,13 +174,8 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
   }
 
   fun buildEffectiveProfile(): InspectionProfileImpl {
-    val effectiveProfile: InspectionProfileImpl = InspectionProfileImpl("Default", inspectionToolsSupplier,
-                                                                        inspectionProfileManager, baseProfile, null)
-      .also { profile ->
-        profile.copyFrom(baseProfile)
-        profile.initInspectionTools()
-        profile.name = profileName ?: "Default"
-      }
+    val effectiveProfile: InspectionProfileImpl = createProfileCopy(baseProfile, inspectionToolsSupplier, inspectionProfileManager)
+    effectiveProfile.name = profileName ?: "Default"
     configurations.forEach { configuration ->
       val tools = findTools(configuration)
       val scopes = configuration.ignore.map { pattern ->
@@ -200,7 +196,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
         val options = (configuration as? YamlInspectionConfig)?.options
         if (options != null) {
           val element = Element("tool")
-          ProfileMigrationUtils.writeXmlOptions(element, options)
+          YamlProfileUtils.writeXmlOptions(element, options)
           inspectionTools.defaultState.tool.tool.readSettings(element)
         }
         scopes.forEach { (scope, enabled) ->
