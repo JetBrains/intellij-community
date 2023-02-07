@@ -29,6 +29,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.intellij.build.BuildDependenciesJps;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -203,7 +205,11 @@ public class RemoteConnectionBuilder {
 
                 Path communityRoot = Path.of(PathManager.getCommunityHomePath());
                 Path iml = BuildDependenciesJps.getProjectModule(communityRoot, "intellij.java.debugger.agent.holder");
-                Path downloadedAgent = BuildDependenciesJps.getModuleLibrarySingleRoot(iml, "debugger-agent");
+                Path downloadedAgent = BuildDependenciesJps.getModuleLibrarySingleRoot(
+                  iml,
+                  "debugger-agent",
+                  BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL,
+                  new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath())));
 
                 Files.copy(downloadedAgent, agentArtifactPath);
               }
