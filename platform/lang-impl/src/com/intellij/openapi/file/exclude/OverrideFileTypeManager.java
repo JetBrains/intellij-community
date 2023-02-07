@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -29,12 +30,35 @@ public final class OverrideFileTypeManager extends PersistentFileSetManager {
     return ApplicationManager.getApplication().getService(OverrideFileTypeManager.class);
   }
 
+  /**
+   * Explicitly associates a virtual file with a particular file type.
+   *
+   * @param file a virtual file
+   * @param type a file type to associate with
+   * @return {@code true} if the association has been successfully added
+   */
+  @RequiresEdt(generateAssertion = false)
+  @ApiStatus.Internal
   @Override
-  boolean addFile(@NotNull VirtualFile file, @NotNull FileType type) {
+  public boolean addFile(@NotNull VirtualFile file, @NotNull FileType type) {
     if (!isOverridable(file.getFileType()) || !isOverridable(type) || !(file instanceof VirtualFileWithId)) {
-      throw new IllegalArgumentException("Cannot override filetype for file "+file+" from "+file.getFileType()+" to "+type+" because the "+(isOverridable(type) ? "former" : "latter")+" is not overridable");
+      //@formatter:off
+      throw new IllegalArgumentException("Cannot override filetype for file " + file + " from " + file.getFileType() + " to " + type + " because the " + (isOverridable(type) ? "former" : "latter") + " is not overridable");
     }
     return super.addFile(file, type);
+  }
+
+  /**
+   * Removes explicit association with a file type.
+   *
+   * @param file a virtual file
+   * @return {@code true} if the association has been successfully removed
+   */
+  @RequiresEdt(generateAssertion = false)
+  @ApiStatus.Internal
+  @Override
+  public boolean removeFile(@NotNull VirtualFile file) {
+    return super.removeFile(file);
   }
 
   @TestOnly
