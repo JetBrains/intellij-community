@@ -2,8 +2,9 @@
 package org.jetbrains.plugins.gitlab.mergerequest.action
 
 import com.intellij.openapi.actionSystem.DataKey
-import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesController
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
+import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesController
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 
 internal object GitLabMergeRequestsActionKeys {
   @JvmStatic
@@ -11,4 +12,8 @@ internal object GitLabMergeRequestsActionKeys {
 
   @JvmStatic
   val FILES_CONTROLLER = DataKey.create<GitLabMergeRequestsFilesController>("org.jetbrains.plugins.gitlab.mergerequests.files.controller")
+
+  @JvmStatic
+  val REVIEW_DETAILS_LOADING_VM: DataKey<GitLabMergeRequestDetailsLoadingViewModel> =
+    DataKey.create("org.jetbrains.plugins.gitlab.mergerequests.review.details.loading.viewmodel")
 }
