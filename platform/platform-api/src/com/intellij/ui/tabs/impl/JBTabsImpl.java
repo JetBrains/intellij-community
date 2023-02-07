@@ -2781,7 +2781,7 @@ public class JBTabsImpl extends JComponent
       myForcedRelayout = forced;
     }
     if (myMoreToolbar != null) {
-      myMoreToolbar.getComponent().setVisible(!isHideTabs() && !isWithScrollBar() &&
+      myMoreToolbar.getComponent().setVisible(!isHideTabs() &&
                                               (getEffectiveLayout() instanceof ScrollableSingleRowLayout ||
                                                getEffectiveLayout() instanceof TableLayout));
     }
