@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.ex.ApplicationUtil;
@@ -363,7 +363,7 @@ final class ReadMostlyRWLock {
     return true;
   }
 
-  boolean isWriteLocked() {
+  boolean isWriteAcquired() {
     return writeAcquired;
   }
 
@@ -389,7 +389,7 @@ final class ReadMostlyRWLock {
     // (b.2) Explicit write lock has been acquired.
     //   OR
     // (b.3) Explicit write intent lock has been acquired
-    return isWriteThread() && (isImplicitReadAllowed() || isWriteLocked() || isWriteIntentLocked());
+    return isWriteThread() && (isImplicitReadAllowed() || isWriteAcquired() || isWriteIntentLocked());
   }
 
   @Override

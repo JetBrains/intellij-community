@@ -897,7 +897,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean acquireWriteIntentLock(@NotNull String invokedClassFqn) {
-    if (myLock.isWriteThread() && (myLock.isWriteIntentLocked() || myLock.isWriteLocked()))
+    if (myLock.isWriteThread() && (myLock.isWriteIntentLocked() || myLock.isWriteAcquired()))
       return false;
     myLock.writeIntentLock();
     return true;
@@ -1148,7 +1148,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       // - allow it,
       // - fire listeners for it (somebody can rely on having listeners fired for each write action)
       // - but do not re-acquire any locks because it could be deadlock-level dangerous
-      if (!myLock.isWriteLocked()) {
+      if (!myLock.isWriteAcquired()) {
         int delay = Holder.ourDumpThreadsOnLongWriteActionWaiting;
         Future<?> reportSlowWrite = delay <= 0 ? null :
            AppExecutorUtil.getAppScheduledExecutorService()
@@ -1282,12 +1282,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean isWriteAccessAllowed() {
-    return myLock.isWriteThread() && myLock.isWriteLocked();
+    return myLock.isWriteThread() && myLock.isWriteAcquired();
   }
 
   @Override
   public boolean isWriteActionInProgress() {
-    return myLock.isWriteLocked();
+    return myLock.isWriteAcquired();
   }
 
   /**
@@ -1298,7 +1298,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
    */
   public void executeSuspendingWriteAction(@Nullable Project project, @NotNull @NlsContexts.DialogTitle String title, @NotNull Runnable runnable) {
     assertWriteIntentLockAcquired();
-    if (!myLock.isWriteLocked()) {
+    if (!myLock.isWriteAcquired()) {
       runModalProgress(project, title, runnable);
       return;
     }
