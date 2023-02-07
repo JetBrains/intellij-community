@@ -12,8 +12,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import java.io.File
 
 object DevModeTestFeature : TestFeature<DevModeTweaksImpl>  {
-    override fun renderConfiguration(configuration: DevModeTweaksImpl): List<String> = emptyList()
-
     override fun createDefaultConfiguration(): DevModeTweaksImpl = DevModeTweaksImpl()
 }
 

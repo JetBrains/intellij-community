@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.workspace
 
 import com.intellij.openapi.application.runReadAction
@@ -6,8 +6,8 @@ import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.gradle.newTests.testFeatures.FacetSettingsFilteringConfiguration
-import org.jetbrains.kotlin.gradle.newTests.testFeatures.FacetSettingsFilteringTestFeature
+import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.KotlinFacetSettingsChecksConfiguration
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.konan.isNative
@@ -15,14 +15,18 @@ import kotlin.reflect.KProperty1
 
 private typealias FacetField = KProperty1<KotlinFacetSettings, *>
 
-class KotlinFacetSettingsPrinterContributor : ModulePrinterContributor {
+object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChecksConfiguration>() {
+    override fun createDefaultConfiguration(): KotlinFacetSettingsChecksConfiguration = KotlinFacetSettingsChecksConfiguration()
+
+    override val classifier: String = "facets"
+
     override fun PrinterContext.process(module: Module) = with(printer) {
         val facetSettings = runReadAction {
             KotlinFacetSettingsProvider.getInstance(module.project)
                 ?.getSettings(module)
         } ?: return
 
-        val configuration = testConfiguration.getConfiguration(FacetSettingsFilteringTestFeature)
+        val configuration = testConfiguration.getConfiguration(KotlinFacetSettingsChecker)
 
         val fieldsToPrint = configuration.computeFieldsToPrint()
 
@@ -49,6 +53,17 @@ class KotlinFacetSettingsPrinterContributor : ModulePrinterContributor {
         }
     }
 
+    override fun renderTestConfigurationDescription(testConfiguration: TestConfiguration): List<String> {
+        val configuration = testConfiguration.getConfiguration(KotlinFacetSettingsChecker)
+        return buildList {
+            if (configuration.excludedFacetFields != null)
+                add("excluding following facet fields: ${configuration.excludedFacetFields!!.joinToString { it.name }}")
+            if (configuration.includedFacetFields != null) {
+                add("showing only following facet fields: ${configuration.includedFacetFields!!.joinToString { it.name }}")
+            }
+        }
+    }
+
     private fun PrinterContext.languageVersionSanitized(
         fieldValue: LanguageVersion,
         field: FacetField,
@@ -61,7 +76,7 @@ class KotlinFacetSettingsPrinterContributor : ModulePrinterContributor {
         return if (fieldValue == languageVersionOfKgp) CURRENT_KGP_LANGUAGE_VERSION_PLACEHOLDER else fieldValue.versionString
     }
 
-    private fun FacetSettingsFilteringConfiguration.computeFieldsToPrint(): Set<FacetField> {
+    private fun KotlinFacetSettingsChecksConfiguration.computeFieldsToPrint(): Set<FacetField> {
         if (includedFacetFields != null) return includedFacetFields!!.ensureOnlyKnownFields()
         if (excludedFacetFields != null) return ALL_FACET_FIELDS_TO_PRINT - excludedFacetFields!!.ensureOnlyKnownFields()
         return ALL_FACET_FIELDS_TO_PRINT
@@ -76,17 +91,15 @@ class KotlinFacetSettingsPrinterContributor : ModulePrinterContributor {
         return this
     }
 
-    companion object {
-        private val ALL_FACET_FIELDS_TO_PRINT = setOf<FacetField>(
-            KotlinFacetSettings::externalProjectId,
-            KotlinFacetSettings::languageLevel,
-            KotlinFacetSettings::apiLevel,
-            KotlinFacetSettings::mppVersion,
-            KotlinFacetSettings::dependsOnModuleNames,
-            KotlinFacetSettings::additionalVisibleModuleNames,
-            KotlinFacetSettings::targetPlatform
-        )
+    private val ALL_FACET_FIELDS_TO_PRINT = setOf<FacetField>(
+        KotlinFacetSettings::externalProjectId,
+        KotlinFacetSettings::languageLevel,
+        KotlinFacetSettings::apiLevel,
+        KotlinFacetSettings::mppVersion,
+        KotlinFacetSettings::dependsOnModuleNames,
+        KotlinFacetSettings::additionalVisibleModuleNames,
+        KotlinFacetSettings::targetPlatform
+    )
 
-        private val CURRENT_KGP_LANGUAGE_VERSION_PLACEHOLDER = "{{LATEST_STABLE}}"
-    }
+    private val CURRENT_KGP_LANGUAGE_VERSION_PLACEHOLDER = "{{LATEST_STABLE}}"
 }
