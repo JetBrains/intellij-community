@@ -2,28 +2,10 @@
 package org.jetbrains.kotlin.gradle.newTests.testFeatures
 
 import org.jetbrains.kotlin.gradle.newTests.TestConfigurationDslScope
-import org.jetbrains.kotlin.gradle.newTests.TestFeature
 import org.jetbrains.kotlin.gradle.newTests.writeAccess
+import org.jetbrains.kotlin.gradle.workspace.ContentRootsChecker
 
-internal object ContentRootsFilteringTestFeature : TestFeature<ContentRootsFilteringConfiguration> {
-    override fun renderConfiguration(configuration: ContentRootsFilteringConfiguration): List<String> {
-        val hiddenSourceRoots = listOfNotNull(
-            "tests".takeIf { configuration.hideTestSourceRoots },
-            "resources".takeIf { configuration.hideResourceRoots },
-            "android-specific roots".takeIf { configuration.hideAndroidSpecificRoots },
-            "generated".takeIf { configuration.hideGeneratedRoots },
-        )
-
-        return if (hiddenSourceRoots.isEmpty())
-            emptyList()
-        else
-            listOf("hiding following roots: ${hiddenSourceRoots.joinToString()}")
-    }
-
-    override fun createDefaultConfiguration(): ContentRootsFilteringConfiguration = ContentRootsFilteringConfiguration()
-}
-
-internal class ContentRootsFilteringConfiguration {
+class ContentRootsChecksConfiguration {
     var hideTestSourceRoots: Boolean = false
     var hideResourceRoots: Boolean = false
 
@@ -32,10 +14,10 @@ internal class ContentRootsFilteringConfiguration {
     val hideGeneratedRoots: Boolean = true
 }
 
-private val TestConfigurationDslScope.config: ContentRootsFilteringConfiguration
-    get() = writeAccess.getConfiguration(ContentRootsFilteringTestFeature)
+private val TestConfigurationDslScope.config: ContentRootsChecksConfiguration
+    get() = writeAccess.getConfiguration(ContentRootsChecker)
 
-interface ContentRootsFilteringDsl {
+interface ContentRootsChecksDsl {
     var TestConfigurationDslScope.hideTestSourceRoots: Boolean
         get() = config.hideTestSourceRoots
         set(value) { config.hideTestSourceRoots = value }

@@ -15,7 +15,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 
 internal object LinkedProjectPathsTestsFeature : TestFeature<LinkedProjectPaths> {
-    override fun renderConfiguration(configuration: LinkedProjectPaths): List<String> = emptyList()
     override fun createDefaultConfiguration(): LinkedProjectPaths = LinkedProjectPaths(mutableSetOf())
 
     override fun KotlinMppTestsContext.beforeImport() {

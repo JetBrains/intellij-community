@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.workspace
 
 import com.intellij.openapi.application.runReadAction
@@ -8,14 +8,19 @@ import com.intellij.openapi.roots.SourceFolder
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.gradle.newTests.testFeatures.ContentRootsFilteringTestFeature
+import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.ContentRootsChecksConfiguration
 import org.jetbrains.kotlin.gradle.workspace.PrinterRootType.*
 import org.jetbrains.kotlin.gradle.workspace.PrinterRootType.RegularRoot.*
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.name
 
-internal class ContentRootsContributor : ModulePrinterContributor {
+object ContentRootsChecker : WorkspaceModelChecker<ContentRootsChecksConfiguration>() {
+    override fun createDefaultConfiguration(): ContentRootsChecksConfiguration = ContentRootsChecksConfiguration()
+
+    override val classifier: String = "source-roots"
+
     /**
      * Only source folders are supported at the moment
      */
@@ -24,7 +29,7 @@ internal class ContentRootsContributor : ModulePrinterContributor {
             .flatMap { it.sourceFolders.asList() }
             .mapNotNull { it.toPrinterEntity(projectRoot) }
 
-        val configuration = testConfiguration.getConfiguration(ContentRootsFilteringTestFeature)
+        val configuration = testConfiguration.getConfiguration(ContentRootsChecker)
 
         val filteredSourceFolders = sourceFolders.asSequence()
             .filterNot {
@@ -42,6 +47,21 @@ internal class ContentRootsContributor : ModulePrinterContributor {
                 printer.println(it)
             }
         }
+    }
+
+    override fun renderTestConfigurationDescription(testConfiguration: TestConfiguration): List<String> {
+        val configuration = testConfiguration.getConfiguration(ContentRootsChecker)
+        val hiddenSourceRoots = listOfNotNull(
+            "tests".takeIf { configuration.hideTestSourceRoots },
+            "resources".takeIf { configuration.hideResourceRoots },
+            "android-specific roots".takeIf { configuration.hideAndroidSpecificRoots },
+            "generated".takeIf { configuration.hideGeneratedRoots },
+        )
+
+        return if (hiddenSourceRoots.isEmpty())
+            emptyList()
+        else
+            listOf("hiding following roots: ${hiddenSourceRoots.joinToString()}")
     }
 }
 
