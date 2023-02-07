@@ -2,8 +2,10 @@
 package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.ui.dsl.builder.Panel
 
@@ -106,5 +108,8 @@ interface NewProjectWizardStep {
     const val GROUP_ID_PROPERTY_NAME = "NewProjectWizard.groupIdState"
 
     const val GENERATE_ONBOARDING_TIPS_NAME = "NewProjectWizard.generateOnboardingTips"
+
+    val MODIFIABLE_MODULE_MODEL_KEY = Key.create<ModifiableModuleModel>("MODIFIABLE_MODULE_MODEL_KEY")
+
   }
 }

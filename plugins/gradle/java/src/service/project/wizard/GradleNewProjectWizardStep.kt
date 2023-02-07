@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.gradle.service.project.wizard
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Gradle.logDslChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Gradle.logDslChanged
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.model.project.ProjectData
@@ -368,7 +368,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       it.configureBuildScript()
     }
 
-    builder.commit(project)
+    val model = context.getUserData(NewProjectWizardStep.MODIFIABLE_MODULE_MODEL_KEY)
+    builder.commit(project, model)
   }
 
   class GradleDataView(override val data: ProjectData) : DataView<ProjectData>() {

@@ -10,8 +10,9 @@ import com.intellij.ide.projectWizard.generators.IntelliJNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.EditorHelper
 import com.intellij.ide.util.projectWizard.ModuleBuilder
-import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
+import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.setupProjectFromBuilder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
@@ -81,7 +82,7 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         }
       })
 
-      groovyModuleBuilder.commit(project)
+      setupProjectFromBuilder(project, groovyModuleBuilder)
       if (addSampleCode) {
         openSampleCodeInEditorLater(project, contentRoot)
       }
