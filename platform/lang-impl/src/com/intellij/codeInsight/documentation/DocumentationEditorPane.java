@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.lang.documentation.DocumentationImageResolver;
@@ -11,7 +11,10 @@ import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
@@ -31,7 +34,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.addDocumentationPaneDefaultCssRules;
-import static com.intellij.util.ui.ExtendableHTMLViewFactory.*;
+import static com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions;
 
 @Internal
 public abstract class DocumentationEditorPane extends JEditorPane {
