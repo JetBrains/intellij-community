@@ -41,8 +41,6 @@ my-app.consumer.linuxX64Test
 
 
 Test configuration:
-- hiding following roots: resources, android-specific roots, generated
-- showing only following facet fields: targetPlatform
 - hiding source modules matching .*lib.*
 - hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
 - hiding dependencies matching .*consumer.*

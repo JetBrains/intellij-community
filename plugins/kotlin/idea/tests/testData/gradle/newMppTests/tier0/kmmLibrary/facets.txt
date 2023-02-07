@@ -80,9 +80,3 @@ project.jvmTest
     mppVersion = M3
     dependsOnModuleNames = project:commonTest
     targetPlatform = JVM (17)
-
-
-Test configuration:
-- hiding following roots: android-specific roots, generated
-- hiding following standard dependencies: sdk, self
-- dependencies order is not checked
