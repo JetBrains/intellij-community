@@ -14,18 +14,10 @@ import java.nio.file.Path
 interface RecentProjectsManager {
   companion object {
     @Topic.AppLevel
-    val RECENT_PROJECTS_CHANGE_TOPIC = Topic("Change of recent projects", RecentProjectsChange::class.java, Topic.BroadcastDirection.NONE)
+    val RECENT_PROJECTS_CHANGE_TOPIC: Topic<RecentProjectsChange> = Topic(RecentProjectsChange::class.java, Topic.BroadcastDirection.NONE)
 
     @JvmStatic
     fun getInstance(): RecentProjectsManager = ApplicationManager.getApplication().getService(RecentProjectsManager::class.java)
-
-    fun fireChangeEvent() {
-      ApplicationManager.getApplication().invokeLater {
-        ApplicationManager.getApplication().messageBus
-          .syncPublisher(RECENT_PROJECTS_CHANGE_TOPIC)
-          .change()
-      }
-    }
   }
 
   // a path pointing to a directory where the last project was created or null if not available
@@ -77,6 +69,7 @@ interface RecentProjectsManager {
 
   fun suggestNewProjectLocation(): String
 
+  // Change of recent projects
   interface RecentProjectsChange {
     @RequiresEdt
     fun change()

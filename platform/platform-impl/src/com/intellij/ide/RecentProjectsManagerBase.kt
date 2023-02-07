@@ -4,7 +4,6 @@
 package com.intellij.ide
 
 import com.intellij.diagnostic.runActivity
-import com.intellij.ide.RecentProjectsManager.Companion.fireChangeEvent
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.isSameProject
@@ -771,6 +770,12 @@ int32 "extendedState"
   }
 }
 
+private fun fireChangeEvent() {
+  ApplicationManager.getApplication().invokeLater {
+    ApplicationManager.getApplication().messageBus.syncPublisher(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC).change()
+  }
+}
+
 private fun isUseProjectFrameAsSplash() = Registry.`is`("ide.project.frame.as.splash")
 
 private fun readProjectName(path: String): String {
@@ -827,6 +832,7 @@ private fun validateRecentProjects(modCounter: LongAdder, map: MutableMap<String
     return
   }
 
+  val oldMapSize = map.size
   val iterator = map.values.iterator()
   while (true) {
     if (!iterator.hasNext()) {
@@ -844,5 +850,9 @@ private fun validateRecentProjects(modCounter: LongAdder, map: MutableMap<String
     if (toRemove <= 0) {
       break
     }
+  }
+
+  if (oldMapSize != map.size) {
+    modCounter.increment()
   }
 }
