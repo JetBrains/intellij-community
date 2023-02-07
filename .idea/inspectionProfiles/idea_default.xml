@@ -1831,6 +1831,11 @@
         <constraint name="myRoot" within="" contains="" />
         <constraint name="myFolder2" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Use !Strings.areSameInstance instead of '!='" uuid="c51501cf-f7af-3a6e-99f9-1f307c8d83a1" description="Comparing Strings by references usually indicate a mistake, if you really need to do this (for performance reeasons or to implement &quot;Sentinel&quot; pattern), use Strings.areSameInstance method to make the intention explicit and get rid of warning." problemDescriptor="Use !Strings.areSameInstance instead of '!=' if you really need to compare strings by reference" text="$s1$ != $s2$" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="!com.intellij.openapi.util.text.Strings.areSameInstance($s1$, $s2$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="s1" nameOfExprType="java\.lang\.String" within="" contains="" />
+        <constraint name="s2" nameOfExprType="java\.lang\.String" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="use explicit toArray() method" text="com.intellij.util.ArrayUtil.toObjectArray($collection$, $class$.class)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$collection$.toArray(new $class$[0])">
         <constraint name="__context__" within="" contains="" />
         <constraint name="class" within="" contains="" />
@@ -2182,6 +2187,11 @@
         <constraint name="FieldName" within="" contains="" />
         <constraint name="FieldType" regexp="Collection" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Use Strings.areSameInstance instead of ==" description="Comparing Strings by references usually indicate a mistake, if you really need to do this (for performance reeasons or to implement &quot;Sentinel&quot; pattern), use Strings.areSameInstance method to make the intention explicit and get rid of warning." problemDescriptor="Use !Strings.areSameInstance instead of '!=' if you really need to compare strings by reference" text="$s1$ == $s2$" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.openapi.util.text.Strings.areSameInstance($s1$, $s2$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="s1" nameOfExprType="java\.lang\.String" within="" contains="" />
+        <constraint name="s2" nameOfExprType="java\.lang\.String" within="" contains="" />
+      </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />
@@ -2216,6 +2226,7 @@
     <inspection_tool class="StringConstructor" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="ignoreSubstringArguments" value="false" />
     </inspection_tool>
+    <inspection_tool class="StringEquality" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
     <inspection_tool class="StringEqualsEmptyString" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL" value="true" />
     </inspection_tool>
