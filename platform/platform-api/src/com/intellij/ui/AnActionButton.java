@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
@@ -157,8 +157,8 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   /**
    * Tries to calculate the 'under the toolbar button' position for a given action.
    *
-   * @deprecated use {@link CommonActionsPanel#getPreferredPopupPoint(AnAction)} instead
    * @return the recommended popup position or null in case no toolbar button corresponds to the given action
+   * @deprecated use {@link CommonActionsPanel#getPreferredPopupPoint(AnAction)} instead
    */
   @Deprecated(forRemoval = true)
   public static @Nullable RelativePoint computePreferredPopupPoint(@NotNull JComponent toolbar, @NotNull AnAction action) {
@@ -221,7 +221,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     }
   }
 
-    @SuppressWarnings("ComponentNotRegistered")
+  @SuppressWarnings("ComponentNotRegistered")
   public static class GroupPopupWrapper extends AnActionButtonWrapper {
     public GroupPopupWrapper(@NotNull ActionGroup group) {
       super(group.getTemplatePresentation(), group);
