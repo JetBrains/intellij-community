@@ -342,7 +342,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
       myEmbedder.release(token);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 

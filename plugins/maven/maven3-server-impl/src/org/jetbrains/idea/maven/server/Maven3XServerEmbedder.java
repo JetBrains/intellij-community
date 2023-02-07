@@ -244,7 +244,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       myContainer = (DefaultPlexusContainer)m.invoke(cli, cliRequest);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
 
     myContainer.getLoggerManager().setThreshold(serverSettings.getLoggingLevel());
@@ -678,7 +678,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       return myCurrentIndicator;
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -711,7 +711,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       defaultModelBuilder.setModelInterpolator(modelInterpolator);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -790,7 +790,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       });
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -806,7 +806,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       return MavenEffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -1412,7 +1412,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       return doResolve(info, remoteRepositories);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -1438,7 +1438,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       return mavenArtifacts.get();
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -1480,7 +1480,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       }
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -1504,7 +1504,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
     catch (Exception e) {
       Maven3ServerGlobals.getLogger().info(e);
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -1733,7 +1733,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       return createExecutionResult(file, result, null);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -1797,7 +1797,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       //((CustomWagonManager)getComponent(WagonManager.class)).reset();
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -1808,7 +1808,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       myContainer.dispose();
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 

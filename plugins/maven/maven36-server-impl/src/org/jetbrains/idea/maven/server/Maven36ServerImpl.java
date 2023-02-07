@@ -22,7 +22,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       return result;
     }
     catch (Throwable e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -40,7 +40,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       return result;
     }
     catch (Throwable e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -52,7 +52,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       return Maven3XServerEmbedder.interpolateAndAlignModel(model, basedir);
     }
     catch (Throwable e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -63,7 +63,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       return Maven3XServerEmbedder.assembleInheritance(model, parentModel);
     }
     catch (Throwable e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -77,7 +77,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       return Maven3XServerEmbedder.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (Throwable e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -91,7 +91,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       return result;
     }
     catch (Throwable e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -104,7 +104,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       return result;
     }
     catch (Throwable e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
   @Override
