@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.preview
 
 import com.intellij.application.options.CodeStyle
@@ -168,7 +168,7 @@ internal class IntentionPreviewComputable(private val project: Project,
     val unwrapped = IntentionActionDelegate.unwrap(action)
     val cls = (if (unwrapped is QuickFixWrapper) unwrapped.fix else unwrapped)::class.java
     val loader = cls.classLoader
-    val thirdParty = loader is PluginAwareClassLoader && PluginManagerCore.isDevelopedByJetBrains(loader.pluginDescriptor)
+    val thirdParty = loader !is PluginAwareClassLoader || !PluginManagerCore.isDevelopedByJetBrains(loader.pluginDescriptor)
     if (!thirdParty) {
       logger<IntentionPreviewComputable>().error("Intention preview fallback is used for action ${cls.name}|${action.familyName}")
     }
