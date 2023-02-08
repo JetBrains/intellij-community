@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.highlighter
 import com.intellij.execution.TestStateStorage
 import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.jetbrains.kotlin.idea.base.util.module
@@ -17,10 +18,7 @@ import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import org.jetbrains.kotlin.platform.SimplePlatform
-import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.idePlatformKind
-import org.jetbrains.kotlin.platform.isMultiPlatform
+import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.konan.NativePlatformWithTarget
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -69,9 +67,11 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
                     HostManager.hostIsMingw -> target in listOf(KonanTarget.MINGW_X86, KonanTarget.MINGW_X64)
                     else -> false
                 }
+            } else if (this is JsPlatform) {
+                return AdvancedSettings.getBoolean("kotlin.mpp.experimental")
+            } else {
+                return true
             }
-
-            return true
         }
 
         fun TargetPlatform.providesRunnableTests(): Boolean = componentPlatforms.any { it.providesRunnableTests() }
