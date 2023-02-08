@@ -11,10 +11,8 @@ import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 /**
  * Storage for file types user selected in "Override File Type" action
@@ -59,21 +57,6 @@ public final class OverrideFileTypeManager extends PersistentFileSetManager {
   @Override
   public boolean removeFile(@NotNull VirtualFile file) {
     return super.removeFile(file);
-  }
-
-  @TestOnly
-  @ApiStatus.Internal
-  public void performTestWithMarkedAsPlainText(@NotNull VirtualFile file, @NotNull Runnable runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    addFile(file, PlainTextFileType.INSTANCE);
-    UIUtil.dispatchAllInvocationEvents();
-    try {
-      runnable.run();
-    }
-    finally {
-      removeFile(file);
-      UIUtil.dispatchAllInvocationEvents();
-    }
   }
 
   static boolean isOverridable(@NotNull FileType type) {
