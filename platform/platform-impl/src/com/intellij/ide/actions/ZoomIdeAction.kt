@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
+import com.intellij.ide.actions.ui.ideScaleIndicator.IdeScaleIndicatorManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.ui.percentValue
@@ -12,7 +13,9 @@ abstract class ZoomIdeAction : AnAction(), DumbAware {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   protected fun fireUISettingsChanged() {
-    UISettings.getInstance().fireUISettingsChanged()
+    IdeScaleIndicatorManager.indicateIfChanged {
+      UISettings.getInstance().fireUISettingsChanged()
+    }
   }
 }
 

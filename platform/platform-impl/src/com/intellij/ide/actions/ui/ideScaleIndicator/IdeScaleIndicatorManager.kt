@@ -75,7 +75,7 @@ class IdeScaleIndicatorManager(val project: Project) {
   private fun setupLafListener() {
     ApplicationManager.getApplication().messageBus.connect(project).subscribe(LafManagerListener.TOPIC, LafManagerListener {
       updateScaleHelper.saveScaleAndRunIfChanged {
-        showIndicator()
+        if (shouldIndicate) showIndicator()
       }
     })
   }
@@ -83,12 +83,23 @@ class IdeScaleIndicatorManager(val project: Project) {
   companion object {
     private const val POPUP_TIMEOUT_MS = 4000
     private const val POPUP_SHORT_TIMEOUT_MS = 1000
+    private var shouldIndicate: Boolean = false
 
     @JvmStatic
     fun getInstance(project: Project): IdeScaleIndicatorManager = project.getService(IdeScaleIndicatorManager::class.java)
     @JvmStatic
     fun setup(project: Project) {
       getInstance(project)
+    }
+
+    fun indicateIfChanged(update: () -> Unit) {
+      shouldIndicate = true
+      try {
+        update()
+      }
+      finally {
+        shouldIndicate = false
+      }
     }
   }
 }
