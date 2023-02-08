@@ -41,7 +41,8 @@ public abstract class Ikv implements AutoCloseable {
   }
 
   public void readByteArrayAt(int position, byte[] data, int size) {
-    mappedBuffer.get(position, data, 0, size);
+    mappedBuffer.position(position);
+    mappedBuffer.get(data, 0, size);
   }
 
   public static final class SizeAwareIkv extends Ikv {
@@ -85,7 +86,8 @@ public abstract class Ikv implements AutoCloseable {
     public byte[] getByteArrayByValue(long pair) {
       int start = (int)(pair >> 32);
       byte[] result = new byte[(int)pair];
-      mappedBuffer.get(start, result);
+      mappedBuffer.position(start);
+      mappedBuffer.get(result, 0, result.length);
       return result;
     }
 
