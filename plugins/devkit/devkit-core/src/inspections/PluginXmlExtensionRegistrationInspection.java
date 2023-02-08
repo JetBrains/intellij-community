@@ -36,6 +36,7 @@ import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.impl.LanguageResolvingUtil;
+import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 
 public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInspectionBase {
 
@@ -61,8 +62,8 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
     }
 
     if (ServiceDescriptor.class.getName().equals(extensionPoint.getBeanClass().getStringValue())) {
-      GenericAttributeValue<?> serviceInterface = DevKitDomInspectionUtil.getAttribute(extension, "serviceInterface");
-      GenericAttributeValue<?> serviceImplementation = DevKitDomInspectionUtil.getAttribute(extension, "serviceImplementation");
+      GenericAttributeValue<?> serviceInterface = DevKitDomUtil.getAttribute(extension, "serviceInterface");
+      GenericAttributeValue<?> serviceImplementation = DevKitDomUtil.getAttribute(extension, "serviceImplementation");
       if (serviceInterface != null && serviceImplementation != null &&
           StringUtil.equals(serviceInterface.getStringValue(), serviceImplementation.getStringValue())) {
         if (hasMissingAttribute(extension, "testServiceImplementation")) {
@@ -116,7 +117,7 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
       // IntentionActionBean, since 223 only
       DomFixedChildDescription languageTagDescription = extension.getGenericInfo().getFixedChildDescription("language");
       if (languageTagDescription != null) {
-        GenericDomValue<?> languageTag = DevKitDomInspectionUtil.getTag(extension, "language");
+        GenericDomValue<?> languageTag = DevKitDomUtil.getTag(extension, "language");
         if (languageTag != null && !DomUtil.hasXml(languageTag)) {
           holder.createProblem(extension,
                                DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.language.tag",

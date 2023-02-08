@@ -50,7 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
-import org.jetbrains.idea.devkit.inspections.DevKitDomInspectionUtil;
+import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase;
 import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo;
@@ -91,7 +91,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       if (isInternal(extension, "isInternal")) {
         return;
       }
-      GenericAttributeValue<?> implementationClass = DevKitDomInspectionUtil.getAttribute(extension, "implementationClass");
+      GenericAttributeValue<?> implementationClass = DevKitDomUtil.getAttribute(extension, "implementationClass");
       if (implementationClass == null || implementationClass.getStringValue() == null) {
         return;
       }
@@ -115,7 +115,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     }
     else if (NotificationGroupEP.class.getName().equals(beanClass.getQualifiedName())) {
       if (hasMissingAttribute(extension, "key")) {
-        GenericAttributeValue<?> value = DevKitDomInspectionUtil.getAttribute(extension, "hideFromSettings");
+        GenericAttributeValue<?> value = DevKitDomUtil.getAttribute(extension, "hideFromSettings");
         if (value == null || !Boolean.parseBoolean(value.getStringValue())) {
           holder.createProblem(extension, DevKitI18nBundle.message("inspections.plugin.xml.i18n.name"),
                                new NotificationGroupI18NQuickFix());
@@ -128,14 +128,14 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
                                                    DomElement element,
                                                    @NonNls String attributeName,
                                                    @Nullable LocalQuickFix fix) {
-    highlightNonLocalizableElement(holder, DevKitDomInspectionUtil.getAttribute(element, attributeName), attributeName, fix);
+    highlightNonLocalizableElement(holder, DevKitDomUtil.getAttribute(element, attributeName), attributeName, fix);
   }
 
   private static void checkNonLocalizableTag(DomElementAnnotationHolder holder,
                                              DomElement element,
                                              String tagName,
                                              @Nullable LocalQuickFix quickFix) {
-    highlightNonLocalizableElement(holder, DevKitDomInspectionUtil.getTag(element, tagName), tagName, quickFix);
+    highlightNonLocalizableElement(holder, DevKitDomUtil.getTag(element, tagName), tagName, quickFix);
   }
 
   private static void highlightNonLocalizableElement(DomElementAnnotationHolder holder,
@@ -191,7 +191,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   }
 
   private static boolean isInternal(@NotNull DomElement action, String internalAttributeName) {
-    final GenericAttributeValue<?> internalAttribute = DevKitDomInspectionUtil.getAttribute(action, internalAttributeName);
+    final GenericAttributeValue<?> internalAttribute = DevKitDomUtil.getAttribute(action, internalAttributeName);
     if (internalAttribute != null && "true".equals(internalAttribute.getStringValue())) return true;
     return false;
   }

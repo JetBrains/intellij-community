@@ -11,6 +11,7 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.RemoveDomElementQuickFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 
 public abstract class DevKitPluginXmlInspectionBase extends BasicDomElementsInspection<IdeaPlugin> {
 
@@ -19,7 +20,7 @@ public abstract class DevKitPluginXmlInspectionBase extends BasicDomElementsInsp
   }
 
   protected static boolean hasMissingAttribute(DomElement element, @NonNls String attributeName) {
-    final GenericAttributeValue<?> attribute = DevKitDomInspectionUtil.getAttribute(element, attributeName);
+    final GenericAttributeValue<?> attribute = DevKitDomUtil.getAttribute(element, attributeName);
     return attribute != null && !DomUtil.hasXml(attribute);
   }
 

@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.inspections;
+package org.jetbrains.idea.devkit.util;
 
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -11,7 +11,7 @@ import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-public final class DevKitDomInspectionUtil {
+public final class DevKitDomUtil {
 
   @Nullable
   public static GenericAttributeValue<?> getAttribute(DomElement domElement, @NonNls String attributeName) {
