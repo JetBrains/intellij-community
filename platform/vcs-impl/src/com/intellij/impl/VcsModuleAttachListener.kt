@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LO
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ModuleAttachListener
+import com.intellij.vcsUtil.VcsUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -38,6 +39,8 @@ private class VcsModuleAttachListener : ModuleAttachListener {
   private fun addVcsMapping(primaryModule: Module, addedModuleContentRoot: VirtualFile) {
     MAPPING_DETECTION_LOG.debug("VcsModuleAttachListener.addVcsMapping", primaryModule, addedModuleContentRoot)
     val project = primaryModule.project
+    if (!VcsUtil.shouldDetectVcsMappingsFor(project)) return
+
     val vcsManager = ProjectLevelVcsManager.getInstance(project)
     val mappings = vcsManager.directoryMappings
     val singleMapping = mappings.singleOrNull()
@@ -65,6 +68,8 @@ private class VcsModuleAttachListener : ModuleAttachListener {
   private fun removeVcsMapping(module: Module) {
     MAPPING_DETECTION_LOG.debug("VcsModuleAttachListener.removeVcsMapping", module)
     val project = module.project
+    if (!VcsUtil.shouldDetectVcsMappingsFor(project)) return
+
     val vcsManager = ProjectLevelVcsManager.getInstance(project)
     val mappings = vcsManager.directoryMappings
     val newMappings = ArrayList(mappings)

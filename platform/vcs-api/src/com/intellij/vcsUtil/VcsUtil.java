@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -702,5 +703,10 @@ public final class VcsUtil {
       modified |= set.remove(value);
     }
     return modified;
+  }
+
+  public static boolean shouldDetectVcsMappingsFor(@NotNull Project project) {
+    return Registry.is("vcs.detect.vcs.mappings.automatically") &&
+           VcsSharedProjectSettings.getInstance(project).isDetectVcsMappingsAutomatically();
   }
 }

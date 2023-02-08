@@ -13,6 +13,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.vcsUtil.VcsUtil
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 
 internal class ModuleVcsDetector(private val project: Project) {
@@ -27,7 +28,8 @@ internal class ModuleVcsDetector(private val project: Project) {
     project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, MyWorkspaceModelChangeListener())
 
     if (vcsManager.needAutodetectMappings() &&
-        vcsManager.haveDefaultMapping() == null) {
+        vcsManager.haveDefaultMapping() == null &&
+        VcsUtil.shouldDetectVcsMappingsFor(project)) {
       queue.queue(DisposableUpdate.createDisposable(queue, "initial scan") { autoDetectDefaultRoots() })
     }
   }
@@ -109,6 +111,8 @@ internal class ModuleVcsDetector(private val project: Project) {
     private val dirtyContentRoots = mutableSetOf<VirtualFile>()
 
     override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
+      if (!VcsUtil.shouldDetectVcsMappingsFor(project)) return
+
       if (added.isNotEmpty()) {
         MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.contentRootsChanged - roots added", added)
         if (vcsManager.haveDefaultMapping() == null) {

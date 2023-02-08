@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Alarm;
+import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,6 +138,8 @@ public final class VcsRootScanner implements Disposable {
     if (VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList().isEmpty()) return;
 
     MAPPING_DETECTION_LOG.debug("VcsRootScanner.scheduleScan");
+    if (!VcsUtil.shouldDetectVcsMappingsFor(myProject)) return;
+
     myAlarm.cancelAllRequests(); // one scan is enough, no need to queue, they all do the same
     myAlarm.addRequest(() -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(myAlarm, () -> {
       myRootProblemNotifier.rescanAndNotifyIfNeeded();

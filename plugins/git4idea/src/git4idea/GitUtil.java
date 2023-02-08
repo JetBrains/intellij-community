@@ -1008,6 +1008,8 @@ public final class GitUtil {
    * Typically, IDE should use its configured VCS directories, via {@link ProjectLevelVcsManager#getVcsFor(FilePath)} or
    * {@link GitRepositoryManager#getRepositoryForFile(VirtualFile)}.
    * While there are exist valid usages of this method, it is marked as Obsolete to make sure it is used only when actually needed.
+   * <p>
+   * If it's used to detect new VCS mappings, consider checking {@link VcsUtil#shouldDetectVcsMappingsFor(Project)} first.
    *
    * @see #findGitDir(VirtualFile)
    */
