@@ -11,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexImpl;
+import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
@@ -31,6 +32,7 @@ import static com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys.CLASS_SHO
 public class GroovyShortNamesCache extends PsiShortNamesCache {
   private final Project myProject;
   private volatile TopLevelFQNames myTopLevelFQNames;
+  private volatile TopLevelFQNames myTopLevelScriptFQNames;
 
   public GroovyShortNamesCache(Project project) {
     myProject = project;
@@ -50,39 +52,38 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
       return topLevelFQNames.useful ? topLevelFQNames : null;
     }
 
-    Set<String> names = new HashSet<>();
-    Processor<String> processor = fqName -> {
-      ProgressManager.checkCanceled();
-      String topLevelName = toTopLevelName(fqName);
-      if (names.add(topLevelName)) {
-        // TopLevelFQNames cache becomes useless if it gets too big
-        if (names.size() > 500) {
-          return false;
-        }
-      }
-      return true;
-    };
+    TopLevelFQNames classTopLevelFQNames = new TopLevelFQNames(GrFullClassNameStringIndex.KEY, myProject);
+    TopLevelFQNames scriptTopLevelFQNames = new TopLevelFQNames(GrFullScriptNameStringIndex.KEY, myProject);
+    myTopLevelScriptFQNames = scriptTopLevelFQNames;
 
-    boolean useful = stubIndex.processAllKeys(GrFullClassNameStringIndex.KEY, myProject, processor) &&
-                     stubIndex.processAllKeys(GrFullScriptNameStringIndex.KEY, myProject, processor);
-
-    topLevelFQNames = new TopLevelFQNames(timestamp, names, useful);
+    topLevelFQNames = classTopLevelFQNames.merge(scriptTopLevelFQNames);
     myTopLevelFQNames = topLevelFQNames;
     return topLevelFQNames;
+  }
+
+  private @Nullable TopLevelFQNames getScriptTopLevelNames() {
+    if (getTopLevelNames() == null) return null;
+
+    TopLevelFQNames topLevelFQNames = myTopLevelScriptFQNames;
+    StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
+    return (topLevelFQNames != null &&
+            topLevelFQNames.useful &&
+            topLevelFQNames.timestamp == stubIndex.getIndexModificationStamp(GrFullScriptNameStringIndex.KEY, myProject))
+           ? topLevelFQNames : null;
   }
 
   /**
    * If <code>fqName</code> is smth like
    * <ul>
    *   <li><code>foo.bar.FooBar</code> it returns <code>foo</code>.</li>
-   *   <li><code>FooBar</code> it returns <code>FooBar</code>.</li>
+   *   <li><code>FooBar</code> it returns an empty string.</li>
    * </ul>
    *
    * @return top level package name if it is available or string itself otherwise.
    */
   private static @NotNull String toTopLevelName(@NotNull String fqName) {
     int index = fqName.indexOf('.');
-    return index >= 1 ? fqName.substring(0, index) : fqName;
+    return index >= 1 ? fqName.substring(0, index) : "";
   }
 
   @Override
@@ -94,6 +95,13 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   public List<PsiClass> getScriptClassesByFQName(final String name, final GlobalSearchScope scope, final boolean srcOnly) {
+    TopLevelFQNames names = getScriptTopLevelNames();
+    if (names != null) {
+      String topLevelName = toTopLevelName(name);
+      if (!names.names.contains(topLevelName)) {
+        return Collections.emptyList();
+      }
+    }
     GlobalSearchScope actualScope = srcOnly ? new GrSourceFilterScope(scope) : scope;
     return ContainerUtil.map2List(
       StubIndex.getElements(GrFullScriptNameStringIndex.KEY, name, myProject, actualScope, GroovyFile.class),
@@ -231,10 +239,44 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
 
     final boolean useful;
 
+    private TopLevelFQNames(@NotNull StubIndexKey<String, ?> indexKey, @NotNull Project project) {
+      StubIndexImpl stubIndex = (StubIndexImpl) StubIndex.getInstance();
+      this.timestamp = stubIndex.getIndexModificationStamp(indexKey, project);
+
+      Set<String> names = new HashSet<>();
+      Processor<String> processor = fqName -> {
+        ProgressManager.checkCanceled();
+        String topLevelName = toTopLevelName(fqName);
+        if (names.add(topLevelName)) {
+          // TopLevelFQNames cache becomes useless if it gets too big
+          if (names.size() > 500) {
+            return false;
+          }
+        }
+        return true;
+      };
+
+      boolean useful = stubIndex.processAllKeys(indexKey, project, processor);
+      this.names = useful ? names : Collections.emptySet();
+      this.useful = useful;
+    }
+
     private TopLevelFQNames(long timestamp, @NotNull Set<String> names, boolean useful) {
       this.timestamp = timestamp;
       this.names = names;
       this.useful = useful;
+    }
+
+    public TopLevelFQNames merge(TopLevelFQNames other) {
+      boolean mergedUseful = useful && other.useful;
+      Set<String> set;
+      if (mergedUseful) {
+        set = new HashSet<>(names);
+        set.addAll(other.names);
+      } else {
+        set = Collections.emptySet();
+      }
+      return new TopLevelFQNames(timestamp + other.timestamp, set, mergedUseful);
     }
   }
 }
