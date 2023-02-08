@@ -10,22 +10,51 @@ class KotlinLanguageFeaturesFUSCollector : CounterUsagesCollector() {
 
     override fun getGroup(): EventLogGroup = GROUP
 
-    object RangeUntil {
+    companion object {
+        private val GROUP = EventLogGroup("kotlin.language.features", 1)
+        private val kotlinLanguageVersionField = EventFields.StringValidatedByRegexp("kotlin_language_version", "version_lang_api")
+
         private const val RANGE_UNTIL_FEATURE = "range_until_feature"
         private val rangeUntilEventField = EventFields.Enum<RangeUntilLanguageFeature>(RANGE_UNTIL_FEATURE)
-        private enum class RangeUntilLanguageFeature {
-            OLD_UNTIL_SEEN,
-            NEW_RANGE_UNTIL_SEEN,
-            UNTIL_TO_RANGE_UNTIL_QUICK_FIX_IS_APPLIED
-        }
-
         private val rangeUntilFeatureEvent = GROUP.registerVarargEvent(
             RANGE_UNTIL_FEATURE,
             rangeUntilEventField,
             EventFields.AnonymizedPath,
             kotlinLanguageVersionField
         )
+        private enum class RangeUntilLanguageFeature {
+            OLD_UNTIL_SEEN,
+            NEW_RANGE_UNTIL_SEEN,
+            UNTIL_TO_RANGE_UNTIL_QUICK_FIX_IS_APPLIED
+        }
 
+        private const val ENUM_ENTRIES_FEATURE = "enum_entries_feature"
+        private val enumEntriesEventField = EventFields.Enum<EnumEntriesLanguageFeature>(ENUM_ENTRIES_FEATURE)
+        private enum class EnumEntriesLanguageFeature {
+            VALUES_TO_ENTRIES_QUICK_FIX_IS_SUGGESTED,
+            VALUES_TO_ENTRIES_QUICK_FIX_IS_APPLIED,
+        }
+        private val enumEntriesFeatureEvent = GROUP.registerVarargEvent(
+            ENUM_ENTRIES_FEATURE,
+            enumEntriesEventField,
+            EventFields.AnonymizedPath
+        )
+
+        private const val DATA_OBJECT_FEATURE = "data_object_feature"
+        private val dataObjectEventField = EventFields.Enum<DataObjectLanguageFeature>(DATA_OBJECT_FEATURE)
+        private enum class DataObjectLanguageFeature {
+            OBJECT_TO_DATA_OBJECT_QUICK_FIX_IS_SUGGESTED,
+            OBJECT_TO_DATA_OBJECT_QUICK_FIX_IS_APPLIED,
+        }
+
+        private val dataObjectFeatureEvent = GROUP.registerVarargEvent(
+            DATA_OBJECT_FEATURE,
+            dataObjectEventField,
+            EventFields.AnonymizedPath
+        )
+    }
+
+    object RangeUntil {
         fun logOldUntilOccurence(file: VirtualFile, kotlinLanguageVersion: String): Unit =
             log(RangeUntilLanguageFeature.OLD_UNTIL_SEEN, file, kotlinLanguageVersion)
 
@@ -47,19 +76,6 @@ class KotlinLanguageFeaturesFUSCollector : CounterUsagesCollector() {
     }
 
     object EnumEntries {
-        private const val ENUM_ENTRIES_FEATURE = "enum_entries_feature"
-        private val enumEntriesEventField = EventFields.Enum<EnumEntriesLanguageFeature>(ENUM_ENTRIES_FEATURE)
-        private enum class EnumEntriesLanguageFeature {
-            VALUES_TO_ENTRIES_QUICK_FIX_IS_SUGGESTED,
-            VALUES_TO_ENTRIES_QUICK_FIX_IS_APPLIED,
-        }
-
-        private val enumEntriesFeatureEvent = GROUP.registerVarargEvent(
-            ENUM_ENTRIES_FEATURE,
-            enumEntriesEventField,
-            EventFields.AnonymizedPath
-        )
-
         fun logValuesToEntriesQuickFixIsSuggested(file: VirtualFile): Unit =
             log(EnumEntriesLanguageFeature.VALUES_TO_ENTRIES_QUICK_FIX_IS_SUGGESTED, file)
 
@@ -71,19 +87,6 @@ class KotlinLanguageFeaturesFUSCollector : CounterUsagesCollector() {
     }
 
     object DataObject {
-        private const val DATA_OBJECT_FEATURE = "data_object_feature"
-        private val dataObjectEventField = EventFields.Enum<DataObjectLanguageFeature>(DATA_OBJECT_FEATURE)
-        private enum class DataObjectLanguageFeature {
-            OBJECT_TO_DATA_OBJECT_QUICK_FIX_IS_SUGGESTED,
-            OBJECT_TO_DATA_OBJECT_QUICK_FIX_IS_APPLIED,
-        }
-
-        private val dataObjectFeatureEvent = GROUP.registerVarargEvent(
-            DATA_OBJECT_FEATURE,
-            dataObjectEventField,
-            EventFields.AnonymizedPath
-        )
-
         fun logObjectToDataObjectQuickFixIsSuggested(file: VirtualFile): Unit =
             log(DataObjectLanguageFeature.OBJECT_TO_DATA_OBJECT_QUICK_FIX_IS_SUGGESTED, file)
 
@@ -94,6 +97,3 @@ class KotlinLanguageFeaturesFUSCollector : CounterUsagesCollector() {
             dataObjectFeatureEvent.log(dataObjectEventField.with(event), EventFields.AnonymizedPath.with(file.path))
     }
 }
-
-private val GROUP = EventLogGroup("kotlin.language.features", 1)
-private val kotlinLanguageVersionField = EventFields.StringValidatedByRegexp("kotlin_language_version", "version_lang_api")
