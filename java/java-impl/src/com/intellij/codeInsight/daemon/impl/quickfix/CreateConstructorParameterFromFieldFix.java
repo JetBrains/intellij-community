@@ -97,7 +97,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       return IntentionPreviewInfo.EMPTY;
     }
     PsiField copyMyField = PsiTreeUtil.findSameElementInCopy(myFieldElement, copyFile);
-    PsiMethod[] constructors = copyMyClass.getConstructors();
+    PsiMethod[] constructors = getPhysicalConstructors(copyMyClass);
     if (constructors.length == 0) {
       final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(copyMyClass);
       defaultConstructorFix.invoke(project, editor, copyFile);
@@ -143,7 +143,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
-    PsiMethod[] constructors = myClass.getConstructors();
+    PsiMethod[] constructors = getPhysicalConstructors(myClass);
     if (constructors.length == 0) {
       final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(myClass);
       ApplicationManager.getApplication().runWriteAction(() -> defaultConstructorFix.invoke(project, editor, file));
@@ -213,6 +213,10 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       }
     }
     GlobalInspectionContextBase.cleanupElements(project, null, cleanupElements);
+  }
+
+  private static PsiMethod[] getPhysicalConstructors(@NotNull PsiClass psiClass) {
+    return ContainerUtil.filter(psiClass.getConstructors(), c -> c.isPhysical()).toArray(PsiMethod[]::new);
   }
 
   @NotNull
