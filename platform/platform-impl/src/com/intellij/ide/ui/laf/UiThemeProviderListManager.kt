@@ -130,30 +130,20 @@ internal class UiThemeProviderListManager {
   private fun findLaFByProviderId(provider: UIThemeProvider) = findLaFById(provider.id)
 }
 
-private fun computeList(): List<UIThemeBasedLookAndFeelInfo> {
-  val themes = ArrayList<UIThemeBasedLookAndFeelInfo>(UIThemeProvider.EP_NAME.point.size())
+private fun computeMap(): SortedMap<UIThemeBasedLookAndFeelInfo, TargetUIType> {
+  val map = TreeMap<UIThemeBasedLookAndFeelInfo, TargetUIType>(themesSortingComparator)
 
   val orderedProviders = sortTopologically(UIThemeProvider.EP_NAME.extensions.asList(), { it.id }, { it.parentTheme })
   for (provider in orderedProviders) {
-    val parentTheme = findParentTheme(themes, provider.parentTheme)
-    val uiTheme = provider.createTheme(parentTheme) ?: continue
-    themes.add(UIThemeBasedLookAndFeelInfo(uiTheme))
-  }
-
-  sortThemes(themes)
-  return themes
-}
-
-private fun computeMap(): SortedMap<UIThemeBasedLookAndFeelInfo, TargetUIType> {
-  val map = TreeMap<UIThemeBasedLookAndFeelInfo, TargetUIType>(themesSortingComparator)
-  UIThemeProvider.EP_NAME.processExtensions { provider, _ ->
-    val theme = UIThemeBasedLookAndFeelInfo(provider.createTheme() ?: return@processExtensions)
+    val parentTheme = findParentTheme(map.keys, provider.parentTheme)
+    val theme = UIThemeBasedLookAndFeelInfo(provider.createTheme(parentTheme) ?: continue)
     map[theme] = provider.targetUI
   }
+
   return map
 }
 
-private fun findParentTheme(themes: List<UIThemeBasedLookAndFeelInfo>, parentId: String?): UITheme? {
+private fun findParentTheme(themes: Collection<UIThemeBasedLookAndFeelInfo>, parentId: String?): UITheme? {
   if (parentId == null) return null
   return themes.map { it.theme }.find { it.id == parentId }
 }

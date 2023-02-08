@@ -44,7 +44,7 @@ public final class UIThemeProvider implements PluginAware {
   @Attribute("parentTheme")
   public @Nullable String parentTheme;
 
-  @Attribute("targetUI")
+  @Attribute("targetUi")
   @NotNull
   public TargetUIType targetUI = TargetUIType.CLASSIC;
 
