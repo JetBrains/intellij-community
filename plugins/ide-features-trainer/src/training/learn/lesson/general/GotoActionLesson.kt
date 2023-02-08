@@ -19,8 +19,10 @@ import training.util.isToStringContains
 import java.awt.event.KeyEvent
 import javax.swing.JDialog
 
-class GotoActionLesson(private val sample: LessonSample, private val firstLesson: Boolean = false) :
-  KLesson("Actions", LessonsBundle.message("goto.action.lesson.name")) {
+class GotoActionLesson(private val sample: LessonSample,
+                       private val firstLesson: Boolean = false,
+                       private val helpUrl: String = "searching-everywhere.html#search_actions")
+  : KLesson("Actions", LessonsBundle.message("goto.action.lesson.name")) {
 
   companion object {
     private const val FIND_ACTION_WORKAROUND: String = "https://intellij-support.jetbrains.com/hc/en-us/articles/360005137400-Cmd-Shift-A-hotkey-opens-Terminal-with-apropos-search-instead-of-the-Find-Action-dialog"
@@ -130,6 +132,6 @@ class GotoActionLesson(private val sample: LessonSample, private val firstLesson
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("help.search.everywhere"),
-         LessonUtil.getHelpLink("searching-everywhere.html")),
+         LessonUtil.getHelpLink(helpUrl)),
   )
 }
