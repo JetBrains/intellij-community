@@ -43,6 +43,7 @@ def testing_engine(
     future: Any | None = ...,
     asyncio: bool = ...,
     transfer_staticpool: bool = ...,
+    _sqlite_savepoint: bool = ...,
 ): ...
 def mock_engine(dialect_name: Any | None = ...): ...
 

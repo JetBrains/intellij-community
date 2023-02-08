@@ -13,11 +13,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.isNotificationSilentMode
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-internal suspend fun restoreOpenedFiles(fileEditorManager: FileEditorManagerImpl, editorSplitters: EditorsSplitters, project: Project) {
+internal suspend fun restoreOpenedFiles(fileEditorManager: FileEditorManagerImpl,
+                                        editorSplitters: EditorsSplitters,
+                                        project: Project,
+                                        frameHelper: ProjectFrameHelper) {
   val hasOpenFiles = withContext(ModalityState.any().asContextElement()) {
     editorSplitters.restoreEditors(requestFocus = true)
 
@@ -39,7 +43,7 @@ internal suspend fun restoreOpenedFiles(fileEditorManager: FileEditorManagerImpl
   // later
   withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
-      LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime))
+      LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime), frameHelper.isTabbedWindow())
     }
   }
 }

@@ -513,20 +513,54 @@
       "description": "GotIt tooltip link foreground color if different from Link.activeForeground"
     },
     {
+      "key": "GotItTooltip.Header.foreground",
+      "description": "GotIt tooltip header foreground color if different from GotItTooltip.foreground",
+      "since": "2022.3.1"
+    },
+    {
+      "key": "GotItTooltip.Button.foreground",
+      "description": "GotIt tooltip button foreground color if different from Button.foreground",
+      "since": "2022.3.1"
+    },
+    {
+      "key": "GotItTooltip.Button.startBackground",
+      "description": "GotIt tooltip button background gradient start color if different from Button.startBackground",
+      "since": "2022.3.1"
+    },
+    {
+      "key": "GotItTooltip.Button.endBackground",
+      "description": "GotIt tooltip button background gradient end color if different from Button.endBackground",
+      "since": "2022.3.1"
+    },
+    {
+      "key": "GotItTooltip.Button.startBorderColor",
+      "description": "GotIt tooltip button outline gradient start color if different from Button.startBorderColor",
+      "since": "2022.3.1"
+    },
+    {
+      "key": "GotItTooltip.Button.endBorderColor",
+      "description": "GotIt tooltip button outline gradient end color if different from Button.endBorderColor",
+      "since": "2022.3.1"
+    },
+    {
       "key": "GotItTooltip.startBackground",
-      "description": "GotIt tooltip button background gradient start color if different from Button.startBackground"
+      "description": "Use GotItTooltip.Button.startBackground",
+      "deprecated": true
     },
     {
       "key": "GotItTooltip.endBackground",
-      "description": "GotIt tooltip button background gradient end color if different from Button.endBackground"
+      "description": "Use GotItTooltip.Button.endBackground",
+      "deprecated": true
     },
     {
       "key": "GotItTooltip.startBorderColor",
-      "description": "GotIt tooltip button outline gradient start color if different from Button.startBorderColor"
+      "description": "Use GotItTooltip.Button.startBorderColor",
+      "deprecated": true
     },
     {
       "key": "GotItTooltip.endBorderColor",
-      "description": "GotIt tooltip button outline gradient end color if different from Button.endBorderColor"
+      "description": "Use GotItTooltip.Button.endBorderColor",
+      "deprecated": true
     },
     {
       "key": "Group.disabledSeparatorColor"

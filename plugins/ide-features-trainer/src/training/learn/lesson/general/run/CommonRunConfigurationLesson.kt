@@ -19,7 +19,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
   protected abstract val demoConfigurationName: String
 
   private fun TaskRuntimeContext.runManager() = RunManager.getInstance(project)
-  private fun TaskRuntimeContext.configurations() =
+  protected fun TaskRuntimeContext.configurations() =
     runManager().allSettings.filter { it.name.contains(demoConfigurationName) }
 
   private fun TaskContext.runToolWindow() = strong(ExecutionBundle.message("tool.window.name.run"))

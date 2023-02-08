@@ -24,8 +24,6 @@ internal object RecentProjectPanelComponentFactory {
 
   @JvmStatic
   fun createComponent(parentDisposable: Disposable, collectors: List<() -> List<RecentProjectTreeItem>>): RecentProjectFilteringTree {
-    ProjectDetector.runDetectors {} // Run detectors that will add projects to the RecentProjectsManagerBase
-
     val tree = Tree()
     val filteringTree = RecentProjectFilteringTree(tree, parentDisposable, collectors).apply {
       installSearchField()
@@ -64,6 +62,9 @@ internal object RecentProjectPanelComponentFactory {
         }
       })
     }
+
+    // Run detectors that will add projects to the RecentProjectsManagerBase
+    ProjectDetector.runDetectors {}
 
     val updateQueue = MergingUpdateQueue("Welcome screen UI updater", UPDATE_INTERVAL, true, null,
                                          parentDisposable, tree, Alarm.ThreadToUse.SWING_THREAD)

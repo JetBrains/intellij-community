@@ -20,7 +20,11 @@ asyncio.Future._callbacks  # Usually initialized from c object
 asyncio.futures.Future.__init__  # Usually initialized from c object
 asyncio.futures.Future._callbacks  # Usually initialized from c object
 builtins.dict.get
-builtins.float.__set_format__  # Internal method for CPython test suite
+builtins.float.__setformat__  # Internal method for CPython test suite
+collections.AsyncGenerator.asend  # async at runtime, deliberately not in the stub, see #7491. Pos-only differences also.
+collections.AsyncGenerator.__anext__  # async at runtime, deliberately not in the stub, see #7491
+collections.AsyncGenerator.aclose  # async at runtime, deliberately not in the stub, see #7491
+collections.AsyncIterator.__anext__  # async at runtime, deliberately not in the stub, see #7491
 collections.AsyncGenerator.ag_await
 collections.AsyncGenerator.ag_code
 collections.AsyncGenerator.ag_frame

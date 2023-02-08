@@ -24,7 +24,7 @@
      name-part: "al",
      display-name: "key event modifier",
      priority: HIGH,
-     problem: UNKNOWN_ITEM,
+     problem: UNKNOWN_SYMBOL,
     },
     {
      name-part: ".",

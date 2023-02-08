@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.externalAnnotations
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.JavaModuleExternalPaths
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -12,7 +13,6 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import java.io.File
 
 abstract class AbstractExternalAnnotationTest: KotlinLightCodeInsightFixtureTestCase()  {

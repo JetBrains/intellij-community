@@ -60,15 +60,22 @@ internal class RecentProjectFilteringTree(
   treeComponent: Tree,
   parentDisposable: Disposable,
   collectors: List<() -> List<RecentProjectTreeItem>>
-) : FilteringTree<DefaultMutableTreeNode, RecentProjectTreeItem>(treeComponent, DefaultMutableTreeNode(RootItem(collectors))),
-    DataProvider {
+) : FilteringTree<DefaultMutableTreeNode, RecentProjectTreeItem>(treeComponent, DefaultMutableTreeNode(RootItem(collectors))) {
   init {
     val projectActionButtonViewModel = ProjectActionButtonViewModel()
     val filePathChecker = createFilePathChecker()
     Disposer.register(parentDisposable, filePathChecker)
 
+    // Provide data context for projects actions
+    DataManager.registerDataProvider(treeComponent) { dataId ->
+      when {
+        RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEM_KEY.`is`(dataId) -> getSelectedItem(tree)
+        RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_TREE_KEY.`is`(dataId) -> tree
+        else -> null
+      }
+    }
+
     treeComponent.addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItem(treeComponent) }
-    treeComponent.addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)) { removeItem(treeComponent) }
 
     val group = ActionManager.getInstance().getAction("WelcomeScreenRecentProjectActionGroup") as ActionGroup
     val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group)
@@ -139,12 +146,6 @@ internal class RecentProjectFilteringTree(
 
   override fun useIdentityHashing(): Boolean = false
 
-  override fun getData(dataId: String): Any? = when {
-    RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEM_KEY.`is`(dataId) -> getSelectedItem(tree)
-    RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_TREE_KEY.`is`(dataId) -> tree
-    else -> null
-  }
-
   private fun createFilePathChecker(): RecentProjectPanel.FilePathChecker {
     val recentProjectTreeItems: List<RecentProjectTreeItem> = RecentProjectListActionProvider.getInstance().collectProjects()
     val recentProjects = mutableListOf<RecentProjectItem>()
@@ -213,6 +214,9 @@ internal class RecentProjectFilteringTree(
     override fun mouseMoved(mouseEvent: MouseEvent) {
       val point = mouseEvent.point
       val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
+      if (row != -1) {
+        tree.repaint(getCloseIconRect(row))
+      }
 
       projectActionButtonViewModel.hoveredRow = row
       projectActionButtonViewModel.isButtonHovered = intersectWithActionIcon(point)

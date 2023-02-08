@@ -48,9 +48,9 @@ public class DarculaButtonUI extends BasicButtonUI {
   protected static JBValue HORIZONTAL_PADDING = new JBValue.Float(14);
 
   private static final Color GOTIT_BUTTON_COLOR_START =
-    JBColor.namedColor("GotItTooltip.startBackground", JBUI.CurrentTheme.Button.buttonColorStart());
+    JBColor.namedColor("GotItTooltip.Button.startBackground", JBUI.CurrentTheme.Button.buttonColorStart());
   private static final Color GOTIT_BUTTON_COLOR_END =
-    JBColor.namedColor("GotItTooltip.endBackground", JBUI.CurrentTheme.Button.buttonColorEnd());
+    JBColor.namedColor("GotItTooltip.Button.endBackground", JBUI.CurrentTheme.Button.buttonColorEnd());
 
   public static final Key<Boolean> DEFAULT_STYLE_KEY = Key.create("JButton.styleDefault");
 

@@ -101,7 +101,7 @@ public class UnindexedFilesUpdater {
   public static int getMaxNumberOfIndexingThreads() {
     // Change of the registry option requires IDE restart.
     int threadCount = INDEXER_THREAD_COUNT;
-    return threadCount <= 0 ? getMaxBackgroundThreadCount() : threadCount;
+    return Math.max(1, threadCount <= 0 ? getMaxBackgroundThreadCount() : threadCount);
   }
 
   /**

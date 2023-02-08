@@ -3,15 +3,15 @@ from _typeshed import Self as Self
 from collections.abc import Callable, Iterable, Iterator
 from datetime import datetime
 from typing import ClassVar, Pattern, overload
-from typing_extensions import Literal
+from typing_extensions import Literal, TypeAlias
 
 from dateparser import _Settings
 from dateparser.conf import Settings
 from dateparser.languages.loader import LocaleDataLoader
 from dateparser.languages.locale import Locale
 
-_DetectLanguagesFunction = Callable[[str, float], list[str]]
-_Period = Literal["time", "day", "week", "month", "year"]
+_DetectLanguagesFunction: TypeAlias = Callable[[str, float], list[str]]
+_Period: TypeAlias = Literal["time", "day", "week", "month", "year"]
 
 APOSTROPHE_LOOK_ALIKE_CHARS: list[str]
 RE_NBSP: Pattern[str]

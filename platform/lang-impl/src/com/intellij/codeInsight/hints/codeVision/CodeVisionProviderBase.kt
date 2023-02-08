@@ -42,7 +42,7 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
     // we want to let this provider work only in tests dedicated for code vision, otherwise they harm performance
     if (ApplicationManager.getApplication().isUnitTestMode && !CodeVisionHost.isCodeLensTest(editor)) return emptyList()
 
-    val virtualFile = file.virtualFile ?: return emptyList()
+    val virtualFile = file.viewProvider.virtualFile
     if (ProjectFileIndex.getInstance(file.project).isInLibrarySource(virtualFile)) return emptyList()
 
     val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()

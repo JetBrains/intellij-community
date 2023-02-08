@@ -442,11 +442,9 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
                                 @NotNull DfaMemoryState memState,
                                 DfaValue @Nullable [] argValues) {
     DfaValue value = memState.pop();
-    if (getContext() instanceof PsiMethodReferenceExpression) {
-      PsiMethodReferenceExpression context = (PsiMethodReferenceExpression)getContext();
-      if (MethodReferenceInstruction.isQualifierDereferenced(context)) {
-        value = CheckNotNullInstruction.dereference(interpreter, memState, value, NullabilityProblemKind.callMethodRefNPE.problem(context, null));
-      }
+    if (getContext() instanceof PsiMethodReferenceExpression context && MethodReferenceInstruction.isQualifierDereferenced(context)) {
+      value = CheckNotNullInstruction.dereference(
+        interpreter, memState, value, NullabilityProblemKind.callMethodRefNPE.problem(context, null));
     }
     DfType dfType = memState.getDfType(value);
     if (getMutationSignature().mutatesThis() && !Mutability.fromDfType(dfType).canBeModified()) {
@@ -455,9 +453,8 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       // So let's conservatively skip the warning here. Such contract is still useful because it assures that nothing else is mutated.
       if (method != null && JavaMethodContractUtil.hasExplicitContractAnnotation(method)) {
         interpreter.getListener().onCondition(new MutabilityProblem(getContext(), true), value, ThreeState.YES, memState);
-        if (dfType instanceof DfReferenceType) {
-          memState.setDfType(value, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
-        }
+        memState.updateDfType(
+          value, type -> type instanceof DfReferenceType refType ? refType.dropMutability().meet(Mutability.MUTABLE.asDfType()) : type);
       }
     }
     TypeConstraint constraint = TypeConstraint.fromDfType(dfType);
@@ -509,9 +506,8 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
             !memState.getDfType(SpecialField.ARRAY_LENGTH.createValue(interpreter.getFactory(), arg)).equals(intValue(0))) {
           PsiElement anchor = getArgumentAnchor(paramIndex);
           interpreter.getListener().onCondition(new MutabilityProblem(anchor, false), arg, ThreeState.YES, memState);
-          if (dfType instanceof DfReferenceType) {
-            memState.setDfType(arg, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
-          }
+          memState.updateDfType(
+            arg, type -> type instanceof DfReferenceType refType ? refType.dropMutability().meet(Mutability.MUTABLE.asDfType()) : type);
         }
       }
       if (argValues != null) {

@@ -137,7 +137,7 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
   @Override
   @Nullable
   public String getDefaultValue() {
-    return isEnumerated() ? myValues.keySet().iterator().next() : null;
+    return isFixed() ? myValues.keySet().iterator().next() : null;
   }
 
   @Override

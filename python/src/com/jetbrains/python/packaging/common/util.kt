@@ -51,15 +51,17 @@ interface PythonPackageManagementListener {
   fun packagesChanged(sdk: Sdk)
 }
 
-internal val RANKING_AWARE_PACKAGE_NAME_COMPARATOR: java.util.Comparator<String> = Comparator { name1, name2 ->
+class PythonRankingAwarePackageNameComparator : Comparator<String> {
   val ranking = service<PyPIPackageRanking>().packageRank
-  val rank1 = ranking[name1.lowercase()]
-  val rank2 = ranking[name2.lowercase()]
-  return@Comparator when {
-    rank1 != null && rank2 == null -> -1
-    rank1 == null && rank2 != null -> 1
-    rank1 != null && rank2 != null -> rank2 - rank1
-    else -> String.CASE_INSENSITIVE_ORDER.compare(name1, name2)
+  override fun compare(name1: String, name2: String): Int {
+    val rank1 = ranking[name1.lowercase()]
+    val rank2 = ranking[name2.lowercase()]
+    return when {
+      rank1 != null && rank2 == null -> -1
+      rank1 == null && rank2 != null -> 1
+      rank1 != null && rank2 != null -> rank2 - rank1
+      else -> String.CASE_INSENSITIVE_ORDER.compare(name1, name2)
+    }
   }
 }
 

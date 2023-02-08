@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -312,23 +313,30 @@ public class StreamChainInliner implements CallInliner {
         call = MethodCallUtils.getQualifierMethodCall(call);
         if (FILTER.matches(call) || STATE_FILTER.matches(call)) {
           exact = false;
-        } else if (ARRAYS_STREAM.matches(call) || COLLECTION_STREAM.matches(call)){
-          return LongRangeSet.range(1, Integer.MAX_VALUE);
+        } else if (ARRAYS_STREAM.matches(call) || COLLECTION_STREAM.matches(call)) {
+          return LongRangeSet.range(0, Integer.MAX_VALUE);
         }
-        else if (STREAM_OF.matches(call) || OPTIONAL_STREAM.matches(call)) {
-          return LongRangeSet.point(1);
-        } else if (STREAM_OF_ARRAY.matches(call)) {
-          if (MethodCallUtils.isVarArgCall(call)) {
-            return exact
-                   ? LongRangeSet.point(call.getArgumentList().getExpressionCount())
-                   : LongRangeSet.range(1, call.getArgumentList().getExpressionCount());
-          } else {
-            return JvmPsiRangeSetUtil.indexRange();
+        else if (STREAM_OF.matches(call)) {
+          return exact ? LongRangeSet.point(1) : LongRangeSet.range(0, 1);
+        }
+        else if (OPTIONAL_STREAM.matches(call)) {
+          return LongRangeSet.range(0, 1);
+        }
+        else {
+          if (STREAM_OF_ARRAY.matches(call)) {
+            if (MethodCallUtils.isVarArgCall(call)) {
+              return exact
+                     ? LongRangeSet.point(call.getArgumentList().getExpressionCount())
+                     : LongRangeSet.range(0, call.getArgumentList().getExpressionCount());
+            }
+            else {
+              return JvmPsiRangeSetUtil.indexRange();
+            }
           }
-        }
-        else if (!BOXED.matches(call) && !MAP.matches(call) && !PEEK.matches(call) && !SORTED.matches(call) &&
-                 !SKIP_STEP.matches(call) && !AS_STREAM.matches(call)) {
-          return LongRangeSet.range(1, Long.MAX_VALUE);
+          else if (!BOXED.matches(call) && !MAP.matches(call) && !PEEK.matches(call) && !SORTED.matches(call) &&
+                   !SKIP_STEP.matches(call) && !AS_STREAM.matches(call)) {
+            return LongRangeSet.range(0, Long.MAX_VALUE);
+          }
         }
       }
     }

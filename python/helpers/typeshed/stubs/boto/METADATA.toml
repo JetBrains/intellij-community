@@ -1,3 +1,2 @@
 version = "2.49.*"
-python2 = true
 requires = ["types-six"]

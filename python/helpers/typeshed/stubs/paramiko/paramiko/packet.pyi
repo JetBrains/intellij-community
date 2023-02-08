@@ -1,16 +1,12 @@
-import sys
+from collections.abc import Callable
+from hashlib import _Hash
 from logging import Logger
 from socket import socket
-from typing import Any, Callable
+from typing import Any
 
 from cryptography.hazmat.primitives.ciphers import Cipher
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.message import Message
-
-if sys.version_info >= (3, 0):
-    from hashlib import _Hash
-else:
-    from hashlib import _hash as _Hash
 
 def compute_hmac(key: bytes, message: bytes, digest_class: _Hash) -> bytes: ...
 

@@ -36,11 +36,13 @@ import java.util.Collection;
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
 
-  static final PersistentFS ourPersistence = PersistentFS.getInstance();
-
   @ApiStatus.Internal
   public static void markAllFilesAsUnindexed() {
     VfsData.markAllFilesAsUnindexed();
+  }
+
+  protected static PersistentFS getPersistence() {
+    return PersistentFS.getInstance();
   }
 
   @ApiStatus.Internal
@@ -98,7 +100,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @NotNull VfsData getVfsData() {
     VfsData data = getSegment().vfsData;
-    if (!((PersistentFSImpl)ourPersistence).isOwnData(data)) {
+    if (!((PersistentFSImpl)getPersistence()).isOwnData(data)) {
       throw new AssertionError("Alien file!");
     }
     return data;
@@ -273,7 +275,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   public void delete(Object requestor) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    ourPersistence.deleteFile(requestor, this);
+    getPersistence().deleteFile(requestor, this);
   }
 
   @Override
@@ -281,13 +283,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (getName().equals(newName)) return;
     validateName(newName);
-    ourPersistence.renameFile(requestor, this, newName);
+    getPersistence().renameFile(requestor, this, newName);
   }
 
   @Override
   public @NotNull VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
     validateName(name);
-    return ourPersistence.createChildFile(requestor, this, name);
+    return getPersistence().createChildFile(requestor, this, name);
   }
 
   @Override
@@ -297,22 +299,22 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public void setWritable(boolean writable) throws IOException {
-    ourPersistence.setWritable(this, writable);
+    getPersistence().setWritable(this, writable);
   }
 
   @Override
   public long getTimeStamp() {
-    return ourPersistence.getTimeStamp(this);
+    return getPersistence().getTimeStamp(this);
   }
 
   @Override
   public void setTimeStamp(long time) throws IOException {
-    ourPersistence.setTimeStamp(this, time);
+    getPersistence().setTimeStamp(this, time);
   }
 
   @Override
   public long getLength() {
-    return ourPersistence.getLength(this);
+    return getPersistence().getLength(this);
   }
 
   @Override
@@ -325,7 +327,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       throw new IOException(CoreBundle.message("file.copy.target.must.be.directory"));
     }
 
-    return EncodingRegistry.doActionAndRestoreEncoding(this, () -> ourPersistence.copyFile(requestor, this, newParent, copyName));
+    return EncodingRegistry.doActionAndRestoreEncoding(this, () -> getPersistence().copyFile(requestor, this, newParent, copyName));
   }
 
   @Override
@@ -337,7 +339,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
 
     EncodingRegistry.doActionAndRestoreEncoding(this, () -> {
-      ourPersistence.moveFile(requestor, this, newParent);
+      getPersistence().moveFile(requestor, this, newParent);
       return this;
     });
   }
@@ -360,7 +362,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
     validateName(name);
-    return ourPersistence.createChildDirectory(requestor, this, name);
+    return getPersistence().createChildDirectory(requestor, this, name);
   }
 
   private void validateName(@NotNull String name) throws IOException {
@@ -381,7 +383,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public @NonNls String toString() {
-    if (!((PersistentFSImpl)ourPersistence).isOwnData(getSegment().vfsData)) {
+    if (!((PersistentFSImpl)getPersistence()).isOwnData(getSegment().vfsData)) {
       return "Alien file!";
     }
     if (isValid()) {
@@ -539,7 +541,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public String getCanonicalPath() {
     if (thisOrParentHaveSymlink()) {
       if (isSymlink()) {
-        return ourPersistence.resolveSymLink(this);
+        return getPersistence().resolveSymLink(this);
       }
       VirtualFileSystemEntry parent = getParent();
       if (parent != null) {

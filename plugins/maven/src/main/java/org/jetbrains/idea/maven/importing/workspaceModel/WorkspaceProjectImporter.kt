@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
@@ -30,9 +31,7 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -260,22 +259,81 @@ internal class WorkspaceProjectImporter(
     //  * the IDE creates module 'B' along with a non-maven module 'A', both pointing at the same content root.
     //  -> IDE is confused - which module to use to resolve project files?.
     //  -> User thinks that either resolve or import is broken.
-    val importedContentRootUrls by lazy {
+    val importedContentRootUrlsToModule by lazy {
       mavenProjectsWithModules
-        .flatMapTo(mutableSetOf()) { it.modules.asSequence().flatMap { it.module.contentRoots.asSequence() }.map { it.url } }
+        .flatMapTo(mutableSetOf()) { it.modules.asSequence().flatMap { it.module.contentRoots.asSequence() }.map { it.url to it.module.name } }.toMap()
     }
+    val modulesWithDuplicatingRoots: MutableSet<String> = mutableSetOf()
 
+    // Here we detect content roots with URLs same to the ones that will be imported right now.
+    //   If the root is in different module, remove content roots and the module if it remains empty. See the explanation above
+    //   If this is the root from the module with the same name, save the name of the module to move source roots and excludes
+    //     to the new content root
     currentStorage
       .entities(ModuleEntity::class.java)
-      .filter {
-        if (isMavenEntity(it.entitySource)) return@filter false
-        if (it.name in importedModuleNames) return@filter true
-        if (it.contentRoots.map { it.url }.any { it in importedContentRootUrls }) return@filter true
-        false
+      .filterNot { isMavenEntity(it.entitySource) }
+      .filter { existingModule ->
+        var removedSomeRoots = false
+        existingModule.contentRoots.forEach { existingContentRoot ->
+          val moduleToImport = importedContentRootUrlsToModule[existingContentRoot.url] ?: return@forEach
+          if (moduleToImport == existingModule.name) {
+            modulesWithDuplicatingRoots += moduleToImport
+          }
+          else {
+            currentStorage.removeEntity(existingContentRoot)
+            removedSomeRoots = true
+          }
+        }
+        return@filter removedSomeRoots
       }
+      // Cleanup modules if they remain without content roots at all
+      .filter { it.contentRoots.isEmpty() }
       .forEach { currentStorage.removeEntity(it) }
 
     currentStorage.replaceBySource({ isMavenEntity(it) }, newStorage)
+
+    // Now we have some modules with duplicating content roots. One content root existed before and another one exported from maven.
+    //   We need to move source roots and excludes from existing content roots to the exported content roots and remove (obsolete) existing.
+    modulesWithDuplicatingRoots.asSequence()
+      .map { ModuleId(it) }
+      .mapNotNull { currentStorage.resolve(it) }
+      .forEach { moduleEntity ->
+        val urlMap = moduleEntity.contentRoots.groupBy { it.url }
+        urlMap.forEach internal@ { (url, entities) ->
+          if (entities.size == 1) return@internal
+          val to = entities.firstOrNull { isMavenEntity(it.entitySource) }
+          val from = entities.firstOrNull { !isMavenEntity(it.entitySource) }
+
+          // Process unexpected case. We expect exactly two roots, one imported and one not.
+          //   Leave a single root if the expectation was not met
+          if (entities.size != 2 || from == null || to == null) {
+            entities.drop(1).forEach { currentStorage.removeEntity(it) }
+            LOG.error("Unexpected state. We've got ${entities.size} similar content roots pointing to $url")
+            return@internal
+          }
+
+          // Move source root if it doesn't exist already
+          from.sourceRoots.forEach {
+            if (to.sourceRoots.none { root -> root.url == it.url }) {
+              currentStorage.modifyEntity(it) {
+                this.contentRoot = to
+              }
+            }
+          }
+
+          // Move exclude if it doesn't exist already
+          from.excludedUrls.forEach {
+            if (to.excludedUrls.none { root -> root.url == it.url }) {
+              currentStorage.modifyEntity(it) {
+                this.contentRoot = to
+              }
+            }
+          }
+
+          // Remove old content root
+          currentStorage.removeEntity(from)
+        }
+      }
   }
 
   private fun mapEntitiesToModulesAndRunAfterModelApplied(appliedStorage: EntityStorage,
@@ -501,6 +559,8 @@ internal class WorkspaceProjectImporter(
                                    durationOfWorkspaceUpdateCallNano = durationOfWorkspaceUpdate,
                                    attempts = attempts)
     }
+
+    private val LOG = Logger.getInstance(WorkspaceProjectImporter::class.java)
   }
 }
 

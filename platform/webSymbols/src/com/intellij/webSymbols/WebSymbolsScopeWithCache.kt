@@ -75,7 +75,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(protected val fra
 
   protected open fun provides(namespace: SymbolNamespace, kind: SymbolKind): Boolean = true
 
-  override fun getSymbols(namespace: SymbolNamespace?,
+  override fun getSymbols(namespace: SymbolNamespace,
                           kind: SymbolKind,
                           name: String?,
                           params: WebSymbolsNameMatchQueryParams,
@@ -88,7 +88,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(protected val fra
     }
     else emptyList()
 
-  override fun getCodeCompletions(namespace: SymbolNamespace?,
+  override fun getCodeCompletions(namespace: SymbolNamespace,
                                   kind: SymbolKind,
                                   name: String?,
                                   params: WebSymbolsCodeCompletionQueryParams,

@@ -11,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,6 +45,7 @@ import java.util.*;
  *   <li>Listener topic class - {@link Listeners.Listener#getTopicClassName()}</li>
  * </ul>
  */
+@SuppressWarnings("UnusedReturnValue")
 public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List<RegistrationEntry>> {
 
   private static final int INDEX_VERSION = 8;
@@ -139,6 +141,7 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
                                  RegistrationType.MODULE_COMPONENT,
                                  RegistrationType.COMPONENT_INTERFACE),
                       Component.class,
+                      true,
                       processor);
   }
 
@@ -169,6 +172,7 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     return processAll(project, key, scope,
                       types,
                       Listeners.Listener.class,
+                      true,
                       processor);
   }
 
@@ -240,24 +244,36 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
                                                 GlobalSearchScope scope,
                                                 EnumSet<RegistrationType> types,
                                                 Processor<? super ActionOrGroup> processor) {
-    return processAll(project, key, scope, types, ActionOrGroup.class, processor);
+    return processAll(project, key, scope, types, ActionOrGroup.class, false, processor);
   }
 
+  /**
+   * @param domClazz     Expected DOM class, possibly parent of the indexed DOM element (see {@code useParentDom})
+   * @param useParentDom {@code true} if DOM element to process is parent of the indexed DOM element
+   * @see RegistrationIndexer
+   */
   private static <T extends DomElement> boolean processAll(@NotNull Project project,
                                                            @NotNull String key,
                                                            GlobalSearchScope scope,
                                                            EnumSet<RegistrationType> types,
                                                            Class<T> domClazz,
+                                                           boolean useParentDom,
                                                            Processor<? super T> processor) {
     List<XmlTag> tags = collectTags(project, key, scope, types);
 
     return ContainerUtil.process(tags, tag -> {
       final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
 
-      T t = DomUtil.getParentOfType(domElement, domClazz, false);
+      T t;
+      if (useParentDom) {
+        t = DomUtil.getParentOfType(domElement, domClazz, false);
+      }
+      else {
+        t = ObjectUtils.tryCast(domElement, domClazz);
+      }
       if (t == null) return true;
-      //noinspection unchecked
-      return processor.process((T)domElement);
+
+      return processor.process(t);
     });
   }
 

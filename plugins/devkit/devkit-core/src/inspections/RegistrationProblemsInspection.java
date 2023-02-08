@@ -25,7 +25,6 @@ import org.jetbrains.idea.devkit.util.ActionType;
 import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UElement;
 
-import java.util.Collections;
 import java.util.Set;
 
 public class RegistrationProblemsInspection extends DevKitUastInspectionBase {
@@ -123,11 +122,7 @@ public class RegistrationProblemsInspection extends DevKitUastInspectionBase {
       boolean external = descriptor.getPsiElement().getContainingFile() != element.getContainingFile();
       if (external) {
         PsiClass clazz = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
-        ReadonlyStatusHandler readonlyStatusHandler = ReadonlyStatusHandler.getInstance(project);
-        ReadonlyStatusHandler.OperationStatus status = readonlyStatusHandler.ensureFilesWritable(
-          Collections.singletonList(element.getContainingFile().getVirtualFile()));
-
-        if (status.hasReadonlyFiles()) {
+        if (!ReadonlyStatusHandler.ensureFilesWritable(project, element.getContainingFile().getVirtualFile())) {
           String className = clazz != null ? clazz.getQualifiedName() : element.getContainingFile().getName();
           Messages.showErrorDialog(project,
                                    DevKitBundle.message("inspections.registration.problems.quickfix.read-only", className),

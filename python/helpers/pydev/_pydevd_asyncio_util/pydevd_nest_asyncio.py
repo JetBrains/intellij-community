@@ -75,7 +75,12 @@ if IS_PY3K:
         def _get_event_loop(stacklevel=3):
             loop = events._get_running_loop()
             if loop is None:
-                loop = events.get_event_loop_policy().get_event_loop()
+                try:
+                    loop = events.get_event_loop_policy().get_event_loop()
+                except:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    _patch_loop(loop)
             return loop
 
         if hasattr(asyncio, '_nest_patched'):
@@ -91,7 +96,6 @@ if IS_PY3K:
         if sys.version_info >= (3, 9, 0):
             events._get_event_loop = events.get_event_loop = \
                 asyncio.get_event_loop = _get_event_loop
-            _get_event_loop
         asyncio.run = run
         asyncio._nest_patched = True
 

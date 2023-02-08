@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -40,17 +41,41 @@ interface KotlinMainFunctionDetector {
 
 @RequiresReadLock
 fun KotlinMainFunctionDetector.hasMain(file: KtFile, configuration: Configuration = Configuration.DEFAULT): Boolean {
-    return file.declarations.any { it is KtNamedFunction && isMain(it, configuration) }
+    return findMain(file, configuration) != null
+}
+
+@RequiresReadLock
+fun KotlinMainFunctionDetector.findMain(file: KtFile, configuration: Configuration = Configuration.DEFAULT): KtNamedFunction? {
+    return findMainInContainer(file, configuration)
 }
 
 @RequiresReadLock
 fun KotlinMainFunctionDetector.hasMain(declaration: KtClassOrObject, configuration: Configuration = Configuration.DEFAULT): Boolean {
+    return findMain(declaration, configuration) != null
+}
+
+@RequiresReadLock
+fun KotlinMainFunctionDetector.findMain(declaration: KtClassOrObject, configuration: Configuration = Configuration.DEFAULT): KtNamedFunction? {
     if (declaration is KtObjectDeclaration) {
-        return !declaration.isObjectLiteral()
-                && declaration.declarations.any { it is KtNamedFunction && isMain(it, configuration) }
+        if (declaration.isObjectLiteral()) {
+            return null
+        }
+
+        return findMainInContainer(declaration, configuration)
     }
 
-    return declaration.companionObjects.any { hasMain(it, configuration) }
+    return declaration.companionObjects.firstNotNullOfOrNull { findMain(it, configuration) }
+}
+
+private fun KotlinMainFunctionDetector.findMainInContainer(owner: KtDeclarationContainer, configuration: Configuration): KtNamedFunction? {
+    for (declaration in owner.declarations) {
+        ProgressManager.checkCanceled()
+        if (declaration is KtNamedFunction && isMain(declaration, configuration)) {
+            return declaration
+        }
+    }
+
+    return null
 }
 
 @RequiresReadLock

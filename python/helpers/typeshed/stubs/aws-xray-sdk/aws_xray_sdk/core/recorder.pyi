@@ -1,6 +1,7 @@
 import time
+from collections.abc import Callable, Iterable
 from logging import Logger
-from typing import Any, Callable, Iterable
+from typing import Any
 
 from aws_xray_sdk import global_sdk_config as global_sdk_config
 from aws_xray_sdk.version import VERSION as VERSION

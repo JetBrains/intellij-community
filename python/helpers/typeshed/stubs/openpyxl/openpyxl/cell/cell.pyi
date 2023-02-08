@@ -66,7 +66,8 @@ class MergedCell(StyleableObject):
     row: Any
     column: Any
     def __init__(self, worksheet, row: Any | None = ..., column: Any | None = ...) -> None: ...
-    coordinate: Any
+    @property
+    def coordinate(self): ...
     value: Any
 
 def WriteOnlyCell(ws: Any | None = ..., value: Any | None = ...): ...

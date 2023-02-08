@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.ucache
 import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
@@ -19,7 +20,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.pathString
@@ -90,15 +90,15 @@ private fun BuilderSnapshot.replaceModelWithSelf(project: Project): CompletableF
 
 private fun MutableEntityStorage.addOrUpdateScriptDependencies(scriptFile: VirtualFile, project: Project): List<LibraryEntity> {
     val configurationManager = ScriptConfigurationManager.getInstance(project)
-    val fileUrlManager = VirtualFileUrlManager.getInstance(project)
-
-    val entitySource = KotlinScriptEntitySource(scriptFile.toVirtualFileUrl(fileUrlManager))
-    val scriptDependencies = mutableListOf<LibraryEntity>() // list builders are not supported by WorkspaceModel yet
 
     val dependenciesClassFiles = configurationManager.getScriptDependenciesClassFiles(scriptFile).toMutableSet()
     val dependenciesSourceFiles = configurationManager.getScriptDependenciesSourceFiles(scriptFile).toMutableSet()
 
     addIdeSpecificDependencies(project, scriptFile, dependenciesClassFiles, dependenciesSourceFiles)
+
+    val fileUrlManager = VirtualFileUrlManager.getInstance(project)
+    val entitySource = KotlinScriptEntitySource(scriptFile.toVirtualFileUrl(fileUrlManager))
+    val scriptDependencies = mutableListOf<LibraryEntity>() // list builders are not supported by WorkspaceModel yet
 
     if (dependenciesClassFiles.isNotEmpty() || dependenciesSourceFiles.isNotEmpty()) {
         scriptDependencies.add(
@@ -130,16 +130,15 @@ private fun MutableEntityStorage.addOrUpdateScriptDependencies(scriptFile: Virtu
         }
     }
 
-    return scriptDependencies.map { dependency ->
-        val existingEntity = entities(LibraryEntity::class.java).find { it.name == dependency.name }
-        if (existingEntity != null) {
-            modifyEntity(existingEntity) { roots = dependency.roots.toMutableList() }
-            existingEntity
-        } else {
-            addEntity(dependency)
-            dependency
-        }
+    scriptDependencies.forEach { dependency ->
+        // Library entity modification is currently not detected by indexing mechanism, we use remove/add as a workaround
+        entities(LibraryEntity::class.java)
+            .find { it.name == dependency.name }
+            ?.let { removeEntity(it) }
+        addEntity(dependency)
     }
+
+    return scriptDependencies
 }
 
 fun VirtualFile.relativeName(project: Project): String {

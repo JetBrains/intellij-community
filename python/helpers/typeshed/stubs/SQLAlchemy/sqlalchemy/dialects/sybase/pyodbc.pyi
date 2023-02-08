@@ -10,7 +10,7 @@ class _SybNumeric_pyodbc(sqltypes.Numeric):
 class SybaseExecutionContext_pyodbc(SybaseExecutionContext):
     def set_ddl_autocommit(self, connection, value) -> None: ...
 
-class SybaseDialect_pyodbc(PyODBCConnector, SybaseDialect):  # type: ignore # argument disparities between base classes
+class SybaseDialect_pyodbc(PyODBCConnector, SybaseDialect):
     supports_statement_cache: bool
     colspecs: Any
     @classmethod

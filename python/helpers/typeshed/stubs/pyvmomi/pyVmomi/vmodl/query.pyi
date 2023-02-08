@@ -21,8 +21,8 @@ class PropertyCollector:
         def __getattr__(self, name: str) -> Any: ...  # incomplete
 
     class RetrieveOptions:
-        def __init__(self, *, maxObjects: int) -> None: ...
-        maxObjects: int
+        def __init__(self, *, maxObjects: int | None = ...) -> None: ...
+        maxObjects: int | None
 
     class ObjectSpec:
         def __init__(

@@ -7,7 +7,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jvnet.winp.Main;
 
@@ -51,15 +51,26 @@ final class UpdatePluginsApp implements ApplicationStarter {
       return;
     }
 
-    Set<String> filter = new HashSet<>(args.subList(1, args.size()));
-    if (!filter.isEmpty()) {
-      availableUpdates = ContainerUtil.filter(availableUpdates, downloader -> filter.contains(downloader.getId().getIdString()));
+    Collection<PluginDownloader> pluginsToUpdate;
+    if (args.size() > 1) {
+      Set<String> filter = new HashSet<>(args.subList(1, args.size()));
+      pluginsToUpdate = availableUpdates.stream()
+        .filter(downloader -> filter.contains(downloader.getId().getIdString()))
+        .toList();
+    }
+    else {
+      pluginsToUpdate = availableUpdates;
     }
 
     log("Plugins to update:");
-    availableUpdates.forEach(d -> log("\t" + d.getPluginName()));
+    pluginsToUpdate.forEach(d -> log("\t" + d.getPluginName()));
 
-    if (UpdateInstaller.installPluginUpdates(availableUpdates, new EmptyProgressIndicator())) {
+    Ref<Boolean> installed = Ref.create();
+    PluginDownloader.runSynchronouslyInBackground(() -> {
+      installed.set(UpdateInstaller.installPluginUpdates(pluginsToUpdate, new EmptyProgressIndicator()));
+    });
+
+    if (installed.get()) {
       System.exit(0);
     }
     else {

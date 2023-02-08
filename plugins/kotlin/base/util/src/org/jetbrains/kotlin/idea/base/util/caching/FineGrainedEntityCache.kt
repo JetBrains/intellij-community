@@ -214,7 +214,7 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
     }
 }
 
-abstract class SynchronizedFineGrainedEntityCache<Key : Any, Value : Any>(project: Project, cleanOnLowMemory: Boolean) :
+abstract class SynchronizedFineGrainedEntityCache<Key : Any, Value : Any>(project: Project, cleanOnLowMemory: Boolean = false) :
     FineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory) {
     @Deprecated("Do not use directly", level = DeprecationLevel.ERROR)
     override val cache: MutableMap<Key, Value> = HashMap()

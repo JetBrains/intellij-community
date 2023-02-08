@@ -26,3 +26,11 @@ passlib.totp.TOTP.normalize_token
 
 # import problem
 passlib.utils.compat._ordered_dict
+
+# initialized to None, but set by concrete sub-classes
+passlib.handlers.pbkdf2.Pbkdf2DigestHandler.default_rounds
+passlib.utils.handlers.GenericHandler.setting_kwds
+
+# set to None on class level, but initialized in __init__
+passlib.utils.handlers.HasManyIdents.ident
+passlib.utils.handlers.HasRounds.rounds

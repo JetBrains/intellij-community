@@ -18,7 +18,9 @@ public interface RegExpLanguageHost {
    * @deprecated Use {@link #characterNeedsEscaping(char, boolean)} instead.
    */
   @Deprecated
-  boolean characterNeedsEscaping(char c);
+  default boolean characterNeedsEscaping(char c) {
+    throw new UnsupportedOperationException("Override characterNeedsEscaping(char, boolean)");
+  }
 
   /**
    * Returns whether the given character needs to be escaped to be treated as a literal.

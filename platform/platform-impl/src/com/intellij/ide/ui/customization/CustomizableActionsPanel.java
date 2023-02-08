@@ -515,21 +515,24 @@ public class CustomizableActionsPanel {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
         AddActionDialog dlg = new AddActionDialog(mySelectedSchema, isInsideMenu(selectionPath));
         if (dlg.showAndGet()) {
-          Object actionIdOrGroup = dlg.getAddedActionIdOrGroup();
-          if (actionIdOrGroup != null) {
+          List<Object> addedActions = dlg.getAddedActions();
+          if (!addedActions.isEmpty()) {
             boolean isGroupSelected = CustomizationUtil.getGroupForNode(node) != null;
-            int newActionPosition = isGroupSelected ? node.getChildCount() : node.getParent().getIndex(node) + 1;
-            if (actionIdOrGroup instanceof Group group) {
-              group.setForceShowAsPopup(true);
+            for (int ind = 0; ind < addedActions.size(); ind++) {
+              Object action = addedActions.get(ind);
+              if (action instanceof Group group) {
+                group.setForceShowAsPopup(true);
+              }
+              int newActionPosition = isGroupSelected ? node.getChildCount() : node.getParent().getIndex(node) + ind + 1;
+              ActionUrl url = new ActionUrl(getGroupPath(new TreePath(node.getPath()), true), action, ADDED, newActionPosition);
+              addCustomizedAction(url);
+              changePathInActionsTree(myActionsTree, url);
             }
-            ActionUrl url = new ActionUrl(getGroupPath(new TreePath(node.getPath()), true), actionIdOrGroup, ADDED, newActionPosition);
-            addCustomizedAction(url);
-            changePathInActionsTree(myActionsTree, url);
 
             ((DefaultTreeModel)myActionsTree.getModel()).reload();
             TreeUtil.restoreExpandedPaths(myActionsTree, expandedPaths);
             if (isGroupSelected) myActionsTree.expandPath(selectionPath);
-            int newSelectedRow = isGroupSelected ? row + newActionPosition + 1 : row + 1;
+            int newSelectedRow = row + (isGroupSelected ? node.getChildCount() : addedActions.size());
             myActionsTree.setSelectionRow(newSelectedRow);
           }
         }

@@ -26,10 +26,11 @@ open class AnActionLink(@Nls text: String, anAction: AnAction, @NonNls place: St
   override fun getData(dataId: String) = when {
     PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.`is`(dataId) -> {
       val point = SwingUtilities.convertPoint(this, 0, 0, UIUtil.getRootPane(this))
-      Rectangle(point.x, point.y, width, height)
+      val ps = preferredSize
+      Rectangle(point.x, point.y, width.coerceAtMost(ps.width), height.coerceAtMost(ps.height))
     }
     PlatformDataKeys.CONTEXT_MENU_POINT.`is`(dataId) -> {
-      Point(0, height)
+      Point(0, height.coerceAtMost(preferredSize.height))
     }
     else -> dataProvider?.getData(dataId)
   }

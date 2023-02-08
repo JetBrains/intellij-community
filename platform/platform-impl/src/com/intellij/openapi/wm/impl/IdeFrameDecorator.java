@@ -41,6 +41,11 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
 
   public void setProject() {
   }
+
+  public boolean isTabbedWindow() {
+    return false;
+  }
+
   /**
    * Returns applied state or rejected promise if it cannot be applied.
    */

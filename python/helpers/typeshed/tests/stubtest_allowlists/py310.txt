@@ -23,6 +23,7 @@ typing.IO.truncate
 typing.IO.write
 typing.IO.writelines
 
+_collections_abc.AsyncGenerator.athrow  # async at runtime, deliberately not in the stub, see #7491. Pos-only differences also.
 _weakref.ProxyType.__reversed__  # Doesn't really exist
 ast.Bytes.__new__
 ast.Ellipsis.__new__
@@ -37,7 +38,7 @@ asyncio.Future._callbacks  # Usually initialized from c object
 asyncio.futures.Future.__init__  # Usually initialized from c object
 asyncio.futures.Future._callbacks  # Usually initialized from c object
 builtins.dict.get
-builtins.float.__set_format__  # Internal method for CPython test suite
+builtins.float.__setformat__  # Internal method for CPython test suite
 builtins.property.__set_name__  # Doesn't actually exist
 contextvars.Context.__init__  # Default C __init__ signature is wrong
 contextlib.AbstractAsyncContextManager.__class_getitem__
@@ -106,8 +107,6 @@ xml.etree.ElementTree.XMLParser.__init__  # Defined in C so has general signatur
 xml.etree.cElementTree.XMLParser.__init__  # Defined in C so has general signature
 
 # positional-only complaints caused by differences between typing aliases and the "real" classes in the stdlib
-_collections_abc.AsyncGenerator.asend
-_collections_abc.AsyncGenerator.athrow
 _collections_abc.Coroutine.send
 _collections_abc.Coroutine.throw
 _collections_abc.Generator.send

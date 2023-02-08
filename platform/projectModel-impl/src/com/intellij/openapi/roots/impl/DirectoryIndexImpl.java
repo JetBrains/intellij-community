@@ -26,6 +26,8 @@ import com.intellij.util.Query;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,11 +48,13 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
 
   private final Project myProject;
   private final MessageBusConnection myConnection;
+  private final WorkspaceFileIndexEx myWorkspaceFileIndex;
 
   private volatile boolean myDisposed;
   private volatile RootIndex myRootIndex;
 
   public DirectoryIndexImpl(@NotNull Project project) {
+    myWorkspaceFileIndex = WorkspaceFileIndexEx.IS_ENABLED ? (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project) : null;
     myProject = project;
     myConnection = project.getMessageBus().connect();
     subscribeToFileChanges();
@@ -116,12 +120,19 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   @Override
   @NotNull
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+    if (myWorkspaceFileIndex != null) {
+      return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
+    }
     return getRootIndex().getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
 
   @Override
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName,
                                                         @NotNull GlobalSearchScope scope) {
+    if (myWorkspaceFileIndex != null) {
+      return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, scope);
+    }
+    
     Collection<ModelBranch> branches = scope.getModelBranchesAffectingScope();
     if (branches.isEmpty()) {
       return super.getDirectoriesByPackageName(packageName, scope);
@@ -193,6 +204,9 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   @Override
   public String getPackageName(@NotNull VirtualFile dir) {
     checkAvailability();
+    if (myWorkspaceFileIndex != null) {
+      return myWorkspaceFileIndex.getPackageName(dir);
+    } 
 
     return getRootIndex(dir).getPackageName(dir);
   }

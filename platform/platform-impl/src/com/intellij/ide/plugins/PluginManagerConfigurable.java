@@ -11,7 +11,6 @@ import com.intellij.ide.plugins.certificates.PluginCertificateManager;
 import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.*;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -52,6 +51,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
@@ -282,7 +282,18 @@ public final class PluginManagerConfigurable
         }
       }
     });
-    actions.add(new InstallFromDiskAction());
+
+    actions.add(new InstallFromDiskAction(myPluginModel,
+                                          myPluginModel,
+                                          myCardPanel) {
+
+      @RequiresEdt
+      @Override
+      protected void onPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData,
+                                               @Nullable Project project) {
+        PluginManagerConfigurable.this.onPluginInstalledFromDisk(callbackData);
+      }
+    });
     actions.addSeparator();
     actions.add(new ChangePluginStateAction(false));
     actions.add(new ChangePluginStateAction(true));
@@ -1875,34 +1886,20 @@ public final class PluginManagerConfigurable
     }
   }
 
-  private final class InstallFromDiskAction extends DumbAwareAction {
-    private InstallFromDiskAction() {
-      super(IdeBundle.messagePointer("action.InstallFromDiskAction.text"));
-    }
+  @RequiresEdt
+  private void onPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {
+    myPluginModel.pluginInstalledFromDisk(callbackData);
 
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      if (!PluginManagerFilters.getInstance().allowInstallFromDisk()) {
-        Messages.showErrorDialog(e.getProject(), IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"), IdeBundle.message("action.InstallFromDiskAction.text"));
-        return;
-      }
+    boolean select = myInstalledPanel == null;
+    updateSelectionTab(INSTALLED_TAB);
 
-      PluginInstaller.chooseAndInstall(e.getProject(), myCardPanel, (file, parent) ->
-        PluginInstaller.installFromDisk(myPluginModel, myPluginModel, file, parent, callbackData -> {
-          myPluginModel.pluginInstalledFromDisk(callbackData);
+    myInstalledTab.clearSearchPanel("");
 
-          boolean select = myInstalledPanel == null;
-          updateSelectionTab(INSTALLED_TAB);
-
-          myInstalledTab.clearSearchPanel("");
-
-          ListPluginComponent component = select ?
-                                          findInstalledPluginById(callbackData.getPluginDescriptor().getPluginId()) :
-                                          null;
-          if (component != null) {
-            myInstalledPanel.setSelection(component);
-          }
-        }));
+    ListPluginComponent component = select ?
+                                    findInstalledPluginById(callbackData.getPluginDescriptor().getPluginId()) :
+                                    null;
+    if (component != null) {
+      myInstalledPanel.setSelection(component);
     }
   }
 

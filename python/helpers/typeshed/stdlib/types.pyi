@@ -1,25 +1,23 @@
 import sys
 from _typeshed import SupportsKeysAndGetItem
-from importlib.abc import _LoaderProtocol
-from importlib.machinery import ModuleSpec
-from typing import (
-    Any,
+from collections.abc import (
     AsyncGenerator,
     Awaitable,
     Callable,
     Coroutine,
     Generator,
-    Generic,
     ItemsView,
     Iterable,
     Iterator,
     KeysView,
-    Mapping,
     MutableSequence,
-    TypeVar,
     ValuesView,
-    overload,
 )
+from importlib.abc import _LoaderProtocol
+from importlib.machinery import ModuleSpec
+
+# pytype crashes if types.MappingProxyType inherits from collections.abc.Mapping instead of typing.Mapping
+from typing import Any, ClassVar, Generic, Mapping, TypeVar, overload  # noqa: Y027
 from typing_extensions import Literal, ParamSpec, final
 
 if sys.version_info >= (3, 10):
@@ -178,7 +176,7 @@ _V_co = TypeVar("_V_co", covariant=True)
 
 @final
 class _Cell:
-    __hash__: None  # type: ignore[assignment]
+    __hash__: ClassVar[None]  # type: ignore[assignment]
     cell_contents: Any
 
 # Make sure this class definition stays roughly in line with `builtins.function`
@@ -199,6 +197,7 @@ class FunctionType:
         @property
         def __builtins__(self) -> dict[str, Any]: ...
 
+    __module__: str
     def __init__(
         self,
         code: CodeType,
@@ -340,7 +339,7 @@ class CodeType:
 
 @final
 class MappingProxyType(Mapping[_KT, _VT_co], Generic[_KT, _VT_co]):
-    __hash__: None  # type: ignore[assignment]
+    __hash__: ClassVar[None]  # type: ignore[assignment]
     def __init__(self, mapping: SupportsKeysAndGetItem[_KT, _VT_co]) -> None: ...
     def __getitem__(self, __k: _KT) -> _VT_co: ...
     def __iter__(self) -> Iterator[_KT]: ...
@@ -356,7 +355,7 @@ class MappingProxyType(Mapping[_KT, _VT_co], Generic[_KT, _VT_co]):
         def __ror__(self, __value: Mapping[_T1, _T2]) -> dict[_KT | _T1, _VT_co | _T2]: ...
 
 class SimpleNamespace:
-    __hash__: None  # type: ignore[assignment]
+    __hash__: ClassVar[None]  # type: ignore[assignment]
     def __init__(self, **kwargs: Any) -> None: ...
     def __getattribute__(self, __name: str) -> Any: ...
     def __setattr__(self, __name: str, __value: Any) -> None: ...
@@ -652,16 +651,20 @@ if sys.version_info >= (3, 9):
         @property
         def __parameters__(self) -> tuple[Any, ...]: ...
         def __init__(self, origin: type, args: Any) -> None: ...
+        if sys.version_info >= (3, 11):
+            @property
+            def __unpacked__(self) -> bool: ...
+
         def __getattr__(self, name: str) -> Any: ...  # incomplete
 
 if sys.version_info >= (3, 10):
     @final
     class NoneType:
         def __bool__(self) -> Literal[False]: ...
-    EllipsisType = ellipsis  # noqa F811 from builtins
+    EllipsisType = ellipsis  # noqa: F821 from builtins
     from builtins import _NotImplementedType
 
-    NotImplementedType = _NotImplementedType  # noqa F811 from builtins
+    NotImplementedType = _NotImplementedType
     @final
     class UnionType:
         @property

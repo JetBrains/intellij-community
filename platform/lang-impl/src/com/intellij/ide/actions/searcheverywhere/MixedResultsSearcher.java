@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -319,6 +320,9 @@ class MixedResultsSearcher implements SESearcher {
           .flatMap(Collection::stream)
           .collect(Collectors.toList());
         SEEqualElementsActionType action = myEqualityProvider.compareItems(newElementInfo, alreadyFoundItems);
+        if (Registry.is("search.everywhere.recent.at.top") && action instanceof SEEqualElementsActionType.Replace replaceAction) {
+          action = fixReplaceAction(replaceAction);
+        }
         if (action == SEEqualElementsActionType.Skip.INSTANCE) {
           LOG.debug(String.format("Element %s for contributor %s was skipped", element.toString(), contributor.getSearchProviderId()));
           return true;
@@ -347,6 +351,15 @@ class MixedResultsSearcher implements SESearcher {
       finally {
         lock.unlock();
       }
+    }
+
+    private static SEEqualElementsActionType fixReplaceAction(SEEqualElementsActionType.Replace action) {
+      String recentContributorID = RecentFilesSEContributor.class.getSimpleName();
+      List<SearchEverywhereFoundElementInfo> updatedList = ContainerUtil.filter(
+        action.getToBeReplaced(),
+        info -> !recentContributorID.equals(info.getContributor().getSearchProviderId())
+      );
+      return updatedList.isEmpty() ? SEEqualElementsActionType.Skip.INSTANCE : new SEEqualElementsActionType.Replace(updatedList);
     }
 
     public void contributorFinished(SearchEverywhereContributor<?> contributor) {

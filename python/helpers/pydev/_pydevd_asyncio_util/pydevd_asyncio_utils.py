@@ -1,6 +1,7 @@
 #  Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 from _pydevd_bundle.pydevd_constants import IS_ASYNCIO_DEBUGGER_ENV, IS_ASYNCIO_REPL
+from _pydev_bundle.pydev_log import warn
 
 eval_async_expression_in_context = None
 eval_async_expression = None
@@ -102,14 +103,20 @@ if IS_ASYNCIO_DEBUGGER_ENV or IS_ASYNCIO_REPL:
         :param global_names: the dictionary implementing the current module namespace
         :return: evaluation result
         """
-        apply()
+        try:
+            apply()
+        except:
+            warn('Failed to patch asyncio')
         func = types.FunctionType(code, global_names)
         result = func()
-        if inspect.iscoroutine(result) and MODULE in str(result):
-            loop = asyncio.get_event_loop()
-            result = loop.run_until_complete(result)
-
-        return result
+        try:
+            if inspect.iscoroutine(result) and MODULE in str(result):
+                loop = asyncio.get_event_loop()
+                result = loop.run_until_complete(result)
+        except:
+            warn('Failed to run coroutine %s'%str(result))
+        finally:
+            return result
 
 
     eval_async_expression_in_context = _eval_async_expression_in_context

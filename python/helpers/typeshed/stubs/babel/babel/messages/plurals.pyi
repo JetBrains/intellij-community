@@ -5,8 +5,11 @@ PLURALS: Any
 DEFAULT_PLURAL: Any
 
 class _PluralTuple(tuple[int, str]):
-    num_plurals: Any
-    plural_expr: Any
-    plural_forms: Any
+    @property
+    def num_plurals(self) -> int: ...
+    @property
+    def plural_expr(self) -> str: ...
+    @property
+    def plural_forms(self) -> str: ...
 
 def get_plural(locale=...): ...

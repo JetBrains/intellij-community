@@ -10,6 +10,7 @@ import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 
+@JvmDefaultWithCompatibility
 interface FloatingToolbarProvider {
   @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("Use [order] option in plugin.xml")

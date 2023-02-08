@@ -1,7 +1,8 @@
 import logging
 from _typeshed import Self
+from collections.abc import Collection
 from types import TracebackType
-from typing import Any, ClassVar, Collection, NamedTuple
+from typing import Any, ClassVar, NamedTuple
 from typing_extensions import Literal
 
 from .. import exceptions

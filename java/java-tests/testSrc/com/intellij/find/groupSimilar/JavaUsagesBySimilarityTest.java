@@ -103,6 +103,7 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
                    b : 1
                    """, bag.toString());
     bag.add("a");
+    assertEquals(bag.getCardinality(), 3);
     Bag toAdd = new Bag("a", "c");
     bag.addAll(toAdd);
     assertEquals("""
@@ -110,6 +111,7 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
                    a : 3
                    b : 1
                    """, bag.toString());
+    assertEquals(bag.getCardinality(), 5);
   }
 
   public void testDistance() {

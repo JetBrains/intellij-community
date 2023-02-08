@@ -77,28 +77,61 @@ class KotlinScriptDependenciesLibraryRootProvider : AdditionalLibraryRootsProvid
         ScriptConfigurationManager.allExtraRoots(project).filterValid()
     }
 
-    private data class KotlinScriptDependenciesLibrary(val classes: Collection<VirtualFile>, val sources: Collection<VirtualFile>) :
-        SyntheticLibrary("KotlinScriptDependenciesLibrary", null), ItemPresentation {
+    abstract class AbstractDependenciesLibrary(private val id: String, val classes: Collection<VirtualFile>, val sources: Collection<VirtualFile>) :
+        SyntheticLibrary(id, null), ItemPresentation {
+
+        protected val gradle: Boolean by lazy { classes.hasGradleDependency() }
+
         override fun getBinaryRoots(): Collection<VirtualFile> = classes
 
         override fun getSourceRoots(): Collection<VirtualFile> = sources
 
-        override fun getPresentableText(): String = KotlinBaseScriptingBundle.message("script.name.kotlin.script.dependencies")
+        override fun getIcon(unused: Boolean): Icon = if (gradle) {
+            KotlinIcons.GRADLE_SCRIPT
+        } else {
+            KotlinIcons.SCRIPT
+        }
 
-        override fun getIcon(unused: Boolean): Icon = KotlinIcons.SCRIPT
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as AbstractDependenciesLibrary
+
+            return id == other.id && classes == other.classes && sources == other.sources
+        }
+
+        override fun hashCode(): Int {
+            return 31 * classes.hashCode() + sources.hashCode()
+        }
+
+
     }
 
-    private data class ScriptSdk(val sdk: Sdk?, val classes: Collection<VirtualFile>, val sources: Collection<VirtualFile>) :
-        SyntheticLibrary(), ItemPresentation {
-        override fun getBinaryRoots(): Collection<VirtualFile> = classes
-
-        override fun getSourceRoots(): Collection<VirtualFile> = sources
+    private class KotlinScriptDependenciesLibrary(classes: Collection<VirtualFile>, sources: Collection<VirtualFile>) :
+        AbstractDependenciesLibrary("KotlinScriptDependenciesLibrary", classes, sources) {
 
         override fun getPresentableText(): String =
-            sdk?.let { KotlinBaseScriptingBundle.message("script.name.kotlin.script.sdk.dependencies.0", it.name) }
-                ?: KotlinBaseScriptingBundle.message("script.name.kotlin.script.sdk.dependencies")
+            if (gradle) {
+                KotlinBaseScriptingBundle.message("script.name.gradle.script.dependencies")
+            } else {
+                KotlinBaseScriptingBundle.message("script.name.kotlin.script.dependencies")
+            }
+    }
 
-        override fun getIcon(unused: Boolean): Icon = KotlinIcons.GRADLE_SCRIPT
+    private class ScriptSdk(val sdk: Sdk?, classes: Collection<VirtualFile>, sources: Collection<VirtualFile>) :
+        AbstractDependenciesLibrary("ScriptSdk", classes, sources) {
+
+        override fun getPresentableText(): String =
+            if (gradle) {
+                sdk?.let { KotlinBaseScriptingBundle.message("script.name.gradle.script.sdk.dependencies.0", it.name) }
+                    ?: KotlinBaseScriptingBundle.message("script.name.gradle.script.sdk.dependencies")
+            } else {
+                sdk?.let { KotlinBaseScriptingBundle.message("script.name.kotlin.script.sdk.dependencies.0", it.name) }
+                    ?: KotlinBaseScriptingBundle.message("script.name.kotlin.script.sdk.dependencies")
+            }
     }
 
 }
+
+fun Collection<VirtualFile>.hasGradleDependency() = any { it.name.contains("gradle") }

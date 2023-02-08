@@ -102,27 +102,12 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       if ((PyNames.TYPE_ENUM + ".name").equals(name)) {
         return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getStrType());
       }
+      else if ("enum.IntEnum.value".equals(name) && anchor instanceof PyReferenceExpression) {
+        return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getIntType());
+      }
       else if ((PyNames.TYPE_ENUM + ".value").equals(name) && anchor instanceof PyReferenceExpression && context.maySwitchToAST(anchor)) {
         final PyReferenceExpression anchorExpr = (PyReferenceExpression)anchor;
         final PyExpression qualifier = anchorExpr.getQualifier();
-        // A specific enum item is used as a qualifier, e.g. MyEnum.FOO.value  
-        if (qualifier instanceof PyReferenceExpression) {
-          final PyReferenceExpression qualifierExpr = (PyReferenceExpression)qualifier;
-          final PsiElement resolvedQualifier = qualifierExpr.getReference().resolve();
-          if (resolvedQualifier instanceof PyTargetExpression) {
-            final PyTargetExpression enumItem = (PyTargetExpression)resolvedQualifier;
-            // Requires switching to AST, we cannot use getType(enumItem) here, because its type is overridden by this type provider
-            if (context.maySwitchToAST(enumItem)) {
-              final PyExpression value = enumItem.findAssignedValue();
-              if (value != null) {
-                return Ref.create(context.getType(value));
-              }
-            }
-            else {
-              return Ref.create();
-            }
-          }
-        }
         // An enum value is retrieved programmatically, e.g. MyEnum[name].value, or just type-hinted
         if (qualifier != null) {
           PyClassType enumType = as(context.getType(qualifier), PyClassType.class);

@@ -4,10 +4,9 @@ package com.jetbrains.python.documentation;
 import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.documentation.DocumentationMarkup;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.util.text.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -42,6 +41,8 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
+import static com.jetbrains.python.documentation.PyStructuredDocstringFormatter.FORMATTER_FRAGMENTS_FLAG;
+import static com.jetbrains.python.documentation.PyStructuredDocstringFormatter.formatDocstring;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public class PyDocumentationBuilder {
@@ -51,7 +52,7 @@ public class PyDocumentationBuilder {
   private final ChainIterable<String> myBody;        // definition main part
   private final ChainIterable<String> myContent;     // sequence for doc string
   private final ChainIterable<String> mySections;
-
+  private final List<FormatterDocFragment> myFormatterFragments;
   private final Map<String, ChainIterable<String>> mySectionsMap = FactoryMap.createMap(item -> new ChainIterable<>(), LinkedHashMap::new);
   private final TypeEvalContext myContext;
 
@@ -64,6 +65,7 @@ public class PyDocumentationBuilder {
     myBody = new ChainIterable<>();
     myContent = new ChainIterable<>();
     mySections = new ChainIterable<>();
+    myFormatterFragments = new ArrayList<>();
     myContext = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
   }
 
@@ -280,18 +282,18 @@ public class PyDocumentationBuilder {
         // not in getter, getter's doc comment may be useful
         final PyStringLiteralExpression getterDocstring = getEffectiveDocStringExpression(getter);
         if (getterDocstring != null) {
-          mySectionsMap.get(PyPsiBundle.message("QDOC.documentation.is.copied.from")).addItem("property getter");
+          mySectionsMap.get(PyPsiBundle.message("QDOC.copied.from")).addItem("property getter");
           docstring = getterDocstring.getStringValue();
         }
       }
     }
     if (docstring != null) {
-      myContent.add(formatDocString(elementDefinition, docstring));
+      myContent.add(safeRunFormatterService(elementDefinition, docstring));
     }
     final String accessorKind = getAccessorKind(direction);
     mySectionsMap.get(PyPsiBundle.message("QDOC.accessor.kind"))
-                 .addItem(accessorKind)
-                 .addItem(accessor.valueOrNull() == null ? " (not defined)" : "");
+      .addItem(accessorKind)
+      .addItem(accessor.valueOrNull() == null ? " (not defined)" : "");
 
     // Choose appropriate definition to display
     if (accessor.valueOrNull() != null) {
@@ -358,9 +360,85 @@ public class PyDocumentationBuilder {
       addTargetDocumentation(target, isProperty);
     }
 
-    if (docStringExpression != null && !isProperty) {
-      myContent.add(formatDocString(myElement, docStringExpression.getStringValue()));
+    final String formatterInput = docStringExpression != null && !isProperty ? docStringExpression.getStringValue() : null;
+
+    if (StringUtil.isEmpty(formatterInput) && myFormatterFragments.isEmpty()) return;
+
+    final DocstringFormatterRequest output =
+      formatDocstring(myElement, new DocstringFormatterRequest(formatterInput, myFormatterFragments),
+                      List.of(FORMATTER_FRAGMENTS_FLAG));
+
+    if (output != null) {
+      myContent.add(new ChainIterable<>(output.getBody()));
+      fillFormattedSections(output.getFragments());
     }
+    else {
+      // if docstring turned out PLAIN, but suddenly we have fragments or body to handle
+      if (docStringExpression != null) {
+        myContent.add(updateLines(myElement, Strings.notNullize(formatterInput)));
+      }
+      fillFormattedSections(myFormatterFragments);
+    }
+  }
+
+  private void fillFormattedSections(@NotNull List<FormatterDocFragment> fragmentList) {
+    fragmentList.forEach(fragment -> {
+      final String html = fragment.html().toString();
+      if (html.isEmpty()) return;
+      final ChainIterable<String> section =
+        switch (fragment.myFragmentType) {
+          case ATTRIBUTE -> mySectionsMap.get(PyPsiBundle.message("QDOC.attributes"));
+          case PARAMETER -> mySectionsMap.get(PyPsiBundle.message("QDOC.params"));
+          case KEYWORD_ARGUMENT -> mySectionsMap.get(PyPsiBundle.message("QDOC.keyword.args"));
+          case RAISE -> mySectionsMap.get(PyPsiBundle.message("QDOC.raises"));
+          case RETURN -> mySectionsMap.get(PyPsiBundle.message("QDOC.returns"));
+        };
+      section.addItem(html);
+    });
+  }
+
+  @Nullable
+  private PyStringLiteralExpression addFunctionDocumentation(@Nullable PyStringLiteralExpression docStringExpression,
+                                                             @NotNull PyFunction pyFunction,
+                                                             @Nullable PyClass pyClass,
+                                                             boolean isProperty) {
+    // if we have containing class, but don't have a function doc
+    if (docStringExpression == null && pyClass != null) {
+      if (!isProperty) {
+        // add docstring from the parent class or function
+        docStringExpression = addFunctionInheritedDocString(pyFunction, pyClass);
+      }
+      if (PyUtil.isInitOrNewMethod(pyFunction)) {
+        final PyStringLiteralExpression classDocstring = getEffectiveDocStringExpression(pyClass);
+        if (classDocstring != null) {
+          // we should add attributes section from class doc because it won't be added with function sections in the end
+          addAttributesSection(classDocstring);
+        }
+      }
+    }
+    if (docStringExpression != null) {
+      addFunctionSpecificSections(docStringExpression, pyFunction);
+    }
+    return docStringExpression;
+  }
+
+  @Nullable
+  private PyStringLiteralExpression addClassDocumentation(@Nullable PyStringLiteralExpression docStringExpression,
+                                                          @NotNull PyClass pyClass) {
+    final PyFunction init = pyClass.findMethodByName(PyNames.INIT, false, myContext);
+    if (docStringExpression != null) {
+      addAttributesSection(docStringExpression);
+      if (init != null) {
+        // add init parameters described in the class doc
+        addFunctionSpecificSections(docStringExpression, init);
+      }
+      return docStringExpression;
+    }
+    // if class doesn't have any doc add init doc without other sections
+    if (init != null) {
+      return getEffectiveDocStringExpression(init);
+    }
+    return null;
   }
 
   private void addTargetDocumentation(@NotNull PyTargetExpression target, boolean isProperty) {
@@ -388,64 +466,15 @@ public class PyDocumentationBuilder {
     myBody.add(PythonDocumentationProvider.describeTarget(target, myContext));
   }
 
-  @Nullable
-  private PyStringLiteralExpression addFunctionDocumentation(@Nullable PyStringLiteralExpression docStringExpression,
-                                                             @NotNull PyFunction pyFunction,
-                                                             @Nullable PyClass pyClass,
-                                                             boolean isProperty) {
-    // if we have containing class, but don't have a function doc
-    if (docStringExpression == null && pyClass != null) {
-      if (!isProperty) {
-        // add docstring from the parent class or function
-        docStringExpression = addFunctionInheritedDocString(pyFunction, pyClass);
-      }
-      if (PyUtil.isInitOrNewMethod(pyFunction)) {
-        final PyStringLiteralExpression classDocstring = getEffectiveDocStringExpression(pyClass);
-        if (classDocstring != null) {
-          // we should add attributes section from class doc because it won't be added with function sections in the end
-          addAttributesSection(classDocstring, pyClass);
-        }
-      }
-    }
-    if (docStringExpression != null) {
-      addFunctionSpecificSections(docStringExpression, pyFunction);
-    }
-    return docStringExpression;
-  }
-
-  @Nullable
-  private PyStringLiteralExpression addClassDocumentation(@Nullable PyStringLiteralExpression docStringExpression,
-                                                          @NotNull PyClass pyClass) {
-    final PyFunction init = pyClass.findMethodByName(PyNames.INIT, false, myContext);
-    if (docStringExpression != null) {
-      addAttributesSection(docStringExpression, pyClass);
-      if (init != null) {
-        // add init parameters described in the class doc
-        addFunctionSpecificSections(docStringExpression, init);
-      }
-      return docStringExpression;
-    }
-    // if class doesn't have any doc add init doc without other sections
-    if (init != null) {
-      return getEffectiveDocStringExpression(init);
-    }
-    return null;
-  }
-
-  private void addAttributesSection(@NotNull PyStringLiteralExpression docstring, @NotNull PyClass cls) {
+  private void addAttributesSection(@NotNull PyStringLiteralExpression docstring) {
     final StructuredDocString structured = DocStringUtil.parseDocString(docstring);
     final List<String> documentedAttributes = structured.getAttributes();
 
-    final String allAttributes = StreamEx.of(documentedAttributes)
-      .map(name -> {
+    StreamEx.of(documentedAttributes)
+      .forEach(name -> {
         final String description = structured.getAttributeDescription(name);
-        return "<p><code>" + name + "</code> &ndash; " + Strings.notNullize(description) + "</p>";
-      })
-      .joining();
-
-    if (!allAttributes.isEmpty()) {
-      mySectionsMap.get(PyPsiBundle.message("QDOC.attributes")).addItem(allAttributes);
-    }
+        myFormatterFragments.add(new FormatterDocFragment(name, StringUtil.notNullize(description), FormatterDocFragmentType.ATTRIBUTE));
+      });
   }
 
   private void addFunctionSpecificSections(@NotNull PyStringLiteralExpression docstring, @NotNull PyFunction function) {
@@ -453,49 +482,34 @@ public class PyDocumentationBuilder {
 
     final List<PyCallableParameter> parameters = function.getParameters(myContext);
     final List<String> actualNames = ContainerUtil.mapNotNull(parameters, PyCallableParameter::getName);
-    // Retain the actual order of parameters
-    final String paramList = StreamEx.of(actualNames)
+    StreamEx.of(actualNames)
       .filter(name -> structured.getParamDescription(name) != null)
-      .map(name -> {
+      .forEach(name -> {
         final String description = structured.getParamDescription(name);
-        return "<p><code>" + name + "</code> &ndash; " + Strings.notNullize(description) + "</p>";
-      })
-      .joining();
-
-    if (!paramList.isEmpty()) {
-      mySectionsMap.get(PyPsiBundle.message("QDOC.params")).addItem(paramList);
-    }
+        myFormatterFragments.add(new FormatterDocFragment(name, StringUtil.notNullize(description), FormatterDocFragmentType.PARAMETER));
+      });
 
     final List<String> allKeywordArgs = structured.getKeywordArguments();
     if (!ContainerUtil.exists(parameters, PyCallableParameter::isKeywordContainer)) {
       allKeywordArgs.retainAll(new HashSet<>(actualNames));
     }
-    final String keywordArgsList = StreamEx.of(allKeywordArgs)
-      .map(name -> {
+    StreamEx.of(allKeywordArgs)
+      .forEach(name -> {
         final String description = structured.getKeywordArgumentDescription(name);
-        return "<p><code>" + name + "</code> &ndash; " + StringUtil.notNullize(description) + "</p>";
-      })
-      .joining();
-    if (!keywordArgsList.isEmpty()) {
-      mySectionsMap.get(PyPsiBundle.message("QDOC.keyword.args")).addItem(keywordArgsList);
-    }
+        myFormatterFragments.add(
+          new FormatterDocFragment(name, StringUtil.notNullize(description), FormatterDocFragmentType.KEYWORD_ARGUMENT));
+      });
 
     final String returnDescription = structured.getReturnDescription();
-    if (returnDescription != null && !mySectionsMap.containsKey(PyPsiBundle.message("QDOC.returns"))) {
-      mySectionsMap.get(PyPsiBundle.message("QDOC.returns")).addItem(Strings.notNullize(returnDescription));
+    if (returnDescription != null) {
+      myFormatterFragments.add(new FormatterDocFragment("return", returnDescription, FormatterDocFragmentType.RETURN));
     }
 
-    final String exceptionList = StreamEx.of(structured.getRaisedExceptions())
-                                          .map(name -> {
-                                            final String description = structured.getRaisedExceptionDescription(name);
-                                            return "<p><code>" + name + "</code>" +
-                                                   (StringUtil.isNotEmpty(description) ? " &ndash; " + description : "") + "</p>";
-                                          })
-                                          .joining();
-
-    if (!exceptionList.isEmpty()) {
-      mySectionsMap.get(PyPsiBundle.message("QDOC.raises")).addItem(exceptionList);
-    }
+    StreamEx.of(structured.getRaisedExceptions())
+      .forEach(name -> {
+        final String description = structured.getRaisedExceptionDescription(name);
+        myFormatterFragments.add(new FormatterDocFragment(name, StringUtil.notNullize(description), FormatterDocFragmentType.RAISE));
+      });
   }
 
   private boolean isAttribute() {
@@ -561,7 +575,7 @@ public class PyDocumentationBuilder {
       if (docstringElement != null && !docstringElement.getStringValue().isEmpty()) {
         final String ancestorLink = isFromClass ? getLinkToClass(ancestor, false) : getLinkToFunction(inherited, false);
         if (ancestorLink != null) {
-          mySectionsMap.get(PyPsiBundle.message("QDOC.documentation.is.copied.from")).addWith(TagCode, $(ancestorLink));
+          mySectionsMap.get(PyPsiBundle.message("QDOC.copied.from")).addWith(TagCode, $(ancestorLink));
         }
         return docstringElement;
       }
@@ -586,8 +600,8 @@ public class PyDocumentationBuilder {
         final PyStringLiteralExpression predefinedDocstring = getEffectiveDocStringExpression(predefinedMethod);
         final String predefinedDoc = predefinedDocstring != null ? predefinedDocstring.getStringValue() : null;
         if (predefinedDoc != null && !predefinedDoc.isEmpty()) {
-          mySectionsMap.get(PyPsiBundle.message("QDOC.documentation.is.copied.from")).addItem("built-in description");
-          myContent.add(formatDocString(fun, predefinedDoc));
+          mySectionsMap.get(PyPsiBundle.message("QDOC.copied.from")).addItem("built-in description");
+          myContent.add(safeRunFormatterService(fun, predefinedDoc));
         }
         return predefinedDocstring;
       }
@@ -596,13 +610,18 @@ public class PyDocumentationBuilder {
   }
 
   @NotNull
-  private static ChainIterable<String> formatDocString(@NotNull PsiElement element, @NotNull String docstring) {
-
-    final List<String> formatted = PyStructuredDocstringFormatter.formatDocstring(element, docstring);
+  private static ChainIterable<String> safeRunFormatterService(@NotNull PsiElement element,
+                                                               @NotNull String docstring) {
+    final DocstringFormatterRequest formatted =
+      formatDocstring(element, new DocstringFormatterRequest(docstring), Collections.emptyList());
     if (formatted != null) {
-      return new ChainIterable<>(formatted);
+      return new ChainIterable<>(formatted.getBody());
     }
+    return updateLines(element, docstring);
+  }
 
+  @NotNull
+  private static ChainIterable<String> updateLines(@NotNull PsiElement element, @NotNull String docstring) {
     final List<String> origLines = LineTokenizer.tokenizeIntoList(docstring.trim(), false, false);
     final List<String> updatedLines = StreamEx.of(PyIndentUtil.removeCommonIndent(origLines, true))
                                               .takeWhile(line -> !line.startsWith(">>>")) //TODO: PyConsoleUtil.ORDINARY_PROMPT
@@ -706,5 +725,99 @@ public class PyDocumentationBuilder {
     final PsiElement original = PyiUtil.getOriginalElement(owner);
     final PyDocStringOwner originalOwner = as(original, PyDocStringOwner.class);
     return originalOwner != null ? originalOwner.getDocStringExpression() : null;
+  }
+
+  private enum FormatterDocFragmentType {
+    ATTRIBUTE,
+    PARAMETER,
+    RETURN,
+    RAISE,
+    KEYWORD_ARGUMENT
+  }
+
+  static final class DocstringFormatterRequest {
+    @NotNull private final String body;
+    @NotNull private final List<FormatterDocFragment> fragments;
+
+    DocstringFormatterRequest() {
+      body = "";
+      fragments = Collections.emptyList();
+    }
+
+    DocstringFormatterRequest(@NotNull String body) {
+      this.body = body;
+      fragments = Collections.emptyList();
+    }
+
+    DocstringFormatterRequest(@NotNull String body, @NotNull List<FormatterDocFragment> fragments) {
+      this.body = body;
+      this.fragments = fragments;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof DocstringFormatterRequest)) return false;
+      DocstringFormatterRequest structure = (DocstringFormatterRequest)o;
+      return body.equals(structure.body) && fragments.equals(structure.fragments);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(body, fragments);
+    }
+
+    @NotNull String getBody() {
+      return body;
+    }
+
+    @NotNull List<FormatterDocFragment> getFragments() {
+      return fragments;
+    }
+  }
+
+  private static final class FormatterDocFragment {
+    @NlsSafe private static final String NDASH = " &ndash; ";
+    @NlsSafe private final String myName;
+    @NlsSafe private final String myDescription;
+    private final FormatterDocFragmentType myFragmentType;
+
+    private FormatterDocFragment(@NotNull String name,
+                                 @NotNull String description,
+                                 @NotNull FormatterDocFragmentType type) {
+      this.myName = name;
+      this.myDescription = description;
+      this.myFragmentType = type;
+    }
+
+    public @NotNull HtmlChunk html() {
+      if (myName.isEmpty() && myFragmentType != FormatterDocFragmentType.RETURN) return HtmlChunk.empty();
+
+      final HtmlBuilder builder = new HtmlBuilder();
+      if (myFragmentType == FormatterDocFragmentType.RETURN) {
+        return builder.appendRaw(myDescription).toFragment();
+      }
+
+      builder.append(HtmlChunk.text(myName).wrapWith("code"));
+      if (!myDescription.isEmpty()) {
+        builder.appendRaw(NDASH).appendRaw(myDescription);
+      }
+      return builder.wrapWith(HtmlChunk.p());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) return true;
+      if (obj == null || obj.getClass() != this.getClass()) return false;
+      var that = (FormatterDocFragment)obj;
+      return Objects.equals(myName, that.myName) &&
+             Objects.equals(myDescription, that.myDescription) &&
+             Objects.equals(myFragmentType, that.myFragmentType);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myName, myDescription, myFragmentType);
+    }
   }
 }

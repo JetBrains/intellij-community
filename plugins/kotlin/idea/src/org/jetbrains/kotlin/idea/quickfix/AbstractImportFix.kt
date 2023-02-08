@@ -186,8 +186,18 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
                 } else {
                     KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(size), firstName, size - 1)
                 }
-            } else {
+            } else if (kind.groupedByPackage) {
                 KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(1), firstName, 0)
+            } else {
+                val groupBy = sortedNames.map { it.name }.toSortedSet().groupBy { it.substringBefore('.') }
+                val value = groupBy.entries.first().value
+                val first = value.first()
+                val multiple = if (value.size == 1) 0 else 1
+                when {
+                    groupBy.size != 1 -> KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(1), first.substringAfter('.'), multiple)
+                    value.size == 2 -> KotlinBundle.message("fix.import.kind.0.name.1.and.name.2", kind.toText(value.size), first, value.last())
+                    else -> KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(1), first, multiple)
+                }
             }
         } else {
             KotlinBundle.message("fix.import")
@@ -196,10 +206,10 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
     private class ImportName(val kind: ImportKind, val name: String, val priority: ComparablePriority)
 
-    private enum class ImportKind(private val key: String) {
-        CLASS("text.class.0"),
+    private enum class ImportKind(private val key: String, val groupedByPackage: Boolean = false) {
+        CLASS("text.class.0", true),
         PROPERTY("text.property.0"),
-        OBJECT("text.object.0"),
+        OBJECT("text.object.0", true),
         FUNCTION("text.function.0"),
         EXTENSION_PROPERTY("text.extension.property.0"),
         EXTENSION_FUNCTION("text.extension.function.0");
@@ -402,7 +412,7 @@ internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, f
         val importedFqNamesAsAlias = getImportedFqNamesAsAlias(ktFile)
         val (defaultImports, excludedImports) = ImportInsertHelperImpl.computeDefaultAndExcludedImports(ktFile)
         return result.filter {
-            val descriptor = it.takeUnless { it.isSealed() } ?: return@filter false
+            val descriptor = it.takeUnless { expression.parent is KtCallExpression && it.isSealed() } ?: return@filter false
             val importableFqName = descriptor.importableFqName ?: return@filter true
             val importPath = ImportPath(importableFqName, isAllUnder = false)
             !importPath.isImported(defaultImports, excludedImports) || importableFqName in importedFqNamesAsAlias

@@ -1,9 +1,9 @@
 from _typeshed import Self, StrPath
-from typing import Optional
+from typing_extensions import TypeAlias
 
-_Label = tuple[int, Optional[str]]
-_DFA = list[list[tuple[int, int]]]
-_DFAS = tuple[_DFA, dict[int, int]]
+_Label: TypeAlias = tuple[int, str | None]
+_DFA: TypeAlias = list[list[tuple[int, int]]]
+_DFAS: TypeAlias = tuple[_DFA, dict[int, int]]
 
 class Grammar:
     symbol2number: dict[str, int]

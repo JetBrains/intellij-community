@@ -150,7 +150,7 @@ internal class ProjectResolutionFacade(
     internal fun resolverForModuleInfo(moduleInfo: IdeaModuleInfo) = cachedResolverForProject.resolverForModule(moduleInfo)
 
     internal fun resolverForElement(element: PsiElement): ResolverForModule {
-        val moduleInfos = mutableListOf<IdeaModuleInfo>()
+        val moduleInfos = mutableSetOf<IdeaModuleInfo>()
 
         for (result in ModuleInfoProvider.getInstance(element.project).collect(element)) {
             val moduleInfo = result.getOrNull()
@@ -159,7 +159,7 @@ internal class ProjectResolutionFacade(
                 if (resolver != null) {
                     return resolver
                 } else {
-                    moduleInfos += moduleInfos
+                    moduleInfos += moduleInfo
                 }
             }
 
@@ -170,7 +170,7 @@ internal class ProjectResolutionFacade(
         }
 
         return cachedResolverForProject.tryGetResolverForModule(NotUnderContentRootModuleInfo)
-            ?: cachedResolverForProject.diagnoseUnknownModuleInfo(moduleInfos)
+            ?: cachedResolverForProject.diagnoseUnknownModuleInfo(moduleInfos.toList())
     }
 
     internal fun resolverForDescriptor(moduleDescriptor: ModuleDescriptor) =

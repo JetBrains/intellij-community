@@ -51,17 +51,15 @@ private fun getCategory(componentClasses: List<Class<PersistentStateComponent<An
 private fun getSchemeCategory(fileSpec: String): SettingsCategory? {
   // fileSpec is e.g. keymaps/mykeymap.xml
   val separatorIndex = fileSpec.indexOf("/")
-  if (separatorIndex >= 0) {
-    val directoryName = fileSpec.substring(0, separatorIndex) // e.g. 'keymaps'
-    var settingsCategory: SettingsCategory? = null
-    (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
-      if (it.fileSpec == directoryName) {
-        settingsCategory = it.getSettingsCategory()
-      }
+  val directoryName = if (separatorIndex >= 0) fileSpec.substring(0, separatorIndex) else fileSpec  // e.g. 'keymaps'
+
+  var settingsCategory: SettingsCategory? = null
+  (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
+    if (it.fileSpec == directoryName) {
+      settingsCategory = it.getSettingsCategory()
     }
-    return settingsCategory
   }
-  return null
+  return settingsCategory
 }
 
 private fun getSubCategory(componentClasses: List<Class<PersistentStateComponent<Any>>>): String? {

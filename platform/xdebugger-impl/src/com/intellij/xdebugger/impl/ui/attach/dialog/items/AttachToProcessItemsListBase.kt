@@ -8,4 +8,5 @@ interface AttachToProcessItemsListBase {
   fun getFocusedComponent(): JComponent
   fun addSelectionListener(disposable: Disposable, listenerAction: (AttachToProcessElement?) -> Unit)
   fun getSelectedItem(): AttachToProcessElement?
+  fun selectNextItem()
 }

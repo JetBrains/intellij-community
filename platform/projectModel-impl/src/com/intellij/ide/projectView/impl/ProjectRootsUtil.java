@@ -48,14 +48,38 @@ public final class ProjectRootsUtil {
   }
 
   public static boolean isModuleSourceRoot(@NotNull VirtualFile virtualFile, @NotNull final Project project) {
-    return getModuleSourceRoot(virtualFile, project) != null;
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+    return fileIndex.isInSourceContent(virtualFile) && virtualFile.equals(fileIndex.getSourceRootForFile(virtualFile));
   }
 
   @Nullable
   public static SourceFolder getModuleSourceRoot(@NotNull VirtualFile root, @NotNull Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    if (!root.equals(projectFileIndex.getSourceRootForFile(root))) return null;
+    
     final Module module = projectFileIndex.getModuleForFile(root);
-    return module != null && !module.isDisposed() ? findSourceFolder(module, root) : null;
+    if (module == null || module.isDisposed()) return null;
+
+    VirtualFile contentRoot = projectFileIndex.getContentRootForFile(root);
+    if (contentRoot == null) return null;
+    
+    for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
+      if (contentRoot.equals(contentEntry.getFile())) {
+        /*
+         If there are several source roots pointing to the same directory, DirectoryIndex::getSourceFolder will return the last of them.
+         It appears that we have code which relies on this behavior, so we'll temporarily keep it. 
+        */
+        SourceFolder @NotNull [] folders = contentEntry.getSourceFolders();
+        for (int i = folders.length - 1; i >= 0; i--) {
+          SourceFolder folder = folders[i];
+          if (root.equals(folder.getFile())) {
+            return folder;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   public static boolean isLibraryRoot(@NotNull VirtualFile directoryFile, @NotNull Project project) {
@@ -109,11 +133,13 @@ public final class ProjectRootsUtil {
     return !projectFileIndex.isInSource(file) && !projectFileIndex.isInLibraryClasses(file);
   }
 
+  /**
+   * @deprecated use {@link #getModuleSourceRoot} instead
+   */
+  @Deprecated
   @Nullable
   public static SourceFolder findSourceFolder(@NotNull Module module, @NotNull VirtualFile root) {
-    ProjectFileIndex index = ProjectFileIndex.getInstance(module.getProject());
-    SourceFolder folder = index.getModuleForFile(root) == module ? index.getSourceFolder(root) : null;
-    return folder != null && root.equals(folder.getFile()) ? folder : null;
+    return getModuleSourceRoot(root, module.getProject());
   }
 
   @Nullable

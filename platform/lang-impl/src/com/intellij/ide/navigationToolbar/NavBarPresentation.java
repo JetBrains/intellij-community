@@ -29,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,8 +79,9 @@ public final class NavBarPresentation {
         Icon icon = ReadAction
           .compute(() -> ((PsiElement)object).isValid() ? ((PsiElement)object).getIcon(0) : null);
 
-        if (icon != null && (icon.getIconHeight() > 16 * 2 || icon.getIconWidth() > 16 * 2)) {
-          icon = IconUtil.cropIcon(icon, 16 * 2, 16 * 2);
+        int maxDimension = JBUI.scale(16 * 2);
+        if (icon != null && (icon.getIconHeight() > maxDimension || icon.getIconWidth() > maxDimension)) {
+          icon = IconUtil.cropIcon(icon, maxDimension, maxDimension);
         }
         return icon;
       }

@@ -8,7 +8,7 @@ import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
-import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
+import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 import java.util.regex.Pattern
 
 internal class RegExpPattern(private val regex: String, private val caseSensitive: Boolean = false) : WebSymbolsPattern() {
@@ -25,7 +25,7 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
 
   override fun match(owner: WebSymbol?,
                      scopeStack: Stack<WebSymbolsScope>,
-                     itemsProvider: WebSymbolsPatternItemsProvider?,
+                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> {
@@ -39,7 +39,7 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
 
   override fun getCompletionResults(owner: WebSymbol?,
                                     scopeStack: Stack<WebSymbolsScope>,
-                                    itemsProvider: WebSymbolsPatternItemsProvider?,
+                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                                     params: CompletionParameters,
                                     start: Int,
                                     end: Int): CompletionResults =

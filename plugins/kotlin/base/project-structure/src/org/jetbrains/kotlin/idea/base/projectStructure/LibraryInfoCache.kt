@@ -42,7 +42,7 @@ class LibraryInfoCache(project: Project) : Disposable {
     }
 
     private class LibraryInfoInnerCache(project: Project) :
-        SynchronizedFineGrainedEntityCache<LibraryEx, List<LibraryInfo>>(project, cleanOnLowMemory = false) {
+        SynchronizedFineGrainedEntityCache<LibraryEx, List<LibraryInfo>>(project) {
 
         val removedLibraryInfoTracker = SimpleModificationTracker()
 

@@ -1,5 +1,6 @@
+from collections.abc import Callable, Mapping, Sequence
 from logging import Logger
-from typing import Any, Callable, Mapping, NamedTuple, Sequence
+from typing import Any, NamedTuple
 
 from .utilities import BadRequest as BadRequest
 

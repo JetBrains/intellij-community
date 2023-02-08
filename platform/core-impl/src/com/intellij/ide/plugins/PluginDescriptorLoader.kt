@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.PlatformUtils
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.URLUtil
 import com.intellij.util.lang.UrlClassLoader
@@ -699,6 +700,7 @@ private fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String>
 }
 
 @Throws(IOException::class)
+@RequiresBackgroundThread
 fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
   val context = DescriptorListLoadingContext(isMissingSubDescriptorIgnored = true,
                                              productBuildNumber = { buildNumber ?: PluginManagerCore.getBuildNumber() },

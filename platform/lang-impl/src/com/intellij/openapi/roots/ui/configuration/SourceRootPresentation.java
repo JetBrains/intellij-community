@@ -7,6 +7,7 @@ import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 
 import javax.swing.*;
@@ -22,19 +23,14 @@ public final class SourceRootPresentation {
   }
 
   @Nullable
-  public static Icon getSourceRootFileLayerIcon(@NotNull SourceFolder sourceFolder) {
-    return getSourceRootFileLayerIcon(sourceFolder.getJpsElement().asTyped());
+  public static Icon getSourceRootFileLayerIcon(JpsModuleSourceRootType<?> rootType) {
+    ModuleSourceRootEditHandler<?> handler = ModuleSourceRootEditHandler.getEditHandler(rootType);
+    return handler != null ? handler.getRootFileLayerIcon() : null;
   }
 
   @NotNull
   private static <P extends JpsElement> Icon getSourceRootIcon(@NotNull JpsTypedModuleSourceRoot<P> root) {
     ModuleSourceRootEditHandler<P> handler = ModuleSourceRootEditHandler.getEditHandler(root.getRootType());
     return handler != null ? handler.getRootIcon(root.getProperties()) : PlatformIcons.FOLDER_ICON;
-  }
-
-  @Nullable
-  private static <P extends JpsElement> Icon getSourceRootFileLayerIcon(@NotNull JpsTypedModuleSourceRoot<P> root) {
-    ModuleSourceRootEditHandler<P> handler = ModuleSourceRootEditHandler.getEditHandler(root.getRootType());
-    return handler != null ? handler.getRootFileLayerIcon(root.getProperties()) : null;
   }
 }

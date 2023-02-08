@@ -126,10 +126,11 @@ def with_polymorphic(
     flat: bool = ...,
     polymorphic_on: Any | None = ...,
     aliased: bool = ...,
+    adapt_on_names: bool = ...,
     innerjoin: bool = ...,
     _use_mapper_path: bool = ...,
     _existing_alias: Any | None = ...,
-): ...
+) -> AliasedClass: ...
 
 class Bundle(ORMColumnsClauseRole, SupportsCloneAnnotations, sql_base.MemoizedHasCacheKey, InspectionAttr):
     single_entity: bool

@@ -35,16 +35,12 @@
     <orderEntry type="library" name="kodein-di-jvm" level="project" />
     <orderEntry type="module-library">
       <library name="rauschig.jarchivelib" type="repository">
-        <properties maven-id="org.rauschig:jarchivelib:1.2.0" />
+        <properties include-transitive-deps="false" maven-id="org.rauschig:jarchivelib:1.2.0" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/rauschig/jarchivelib/1.2.0/jarchivelib-1.2.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.21/commons-compress-1.21.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
-        <excluded>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.21/commons-compress-1.21.jar!/" />
-        </excluded>
       </library>
     </orderEntry>
     <orderEntry type="library" name="commons-logging" level="project" />

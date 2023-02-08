@@ -2107,6 +2107,19 @@ public class PyTypingTest extends PyTestCase {
            "expr = x.method()");
   }
 
+  public void testUnresolvedReturnTypeNotOverridenByAncestorAnnotation() {
+    doTest("Any",
+           """
+             class Super:
+                 def m(self) -> int:
+                     ...
+             class Sub(Super):
+                 def m(self) -> Unresolved:
+                     ...
+             expr = Sub().m()
+             """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

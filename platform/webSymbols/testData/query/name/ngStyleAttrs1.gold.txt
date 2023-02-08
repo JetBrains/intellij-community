@@ -25,6 +25,24 @@
     },
    },
    {
+    name-part: "",
+    symbol: {
+     matchedName: "html/ng-bindings/<pattern>",
+     name: "Property binding",
+     origin: "css@1.0 (<none>)",
+     complete: true,
+     virtual: true,
+     priority: NORMAL,
+     has-pattern: true,
+     segments: [
+      {
+       name-part: "",
+       symbol: <self>,
+      },
+     ],
+    },
+   },
+   {
     name-part: "prop1",
     display-name: "Property binding",
     symbol: {

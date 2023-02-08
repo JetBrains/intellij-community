@@ -3,7 +3,6 @@
   matchedName: "html/attributes/moveClass",
   origin: "vue@3.0.0 (vue)",
   attrValue: {
-   kind: PLAIN,
    type: OF_MATCH,
   },
   complete: true,
@@ -16,7 +15,6 @@
      name: "Component property",
      origin: "vue@3.0.0 (vue)",
      attrValue: {
-      kind: PLAIN,
       type: OF_MATCH,
      },
      complete: true,

@@ -30,6 +30,10 @@ public abstract class TabLayout {
     return false;
   }
 
+  public boolean isWithScrollBar() {
+    return false;
+  }
+
   public static double getDragOutMultiplier() {
     return Registry.doubleValue("ide.tabbedPane.dragOutMultiplier");
   }

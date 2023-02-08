@@ -1,8 +1,6 @@
 package com.siyeh.igtest.performance.key_set_iteration_may_use_entry_set;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 public class KeySetIterationMayUseEntrySet {
@@ -49,6 +47,24 @@ public class KeySetIterationMayUseEntrySet {
       String value = map.get(x);
       System.out.println(x+"="+value);
     });
+  }
+
+  private Object[] shrink(Hashtable<?, ?> tmp) {
+    Object[] array = new Object[tmp.size() * 2];
+    int j = 0;
+    for (Object o : <warning descr="Iteration over 'tmp.keySet()' may be replaced with 'entrySet()' iteration">tmp.keySet()</warning>) {
+      array[j] = o;
+      array[j + 1] = tmp.get(o);
+      j += 2;
+    }
+    return array;
+  }
+  
+  void inc(Map<Integer, Long> map) {
+    for (Integer key : map.keySet()) {
+      key++;
+      System.out.println(map.get(key));
+    }
   }
 
   HashMap<String, String> get() {

@@ -1,4 +1,5 @@
-from typing import Any, Callable, Container, Iterable, Mapping, NamedTuple, Sequence, Union
+from typing import Any, Callable, Container, Iterable, Mapping, NamedTuple, Sequence
+from typing_extensions import TypeAlias
 
 LATEX_ESCAPE_RULES: dict[str, str]
 MIN_PADDING: int
@@ -18,8 +19,8 @@ class DataRow(NamedTuple):
     sep: str
     end: str
 
-_TableFormatLine = Union[None, Line, Callable[[list[int], list[str]], str]]
-_TableFormatRow = Union[None, DataRow, Callable[[list[Any], list[int], list[str]], str]]
+_TableFormatLine: TypeAlias = None | Line | Callable[[list[int], list[str]], str]
+_TableFormatRow: TypeAlias = None | DataRow | Callable[[list[Any], list[int], list[str]], str]
 
 class TableFormat(NamedTuple):
     lineabove: _TableFormatLine

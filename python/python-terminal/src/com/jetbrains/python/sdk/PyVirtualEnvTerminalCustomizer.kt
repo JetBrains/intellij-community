@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -69,11 +70,14 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
                                               workingDirectory: String?,
                                               command: Array<out String>,
                                               envs: MutableMap<String, String>): Array<out String> {
-    var sdk: Sdk? = null
+    var sdkByDirectory: Sdk? = null
     if (workingDirectory != null) {
-      sdk = PySdkUtil.findSdkForDirectory(project, Paths.get(workingDirectory), false)
+      runReadAction {
+        sdkByDirectory = PySdkUtil.findSdkForDirectory(project, Paths.get(workingDirectory), false)
+      }
     }
 
+    val sdk = sdkByDirectory
     if (sdk != null &&
         (PythonSdkUtil.isVirtualEnv(sdk) || PythonSdkUtil.isConda(sdk)) &&
         PyVirtualEnvTerminalSettings.getInstance(project).virtualEnvActivate) {

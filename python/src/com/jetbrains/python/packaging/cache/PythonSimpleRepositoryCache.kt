@@ -22,6 +22,7 @@ import javax.swing.text.html.parser.ParserDelegator
 @Service
 class PythonSimpleRepositoryCache : PythonPackageCache<PyPackageRepository> {
 
+  @Volatile
   private var cache: Map<PyPackageRepository, List<String>> = emptyMap()
 
   val repositories: List<PyPackageRepository>
@@ -45,9 +46,7 @@ class PythonSimpleRepositoryCache : PythonPackageCache<PyPackageRepository> {
           service.markInvalid(it.repositoryUrl!!)
         }
       }
-      withContext(Dispatchers.Main) {
-        cache = newCache
-      }
+      cache = newCache
     }
   }
 

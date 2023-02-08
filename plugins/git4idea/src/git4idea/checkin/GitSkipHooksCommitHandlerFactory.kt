@@ -10,6 +10,8 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.util.ui.JBUI
+import com.intellij.vcs.commit.CommitSessionCollector
+import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitOption
 import com.intellij.vcs.commit.commitProperty
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle
@@ -47,6 +49,9 @@ private class GitSkipHooksConfigurationPanel(
   private val runHooks = JCheckBox(GitBundle.message("checkbox.run.git.hooks")).apply {
     isSelected = true
     toolTipText = GitBundle.message("tooltip.run.git.hooks")
+    addActionListener {
+      CommitSessionCollector.getInstance(panel.project).logCommitOptionToggled(CommitOption.RUN_HOOKS, isSelected)
+    }
   }
 
   override fun getComponent(): JComponent = JBUI.Panels.simplePanel(runHooks)

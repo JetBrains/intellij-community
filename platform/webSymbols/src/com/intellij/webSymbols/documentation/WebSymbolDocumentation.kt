@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.documentation
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationImpl
@@ -18,12 +19,12 @@ interface WebSymbolDocumentation {
   /**
    * Symbol name
    */
-  val name: String
+  val name: @NlsSafe String
 
   /**
    * Symbol definition with HTML markup
    */
-  val definition: String
+  val definition: @NlsSafe String
 
   /**
    * Description of the symbol with HTML markup
@@ -33,7 +34,7 @@ interface WebSymbolDocumentation {
   /**
    * URL for external documentation
    */
-  val docUrl: String?
+  val docUrl: @NlsSafe String?
 
   /**
    * Whether the symbol is deprecated
@@ -56,12 +57,12 @@ interface WebSymbolDocumentation {
   /**
    * Default value
    */
-  val defaultValue: String?
+  val defaultValue: @NlsSafe String?
 
   /**
    * Library of origin
    */
-  val library: String?
+  val library: @NlsSafe String?
 
   /**
    * Icon
@@ -80,13 +81,13 @@ interface WebSymbolDocumentation {
 
   fun isNotEmpty(): Boolean
 
-  fun withName(name: String): WebSymbolDocumentation
+  fun withName(name: @NlsSafe String): WebSymbolDocumentation
 
-  fun withDefinition(definition: String): WebSymbolDocumentation
+  fun withDefinition(definition: @NlsSafe String): WebSymbolDocumentation
 
   fun withDescription(description: @Nls String?): WebSymbolDocumentation
 
-  fun withDocUrl(docUrl: String?): WebSymbolDocumentation
+  fun withDocUrl(docUrl: @NlsSafe String?): WebSymbolDocumentation
 
   fun withDeprecated(deprecated: Boolean): WebSymbolDocumentation
 
@@ -94,25 +95,25 @@ interface WebSymbolDocumentation {
 
   fun withRequired(required: Boolean): WebSymbolDocumentation
 
-  fun withDefault(defaultValue: String?): WebSymbolDocumentation
+  fun withDefault(defaultValue: @NlsSafe String?): WebSymbolDocumentation
 
-  fun withLibrary(library: String?): WebSymbolDocumentation
+  fun withLibrary(library: @NlsSafe String?): WebSymbolDocumentation
 
   fun withIcon(icon: Icon?): WebSymbolDocumentation
 
-  fun withDescriptionSection(@Nls name: String, @Nls contents: String): WebSymbolDocumentation
+  fun withDescriptionSection(name: @Nls String, contents: @Nls String): WebSymbolDocumentation
 
-  fun withFootnote(@Nls footnote: String?): WebSymbolDocumentation
+  fun withFootnote(footnote: @Nls String?): WebSymbolDocumentation
 
-  fun with(name: String = this.name,
-           definition: String = this.definition,
+  fun with(name: @NlsSafe String = this.name,
+           definition: @NlsSafe String = this.definition,
            description: @Nls String? = this.description,
-           docUrl: String? = this.docUrl,
+           docUrl: @NlsSafe String? = this.docUrl,
            deprecated: Boolean = this.deprecated,
            experimental: Boolean = this.experimental,
            required: Boolean = this.required,
-           defaultValue: String? = this.defaultValue,
-           library: String? = this.library,
+           defaultValue: @NlsSafe String? = this.defaultValue,
+           library: @NlsSafe String? = this.library,
            icon: Icon? = this.icon,
            additionalSections: Map<@Nls String, @Nls String> = emptyMap(),
            footnote: @Nls String? = this.footnote): WebSymbolDocumentation

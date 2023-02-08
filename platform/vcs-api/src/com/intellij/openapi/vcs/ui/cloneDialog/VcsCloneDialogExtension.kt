@@ -12,6 +12,7 @@ import javax.swing.Icon
  * Extension point that provide an ability to add integration with specific cloud repository hosting/service (e.g "GitHub", "BitBucket", etc)
  */
 @ApiStatus.OverrideOnly
+@JvmDefaultWithCompatibility
 interface VcsCloneDialogExtension {
   companion object {
     val EP_NAME =

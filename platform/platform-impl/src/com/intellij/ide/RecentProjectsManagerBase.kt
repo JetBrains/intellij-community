@@ -441,6 +441,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     try {
       val isOpened = if (openPaths.size == 1 ||
                          ApplicationManager.getApplication().isHeadlessEnvironment ||
+                         !System.getProperty("idea.open.multi.projects.correctly", "true").toBoolean() ||
                          WindowManagerEx.getInstanceEx().getFrameHelper(null) != null) {
         openOneByOne(java.util.List.copyOf(openPaths), index = 0, someProjectWasOpened = false)
       }
@@ -679,7 +680,11 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     var file: File? = File(projectPath)
     while (file != null) {
       val projectMetaInfo = state.additionalInfo.remove(FileUtil.toSystemIndependentName(file.path))
-      if (projectMetaInfo != null) break
+      if (projectMetaInfo != null) {
+        modCounter.incrementAndGet()
+        fireChangeEvent()
+        break
+      }
 
       file = FileUtil.getParentFile(file)
     }

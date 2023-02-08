@@ -5,8 +5,7 @@ import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.JBColor
+import com.intellij.openapi.wm.impl.headertoolbar.isDarkHeader
 import com.intellij.util.ui.JBValue
 import java.awt.Color
 import java.awt.Graphics
@@ -18,8 +17,6 @@ import javax.swing.UIManager
 private const val iconSize = 20
 
 internal class HeaderToolbarButtonLook : IdeaActionButtonLook() {
-
-  private val headerColor = JBColor.namedColor("MainToolbar.background")
 
   override fun getStateBackground(component: JComponent, state: Int): Color = when (state) {
     ActionButtonComponent.NORMAL -> component.background
@@ -49,7 +46,7 @@ internal class HeaderToolbarButtonLook : IdeaActionButtonLook() {
   }
 
   private fun adjustColor(icon: Icon) =
-    if (ColorUtil.isDark(headerColor)) IconLoader.getDarkIcon(icon, true) else icon
+    if (isDarkHeader()) IconLoader.getDarkIcon(icon, true) else icon
 
   private fun scaleIcon(icon: Icon) : Icon {
     if (icon is ScalableIcon) {

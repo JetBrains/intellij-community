@@ -1310,7 +1310,7 @@ public abstract class DialogWrapper {
         DialogPanel dialogPanel = (DialogPanel)centerPanel;
         myPreferredFocusedComponentFromPanel = dialogPanel.getPreferredFocusedComponent();
         dialogPanel.registerValidators(myDisposable, map -> {
-          setOKActionEnabled(map.isEmpty());
+          setOKActionEnabled(ContainerUtil.and(map.values(), info -> info.okEnabled));
           return Unit.INSTANCE;
         });
         myDialogPanel = dialogPanel;

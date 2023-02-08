@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JsCompilerArgumen
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector
 import org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetectorListener
 import org.jetbrains.kotlin.idea.notification.catchNotificationText
@@ -144,6 +145,20 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
     fun testTwoModulesWithJSNonDefaultPath_doNotCopyInDefault() {
         doTestConfigureModulesWithNonDefaultSetup(jsConfigurator)
         assertEmpty(getCanBeConfiguredModules(myProject, jvmConfigurator))
+    }
+
+    fun testModuleFacetChange() {
+        val kotlinFacet = KotlinFacet.get(module)!!
+        val languageVersionSettings = module.languageVersionSettings
+        assertEquals(languageVersionSettings, module.languageVersionSettings)
+
+        runWriteAction {
+            val model = FacetManager.getInstance(module).createModifiableModel()
+            model.removeFacet(kotlinFacet)
+            model.commit()
+        }
+
+        assertFalse(languageVersionSettings == module.languageVersionSettings)
     }
 
     fun testSimple() {

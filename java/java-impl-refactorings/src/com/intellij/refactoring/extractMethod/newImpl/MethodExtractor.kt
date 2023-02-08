@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.refactoring.HelpID
+import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
@@ -60,7 +61,7 @@ class MethodExtractor {
       }
     } else {
       findAndSelectExtractOption(editor, file, range)?.thenApply { options ->
-        extractInDialog(options.targetClass, options.elements, "", options.isStatic)
+        extractInDialog(options.targetClass, options.elements, "", JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD)
       }
     }
 }
@@ -127,16 +128,16 @@ class MethodExtractor {
   }
 
   private fun createInplaceSettingsPopup(options: ExtractOptions): ExtractMethodPopupProvider {
-    val isStatic = options.isStatic
     val analyzer = CodeFragmentAnalyzer(options.elements)
     val optionsWithStatic = ExtractMethodPipeline.withForcedStatic(analyzer, options)
     val makeStaticAndPassFields = optionsWithStatic?.inputParameters?.size != options.inputParameters.size
-    val showStatic = ! isStatic && optionsWithStatic != null
+    val showStatic = !options.isStatic && optionsWithStatic != null
+    val defaultStatic = if (!makeStaticAndPassFields) JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD else false
     val hasAnnotation = options.dataOutput.nullability != Nullability.UNKNOWN && options.dataOutput.type !is PsiPrimitiveType
     val annotationAvailable = ExtractMethodHelper.isNullabilityAvailable(options)
     return ExtractMethodPopupProvider(
       annotateDefault = if (hasAnnotation && annotationAvailable) needsNullabilityAnnotations(options.project) else null,
-      makeStaticDefault = if (showStatic) !makeStaticAndPassFields else null,
+      makeStaticDefault = if (showStatic) defaultStatic else null,
       staticPassFields = makeStaticAndPassFields
     )
   }

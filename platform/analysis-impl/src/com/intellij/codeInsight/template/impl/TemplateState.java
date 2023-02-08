@@ -923,12 +923,13 @@ public final class TemplateState extends TemplateStateBase implements Disposable
         int templateStartOffset = getTemplateStartOffset();
         int offset = templateStartOffset > 0 ? getTemplateStartOffset() - 1 : getTemplateStartOffset();
 
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-
         Editor editor = getEditor();
         if (editor == null) {
           return null;
         }
+
+        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         return file == null ? null : file.findElementAt(offset);
       }

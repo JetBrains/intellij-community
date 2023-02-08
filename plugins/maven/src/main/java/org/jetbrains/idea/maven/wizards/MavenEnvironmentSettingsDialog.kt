@@ -13,7 +13,9 @@ import org.jetbrains.idea.maven.project.MavenGeneralSettings
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.utils.MavenUtil
 
-class MavenEnvironmentSettingsDialog(private val project: Project, private val settings: MavenGeneralSettings) : DialogWrapper(project) {
+class MavenEnvironmentSettingsDialog(private val project: Project,
+                                     private val settings: MavenGeneralSettings,
+                                     private val runImportAfter: Runnable) : DialogWrapper(project) {
 
   private val propertyGraph = PropertyGraph()
   private val userSettingsProperty = propertyGraph.lazyProperty(settings::getUserSettingsFile)
@@ -30,6 +32,17 @@ class MavenEnvironmentSettingsDialog(private val project: Project, private val s
     defaultLocalRepositoryProperty.dependsOn(userSettingsProperty) {
       resolveDefaultLocalRepository()
     }
+  }
+
+
+  override fun doOKAction() {
+    super.doOKAction()
+    runImportAfter.run()
+  }
+
+  override fun doCancelAction() {
+    super.doCancelAction()
+    runImportAfter.run()
   }
 
   private fun resolveDefaultUserSettingsFile(): String {

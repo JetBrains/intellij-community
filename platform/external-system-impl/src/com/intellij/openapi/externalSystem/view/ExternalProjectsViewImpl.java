@@ -513,11 +513,13 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   @Nullable
   public String getDisplayName(@Nullable DataNode node) {
     if (node == null) return null;
-    return myViewContributors.stream()
-                             .map(contributor -> contributor.getDisplayName(node))
-                             .filter(Objects::nonNull)
-                             .findFirst()
-                             .orElse(null);
+    for (ExternalSystemViewContributor contributor : myViewContributors) {
+      String name = contributor.getDisplayName(node);
+      if (name != null) {
+        return name;
+      }
+    }
+    return null;
   }
 
   private <T extends ExternalSystemNode> void scheduleNodesRebuild(@NotNull Class<T> nodeClass) {

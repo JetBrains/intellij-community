@@ -43,7 +43,7 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
       .getAttributeNameCodeCompletionFilter(tag)
 
     val symbols = (tag.descriptor as? WebSymbolElementDescriptor)?.symbol?.let { listOf(it) }
-                  ?: queryExecutor.runNameMatchQuery(listOf(NAMESPACE_HTML, KIND_HTML_ELEMENTS, tag.name))
+                  ?: queryExecutor.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ELEMENTS, tag.name)
 
     val filteredOutStandardSymbols = getStandardHtmlAttributeDescriptors(tag)
       .map { it.name }.toMutableSet()
@@ -78,7 +78,7 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
                                                                       queryExecutor.allowResolve) // TODO Fix pointer dereference and use it here
 
             val fullName = name.substring(0, item.offset) + item.name
-            val match = freshRegistry.runNameMatchQuery(listOf(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, fullName), scope = symbols)
+            val match = freshRegistry.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, fullName, scope = symbols)
             val info = WebSymbolHtmlAttributeInfo.create(fullName, freshRegistry, match)
             if (info != null && info.acceptsValue && !info.acceptsNoValue) {
               XmlAttributeInsertHandler.INSTANCE.handleInsert(insertionContext, lookupItem)

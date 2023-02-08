@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.messages.Topic
+import com.intellij.util.messages.Topic.BroadcastDirection
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SerializationFilterBase
 import com.intellij.util.xmlb.XmlSerializer
@@ -115,6 +116,6 @@ interface KotlinCompilerSettingsListener {
 
     companion object {
         @Topic.ProjectLevel
-        val TOPIC = Topic.create("KotlinCompilerSettingsListener", KotlinCompilerSettingsListener::class.java)
+        val TOPIC = Topic(KotlinCompilerSettingsListener::class.java, BroadcastDirection.TO_CHILDREN, true)
     }
 }

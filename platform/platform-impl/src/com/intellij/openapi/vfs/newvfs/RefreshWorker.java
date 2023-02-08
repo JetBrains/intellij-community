@@ -196,9 +196,7 @@ final class RefreshWorker {
             continue nextDir;
           }
           finally {
-            if (fs instanceof LocalFileSystemImpl) {
-              ((LocalFileSystemImpl)fs).clearListCache();
-            }
+            clearFsCache(fs);
           }
         }
         myProcessed.incrementAndGet();
@@ -254,7 +252,7 @@ final class RefreshWorker {
       LOG.trace("current=" + vfsNames + " +" + newNames + " -" + deletedNames);
     }
 
-    List<ChildInfo> newKids = newNames.isEmpty() ? List.of() : new ArrayList<>(newNames.size());
+    List<ChildInfo> newKids = newNames.isEmpty() && deletedNames.isEmpty() ? List.of() : new ArrayList<>(newNames.size());
     for (String newName : newNames) {
       if (VfsUtil.isBadName(newName)) continue;
       checkCancelled(dir);
@@ -273,6 +271,7 @@ final class RefreshWorker {
       }
     }
 
+    clearFsCache(fs);
     if (isDirectoryChanged(dir, vfsChildren, vfsNames)) {
       return false;
     }
@@ -358,6 +357,7 @@ final class RefreshWorker {
       existingMap.add(new Pair<>(child, getAttributes(fs, dirList, child)));
     }
 
+    clearFsCache(fs);
     if (isDirectoryChanged(dir, cached, wanted)) {
       return false;
     }
@@ -449,6 +449,12 @@ final class RefreshWorker {
       else {
         scheduleDeletion(events, child);
       }
+    }
+  }
+
+  private static void clearFsCache(NewVirtualFileSystem fs) {
+    if (fs instanceof LocalFileSystemImpl) {
+      ((LocalFileSystemImpl)fs).clearListCache();
     }
   }
 

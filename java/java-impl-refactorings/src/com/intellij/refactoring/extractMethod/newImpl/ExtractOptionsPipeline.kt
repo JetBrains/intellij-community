@@ -16,6 +16,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ParametersFolder
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.areSame
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
@@ -32,31 +33,24 @@ import java.util.concurrent.CompletableFuture
 
 object ExtractMethodPipeline {
 
-  fun remap(extractOptions: ExtractOptions,
-            variableData: Array<VariableData>,
-            methodName: String,
-            isStatic: Boolean,
-            visibility: String,
-            isConstructor: Boolean,
-            returnType: PsiType
-  ): ExtractOptions {
+  fun withDialogParameters(extractOptions: ExtractOptions, extractDialog: ExtractMethodDialog): ExtractOptions {
     val analyzer = CodeFragmentAnalyzer(extractOptions.elements)
-    var options = withMappedName(extractOptions, methodName)
-    if (isStatic && ! options.isStatic) {
+    var options = withMappedName(extractOptions, extractDialog.chosenMethodName)
+    if (extractDialog.isMakeStatic && !options.isStatic) {
       options = withForcedStatic(analyzer, options) ?: options
     }
-    options = withMappedParametersInput(options, variableData.toList())
+    options = withMappedParametersInput(options, extractDialog.chosenParameters.toList())
     val targetClass = extractOptions.anchor.containingClass!!
     options = if (targetClass.isInterface) {
       adjustModifiersForInterface(options.copy(visibility = PsiModifier.PRIVATE))
     } else {
-      options.copy(visibility = visibility)
+      options.copy(visibility = extractDialog.visibility)
     }
 
-    if (isConstructor) {
+    if (extractDialog.isChainedConstructor) {
       options = asConstructor(analyzer, options) ?: options
     } else {
-      options = options.copy(dataOutput = extractOptions.dataOutput.withType(returnType))
+      options = options.copy(dataOutput = extractOptions.dataOutput.withType(extractDialog.returnType))
     }
     return options
   }

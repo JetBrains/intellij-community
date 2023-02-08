@@ -1,0 +1,7 @@
+<inspection_tool class="UsePropertyAccessSyntax" enabled="true" enabled_by_default="true">
+  <option name="fqNameStrings">
+    <list>
+      <option value="accessor.ContainsAccessMethod.getStr" />
+    </list>
+  </option>
+</inspection_tool>

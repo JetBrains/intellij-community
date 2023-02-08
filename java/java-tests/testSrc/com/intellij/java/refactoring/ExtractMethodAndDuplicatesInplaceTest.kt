@@ -63,7 +63,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testRenamedParametrizedDuplicate(){
-    doTest(changedName = "average")
+    doTest(changedName = "averageWithOffset")
   }
 
   fun testStaticMustBePlaced(){
@@ -220,6 +220,36 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
 
   fun testTemplateRenamesInsertedCallOnly(){
     doTest(changedName = "renamed")
+  }
+
+  fun testSignatureChangeIsNotAvoided() {
+    doTest()
+  }
+
+  fun testSignatureChangeIsAvoided1(){
+    doTest()
+  }
+
+  fun testSignatureChangeIsAvoided2(){
+    doTest()
+  }
+
+  fun testSignatureChangeIsAvoided3(){
+    doTest()
+  }
+
+  fun testLiteralDuplicates(){
+    doTest()
+  }
+
+  fun testFoldedParametersInExactDuplicates(){
+    val default = DuplicatesMethodExtractor.changeSignatureDefault
+    try {
+      DuplicatesMethodExtractor.changeSignatureDefault = false
+      doTest()
+    } finally {
+      DuplicatesMethodExtractor.changeSignatureDefault = default
+    }
   }
 
   fun testRefactoringListener(){

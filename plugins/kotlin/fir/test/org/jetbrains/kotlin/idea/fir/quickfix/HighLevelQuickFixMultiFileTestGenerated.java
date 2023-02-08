@@ -590,6 +590,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/multiDeclarationExtensionComponentNoOperator.test");
         }
 
+        @TestMetadata("multiFunctionCandidate.test")
+        public void testMultiFunctionCandidate() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/multiFunctionCandidate.test");
+        }
+
         @TestMetadata("nestedClass.before.Main.kt")
         public void testNestedClass() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/nestedClass.before.Main.kt");
@@ -728,6 +733,16 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
         @TestMetadata("sameModuleImportPriority.before.Main.kt")
         public void testSameModuleImportPriority() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/sameModuleImportPriority.before.Main.kt");
+        }
+
+        @TestMetadata("sealedClass.test")
+        public void testSealedClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/sealedClass.test");
+        }
+
+        @TestMetadata("sealedClass2.test")
+        public void testSealedClass2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/sealedClass2.test");
         }
 
         @TestMetadata("timesAssign.before.Main.kt")

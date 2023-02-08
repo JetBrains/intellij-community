@@ -163,7 +163,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
             invokeLater { debugSession.setBreakpointMuted(false) }  // session is not initialized at this moment
             if (!watchesRemoved) {
-              (debugSession as XDebugSessionImpl).setWatchExpressions(emptyList())
+              (debugSession as XDebugSessionImpl).sessionData.watchExpressions = emptyList()
               watchesRemoved = true
             }
             debugSession.addSessionListener(object : XDebugSessionListener {

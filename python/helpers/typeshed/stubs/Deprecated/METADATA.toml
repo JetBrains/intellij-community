@@ -1,3 +1,2 @@
 version = "1.2.*"
-python2 = true
 requires = []

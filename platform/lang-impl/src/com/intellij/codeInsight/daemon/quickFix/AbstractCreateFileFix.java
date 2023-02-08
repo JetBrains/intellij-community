@@ -12,7 +12,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
@@ -29,17 +28,15 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
-import java.io.File;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.openapi.project.ProjectUtilCore.displayUrlRelativeToProject;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
@@ -163,21 +160,25 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
   protected abstract void apply(@NotNull Project project, @NotNull PsiDirectory targetDirectory, @Nullable Editor editor)
     throws IncorrectOperationException;
 
-  @NotNull
-  protected HtmlChunk getDescription(@NotNull Icon itemIcon) {
+  protected @Nullable HtmlChunk getDescription(@NotNull Icon itemIcon) {
     Path filePath;
     String directoryPath = null;
-    if (myDirectories.size() == 1) {
-      TargetDirectory directory = myDirectories.get(0);
-      PsiDirectory psiDirectory = directory.getDirectory();
-      directoryPath = psiDirectory == null ? "" : psiDirectory.getVirtualFile().getPresentableUrl();
-      filePath = Path.of("", directory.getPathToCreate());
-      for (String component : mySubPath) {
-        filePath = filePath.resolve(component);
+    try {
+      if (myDirectories.size() == 1) {
+        TargetDirectory directory = myDirectories.get(0);
+        PsiDirectory psiDirectory = directory.getDirectory();
+        directoryPath = psiDirectory == null ? "" : psiDirectory.getVirtualFile().getPresentableUrl();
+        filePath = Path.of("", directory.getPathToCreate());
+        for (String component : mySubPath) {
+          filePath = filePath.resolve(component);
+        }
+        filePath = filePath.resolve(myNewFileName);
+      } else {
+        filePath = Path.of("", mySubPath).resolve(myNewFileName);
       }
-      filePath = filePath.resolve(myNewFileName);
-    } else {
-      filePath = Path.of("", mySubPath).resolve(myNewFileName);
+    }
+    catch (InvalidPathException e) {
+      return null;
     }
     HtmlChunk fileReference = fragment(icon("file", itemIcon), nbsp(), text(filePath.toString()));
     HtmlBuilder builder = new HtmlBuilder();
@@ -279,9 +280,9 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
 
     Project project = directory.getProject();
     ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
-    SourceFolder sourceFolder = projectFileIndex.getSourceFolder(file);
-    if (sourceFolder != null && sourceFolder.getFile() != null) {
-      return IconUtil.getIcon(sourceFolder.getFile(), 0, project);
+    VirtualFile sourceRoot = projectFileIndex.getSourceRootForFile(file);
+    if (sourceRoot != null) {
+      return IconUtil.getIcon(sourceRoot, 0, project);
     }
 
     return IconUtil.getIcon(file, 0, project);

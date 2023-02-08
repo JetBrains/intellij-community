@@ -3,18 +3,20 @@ package com.intellij.webSymbols
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.webSymbols.utils.matchedNameOrName
 
 class WebSymbolNameSegment(val start: Int,
                            val end: Int,
                            val symbols: List<WebSymbol> = emptyList(),
                            val problem: MatchProblem? = null,
-                           @NlsSafe
-                           val displayName: String? = null,
+                           val displayName: @NlsSafe String? = null,
                            val matchScore: Int = end - start,
                            symbolKinds: Set<WebSymbolQualifiedKind>? = null,
                            private val explicitDeprecated: Boolean? = null,
                            private val explicitPriority: WebSymbol.Priority? = null,
                            private val explicitProximity: Int? = null) {
+
+  constructor(symbol: WebSymbol): this(0, symbol.name.length, listOf(symbol))
 
   constructor(start: Int, end: Int, symbol: WebSymbol) : this(start, end, listOf(symbol))
   constructor(start: Int, end: Int, vararg symbols: WebSymbol) : this(start, end, symbols.toList())
@@ -40,8 +42,8 @@ class WebSymbolNameSegment(val start: Int,
       forcedSymbolTypes
       ?: symbols.asSequence().map { WebSymbolQualifiedKind(it.namespace, it.kind) }.toSet()
 
-  fun getName(symbol: WebSymbol): String =
-    symbol.matchedName.substring(start, end)
+  fun getName(symbol: WebSymbol): @NlsSafe String =
+    symbol.matchedNameOrName.substring(start, end)
 
   internal fun withOffset(offset: Int): WebSymbolNameSegment =
     WebSymbolNameSegment(start + offset, end + offset, symbols, problem, displayName,
@@ -74,7 +76,7 @@ class WebSymbolNameSegment(val start: Int,
 
   enum class MatchProblem {
     MISSING_REQUIRED_PART,
-    UNKNOWN_ITEM,
+    UNKNOWN_SYMBOL,
     DUPLICATE
   }
 

@@ -281,69 +281,69 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
   }
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
-    return object :
-      BooleanCommitOption(project, getInitialText(), true, settings.myState::enabled) {
+    return RunTestCommitOption().withCheckinHandler(this)
+  }
 
-      override fun getComponent(): JComponent {
-        val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
-          JBPopupMenu.showBelow(sourceLink, ActionPlaces.UNKNOWN, createConfigurationChooser())
-        }
-        val configureFilterLink = LinkLabel(SmRunnerBundle.message("link.label.choose.configuration.before.commit"), null, showFiltersPopup)
-
-        checkBox.text = getInitialText()
-        return JBUI.Panels.simplePanel(4, 0).addToLeft(checkBox).addToCenter(configureFilterLink)
+  private inner class RunTestCommitOption : BooleanCommitOption(project, getInitialText(), true, settings.myState::enabled) {
+    override fun getComponent(): JComponent {
+      val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
+        JBPopupMenu.showBelow(sourceLink, ActionPlaces.UNKNOWN, createConfigurationChooser())
       }
+      val configureFilterLink = LinkLabel(SmRunnerBundle.message("link.label.choose.configuration.before.commit"), null, showFiltersPopup)
 
-      private fun createConfigurationChooser(): ActionGroup {
-        fun testConfiguration(it: RunConfiguration) =
-          it is ConsolePropertiesProvider && it.createTestConsoleProperties(DefaultRunExecutor.getRunExecutorInstance()) != null
+      checkBox.text = getInitialText()
+      return JBUI.Panels.simplePanel(4, 0).addToLeft(checkBox).addToCenter(configureFilterLink)
+    }
 
-        val result = DefaultActionGroup()
-        val runManager = RunManagerImpl.getInstanceImpl(project)
-        for ((type, folderMap) in runManager.getConfigurationsGroupedByTypeAndFolder(false)) {
-          var addedSeparator = false
-          for ((folder, list) in folderMap.entries) {
-            val localConfigurations: List<RunConfiguration> = list.map { it.configuration }
-              .filter {
-                testConfiguration(it) ||
-                it is CompoundRunConfiguration && it.getConfigurationsWithTargets(runManager).keys.all { one -> testConfiguration(one) }
-              }
+    private fun createConfigurationChooser(): ActionGroup {
+      fun testConfiguration(it: RunConfiguration) =
+        it is ConsolePropertiesProvider && it.createTestConsoleProperties(DefaultRunExecutor.getRunExecutorInstance()) != null
 
-            if (localConfigurations.isEmpty()) continue
-
-            if (!addedSeparator && result.childrenCount > 0) {
-              result.addSeparator()
-              addedSeparator = true
+      val result = DefaultActionGroup()
+      val runManager = RunManagerImpl.getInstanceImpl(project)
+      for ((type, folderMap) in runManager.getConfigurationsGroupedByTypeAndFolder(false)) {
+        var addedSeparator = false
+        for ((folder, list) in folderMap.entries) {
+          val localConfigurations: List<RunConfiguration> = list.map { it.configuration }
+            .filter {
+              testConfiguration(it) ||
+              it is CompoundRunConfiguration && it.getConfigurationsWithTargets(runManager).keys.all { one -> testConfiguration(one) }
             }
 
-            var target = result
-            if (folder != null) {
-              target = DefaultActionGroup(folder, true)
-              result.add(target)
-            }
+          if (localConfigurations.isEmpty()) continue
 
-
-            localConfigurations
-              .forEach { configuration: RunConfiguration ->
-                target.add(object : AnAction(configuration.icon) {
-                  init {
-                    templatePresentation.setText(configuration.name, false)
-                  }
-
-                  override fun actionPerformed(e: AnActionEvent) {
-                    val bean = ConfigurationBean()
-                    bean.configurationId = type.id
-                    bean.name = configuration.name
-                    settings.myState.configuration = bean
-
-                    checkBox.text = getOptionTitle(configuration.name)
-                  }
-                })
-              }
+          if (!addedSeparator && result.childrenCount > 0) {
+            result.addSeparator()
+            addedSeparator = true
           }
+
+          var target = result
+          if (folder != null) {
+            target = DefaultActionGroup(folder, true)
+            result.add(target)
+          }
+
+
+          localConfigurations
+            .forEach { configuration: RunConfiguration ->
+              target.add(object : AnAction(configuration.icon) {
+                init {
+                  templatePresentation.setText(configuration.name, false)
+                }
+
+                override fun actionPerformed(e: AnActionEvent) {
+                  val bean = ConfigurationBean()
+                  bean.configurationId = type.id
+                  bean.name = configuration.name
+                  settings.myState.configuration = bean
+
+                  checkBox.text = getOptionTitle(configuration.name)
+                }
+              })
+            }
         }
-        return result
       }
+      return result
     }
   }
 

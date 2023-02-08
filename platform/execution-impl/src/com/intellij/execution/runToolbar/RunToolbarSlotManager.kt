@@ -77,15 +77,21 @@ class RunToolbarSlotManager(private val project: Project) {
         Disposer.register(project, disp)
         activeDisposable = disp
 
-        val settingsData =  runToolbarSettings.getConfigurations()
+        val settingsData = runToolbarSettings.getConfigurations()
         val slotOrder = settingsData.first
         val configurations = settingsData.second
 
         slotOrder.filter { configurations[it] != null }.forEachIndexed { index, s ->
           if (index == 0) {
+            traceState("SM reset main")
+
+            slotsData.remove(mainSlotData.id)
             mainSlotData.updateId(s)
             mainSlotData.configuration = configurations[s]
             slotsData[mainSlotData.id] = mainSlotData
+
+            traceState("SM after reset ")
+
           }
           else {
             addSlot(configurations[s], s)
@@ -172,14 +178,12 @@ class RunToolbarSlotManager(private val project: Project) {
   }
 
 
-  private fun traceState() {
+  private fun traceState(txt: String? = null) {
     if (!RunToolbarProcess.logNeeded) return
 
-    val separator = " "
-    val ids = dataIds.indices.mapNotNull { "${it + 1}: ${slotsData[dataIds[it]]}" }.joinToString(", ")
-    LOG.info("SM state: $state" +
-             "${separator}== slots: 0: ${mainSlotData}, $ids" +
-             "${separator}== slotsData: ${slotsData.values} RunToolbar")
+    txt?.let {  LOG.info(it) }
+    LOG.info("SM state: $state mainSlot: ${mainSlotData} RunToolbar")
+    LOG.info("SM slotsData: ${slotsData.values} RunToolbar")
   }
 
 
@@ -306,7 +310,8 @@ class RunToolbarSlotManager(private val project: Project) {
             // Case 1: there are no slots corresponding to the main one in the secondary slot list. So, move the new slot to the main
             // position, and move the former main slot to the secondary slot list (effectively creating a new secondary slot).
             moveToTop(slot.id)
-          } else {
+          }
+          else {
             // Case 2: there's at least one secondary slot corresponding to the main one.
 
             fun removeFormerMainSlotAndMoveCurrentToTop() {
@@ -324,11 +329,13 @@ class RunToolbarSlotManager(private val project: Project) {
                 // Case 2.1.1: we've found the new free slot to enable the (former) main configuration there.
                 freeSlotCorrespondingToMain.environment = mainSlotData.environment
                 removeFormerMainSlotAndMoveCurrentToTop()
-              } else {
+              }
+              else {
                 // Case 2.1.2: there are no free slots for the former main active configuration to move to. Add a new one then.
                 moveToTop(slot.id)
               }
-            } else {
+            }
+            else {
               // Case 2.2: the former main slot is inactive. Let's just remove it after replacement.
               removeFormerMainSlotAndMoveCurrentToTop()
             }
@@ -544,7 +551,7 @@ internal open class SlotDate(val project: Project, override var id: String) : Ru
     get() = environment?.executionTarget ?: run {
       configuration?.configuration.let {
         val targets = ExecutionTargetManager.getInstance(project).getTargetsFor(it)
-        if(field != null && targets.contains(field)) field else targets.firstOrNull()
+        if (field != null && targets.contains(field)) field else targets.firstOrNull()
       }
     } ?: run {
       ExecutionTargetManager.getInstance(project).activeTarget
@@ -569,6 +576,6 @@ internal open class SlotDate(val project: Project, override var id: String) : Ru
   }
 
   override fun toString(): String {
-    return "$id-${environment?.let { "$it [${it.executor.actionName} ${it.executionId}]" } ?: configuration?.configuration?.name ?: "configuration null"}"
+    return "$id - ${environment?.let { "$it ${it.executor.actionName} ${it.executionId}" } ?: configuration?.configuration?.name ?: "configuration null"}"
   }
 }

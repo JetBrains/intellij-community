@@ -8,6 +8,7 @@ import com.intellij.openapi.util.StackOverflowPreventedException
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.webTypes.json.parseWebTypesPath
 
 class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
 
@@ -226,7 +227,7 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
       object : WebSymbolsScope {
         override fun createPointer(): Pointer<out WebSymbolsScope> = Pointer.hardPointer(this)
 
-        override fun getCodeCompletions(namespace: SymbolNamespace?,
+        override fun getCodeCompletions(namespace: SymbolNamespace,
                                         kind: SymbolKind,
                                         name: String?,
                                         params: WebSymbolsCodeCompletionQueryParams,
@@ -301,7 +302,7 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest(testPath) {
       registerFiles(framework, *webTypes)
       val matches = webSymbolsQueryExecutorFactory.create(null)
-        .runCodeCompletionQuery(path, position)
+        .runCodeCompletionQuery(parseWebTypesPath(path, null), position)
       printCodeCompletionItems(matches)
     }
   }

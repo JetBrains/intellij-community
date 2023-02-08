@@ -3,13 +3,15 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl
 import com.intellij.openapi.roots.impl.RootFileSupplier
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.util.CollectionQuery
+import com.intellij.util.Query
 import com.intellij.util.containers.ConcurrentBitSet
-import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.*
@@ -18,20 +20,20 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.intellij.lang.annotations.MagicConstant
-import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory
 
-internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexContributor<*>>,
+internal class WorkspaceFileIndexData(private val contributorList: List<WorkspaceFileIndexContributor<*>>,
                                       private val project: Project,
                                       private val rootFileSupplier: RootFileSupplier) {
   private val contributors = contributorList.groupBy { it.entityClass }
-  private val contributorsWithDependency = contributorList
-    .flatMap { contributor -> contributor.dependenciesOnParentEntities.map { it to contributor } }
-    .groupBy({ it.second.entityClass }, { it.first to it.second })
-  /** this map is accessed under 'Read Action' and updated under 'Write Action' or under 'Read Action' with a special lock in [NonIncrementalContributors.updateIfNeeded] */
-  private val fileSets = MultiMap.create<VirtualFile, StoredFileSet>()
+  private val contributorDependencies = contributorList.associateWith { it.dependenciesOnOtherEntities }
+  
+  /** these maps are accessed under 'Read Action' and updated under 'Write Action' or under 'Read Action' with a special lock in [NonIncrementalContributors.updateIfNeeded] */
+  private val fileSets = HashMap<VirtualFile, StoredFileSetCollection>()
+  private val fileSetsByPackagePrefix = PackagePrefixStorage()
+  
+  private val packageDirectoryCache: PackageDirectoryCacheImpl
   private val nonIncrementalContributors = NonIncrementalContributors(project, rootFileSupplier)
-  private val librariesAndSdkContributors = LibrariesAndSdkContributors(project, rootFileSupplier, fileSets)
+  private val librariesAndSdkContributors = LibrariesAndSdkContributors(project, rootFileSupplier, fileSets, fileSetsByPackagePrefix)
   private val fileIdWithoutFileSets = ConcurrentBitSet.create()
   private val storeFileSetRegistrar = StoreFileSetsRegistrarImpl()
   private val removeFileSetRegistrar = RemoveFileSetsRegistrarImpl()
@@ -42,6 +44,7 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
   private var hasDirtyEntities = false
 
   init {
+    packageDirectoryCache = PackageDirectoryCacheImpl(::fillPackageDirectories, ::isPackageDirectory)
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
     contributors.keys.forEach { entityClass ->
       storage.entities(entityClass).forEach {
@@ -60,85 +63,54 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
     if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
       updateDirtyEntities()
     }
-    nonIncrementalContributors.updateIfNeeded(fileSets)
+    nonIncrementalContributors.updateIfNeeded(fileSets, fileSetsByPackagePrefix)
 
-    val originalKindMask = 
+    val originalAcceptedKindMask = 
       (if (includeContentSets) WorkspaceFileKindMask.CONTENT else 0) or 
       (if (includeExternalSets) WorkspaceFileKindMask.EXTERNAL_BINARY else 0) or
       (if (includeExternalSourceSets) WorkspaceFileKindMask.EXTERNAL_SOURCE else 0) 
-    var kindMask = originalKindMask 
+    var acceptedKindsMask = originalAcceptedKindMask 
     var current: VirtualFile? = file
-    var currentExclusionMask = 0
     while (current != null) {
       val fileId = (current as? VirtualFileWithId)?.id ?: -1
       val mayHaveFileSets = fileId < 0 || !fileIdWithoutFileSets.get(fileId)
       if (mayHaveFileSets) {
-        var firstRelevantFileSet: WorkspaceFileSetImpl? = null
-        var additionalRelevantFileSets: MutableList<WorkspaceFileSetImpl>? = null
-        val storedFileSets = fileSets.get(current)
-        for (info in storedFileSets) {
-          when (info) {
-            is ExcludedFileSet.ByFileKind -> {
-              if (honorExclusion) {
-                currentExclusionMask = currentExclusionMask or info.mask
-              }
-            }
-            is ExcludedFileSet.ByPattern -> {
-              if (honorExclusion && info.isExcluded(file)) return WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
-            }
-            is ExcludedFileSet.ByCondition -> {
-              if (honorExclusion && info.isExcluded(file)) return WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
-            }
-            is WorkspaceFileSetImpl -> {
-              if (info.kind.toMask() and kindMask != 0 && !info.isUnloaded(project)) {
-                if (firstRelevantFileSet == null) {
-                  firstRelevantFileSet = info
-                }
-                else if (additionalRelevantFileSets == null) {
-                  additionalRelevantFileSets = ArrayList<WorkspaceFileSetImpl>(2).apply { add(info) }
-                }
-                else {
-                  additionalRelevantFileSets.add(info)
-                }
-              }
-            }
-          }
-        }
-        if (honorExclusion && currentExclusionMask.inv() and kindMask == 0) {
-          return WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
-        }
-        if (firstRelevantFileSet != null) {
-          val firstNotExcluded = firstRelevantFileSet.takeIf { it.kind.toMask() and kindMask and currentExclusionMask.inv() != 0 }
-          if (firstNotExcluded != null && additionalRelevantFileSets == null) return firstNotExcluded
+        val storedFileSets = fileSets[current]
+        if (storedFileSets != null) {
+          val masks = storedFileSets.computeMasks(acceptedKindsMask shl ACCEPTED_KINDS_MASK_SHIFT, project, honorExclusion, file)
+          val storedKindMask = masks and StoredFileSetKindMask.ALL
+          acceptedKindsMask = (masks shr ACCEPTED_KINDS_MASK_SHIFT) and WorkspaceFileKindMask.ALL 
           
-          val additionalNotExcluded = additionalRelevantFileSets?.filter { it.kind.toMask() and kindMask and currentExclusionMask.inv() != 0 }
-                                                                ?.takeIf { it.isNotEmpty() }
-          if (firstNotExcluded != null || additionalNotExcluded != null) {
-            if (additionalNotExcluded == null) return firstNotExcluded!!
-            val allNotExcluded = 
-              if (firstNotExcluded != null) ArrayList<WorkspaceFileSetImpl>().apply { add(firstNotExcluded); addAll(additionalNotExcluded) }
-              else additionalNotExcluded
-            val single = allNotExcluded.singleOrNull()
-            return single ?: MultipleWorkspaceFileSets(allNotExcluded)
-          }
-          kindMask = kindMask and firstRelevantFileSet.kind.toMask().inv()
-          additionalRelevantFileSets?.forEach {
-            kindMask = kindMask and it.kind.toMask().inv()
-          }
-          if (currentExclusionMask.inv() and kindMask == 0) {
+          if (acceptedKindsMask == 0) {
             return WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
+          }
+          
+          if (storedKindMask and StoredFileSetKindMask.ACCEPTED_FILE_SET != 0) {
+            if (storedKindMask == StoredFileSetKindMask.ACCEPTED_FILE_SET) {
+              return storedFileSets as WorkspaceFileInternalInfo
+            }
+            val acceptedFileSets = ArrayList<WorkspaceFileSetImpl>()
+            //copy a mutable variable used from lambda to a 'val' to ensure that kotlinc won't wrap it into IntRef
+            val currentKindMask = acceptedKindsMask 
+            //this should be a rare case so it's ok to use less optimal code here and check 'isUnloaded' again
+            storedFileSets.forEach { fileSet ->
+              if (fileSet is WorkspaceFileSetImpl && fileSet.kind.toMask() and currentKindMask != 0 && !fileSet.isUnloaded(project)) {
+                acceptedFileSets.add(fileSet)
+              }
+            }
+            return if (acceptedFileSets.size > 1) MultipleWorkspaceFileSetsImpl(acceptedFileSets) else acceptedFileSets.first()
           }
         }
         if (fileTypeRegistry.isFileIgnored(current)) {
           return WorkspaceFileInternalInfo.NonWorkspace.IGNORED
         }
-        if (fileId >= 0 && storedFileSets.isEmpty()) {
+        if (fileId >= 0 && storedFileSets == null) {
           fileIdWithoutFileSets.set(fileId)
         }
       }
       current = current.parent
     }
-    if (originalKindMask != kindMask || currentExclusionMask != 0) {
+    if (originalAcceptedKindMask != acceptedKindsMask) {
       return WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
     }
     return WorkspaceFileInternalInfo.NonWorkspace.NOT_UNDER_ROOTS
@@ -162,35 +134,51 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
     }
   }
 
-  private fun <E : WorkspaceEntity> processChanges(event: VersionedStorageChange, entityClass: Class<out E>) {
-    val changes = event.getChanges(entityClass)
-    changes.forEach { change -> processChange(change, entityClass, event) }
-    collectChangesFromParents(event, entityClass)
-  }
-
-  private fun <C : WorkspaceEntity> collectChangesFromParents(event: VersionedStorageChange, childClass: Class<C>) {
-    val contributors = contributorsWithDependency[childClass] ?: return
-    contributors.forEach { (dependency, contributor) ->
+  private fun <E : WorkspaceEntity> processChangesByContributor(contributor: WorkspaceFileIndexContributor<E>, event: VersionedStorageChange) {
+    val removedEntities = LinkedHashSet<E>()
+    val addedEntities = LinkedHashSet<E>()
+    for (change in event.getChanges(contributor.entityClass)) {
+      change.oldEntity?.let { removedEntities.add(it) }
+      change.newEntity?.let { addedEntities.add(it) }
+    }
+    for (dependency in contributorDependencies.getValue(contributor)) {
       @Suppress("UNCHECKED_CAST")
-      processChangeInDependency(dependency as DependencyOnParentEntity<C, WorkspaceEntity>,
-                                contributor as WorkspaceFileIndexContributor<C>, event)
+      when (dependency) {
+        is DependencyDescription.OnParent<*, *> -> collectEntitiesWithChangedParent(dependency as DependencyDescription.OnParent<E, *>,
+                                                                                    event, removedEntities, addedEntities)
+        is DependencyDescription.OnChild<*, *> -> collectEntitiesWithChangedChild(dependency as DependencyDescription.OnChild<E, *>,
+                                                                                  event, removedEntities, addedEntities)
+      }
+    }
+    
+    for (removed in removedEntities) {
+      contributor.registerFileSets(removed, removeFileSetRegistrar, event.storageBefore)
+    }
+    for (added in addedEntities) {
+      contributor.registerFileSets(added, storeFileSetRegistrar, event.storageAfter)
     }
   }
 
-  private fun <E : WorkspaceEntity> processChange(change: EntityChange<out E>, entityClass: Class<out E>, event: VersionedStorageChange) {
-    change.oldEntity?.let { unregisterFileSets(it, entityClass, event.storageBefore) }
-    change.newEntity?.let { registerFileSets(it, entityClass, event.storageAfter) }
+  private fun <E : WorkspaceEntity, P : WorkspaceEntity> collectEntitiesWithChangedParent(dependency: DependencyDescription.OnParent<E, P>,
+                                                                                          event: VersionedStorageChange,
+                                                                                          removedEntities: MutableSet<E>,
+                                                                                          addedEntities: MutableSet<E>) {
+    event.getChanges(dependency.parentClass).asSequence().filterIsInstance<EntityChange.Replaced<P>>().forEach { change ->
+      dependency.childrenGetter(change.oldEntity).toCollection(removedEntities)
+      dependency.childrenGetter(change.newEntity).toCollection(addedEntities)
+    }
   }
 
-  private fun <C : WorkspaceEntity, P : WorkspaceEntity> processChangeInDependency(dependency: DependencyOnParentEntity<C, P>,
-                                                                                   contributor: WorkspaceFileIndexContributor<C>,
-                                                                                   event: VersionedStorageChange) {
-    event.getChanges(dependency.parentClass).asSequence().filterIsInstance<EntityChange.Replaced<P>>().forEach { change ->
-      dependency.childrenGetter(change.oldEntity).forEach {
-        contributor.registerFileSets(it, removeFileSetRegistrar, event.storageBefore)
+  private fun <E : WorkspaceEntity, C : WorkspaceEntity> collectEntitiesWithChangedChild(dependency: DependencyDescription.OnChild<E, C>,
+                                                                                         event: VersionedStorageChange,
+                                                                                         removedEntities: LinkedHashSet<E>,
+                                                                                         addedEntities: LinkedHashSet<E>) {
+    event.getChanges(dependency.childClass).asSequence().forEach { change ->
+      change.oldEntity?.let {
+        removedEntities.add(dependency.parentGetter(it))
       }
-      dependency.childrenGetter(change.newEntity).forEach {
-        contributor.registerFileSets(it, storeFileSetRegistrar, event.storageAfter)
+      change.newEntity?.let {
+        addedEntities.add(dependency.parentGetter(it))
       }
     }
   }
@@ -210,8 +198,8 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
 
   fun onEntitiesChanged(event: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    contributors.keys.forEach { entityClass ->
-      processChanges(event, entityClass)
+    contributorList.forEach { 
+      processChangesByContributor(it, event)
     }
     resetFileCache()
   }
@@ -235,6 +223,54 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
 
   fun resetFileCache() {
     fileIdWithoutFileSets.clear()
+    packageDirectoryCache.clear()
+  }
+  
+  private fun isPackageDirectory(dir: VirtualFile, packageName: String): Boolean = getPackageName(dir) == packageName
+
+  private fun fillPackageDirectories(packageName: String, result: MutableList<in VirtualFile>) {
+    val addedRoots = HashSet<VirtualFile>()
+    fileSetsByPackagePrefix[packageName]?.values()?.forEach { fileSet ->
+      val root = fileSet.root
+      if (root.isDirectory && root.isValid && addedRoots.add(root)) {
+        result.add(root)
+      }
+    }
+  }
+
+  fun getPackageName(dir: VirtualFile): String? {
+    if (!dir.isDirectory) return null
+
+    val fileSet = when (val info = getFileInfo(dir, true, true, true, true)) {
+                    is WorkspaceFileSetWithCustomData<*> -> info.takeIf { it.data is JvmPackageRootData }
+                    is MultipleWorkspaceFileSets -> info.find(JvmPackageRootData::class.java)
+                    else -> null
+                  } ?: return null
+
+    val packagePrefix = (fileSet.data as JvmPackageRootData).packagePrefix
+    val packageName = VfsUtilCore.getRelativePath(dir, fileSet.root, '.') 
+                      ?: error("${dir.presentableUrl} is not under ${fileSet.root.presentableUrl}")
+    return when {
+      packagePrefix.isEmpty() -> packageName
+      packageName.isEmpty() -> packagePrefix
+      else -> "$packagePrefix.$packageName"
+    }
+  }
+
+  fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile> {
+    val query = CollectionQuery(packageDirectoryCache.getDirectoriesByPackageName(packageName))
+    if (includeLibrarySources) return query
+    return query.filtering {
+      getFileInfo(it, true, true, true, false) !is WorkspaceFileInternalInfo.NonWorkspace
+    }
+  }
+
+  fun onLowMemory() {
+    packageDirectoryCache.onLowMemory()
+  }
+
+  fun clearPackageDirectoryCache() {
+    packageDirectoryCache.clear()
   }
 
   fun unloadModules(entities: List<ModuleEntity>) {
@@ -276,7 +312,11 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
                                  kind: WorkspaceFileKind,
                                  entity: WorkspaceEntity,
                                  customData: WorkspaceFileSetData?) {
-      fileSets.putValue(root, WorkspaceFileSetImpl(root, kind, entity.createReference(), customData ?: DummyWorkspaceFileSetData))
+      val fileSet = WorkspaceFileSetImpl(root, kind, entity.createReference(), customData ?: DummyWorkspaceFileSetData)
+      fileSets.putValue(root, fileSet)
+      if (customData is JvmPackageRootData) {
+        fileSetsByPackagePrefix.addFileSet(customData.packagePrefix, fileSet)
+      }
     }
 
     override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, entity: WorkspaceEntity) {
@@ -325,9 +365,12 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
                                  entity: WorkspaceEntity,
                                  customData: WorkspaceFileSetData?) {
       fileSets.removeValueIf(root) { it is WorkspaceFileSetImpl && isResolvesTo(it.entityReference, entity) }
+      if (customData is JvmPackageRootData) {
+        fileSetsByPackagePrefix.removeByPrefixAndReference(customData.packagePrefix, entity.createReference())
+      }
     }
 
-    private fun isResolvesTo(reference: EntityReference<*>, entity: WorkspaceEntity) = reference == entity.createReference<WorkspaceEntity>() 
+    private fun isResolvesTo(reference: EntityReference<*>, entity: WorkspaceEntity) = reference.isReferenceTo(entity) 
 
     override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, entity: WorkspaceEntity) {
       val excludedRootFile = rootFileSupplier.findFile(excludedRoot)
@@ -360,86 +403,7 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
   }
 }
 
-internal class WorkspaceFileSetImpl(override val root: VirtualFile,
-                                    override val kind: WorkspaceFileKind,
-                                    override val entityReference: EntityReference<WorkspaceEntity>,
-                                    override val data: WorkspaceFileSetData)
-  : WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, StoredFileSet, WorkspaceFileInternalInfo {
-  fun isUnloaded(project: Project): Boolean {
-    return (data as? UnloadableFileSetData)?.isUnloaded(project) == true
-  }
-}
-
-internal class MultipleWorkspaceFileSets(val fileSets: List<WorkspaceFileSetImpl>) : WorkspaceFileInternalInfo
-
-internal object DummyWorkspaceFileSetData : WorkspaceFileSetData
-
-internal object WorkspaceFileKindMask {
-  const val CONTENT = 1
-  const val EXTERNAL_BINARY = 2
-  const val EXTERNAL_SOURCE = 4
-  const val EXTERNAL = EXTERNAL_SOURCE or EXTERNAL_BINARY
-  const val ALL = CONTENT or EXTERNAL
-}
-
-/**
- * Base interface for file sets stored in [WorkspaceFileIndexData]. 
- */
-internal sealed interface StoredFileSet {
-  val entityReference: EntityReference<WorkspaceEntity>
-}
-
-internal sealed interface ExcludedFileSet : StoredFileSet {
-  class ByFileKind(@MagicConstant(flagsFromClass = WorkspaceFileKindMask::class) val mask: Int,
-                   override val entityReference: EntityReference<WorkspaceEntity>) : ExcludedFileSet
-  
-  class ByPattern(val root: VirtualFile, patterns: List<String>,
-                  override val entityReference: EntityReference<WorkspaceEntity>) : ExcludedFileSet {
-    val table = FileTypeAssocTable<Boolean>()
-
-    init {
-      for (pattern in patterns) {
-        table.addAssociation(FileNameMatcherFactory.getInstance().createMatcher(pattern), true)
-      }
-    }
-
-    fun isExcluded(file: VirtualFile): Boolean {
-      var current = file
-      while (current != root) {
-        if (table.findAssociatedFileType(current.nameSequence) != null) {
-          return true
-        }
-        current = current.parent
-      }
-      return false
-    }
-  }
-  
-  class ByCondition(val root: VirtualFile, val condition: (VirtualFile) -> Boolean,
-                    override val entityReference: EntityReference<WorkspaceEntity>) : ExcludedFileSet {
-    fun isExcluded(file: VirtualFile): Boolean {
-      var current = file
-      while (current != root) {
-        if (condition(current)) {
-          return true
-        }
-        current = current.parent
-      }
-
-      return condition(root)
-    }
-  }
-}
-
-internal inline fun <K, V> MultiMap<K, V>.removeValueIf(key: K, crossinline valuePredicate: (V) -> Boolean) {
-  val collection = get(key)
-  collection.removeIf { valuePredicate(it) }
-  if (collection.isEmpty()) {
-    remove(key)
-  }
-}
-
-private fun WorkspaceFileKind.toMask(): Int {
+internal fun WorkspaceFileKind.toMask(): Int {
   val mask = when (this) {
     WorkspaceFileKind.CONTENT, WorkspaceFileKind.TEST_CONTENT -> WorkspaceFileKindMask.CONTENT
     WorkspaceFileKind.EXTERNAL -> WorkspaceFileKindMask.EXTERNAL_BINARY

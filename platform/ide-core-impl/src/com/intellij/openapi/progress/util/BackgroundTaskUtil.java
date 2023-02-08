@@ -298,7 +298,8 @@ public final class BackgroundTaskUtil {
         future.get(1, TimeUnit.SECONDS);
       }
       catch (ExecutionException e) {
-        if (e.getCause() instanceof ProcessCanceledException) {
+        Throwable cause = e.getCause();
+        if (cause instanceof ProcessCanceledException || cause instanceof CancellationException) {
           // ignore: expected cancellation
         }
         else {

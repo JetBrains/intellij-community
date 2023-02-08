@@ -42,7 +42,13 @@ public class CopyPathsAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(@NotNull AnActionEvent event) {
-    event.getPresentation().setEnabledAndVisible(KEYBOARD_SHORTCUT.equals(event.getPlace()));
+  public void update(@NotNull AnActionEvent e) {
+    VirtualFile[] files;
+    final boolean enabled =
+      KEYBOARD_SHORTCUT.equals(e.getPlace()) &&
+      ((files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)) != null) &&
+      (files.length > 0);
+
+    e.getPresentation().setEnabledAndVisible(enabled);
   }
 }

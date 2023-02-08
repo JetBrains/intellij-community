@@ -13,6 +13,7 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.*;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -22,11 +23,13 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
   private boolean myWithoutDepModules;
   private boolean myWithoutModuleSourceEntries;
   protected boolean myRecursively;
-  private final Collection<JpsModule> myRootModules;
+  private final Set<JpsModule> myRootModules;
   private Condition<? super JpsDependencyElement> myCondition;
 
   protected JpsDependenciesEnumeratorBase(Collection<JpsModule> rootModules) {
-    myRootModules = rootModules;
+    myRootModules = Collections.unmodifiableSet(
+      rootModules instanceof Set? (Set<JpsModule>)rootModules : new LinkedHashSet<>(rootModules)
+    );
   }
 
   @NotNull

@@ -13,12 +13,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.psi.PsiFile
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
 import org.jetbrains.kotlin.idea.script.ScriptDiagnosticFixProvider
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
@@ -36,7 +31,6 @@ class ScriptExternalHighlightingPass(
         val document = document
 
         if (!file.isScript()) return
-
         val reports = IdeScriptReportSink.getReports(file)
 
         val annotations = reports.mapNotNull { scriptDiagnostic ->
@@ -70,48 +64,38 @@ class ScriptExternalHighlightingPass(
     }
 
     private fun computeOffsets(document: Document, position: SourceCode.Location): Pair<Int, Int> {
-        val startLine = position.start.line.coerceLineIn(document)
-        val startOffset = document.offsetBy(startLine, position.start.col)
+        val startOffset = position.start.absolutePos
+            ?: run {
+                val startLine = position.start.line.coerceLineIn(document)
+                document.offsetBy(startLine, position.start.col)
+            }
 
-        val endLine = position.end?.line?.coerceAtLeast(startLine)?.coerceLineIn(document) ?: startLine
-        val endOffset = document.offsetBy(
-            endLine,
-            position.end?.col ?: document.getLineEndOffset(endLine)
-        ).coerceAtLeast(startOffset)
+        val endOffset = position.end?.absolutePos
+            ?: run {
+                val startLine = position.start.line.coerceLineIn(document)
+                val endLine = position.end?.line?.coerceAtLeast(startLine)?.coerceLineIn(document) ?: startLine
+                document.offsetBy(
+                    endLine,
+                    position.end?.col ?: document.getLineEndOffset(endLine)
+                ).coerceAtLeast(startOffset)
+            }
 
         return startOffset to endOffset
     }
 
     private fun Int.coerceLineIn(document: Document) = coerceIn(0, document.lineCount - 1)
 
-    private fun Document.offsetBy(line: Int, col: Int): Int {
-        return (getLineStartOffset(line) + col).coerceIn(getLineStartOffset(line), getLineEndOffset(line))
+    private fun Document.offsetBy(line: Int, col: Int): Int =
+        (getLineStartOffset(line) + col).coerceIn(getLineStartOffset(line), getLineEndOffset(line))
+
+    private fun ScriptDiagnostic.Severity.convertSeverity(): HighlightSeverity? = when (this) {
+        ScriptDiagnostic.Severity.FATAL -> ERROR
+        ScriptDiagnostic.Severity.ERROR -> ERROR
+        ScriptDiagnostic.Severity.WARNING -> WARNING
+        ScriptDiagnostic.Severity.INFO -> INFORMATION
+        ScriptDiagnostic.Severity.DEBUG -> if (isApplicationInternalMode()) INFORMATION else null
     }
 
-    private fun ScriptDiagnostic.Severity.convertSeverity(): HighlightSeverity? {
-        return when (this) {
-            ScriptDiagnostic.Severity.FATAL -> ERROR
-            ScriptDiagnostic.Severity.ERROR -> ERROR
-            ScriptDiagnostic.Severity.WARNING -> WARNING
-            ScriptDiagnostic.Severity.INFO -> INFORMATION
-            ScriptDiagnostic.Severity.DEBUG -> if (isApplicationInternalMode()) INFORMATION else null
-        }
-    }
-
-    private fun showNotification(file: KtFile, @NlsContexts.PopupContent message: String) {
-        UIUtil.invokeLaterIfNeeded {
-            val ideFrame = WindowManager.getInstance().getIdeFrame(file.project)
-            if (ideFrame != null) {
-                val statusBar = ideFrame.statusBar as StatusBarEx
-                statusBar.notifyProgressByBalloon(
-                    MessageType.WARNING,
-                    message,
-                    null,
-                    null
-                )
-            }
-        }
-    }
 
     class Registrar : TextEditorHighlightingPassFactoryRegistrar {
         override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {

@@ -38,6 +38,10 @@ import kotlin.io.path.Path
  * @author Konstantin Bulenkov
  */
 class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
+  init {
+    isEnabledInModalContext = true  // To allow the action to be run in the Manage Recent Projects modal dialog, see IDEA-302750
+  }
+
   override fun actionPerformed(event: AnActionEvent) {
     val reopenProjectAction = getSelectedItem(event) as RecentProjectItem
     val projectPath = reopenProjectAction.projectPath

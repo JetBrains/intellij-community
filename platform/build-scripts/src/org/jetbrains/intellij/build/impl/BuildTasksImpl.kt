@@ -107,20 +107,6 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
                                                    context = context)
   }
 
-  override suspend fun generateProjectStructureMapping(targetFile: Path) {
-    val pluginLayoutRoot = withContext(Dispatchers.IO) {
-      Files.createDirectories(context.paths.tempDir)
-      Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
-    }
-    writeProjectStructureReport(
-      entries = generateProjectStructureMapping(context = context,
-                                                state = DistributionBuilderState(pluginsToPublish = emptySet(), context = context),
-                                                pluginLayoutRoot = pluginLayoutRoot),
-      file = targetFile,
-      buildPaths = context.paths
-    )
-  }
-
   override fun compileProjectAndTests(includingTestsInModules: List<String>) {
     compileModules(null, includingTestsInModules)
   }
@@ -134,11 +120,7 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
   }
 
   override fun buildFullUpdaterJar() {
-    doBuildUpdaterJar(context, "updater-full.jar")
-  }
-
-  fun buildUpdaterJar() {
-    doBuildUpdaterJar(context, "updater.jar")
+    buildUpdaterJar(context, "updater-full.jar")
   }
 
   override suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean) {
@@ -171,6 +153,23 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
       copyDistFiles(context = context, newDir = targetDirectory, os = currentOs, arch = arch)
     }
   }
+}
+
+/**
+ * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
+ */
+suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildContext) {
+  val pluginLayoutRoot = withContext(Dispatchers.IO) {
+    Files.createDirectories(context.paths.tempDir)
+    Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
+  }
+  writeProjectStructureReport(
+    entries = generateProjectStructureMapping(context = context,
+                                              state = DistributionBuilderState(pluginsToPublish = emptySet(), context = context),
+                                              pluginLayoutRoot = pluginLayoutRoot),
+    file = targetFile,
+    buildPaths = context.paths
+  )
 }
 
 data class SupportedDistribution(@JvmField val os: OsFamily, @JvmField val arch: JvmArchitecture)
@@ -271,6 +270,7 @@ private suspend fun layoutShared(context: BuildContext) {
       context.productProperties.copyAdditionalFiles(context, context.paths.getDistAll())
     }
   }
+  checkClassFiles(context.paths.distAllDir, context)
 }
 
 private fun findBrandingResource(relativePath: String, context: BuildContext): Path {
@@ -923,7 +923,7 @@ internal fun logFreeDiskSpace(dir: Path, phase: String) {
   ))
 }
 
-private fun doBuildUpdaterJar(context: BuildContext, artifactName: String) {
+fun buildUpdaterJar(context: BuildContext, artifactName: String = "updater.jar") {
   val updaterModule = context.findRequiredModule("intellij.platform.updater")
   val updaterModuleSource = DirSource(context.getModuleOutputDir(updaterModule))
   val librarySources = JpsJavaExtensionService.dependencies(updaterModule)
@@ -939,7 +939,7 @@ private fun doBuildUpdaterJar(context: BuildContext, artifactName: String) {
   context.notifyArtifactBuilt(updaterJar)
 }
 
-private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
+private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
   val executableName = context.productProperties.baseFileName
 
   val productJson = generateMultiPlatformProductJson(
@@ -998,10 +998,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
     compress = context.options.compressZipFiles,
   )
 
-  coroutineScope {
-    launch { checkInArchive(archiveFile = targetFile, pathInArchive = "", context = context) }
-    launch { checkClassFiles(targetFile = targetFile, context = context) }
-  }
+  checkInArchive(archiveFile = targetFile, pathInArchive = "", context = context)
   context.notifyArtifactBuilt(targetFile)
   return targetFile
 }

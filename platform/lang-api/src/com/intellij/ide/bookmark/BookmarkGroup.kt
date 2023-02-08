@@ -3,6 +3,7 @@ package com.intellij.ide.bookmark
 
 import com.intellij.openapi.util.NlsSafe
 
+@JvmDefaultWithCompatibility
 interface BookmarkGroup {
   var name: @NlsSafe String
   var isDefault: Boolean

@@ -38,7 +38,7 @@
 
     <registryKey key="settingsSync.autoSync.on.focus" defaultValue="true"
                  description="Settings will be automatically synced when the application receives the focus"/>
-    <registryKey key="settingsSync.autoSync.frequency.sec" defaultValue="60"
+    <registryKey key="settingsSync.autoSync.frequency.sec" defaultValue="3600"
                  description="Settings will be automatically synced with the server every N seconds.
                               Settings the value to 0 or less disables syncing by timer."/>
 
@@ -65,6 +65,10 @@
 
     <action id="SettingsSyncStatusAction" class="com.intellij.settingsSync.config.SettingsSyncStatusAction">
       <add-to-group group-id="SettingsEntryPointGroup" anchor="after" relative-to-action="WelcomeScreen.Plugins"/>
+    </action>
+
+    <action id="SettingsSyncOpenSettingsAction" class="com.intellij.settingsSync.config.SettingsSyncOpenSettingsAction$Simple">
+      <add-to-group group-id="ExportImportGroup" anchor="last"/>
     </action>
   </actions>
 

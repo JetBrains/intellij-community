@@ -1,21 +1,19 @@
-from typing import Any
+from typing import Any, ClassVar
 
 import passlib.utils.handlers as uh
 
-class lmhash(uh.TruncateMixin, uh.HasEncodingContext, uh.StaticHandler):  # type: ignore
-    name: str
-    setting_kwds: Any
-    checksum_chars: Any
-    checksum_size: int
-    truncate_size: int
-    default_encoding: str
+class lmhash(uh.TruncateMixin, uh.HasEncodingContext, uh.StaticHandler):
+    name: ClassVar[str]
+    checksum_chars: ClassVar[str]
+    checksum_size: ClassVar[int]
+    truncate_size: ClassVar[int]
     @classmethod
     def raw(cls, secret, encoding: Any | None = ...): ...
 
 class nthash(uh.StaticHandler):
-    name: str
-    checksum_chars: Any
-    checksum_size: int
+    name: ClassVar[str]
+    checksum_chars: ClassVar[str]
+    checksum_size: ClassVar[int]
     @classmethod
     def raw(cls, secret): ...
     @classmethod
@@ -23,16 +21,16 @@ class nthash(uh.StaticHandler):
 
 bsd_nthash: Any
 
-class msdcc(uh.HasUserContext, uh.StaticHandler):  # type: ignore
-    name: str
-    checksum_chars: Any
-    checksum_size: int
+class msdcc(uh.HasUserContext, uh.StaticHandler):
+    name: ClassVar[str]
+    checksum_chars: ClassVar[str]
+    checksum_size: ClassVar[int]
     @classmethod
     def raw(cls, secret, user): ...
 
-class msdcc2(uh.HasUserContext, uh.StaticHandler):  # type: ignore
-    name: str
-    checksum_chars: Any
-    checksum_size: int
+class msdcc2(uh.HasUserContext, uh.StaticHandler):
+    name: ClassVar[str]
+    checksum_chars: ClassVar[str]
+    checksum_size: ClassVar[int]
     @classmethod
     def raw(cls, secret, user): ...

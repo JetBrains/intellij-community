@@ -26,6 +26,7 @@ import com.intellij.psi.tree.TokenSet
  * You need to implement [isMyContextRoot] and add com.intellij.grazie.grammar.strategy extension in your .xml config
  */
 @Deprecated("Use TextExtractor and ProblemFilter instead")
+@JvmDefaultWithCompatibility
 interface GrammarCheckingStrategy {
 
   /**

@@ -24,7 +24,7 @@
    },
    {
     name-part: "vuetfy",
-    problem: UNKNOWN_ITEM,
+    problem: UNKNOWN_SYMBOL,
    },
    {
     name-part: "-",

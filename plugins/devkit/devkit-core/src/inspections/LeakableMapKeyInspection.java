@@ -35,7 +35,7 @@ public final class LeakableMapKeyInspection extends DevKitUastInspectionBase {
 
   @Override
   protected boolean isAllowed(@NotNull ProblemsHolder holder) {
-    return DevKitInspectionBase.isAllowedInPluginsOnly(holder.getFile());
+    return DevKitInspectionUtil.isAllowedInPluginsOnly(holder.getFile());
   }
 
   @Override

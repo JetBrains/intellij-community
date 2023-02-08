@@ -25,5 +25,8 @@ class UrlParameterKeys {
     // used in Gateway-from-IDE scenario to go around the local path limitation
     const val runFromIdeToken = "runFromIdeToken"
     const val runFromIdeTokenEnvVar = "GTW_FROM_IDE_TOKEN"
+    const val cloudWorkstationId = "cloudWorkstationId"
+    const val gitpodHost = "gitpodHost"
+    const val awsEnvId = "aws.codecatalyst.env.id"
   }
 }

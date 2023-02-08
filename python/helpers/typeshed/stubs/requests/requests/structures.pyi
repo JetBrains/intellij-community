@@ -1,4 +1,5 @@
-from typing import Any, Generic, Iterable, Iterator, Mapping, MutableMapping, TypeVar
+from collections.abc import Iterable, Iterator, Mapping, MutableMapping
+from typing import Any, Generic, TypeVar
 
 _VT = TypeVar("_VT")
 

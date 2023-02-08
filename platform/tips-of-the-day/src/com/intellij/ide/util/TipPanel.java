@@ -149,9 +149,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
                                                           @NotNull String place,
                                                           @NotNull Presentation presentation,
                                                           @NotNull Dimension minimumSize) {
-        int buttonSize = getFeedbackButtonSize();
-        Dimension size = new Dimension(buttonSize, buttonSize);
-        ActionButton button = new ActionButton(action, presentation, place, size) {
+        ActionButton button = new ActionButton(action, presentation, place, getFeedbackButtonSize()) {
           @Override
           protected void paintButtonLook(Graphics g) {
             // do not paint icon background
@@ -160,12 +158,12 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
 
           @Override
           public Dimension getPreferredSize() {
-            return size;
+            return getFeedbackButtonSize();
           }
 
           @Override
           public Dimension getMaximumSize() {
-            return size;
+            return getFeedbackButtonSize();
           }
         };
         int iconIndent = TipUiSettings.getFeedbackIconIndent();
@@ -176,9 +174,9 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
 
       @Override
       public @NotNull Dimension getPreferredSize() {
-        int size = getFeedbackButtonSize();
+        Dimension size = getFeedbackButtonSize();
         int buttonsCount = getActionGroup().getChildren(null).length;
-        return new Dimension(size * buttonsCount, size);
+        return new Dimension(size.width * buttonsCount, size.height);
       }
 
       @Override
@@ -197,8 +195,9 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     return toolbar;
   }
 
-  private static int getFeedbackButtonSize() {
-    return AllIcons.Ide.Like.getIconWidth() + 2 * TipUiSettings.getFeedbackIconIndent();
+  private static Dimension getFeedbackButtonSize() {
+    int dim = AllIcons.Ide.Like.getIconWidth() + 2 * TipUiSettings.getFeedbackIconIndent();
+    return new Dimension(dim, dim);
   }
 
   private AnAction createFeedbackAction(@NlsActions.ActionText String text,

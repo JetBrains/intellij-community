@@ -1,6 +1,6 @@
 [tool.black]
 line_length = 130
-target_version = ["py37"]
+target_version = ["py310"]
 force-exclude = ".*_pb2.pyi"
 skip_magic_trailing_comma = true
 

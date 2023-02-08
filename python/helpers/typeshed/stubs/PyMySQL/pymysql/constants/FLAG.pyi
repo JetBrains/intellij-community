@@ -1,17 +1,15 @@
-from typing import Any
-
-NOT_NULL: Any
-PRI_KEY: Any
-UNIQUE_KEY: Any
-MULTIPLE_KEY: Any
-BLOB: Any
-UNSIGNED: Any
-ZEROFILL: Any
-BINARY: Any
-ENUM: Any
-AUTO_INCREMENT: Any
-TIMESTAMP: Any
-SET: Any
-PART_KEY: Any
-GROUP: Any
-UNIQUE: Any
+NOT_NULL: int
+PRI_KEY: int
+UNIQUE_KEY: int
+MULTIPLE_KEY: int
+BLOB: int
+UNSIGNED: int
+ZEROFILL: int
+BINARY: int
+ENUM: int
+AUTO_INCREMENT: int
+TIMESTAMP: int
+SET: int
+PART_KEY: int
+GROUP: int
+UNIQUE: int

@@ -310,8 +310,6 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       replaceOptions.setToShortenFQN(myShortenFqn.isSelected());
       replaceOptions.setToUseStaticImport(myStaticImport.isSelected());
       replaceOptions.setToReformatAccordingToStyle(myReformat.isSelected());
-
-
     }
     return result;
   }
@@ -329,6 +327,12 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
         setTextForEditor(text.trim(), mySearchCriteriaEdit);
         setTextForEditor(text, myReplaceCriteriaEdit);
         myScopePanel.setScopesFromContext(null);
+        final Document document = editor.getDocument();
+        final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        if (file != null) {
+          final Language language = file.getLanguage();
+          myFileTypeChooser.setSelectedItem(language.getAssociatedFileType(), language, null);
+        }
         ApplicationManager.getApplication().invokeLater(() -> startTemplate());
         return;
       }
@@ -441,20 +445,14 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     }
     myFileTypeChooser.setSelectedItem(myFileType, myDialect, myPatternContext);
     myFileTypeChooser.setFileTypeInfoConsumer(info -> {
-      if (info == null) {
-        myFileType = null;
-        myDialect = null;
-        myPatternContext = null;
-      }
-      else {
-        myFileType = info.getFileType();
-        myDialect = info.getDialect();
-        myPatternContext = info.getContext();
-        final MatchOptions matchOptions = myConfiguration.getMatchOptions();
-        matchOptions.setFileType(myFileType);
-        matchOptions.setDialect(myDialect);
-        matchOptions.setPatternContext(myPatternContext);
-      }
+      myFileType = info.getFileType();
+      myDialect = info.getDialect();
+      myPatternContext = info.getContext();
+      final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+      matchOptions.setFileType(myFileType);
+      matchOptions.setDialect(myDialect);
+      matchOptions.setPatternContext(myPatternContext);
+
       myOptionsToolbar.updateActionsImmediately();
       myFilterPanel.setFileType(myFileType);
       final String contextId = (myPatternContext == null) ? "" : myPatternContext.getId();
@@ -472,6 +470,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       myReplaceCriteriaEdit.setNewDocumentAndFileType((myFileType == null) ? PlainTextFileType.INSTANCE : myFileType, replaceDocument);
       replaceDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
 
+      updateOptions();
       initValidation();
     });
     myFileTypeChooser.setUserActionFileTypeInfoConsumer(info -> {
@@ -756,6 +755,13 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
 
   public Configuration getConfiguration() {
     saveConfiguration();
+    //final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+    //assert matchOptions.isCaseSensitiveMatch() == myMatchCase.isSelected();
+    //assert matchOptions.isSearchInjectedCode() == myInjected.isSelected();
+    //final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
+    //assert replaceOptions.isToReformatAccordingToStyle() == myReformat.isSelected();
+    //assert replaceOptions.isToUseStaticImport() == myStaticImport.isSelected();
+    //assert replaceOptions.isToShortenFQN() == myShortenFqn.isSelected();
     return myReplace ? new ReplaceConfiguration(myConfiguration) : new SearchConfiguration(myConfiguration);
   }
 
@@ -910,9 +916,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       else {
         errors.add(new ValidationInfo(""));
       }
-      ApplicationManager.getApplication().invokeLater(() -> {
-        setSearchTargets(myConfiguration.getMatchOptions());
-      }, ModalityState.stateForComponent(component));
+      ApplicationManager.getApplication().invokeLater(() -> setSearchTargets(myConfiguration.getMatchOptions()),
+                                                      ModalityState.stateForComponent(component));
     }
     catch (ProcessCanceledException e) {
       throw e;

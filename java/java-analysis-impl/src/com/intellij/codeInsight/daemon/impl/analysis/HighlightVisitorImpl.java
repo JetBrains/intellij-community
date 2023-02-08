@@ -38,6 +38,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -1968,6 +1969,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (ref.multiResolve(true).length == 0) {
       PsiElementFactory elementFactory = PsiElementFactory.getInstance(myFile.getProject());
       if (pattern.getPatternVariable() == null && pattern.getDeconstructionList().getDeconstructionComponents().length == 0) {
+        PsiClassType type = tryCast(pattern.getTypeElement().getType(), PsiClassType.class);
+        if (type != null && ContainerUtil.exists(type.getParameters(), PsiWildcardType.class::isInstance)) return;
         PsiExpression expression = elementFactory.createExpressionFromText(pattern.getText(), grandParent);
         PsiMethodCallExpression call = tryCast(expression, PsiMethodCallExpression.class);
         if (call == null) return;

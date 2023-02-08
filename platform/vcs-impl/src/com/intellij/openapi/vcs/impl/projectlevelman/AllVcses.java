@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.impl.VcsEP;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -289,6 +290,8 @@ public final class AllVcses implements AllVcsesI, Disposable {
 
   private void installPlugin(@NotNull ObsoleteVcs vcs) {
     new Task.Backgroundable(myProject, VcsBundle.message("impl.progress.title.installing.plugin")) {
+
+      @RequiresBackgroundThread
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {

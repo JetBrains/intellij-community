@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
@@ -325,6 +326,61 @@ class ModuleLibraryBridgeTest {
     assertTrue(antLibraryBridgeOne === antLibraryBridgeTwo)
     assertTrue(mavenLibraryBridgeOne !== mavenLibraryBridgeTwo)
     assertTrue(gradleLibraryBridgeOne !== gradleLibraryBridgeTwo)
+  }
+
+  @Test
+  fun `check module library dispose`() = WriteCommandAction.runWriteCommandAction(project) {
+    val moduleName = "build"
+    val antLibraryName = "ant-lib"
+    val mavenLibraryName = "maven-lib"
+    val gradleLibraryName = "gradle-lib"
+
+    val moduleFile = File(project.basePath, "$moduleName.iml")
+    val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+      moduleModel.commit()
+      module
+    }
+    ModuleRootModificationUtil.addModuleLibrary(module, antLibraryName, listOf(), emptyList())
+    ModuleRootModificationUtil.addModuleLibrary(module, mavenLibraryName, listOf(), emptyList())
+    ModuleRootModificationUtil.addModuleLibrary(module, gradleLibraryName, listOf(), emptyList())
+    var moduleLibraryTable = ModuleRootComponentBridge.getInstance(module).getModuleLibraryTable()
+    val antLibraryBridgeOrigin = moduleLibraryTable.getLibraryByName(antLibraryName)
+    val mavenLibraryBridgeOrigin = moduleLibraryTable.getLibraryByName(mavenLibraryName)
+    val gradleLibraryBridgeOrigin = moduleLibraryTable.getLibraryByName(gradleLibraryName)
+
+    val rootModel = ModuleRootManager.getInstance(module).modifiableModel
+    val antLibraryBridgeCopy = rootModel.moduleLibraryTable.getLibraryByName(antLibraryName)
+    rootModel.moduleLibraryTable.removeLibrary(antLibraryBridgeCopy!!)
+
+    val mavenLibraryBridgeCopy = rootModel.moduleLibraryTable.getLibraryByName(mavenLibraryName)
+
+    val gradleLibraryBridgeCopy = rootModel.moduleLibraryTable.getLibraryByName(gradleLibraryName)
+    rootModel.moduleLibraryTable.getLibraryByName(gradleLibraryName)?.modifiableModel?.let {
+      it.name = "New Name"
+      it.commit()
+    }
+    rootModel.commit()
+
+    moduleLibraryTable = ModuleRootComponentBridge.getInstance(module).getModuleLibraryTable()
+
+    // Check both instances of removed library disposed
+    assertNull(moduleLibraryTable.getLibraryByName(antLibraryName))
+    assertTrue(antLibraryBridgeOrigin !== antLibraryBridgeCopy)
+    assertTrue((antLibraryBridgeOrigin as LibraryBridge).isDisposed)
+    assertTrue((antLibraryBridgeCopy as LibraryBridge).isDisposed)
+
+    // Check copy instance is disposed for not modified library
+    val mavenLibraryBridgeTwo = moduleLibraryTable.getLibraryByName(mavenLibraryName)
+    assertTrue(mavenLibraryBridgeTwo === mavenLibraryBridgeOrigin)
+    assertTrue((mavenLibraryBridgeCopy as LibraryBridge).isDisposed)
+    assertFalse((mavenLibraryBridgeOrigin as LibraryBridge).isDisposed)
+
+    // Check origin instance is disposed for modified library
+    val gradleLibraryBridgeTwo = moduleLibraryTable.getLibraryByName("New Name")
+    assertTrue(gradleLibraryBridgeTwo === gradleLibraryBridgeCopy)
+    assertTrue((gradleLibraryBridgeOrigin as LibraryBridge).isDisposed)
+    assertFalse((gradleLibraryBridgeCopy as LibraryBridge).isDisposed)
   }
 
   @Test

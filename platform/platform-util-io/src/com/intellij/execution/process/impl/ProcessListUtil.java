@@ -40,6 +40,8 @@ public final class ProcessListUtil {
   public static final List<@NlsSafe String> COMM_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,ppid,state,user,comm");
   public static final List<@NlsSafe String> COMMAND_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,ppid,state,user,command");
 
+  private static final String PARENT_PID_PREFIX = "PPid:";
+
   public static ProcessInfo @NotNull [] getProcessList() {
     List<ProcessInfo> result = doGetProcessList();
     return result.toArray(ProcessInfo.EMPTY_ARRAY);
@@ -145,10 +147,29 @@ public final class ProcessListUtil {
         // couldn't resolve symlink
       }
 
+      int parentPid = -1;
+      try (FileInputStream stream = new FileInputStream(new File(each, "status"))) {
+        String statusString = new String(FileUtil.loadBytes(stream), StandardCharsets.UTF_8);
+        for (String line : StringUtil.splitByLines(statusString)) {
+          if (line.startsWith(PARENT_PID_PREFIX)) {
+            try {
+              parentPid = Integer.parseInt(line.substring(PARENT_PID_PREFIX.length()).trim());
+            }
+            catch (NumberFormatException numberFormatException) {
+              LOG.error("Failed to parse parent pid from line " + line);
+            }
+            break;
+          }
+        }
+      }
+      catch (IOException ignored) {
+      }
+
       result.add(new ProcessInfo(pid, StringUtil.join(cmdline, " "),
                                  PathUtil.getFileName(cmdline.get(0)),
                                  StringUtil.join(cmdline.subList(1, cmdline.size()), " "),
-                                 executablePath
+                                 executablePath,
+                                 parentPid
       ));
     }
     return result;

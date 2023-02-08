@@ -1,50 +1,45 @@
-from typing import Any
+from typing import Any, ClassVar
 
 import passlib.utils.handlers as uh
 from passlib.ifc import DisabledHash
 
-class unix_fallback(DisabledHash, uh.StaticHandler):  # type: ignore
-    name: str
-    context_kwds: Any
+class unix_fallback(DisabledHash, uh.StaticHandler):
+    name: ClassVar[str]
     @classmethod
-    def identify(cls, hash): ...
+    def identify(cls, hash: str | bytes) -> bool: ...
     enable_wildcard: Any
     def __init__(self, enable_wildcard: bool = ..., **kwds) -> None: ...
     @classmethod
-    def verify(cls, secret, hash, enable_wildcard: bool = ...): ...  # type: ignore[override]
+    def verify(cls, secret: str | bytes, hash: str | bytes, enable_wildcard: bool = ...): ...  # type: ignore[override]
 
-class unix_disabled(DisabledHash, uh.MinimalHandler):  # type: ignore
-    name: str
-    setting_kwds: Any
-    context_kwds: Any
-    default_marker: Any
+class unix_disabled(DisabledHash, uh.MinimalHandler):
+    name: ClassVar[str]
+    default_marker: ClassVar[str]
     @classmethod
     def using(cls, marker: Any | None = ..., **kwds): ...  # type: ignore[override]
     @classmethod
-    def identify(cls, hash): ...
+    def identify(cls, hash: str | bytes) -> bool: ...
     @classmethod
-    def verify(cls, secret, hash): ...
+    def verify(cls, secret: str | bytes, hash: str | bytes) -> bool: ...  # type: ignore[override]
     @classmethod
-    def hash(cls, secret, **kwds): ...
+    def hash(cls, secret: str | bytes, **kwds) -> str: ...
     @classmethod
-    def genhash(cls, secret, config, marker: Any | None = ...): ...  # type: ignore[override]
+    def genhash(cls, secret: str | bytes, config, marker: Any | None = ...): ...  # type: ignore[override]
     @classmethod
-    def disable(cls, hash: Any | None = ...): ...
+    def disable(cls, hash: str | bytes | None = ...) -> str: ...
     @classmethod
-    def enable(cls, hash): ...
+    def enable(cls, hash: str | bytes) -> str: ...
 
 class plaintext(uh.MinimalHandler):
-    name: str
-    setting_kwds: Any
-    context_kwds: Any
-    default_encoding: str
+    name: ClassVar[str]
+    default_encoding: ClassVar[str]
     @classmethod
-    def identify(cls, hash): ...
+    def identify(cls, hash: str | bytes): ...
     @classmethod
-    def hash(cls, secret, encoding: Any | None = ...): ...  # type: ignore[override]
+    def hash(cls, secret: str | bytes, encoding: Any | None = ...): ...  # type: ignore[override]
     @classmethod
-    def verify(cls, secret, hash, encoding: Any | None = ...): ...  # type: ignore[override]
+    def verify(cls, secret: str | bytes, hash: str | bytes, encoding: str | None = ...): ...  # type: ignore[override]
     @classmethod
     def genconfig(cls): ...
     @classmethod
-    def genhash(cls, secret, config, encoding: Any | None = ...): ...  # type: ignore[override]
+    def genhash(cls, secret, config, encoding: str | None = ...): ...  # type: ignore[override]

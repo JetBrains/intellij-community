@@ -43,8 +43,7 @@
                 ]
               },
               "value": {
-                "type": "of-match",
-                "kind": "plain"
+                "type": "of-match"
               },
               "vue-custom-prop": {
                 "name": "Custom Vue component property",
@@ -838,6 +837,7 @@
               "items": {
                 "path": "attributes",
                 "filter": "match-with-target-list",
+                "includeVirtual": false,
                 "target-list": "/js/events",
                 "prefix": "update:"
               }

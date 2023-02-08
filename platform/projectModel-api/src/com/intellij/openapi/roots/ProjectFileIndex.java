@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.List;
 
@@ -161,6 +162,23 @@ public interface ProjectFileIndex extends FileIndex {
    */
   boolean isUnderIgnored(@NotNull VirtualFile file);
 
+  /**
+   * Returns type of the module source root which contains the given {@code file}, or {@code null} if {@code file} doesn't belong to sources 
+   * of modules.
+   */
+  @Nullable JpsModuleSourceRootType<?> getContainingSourceRootType(@NotNull VirtualFile file);
+
+  /**
+   * Returns {@code true} if {@code file} is located under a source root which is marked as containing generated sources. This method is 
+   * mostly for internal use only. If you need to check if a source file is generated, it's better to use {@link com.intellij.openapi.roots.GeneratedSourcesFilter#isGeneratedSourceByAnyFilter} instead.
+   */
+  boolean isInGeneratedSources(@NotNull VirtualFile file);
+
+  /**
+   * @deprecated use other methods from this class to obtain the information you need to get from {@link SourceFolder} instance, e.g. 
+   * {@link #getContainingSourceRootType} or {@link #isInGeneratedSources}.
+   */
+  @Deprecated
   @Nullable
   default SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
     return null;

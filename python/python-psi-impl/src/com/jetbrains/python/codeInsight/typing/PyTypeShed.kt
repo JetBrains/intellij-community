@@ -72,6 +72,7 @@ object PyTypeShed {
     "tomllib" to (LanguageLevel.PYTHON311 to null),
     "unittest._log" to (LanguageLevel.PYTHON39 to null),  // likely it is ignored now
     "unittest.async_case" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "wsgiref.types" to (LanguageLevel.PYTHON311 to null),  // likely it is ignored now
     "zoneinfo" to (LanguageLevel.PYTHON39 to null)
   )
 

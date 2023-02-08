@@ -1,4 +1,6 @@
 // "Remove unreachable branches" "true"
+import org.jetbrains.annotations.*;
+
 class Test {
     void test(Object obj) {
         if (!(obj instanceof Rect)) return;
@@ -6,5 +8,5 @@ class Test {
     }
 
     record Point(double x, double y) {}
-    record Rect(Point point1, Point point2) {}
+    record Rect(@NotNull Point point1, @NotNull Point point2) {}
 }

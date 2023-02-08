@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -18,6 +18,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerActionsCollector;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,8 +51,18 @@ public abstract class GotoFrameSourceAction extends DebuggerAction{
           JavaExecutionStack executionStack =
             new JavaExecutionStack(threadProxy, process, Objects.equals(threadSuspendContext.getThread(), threadProxy));
           executionStack.initTopFrame();
+          boolean threadChanged = false;
+          if (session instanceof XDebugSessionImpl) {
+            if (!Objects.equals(((XDebugSessionImpl)session).getCurrentExecutionStack(), executionStack)) {
+              threadChanged = true;
+              XDebuggerActionsCollector.threadSelected.log(XDebuggerActionsCollector.PLACE_THREADS_VIEW);
+            }
+          }
           XStackFrame frame = ContainerUtil.getFirstItem(executionStack.createStackFrames(frameProxy));
           if (frame != null) {
+            if (!threadChanged) {
+              XDebuggerActionsCollector.frameSelected.log(XDebuggerActionsCollector.PLACE_THREADS_VIEW);
+            }
             DebuggerUIUtil.invokeLater(() -> session.setCurrentStackFrame(executionStack, frame));
           }
         }

@@ -1,4 +1,5 @@
-from typing import Any, Generator
+from collections.abc import Generator
+from typing import Any
 
 from ..formatter import Formatter
 from .bbcode import BBCodeFormatter as BBCodeFormatter

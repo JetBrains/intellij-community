@@ -5,6 +5,7 @@
 package org.jetbrains.kotlin.idea.base.highlighting
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus
@@ -17,7 +18,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderConten
 import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.script.experimental.api.ScriptDiagnostic

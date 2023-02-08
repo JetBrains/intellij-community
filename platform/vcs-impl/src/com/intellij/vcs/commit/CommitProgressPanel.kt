@@ -218,7 +218,7 @@ sealed class CommitCheckFailure {
 
   class WithDetails(text: @NlsContexts.NotificationContent String,
                     val viewDetailsActionText: @NlsContexts.NotificationContent String,
-                    val viewDetails: () -> Unit) : WithDescription(text)
+                    val viewDetails: (place: CommitSessionCounterUsagesCollector.CommitProblemPlace) -> Unit) : WithDescription(text)
 }
 
 private class FailuresPanel : JBPanel<FailuresPanel>() {
@@ -302,7 +302,7 @@ private class FailuresDescriptionPanel : HtmlPanel() {
     if (event.eventType != HyperlinkEvent.EventType.ACTIVATED) return
 
     val failure = failures[event.description.toInt()] as? CommitCheckFailure.WithDetails ?: return
-    failure.viewDetails()
+    failure.viewDetails(CommitSessionCounterUsagesCollector.CommitProblemPlace.COMMIT_TOOLWINDOW)
   }
 }
 

@@ -4,6 +4,7 @@ import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
@@ -37,6 +38,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
 
     if (!SettingsSyncSettings.getInstance().migrationFromOldStorageChecked) {
       SettingsSyncSettings.getInstance().migrationFromOldStorageChecked = true
+      SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.PLUGINS, false)
       val migration = MIGRATION_EP.extensionList.firstOrNull { it.isLocalDataAvailable(PathManager.getConfigDir()) }
       if (migration != null) {
         LOG.info("Found migration from an old storage via ${migration.javaClass.simpleName}")
@@ -72,6 +74,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     LOG.info("Initializing settings sync")
     val settingsSyncMain = SettingsSyncMain.getInstance()
     settingsSyncMain.controls.bridge.initialize(initMode)
+    SettingsSyncEvents.getInstance().addCategoriesChangeListener(this)
     syncSettings()
   }
 
@@ -88,7 +91,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
   }
 
   override fun categoriesStateChanged() {
-    syncSettings()
+    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.LogCurrentSettings)
   }
 
   private fun scheduleSyncingOnAppFocus() {

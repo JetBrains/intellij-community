@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.caches.project
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -35,7 +36,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceIn
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.types.typeUtil.closure
@@ -115,7 +115,8 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
     override fun dispose() = Unit
 
     abstract inner class AbstractCache<Key : Any, Value : Any>(initializer: (AbstractCache<Key, Value>) -> Unit) :
-        SynchronizedFineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory = false),
+        SynchronizedFineGrainedEntityCache<Key, Value>(project),
+        ModuleRootListener,
         WorkspaceModelChangeListener {
 
         @Volatile
@@ -125,6 +126,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
             connection.subscribe(WorkspaceModelTopics.CHANGED, this)
+            connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
             subscribe(connection)
         }
 
@@ -164,6 +166,18 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
         override fun checkKeyValidity(key: Module) {
             key.checkValidity()
+        }
+
+        override fun rootsChanged(event: ModuleRootEvent) {
+            // TODO: entire method to be drop when IDEA-298694 is fixed.
+            //  Reason: unload modules are untracked with WorkspaceModel
+            if (event.isCausedByWorkspaceModelChangesOnly) return
+
+            applyIfPossible {
+                invalidate()
+                project.ideaModules().forEach(::get)
+                incModificationCount()
+            }
         }
 
         override fun modelChanged(event: VersionedStorageChange) {
@@ -246,7 +260,6 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
         override fun subscribe(connection: MessageBusConnection) {
             connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
-            connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
         }
 
         override fun checkKeyValidity(key: Sdk) = Unit
@@ -283,7 +296,12 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
             applyIfPossible {
                 // SDK could be changed (esp in tests) out of message bus subscription
                 val sdks = runReadAction { ProjectJdkTable.getInstance().allJdks }
-                invalidateEntries({ k, _ -> k !in sdks })
+
+                // TODO: `invalidate()` to be drop when IDEA-298694 is fixed
+                //  Reason: unload modules are untracked with WorkspaceModel
+                invalidate()
+                // TODO: `invalidateEntries(..)` to be uncommented when IDEA-298694 is fixed
+                //invalidateEntries({ k, _ -> k !in sdks })
 
                 // force calculation
                 sdks.forEach(::get)

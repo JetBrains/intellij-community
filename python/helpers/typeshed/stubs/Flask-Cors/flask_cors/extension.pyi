@@ -1,8 +1,10 @@
+from collections.abc import Callable, Iterable
 from datetime import timedelta
 from logging import Logger
-from typing import Any, Callable, Iterable
+from typing import Any
+from typing_extensions import TypeAlias
 
-_App = Any  # flask is not part of typeshed
+_App: TypeAlias = Any  # flask is not part of typeshed
 
 LOG: Logger
 

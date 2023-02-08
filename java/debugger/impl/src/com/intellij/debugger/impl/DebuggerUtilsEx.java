@@ -900,7 +900,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
         if (document != null) {
           TextRange lineRange = DocumentUtil.getLineTextRange(document, getLine());
           TextRange res = range.intersection(lineRange);
-          return res.equals(lineRange) ? null : res; // highlight the whole line for multiline lambdas
+          return lineRange.equals(res) ? null : res; // highlight the whole line for multiline lambdas
         }
       }
       return range;

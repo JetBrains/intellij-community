@@ -89,9 +89,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
 
   protected @Nullable WorkspaceEntity getExistingEntity(MutableEntityStorage diff) {
     ExternalEntityMapping<Object> mapping = diff.getExternalMapping("intellij.artifacts.packaging.elements");
-    Optional<WorkspaceEntity> existing = mapping.getEntities(this).stream().findFirst();
-
-    return existing.orElse(null);
+    return mapping.getFirstEntity(this);
   }
 
   public void setStorage(@NotNull VersionedEntityStorage storage, @NotNull Project project, Set<PackagingElement<?>> elementsWithDiff,
@@ -139,7 +137,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
         noStorageChange.get();
         MutableEntityStorage builder = ((VersionedEntityStorageOnBuilder)myStorage).getBase();
         MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping("intellij.artifacts.packaging.elements");
-        PackagingElementEntity entity = (PackagingElementEntity)ContainerUtil.getFirstItem(mapping.getEntities(this));
+        PackagingElementEntity entity = (PackagingElementEntity)mapping.getFirstEntity(this);
         if (entity == null) {
           throw new RuntimeException("Cannot find an entity");
         }
@@ -152,7 +150,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
     assert myStorage != null;
     EntityStorage base = myStorage.getBase();
     ExternalEntityMapping<Object> externalMapping = base.getExternalMapping("intellij.artifacts.packaging.elements");
-    PackagingElementEntity entity = (PackagingElementEntity)ContainerUtil.getFirstItem(externalMapping.getEntities(this));
+    PackagingElementEntity entity = (PackagingElementEntity)externalMapping.getFirstEntity(this);
     if (entity == null) {
       throw new RuntimeException("Cannot find an entity");
     }

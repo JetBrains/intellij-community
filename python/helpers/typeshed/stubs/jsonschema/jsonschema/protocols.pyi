@@ -1,4 +1,5 @@
-from typing import Any, ClassVar, Iterator, Protocol
+from collections.abc import Iterator
+from typing import Any, ClassVar, Protocol
 
 from jsonschema._format import FormatChecker
 from jsonschema._types import TypeChecker

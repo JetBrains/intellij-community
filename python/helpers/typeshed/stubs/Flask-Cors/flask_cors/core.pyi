@@ -1,13 +1,14 @@
+from collections.abc import Iterable
 from datetime import timedelta
 from logging import Logger
-from typing import Any, Iterable, Pattern, TypeVar, overload
-from typing_extensions import TypedDict
+from typing import Any, Pattern, TypeVar, overload
+from typing_extensions import TypeAlias, TypedDict
 
 _IterableT = TypeVar("_IterableT", bound=Iterable[Any])
 _T = TypeVar("_T")
-_App = Any  # flask is not part of typeshed
-_Response = Any  # flask is not part of typeshed
-_MultiDict = Any  # werkzeug is not part of typeshed
+_App: TypeAlias = Any  # flask is not part of typeshed
+_Response: TypeAlias = Any  # flask is not part of typeshed
+_MultiDict: TypeAlias = Any  # werkzeug is not part of typeshed
 
 class _Options(TypedDict, total=False):
     resources: dict[str, dict[str, Any]] | list[str] | str | None
@@ -35,7 +36,7 @@ ACL_REQUEST_HEADERS: str
 ALL_METHODS: list[str]
 CONFIG_OPTIONS: list[str]
 FLASK_CORS_EVALUATED: str
-RegexObject = Pattern[str]
+RegexObject: TypeAlias = Pattern[str]
 DEFAULT_OPTIONS: _Options
 
 def parse_resources(resources: dict[str, _Options] | Iterable[str] | str | Pattern[str]) -> list[tuple[str, _Options]]: ...
@@ -53,9 +54,9 @@ def get_app_kwarg_dict(appInstance: _App | None = ...) -> _Options: ...
 def flexible_str(obj: object) -> str | None: ...
 def serialize_option(options_dict: _Options, key: str, upper: bool = ...) -> None: ...
 @overload
-def ensure_iterable(inst: str) -> list[str]: ...  # type: ignore
+def ensure_iterable(inst: str) -> list[str]: ...  # type: ignore[misc]
 @overload
-def ensure_iterable(inst: _IterableT) -> _IterableT: ...  # type: ignore
+def ensure_iterable(inst: _IterableT) -> _IterableT: ...
 @overload
 def ensure_iterable(inst: _T) -> list[_T]: ...
 def sanitize_regex_param(param: str | list[str]) -> list[str]: ...

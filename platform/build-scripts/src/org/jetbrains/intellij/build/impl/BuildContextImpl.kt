@@ -242,6 +242,10 @@ class BuildContextImpl private constructor(
     val projectHomeForCustomizersAsString = FileUtilRt.toSystemIndependentName(projectHomeForCustomizers.toString())
     val options = BuildOptions()
     options.useCompiledClassesFromProjectOutput = this.options.useCompiledClassesFromProjectOutput
+    options.buildStepsToSkip = this.options.buildStepsToSkip
+    options.compressZipFiles = this.options.compressZipFiles
+    options.targetArch = this.options.targetArch
+    options.targetOs = this.options.targetOs
     val compilationContextCopy = compilationContext.createCopy(
       messages = messages,
       options = options,
@@ -288,9 +292,9 @@ class BuildContextImpl private constructor(
     }
     jvmArgs.add("-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".let { if (isScript) '"' + it + '"' else it })
     jvmArgs.add("-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".let { if (isScript) '"' + it + '"' else it })
-    // prefer bundled JNA dispatcher lib
+    // require bundled JNA dispatcher lib
     jvmArgs.add("-Djna.nosys=true")
-    jvmArgs.add("-Djna.nounpack=true")
+    jvmArgs.add("-Djna.noclasspath=true")
 
     if (productProperties.platformPrefix != null) {
       jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")

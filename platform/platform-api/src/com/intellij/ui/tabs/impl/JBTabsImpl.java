@@ -128,7 +128,7 @@ public class JBTabsImpl extends JComponent
   private final WeakHashMap<Component, Component> myDeferredToRemove = new WeakHashMap<>();
 
   private SingleRowLayout mySingleRowLayout;
-  private final TableLayout myTableLayout = new TableLayout(this);
+  private TableLayout myTableLayout = createTableLayout();
   // it's an invisible splitter intended for changing size of tab zone
   private final TabsSideSplitter mySplitter = new TabsSideSplitter(this);
 
@@ -517,7 +517,7 @@ public class JBTabsImpl extends JComponent
   }
 
   public boolean isWithScrollBar() {
-    return mySingleRowLayout != null && mySingleRowLayout.isWithScrollBar();
+    return myLayout.isWithScrollBar();
   }
 
   @NotNull
@@ -542,30 +542,42 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateRowLayout() {
-    mySingleRowLayout = createSingleRowLayout();
     if (getTabsPosition() != JBTabsPosition.top) {
       mySingleRow = true;
     }
-    setupScrollBar();
-    myTableLayout.setWithScrollBar(isWithScrollBar());
-    boolean useTableLayout = !isSingleRow();
-     useTableLayout |= getTabsPosition() == JBTabsPosition.top
-                && supportsTableLayoutAsSingleRow()
-                && TabLayout.showPinnedTabsSeparately();
-    TabLayout layout = useTableLayout ? myTableLayout : mySingleRowLayout;
-    if (setLayout(layout)) {
-      relayout(true, true);
+    boolean forceTableLayout = getTabsPosition() == JBTabsPosition.top
+                               && supportsTableLayoutAsSingleRow()
+                               && TabLayout.showPinnedTabsSeparately();
+    boolean useTableLayout = !isSingleRow() || forceTableLayout;
+    if (useTableLayout) {
+      myTableLayout = createTableLayout();
     }
+    else {
+      mySingleRowLayout = createSingleRowLayout();
+    }
+    TabLayout layout = useTableLayout ? myTableLayout : mySingleRowLayout;
+    setLayout(layout);
+    setupScrollBar();
+    relayout(true, true);
   }
 
   protected boolean supportsTableLayoutAsSingleRow() {
     return false;
   }
 
+  protected TableLayout createTableLayout() {
+    boolean isWithScrollBar = ExperimentalUI.isEditorTabsWithScrollBar()
+                              && isSingleRow()
+                              && getTabsPosition() == JBTabsPosition.top
+                              && supportsTableLayoutAsSingleRow()
+                              && TabLayout.showPinnedTabsSeparately()
+                              && (!supportsCompression() || UISettings.getInstance().getHideTabsIfNeeded());
+    return new TableLayout(this, isWithScrollBar);
+  }
+
   protected SingleRowLayout createSingleRowLayout() {
     return new ScrollableSingleRowLayout(this);
   }
-
 
   @Override
   public JBTabs setNavigationActionBinding(String prevActionId, String nextActionId) {
@@ -1967,7 +1979,8 @@ public class JBTabsImpl extends JComponent
 
     myScrollBarModel.setMaximum(maximum);
     myScrollBarModel.setValue(value);
-    myScrollBarModel.setExtent(extent);
+    // If extent is 0, that means the layout is in improper state, so we don't show the scrollbar.
+    myScrollBarModel.setExtent(extent == 0 ? value + maximum : extent);
   }
 
   private void updateTabsOffsetFromScrollBar() {
@@ -3189,7 +3202,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public boolean isSingleRow() {
-    return mySingleRow || ExperimentalUI.isNewUI();
+    return mySingleRow;
   }
 
   public boolean isSideComponentVertical() {

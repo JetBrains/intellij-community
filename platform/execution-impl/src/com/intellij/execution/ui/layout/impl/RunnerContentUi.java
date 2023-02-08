@@ -733,12 +733,12 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       selectedContent = null;
     }
 
-    Content[] debugTabs = ToolWindowManager.getInstance(myProject)
-      .getToolWindow(ToolWindowId.DEBUG)
-      .getContentManager().getContents();
-    for (Content content : debugTabs) {
-      if (content != selectedContent) {
-        contents.add(content);
+    ToolWindow debugToolwindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.DEBUG);
+    if (debugToolwindow != null) {
+      for (Content content : debugToolwindow.getContentManager().getContents()) {
+        if (content != selectedContent) {
+          contents.add(content);
+        }
       }
     }
     return contents;

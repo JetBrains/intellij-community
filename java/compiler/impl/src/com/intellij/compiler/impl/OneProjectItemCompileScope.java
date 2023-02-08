@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -81,10 +80,10 @@ public class OneProjectItemCompileScope extends ExportableUserDataHolderBase imp
     if (module == null || !fileIndex.isInSourceContent(myFile)) {
       return Collections.emptyList();
     }
-    SourceFolder sourceFolder = fileIndex.getSourceFolder(myFile);
-    if (sourceFolder == null) return Collections.emptyList();
 
-    JpsModuleSourceRootType<?> rootType = sourceFolder.getRootType();
+    JpsModuleSourceRootType<?> rootType = fileIndex.getContainingSourceRootType(myFile);
+    if (rootType == null) return Collections.emptyList();
+    
     final boolean isResource = rootType instanceof JavaResourceRootType;
     final ModuleSourceSet.Type type = rootType.isForTests()?
       isResource? ModuleSourceSet.Type.RESOURCES_TEST :  ModuleSourceSet.Type.TEST :

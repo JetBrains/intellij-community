@@ -29,6 +29,7 @@ private class UpdateCopyrightCheckinHandler(val project: Project) : CheckinHandl
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
     return BooleanCommitOption(project, CopyrightBundle.message("before.checkin.update.copyright"), false,
                                settings::UPDATE_COPYRIGHT)
+      .withCheckinHandler(this)
   }
 
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION

@@ -15,6 +15,7 @@ YEAR: int
 NEWDATE: int
 VARCHAR: int
 BIT: int
+JSON: int
 NEWDECIMAL: int
 ENUM: int
 SET: int

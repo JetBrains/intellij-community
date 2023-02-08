@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 
+@JvmDefaultWithCompatibility
 interface KotlinUniversalQuickFix : IntentionActionWithFixAllOption, LocalQuickFix {
     override fun getName() = text
 

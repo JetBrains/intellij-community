@@ -15,8 +15,6 @@
  */
 package com.intellij.spellchecker;
 
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -28,21 +26,9 @@ public class MethodNameTokenizerJava extends NamedElementTokenizer<PsiMethod> {
 
   @Override
   public void tokenize(@NotNull PsiMethod element, TokenConsumer consumer) {
-    if (element.isConstructor()) return;
-    final PsiMethod[] methods = (element).findDeepestSuperMethods();
-    boolean isInSource = true;
-    for (PsiMethod psiMethod : methods) {
-      isInSource &= isMethodDeclarationInSource(psiMethod);
-    }
-    if (isInSource) {
-      super.tokenize(element, consumer);
-    }
+    if (element.isConstructor() || element.findDeepestSuperMethods().length > 0) return;
+
+    super.tokenize(element, consumer);
   }
 
-  private static boolean isMethodDeclarationInSource(@NotNull PsiMethod psiMethod) {
-    if (psiMethod.getContainingFile() == null) return false;
-    final VirtualFile virtualFile = psiMethod.getContainingFile().getVirtualFile();
-    if (virtualFile == null) return false;
-    return ProjectRootManager.getInstance(psiMethod.getProject()).getFileIndex().isInSource(virtualFile);
-  }
 }

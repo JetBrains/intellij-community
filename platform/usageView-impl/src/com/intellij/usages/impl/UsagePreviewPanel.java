@@ -43,10 +43,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.StatusText;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -216,29 +213,17 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       UsageInfo info = infos.get(i);
       PsiElement psiElement = info.getElement();
       if (psiElement == null || !psiElement.isValid()) continue;
-      int offsetInFile = psiElement.getTextOffset();
 
-      TextRange elementRange = psiElement.getTextRange();
-      TextRange infoRange = info.getRangeInElement();
-      TextRange textRange = infoRange == null
-                            || infoRange.getStartOffset() > elementRange.getLength()
-                            || infoRange.getEndOffset() > elementRange.getLength() ? null
-                                                                                   : elementRange.cutOut(infoRange);
-      if (textRange == null) textRange = elementRange;
-      // hack to determine element range to highlight
+      ProperTextRange infoRange = info.getRangeInElement();
+      TextRange rangeToHighlight = calculateHighlightingRangeForUsage(psiElement, infoRange);
       if (highlightOnlyNameElements && psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
-        PsiFile psiFile = psiElement.getContainingFile();
-        PsiElement nameElement = psiFile.findElementAt(offsetInFile);
-        if (nameElement != null) {
-          textRange = nameElement.getTextRange();
-        }
+        rangeToHighlight = getNameElementTextRange(psiElement);
       }
       // highlight injected element in host document text range
-      textRange = InjectedLanguageManager.getInstance(project).injectedToHost(psiElement, textRange);
-
+      rangeToHighlight = InjectedLanguageManager.getInstance(psiElement.getProject()).injectedToHost(psiElement, rangeToHighlight);
       RangeHighlighter highlighter = markupModel.addRangeHighlighter(EditorColors.SEARCH_RESULT_ATTRIBUTES,
-                                                                     textRange.getStartOffset(),
-                                                                     textRange.getEndOffset(),
+                                                                     rangeToHighlight.getStartOffset(),
+                                                                     rangeToHighlight.getEndOffset(),
                                                                      highlightLayer,
                                                                      HighlighterTargetArea.EXACT_RANGE);
       highlighter.putUserData(IN_PREVIEW_USAGE_FLAG, Boolean.TRUE);
@@ -254,14 +239,42 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
         editor.getCaretModel().moveToOffset(infoRange.getEndOffset());
       }
       else {
-        editor.getCaretModel().moveToOffset(textRange.getEndOffset());
+        editor.getCaretModel().moveToOffset(rangeToHighlight.getEndOffset());
       }
 
-      if (findModel != null && infos.size() == 1 && infoRange != null && infoRange.equals(textRange)) {
+      if (findModel != null && infos.size() == 1 && infoRange != null && infoRange.equals(rangeToHighlight)) {
         showBalloon(project, editor, infoRange, findModel);
       }
     }
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+  }
+
+  /**
+   * Attempts to find the name element of PsiNamedElement and return its range
+   * @param psiElement an element to highlight
+   * @return range to highlight for named element
+   */
+  private static @NotNull TextRange getNameElementTextRange(@NotNull PsiElement psiElement) {
+    PsiFile psiFile = psiElement.getContainingFile();
+    PsiElement nameElement = psiFile.findElementAt(psiElement.getTextOffset());
+    if (nameElement != null) {
+      return nameElement.getTextRange();
+    }
+    return psiElement.getTextRange();
+  }
+
+  /**
+   * Calculates the proper highlighting range for usage in preview. In some cases psiElement text range info is not fine (i.e. Non-code usages)
+   * @param psiElement an element to highlight
+   * @param infoRange the {@link UsageInfo#getRangeInElement()} result in corresponding UsageInfo
+   * @return range to highlight for in usage preview
+   */
+  @ApiStatus.Internal
+  public static @NotNull TextRange calculateHighlightingRangeForUsage(@NotNull PsiElement psiElement, @Nullable ProperTextRange infoRange) {
+    TextRange elementRange = psiElement.getTextRange();
+    return infoRange == null || infoRange.getStartOffset() > elementRange.getLength() || infoRange.getEndOffset() > elementRange.getLength()
+           ? elementRange
+           : elementRange.cutOut(infoRange);
   }
 
   private static final Key<Balloon> REPLACEMENT_BALLOON_KEY = Key.create("REPLACEMENT_BALLOON_KEY");

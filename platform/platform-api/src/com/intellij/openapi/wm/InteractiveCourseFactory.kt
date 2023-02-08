@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import javax.swing.JComponent
 
 interface InteractiveCourseFactory {
 
@@ -9,5 +10,7 @@ interface InteractiveCourseFactory {
     val INTERACTIVE_COURSE_FACTORY_EP = ExtensionPointName<InteractiveCourseFactory>("com.intellij.interactiveCourseFactory")
   }
 
-  fun getInteractiveCourseData(): InteractiveCourseData?
+  val isActive: Boolean
+
+  fun getInteractiveCourseComponent(): JComponent
 }

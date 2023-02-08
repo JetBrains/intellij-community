@@ -1,5 +1,6 @@
 import ast
-from typing import Any, ClassVar, Generator
+from collections.abc import Generator
+from typing import Any, ClassVar
 
 class BuiltinsChecker:
     name: ClassVar[str]

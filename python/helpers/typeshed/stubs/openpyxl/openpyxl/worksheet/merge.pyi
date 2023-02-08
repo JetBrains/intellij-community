@@ -6,7 +6,8 @@ from .cell_range import CellRange
 
 class MergeCell(CellRange):
     tagname: str
-    ref: Any
+    @property
+    def ref(self): ...
     __attrs__: Any
     def __init__(self, ref: Any | None = ...) -> None: ...
     def __copy__(self): ...

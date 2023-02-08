@@ -11,6 +11,10 @@ import java.awt.datatransfer.StringSelection
  * @author gregsh
  */
 class CopyProjectPathAction : RecentProjectsWelcomeScreenActionBase() {
+  init {
+    isEnabledInModalContext = true  // To allow the action to be run in the Manage Recent Projects modal dialog, see IDEA-302750
+  }
+
   override fun update(event: AnActionEvent) {
     val item = getSelectedItem(event)
     event.presentation.isEnabled = item is RecentProjectItem

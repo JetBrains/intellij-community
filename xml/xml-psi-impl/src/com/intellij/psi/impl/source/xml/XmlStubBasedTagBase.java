@@ -251,7 +251,7 @@ public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
 
   @Override
   public XmlTag createChildTag(String localName, String namespace, String bodyText, boolean enforceNamespacesDeep) {
-    return XmlUtil.createChildTag(this, localName, namespace, bodyText, enforceNamespacesDeep);
+    return XmlUtil.createChildTag(this, localName, namespace, bodyText, enforceNamespacesDeep, getImpl()::createTagFromText);
   }
 
   protected XmlTagValue createXmlTagValue() {

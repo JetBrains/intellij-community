@@ -314,6 +314,9 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     }, myProject.getDisposed());
     if (!myProject.isDisposed()) {
       myProject.getMessageBus().syncPublisher(TOPIC).currentSessionChanged(previousSession, currentSession);
+      if (currentSession != null && previousSession != null) {
+        XDebuggerActionsCollector.sessionChanged.log();
+      }
     }
   }
 

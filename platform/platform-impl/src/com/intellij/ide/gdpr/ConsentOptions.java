@@ -5,6 +5,8 @@ import com.fasterxml.jackson.jr.ob.JSON;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.analytics.AndroidStudioAnalytics;
+import com.intellij.diagnostic.LoadingState;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -73,6 +75,11 @@ public final class ConsentOptions {
         Path confirmedConsentsFile = getConfirmedConsentsFile();
         Files.createDirectories(confirmedConsentsFile.getParent());
         Files.writeString(confirmedConsentsFile, data);
+        if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
+          DataSharingSettingsChangeListener syncPublisher =
+            ApplicationManager.getApplication().getMessageBus().syncPublisher(DataSharingSettingsChangeListener.Companion.getTOPIC());
+          syncPublisher.consentWritten();
+        }
       }
 
       @Override
@@ -248,7 +255,7 @@ public final class ConsentOptions {
   public @NotNull Pair<List<Consent>, Boolean> getConsents() {
     return getConsents(consent -> true);
   }
-  
+
   public @NotNull Pair<List<Consent>, Boolean> getConsents(@NotNull Predicate<? super Consent> filter) {
     final Map<String, Consent> allDefaults = loadDefaultConsents();
     if (isEAP()) {
@@ -266,7 +273,7 @@ public final class ConsentOptions {
         it.remove();
       }
     }
-    
+
     if (allDefaults.isEmpty()) {
       return new Pair<>(Collections.emptyList(), Boolean.FALSE);
     }

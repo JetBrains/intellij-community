@@ -15,6 +15,7 @@ import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbService
@@ -58,7 +59,6 @@ import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
 import org.jetbrains.kotlin.name.FqName
@@ -368,11 +368,11 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     override fun getAllClasses(sourcePosition: SourcePosition): List<ReferenceType> {
         val psiFile = sourcePosition.file
         if (psiFile is KtFile) {
-            if (!RootKindFilter.projectAndLibrarySources.matches(psiFile)) return emptyList()
 
             val referenceTypesInKtFile = syncNonBlockingReadAction(psiFile.project) {
+                if (!RootKindFilter.projectAndLibrarySources.matches(psiFile)) return@syncNonBlockingReadAction null
                 getReferenceTypesForPositionInKotlinFile(sourcePosition)
-            }
+            } ?: return emptyList()
 
             if (sourcePosition.isInsideProjectWithCompose()) {
                 return referenceTypesInKtFile + getComposableSingletonsClasses(debugProcess, psiFile)

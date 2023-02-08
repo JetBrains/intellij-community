@@ -164,7 +164,7 @@ class GotItTooltip(@NonNls val id: String,
    * Add optional icon on the left of the header or description.
    */
   fun withIcon(icon: Icon): GotItTooltip {
-    this.icon = icon
+    this.icon = adjustIcon(icon)
     return this
   }
 
@@ -485,7 +485,7 @@ class GotItTooltip(@NonNls val id: String,
 
       val finalText = HtmlChunk.raw(header)
         .bold()
-        .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(JBUI.CurrentTheme.GotItTooltip.foreground(useContrastColors))))
+        .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(JBUI.CurrentTheme.GotItTooltip.headerForeground())))
         .wrapWith(HtmlChunk.html())
         .toString()
       panel.add(JBLabel(finalText), gc.setColumn(column).anchor(GridBagConstraints.LINE_START).insetLeft(left))
@@ -511,8 +511,12 @@ class GotItTooltip(@NonNls val id: String,
 
     if (timeout <= 0) {
       val button = JButton(buttonLabel).apply {
+        if (ExperimentalUI.isNewUI()) {
+          font = JBFont.label().asBold()
+        }
         isFocusable = false
         isOpaque = false
+        foreground = JBUI.CurrentTheme.GotItTooltip.buttonForeground()
         putClientProperty("gotItButton", true)
         if (useContrastColors) {
           border = JBUI.Borders.empty(0, 0, 5, 0)
@@ -599,7 +603,17 @@ class GotItTooltip(@NonNls val id: String,
     private val PANEL_MARGINS = JBUI.Borders.empty(7, 4, 9, 9)
 
     internal fun findIcon(src: String): Icon? {
-      return IconLoader.findIcon(src, GotItTooltip::class.java.classLoader)
+      return IconLoader.findIcon(src, GotItTooltip::class.java)?.let { icon ->
+        adjustIcon(icon)
+      }
+    }
+
+    // returns dark icon if GotIt tooltip background is dark
+    private fun adjustIcon(icon: Icon): Icon {
+      return if (ColorUtil.isDark(JBUI.CurrentTheme.GotItTooltip.background(false))) {
+        IconLoader.getDarkIcon(icon, true)
+      }
+      else icon
     }
 
     // Frequently used point providers

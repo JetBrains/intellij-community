@@ -1,5 +1,6 @@
 package com.intellij.settingsSync.migration
 
+import com.intellij.codeInsight.template.impl.TemplateSettings
 import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.notification.NotificationAction
@@ -140,6 +141,7 @@ internal class SettingsRepositoryToSettingsSyncMigration {
           val snapshot = settingsRepositoryMigration.getLocalDataIfAvailable(PathManager.getConfigDir())
           if (snapshot != null) {
             backupCurrentConfig()
+            TemplateSettings.getInstance() // Required for live templates to be migrated correctly, see IDEA-303831
 
             SettingsSyncIdeMediatorImpl(ApplicationManager.getApplication().stateStore as ComponentStoreImpl,
                                         PathManager.getConfigDir(), { false }).applyToIde(snapshot)

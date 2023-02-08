@@ -4,6 +4,7 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.application.options.OptionsApplicabilityFilter;
 import com.intellij.ide.*;
 import com.intellij.ide.bookmark.BookmarksListener;
+import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
@@ -1285,7 +1286,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
       Object paneData = selectedPane == null ? null : selectedPane.getData(dataId);
       if (paneData != null) {
-        return paneData;
+        return DataValidators.validOrNull(paneData, dataId, selectedPane);
       }
       if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
         return myCopyPasteDelegator.getCutProvider();

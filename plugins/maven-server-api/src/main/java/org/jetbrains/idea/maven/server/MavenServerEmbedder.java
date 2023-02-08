@@ -50,7 +50,8 @@ public interface MavenServerEmbedder extends Remote {
   @NotNull
   Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<File> files,
                                                         @NotNull Collection<String> activeProfiles,
-                                                        @NotNull Collection<String> inactiveProfiles, MavenToken token)
+                                                        @NotNull Collection<String> inactiveProfiles,
+                                                        boolean forceResolveDependenciesSequentially, MavenToken token)
     throws
     RemoteException,
     MavenServerProcessCanceledException;

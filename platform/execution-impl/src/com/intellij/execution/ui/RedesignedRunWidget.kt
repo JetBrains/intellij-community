@@ -194,7 +194,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
   override fun getButtonArc(): JBValue = JBValue.Float(8f)
 }
 
-private const val MINIMAL_POPUP_WIDTH = 270
+internal const val MINIMAL_POPUP_WIDTH = 270
 private abstract class TogglePopupAction : ToggleAction {
 
   constructor()

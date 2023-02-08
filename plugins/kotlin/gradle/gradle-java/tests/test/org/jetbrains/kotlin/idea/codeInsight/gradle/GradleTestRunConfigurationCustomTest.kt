@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
@@ -9,7 +10,6 @@ import org.jetbrains.kotlin.gradle.textWithoutTags
 import org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestClassGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestMethodGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.run.getConfiguration
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions

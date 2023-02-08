@@ -18,6 +18,5 @@ interface WebTypesJsonOrigin : WebSymbolOrigin {
   fun resolveSourceSymbol(source: SourceBase, cacheHolder: UserDataHolderEx): PsiElement?
   fun resolveSourceLocation(source: SourceBase): WebTypesSymbol.Location?
   fun renderDescription(description: String): String?
-  fun loadIcon(path: String): Icon?
   fun matchContext(context: WebSymbolsContext): Boolean
 }

@@ -52,7 +52,8 @@ public final class IconLoader {
   private static final Map<@NotNull Pair<String, ClassLoader>, @NotNull CachedImageIcon> iconCache = new ConcurrentHashMap<>(100, 0.9f, 2);
 
   // contains mapping between icons and disabled icons.
-  private static final Map<@NotNull Icon, @NotNull Icon> iconToDisabledIcon = CollectionFactory.createConcurrentWeakMap();
+  private static final Map<@NotNull Supplier<@NotNull RGBImageFilter>, Map<@NotNull Icon, @NotNull Icon>> iconToDisabledIcon =
+    CollectionFactory.createConcurrentWeakMap();
 
   private static volatile boolean STRICT_GLOBAL;
 
@@ -583,6 +584,11 @@ public final class IconLoader {
    * Same as {@link #getDisabledIcon(Icon)} with an ancestor component for HiDPI-awareness.
    */
   public static @NotNull Icon getDisabledIcon(@NotNull Icon icon, @Nullable Component ancestor) {
+    return getDisabledIcon(icon, null, ancestor);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Icon getDisabledIcon(@NotNull Icon icon, @Nullable Supplier<RGBImageFilter> disableFilter, @Nullable Component ancestor) {
     if (!isActivated) {
       return icon;
     }
@@ -591,9 +597,12 @@ public final class IconLoader {
       icon = ((LazyIcon)icon).getOrComputeIcon();
     }
 
-    return iconToDisabledIcon.computeIfAbsent(icon, existingIcon -> {
-      return filterIcon(existingIcon, UIUtil::getGrayFilter/* returns laf-aware instance */, ancestor);
-    });
+    Supplier<RGBImageFilter> filter = disableFilter != null ? disableFilter : UIUtil::getGrayFilter; /* returns laf-aware instance */
+
+    return iconToDisabledIcon.computeIfAbsent(filter, (d) -> CollectionFactory.createConcurrentWeakMap())
+      .computeIfAbsent(icon, existingIcon -> {
+        return filterIcon(existingIcon, filter, ancestor);
+      });
   }
 
   /**
@@ -800,7 +809,9 @@ public final class IconLoader {
       return icon.detachClassLoader(classLoader) || entry.getKey().second == classLoader;
     });
 
-    iconToDisabledIcon.keySet().removeIf(icon -> icon instanceof CachedImageIcon && ((CachedImageIcon)icon).detachClassLoader(classLoader));
+    for (Map<Icon, Icon> map : iconToDisabledIcon.values()) {
+      map.keySet().removeIf(icon -> icon instanceof CachedImageIcon && ((CachedImageIcon)icon).detachClassLoader(classLoader));
+    }
   }
 
   @ApiStatus.Internal

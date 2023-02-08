@@ -1,6 +1,7 @@
 from _typeshed import Self, SupportsItems
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any, NamedTuple
+from typing_extensions import TypeAlias
 
 from ..util import immutabledict
 from .interfaces import Dialect
@@ -15,7 +16,7 @@ class _URLTuple(NamedTuple):
     database: str | None
     query: immutabledict[str, str | tuple[str, ...]]
 
-_Query = Mapping[str, str | Sequence[str]] | Sequence[tuple[str, str | Sequence[str]]]
+_Query: TypeAlias = Mapping[str, str | Sequence[str]] | Sequence[tuple[str, str | Sequence[str]]]
 
 class URL(_URLTuple):
     @classmethod

@@ -216,6 +216,25 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-7758
+  public void testUnreachableCodeReportedAfterBuiltinExit() {
+    doTest();
+  }
+
+  // PY-23859
+  public void testUnreachableCodeReportedAfterSelfFailInClassContainingTestInName() {
+    doTest();
+  }
+
+  // PY-23859
+  public void testCodeNotReportedAsUnreachableAfterSelfFailInClassNotContainingTestInName() {
+    doTest();
+  }
+
+  public void testUnreachableCodeReportedAfterPytestFail() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

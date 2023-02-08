@@ -463,13 +463,18 @@
 
     "GotItTooltip": {
       "background": "Grey3",
-      "borderColor": "Grey4",
-      "startBackground": "Grey3",
-      "endBackground": "Grey3",
-      "startBorderColor": "Grey7",
-      "endBorderColor": "Grey7",
+      "borderColor": "Grey3",
+      "foreground": "Grey10",
+      "Header.foreground": "Grey14",
       "shortcutForeground": "Grey9",
-      "linkForeground": "Blue9"
+      "linkForeground": "Blue9",
+      "Button": {
+        "foreground": "Grey14",
+        "startBackground": "Grey6",
+        "endBackground": "Grey6",
+        "startBorderColor": "Grey6",
+        "endBorderColor": "Grey6"
+      }
     },
 
     "ValidationTooltip": {

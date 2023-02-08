@@ -313,7 +313,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     @Language("HTML")
     String labelWithCounter = "<html><body>" +
                               "<table cellpadding='0' cellspacing='0'><tr>" +
-                                "<td>%s</td>" +
+                                "<td><nobr>%s</nobr></td>" +
                                 "<td width='%s'></td>" +
                                 "<td><font color='%s'>%s</font></td>" +
                               "</tr></table></body></html>";

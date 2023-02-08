@@ -4,7 +4,6 @@
   origin: "vue@3.0.0 (vue)",
   type: "string",
   attrValue: {
-   kind: PLAIN,
    type: OF_MATCH,
   },
   complete: true,
@@ -17,7 +16,6 @@
      name: "Component property",
      origin: "vue@3.0.0 (vue)",
      attrValue: {
-      kind: PLAIN,
       type: OF_MATCH,
      },
      complete: true,

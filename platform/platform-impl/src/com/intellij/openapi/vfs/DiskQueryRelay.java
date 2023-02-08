@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,7 +88,9 @@ public final class DiskQueryRelay<Param, Result> {
         throw new ProcessCanceledException(e);
       }
       catch (ExecutionException e) {
-        @SuppressWarnings("unchecked") E cause = (E)e.getCause();
+        Throwable t = e.getCause();
+        ExceptionUtil.rethrowUnchecked(t);
+        @SuppressWarnings("unchecked") E cause = (E)t;
         throw cause;
       }
     }

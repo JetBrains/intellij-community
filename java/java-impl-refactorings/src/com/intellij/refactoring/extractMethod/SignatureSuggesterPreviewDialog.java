@@ -45,19 +45,22 @@ public class SignatureSuggesterPreviewDialog extends DialogWrapper {
   private final PsiMethod myNewMethod;
   private final PsiMethodCallExpression myOldCall;
   private final PsiMethodCallExpression myNewCall;
-  private final int myDuplicatesNumber;
+  private final int myParametrizedDuplicatesNumber;
+  private final int myExactDuplicatesNumber;
 
   public SignatureSuggesterPreviewDialog(@NotNull PsiMethod oldMethod,
                                          @NotNull PsiMethod newMethod,
                                          @NotNull PsiMethodCallExpression oldMethodCall,
                                          @NotNull PsiMethodCallExpression newMethodCall,
-                                         int duplicatesNumber) {
+                                         int exactDuplicatesNumber,
+                                         int parametrizedDuplicatesNumber) {
     super(oldMethod.getProject());
     myOldMethod = oldMethod;
     myNewMethod = newMethod;
     myOldCall = oldMethodCall;
     myNewCall = newMethodCall;
-    myDuplicatesNumber = duplicatesNumber;
+    myParametrizedDuplicatesNumber = parametrizedDuplicatesNumber;
+    myExactDuplicatesNumber = exactDuplicatesNumber;
     setTitle(JavaRefactoringBundle.message("extract.parameters.to.replace.duplicates"));
     setOKButtonText(JavaRefactoringBundle.message("accept.signature.change"));
     setCancelButtonText(JavaRefactoringBundle.message("keep.original.signature"));
@@ -67,7 +70,7 @@ public class SignatureSuggesterPreviewDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createNorthPanel() {
-    return new JLabel(JavaRefactoringBundle.message("no.exact.method.duplicates.were.found", myDuplicatesNumber));
+    return new JLabel(JavaRefactoringBundle.message("no.exact.method.duplicates.were.found", myExactDuplicatesNumber, myParametrizedDuplicatesNumber));
   }
 
   @Nullable

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -64,6 +65,7 @@ public class CreateDirectoryPathFix extends AbstractCreateFileFix {
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return new IntentionPreviewInfo.Html(getDescription(AllIcons.Nodes.Folder));
+    HtmlChunk description = getDescription(AllIcons.Nodes.Folder);
+    return description == null ? IntentionPreviewInfo.EMPTY : new IntentionPreviewInfo.Html(description);
   }
 }

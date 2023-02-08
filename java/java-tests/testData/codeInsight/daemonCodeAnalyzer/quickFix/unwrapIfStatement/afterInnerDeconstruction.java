@@ -1,4 +1,6 @@
 // "Unwrap 'if' statement extracting side effects" "true-preview"
+import org.jetbrains.annotations.NotNull;
+
 class Test {
   void foo(Object obj) {
     if (!(obj instanceof Rect)) {
@@ -25,5 +27,5 @@ record Point(double x, double y) {
 record Size(double w, double h) {
 }
 
-record Rect(Point pos, Size size) {
+record Rect(@NotNull Point pos, @NotNull Size size) {
 }

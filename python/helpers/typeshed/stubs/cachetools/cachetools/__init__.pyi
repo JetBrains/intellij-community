@@ -1,7 +1,7 @@
 from _typeshed import IdentityFunction
-from collections.abc import Iterator, Sequence
+from collections.abc import Callable, Iterator, MutableMapping, Sequence
 from contextlib import AbstractContextManager
-from typing import Any, Callable, Generic, MutableMapping, TypeVar, overload
+from typing import Any, Generic, TypeVar, overload
 
 __all__ = ("Cache", "FIFOCache", "LFUCache", "LRUCache", "MRUCache", "RRCache", "TLRUCache", "TTLCache", "cached", "cachedmethod")
 __version__: str

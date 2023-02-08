@@ -23,8 +23,11 @@ import com.jetbrains.python.console.PythonConsoleView
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import org.apache.thrift.TException
 import java.lang.invoke.MethodHandles
 import java.util.concurrent.Callable
+
+private val LOG = Logger.getInstance(MethodHandles.lookup().lookupClass())
 
 class ConsolePandasColumnNameCompletionContributor : CompletionContributor(), DumbAware {
 
@@ -47,7 +50,7 @@ class ConsolePandasColumnNameCompletionContributor : CompletionContributor(), Du
           result.addAllElements(dataFrameCandidates.flatMap { candidate ->
             val columnsDataFrame = getDataFrameColumns(project, candidate.psiName, consoleCommunication)
             processDataFrameColumns(candidate.psiName, columnsDataFrame, candidate.needValidatorCheck,
-                                                                       parameters.position, project, false)
+                                    parameters.position, project, true)
           })
         }, ProgressManager.getInstance().progressIndicator)
       }
@@ -78,8 +81,8 @@ class ConsolePandasColumnNameCompletionContributor : CompletionContributor(), Du
   }
 
   companion object {
-    val LOG = Logger.getInstance(MethodHandles.lookup().lookupClass())
-    const val COMPLETION_LOG_MESSAGE = "Incorrectly created python script with expression: "
+    const val COMPLETION_SCRIPT_LOG_MESSAGE = "Incorrectly created python script with expression: "
+    const val COMPLETION_EVALUATE_LOG_MESSAGE = "Evaluation script for completion failed with expression: "
   }
 
 }
@@ -98,15 +101,21 @@ class ConsolePandasColumnNameRetrievalServiceImpl(val project: Project) : Consol
     if (!PyConsoleOptions.getInstance(project).isAutoCompletionEnabled) {
       return emptyList()
     }
-    val debugValue = consoleCommunication.evaluate(PANDAS_COLUMN_NAMES_CODE.format(name, name), true, true)
-    return when (debugValue.type) {
-      "str" -> debugValue.value?.let { parseDebugValue(it) } ?: emptyList()
-      "NameError" -> emptyList()
-      "SyntaxError" -> {
-        ConsolePandasColumnNameCompletionContributor.LOG.info(ConsolePandasColumnNameCompletionContributor.COMPLETION_LOG_MESSAGE + name)
-        emptyList()
+    try {
+      val debugValue = consoleCommunication.evaluateCommand(PANDAS_COLUMN_NAMES_CODE.format(name, name), true)
+      return when (debugValue.type) {
+        "str" -> debugValue.value?.let { parseDebugValue(it) } ?: emptyList()
+        "NameError" -> emptyList()
+        "SyntaxError" -> {
+          LOG.info(ConsolePandasColumnNameCompletionContributor.COMPLETION_SCRIPT_LOG_MESSAGE + name)
+          emptyList()
+        }
+        else -> emptyList()
       }
-      else -> emptyList()
+    }
+    catch (e: TException) {
+      LOG.warn(ConsolePandasColumnNameCompletionContributor.COMPLETION_EVALUATE_LOG_MESSAGE + name)
+      return emptyList()
     }
   }
 

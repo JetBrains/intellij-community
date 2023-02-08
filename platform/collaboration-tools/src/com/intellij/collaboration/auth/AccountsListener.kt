@@ -6,6 +6,7 @@ import java.util.*
 /**
  * @param A - account type
  */
+@JvmDefaultWithCompatibility
 interface AccountsListener<A> : EventListener {
   fun onAccountListChanged(old: Collection<A>, new: Collection<A>) {}
   fun onAccountCredentialsChanged(account: A) {}

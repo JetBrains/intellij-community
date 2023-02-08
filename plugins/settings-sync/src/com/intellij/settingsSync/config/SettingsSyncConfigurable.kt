@@ -14,6 +14,7 @@ import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.UpdateResult.*
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBColor
+import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
@@ -119,6 +120,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
           LoggedInPredicate().and(EnabledPredicate())
           disableSync()
         }.visibleIf(isSyncEnabled)
+        bottomGap(BottomGap.MEDIUM)
       }
       row {
         cell(categoriesPanel)
@@ -129,6 +131,12 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
           }
           .onReset { categoriesPanel.reset() }
           .onIsModified { categoriesPanel.isModified() }
+        bottomGap(BottomGap.MEDIUM)
+      }
+      row {
+          label(message("settings.cross.ide.sync.warning.label"))
+            .apply { component.icon = AllIcons.General.Information }
+            .visibleIf(LoggedInPredicate().and(EnabledPredicate()))
       }
     }
     SettingsSyncAuthService.getInstance().addListener(object : SettingsSyncAuthService.Listener {
@@ -156,6 +164,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
   override fun updateFromServerFinished(result: UpdateResult) {
     when (result) {
       is Success -> {
+        reset()
         SettingsSyncSettings.getInstance().syncEnabled = true
       }
       NoFileOnServer, FileDeletedFromServer -> {

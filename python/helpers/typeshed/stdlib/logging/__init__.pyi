@@ -6,8 +6,8 @@ from io import TextIOWrapper
 from string import Template
 from time import struct_time
 from types import FrameType, TracebackType
-from typing import Any, ClassVar, Generic, Optional, Pattern, TextIO, TypeVar, Union, overload
-from typing_extensions import Literal
+from typing import Any, ClassVar, Generic, Pattern, TextIO, TypeVar, Union, overload
+from typing_extensions import Literal, TypeAlias
 
 __all__ = [
     "BASIC_FORMAT",
@@ -54,12 +54,12 @@ __all__ = [
     "raiseExceptions",
 ]
 
-_SysExcInfoType = Union[tuple[type[BaseException], BaseException, Optional[TracebackType]], tuple[None, None, None]]
-_ExcInfoType = Union[None, bool, _SysExcInfoType, BaseException]
-_ArgsType = Union[tuple[object, ...], Mapping[str, object]]
-_FilterType = Union[Filter, Callable[[LogRecord], int]]
-_Level = Union[int, str]
-_FormatStyle = Literal["%", "{", "$"]
+_SysExcInfoType: TypeAlias = Union[tuple[type[BaseException], BaseException, TracebackType | None], tuple[None, None, None]]
+_ExcInfoType: TypeAlias = None | bool | _SysExcInfoType | BaseException
+_ArgsType: TypeAlias = tuple[object, ...] | Mapping[str, object]
+_FilterType: TypeAlias = Filter | Callable[[LogRecord], int]
+_Level: TypeAlias = int | str
+_FormatStyle: TypeAlias = Literal["%", "{", "$"]
 
 raiseExceptions: bool
 logThreads: bool
@@ -408,7 +408,7 @@ class LogRecord:
     ) -> None: ...
     def getMessage(self) -> str: ...
 
-_L = TypeVar("_L", Logger, LoggerAdapter[Logger], LoggerAdapter[Any])
+_L = TypeVar("_L", bound=Logger | LoggerAdapter[Any])
 
 class LoggerAdapter(Generic[_L]):
     logger: _L

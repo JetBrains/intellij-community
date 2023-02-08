@@ -51,6 +51,14 @@ import static com.intellij.openapi.util.Pair.pair;
 import static java.util.Comparator.comparingInt;
 import static org.junit.Assert.*;
 
+/**
+ * Extracts the markers for the expected highlighting ranges, such as {@code <error descr="..."/>},
+ * and removes them from the document.
+ * <p>
+ * Whether warnings, weak warnings and info are checked depends on the constructor.
+ * In particular, if the document contains markers whose type is disabled,
+ * these markers are not checked.
+ */
 public class ExpectedHighlightingData {
   public static final String EXPECTED_DUPLICATION_MESSAGE =
     "Expected duplication problem. Please remove this wrapper, if there is no such problem any more";
@@ -242,17 +250,17 @@ public class ExpectedHighlightingData {
     Set<String> markers = myHighlightingTypes.keySet();
     String typesRx = "(?:" + StringUtil.join(markers, ")|(?:") + ")";
     String openingTagRx = "<(" + typesRx + ")" +
-                                "(?:\\s+descr=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
-                                "(?:\\s+type=\"([0-9A-Z_]+)\")?" +
-                                "(?:\\s+foreground=\"([0-9xa-f]+)\")?" +
-                                "(?:\\s+background=\"([0-9xa-f]+)\")?" +
-                                "(?:\\s+effectcolor=\"([0-9xa-f]+)\")?" +
-                                "(?:\\s+effecttype=\"([A-Z]+)\")?" +
-                                "(?:\\s+fonttype=\"([0-9]+)\")?" +
-                                "(?:\\s+textAttributesKey=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
-                                "(?:\\s+bundleMsg=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
-                                "(?:\\s+tooltip=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
-                                "(/)?>";
+                          "(?:\\s+descr=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
+                          "(?:\\s+type=\"([0-9A-Z_]+)\")?" +
+                          "(?:\\s+foreground=\"([0-9xa-f]+)\")?" +
+                          "(?:\\s+background=\"([0-9xa-f]+)\")?" +
+                          "(?:\\s+effectcolor=\"([0-9xa-f]+)\")?" +
+                          "(?:\\s+effecttype=\"([A-Z]+)\")?" +
+                          "(?:\\s+fonttype=\"([0-9]+)\")?" +
+                          "(?:\\s+textAttributesKey=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
+                          "(?:\\s+bundleMsg=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
+                          "(?:\\s+tooltip=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
+                          "(/)?>";
 
     Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
     Ref<Integer> textOffset = Ref.create(0);
@@ -896,6 +904,7 @@ public class ExpectedHighlightingData {
       return null;
     }
   };
+
   private static class PathIcon implements Icon {
     private final String path;
 
@@ -932,6 +941,7 @@ public class ExpectedHighlightingData {
       return path;
     }
   }
+
   private static class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     private final String myTooltip;
 

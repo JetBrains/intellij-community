@@ -12,6 +12,7 @@ import com.intellij.xdebugger.impl.ui.attach.dialog.items.*
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.AttachGroupColumnRenderer
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.AttachGroupFirstColumnRenderer
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.AttachGroupLastColumnRenderer
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.tree.selectNext
 import kotlinx.coroutines.ensureActive
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -107,6 +108,10 @@ internal class AttachToProcessItemsList(itemNodes: List<AttachToProcessElement>,
 
   override fun getSelectedItem(): AttachToProcessElement? {
     return model.getValueAt<AttachToProcessListItem>(selectedRow)
+  }
+
+  override fun selectNextItem() {
+    selectionModel.selectNext()
   }
 
   private fun transformToNode(obj: Any?): AttachToProcessElement? {

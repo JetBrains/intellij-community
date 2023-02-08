@@ -21,7 +21,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.profile.codeInspection.ProjectBasedInspectionProfileManager;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -192,7 +192,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     if (isProjectLevel()) {
       element.setAttribute("version", "1.0");
     }
-    if (isProjectLevel() && ProjectKt.isDirectoryBased(((ProjectInspectionProfileManager)getProfileManager()).getProject())) {
+    if (isProjectLevel() && ProjectKt.isDirectoryBased(((ProjectBasedInspectionProfileManager)getProfileManager()).getProject())) {
       return new Element("component").setAttribute("name", "InspectionProjectProfileManager").addContent(element);
     }
 

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.actions.AddImportAction
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -35,7 +36,6 @@ import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode
@@ -50,6 +50,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.ImportPath
 import java.awt.BorderLayout
+import java.util.*
 import javax.swing.Icon
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
@@ -62,14 +63,14 @@ internal fun createSingleImportAction(
 ): KotlinAddImportAction {
     val file = element.containingKtFile
     val prioritizer = Prioritizer(file)
-    val variants = fqNames.asSequence().mapNotNull { fqName ->
+    val variants = fqNames.asSequence().mapNotNull {fqName ->
         val sameFqNameDescriptors = file.resolveImportReference(fqName)
         val priority = sameFqNameDescriptors.minOfOrNull {
             prioritizer.priority(it, file.languageVersionSettings)
         } ?: return@mapNotNull null
 
         VariantWithPriority(SingleImportVariant(fqName, sameFqNameDescriptors, project), priority)
-    }
+    }.sortedWith(compareBy({ it.priority }, { it.variant.hint }))
 
     return KotlinAddImportAction(project, editor, element, variants)
 }

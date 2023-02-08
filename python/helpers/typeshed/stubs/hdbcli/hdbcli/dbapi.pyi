@@ -1,8 +1,9 @@
 import decimal
 from _typeshed import ReadableBuffer
+from collections.abc import Sequence
 from datetime import date, datetime, time
-from typing import Any, Sequence, overload
-from typing_extensions import Literal
+from typing import Any, overload
+from typing_extensions import Literal, TypeAlias
 
 from .resultrow import ResultRow
 
@@ -44,7 +45,7 @@ class LOB:
     def read(self, size: int = ..., position: int = ...) -> str | bytes: ...
     def write(self, object: str | bytes) -> int: ...
 
-_Parameters = Sequence[tuple[Any, ...]]
+_Parameters: TypeAlias = Sequence[tuple[Any, ...]]
 
 class Cursor:
     description: tuple[tuple[Any, ...], ...]

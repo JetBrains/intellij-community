@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.gradleJava.scripting.roots
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -14,6 +15,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
@@ -28,7 +30,6 @@ import org.jetbrains.kotlin.idea.gradle.scripting.LastModifiedFiles
 import org.jetbrains.kotlin.idea.gradleJava.scripting.*
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslGradleBuildSync
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRoot.ImportingStatus.*
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
@@ -429,9 +430,12 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
                 }
 
                 if (restartAnalyzer) {
+                    KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
                     // this required only for "pause" state
-                    val ktFile = PsiManager.getInstance(project).findFile(it)
-                    if (ktFile != null) DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
+                    PsiManager.getInstance(project).findFile(it)?.let { ktFile ->
+                        DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
+                    }
+
                 }
 
                 EditorNotifications.getInstance(project).updateAllNotifications()

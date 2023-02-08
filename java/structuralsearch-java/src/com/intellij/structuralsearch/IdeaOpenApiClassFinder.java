@@ -5,7 +5,7 @@ package com.intellij.structuralsearch;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.PackageDirectoryCache;
+import com.intellij.openapi.roots.PackageDirectoryCache;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.NonClasspathClassFinder;

@@ -1,4 +1,2 @@
-from typing import Text
-
-EMOJI_UNICODE_SPANISH: dict[Text, Text]
-UNICODE_EMOJI_SPANISH: dict[Text, Text]
+EMOJI_UNICODE_SPANISH: dict[str, str]
+UNICODE_EMOJI_SPANISH: dict[str, str]

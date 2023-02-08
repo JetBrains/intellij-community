@@ -3,7 +3,8 @@
 # Therefore typeshed is the best place.
 
 import ast
-from typing import Any, ClassVar, Generator
+from collections.abc import Generator
+from typing import Any, ClassVar
 
 class Plugin:
     name: ClassVar[str]

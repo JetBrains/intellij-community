@@ -75,7 +75,7 @@ class ORMFromStatementCompileState(ORMCompileState):
     @classmethod
     def create_for_statement(cls, statement_container, compiler, **kw): ...
 
-class ORMSelectCompileState(ORMCompileState, SelectState):  # type: ignore # argument disparities between base classes
+class ORMSelectCompileState(ORMCompileState, SelectState):
     multi_row_eager_loaders: bool
     compound_eager_adapter: Any
     correlate: Any

@@ -531,7 +531,9 @@ object ProjectUtil {
       else {
         val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(file.toString()))
         if (virtualFile != null && virtualFile.isValid) {
-          OpenFileAction.openFile(virtualFile, projectToClose)
+          withContext(Dispatchers.EDT) {
+            OpenFileAction.openFile(virtualFile, projectToClose)
+          }
         }
         result = projectToClose
       }

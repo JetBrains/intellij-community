@@ -19,7 +19,7 @@ class LXMLTreeBuilderForXML(TreeBuilder):
     soup: Any
     nsmaps: Any
     def __init__(self, parser: Any | None = ..., empty_element_tags: Any | None = ..., **kwargs) -> None: ...
-    def prepare_markup(  # type: ignore  # the order of the parameters is different
+    def prepare_markup(  # type: ignore[override]  # the order of the parameters is different
         self,
         markup,
         user_specified_encoding: Any | None = ...,
@@ -37,7 +37,7 @@ class LXMLTreeBuilderForXML(TreeBuilder):
     def comment(self, content) -> None: ...
     def test_fragment_to_document(self, fragment): ...
 
-class LXMLTreeBuilder(HTMLTreeBuilder, LXMLTreeBuilderForXML):  # type: ignore # argument disparities between base classes
+class LXMLTreeBuilder(HTMLTreeBuilder, LXMLTreeBuilderForXML):
     NAME: Any
     ALTERNATE_NAMES: Any
     features: Any

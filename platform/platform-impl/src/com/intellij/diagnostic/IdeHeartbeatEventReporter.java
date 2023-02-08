@@ -54,9 +54,15 @@ public final class IdeHeartbeatEventReporter implements Disposable {
     long thisGcTime = myLastGcTime == -1 ? 0 : totalGcTime - myLastGcTime;
     myLastGcTime = thisGcTime;
 
+    long thisCpuTime;
     long totalCpuTime = mxBean.getProcessCpuTime();
-    long thisCpuTime = totalCpuTime < 0 || myLastCpuTime < 0 ? -1 : totalCpuTime - myLastCpuTime;
-    myLastCpuTime = thisCpuTime;
+    if (totalCpuTime < 0) {
+      thisCpuTime = -1;
+    }
+    else {
+      thisCpuTime = totalCpuTime - myLastCpuTime;
+      myLastCpuTime = thisCpuTime;
+    }
 
     // don't report total GC time in the first 5 minutes of IJ execution
     UILatencyLogger.HEARTBEAT.log(

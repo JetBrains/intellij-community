@@ -1,8 +1,9 @@
 from _typeshed import Self
 from abc import abstractmethod
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from types import TracebackType
-from typing import Any, Callable, TypeVar, overload
+from typing import Any, TypeVar, overload
+from typing_extensions import TypeAlias
 
 from ..dbapi import DBAPIConnection
 from ..log import Identified, _EchoFlag, echo_property
@@ -19,7 +20,7 @@ from .util import TransactionalContext
 
 _T = TypeVar("_T")
 
-_Executable = ClauseElement | FunctionElement | DDLElement | DefaultGenerator | Compiled
+_Executable: TypeAlias = ClauseElement | FunctionElement | DDLElement | DefaultGenerator | Compiled
 
 class Connection(Connectable):
     engine: Engine
@@ -172,7 +173,7 @@ class Engine(Connectable, Identified):
     def name(self) -> str: ...
     @property
     def driver(self): ...
-    def dispose(self) -> None: ...
+    def dispose(self, close: bool = ...) -> None: ...
 
     class _trans_ctx:
         conn: Connection

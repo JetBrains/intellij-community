@@ -172,10 +172,10 @@ fun processDataFrameColumns(dfName: String,
   val validator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance())
   return columns.mapNotNull { column ->
     when {
-      !needValidatorCheck && elementOnPosition !is PyPlainStringElement -> {
-        "'${StringUtil.escapeChar(column, '\'')}'"
+      !needValidatorCheck &&  elementOnPosition !is PyPlainStringElement -> {
+        "'${StringUtil.escapeStringCharacters(column.length,  column, "'", StringBuilder())}'"
       }
-      !needValidatorCheck -> StringUtil.escapeChar(column, '\'')
+      !needValidatorCheck -> StringUtil.escapeStringCharacters(column.length,  column, "'", StringBuilder())
       validator.isIdentifier(column, project) -> column
       else -> null
     }?.let {

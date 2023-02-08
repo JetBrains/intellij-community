@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.ui.HtmlRtfPane
 import com.intellij.idea.AppExitCodes
@@ -116,7 +117,7 @@ class AgreementUi private constructor(@NlsSafe val htmlText: String, val exitOnC
       override fun doCancelAction() {
         super.doCancelAction()
         if (exitOnCancel) {
-          val application = ApplicationManager.getApplication()
+          val application = ApplicationManager.getApplication()?.takeIf { LoadingState.COMPONENTS_REGISTERED.isOccurred }
           if (application == null) {
             exitProcess(AppExitCodes.PRIVACY_POLICY_REJECTION)
           }

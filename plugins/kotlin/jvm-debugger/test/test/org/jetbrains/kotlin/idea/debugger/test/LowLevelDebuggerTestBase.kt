@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.impl.OutputChecker
 import com.intellij.execution.ExecutionTestCase
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.util.PathUtil
@@ -20,7 +21,6 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.addRoot
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import java.io.File
 import java.io.IOException
 import java.net.Socket

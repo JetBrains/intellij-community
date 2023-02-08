@@ -1,10 +1,10 @@
 from _typeshed import Self
 from logging import Logger
 from typing import Any, TypeVar, overload
-from typing_extensions import Literal
+from typing_extensions import Literal, TypeAlias
 
 _ClsT = TypeVar("_ClsT", bound=type)
-_EchoFlag = bool | Literal["debug"] | None
+_EchoFlag: TypeAlias = bool | Literal["debug"] | None
 
 rootlogger: Any
 

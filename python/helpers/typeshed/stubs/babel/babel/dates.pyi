@@ -1,6 +1,6 @@
 from datetime import date, datetime, time, timedelta, tzinfo
 from typing import Any, overload
-from typing_extensions import Literal
+from typing_extensions import Literal, TypeAlias
 
 from babel.core import Locale
 from babel.util import LOCALTZ as LOCALTZ, UTC as UTC
@@ -10,8 +10,8 @@ from pytz import BaseTzInfo
 # http://babel.pocoo.org/en/latest/api/dates.html
 
 # Date and Time Formatting
-_Instant = date | time | datetime | float | None
-_PredefinedTimeFormat = Literal["full", "long", "medium", "short"]
+_Instant: TypeAlias = date | time | datetime | float | None
+_PredefinedTimeFormat: TypeAlias = Literal["full", "long", "medium", "short"]
 
 def format_datetime(
     datetime: _Instant = ..., format: _PredefinedTimeFormat | str = ..., tzinfo: tzinfo | None = ..., locale: str | Locale = ...
@@ -57,7 +57,7 @@ def get_timezone_gmt(
     return_z: bool = ...,
 ) -> str: ...
 
-_DtOrTzinfo = datetime | tzinfo | str | int | time | None
+_DtOrTzinfo: TypeAlias = datetime | tzinfo | str | int | time | None
 
 def get_timezone_location(dt_or_tzinfo: _DtOrTzinfo = ..., locale: str | Locale = ..., return_city: bool = ...) -> str: ...
 def get_timezone_name(

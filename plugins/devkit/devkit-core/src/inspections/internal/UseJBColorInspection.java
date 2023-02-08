@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
+import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
 import org.jetbrains.uast.generate.UastElementFactory;
@@ -29,7 +29,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class UseJBColorInspection extends DevKitInspectionBase {
+public class UseJBColorInspection extends DevKitUastInspectionBase {
 
   private static final String AWT_COLOR_CLASS_NAME = Color.class.getName();
   private static final String JB_COLOR_CLASS_NAME = JBColor.class.getName();

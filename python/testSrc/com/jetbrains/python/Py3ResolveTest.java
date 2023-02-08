@@ -777,6 +777,11 @@ public class Py3ResolveTest extends PyResolveTestCase {
     assertNull(doResolve());
   }
 
+  // PY-36158
+  public void testDataclassFieldsDataclassesStarImport() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
   public void testInstanceAttrAbove() {
     assertResolvesTo(PyTargetExpression.class, "foo");
   }

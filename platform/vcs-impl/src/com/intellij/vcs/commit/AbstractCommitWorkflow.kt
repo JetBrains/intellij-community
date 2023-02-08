@@ -362,12 +362,35 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         return null
       }
 
-      LOG.debug("Running commit check $commitCheck")
-      val ctx = coroutineContext
-      ctx.ensureActive()
-      ctx.progressSink?.update(text = "", details = "")
+      var success = false
+      val activity = CommitSessionCounterUsagesCollector.COMMIT_CHECK_SESSION.started(project) {
+        listOf(
+          CommitSessionCounterUsagesCollector.COMMIT_CHECK_CLASS.with(commitCheck.asCheckinHandler()?.javaClass ?: commitCheck.javaClass),
+          CommitSessionCounterUsagesCollector.EXECUTION_ORDER.with(commitCheck.getExecutionOrder())
+        )
+      }
 
-      return commitCheck.runCheck(commitInfo)
+      try {
+        LOG.debug("Running commit check $commitCheck")
+        val ctx = coroutineContext
+        ctx.ensureActive()
+        ctx.progressSink?.update(text = "", details = "")
+
+        val problem = commitCheck.runCheck(commitInfo)
+        success = problem == null
+        return problem
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        return CommitProblem.createError(e)
+      }
+      finally {
+        activity.finished {
+          listOf(CommitSessionCounterUsagesCollector.IS_SUCCESS.with(success))
+        }
+      }
     }
   }
 }
@@ -398,7 +421,7 @@ internal fun CheckinHandler.asCommitCheck(commitInfo: CommitInfo): CommitCheck {
   return ProxyCommitCheck(this, commitInfo.executor)
 }
 
-private class ProxyCommitCheck(private val checkinHandler: CheckinHandler,
+private class ProxyCommitCheck(val checkinHandler: CheckinHandler,
                                private val executor: CommitExecutor?) : CommitCheck {
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder {
     if (checkinHandler is CheckinModificationHandler) return CommitCheck.ExecutionOrder.MODIFICATION
@@ -421,6 +444,14 @@ private class ProxyCommitCheck(private val checkinHandler: CheckinHandler,
 
   override fun toString(): String {
     return "ProxyCommitCheck: $checkinHandler"
+  }
+}
+
+private fun CommitCheck.asCheckinHandler(): CheckinHandler? {
+  when (this) {
+    is ProxyCommitCheck -> return this.checkinHandler
+    is CheckinHandler -> return this
+    else -> return null
   }
 }
 

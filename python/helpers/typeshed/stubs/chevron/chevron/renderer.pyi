@@ -1,5 +1,6 @@
 from _typeshed import StrPath, SupportsRead
-from typing import Any, MutableSequence, Sequence
+from collections.abc import MutableSequence, Sequence
+from typing import Any
 
 g_token_cache: dict[str, list[tuple[str, str]]]  # undocumented
 

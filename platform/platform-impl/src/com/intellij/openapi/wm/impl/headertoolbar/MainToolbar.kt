@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
@@ -23,11 +24,15 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
+import com.intellij.util.ui.UIUtil
 import java.awt.*
+import java.awt.image.RGBImageFilter
+import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -98,6 +103,10 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   }
 }
 
+private val lightThemeDarkHeaderDisableFilter: Supplier<RGBImageFilter> = Supplier {
+  if (isDarkHeader()) UIUtil.GrayFilter(-70, -70, 100) else UIUtil.getGrayFilter()
+}
+
 private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
 
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
@@ -134,9 +143,16 @@ private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(Action
     }
     return null
   }
+
+  override fun applyToolbarLook(look: ActionButtonLook?, presentation: Presentation, component: JComponent) {
+    presentation.putClientProperty(Presentation.DISABLE_ICON_FILTER, lightThemeDarkHeaderDisableFilter)
+    super.applyToolbarLook(look, presentation, component)
+  }
 }
 
 @JvmOverloads internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance) : Boolean {
   return ((SystemInfoRt.isMac && Registry.`is`("ide.experimental.ui.title.toolbar.in.macos", true))
           || (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle)) && IdeFrameDecorator.isCustomDecorationAvailable()
 }
+
+internal fun isDarkHeader() = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))

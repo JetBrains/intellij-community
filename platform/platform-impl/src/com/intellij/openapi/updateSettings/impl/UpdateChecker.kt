@@ -448,6 +448,7 @@ object UpdateChecker {
     (toUpdate.keys.asSequence() + toUpdateDisabled.keys.asSequence()).forEach { updateable.remove(it) }
   }
 
+  @RequiresBackgroundThread
   private fun prepareDownloader(state: InstalledPluginsState,
                                 descriptor: PluginNode,
                                 buildNumber: BuildNumber?,
@@ -491,6 +492,7 @@ object UpdateChecker {
   @Throws(IOException::class)
   @JvmOverloads
   @JvmStatic
+  @RequiresBackgroundThread
   fun checkAndPrepareToInstall(
     originalDownloader: PluginDownloader,
     state: InstalledPluginsState,

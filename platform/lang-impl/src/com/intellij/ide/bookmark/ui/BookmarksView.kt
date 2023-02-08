@@ -4,6 +4,7 @@ package com.intellij.ide.bookmark.ui
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
+import com.intellij.ide.bookmark.actions.registerNavigateOnEnterAction
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
 import com.intellij.ide.bookmark.ui.tree.FolderNodeComparator
 import com.intellij.ide.bookmark.ui.tree.FolderNodeUpdater
@@ -32,7 +33,6 @@ import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.EditSourceOnDoubleClickHandler
-import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.containers.toArray
@@ -49,6 +49,9 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   }
 
   val isPopup = showToolbar == null
+
+  fun interface EditSourceListener { fun onEditSource() }
+  private val editSourceListeners: MutableList<EditSourceListener> = mutableListOf()
 
   private val state = BookmarksViewState.getInstance(project)
   private val preview = DescriptorPreview(this, false, null)
@@ -201,6 +204,10 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     ApplicationManager.getApplication()?.invokeLater(task, stateForComponent(tree)) { project.isDisposed }
   }
 
+  fun addEditSourceListener(listener: EditSourceListener) {
+    editSourceListeners.add(listener)
+  }
+
   init {
     panel.addToCenter(createScrollPane(tree, true))
     panel.putClientProperty(OPEN_IN_PREVIEW_TAB, true)
@@ -231,8 +238,8 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
     TreeSpeedSearch(tree)
     TreeUtil.promiseSelectFirstLeaf(tree)
-    EditSourceOnEnterKeyHandler.install(tree)
-    EditSourceOnDoubleClickHandler.install(tree)
+    tree.registerNavigateOnEnterAction { editSourceListeners.forEach { it.onEditSource() } }
+    EditSourceOnDoubleClickHandler.install(tree) { editSourceListeners.forEach { it.onEditSource() } }
 
     val group = ContextMenuActionGroup(tree)
     val handler = PopupHandler.installPopupMenu(tree, group, ActionPlaces.BOOKMARKS_VIEW_POPUP)

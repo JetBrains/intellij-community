@@ -183,7 +183,7 @@ sealed class CallTypeAndReceiver<TReceiver : KtElement?, out TCallType : CallTyp
 
                         is KtUnaryExpression -> OPERATOR(receiverExpression)
 
-                        else -> error("Unknown parent for JetOperationReferenceExpression: $parent with text '${parent.text}'")
+                        else -> error("Unknown parent for KtOperationReferenceExpression: $parent with text '${parent.text}'")
                     }
                 }
 
@@ -211,7 +211,7 @@ sealed class CallTypeAndReceiver<TReceiver : KtElement?, out TCallType : CallTyp
                                 DOT(receiverExpression)
                         }
 
-                        else -> error("Unknown parent for JetNameReferenceExpression with receiver: $parent")
+                        else -> error("Unknown parent for KtNameReferenceExpression with receiver: $parent")
                     }
                 }
 

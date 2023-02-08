@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.findUsages
 
 import com.intellij.find.findUsages.CustomUsageSearcher
 import com.intellij.find.findUsages.FindUsagesOptions
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.usageView.UsageInfo
@@ -12,7 +13,6 @@ import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

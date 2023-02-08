@@ -1,6 +1,7 @@
 import collections
 from _typeshed import Self
-from typing import Any, Generic, Iterable, Iterator, Mapping, TypeVar, overload
+from collections.abc import Iterable, Iterator, Mapping
+from typing import Any, Generic, TypeVar, overload
 
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")

@@ -429,7 +429,7 @@ public abstract class AbstractLayoutCodeProcessor {
         myFilesProcessed++;
 
         if (shouldProcessFile(file)) {
-          updateIndicatorText(ApplicationBundle.message("bulk.reformat.process.progress.text"), getPresentablePath(myProject, file));
+          updateIndicatorText(ApplicationBundle.message("bulk.reformat.process.progress.text"), ReadAction.compute(() -> getPresentablePath(myProject, file)));
           VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
           if (virtualFile != null) {
             DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> performFileProcessing(virtualFile));

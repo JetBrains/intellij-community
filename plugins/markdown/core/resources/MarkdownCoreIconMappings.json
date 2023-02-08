@@ -1,0 +1,7 @@
+{
+  "icons": {
+    "expui": {
+      "markdown.svg": "icons/MarkdownPlugin.svg"
+    }
+  }
+}

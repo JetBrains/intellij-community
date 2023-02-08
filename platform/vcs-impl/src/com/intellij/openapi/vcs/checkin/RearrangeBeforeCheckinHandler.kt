@@ -22,6 +22,7 @@ class RearrangeBeforeCheckinHandler(project: Project) : CodeProcessorCheckinHand
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
     BooleanCommitOption(project, VcsBundle.message("checkbox.checkin.options.rearrange.code"), true,
                         settings::REARRANGE_BEFORE_PROJECT_COMMIT)
+      .withCheckinHandler(this)
 
   override fun isEnabled(): Boolean = settings.REARRANGE_BEFORE_PROJECT_COMMIT
 

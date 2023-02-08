@@ -1,12 +1,18 @@
 import foo.NotNull;
 import foo.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 class Clazz {
+  // IDEA-304297
+  void customCollectToHashMap(List<String> list2) {
+    Collection<String> list = Arrays.asList("test");
+    Map<String, Integer> aux = list.stream().collect(() -> new HashMap<>(), (a, b) -> a.put(b, b.length()), Map::putAll);
+    if (<warning descr="Condition 'aux.isEmpty()' is always 'false'">aux.isEmpty()</warning>) {}
+    Map<String, Integer> aux2 = list2.stream().collect(() -> new HashMap<>(), (a, b) -> a.put(b, b.length()), Map::putAll);
+    if (aux2.isEmpty()) {}
+  }
+  
   public void passNull(Collection<?> c) {
     c.stream().collect(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>, 
                        <warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>, 
