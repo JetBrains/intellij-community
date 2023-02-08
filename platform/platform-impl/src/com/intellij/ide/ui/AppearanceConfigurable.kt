@@ -167,7 +167,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         comboBox(model, SimpleListCellRenderer.create("") { it })
           .bindItem( { settings.ideScale.percentStringValue }, { })
           .onChanged {
-            IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item)?.let { scale ->
+            IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, false)?.let { scale ->
               resetZoom?.visible(scale != 1f)
               settings.ideScale = scale
               settings.fireUISettingsChanged()
@@ -441,11 +441,11 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             .applyToComponent {
               isEditable = true
             }
-            .validationOnInput(IdeScaleTransformer.Settings::validatePercentScaleInput)
+            .validationOnInput(IdeScaleTransformer.Settings::validatePresentationModePercentScaleInput)
             .onChanged {
-              if (IdeScaleTransformer.Settings.validatePercentScaleInput(it.item) != null) return@onChanged
+              if (IdeScaleTransformer.Settings.validatePresentationModePercentScaleInput(it.item) != null) return@onChanged
 
-              IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item)?.let { scale ->
+              IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, true)?.let { scale ->
                 settings.presentationModeIdeScale = scale
                 if (settings.presentationMode) {
                   settings.fireUISettingsChanged()

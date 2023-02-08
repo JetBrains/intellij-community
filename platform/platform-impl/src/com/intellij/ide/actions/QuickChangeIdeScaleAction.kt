@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 
 class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
   override fun fillActions(project: Project?, group: DefaultActionGroup, dataContext: DataContext) {
-    IdeScaleTransformer.Settings.regularScaleOptions.forEach { scale ->
+    IdeScaleTransformer.Settings.currentScaleOptions.forEach { scale ->
       val title = scale.percentStringValue
       group.add(object : DumbAwareToggleAction(title) {
         override fun isSelected(e: AnActionEvent): Boolean = UISettingsUtils.currentIdeScale.percentValue == scale.percentValue
@@ -31,5 +31,5 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
     }
   }
 
-  override fun isEnabled(): Boolean = IdeScaleTransformer.Settings.regularScaleOptions.isNotEmpty()
+  override fun isEnabled(): Boolean = IdeScaleTransformer.Settings.currentScaleOptions.isNotEmpty()
 }
