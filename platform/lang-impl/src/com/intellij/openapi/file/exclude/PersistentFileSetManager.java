@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.util.FileContentUtilCore;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.SmartList;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -31,26 +31,38 @@ abstract class PersistentFileSetManager implements PersistentStateComponent<Elem
 
   private final Map<VirtualFile, String> myMap = new HashMap<>();
 
-  @RequiresEdt(generateAssertion = false)
   boolean addFile(@NotNull VirtualFile file, @NotNull FileType type) {
-    if (!(file instanceof VirtualFileWithId)) {
-      //@formatter:off
-      throw new IllegalArgumentException("file must be instanceof VirtualFileWithId but got: " + file + " (" + file.getClass() + ")");
+    return addFiles(Collections.singletonMap(file, type));
+  }
+
+  boolean addFiles(@NotNull Map<? extends VirtualFile, FileType> files) {
+    List<VirtualFile> changedFiles = new SmartList<>();
+    for (Map.Entry<? extends VirtualFile, FileType> entry : files.entrySet()) {
+      VirtualFile file = entry.getKey();
+      if (!(file instanceof VirtualFileWithId)) {
+        //@formatter:off
+        throw new IllegalArgumentException("file must be instanceof VirtualFileWithId but got: " + file + " (" + file.getClass() + ")");
+      }
+      if (file.isDirectory()) {
+        //@formatter:off
+        throw new IllegalArgumentException("file must not be directory but got: " + file + "; File.isDirectory():" + new File(file.getPath()).isDirectory());
+      }
+
+      String value = entry.getValue().getName();
+      String prevValue = myMap.put(file, value);
+
+      if (!value.equals(prevValue)) {
+        changedFiles.add(file);
+      }
     }
-    if (file.isDirectory()) {
-      //@formatter:off
-      throw new IllegalArgumentException("file must not be directory but got: " + file + "; File.isDirectory():" + new File(file.getPath()).isDirectory());
-    }
-    String value = type.getName();
-    String prevValue = myMap.put(file, value);
-    boolean isAdded = !value.equals(prevValue);
+
+    boolean isAdded = !changedFiles.isEmpty();
     if (isAdded) {
-      onFileSettingsChanged(Collections.singleton(file));
+      onFileSettingsChanged(changedFiles);
     }
     return isAdded;
   }
 
-  @RequiresEdt(generateAssertion = false)
   boolean removeFile(@NotNull VirtualFile file) {
     boolean isRemoved = myMap.remove(file) != null;
     if (isRemoved) {

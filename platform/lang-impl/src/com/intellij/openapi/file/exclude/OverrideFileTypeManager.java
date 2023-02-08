@@ -37,7 +37,7 @@ public final class OverrideFileTypeManager extends PersistentFileSetManager {
    * @param type a file type to associate with
    * @return {@code true} if the association has been successfully added
    */
-  @RequiresEdt(generateAssertion = false)
+  @RequiresEdt
   @ApiStatus.Internal
   @Override
   public boolean addFile(@NotNull VirtualFile file, @NotNull FileType type) {
@@ -54,7 +54,7 @@ public final class OverrideFileTypeManager extends PersistentFileSetManager {
    * @param file a virtual file
    * @return {@code true} if the association has been successfully removed
    */
-  @RequiresEdt(generateAssertion = false)
+  @RequiresEdt
   @ApiStatus.Internal
   @Override
   public boolean removeFile(@NotNull VirtualFile file) {
