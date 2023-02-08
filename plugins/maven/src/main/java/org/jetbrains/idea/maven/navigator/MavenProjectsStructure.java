@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -1446,22 +1447,20 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public void updateRunConfigurations(MavenProject mavenProject) {
-      boolean childChanged = false;
+      final var childChanged = new Ref<>(false);
 
       Set<RunnerAndConfigurationSettings> settings = new HashSet<>(
         RunManager.getInstance(myProject).getConfigurationSettingsList(MavenRunConfigurationType.getInstance()));
 
-      for (Iterator<RunConfigurationNode> itr = myChildren.iterator(); itr.hasNext(); ) {
-        RunConfigurationNode node = itr.next();
-
+      myChildren.forEach(node -> {
         if (settings.remove(node.getSettings())) {
           node.updateRunConfiguration();
         }
         else {
-          itr.remove();
-          childChanged = true;
+          myChildren.remove(node);
+          childChanged.set(true);
         }
-      }
+      });
 
       int oldSize = myChildren.size();
 
@@ -1474,11 +1473,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       }
 
       if (oldSize != myChildren.size()) {
-        childChanged = true;
+        childChanged.set(true);
         sort(myChildren);
       }
 
-      if (childChanged) {
+      if (childChanged.get()) {
         childrenChanged();
       }
     }
