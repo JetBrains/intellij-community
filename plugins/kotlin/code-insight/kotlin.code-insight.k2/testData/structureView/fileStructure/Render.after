@@ -1,14 +1,14 @@
 -Render.kt
  class A1
- -class A2
+ -class A2(a: Int, b: String = ...)
   a: Int
   b: String = ...
   constructor(a: Int, b: String = ...)
- -class A3
+ -class A3(a: Int)
   a: Int
   constructor(a: Int)
   var b: String
- -class A4<T : Any>
+ -class A4(t: T?)
   constructor(t: T?)
   t: T?
  -class A5
@@ -16,30 +16,30 @@
   class Inner2
  -class A6
   -companion object
-   fun test(): Unit
+   fun test()
  -class A7
   <class initializer>
   val a: Int
- class TestWithWhere<T>
- -class WithDefaultArgs
+ class TestWithWhere
+ -class WithDefaultArgs(a: Int = ..., b: String = ...)
   a: Int = ...
   constructor(a: Int = ..., b: String = ...)
  -enum class Enum1
   FIRST
   SECOND
- fun <T : String> test4(t: T): Unit
- fun <T : String> testWithWhere(): Unit
- fun <T, U> test3(t: T, u: U): Unit
- fun <T> Comparable<T>.extension2(): Unit
- fun String.extension1(): Unit
- fun test1(): Unit
- fun test2(a: String?): Unit
+ fun Comparable<T>.extension2()
+ fun String.extension1()
+ fun test1()
+ fun test2(a: String?)
+ fun test3(t: T, u: U)
+ fun test4(t: T)
  fun test5(): String
  fun test6(): Comparable<String>
- fun withDefaulArgs(a: Int = ..., b: String = ...): Unit
+ fun testWithWhere()
+ fun withDefaulArgs(a: Int = ..., b: String = ...)
  interface Trait
- interface Trait1 : Trait
- val <T> Comparable<T>.a: String
+ interface Trait1
  val a: Int
  -val b: Any
   object
+ val Comparable<T>.a: String
