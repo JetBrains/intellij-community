@@ -6,7 +6,6 @@ import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction.SelectConfigAction
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.execution.executors.ExecutorGroup
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -67,23 +66,14 @@ import kotlin.properties.Delegates
 
 private const val RUN: String = DefaultRunExecutor.EXECUTOR_ID
 private const val DEBUG: String = ToolWindowId.DEBUG
-private const val PROFILER: String = "Profiler"
 
 private val recentLimit: Int get() = AdvancedSettings.getInt("max.recent.run.configurations")
 
-internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boolean = true): ActionGroup {
+internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
   val actions = DefaultActionGroup()
   val registry = ExecutorRegistry.getInstance()
   val runExecutor = registry.getExecutorById(RUN) ?: error("No '${RUN}' executor found")
   val debugExecutor = registry.getExecutorById(DEBUG) ?: error("No '${DEBUG}' executor found")
-  if (addHeader) {
-    val profilerExecutor: ExecutorGroup<*>? = registry.getExecutorById(PROFILER) as? ExecutorGroup<*>
-    actions.add(RunToolbarWidgetRunAction(runExecutor) { RunManager.getInstance(it).selectedConfiguration })
-    actions.add(RunToolbarWidgetRunAction(debugExecutor) { RunManager.getInstance(it).selectedConfiguration })
-    if (profilerExecutor != null) {
-      actions.add(profilerExecutor.createExecutorActionGroup { RunManager.getInstance(it).selectedConfiguration })
-    }
-  }
   actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
   RunConfigurationStartHistory.getInstance(project).history().take(recentLimit).forEach { conf ->
     val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project)
@@ -184,21 +174,12 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
                                               project: Project,
                                               shouldBeShown: () -> Boolean = { true }): SelectRunConfigurationWithInlineActions {
   val inlineActions = mutableListOf<AnAction>()
-  inlineActions.add(RunToolbarWidgetRunAction(runExecutor) { conf })
-  inlineActions.add(RunToolbarWidgetRunAction(debugExecutor) { conf })
+  inlineActions.add(ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, conf, false))
+  inlineActions.add(ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(debugExecutor, conf, false))
 
   val result = SelectRunConfigurationWithInlineActions(inlineActions, conf, project, shouldBeShown)
   addAdditionalActionsToRunConfigurationOptions(project, conf, result, false)
   return result
-}
-
-private fun ExecutorGroup<*>.createExecutorActionGroup(conf: (Project) -> RunnerAndConfigurationSettings?) = DefaultActionGroup().apply {
-  templatePresentation.text = actionName
-  isPopup = true
-
-  childExecutors().forEach { executor ->
-    add(RunToolbarWidgetRunAction(executor, hideIfDisable = true, conf))
-  }
 }
 
 private class DelegateAction(val string: Supplier<@Nls String>, delegate: AnAction) : AnActionWrapper(delegate) {
@@ -336,24 +317,6 @@ fun runCounterToString(e: AnActionEvent, stopCount: Int): String =
   else {
     stopCount.toString()
   }
-
-private class RunToolbarWidgetRunAction(
-  executor: Executor,
-  val hideIfDisable: Boolean = false,
-  val settingSupplier: (Project) -> RunnerAndConfigurationSettings?,
-) : ExecutorRegistryImpl.ExecutorAction(executor) {
-
-  override fun update(e: AnActionEvent) {
-    super.update(e)
-    if (hideIfDisable) {
-      e.presentation.isVisible = e.presentation.isEnabled
-    }
-  }
-
-  override fun getSelectedConfiguration(e: AnActionEvent): RunnerAndConfigurationSettings? {
-    return settingSupplier(e.project ?: return null)
-  }
-}
 
 private enum class RunButtonColors {
   RED {

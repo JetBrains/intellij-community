@@ -840,7 +840,6 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
                            @NotNull Executor executor) {
       if (settings != null) {
         RunConfigurationStartHistory.getInstance(project).register(settings);
-        RunManager.getInstance(project).setSelectedConfiguration(settings);
       }
       runSubProcess(project, configuration, settings, dataContext, executor, RunToolbarProcessData.prepareBaseSettingCustomization(settings, null));
     }
