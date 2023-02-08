@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 /**
@@ -21,6 +22,7 @@ import javax.swing.JComponent
  *
  * @param VM - inlay viemodel
  */
+@ApiStatus.Experimental
 fun <VM : Any> DiffViewerBase.controlInlaysIn(
   cs: CoroutineScope,
   vmsFlow: Flow<Collection<DiffMappedValue<VM>>>,
@@ -42,6 +44,7 @@ fun <VM : Any> DiffViewerBase.controlInlaysIn(
 }
 
 
+@ApiStatus.Experimental
 private fun <VM : Any> SimpleOnesideDiffViewer.controlInlaysIn(
   cs: CoroutineScope,
   vmsFlow: Flow<Collection<DiffMappedValue<VM>>>,

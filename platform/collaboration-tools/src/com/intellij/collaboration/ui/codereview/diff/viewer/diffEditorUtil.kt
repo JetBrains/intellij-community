@@ -17,8 +17,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
+@ApiStatus.Experimental
 fun <VM : Any> EditorEx.controlInlaysIn(
   cs: CoroutineScope,
   vmsFlow: Flow<Map<Int, List<VM>>>,
@@ -29,6 +31,7 @@ fun <VM : Any> EditorEx.controlInlaysIn(
   EditorLineInlaysController(cs, vmsFlow, vmKeyExtractor, componentFactory, inlaysManager1)
 }
 
+@ApiStatus.Experimental
 fun EditorEx.controlGutterIconsIn(cs: CoroutineScope, createRenderer: (Int) -> GutterIconRenderer) {
   cs.launch(Dispatchers.Main, start = CoroutineStart.UNDISPATCHED) {
     lineCountFlow().distinctUntilChanged().collectLatest { editorLineCount ->

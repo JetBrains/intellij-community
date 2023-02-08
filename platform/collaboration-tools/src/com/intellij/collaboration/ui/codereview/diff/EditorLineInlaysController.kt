@@ -7,9 +7,11 @@ import com.intellij.ui.ClientProperty
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
 
+@ApiStatus.Experimental
 class EditorLineInlaysController<VM : Any>(
   parentCs: CoroutineScope,
   inlayVms: Flow<Map<Int, List<VM>>>,
