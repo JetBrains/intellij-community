@@ -707,6 +707,9 @@
     <!--Stubs index-->
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullScriptNameIndex"/>
+
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameStringIndex"/>
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullScriptNameStringIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotationMethodNameIndex"/>
