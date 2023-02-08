@@ -7,19 +7,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.Accessible;
 
-final public class AccessibleAnnouncerImpl {
-  private static AccessibleAnnouncer announcer = null;
+final public class AccessibleAnnouncerUtil {
+  private static AccessibleAnnouncer announcer = JBR.getAccessibleAnnouncer();
 
   public static int ANNOUNCE_WITHOUT_INTERRUPTING_CURRENT_OUTPUT = AccessibleAnnouncer.ANNOUNCE_WITHOUT_INTERRUPTING_CURRENT_OUTPUT;
   public static int ANNOUNCE_WITH_INTERRUPTING_CURRENT_OUTPUT = AccessibleAnnouncer.ANNOUNCE_WITH_INTERRUPTING_CURRENT_OUTPUT;
 
-  static {
-    if (announcer == null) {
-      announcer = JBR.getAccessibleAnnouncer();
-    }
-  }
-
-  private AccessibleAnnouncerImpl() {}
+  private AccessibleAnnouncerUtil() {}
 
   /**
    * This method make announce with screenreader
