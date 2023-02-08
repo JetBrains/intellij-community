@@ -61,8 +61,8 @@ public abstract class XDebuggerManager {
    */
   @NotNull
   public abstract XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
-                                                       @NotNull ExecutionEnvironment environment,
-                                                       @NotNull XDebugProcessStarter starter) throws ExecutionException;
+                                                       @NotNull XDebugProcessStarter starter,
+                                                       @NotNull ExecutionEnvironment environment) throws ExecutionException;
 
   /**
    * Start a new debugging session and open 'Debug' tool window

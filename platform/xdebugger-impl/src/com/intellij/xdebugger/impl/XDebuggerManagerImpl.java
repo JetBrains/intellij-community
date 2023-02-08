@@ -240,8 +240,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   @Override
   public @NotNull XDebugSession startSessionAndShowTab(@Nls @NotNull String sessionName,
-                                                       @NotNull ExecutionEnvironment environment,
-                                                       @NotNull XDebugProcessStarter starter) throws ExecutionException {
+                                                       @NotNull XDebugProcessStarter starter,
+                                                       @NotNull ExecutionEnvironment environment) throws ExecutionException {
     return startSessionAndShowTab(sessionName, null, environment, environment.getContentToReuse(), false, starter);
   }
 

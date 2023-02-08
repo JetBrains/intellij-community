@@ -76,7 +76,7 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
 
     //start remote debug server
     return XDebuggerManager.getInstance(myProject).
-      startSessionAndShowTab(String.valueOf(myPid), (RunContentDescriptor)null, new XDebugProcessStarter() {
+      startSessionAndShowTab(String.valueOf(myPid), null, new XDebugProcessStarter() {
         @Override
         @NotNull
         public XDebugProcess start(@NotNull final XDebugSession session) {
