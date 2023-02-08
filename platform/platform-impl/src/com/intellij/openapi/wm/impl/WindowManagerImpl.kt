@@ -6,6 +6,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
@@ -347,6 +348,10 @@ private fun calcAlphaModelSupported(): Boolean {
   if (device.isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.TRANSLUCENT)) {
     return true
   }
+
+  // GTW-3304 WindowUtils crashes on X11-enabled RD hosts
+  if (AppMode.isRemoteDevHost())
+    return false
 
   return try {
     WindowUtils.isWindowAlphaSupported()
