@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
+import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.*
@@ -57,12 +58,24 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
         private fun SimplePlatform.providesRunnableTests(): Boolean {
             if (this is NativePlatformWithTarget) {
                 return when {
-                    HostManager.hostIsMac -> target in listOf(
-                        KonanTarget.IOS_X64,
-                        KonanTarget.MACOS_X64,
-                        KonanTarget.WATCHOS_X64, KonanTarget.WATCHOS_X86,
-                        KonanTarget.TVOS_X64
-                    )
+                    HostManager.hostIsMac -> {
+                        val testTargets = if (HostManager.host.architecture == Architecture.ARM64) {
+                            listOf(
+                                KonanTarget.IOS_SIMULATOR_ARM64,
+                                KonanTarget.MACOS_ARM64,
+                                KonanTarget.WATCHOS_SIMULATOR_ARM64,
+                                KonanTarget.TVOS_SIMULATOR_ARM64
+                            )
+                        } else {
+                            listOf(
+                                KonanTarget.IOS_X64,
+                                KonanTarget.MACOS_X64,
+                                KonanTarget.WATCHOS_X64, KonanTarget.WATCHOS_X86,
+                                KonanTarget.TVOS_X64
+                            )
+                        }
+                        target in testTargets
+                    }
                     HostManager.hostIsLinux -> target == KonanTarget.LINUX_X64
                     HostManager.hostIsMingw -> target in listOf(KonanTarget.MINGW_X86, KonanTarget.MINGW_X64)
                     else -> false
