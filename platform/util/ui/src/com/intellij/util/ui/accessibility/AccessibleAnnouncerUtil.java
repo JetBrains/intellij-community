@@ -8,10 +8,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.accessibility.Accessible;
 
 final public class AccessibleAnnouncerUtil {
-  private static AccessibleAnnouncer announcer = JBR.getAccessibleAnnouncer();
+  final private static AccessibleAnnouncer announcer = JBR.getAccessibleAnnouncer();
 
-  public static int ANNOUNCE_WITHOUT_INTERRUPTING_CURRENT_OUTPUT = AccessibleAnnouncer.ANNOUNCE_WITHOUT_INTERRUPTING_CURRENT_OUTPUT;
-  public static int ANNOUNCE_WITH_INTERRUPTING_CURRENT_OUTPUT = AccessibleAnnouncer.ANNOUNCE_WITH_INTERRUPTING_CURRENT_OUTPUT;
+  final public static int ANNOUNCE_WITHOUT_INTERRUPTING_CURRENT_OUTPUT = AccessibleAnnouncer.ANNOUNCE_WITHOUT_INTERRUPTING_CURRENT_OUTPUT;
+  final public static int ANNOUNCE_WITH_INTERRUPTING_CURRENT_OUTPUT = AccessibleAnnouncer.ANNOUNCE_WITH_INTERRUPTING_CURRENT_OUTPUT;
 
   private AccessibleAnnouncerUtil() {}
 
