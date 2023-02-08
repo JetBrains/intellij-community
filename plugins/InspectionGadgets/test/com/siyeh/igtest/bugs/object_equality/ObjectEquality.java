@@ -171,4 +171,41 @@ public class ObjectEquality {
       test(a == b);
     }
   }
+
+  class MyIdentity {
+    @Override
+    public boolean equals(Object obj) {
+      // In the 'equals' method, comparing 'this' by reference allowed,
+      // as it is a concious implementation choice.
+      return this == obj || obj == this;
+    }
+
+    // In methods other than 'equals', comparing 'this' by reference is suspicious.
+    void notEquals(Object obj) {
+      test(this <warning descr="Object values are compared using '==', not 'equals()'">==</warning> obj);
+      test(obj <warning descr="Object values are compared using '==', not 'equals()'">==</warning> this);
+    }
+
+    @Override
+    public int hashCode() {
+      return System.identityHashCode(this);
+    }
+  }
+
+  class MyBean {
+    private Boolean field;
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == null || getClass() != obj.getClass()) return false;
+      MyBean other = (MyBean)obj;
+      // In the 'equals' method, comparing fields is no different than anywhere else.
+      return field <warning descr="Object values are compared using '==', not 'equals()'">==</warning> other.field;
+    }
+
+    @Override
+    public int hashCode() {
+      return field.hashCode();
+    }
+  }
 }
