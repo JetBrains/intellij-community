@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.projectTemplates
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import icons.KotlinBaseResourcesIcons
 import org.jetbrains.annotations.NonNls
@@ -84,7 +85,7 @@ abstract class ProjectTemplate : DisplayableSettingItem {
         ).run {
             // in IDE Registry is filled with default false value
             // But in tests there is no registry, so true for tests
-            if (Registry.`is`("kotlin.wasm.wizard", true))
+            if (Registry.`is`("kotlin.wasm.wizard", true) || ApplicationManager.getApplication().isUnitTestMode)
                 this + WasmApplicationProjectTemplate
             else
                 this
