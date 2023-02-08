@@ -35,6 +35,7 @@ abstract class PersistentVar<T>(
     else {
       DataOutputStream(Channels.newOutputStream(fileChannel.position(0))).writeValue(value)
     }
+    fileChannel.force(false)
   }
 
   companion object {
