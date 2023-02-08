@@ -40,7 +40,8 @@ object KotlinModuleUtils {
                         ExternalSystemTestRunTask(
                             it.taskName,
                             gradleModule.gradleProject.path,
-                            target.name
+                            target.name,
+                            target.platform.id
                         )
                     }
                 val nativeMainRunTasks = target.nativeMainRunTasks
