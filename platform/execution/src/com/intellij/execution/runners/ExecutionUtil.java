@@ -18,7 +18,9 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -253,7 +255,11 @@ public final class ExecutionUtil {
       builder.dataContext(dataContext);
     }
 
-    ExecutionEnvironment environment = builder.build();
+    ExecutionEnvironment environment = ApplicationManager.getApplication().isDispatchThread() ?
+                                       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.compute(() -> builder.build()),
+                                                                                                         ExecutionBundle.message("dialog.title.preparing.execution"), true,
+                                                                                                         null) :
+                                       builder.build();
     if(environmentCustomization != null) {
       environmentCustomization.accept(environment);
     }
