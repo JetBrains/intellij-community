@@ -4,6 +4,7 @@ fragment mergeRequest on MergeRequest {
   title
   description
   webUrl
+  createdAt
 
   targetBranch
   sourceBranch
@@ -15,6 +16,7 @@ fragment mergeRequest on MergeRequest {
   }
 
   conflicts
+  mergeStatusEnum
   state
   draft
 
@@ -32,6 +34,15 @@ fragment mergeRequest on MergeRequest {
     }
   }
 
+  assignees(first: 1000) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      ...user
+    }
+  }
   reviewers(first: 1000) {
     pageInfo {
       ...pageInfo

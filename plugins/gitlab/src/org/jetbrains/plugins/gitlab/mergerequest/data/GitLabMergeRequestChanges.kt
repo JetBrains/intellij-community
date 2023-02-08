@@ -19,7 +19,6 @@ import kotlinx.coroutines.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadCommit
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadCommitDiffs
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestDiffs
@@ -41,14 +40,14 @@ class GitLabMergeRequestChangesImpl(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
   private val projectMapping: GitLabProjectMapping,
-  private val mergeRequest: GitLabMergeRequestDTO
+  private val mergeRequestDetails: GitLabMergeRequestFullDetails
 ) : GitLabMergeRequestChanges {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
   private val glProject = projectMapping.repository
 
-  override val commits: List<GitLabCommitDTO> = mergeRequest.commits.asReversed()
+  override val commits: List<GitLabCommitDTO> = mergeRequestDetails.commits.asReversed()
 
   private val parsedChanges = cs.async(start = CoroutineStart.LAZY) {
     loadChanges(commits)
@@ -58,8 +57,8 @@ class GitLabMergeRequestChangesImpl(
 
   private suspend fun loadChanges(commits: List<GitLabCommitDTO>): GitParsedChangesBundle {
     val repository = projectMapping.remote.repository
-    val baseSha = mergeRequest.diffRefs.startSha
-    val mergeBaseSha = mergeRequest.diffRefs.baseSha ?: error("Missing merge base revision")
+    val baseSha = mergeRequestDetails.diffRefs.startSha
+    val mergeBaseSha = mergeRequestDetails.diffRefs.baseSha ?: error("Missing merge base revision")
 
     val commitsWithPatches = withContext(Dispatchers.IO) {
       coroutineScope {
@@ -73,21 +72,21 @@ class GitLabMergeRequestChangesImpl(
       }
     }
     val headPatches = withContext(Dispatchers.IO) {
-      api.loadMergeRequestDiffs(glProject, mergeRequest).body()!!.map(GitLabDiffDTO::toPatch)
+      api.loadMergeRequestDiffs(glProject, mergeRequestDetails).body()!!.map(GitLabDiffDTO::toPatch)
     }
     return GitParsedChangesBundleImpl(repository.project, repository.root, baseSha, mergeBaseSha, commitsWithPatches, headPatches)
   }
 
   override suspend fun ensureAllRevisionsFetched() {
     val revsToCheck = commits.map { it.sha }.toMutableList()
-    mergeRequest.diffRefs.baseSha?.also {
+    mergeRequestDetails.diffRefs.baseSha?.also {
       revsToCheck.add(it)
     }
     withContext(Dispatchers.IO) {
       if (areAllRevisionPresent(revsToCheck)) return@withContext
 
-      fetch(mergeRequest.targetBranch)
-      fetch("""merge-requests/${mergeRequest.iid}/head:""")
+      fetch(mergeRequestDetails.targetBranch)
+      fetch("""merge-requests/${mergeRequestDetails.iid}/head:""")
 
       check(areAllRevisionPresent(revsToCheck)) { "Failed to fetch some revisions" }
     }

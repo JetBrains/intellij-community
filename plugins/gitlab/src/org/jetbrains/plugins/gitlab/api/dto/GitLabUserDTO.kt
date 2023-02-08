@@ -12,4 +12,15 @@ data class GitLabUserDTO(
   override val name: @NlsSafe String,
   override val avatarUrl: String?,
   val webUrl: String
-) : AccountDetails
+) : AccountDetails {
+
+  companion object {
+    fun fromRestDTO(dto: GitLabUserRestDTO): GitLabUserDTO = GitLabUserDTO(
+      id = "gid://gitlab/User/${dto.id}",
+      username = dto.username,
+      name = dto.name,
+      avatarUrl = dto.avatarUrl?.removePrefix("https://gitlab.com"),
+      webUrl = dto.webUrl
+    )
+  }
+}
