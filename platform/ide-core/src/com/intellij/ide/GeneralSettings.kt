@@ -153,7 +153,7 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
 
     fun isSupportScreenReadersOverridden(): Boolean = SUPPORT_SCREEN_READERS_OVERRIDDEN != null
 
-    fun defaultConfirmNewProject(): Int = if (PlatformUtils.isDataSpell()) OPEN_PROJECT_SAME_WINDOW_ATTACH else OPEN_PROJECT_ASK
+    fun defaultConfirmNewProject(): Int = OPEN_PROJECT_ASK
   }
 
   enum class PropertyNames {
