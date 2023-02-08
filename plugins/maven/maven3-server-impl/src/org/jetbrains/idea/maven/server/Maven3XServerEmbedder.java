@@ -25,6 +25,7 @@ import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.artifact.resolver.ResolutionListener;
 import org.apache.maven.cli.MavenCli;
+import org.apache.maven.cli.internal.extension.model.CoreExtension;
 import org.apache.maven.execution.*;
 import org.apache.maven.model.Activation;
 import org.apache.maven.model.Model;
@@ -93,6 +94,8 @@ import org.jetbrains.idea.maven.server.utils.MavenServerParallelRunner;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -244,6 +247,13 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       myContainer = (DefaultPlexusContainer)m.invoke(cli, cliRequest);
     }
     catch (Exception e) {
+      if (e instanceof InvocationTargetException) {
+        if (((InvocationTargetException)e).getTargetException().getClass().getCanonicalName()
+          .equals("org.apache.maven.cli.internal.ExtensionResolutionException")) {
+          MavenId id = extractIdFromException(((InvocationTargetException)e).getTargetException());
+          throw new MavenCoreInitializationException(wrapToSerializableRuntimeException(((InvocationTargetException)e).getTargetException()), id);
+        }
+      }
       throw wrapToSerializableRuntimeException(e);
     }
 
@@ -273,6 +283,18 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       myContainer.addComponent(importerSpy, MavenImporterSpy.class.getName());
     }
     myImporterSpy = importerSpy;
+  }
+
+  private MavenId extractIdFromException(Throwable exception) {
+    try {
+      Field field = exception.getClass().getDeclaredField("extension");
+      field.setAccessible(true);
+      CoreExtension extension = (CoreExtension)field.get(exception);
+      return new MavenId(extension.getGroupId(), extension.getArtifactId(), extension.getVersion());
+    }
+    catch (Throwable e) {
+      return null;
+    }
   }
 
   @NotNull

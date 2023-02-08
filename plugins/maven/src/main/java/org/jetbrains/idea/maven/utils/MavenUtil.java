@@ -105,6 +105,18 @@ import static icons.ExternalSystemIcons.Task;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 
 public class MavenUtil {
+
+  private static List<String> settingsListNamespaces = List.of(
+    "http://maven.apache.org/SETTINGS/1.0.0",
+    "http://maven.apache.org/SETTINGS/1.1.0",
+    "http://maven.apache.org/SETTINGS/1.2.0"
+  );
+
+  private static List<String> extensionListNamespaces = List.of(
+    "http://maven.apache.org/EXTENSIONS/1.0.0",
+    "http://maven.apache.org/EXTENSIONS/1.1.0",
+    "http://maven.apache.org/EXTENSIONS/1.2.0"
+  );
   private static final Set<Runnable> runnables = Collections.newSetFromMap(new IdentityHashMap<>());
   public static final String INTELLIJ_PLUGIN_ID = "org.jetbrains.idea.maven";
   @ApiStatus.Experimental
@@ -984,14 +996,14 @@ public class MavenUtil {
 
   public static String getMirroredUrl(final File settingsFile, String url, String id) {
     try {
-      Element mirrorParent = getElementWithRegardToNamespace(getDomRootElement(settingsFile), "mirrors");
+      Element mirrorParent = getElementWithRegardToNamespace(getDomRootElement(settingsFile), "mirrors", settingsListNamespaces);
       if (mirrorParent == null) {
         return url;
       }
-      List<Element> mirrors = getElementsWithRegardToNamespace(mirrorParent, "mirror");
+      List<Element> mirrors = getElementsWithRegardToNamespace(mirrorParent, "mirror", settingsListNamespaces);
       for (Element el : mirrors) {
-        Element mirrorOfElement = getElementWithRegardToNamespace(el, "mirrorOf");
-        Element mirrorUrlElement = getElementWithRegardToNamespace(el, "url");
+        Element mirrorOfElement = getElementWithRegardToNamespace(el, "mirrorOf", settingsListNamespaces);
+        Element mirrorUrlElement = getElementWithRegardToNamespace(el, "url", settingsListNamespaces);
         if (mirrorOfElement == null) continue;
         if (mirrorUrlElement == null) continue;
 
@@ -1045,7 +1057,7 @@ public class MavenUtil {
 
   @Nullable
   private static Element getRepositoryElement(File file) throws JDOMException, IOException {
-    return getElementWithRegardToNamespace(getDomRootElement(file), "localRepository");
+    return getElementWithRegardToNamespace(getDomRootElement(file), "localRepository", settingsListNamespaces);
   }
 
   private static Element getDomRootElement(File file) throws IOException, JDOMException {
@@ -1054,33 +1066,24 @@ public class MavenUtil {
   }
 
   @Nullable
-  private static Element getElementWithRegardToNamespace(@NotNull Element parent, String childName) {
-
+  private static Element getElementWithRegardToNamespace(@NotNull Element parent, String childName, List<String> namespaces) {
     Element element = parent.getChild(childName);
-    if (element == null) {
-      element = parent.getChild(childName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.0.0"));
+    if (element != null) return element;
+    for (String namespace : namespaces) {
+      element = parent.getChild(childName, Namespace.getNamespace(namespace));
+      if (element != null) return element;
     }
-    if (element == null) {
-      element = parent.getChild(childName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.1.0"));
-    }
-    if (element == null) {
-      element = parent.getChild(childName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.2.0"));
-    }
-    return element;
+    return null;
   }
 
-  private static List<Element> getElementsWithRegardToNamespace(@NotNull Element parent, String childrenName) {
+  private static List<Element> getElementsWithRegardToNamespace(@NotNull Element parent, String childrenName, List<String> namespaces) {
     List<Element> elements = parent.getChildren(childrenName);
-    if (elements.isEmpty()) {
-      elements = parent.getChildren(childrenName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.0.0"));
+    if (!elements.isEmpty()) return elements;
+    for (String namespace : namespaces) {
+      elements = parent.getChildren(childrenName, Namespace.getNamespace(namespace));
+      if (!elements.isEmpty()) return elements;
     }
-    if (elements.isEmpty()) {
-      elements = parent.getChildren(childrenName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.1.0"));
-    }
-    if (elements.isEmpty()) {
-      elements = parent.getChildren(childrenName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.2.0"));
-    }
-    return elements;
+    return Collections.emptyList();
   }
 
   public static String expandProperties(String text, Properties props) {
@@ -1376,6 +1379,34 @@ public class MavenUtil {
     if (!isPotentialPomFile(name)) return false;
 
     return isPomFileIgnoringName(project, file);
+  }
+
+
+  public static boolean containsDeclaredExtension(final File extensionFile, @NotNull MavenId mavenId) {
+    try {
+
+      Element extensions = getDomRootElement(extensionFile);
+      if (!extensions.getName().equals("extensions")) return false;
+      if (extensions == null) return false;
+      for (Element extension : getElementsWithRegardToNamespace(extensions, "extension", extensionListNamespaces)) {
+        Element groupId = getElementWithRegardToNamespace(extension, "groupId", extensionListNamespaces);
+        Element artifactId = getElementWithRegardToNamespace(extension, "artifactId", extensionListNamespaces);
+        Element version = getElementWithRegardToNamespace(extension, "version", extensionListNamespaces);
+
+        if (groupId != null &&
+            groupId.getTextTrim().equals(mavenId.getGroupId()) &&
+            artifactId != null &&
+            artifactId.getTextTrim().equals(mavenId.getArtifactId()) &&
+            version != null &&
+            version.getTextTrim().equals(mavenId.getVersion())) {
+          return true;
+        }
+      }
+    }
+    catch (IOException | JDOMException e) {
+      return false;
+    }
+    return false;
   }
 
   public static boolean isPomFileIgnoringName(@Nullable Project project, @NotNull VirtualFile file) {

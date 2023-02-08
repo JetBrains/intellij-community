@@ -4,12 +4,12 @@ package org.jetbrains.idea.maven.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
-import org.jetbrains.idea.maven.server.security.MavenToken;
 
 public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer {
 
@@ -20,6 +20,9 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       Maven36ServerEmbedderImpl result = new Maven36ServerEmbedderImpl(settings);
       UnicastRemoteObject.exportObject(result, 0);
       return result;
+    }
+    catch (MavenCoreInitializationException e) {
+      throw e;
     }
     catch (Throwable e) {
       throw wrapToSerializableRuntimeException(e);
