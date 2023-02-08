@@ -249,6 +249,7 @@
     },
 
     "EditorTabs": {
+      "underlineArc": "4",
       "tabInsets": "-3,12,-4,8",
       "hoverBackground": "#1E1F2200",
       "inactiveHoverBackground": "#1E1F2200",
@@ -528,6 +529,8 @@
         "leftRightInsets": "0,12,0,12"
       },
       "Button": {
+        "selectedForeground": "Grey14",
+        "selectedBackground": "Blue6",
         "DragAndDrop" : {
           "stripeBackground" : "Grey2",
           "buttonDropBackground": "#35538F99",

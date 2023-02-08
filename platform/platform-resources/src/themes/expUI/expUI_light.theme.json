@@ -239,6 +239,7 @@
     "DefaultTabs.hoverBackground": "Grey12",
 
     "EditorTabs": {
+      "underlineArc": "4",
       "tabInsets": "-3,12,-4,8",
       "hoverBackground": "#FFFFFF00",
       "hoverInactiveBackground": "#FFFFFF00",
@@ -541,6 +542,8 @@
         "leftRightInsets": "0,12,0,12"
       },
       "Button": {
+        "selectedForeground": "Grey14",
+        "selectedBackground": "Blue4",
         "hoverBackground": "Grey12",
         "DragAndDrop" : {
           "stripeBackground" : "Grey13",
