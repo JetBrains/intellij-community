@@ -449,7 +449,7 @@ public final class ContainerUtil {
   @SafeVarargs
   @Contract(pure = true)
   @Unmodifiable
-  public static @NotNull <E> ImmutableList<E> immutableList(E @NotNull ... array) {
+  public static @NotNull <E> ImmutableList<E> immutableList(@NotNull E @NotNull ... array) {
     return new ImmutableListBackedByArray<>(array);
   }
 
