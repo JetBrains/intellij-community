@@ -19,9 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -35,13 +32,6 @@ import java.util.Objects;
 public final class PsiUtilEx {
 
   private PsiUtilEx() {
-  }
-
-  public static boolean isInSourceContent(PsiElement e) {
-    final VirtualFile file = e.getContainingFile().getVirtualFile();
-    if (file == null) return false;
-    final ProjectFileIndex index = ProjectRootManager.getInstance(e.getProject()).getFileIndex();
-    return index.isInContent(file);
   }
 
   @Nullable
