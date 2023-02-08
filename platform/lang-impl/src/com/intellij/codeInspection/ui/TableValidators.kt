@@ -22,6 +22,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.fields.ExtendableTextField
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Supplier
 import javax.swing.DefaultCellEditor
 import javax.swing.event.TableModelEvent
 import javax.swing.table.DefaultTableCellRenderer
@@ -52,9 +53,9 @@ private class BackgroundValidationsHolder(val context: Disposable, val project: 
         cache[Pair(row, column)] = ValidationResult(dumb, stringValue, errorMessage)
       }
 
-      ApplicationManager.getApplication().invokeLater ({
-        table.repaint()
-      }, ModalityState.any())
+      ApplicationManager.getApplication().invokeLater({
+                                                        table.repaint()
+                                                      }, ModalityState.any())
     }
   }
 
@@ -95,51 +96,6 @@ private class BackgroundValidationsHolder(val context: Disposable, val project: 
   }
 }
 
-private class BackgroundOneValidationHolder(val validator: StringValidator,
-                                            val context: Disposable,
-                                            val project: Project,
-                                            val cellEditor: ExtendableTextField) {
-  private var myComponentValidator: ComponentValidator? = null
-
-  val cs = CoroutineScope(SupervisorJob())
-
-  init {
-    Disposer.register(context) {
-      cs.cancel()
-    }
-  }
-
-  fun updateBy(componentValidator: ComponentValidator?) {
-    this.myComponentValidator = componentValidator
-  }
-
-  fun validate() {
-    val componentValidator = myComponentValidator
-    if (componentValidator == null) {
-      return
-    }
-    val text = cellEditor.text ?: return
-    runInBackground(text, validator, componentValidator)
-  }
-
-  private fun runInBackground(text: String, validator: StringValidator, componentValidator: ComponentValidator) {
-    cs.launch(Dispatchers.Default) {
-      val validationInfo = readAction {
-        val errorMessage = validator.getErrorMessage(project, text)
-        if (errorMessage != null) {
-          ValidationInfo(errorMessage, cellEditor)
-        }
-        else {
-          null
-        }
-      }
-      ApplicationManager.getApplication().invokeLater({
-                                                        componentValidator.updateInfo(validationInfo)
-                                                      }, ModalityState.any())
-    }
-  }
-}
-
 private data class ValidationResult(val isDumbMode: Boolean = false, val value: String = "", var errorMessage: String?)
 
 internal fun addColumnValidators(table: ListTable, components: List<OptStringList>, parent: Disposable?, project: Project?) {
@@ -154,15 +110,20 @@ internal fun addColumnValidators(table: ListTable, components: List<OptStringLis
     cellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, true)
 
     val column = table.columnModel.getColumn(index)
-    val oneValidationHolder = BackgroundOneValidationHolder(validator, parent, project, cellEditor)
-    val componentValidator = object : ComponentValidator(parent) {
-      override fun revalidate() {
-        oneValidationHolder.validate()
+    ComponentValidator(parent)
+      .withValidator(Supplier {
+        val text = cellEditor.text ?: return@Supplier null
+        val errorMessage = validator.getErrorMessage(project, text)
+        if (errorMessage != null) {
+          ValidationInfo(errorMessage, cellEditor)
+        }
+        else {
+          null
+        }
       }
-    }
+      )
       .andRegisterOnDocumentListener(cellEditor)
       .installOn(cellEditor)
-    oneValidationHolder.updateBy(componentValidator)
 
 
     column.cellEditor = DefaultCellEditor(cellEditor)
