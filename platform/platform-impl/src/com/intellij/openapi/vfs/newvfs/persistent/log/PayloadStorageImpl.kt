@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.ByteCountingOutputStream
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMapedFileIO
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMappedFileIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
 import com.intellij.util.io.DataInputOutputUtil
@@ -31,7 +31,7 @@ class PayloadStorageImpl(
 
     val fileChannel = UnInterruptibleFileChannel(storagePath / "payload",
                                                  StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
-    storageIO = ChunkMMapedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
+    storageIO = ChunkMMappedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
 
     position = AdvancingPositionTracker(lastSafeSize ?: 0L)
   }

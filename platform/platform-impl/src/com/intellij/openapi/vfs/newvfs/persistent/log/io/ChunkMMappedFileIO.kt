@@ -9,7 +9,7 @@ import java.nio.channels.FileChannel.MapMode
 import kotlin.math.max
 import kotlin.math.min
 
-class ChunkMMapedFileIO(
+class ChunkMMappedFileIO(
   private val fileChannel: FileChannel,
   private val mapMode: MapMode
 ) : StorageIO {
@@ -38,7 +38,7 @@ class ChunkMMapedFileIO(
   }
 
   /**
-   * buf[ offset..(offset+length-1) ] -> chunk[ chunkOffset..( chunkOffset+length-1) ]
+   * buf[ offset..offset+length ) -> chunk[ chunkOffset..chunkOffset+length )
    */
   private fun writeChunkConfined(chunkId: Int, chunkOffset: Int, buf: ByteBuffer, offset: Int, length: Int) {
     assert(0 <= chunkOffset && chunkOffset + length <= CHUNK_SIZE)
@@ -101,7 +101,7 @@ class ChunkMMapedFileIO(
   override fun offsetOutputStream(startPosition: Long) = OffsetOutputStream(this, startPosition)
 
   class OffsetOutputStream(
-    private val mmapIO: ChunkMMapedFileIO,
+    private val mmapIO: ChunkMMappedFileIO,
     private val startOffset: Long,
   ) : OutputStreamWithValidation() {
     private var position = startOffset

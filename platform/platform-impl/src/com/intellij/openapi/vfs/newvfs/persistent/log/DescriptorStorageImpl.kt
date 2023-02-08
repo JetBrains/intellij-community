@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMapedFileIO
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMappedFileIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
 import com.intellij.util.io.DataEnumerator
@@ -25,7 +25,7 @@ class DescriptorStorageImpl(
 
     val fileChannel = UnInterruptibleFileChannel(storagePath / "descriptors",
                                                  StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
-    storageIO = ChunkMMapedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
+    storageIO = ChunkMMappedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
 
     lastSafeSize.let {
       if (it != null) {
