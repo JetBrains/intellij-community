@@ -556,7 +556,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
     }
     else {
-      LOG.error(element.getParent());
+      LOG.error("Unexpected parent type " + element.getParent());
     }
   }
 

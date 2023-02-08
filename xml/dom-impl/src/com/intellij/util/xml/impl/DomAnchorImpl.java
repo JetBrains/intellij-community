@@ -111,7 +111,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       diag.append("\n");
     }
     diag.append("Child name: ").append(t.getXmlElementName()).append(";").append(t.getXmlElementNamespaceKey());
-    LOG.error(diag);
+    LOG.error(diag.toString());
   }
 
 

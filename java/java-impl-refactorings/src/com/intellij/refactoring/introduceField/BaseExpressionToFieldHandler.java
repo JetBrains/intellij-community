@@ -162,7 +162,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         return true;
       }
       else {
-        LOG.error(file);
+        LOG.error("Unexpected file: " + file);
         return true;
       }
     }

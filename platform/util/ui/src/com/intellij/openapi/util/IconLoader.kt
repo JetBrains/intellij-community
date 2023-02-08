@@ -450,8 +450,7 @@ object IconLoader {
           icon == null || icon is DummyIcon || icon is EmptyIcon -> icon
           icon is LazyIcon -> replaceIcon(icon.getOrComputeIcon())
           icon is ReplaceableIcon -> icon.replaceBy(this)
-          !isGoodSize(icon) -> {
-            LOG.error(icon)
+          !checkIconSize(icon) -> {
             com.intellij.openapi.util.CachedImageIcon.EMPTY_ICON
           }
           icon is com.intellij.openapi.util.CachedImageIcon -> cachedImageIconReplacer(icon)
@@ -467,9 +466,7 @@ object IconLoader {
    */
   fun filterIcon(icon: Icon, filterSupplier: () -> RGBImageFilter): Icon {
     val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
-    if (!isGoodSize(effectiveIcon)) {
-      // # 22481
-      LOG.error(effectiveIcon)
+    if (!checkIconSize(effectiveIcon)) {
       return com.intellij.openapi.util.CachedImageIcon.EMPTY_ICON
     }
     return if (effectiveIcon is com.intellij.openapi.util.CachedImageIcon) {
@@ -478,6 +475,14 @@ object IconLoader {
     else {
       FilteredIcon(effectiveIcon, filterSupplier)
     }
+  }
+
+  private fun checkIconSize(icon: Icon): Boolean {
+    if (!isGoodSize(icon)) {
+      LOG.error("Icon $icon has incorrect size: ${icon.iconWidth}x${icon.iconHeight}")
+      return false
+    }
+    return true
   }
 
   fun getScaleToRenderIcon(icon: Icon, ancestor: Component?): Float {

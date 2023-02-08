@@ -186,7 +186,7 @@ public final class GroovyIntroduceParameterUtil {
 
   public static void processChangedMethodCall(PsiElement element, GrIntroduceParameterSettings settings, Project project) {
     if (!(element.getParent() instanceof GrMethodCallExpression methodCall)) {
-      LOG.error(element.getParent());
+      LOG.error("Unexpected parent type: " + element.getParent());
       return;
     }
 
