@@ -3,7 +3,10 @@ package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 
 object ReviewDetailsUIUtil {
   fun getRequestStateText(state: RequestState): @NlsSafe String = when (state) {
@@ -11,6 +14,18 @@ object ReviewDetailsUIUtil {
     RequestState.CLOSED -> CollaborationToolsBundle.message("review.details.review.state.closed")
     RequestState.MERGED -> CollaborationToolsBundle.message("review.details.review.state.merged")
     RequestState.DRAFT -> CollaborationToolsBundle.message("review.details.review.state.draft")
+  }
+
+  fun getReviewStateIcon(reviewState: ReviewState): Icon = when (reviewState) {
+    ReviewState.ACCEPTED -> AllIcons.RunConfigurations.TestPassed
+    ReviewState.WAIT_FOR_UPDATES -> AllIcons.RunConfigurations.TestError
+    ReviewState.NEED_REVIEW -> AllIcons.RunConfigurations.TestFailed
+  }
+
+  fun getReviewStateText(reviewState: ReviewState, reviewer: String): @Nls String = when (reviewState) {
+    ReviewState.ACCEPTED -> CollaborationToolsBundle.message("review.details.status.reviewer.approved", reviewer)
+    ReviewState.WAIT_FOR_UPDATES -> CollaborationToolsBundle.message("review.details.status.reviewer.wait.for.updates", reviewer)
+    ReviewState.NEED_REVIEW -> CollaborationToolsBundle.message("review.details.status.reviewer.need.review", reviewer)
   }
 
   val indentTop: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 12, newUI = 16)

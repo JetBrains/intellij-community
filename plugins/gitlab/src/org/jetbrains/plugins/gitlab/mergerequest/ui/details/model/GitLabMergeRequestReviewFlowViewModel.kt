@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.collaboration.ui.codereview.details.RequestState
 import com.intellij.collaboration.ui.codereview.details.ReviewRole
+import com.intellij.collaboration.ui.codereview.details.ReviewState
 import com.intellij.util.childScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +25,7 @@ internal interface GitLabMergeRequestReviewFlowViewModel {
   val role: Flow<ReviewRole>
   val requestState: Flow<RequestState>
   val isApproved: StateFlow<Boolean>
+  val reviewerAndReviewState: Flow<Map<GitLabUserDTO, ReviewState>>
 
   fun merge()
 
@@ -70,6 +72,14 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   override val isApproved: StateFlow<Boolean> = approvedBy
     .map { it.isNotEmpty() }
     .stateIn(scope, SharingStarted.Lazily, false)
+
+  override val reviewerAndReviewState: Flow<Map<GitLabUserDTO, ReviewState>> = combine(reviewers, approvedBy) { reviewers, approvedBy ->
+    mutableMapOf<GitLabUserDTO, ReviewState>().apply {
+      reviewers.forEach { reviewer -> put(reviewer, ReviewState.NEED_REVIEW) }
+      approvedBy.forEach { reviewer -> put(reviewer, ReviewState.ACCEPTED) }
+      // TODO: implement ReviewState.WAIT_FOR_UPDATES
+    }
+  }
 
   override fun merge() = runAction {
     mergeRequest.merge()

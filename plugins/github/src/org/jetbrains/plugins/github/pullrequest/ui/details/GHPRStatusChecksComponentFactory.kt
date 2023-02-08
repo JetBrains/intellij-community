@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.collaboration.ui.codereview.details.ReviewState
 import com.intellij.collaboration.ui.util.*
 import com.intellij.icons.AllIcons
@@ -19,7 +20,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -226,11 +226,11 @@ internal object GHPRStatusChecksComponentFactory {
   ): JComponent {
     return HorizontalListPanel(STATUS_COMPONENTS_GAP).apply {
       val reviewStatusIconLabel = JLabel().apply {
-        icon = getReviewStateIcon(reviewState)
+        icon = ReviewDetailsUIUtil.getReviewStateIcon(reviewState)
       }
       val reviewerLabel = JLabel().apply {
         icon = avatarIconsProvider.getIcon(reviewer.avatarUrl, AVATAR_SIZE)
-        text = getReviewStateText(reviewState, reviewer.shortName)
+        text = ReviewDetailsUIUtil.getReviewStateText(reviewState, reviewer.shortName)
         iconTextGap = STATUS_COMPONENTS_GAP
       }
 
@@ -243,18 +243,6 @@ internal object GHPRStatusChecksComponentFactory {
         "GHPRReviewerStatus"
       )
     }
-  }
-
-  private fun getReviewStateIcon(reviewState: ReviewState): Icon = when (reviewState) {
-    ReviewState.ACCEPTED -> AllIcons.RunConfigurations.TestPassed
-    ReviewState.WAIT_FOR_UPDATES -> AllIcons.RunConfigurations.TestError
-    ReviewState.NEED_REVIEW -> AllIcons.RunConfigurations.TestFailed
-  }
-
-  private fun getReviewStateText(reviewState: ReviewState, reviewer: String): @Nls String = when (reviewState) {
-    ReviewState.ACCEPTED -> CollaborationToolsBundle.message("review.details.status.reviewer.approved", reviewer)
-    ReviewState.WAIT_FOR_UPDATES -> CollaborationToolsBundle.message("review.details.status.reviewer.wait.for.updates", reviewer)
-    ReviewState.NEED_REVIEW -> CollaborationToolsBundle.message("review.details.status.reviewer.need.review", reviewer)
   }
 
   private fun getCheckStatusIcon(mergeability: GHPRMergeabilityState?): Icon? {

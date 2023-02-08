@@ -90,7 +90,6 @@ internal object GitLabMergeRequestDetailsComponentFactory {
           CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft,
                            right = ReviewDetailsUIUtil.indentRight,
                            bottom = ReviewDetailsUIUtil.gapBetweenCommitsAndCommitInfo))
-
       add(GitLabMergeRequestDetailsCommitInfoComponentFactory.create(cs, changesVm.selectedCommit),
           CC().growX().maxHeight("${ReviewDetailsUIUtil.commitInfoMaxHeight}")
             .gap(left = ReviewDetailsUIUtil.indentLeft,
@@ -98,7 +97,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
                  bottom = ReviewDetailsUIUtil.gapBetweenCommitInfoAndCommitsBrowser))
       add(GitLabMergeRequestDetailsChangesComponentFactory(project).create(cs, changesVm),
           CC().grow().push())
-      add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(cs, detailsInfoVm),
+      add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(cs, detailsInfoVm, detailsReviewFlowVm, avatarIconsProvider),
           CC().growX().maxHeight("${ReviewDetailsUIUtil.statusChecksMaxHeight}")
             .gap(left = ReviewDetailsUIUtil.indentLeft,
                  right = ReviewDetailsUIUtil.indentRight,
