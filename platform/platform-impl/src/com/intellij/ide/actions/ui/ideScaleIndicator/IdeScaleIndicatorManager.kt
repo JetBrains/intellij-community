@@ -23,7 +23,7 @@ class IdeScaleIndicatorManager(val project: Project) {
   private var balloon: Balloon? = null
   private var indicator: IdeScaleIndicator? = null
   private val alarm = Alarm(project)
-  private val updateScaleHelper = UpdateScaleHelper { UISettingsUtils.currentIdeScale }
+  private val updateScaleHelper = UpdateScaleHelper { UISettingsUtils.instance.currentIdeScale }
 
   init {
     setupLafListener()
@@ -32,7 +32,7 @@ class IdeScaleIndicatorManager(val project: Project) {
   fun showIndicator() {
     cancelCurrentPopup()
     val ideFrame = WindowManager.getInstance().getIdeFrame(project)?.component ?: return
-    val indicator = IdeScaleIndicator(UISettingsUtils.currentIdeScale.percentValue)
+    val indicator = IdeScaleIndicator(UISettingsUtils.instance.currentIdeScale.percentValue)
     this.indicator = indicator
 
     val newUI = ExperimentalUI.isNewUI()

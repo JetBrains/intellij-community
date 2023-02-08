@@ -5,24 +5,38 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import kotlin.math.round
 
 
-class UISettingsUtils {
-  companion object {
-    private val settings get() = UISettings.getInstance()
+class UISettingsUtils(private val settings: UISettings) {
+  val currentIdeScale get() = if (settings.presentationMode) settings.presentationModeIdeScale else settings.ideScale
 
-    val currentIdeScale get() = if (settings.presentationMode) settings.presentationModeIdeScale else settings.ideScale
+  fun setCurrentIdeScale(scale: Float) {
+    if (scale.percentValue == currentIdeScale.percentValue) return
+    if (settings.presentationMode) settings.presentationModeIdeScale = scale
+    else settings.ideScale = scale
+  }
 
-    fun setCurrentIdeScale(scale: Float) {
-      if (scale.percentValue == currentIdeScale.percentValue) return
-      if (settings.presentationMode) settings.presentationModeIdeScale = scale
-      else settings.ideScale = scale
+  var presentationModeFontSize: Float
+    get() = scaleFontSize(globalSchemeEditorFontSize, settings.presentationModeIdeScale)
+    set(value) {
+      settings.presentationModeIdeScale = presentationModeIdeScaleFromFontSize(value)
     }
 
+  val scaledConsoleFontSize: Float
+    get() = scaleFontSize(EditorColorsManager.getInstance().globalScheme.consoleFontSize2D, currentIdeScale)
+
+  val scaledEditorFontSize: Float
+    get() = scaleFontSize(globalSchemeEditorFontSize, currentIdeScale)
+
+  fun scaleFontSize(fontSize: Float): Float = scaleFontSize(fontSize, currentIdeScale)
+
+  val currentDefaultScale get() = defaultScale(UISettings.getInstance().presentationMode)
+
+  companion object {
     @JvmStatic
-    var presentationModeFontSize: Float
-      get() = scaleFontSize(globalSchemeEditorFontSize, settings.presentationModeIdeScale)
-      set(value) {
-        settings.presentationModeIdeScale = presentationModeIdeScaleFromFontSize(value)
-      }
+    val instance: UISettingsUtils get() = UISettingsUtils(UISettings.getInstance())
+    @JvmStatic
+    fun with(settings: UISettings) = UISettingsUtils(settings)
+
+    private val globalSchemeEditorFontSize: Float get() = EditorColorsManager.getInstance().globalScheme.editorFontSize2D
 
     @JvmStatic
     internal fun presentationModeIdeScaleFromFontSize(fontSize: Float): Float =
@@ -32,24 +46,10 @@ class UISettingsUtils {
       }
 
     @JvmStatic
-    val scaledConsoleFontSize: Float
-      get() = scaleFontSize(EditorColorsManager.getInstance().globalScheme.consoleFontSize2D, currentIdeScale)
-
-    @JvmStatic
-    val scaledEditorFontSize: Float
-      get() = scaleFontSize(globalSchemeEditorFontSize, currentIdeScale)
-
-    private val globalSchemeEditorFontSize: Float get() = EditorColorsManager.getInstance().globalScheme.editorFontSize2D
-
-    @JvmStatic
-    fun scaleFontSize(fontSize: Float): Float = scaleFontSize(fontSize, currentIdeScale)
-
-    @JvmStatic
     fun scaleFontSize(fontSize: Float, scale: Float): Float =
       if (scale == 1f) fontSize
       else round(fontSize * scale)
 
-    val currentDefaultScale get() = defaultScale(UISettings.getInstance().presentationMode)
     fun defaultScale(isPresentation: Boolean) = if (isPresentation) 1.75f else 1f
   }
 }

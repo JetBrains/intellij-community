@@ -184,7 +184,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       else {
         UISettings uiSettings = UISettings.getInstance();
         if (uiSettings.getPresentationMode()) {
-          editor.setFontSize(UISettingsUtils.getPresentationModeFontSize());
+          editor.setFontSize(UISettingsUtils.with(uiSettings).getPresentationModeFontSize());
         }
       }
 

@@ -128,8 +128,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    if (uiSettings.getPresentationMode() && myEditor.getFontSize() != UISettingsUtils.getPresentationModeFontSize()) {
-      myEditor.setFontSize(UISettingsUtils.getPresentationModeFontSize());
+    UISettingsUtils settingsUtils = UISettingsUtils.with(uiSettings);
+    if (uiSettings.getPresentationMode() && myEditor.getFontSize() != settingsUtils.getPresentationModeFontSize()) {
+      myEditor.setFontSize(settingsUtils.getPresentationModeFontSize());
     }
   }
 

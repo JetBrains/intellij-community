@@ -116,9 +116,9 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
 
   private fun detectFontSize(): Float {
     return if (UISettings.getInstance().presentationMode) {
-      UISettingsUtils.presentationModeFontSize
+      UISettingsUtils.instance.presentationModeFontSize
     }
-    else UISettingsUtils.scaledConsoleFontSize
+    else UISettingsUtils.instance.scaledConsoleFontSize
   }
 
   fun resetFontSize() {

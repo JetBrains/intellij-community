@@ -30,7 +30,7 @@ public class EditorFontCacheImpl extends EditorFontCache {
       assert font != null : "Font " + fontType + " not found.";
       UISettings uiSettings = UISettings.getInstance();
       if (uiSettings.getPresentationMode()) {
-        return font.deriveFont(UISettingsUtils.getPresentationModeFontSize());
+        return font.deriveFont(UISettingsUtils.with(uiSettings).getPresentationModeFontSize());
       }
       return font;
     }

@@ -59,7 +59,7 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
     val ui = UISettings.shadowInstance
     val usages = mutableSetOf(
       UI_FONT.metric(ui.fontFace, ui.fontSize, ui.fontSize2D),
-      PRESENTATION_MODE_FONT.metric(UISettingsUtils.presentationModeFontSize.toInt())
+      PRESENTATION_MODE_FONT.metric(UISettingsUtils.with(ui).presentationModeFontSize.toInt())
     )
     if (!scheme.isUseAppFontPreferencesInEditor) {
       usages += EDITOR_FONT.metric(

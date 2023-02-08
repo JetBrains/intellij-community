@@ -304,9 +304,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var presentationModeFontSize: Int
-    get() = UISettingsUtils.presentationModeFontSize.toInt()
+    get() = UISettingsUtils.with(this).presentationModeFontSize.toInt()
     set(value) {
-      UISettingsUtils.presentationModeFontSize = value.toFloat()
+      UISettingsUtils.with(this).presentationModeFontSize = value.toFloat()
     }
 
   var presentationModeIdeScale: Float

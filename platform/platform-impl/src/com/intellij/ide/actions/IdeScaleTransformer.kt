@@ -24,7 +24,8 @@ import org.jetbrains.annotations.Nls
 
 @Service(Service.Level.APP)
 class IdeScaleTransformer : UISettingsListener, Disposable {
-  private var lastSetScale: Float = UISettingsUtils.currentIdeScale
+  private val settingsUtils get() = UISettingsUtils.instance
+  private var lastSetScale: Float = settingsUtils.currentIdeScale
 
   init {
     Disposer.register(ApplicationManager.getApplication(), this)
@@ -32,13 +33,13 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
-    if (lastSetScale.percentValue != UISettingsUtils.currentIdeScale.percentValue) {
+    if (lastSetScale.percentValue != settingsUtils.currentIdeScale.percentValue) {
       scale()
     }
   }
 
   private fun scale() {
-    lastSetScale = UISettingsUtils.currentIdeScale
+    lastSetScale = settingsUtils.currentIdeScale
     tweakEditorFont()
     notifyAllAndUpdateUI()
   }
@@ -47,7 +48,7 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
     for (editor in EditorFactory.getInstance().allEditors) {
       if (editor is EditorEx) {
         editor.putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true)
-        editor.setFontSize(UISettingsUtils.scaledEditorFontSize)
+        editor.setFontSize(settingsUtils.scaledEditorFontSize)
       }
     }
   }
@@ -115,11 +116,11 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
       }
 
       fun increasedScale() = scaleWithIndexShift(true,
-                                                 UISettingsUtils.currentIdeScale,
+                                                 UISettingsUtils.instance.currentIdeScale,
                                                  UISettings.getInstance().presentationMode)
 
       fun decreasedScale() = scaleWithIndexShift(false,
-                                                 UISettingsUtils.currentIdeScale,
+                                                 UISettingsUtils.instance.currentIdeScale,
                                                  UISettings.getInstance().presentationMode)
 
       private fun scaleWithIndexShift(isNext: Boolean, scale: Float, isPresentation: Boolean): Float? {

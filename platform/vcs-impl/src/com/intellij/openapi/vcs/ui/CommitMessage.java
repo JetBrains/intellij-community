@@ -85,7 +85,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
     // We have to wrap the colorsScheme into a scheme delegate in order to avoid editing the global scheme
     colorsScheme = editor.createBoundColorSchemeDelegate(colorsScheme);
-    colorsScheme.setEditorFontSize(UISettingsUtils.getScaledEditorFontSize());
+    colorsScheme.setEditorFontSize(UISettingsUtils.getInstance().getScaledEditorFontSize());
 
     return colorsScheme;
   }

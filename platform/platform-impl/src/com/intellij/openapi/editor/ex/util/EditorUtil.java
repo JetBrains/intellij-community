@@ -859,7 +859,7 @@ public final class EditorUtil {
    * editor.
    */
   public static Font getEditorFont() {
-    float fontSize = UISettingsUtils.getScaledEditorFontSize();
+    float fontSize = UISettingsUtils.getInstance().getScaledEditorFontSize();
     if (UISettings.getInstance().getPresentationMode()) {
       fontSize -= 4f;
     }

@@ -511,7 +511,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }, myCaretModel);
 
-    setFontSize(UISettingsUtils.getScaledEditorFontSize());
+    setFontSize(UISettingsUtils.getInstance().getScaledEditorFontSize());
 
     myGutterComponent.updateSize();
     Dimension preferredSize = getPreferredSize();
@@ -4569,7 +4569,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return myFontPreferences.getSize2D(myFontPreferences.getFontFamily());
       }
       if (myFontSize == FONT_SIZE_TO_IGNORE) {
-        return UISettingsUtils.scaleFontSize(getDelegate().getEditorFontSize2D());
+        return UISettingsUtils.getInstance().scaleFontSize(getDelegate().getEditorFontSize2D());
       }
       return myFontSize;
     }
@@ -4595,7 +4595,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myFontPreferencesAreSetExplicitly = false;
 
-      if (fontSize == UISettingsUtils.scaleFontSize(super.getEditorFontSize2D())) {
+      if (fontSize == UISettingsUtils.getInstance().scaleFontSize(super.getEditorFontSize2D())) {
         myFontSize = FONT_SIZE_TO_IGNORE;
       }
       else {

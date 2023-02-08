@@ -14,14 +14,16 @@ import com.intellij.openapi.project.Project
 
 class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
   override fun fillActions(project: Project?, group: DefaultActionGroup, dataContext: DataContext) {
+    val settingsUtils = UISettingsUtils.instance
+
     IdeScaleTransformer.Settings.currentScaleOptions.forEach { scale ->
       val title = scale.percentStringValue
       group.add(object : DumbAwareToggleAction(title) {
-        override fun isSelected(e: AnActionEvent): Boolean = UISettingsUtils.currentIdeScale.percentValue == scale.percentValue
+        override fun isSelected(e: AnActionEvent): Boolean = settingsUtils.currentIdeScale.percentValue == scale.percentValue
 
         override fun setSelected(e: AnActionEvent, state: Boolean) {
-          if (state && UISettingsUtils.currentIdeScale.percentValue != scale.percentValue) {
-            UISettingsUtils.setCurrentIdeScale(scale)
+          if (state && settingsUtils.currentIdeScale.percentValue != scale.percentValue) {
+            settingsUtils.setCurrentIdeScale(scale)
             UISettings.getInstance().fireUISettingsChanged()
           }
         }

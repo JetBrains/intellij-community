@@ -102,13 +102,13 @@ public final class ResetFontSizeAction extends EditorAction {
   private static final class PresentationModeStrategy implements Strategy {
     @Override
     public float getFontSize() {
-      return UISettingsUtils.getPresentationModeFontSize();
+      return UISettingsUtils.getInstance().getPresentationModeFontSize();
     }
 
     @Override
     public void setFontSize(float fontSize) {
       int fs = (int)fontSize;
-      UISettingsUtils.setPresentationModeFontSize(fs);
+      UISettingsUtils.getInstance().setPresentationModeFontSize(fs);
       for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
         if (editor instanceof EditorEx) {
           ((EditorEx)editor).setFontSize(fs);

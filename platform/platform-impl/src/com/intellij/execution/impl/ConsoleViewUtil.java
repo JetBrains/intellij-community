@@ -70,7 +70,7 @@ public final class ConsoleViewUtil {
 
       DelegateColorScheme scheme = updateConsoleColorScheme(editor.getColorsScheme());
       if (UISettings.getInstance().getPresentationMode()) {
-        scheme.setEditorFontSize(UISettingsUtils.getPresentationModeFontSize());
+        scheme.setEditorFontSize(UISettingsUtils.getInstance().getPresentationModeFontSize());
       }
       editor.setColorsScheme(scheme);
       editor.setHighlighter(new NullEditorHighlighter());
