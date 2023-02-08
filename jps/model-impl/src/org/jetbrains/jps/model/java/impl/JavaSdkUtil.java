@@ -4,7 +4,6 @@ package org.jetbrains.jps.model.java.impl;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,8 +18,7 @@ import java.util.Set;
 
 public final class JavaSdkUtil {
   /** @deprecated use {@link #getJdkClassesRoots(Path, boolean)} instead */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull List<File> getJdkClassesRoots(@NotNull File home, boolean isJre) {
     return ContainerUtil.map(getJdkClassesRoots(home.toPath(), isJre), Path::toFile);
   }
@@ -45,14 +43,16 @@ public final class JavaSdkUtil {
       jarDirs = new Path[]{libEndorsedDir, libDir, libExtDir};
     }
 
-    Set<String> pathFilter = CollectionFactory.createFilePathSet();
     List<Path> rootFiles = new ArrayList<>();
+
     if (Registry.is("project.structure.add.tools.jar.to.new.jdk", false)) {
-      Path toolsJar = home.resolve("lib/tools.jar");
+      @SuppressWarnings("IdentifierGrammar") Path toolsJar = home.resolve("lib/tools.jar");
       if (Files.isRegularFile(toolsJar)) {
         rootFiles.add(toolsJar);
       }
     }
+
+    Set<String> pathFilter = CollectionFactory.createFilePathSet();
     for (Path jarDir : jarDirs) {
       if (jarDir != null && Files.isDirectory(jarDir)) {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(jarDir, "*.jar")) {
