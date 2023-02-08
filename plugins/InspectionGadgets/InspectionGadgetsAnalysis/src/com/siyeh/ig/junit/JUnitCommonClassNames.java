@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.junit;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
+import java.util.List;
 
 @NonNls
 public final class JUnitCommonClassNames {
@@ -44,14 +44,14 @@ public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE = "org.junit.jupiter.params.provider.CsvFileSource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE = "org.junit.jupiter.params.provider.ArgumentsSource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCES = "org.junit.jupiter.params.provider.ArgumentsSources";
-  public static final Collection<String> SOURCE_ANNOTATIONS = ContainerUtil
-    .immutableList(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_VALUE_SOURCE,
-                   ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ENUM_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE,
-                   ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE,
-                   ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCES,
-                   ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_SOURCE,
-                   ORG_JUNIT_JUPITER_PARAMS_PROVIDER_EMPTY_SOURCE,
-                   ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_AND_EMPTY_SOURCE);
+  public static final Collection<String> SOURCE_ANNOTATIONS =
+    List.of(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_VALUE_SOURCE,
+            ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ENUM_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE,
+            ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE,
+            ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCES,
+            ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_SOURCE,
+            ORG_JUNIT_JUPITER_PARAMS_PROVIDER_EMPTY_SOURCE,
+            ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_AND_EMPTY_SOURCE);
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS = "org.junit.jupiter.params.provider.Arguments";
   public static final String ORG_JUNIT_JUPITER_PARAMS_CONVERTER_CONVERT_WITH = "org.junit.jupiter.params.converter.ConvertWith";
   public static final String ORG_JUNIT_JUPITER_API_DISABLED = "org.junit.jupiter.api.Disabled";

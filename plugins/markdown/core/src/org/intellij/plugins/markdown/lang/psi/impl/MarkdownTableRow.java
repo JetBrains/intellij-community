@@ -25,11 +25,11 @@ public class MarkdownTableRow extends MarkdownCompositePsiElementBase {
   }
 
   public @NotNull List<@NotNull MarkdownTableCell> getCells() {
-    final var cells = PsiTreeUtil.getChildrenOfType(this, MarkdownTableCell.class);
+    MarkdownTableCell[] cells = PsiTreeUtil.getChildrenOfType(this, MarkdownTableCell.class);
     if (cells == null) {
       return ContainerUtil.emptyList();
     }
-    return ContainerUtil.immutableList(cells);
+    return List.of(cells);
   }
 
   public @Nullable MarkdownTableCell getCell(int nth) {

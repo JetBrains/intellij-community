@@ -234,7 +234,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   public List<PsiElement> getElements() {
-    return ContainerUtil.immutableList(myElementsToMove);
+    return List.of(myElementsToMove);
   }
 
   public PackageWrapper getTargetPackage() {

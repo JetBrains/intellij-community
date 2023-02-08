@@ -53,7 +53,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -139,7 +138,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     List<AccessModifier> modifiers = AccessModifier.getAvailableModifiers(member);
     if (modifiers.isEmpty()) return;
     AccessModifier target = myTarget;
-    if (modifiers.contains(target)) {
+    if (target != null && modifiers.contains(target)) {
       setModifier(member, target);
       return;
     }
@@ -298,10 +297,10 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   }
 
   @Nullable
-  private static PsiKeyword getAnchorKeyword(PsiModifierList modifierList) {
+  private static PsiKeyword getAnchorKeyword(@NotNull PsiModifierList modifierList) {
     for (PsiElement child = modifierList.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (AccessModifier.ALL_MODIFIERS.contains(AccessModifier.fromKeyword(ObjectUtils.tryCast(child, PsiKeyword.class)))) {
-        return (PsiKeyword)child;
+      if (child instanceof PsiKeyword keyword && AccessModifier.fromKeyword(keyword)!=null) {
+        return keyword;
       }
     }
     return null;

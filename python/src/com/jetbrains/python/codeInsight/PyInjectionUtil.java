@@ -45,8 +45,8 @@ public final class PyInjectionUtil {
   }
 
   public static final List<Class<? extends PsiElement>> ELEMENTS_TO_INJECT_IN =
-    ContainerUtil.immutableList(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class,
-                                PyCallExpression.class, PsiComment.class);
+    List.of(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class,
+            PyCallExpression.class, PsiComment.class);
 
   private PyInjectionUtil() {}
 

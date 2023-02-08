@@ -3,7 +3,6 @@ package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,7 @@ public final class PyNames {
   /**
    * Any string type
    */
-  public static final List<String> TYPE_STRING_TYPES = ContainerUtil.immutableList(TYPE_UNICODE, TYPE_STR);
+  public static final List<String> TYPE_STRING_TYPES = List.of(TYPE_UNICODE, TYPE_STR);
   /**
    * date type
    */

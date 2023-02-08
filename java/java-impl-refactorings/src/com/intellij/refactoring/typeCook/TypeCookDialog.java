@@ -13,6 +13,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,7 +28,7 @@ public class TypeCookDialog extends RefactoringDialog {
   private final JCheckBox myCbCookObjects = new JCheckBox();
   private final JCheckBox myCbCookToWildcards = new JCheckBox();
 
-  public TypeCookDialog(Project project, PsiElement[] elements) {
+  public TypeCookDialog(Project project, @NotNull PsiElement @NotNull [] elements) {
     super(project, true);
 
     setTitle(getRefactoringName());

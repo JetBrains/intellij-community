@@ -65,6 +65,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return myReferences.clone();
   }
 
+  @NotNull
   private synchronized PsiReference chooseReference(){
     if (!mySorted) {
       Arrays.sort(myReferences, COMPARATOR);
