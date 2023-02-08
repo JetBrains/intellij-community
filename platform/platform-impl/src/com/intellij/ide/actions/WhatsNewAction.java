@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -19,7 +19,6 @@ import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.Urls;
 import com.intellij.util.ui.UIUtil;
@@ -27,13 +26,14 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
 public class WhatsNewAction extends AnAction implements DumbAware {
+  private static final String ENABLE_NEW_UI_REQUEST = "enable-new-UI";
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     boolean available = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl() != null;
@@ -91,25 +91,33 @@ public class WhatsNewAction extends AnAction implements DumbAware {
       if (locale != null) {
         parameters.put("lang", locale.toLanguageTag().toLowerCase(Locale.ENGLISH));
       }
-      String embeddedUrl = Urls.newFromEncoded(url).addParameters(parameters).toExternalForm();
+      var request = HTMLEditorProvider.Request.url(Urls.newFromEncoded(url).addParameters(parameters).toExternalForm());
 
-      String timeoutContent = null;
-      try (InputStream html = WhatsNewAction.class.getResourceAsStream("whatsNewTimeoutText.html")) {
-        if (html != null) {
-          //noinspection HardCodedStringLiteral
-          timeoutContent = new String(StreamUtil.readBytes(html), StandardCharsets.UTF_8)
-            .replace("__THEME__", darkTheme ? "theme-dark" : "")
-            .replace("__TITLE__", IdeBundle.message("whats.new.timeout.title"))
-            .replace("__MESSAGE__", IdeBundle.message("whats.new.timeout.message"))
-            .replace("__ACTION__", IdeBundle.message("whats.new.timeout.action", url));
+      try (var stream = WhatsNewAction.class.getResourceAsStream("whatsNewTimeoutText.html")) {
+        if (stream != null) {
+          request.withTimeoutHtml(new String(stream.readAllBytes(), StandardCharsets.UTF_8)
+                                    .replace("__THEME__", darkTheme ? "theme-dark" : "")
+                                    .replace("__TITLE__", IdeBundle.message("whats.new.timeout.title"))
+                                    .replace("__MESSAGE__", IdeBundle.message("whats.new.timeout.message"))
+                                    .replace("__ACTION__", IdeBundle.message("whats.new.timeout.action", url)));
         }
       }
       catch (IOException e) {
         Logger.getInstance(WhatsNewAction.class).error(e);
       }
 
-      String title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().getFullProductName());
-      HTMLEditorProvider.openEditor(project, title, embeddedUrl, timeoutContent);
+      request.withQueryHandler((HTMLEditorProvider.JsQueryHandler.Java)(id, jsRequest) -> {
+        if (ENABLE_NEW_UI_REQUEST.equals(jsRequest)) {
+          //todo[KB] please put the implementation here
+          return "true";
+        }
+        else {
+          throw new IllegalArgumentException("Unexpected query: " + jsRequest);
+        }
+      });
+
+      var title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().getFullProductName());
+      HTMLEditorProvider.openEditor(project, title, request);
     }
   }
 }

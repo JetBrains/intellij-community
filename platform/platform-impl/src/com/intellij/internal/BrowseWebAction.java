@@ -1,18 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.jcef.JBCefApp;
 import org.jetbrains.annotations.NotNull;
 
 final class BrowseWebAction extends AnAction implements DumbAware {
-
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.EDT;
@@ -25,11 +25,15 @@ final class BrowseWebAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
+    var project = e.getProject();
     if (project != null) {
-      String url = Messages.showInputDialog(project, "Where to?", "Browse Web", null, "https://www.jetbrains.com", null);
+      var url = Messages.showInputDialog(project, "Where to?", "Browse Web", null, "https://www.jetbrains.com", null);
       if (url != null && !url.isBlank()) {
-        HTMLEditorProvider.openEditor(project, "World Wild Web", url, null);
+        HTMLEditorProvider.openEditor(project, "World Wild Web", HTMLEditorProvider.Request.url(url)
+          .withQueryHandler((HTMLEditorProvider.JsQueryHandler.Java)(id, jsRequest) -> {
+            new Notification("System Messages", "JS request", "[" + id + "] " + jsRequest, NotificationType.INFORMATION).notify(project);
+            return "x";
+          }));
       }
     }
   }
