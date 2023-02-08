@@ -328,7 +328,7 @@ abstract class RestService : HttpRequestHandler() {
     }
   }
 
-  fun isHostInPredefinedHosts(request: FullHttpRequest, urlDecoder: QueryStringDecoder, trustedPredefinedHosts: Set<String>, systemPropertyKey: String): Boolean {
+  fun isHostInPredefinedHosts(request: HttpRequest, trustedPredefinedHosts: Set<String>, systemPropertyKey: String): Boolean {
     val origin = request.origin
     val originHost = try {
       if (origin == null) null else URI(origin).takeIf { it.scheme == "https" }?.host.nullize()
