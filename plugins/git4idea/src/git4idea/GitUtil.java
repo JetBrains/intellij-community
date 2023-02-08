@@ -464,7 +464,8 @@ public final class GitUtil {
   public static void getLocalCommittedChanges(final Project project,
                                               final VirtualFile root,
                                               final Consumer<? super GitHandler> parametersSpecifier,
-                                              final Consumer<? super GitCommittedChangeList> consumer, boolean skipDiffsForMerge) throws VcsException {
+                                              final Consumer<? super GitCommittedChangeList> consumer,
+                                              boolean skipDiffsForMerge) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
     h.addParameters("--pretty=format:%x04%x01" + GitChangeUtils.COMMITTED_CHANGELIST_FORMAT, "--name-status");
@@ -497,8 +498,8 @@ public final class GitUtil {
   }
 
   public static List<GitCommittedChangeList> getLocalCommittedChanges(final Project project,
-                                                                   final VirtualFile root,
-                                                                   final Consumer<? super GitHandler> parametersSpecifier)
+                                                                      final VirtualFile root,
+                                                                      final Consumer<? super GitHandler> parametersSpecifier)
     throws VcsException {
     final List<GitCommittedChangeList> rc = new ArrayList<>();
 
@@ -718,8 +719,9 @@ public final class GitUtil {
 
   /**
    * git diff --name-only [--cached]
-   * @return true if there is anything in the unstaged/staging area, false if the unstaged/staging area is empty.
+   *
    * @param staged if true checks the staging area, if false checks unstaged files.
+   * @return true if there is anything in the unstaged/staging area, false if the unstaged/staging area is empty.
    */
   public static boolean hasLocalChanges(boolean staged, Project project, VirtualFile root) throws VcsException {
     GitLineHandler diff = new GitLineHandler(project, root, GitCommand.DIFF);
@@ -805,7 +807,7 @@ public final class GitUtil {
   @NlsSafe
   @NotNull
   public static String cleanupErrorPrefixes(@NotNull @NlsSafe String msg) {
-    final @NonNls String[] PREFIXES = { "fatal:", "error:" };
+    final @NonNls String[] PREFIXES = {"fatal:", "error:"};
     msg = msg.trim();
     for (String prefix : PREFIXES) {
       if (msg.startsWith(prefix)) {
