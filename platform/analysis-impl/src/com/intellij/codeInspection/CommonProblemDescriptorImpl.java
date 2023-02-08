@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
   private static final Logger LOG = Logger.getInstance(CommonProblemDescriptorImpl.class);
-  private final QuickFix<?>[] myFixes;
+  private final QuickFix<?> @NotNull [] myFixes;
   private final @InspectionMessage String myDescriptionTemplate;
 
   CommonProblemDescriptorImpl(@NotNull @InspectionMessage String descriptionTemplate, QuickFix<?> @Nullable [] fixes) {
@@ -31,7 +31,7 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
         }
       }
     }
-    myFixes = filteredFixes != null && filteredFixes.length == 0 ? null : filteredFixes;
+    myFixes = filteredFixes == null || filteredFixes.length == 0 ? QuickFix.EMPTY_ARRAY : filteredFixes;
     myDescriptionTemplate = descriptionTemplate;
   }
 
@@ -43,7 +43,7 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
 
   @Override
   public QuickFix<?> @NotNull [] getFixes() {
-    return myFixes == null ? QuickFix.EMPTY_ARRAY : myFixes;
+    return myFixes;
   }
 
   @Override
