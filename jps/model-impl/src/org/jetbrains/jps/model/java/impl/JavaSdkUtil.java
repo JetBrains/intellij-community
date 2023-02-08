@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.registry.Registry;
@@ -72,20 +72,12 @@ public final class JavaSdkUtil {
       }
     }
 
-    List<Path> ibmJdkLookupDirs = new ArrayList<>();
-    ibmJdkLookupDirs.add(home.resolve(isJre ? "bin" : "jre/bin"));
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(home.resolve(isJre ? "lib" : "jre/lib"), Files::isDirectory)) {
-      for (Path path : stream) ibmJdkLookupDirs.add(path);
-    }
-    catch (IOException ignored) { }
-    for (Path candidate : ibmJdkLookupDirs) {
-      try (DirectoryStream<Path> stream = Files.newDirectoryStream(candidate, p -> p.getFileName().toString().startsWith("jclSC") && Files.isDirectory(p))) {
-        for (Path dir : stream) {
-          Path vmJar = dir.resolve("vm.jar");
-          if (Files.isRegularFile(vmJar)) {
-            rootFiles.add(vmJar);
-          }
-        }
+    if (ContainerUtil.exists(rootFiles, path -> path.getFileName().toString().startsWith("ibm"))) {
+      // ancient IBM JDKs split JRE classes between `rt.jar` and `vm.jar`, and the latter might be anywhere
+      try (var paths = Files.walk(isJre ? home : home.resolve("jre"))) {
+        paths.filter(path -> path.getFileName().toString().equals("vm.jar"))
+          .findFirst()
+          .ifPresent(rootFiles::add);
       }
       catch (IOException ignored) { }
     }
