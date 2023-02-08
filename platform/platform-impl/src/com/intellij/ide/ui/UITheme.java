@@ -127,7 +127,14 @@ public final class UITheme {
                                                                         @Nullable Map<String, Object> parentThemeMap) {
     if (parentThemeMap == null) return themeMap;
     Map<String, Object> result = new LinkedHashMap<>(parentThemeMap);
-    if (themeMap != null) result.putAll(themeMap);
+    if (themeMap != null) {
+      for (Map.Entry<String, Object> entry : themeMap.entrySet()) {
+        String key = entry.getKey();
+        Object value = entry.getValue();
+        result.remove(key);
+        result.put(key, value);
+      }
+    }
     return result;
   }
 
