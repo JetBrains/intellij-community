@@ -176,6 +176,10 @@ public final class TerminalToolWindowManager implements Disposable {
     createNewSession(terminalRunner, tabState, true);
   }
 
+  public @NotNull TerminalWidget createNewSession() {
+    return createNewSession(myTerminalRunner, null, true, true);
+  }
+
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable @Nls String tabName) {
     return createLocalShellWidget(workingDirectory, tabName, true, true);
   }
