@@ -1454,9 +1454,7 @@ public final class BuildManager implements Disposable {
 
 
     final File projectSystemRoot = getProjectSystemDirectory(project);
-    if (projectSystemRoot != null) {
-      cmdLine.addPathParameter("-Djava.io.tmpdir=", FileUtil.toSystemIndependentName(projectSystemRoot.getPath()) + "/" + TEMP_DIR_NAME);
-    }
+    cmdLine.addPathParameter("-Djava.io.tmpdir=", FileUtil.toSystemIndependentName(projectSystemRoot.getPath()) + "/" + TEMP_DIR_NAME);
 
     for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
       for (String arg : provider.getVMArguments()) {
@@ -1649,7 +1647,7 @@ public final class BuildManager implements Disposable {
     return new File(PathManager.getLogPath(), "build-log");
   }
 
-  public @Nullable File getProjectSystemDirectory(Project project) {
+  public @NotNull File getProjectSystemDirectory(@NotNull Project project) {
     String projectPath = getProjectPath(project);
     WslPath wslPath = WslPath.parseWindowsUncPath(projectPath);
     Function<String, Integer> hashFunction;
@@ -2077,10 +2075,7 @@ public final class BuildManager implements Disposable {
       BuildProcessParametersProvider.EP_NAME.addChangeListener(project, () -> getInstance().cancelAllPreloadedBuilds(), null);
 
       getInstance().runCommand(() -> {
-        File projectSystemDir = getInstance().getProjectSystemDirectory(project);
-        if (projectSystemDir != null) {
-          updateUsageFile(project, projectSystemDir);
-        }
+        updateUsageFile(project, getInstance().getProjectSystemDirectory(project));
       });
       // run automake after project opened
       getInstance().scheduleAutoMake();

@@ -47,7 +47,7 @@ class KotlinCompilerReferenceIndexStorage private constructor(
         fun open(project: Project): KotlinCompilerReferenceIndexStorage? {
             val projectPath = runReadAction { project.takeUnless(Project::isDisposed)?.basePath } ?: return null
             val buildDataPaths = project.buildDataPaths
-            val kotlinDataContainerPath = buildDataPaths?.kotlinDataContainer ?: kotlin.run {
+            val kotlinDataContainerPath = buildDataPaths.kotlinDataContainer ?: kotlin.run {
                 LOG.warn("${SettingConstants.KOTLIN_DATA_CONTAINER_ID} is not found")
                 return null
             }
@@ -76,8 +76,8 @@ class KotlinCompilerReferenceIndexStorage private constructor(
             destination: ClassOneToManyStorage,
         ) = initializeSubtypeStorage(buildDataPaths, destination)
 
-        internal val Project.buildDataPaths: BuildDataPaths?
-            get() = BuildManager.getInstance().getProjectSystemDirectory(this)?.let(::BuildDataPathsImpl)
+        internal val Project.buildDataPaths: BuildDataPaths
+            get() = BuildDataPathsImpl(BuildManager.getInstance().getProjectSystemDirectory(this))
 
         internal val BuildDataPaths.kotlinDataContainer: Path?
             get() = targetsDataRoot?.toPath()

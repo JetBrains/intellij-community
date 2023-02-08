@@ -119,7 +119,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
   private boolean hasIndex() {
     File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
-    return buildDir != null && !CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion());
+    return !CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion());
   }
 
   public static class JCRIIsUpToDateConsumer implements IsUpToDateCheckConsumer {
