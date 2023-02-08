@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview
 
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -8,6 +10,7 @@ import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.components.ScrollBarPainter
@@ -38,17 +41,19 @@ internal object PreviewLAFThemeStyles {
 
     val fontSize = JBCefApp.normalizeScaledSize(EditorUtil.getEditorFont().size + 1)
 
-    val scrollbarBackgroundColor = scheme.getRGBaColor(ScrollBarPainter.BACKGROUND)
-    val scrollbarTrackColor = scheme.getRGBaColor(ScrollBarPainter.TRACK_OPAQUE_BACKGROUND)
-    val scrollbarTrackColorHovered = scheme.getRGBaColor(ScrollBarPainter.TRACK_OPAQUE_HOVERED_BACKGROUND)
-    val scrollbarThumbColor = scheme.getRGBaColor(ScrollBarPainter.THUMB_OPAQUE_BACKGROUND)
-    val scrollbarThumbColorHovered = scheme.getRGBaColor(ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND)
-    val scrollbarThumbBorder = scheme.getRGBaColor(ScrollBarPainter.THUMB_OPAQUE_FOREGROUND)
-    val scrollbarThumbBorderHovered = scheme.getRGBaColor(ScrollBarPainter.THUMB_OPAQUE_HOVERED_FOREGROUND)
+    val scrollbarBackgroundColor = scheme.getScrollbarColor(ScrollBarPainter.BACKGROUND)
+    val scrollbarTrackColor = scheme.getScrollbarColor(ScrollBarPainter.TRACK_OPAQUE_BACKGROUND)
+    val scrollbarTrackColorHovered = scheme.getScrollbarColor(ScrollBarPainter.TRACK_OPAQUE_HOVERED_BACKGROUND)
+    val scrollbarThumbColor = scheme.getScrollbarColor(ScrollBarPainter.THUMB_OPAQUE_BACKGROUND)
+    val scrollbarThumbColorHovered = scheme.getScrollbarColor(ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND)
+    val scrollbarThumbBorder = scheme.getScrollbarColor(ScrollBarPainter.THUMB_OPAQUE_FOREGROUND)
+    val scrollbarThumbBorderHovered = scheme.getScrollbarColor(ScrollBarPainter.THUMB_OPAQUE_HOVERED_FOREGROUND)
 
-    val scrollbarTrackSize = if (SystemInfo.isMac) "14px" else "10px"
-    val scrollbarThumbBorderSize = if (SystemInfo.isMac) "3px" else "1px"
-    val scrollbarThumbRadius = if (SystemInfo.isMac) "14px" else "0"
+    val scale = UISettingsUtils.instance.currentIdeScale
+    val scrollbarTrackSizePx = (if (SystemInfo.isMac) 14 else 10) * scale
+    val scrollbarThumbBorderSizePx = (if (SystemInfo.isMac) 3 else 1) * scale
+    val scrollbarThumbRadiusPx = (if (SystemInfo.isMac) 14 else 0) * scale
+    UISettingsUtils.instance.currentIdeScale
 
     val backgroundColor = scheme.defaultBackground.webRgba()
     // language=CSS
@@ -91,8 +96,8 @@ internal object PreviewLAFThemeStyles {
     }
     
     ::-webkit-scrollbar {
-      width: $scrollbarTrackSize;
-      height: $scrollbarTrackSize;
+      width: ${scrollbarTrackSizePx}px;
+      height: ${scrollbarTrackSizePx}px;
       background-color: $scrollbarBackgroundColor;
     }
     
@@ -106,24 +111,24 @@ internal object PreviewLAFThemeStyles {
     
     ::-webkit-scrollbar-thumb {
       background-color:$scrollbarThumbColor;
-      border-radius:$scrollbarThumbRadius;
-      border-width: $scrollbarThumbBorderSize;
+      border-radius:${scrollbarThumbRadiusPx}px;
+      border-width: ${scrollbarThumbBorderSizePx}px;
       border-style: solid;
       border-color: $scrollbarTrackColor;
       background-clip: padding-box;
       outline: 1px solid $scrollbarThumbBorder;
-      outline-offset: -$scrollbarThumbBorderSize;
+      outline-offset: -${scrollbarThumbBorderSizePx}px;
     }
     
     ::-webkit-scrollbar-thumb:hover {
       background-color:$scrollbarThumbColorHovered;
-      border-radius:$scrollbarThumbRadius;
-      border-width: $scrollbarThumbBorderSize;
+      border-radius:${scrollbarThumbRadiusPx}px;
+      border-width: ${scrollbarThumbBorderSizePx}px;
       border-style: solid;
       border-color: $scrollbarTrackColor;
       background-clip: padding-box;
       outline: 1px solid $scrollbarThumbBorderHovered;
-      outline-offset: -$scrollbarThumbBorderSize;
+      outline-offset: -${scrollbarThumbBorderSizePx}px;
     }
     
     ::-webkit-scrollbar-button {
@@ -149,8 +154,35 @@ internal object PreviewLAFThemeStyles {
     return "rgba($red, $green, $blue, $alpha)"
   }
 
-  private fun EditorColorsScheme.getRGBaColor(key: ColorKey): String {
-    return (getColor(key) ?: key.defaultColor).let { "rgba(${it.red}, ${it.blue}, ${it.green}, ${it.alpha / 255.0})" }
+  private fun EditorColorsScheme.getScrollbarColor(key: ColorKey): String {
+    return (getColor(key) ?: key.defaultColor).let {
+      "rgba(${it.red}, ${it.blue}, ${it.green}, ${getScrollbarAlpha(key) ?: (it.alpha / 255.0)})"
+    }
+  }
+
+  private fun getScrollbarAlpha(colorKey: ColorKey): Int? {
+    val contrastElementsKeys = listOf(
+      ScrollBarPainter.THUMB_OPAQUE_FOREGROUND,
+      ScrollBarPainter.THUMB_OPAQUE_BACKGROUND,
+      ScrollBarPainter.THUMB_OPAQUE_HOVERED_FOREGROUND,
+      ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND,
+      ScrollBarPainter.THUMB_FOREGROUND,
+      ScrollBarPainter.THUMB_BACKGROUND,
+      ScrollBarPainter.THUMB_HOVERED_FOREGROUND,
+      ScrollBarPainter.THUMB_HOVERED_BACKGROUND
+    )
+
+    if (!UISettings.shadowInstance.useContrastScrollbars || colorKey !in contrastElementsKeys) return null
+
+    val lightAlpha = if (SystemInfo.isMac) 120 else 160
+    val darkAlpha = if (SystemInfo.isMac) 255 else 180
+    val alpha = Registry.intValue("contrast.scrollbars.alpha.level")
+    return if (alpha > 0) {
+      Integer.min(alpha, 255)
+    }
+    else {
+      if (UIUtil.isUnderDarcula()) darkAlpha else lightAlpha
+    }
   }
 
   /**
