@@ -27,14 +27,7 @@ class DescriptorStorageImpl(
                                                  StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
     storageIO = ChunkMMappedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
 
-    lastSafeSize.let {
-      if (it != null) {
-        position = AdvancingPositionTracker(it)
-      }
-      else {
-        position = AdvancingPositionTracker(0L)
-      }
-    }
+    position = AdvancingPositionTracker(lastSafeSize ?: 0L)
   }
 
   override fun bytesForDescriptor(tag: VfsOperationTag): Int =
