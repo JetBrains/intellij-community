@@ -62,6 +62,7 @@ import javax.swing.plaf.basic.BasicButtonUI
 import javax.swing.plaf.basic.BasicGraphicsUtils
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.math.max
 import kotlin.properties.Delegates
 
 private const val RUN: String = DefaultRunExecutor.EXECUTOR_ID
@@ -74,24 +75,30 @@ internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
   val registry = ExecutorRegistry.getInstance()
   val runExecutor = registry.getExecutorById(RUN) ?: error("No '${RUN}' executor found")
   val debugExecutor = registry.getExecutorById(DEBUG) ?: error("No '${DEBUG}' executor found")
-  actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
-  RunConfigurationStartHistory.getInstance(project).history().take(recentLimit).forEach { conf ->
-    val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project)
-    actions.add(actionGroupWithInlineActions)
+  val recents = RunConfigurationStartHistory.getInstance(project).history().take(max(recentLimit, 0))
+  val shouldShowRecent = recentLimit > 0 && recents.isNotEmpty()
+  if (shouldShowRecent) {
+    actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
+    for (conf in recents) {
+      val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project)
+      actions.add(actionGroupWithInlineActions)
+    }
+    actions.add(Separator.create())
   }
-  actions.add(Separator.create())
-  if (Registry.`is`("ide.experimental.ui.redesigned.run.popup")) {
-    actions.add(AllRunConfigurationsToggle())
+  if (!shouldShowRecent || Registry.`is`("ide.experimental.ui.redesigned.run.popup")) {
+    if (shouldShowRecent) {
+      actions.add(AllRunConfigurationsToggle())
+    }
+
+    val shouldBeShown: () -> Boolean = if (shouldShowRecent) ({
+      RunConfigurationStartHistory.getInstance(project).state.allConfigurationsExpanded
+    }) else ({ true } )
 
     val createActionFn: (RunnerAndConfigurationSettings) -> AnAction = { configuration ->
-      createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project) {
-        RunConfigurationStartHistory.getInstance(project).state.allConfigurationsExpanded
-      }
+      createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project, shouldBeShown)
     }
     val createFolderFn: (String) -> DefaultActionGroup = { folderName ->
-      HideableDefaultActionGroup(folderName) {
-        RunConfigurationStartHistory.getInstance(project).state.allConfigurationsExpanded
-      }
+      HideableDefaultActionGroup(folderName, shouldBeShown)
     }
     RunConfigurationsComboBoxAction.addRunConfigurations(actions, project, createActionFn, createFolderFn)
   }
@@ -660,7 +667,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
   }
 
   fun register(setting: RunnerAndConfigurationSettings) {
-    _state = State(_state.history.take(recentLimit*2).toMutableList().apply {
+    _state = State(_state.history.take(max(5, recentLimit*2)).toMutableList().apply {
       add(0, Element(setting.uniqueID))
     }.toMutableSet(), _state.allConfigurationsExpanded)
   }
