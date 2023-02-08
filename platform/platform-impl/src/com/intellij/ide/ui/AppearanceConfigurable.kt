@@ -141,44 +141,46 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     }
 
     return panel {
-      row(message("combobox.look.and.feel")) {
-        val theme = comboBox(lafManager.lafComboBoxModel, lafManager.lookAndFeelCellRenderer)
-          .bindItem(lafProperty)
-          .accessibleName(message("combobox.look.and.feel"))
+      panel {
+        row(message("combobox.look.and.feel")) {
+          val theme = comboBox(lafManager.lafComboBoxModel, lafManager.lookAndFeelCellRenderer)
+            .bindItem(lafProperty)
+            .accessibleName(message("combobox.look.and.feel"))
 
-        val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"))
-          .bindSelected(syncThemeProperty)
-          .visible(lafManager.autodetectSupported)
+          val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"))
+            .bindSelected(syncThemeProperty)
+            .visible(lafManager.autodetectSupported)
 
-        theme.enabledIf(syncCheckBox.selected.not())
-        cell(lafManager.settingsToolbar)
-          .visibleIf(syncCheckBox.selected)
+          theme.enabledIf(syncCheckBox.selected.not())
+          cell(lafManager.settingsToolbar)
+            .visibleIf(syncCheckBox.selected)
 
-        link(message("link.get.more.themes")) {
-          val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as ActionLink))
-          settings?.select(settings.find("preferences.pluginManager"), "/tag:theme")
+          link(message("link.get.more.themes")) {
+            val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as ActionLink))
+            settings?.select(settings.find("preferences.pluginManager"), "/tag:theme")
+          }
         }
-      }.layout(RowLayout.INDEPENDENT)
 
-      row(message("combobox.ide.scale.percent")) {
-        val defaultScale = UISettingsUtils.defaultScale(false)
-        var resetZoom: Cell<ActionLink>? = null
+        row(message("combobox.ide.scale.percent")) {
+          val defaultScale = UISettingsUtils.defaultScale(false)
+          var resetZoom: Cell<ActionLink>? = null
 
-        val model = IdeScaleTransformer.Settings.createIdeScaleComboboxModel()
-        comboBox(model, SimpleListCellRenderer.create("") { it })
-          .bindItem( { settings.ideScale.percentStringValue }, { })
-          .onChanged {
-            IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, false)?.let { scale ->
-              resetZoom?.visible(scale.percentValue != defaultScale.percentValue)
-              settings.ideScale = scale
-              settings.fireUISettingsChanged()
-            }
-          }.gap(RightGap.SMALL)
+          val model = IdeScaleTransformer.Settings.createIdeScaleComboboxModel()
+          comboBox(model, SimpleListCellRenderer.create("") { it })
+            .bindItem({ settings.ideScale.percentStringValue }, { })
+            .onChanged {
+              IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, false)?.let { scale ->
+                resetZoom?.visible(scale.percentValue != defaultScale.percentValue)
+                settings.ideScale = scale
+                settings.fireUISettingsChanged()
+              }
+            }.gap(RightGap.SMALL)
 
-        resetZoom = link(message("ide.scale.reset.link")) {
-          model.selectedItem = defaultScale.percentStringValue
-        }.apply { visible(settings.ideScale.percentValue != defaultScale.percentValue) }
-      }.layout(RowLayout.INDEPENDENT).topGap(TopGap.SMALL)
+          resetZoom = link(message("ide.scale.reset.link")) {
+            model.selectedItem = defaultScale.percentStringValue
+          }.apply { visible(settings.ideScale.percentValue != defaultScale.percentValue) }
+        }.topGap(TopGap.SMALL)
+      }
 
       row {
         var resetCustomFont: (() -> Unit)? = null
