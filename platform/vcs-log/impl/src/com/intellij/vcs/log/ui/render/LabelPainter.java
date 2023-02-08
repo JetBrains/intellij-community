@@ -37,6 +37,7 @@ public class LabelPainter {
   public static final JBValue LEFT_PADDING = JBVG.value(4);
   public static final JBValue COMPACT_MIDDLE_PADDING = JBVG.value(2);
   public static final JBValue MIDDLE_PADDING = JBVG.value(12);
+  public static final JBValue ICON_TEXT_PADDING = JBVG.value(1);
   public static final JBValue LABEL_ARC = JBVG.value(6);
   private static final int MAX_LENGTH = 22;
   private static final String TWO_DOTS = "..";
@@ -117,6 +118,7 @@ public class LabelPainter {
 
       String text = shortenRefName(group.getName(), fontMetrics, availableWidth - newWidth);
       newWidth += fontMetrics.stringWidth(text);
+      newWidth += getIconTextPadding();
 
       labels.add(Pair.create(text, labelIcon));
       width = newWidth;
@@ -150,6 +152,7 @@ public class LabelPainter {
 
       String text = getGroupText(group, fontMetrics, availableWidth - newWidth - doNotFitWidth);
       newWidth += fontMetrics.stringWidth(text);
+      newWidth += getIconTextPadding();
 
       if (availableWidth - newWidth - doNotFitWidth < 0) {
         LabelIcon lastIcon = getIcon(height, background, getColors(refGroups.subList(i, refGroups.size())));
@@ -297,13 +300,17 @@ public class LabelPainter {
 
       icon.paintIcon(null, g2, x, y + (height - icon.getIconHeight()) / 2);
       x += icon.getIconWidth();
-
+      x += getIconTextPadding();
       g2.setColor(myForeground);
       g2.drawString(text, x, y + baseLine);
       x += fontMetrics.stringWidth(text) + (myCompact ? COMPACT_MIDDLE_PADDING.get() : MIDDLE_PADDING.get());
     }
 
     config.restore();
+  }
+
+  private static int getIconTextPadding() {
+    return ExperimentalUI.isNewUI() ? ICON_TEXT_PADDING.get() : 0;
   }
 
   private Object getTextAntiAliasingValue() {
