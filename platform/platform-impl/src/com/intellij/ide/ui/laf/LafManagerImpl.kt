@@ -802,8 +802,11 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     val currentScale = UISettingsUtils.currentIdeScale
     if (uiSettings.overrideLafFonts || currentScale != 1f) {
       storeOriginalFontDefaults(uiDefaults)
-      val fontSize = uiSettings.fontSize2D * currentScale
-      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(uiSettings.fontFace, Font.PLAIN, fontSize))
+      val fontFace = if (uiSettings.overrideLafFonts) uiSettings.fontFace else defaultFont.family
+      val fontSize = (if (uiSettings.overrideLafFonts) uiSettings.fontSize2D else defaultFont.size2D).let{
+        it * currentScale
+      }
+      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(fontFace, Font.PLAIN, fontSize))
       val userScaleFactor = if (useInterFont()) fontSize / INTER_SIZE else getFontScale(fontSize)
       setUserScaleFactor(userScaleFactor)
     }
