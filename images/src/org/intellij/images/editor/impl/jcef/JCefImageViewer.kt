@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.editor.impl.jcef
 
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
@@ -17,12 +20,14 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.ScrollBarPainter
 import com.intellij.ui.jcef.*
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.ui.UIUtil
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -44,6 +49,7 @@ import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
+import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
@@ -240,8 +246,10 @@ class JCefImageViewer(private val myFile: VirtualFile,
       myBrowser.loadURL(VIEWER_URL)
     }
 
-    ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(EditorColorsManager.TOPIC,
-                                                                             EditorColorsListener { reloadStyles() })
+    val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
+
+    busConnection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { reloadStyles() })
+    busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener { reloadStyles() })
   }
 
   @Serializable
@@ -264,7 +272,9 @@ class JCefImageViewer(private val myFile: VirtualFile,
 
   private fun getColorCSS(key: ColorKey): String {
     val colorScheme = EditorColorsManager.getInstance().schemeForCurrentUITheme
-    return (colorScheme.getColor(key) ?: key.defaultColor).let { "rgba(${it.red}, ${it.blue}, ${it.green}, ${it.alpha / 255.0})" }
+    return (colorScheme.getColor(key) ?: key.defaultColor).let {
+      "rgba(${it.red}, ${it.blue}, ${it.green}, ${getScrollbarAlpha(key) ?: (it.alpha / 255.0)})"
+    }
   }
 
   private fun buildScrollbarsStyle(): String {
@@ -276,14 +286,15 @@ class JCefImageViewer(private val myFile: VirtualFile,
     val thumbBorder = getColorCSS(ScrollBarPainter.THUMB_OPAQUE_FOREGROUND)
     val thumbBorderHovered = getColorCSS(ScrollBarPainter.THUMB_OPAQUE_HOVERED_FOREGROUND)
 
-    val trackSize = if (SystemInfo.isMac) "14px" else "10px"
-    val thumbBorderSize = if (SystemInfo.isMac) "3px" else "1px"
-    val thumbRadius = if (SystemInfo.isMac) "14px" else "0"
+    val scale = UISettingsUtils.instance.currentIdeScale
+    val trackSizePx = (if (SystemInfo.isMac) 14 else 10) * scale
+    val thumbBorderSizePx = (if (SystemInfo.isMac) 3 else 1) * scale
+    val thumbRadiusPx = (if (SystemInfo.isMac) 14 else 0) * scale
 
     return /*language=css*/ """
       ::-webkit-scrollbar {
-        width: $trackSize;
-        height: $trackSize;
+        width: ${trackSizePx}px;
+        height: ${trackSizePx}px;
         background-color: $background;
       }
       
@@ -299,24 +310,24 @@ class JCefImageViewer(private val myFile: VirtualFile,
       /*!* scrollbar itself *!*/
       ::-webkit-scrollbar-thumb {
         background-color:$thumbColor;
-        border-radius:$thumbRadius;
-        border-width: $thumbBorderSize;
+        border-radius:${thumbRadiusPx}px;
+        border-width: ${thumbBorderSizePx}px;
         border-style: solid;
         border-color: $trackColor;
         background-clip: padding-box;
         outline: 1px solid $thumbBorder;
-        outline-offset: -$thumbBorderSize;
+        outline-offset: -${thumbBorderSizePx}px;
       }
       
       ::-webkit-scrollbar-thumb:hover {
         background-color:$thumbHoveredColor;
-        border-radius:$thumbRadius;
-        border-width: $thumbBorderSize;
+        border-radius:${thumbRadiusPx}px;
+        border-width: ${thumbBorderSizePx}px;
         border-style: solid;
         border-color: $trackColor;
         background-clip: padding-box;
         outline: 1px solid $thumbBorderHovered;
-        outline-offset: -$thumbBorderSize;
+        outline-offset: -${thumbBorderSizePx}px;
       }
       
       /* set button(top and bottom of the scrollbar) */
@@ -328,6 +339,31 @@ class JCefImageViewer(private val myFile: VirtualFile,
         background-color: $background;
       }
     """.trimIndent()
+  }
+
+  private fun getScrollbarAlpha(colorKey: ColorKey): Int? {
+    val contrastElementsKeys = listOf(
+      ScrollBarPainter.THUMB_OPAQUE_FOREGROUND,
+      ScrollBarPainter.THUMB_OPAQUE_BACKGROUND,
+      ScrollBarPainter.THUMB_OPAQUE_HOVERED_FOREGROUND,
+      ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND,
+      ScrollBarPainter.THUMB_FOREGROUND,
+      ScrollBarPainter.THUMB_BACKGROUND,
+      ScrollBarPainter.THUMB_HOVERED_FOREGROUND,
+      ScrollBarPainter.THUMB_HOVERED_BACKGROUND
+    )
+
+    if (!UISettings.shadowInstance.useContrastScrollbars || colorKey !in contrastElementsKeys) return null
+
+    val lightAlpha = if (SystemInfo.isMac) 120 else 160
+    val darkAlpha = if (SystemInfo.isMac) 255 else 180
+    val alpha = Registry.intValue("contrast.scrollbars.alpha.level")
+    return if (alpha > 0) {
+      Integer.min(alpha, 255)
+    }
+    else {
+      if (UIUtil.isUnderDarcula()) darkAlpha else lightAlpha
+    }
   }
 
   private fun reloadStyles() {
