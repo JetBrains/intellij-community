@@ -487,7 +487,8 @@ class KotlinFacetEditorGeneralTab(
                 configuration.settings.targetPlatform = editor.getChosenPlatform()
                 updateMergedArguments()
 
-                KotlinFacetModificationTracker.getInstance(editorContext.project).incModificationCount()
+                // Force code analysis with modified settings
+                runWriteAction { KotlinFacetModificationTracker.getInstance(editorContext.project).incModificationCount() }
             }
         }
     }
