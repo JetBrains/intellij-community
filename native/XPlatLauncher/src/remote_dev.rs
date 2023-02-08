@@ -173,6 +173,11 @@ impl RemoteDevLaunchConfiguration {
             }
         };
 
+        if remote_dev_starter_command == "help" {
+            print_help();
+            std::process::exit(0)
+        }
+
         let project_path = if args.len() > 2 {
             let arg = args[2].as_str();
             if arg == "-h" || arg == "--help" {
