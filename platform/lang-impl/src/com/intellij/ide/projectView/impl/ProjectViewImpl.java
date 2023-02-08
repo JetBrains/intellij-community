@@ -938,6 +938,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     });
     viewSelectionChanged();
+    setupToolwindowActions(toolWindow);
 
     Object multicaster = EditorFactory.getInstance().getEventMulticaster();
     if (multicaster instanceof EditorEventMulticasterEx ex) {
@@ -968,6 +969,20 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           }
         }
       }, myProject);
+    }
+  }
+
+  private void setupToolwindowActions(@NotNull ToolWindow toolWindow) {
+    List<AnAction> titleActions = new ArrayList<>();
+    createTitleActions(titleActions);
+    if (!titleActions.isEmpty()) {
+      toolWindow.setTitleActions(titleActions);
+    }
+
+    List<AnAction> tabActions = new ArrayList<>();
+    createTabActions(tabActions);
+    if (!tabActions.isEmpty()) {
+      ((ToolWindowEx)toolWindow).setTabActions(tabActions.toArray(AnAction[]::new));
     }
   }
 
@@ -1061,24 +1076,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     pane.addToolbarActions(myActionGroup);
-
-    List<AnAction> titleActions = new ArrayList<>();
-    createTitleActions(titleActions);
-    if (!titleActions.isEmpty()) {
-      ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
-      if (window != null) {
-        window.setTitleActions(titleActions);
-      }
-    }
-
-    List<AnAction> tabActions = new ArrayList<>();
-    createTabActions(tabActions);
-    if (!tabActions.isEmpty()) {
-      ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
-      if (window instanceof ToolWindowEx) {
-        ((ToolWindowEx)window).setTabActions(tabActions.toArray(AnAction[]::new));
-      }
-    }
   }
 
   protected void createTitleActions(@NotNull List<? super AnAction> titleActions) {
