@@ -103,6 +103,10 @@ public final class TerminalToolWindowManager implements Disposable {
   public void dispose() {
   }
 
+  /**
+   * @deprecated use {@link #getTerminalWidgets()} instead
+   */
+  @Deprecated
   public Set<JBTerminalWidget> getWidgets() {
     return ContainerUtil.map2SetNotNull(myContainerByWidgetMap.keySet(),
                                         widget -> JBTerminalWidget.asJediTermWidget(widget));

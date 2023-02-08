@@ -11,8 +11,10 @@ import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TtyConnectorAccessor;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.Terminal;
@@ -394,5 +396,9 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   @Override
   protected @NotNull JediTermSearchComponent createSearchComponent() {
     return new TerminalSearchSession(this).getTerminalSearchComponent();
+  }
+
+  public static @Nullable ShellTerminalWidget asShellJediTermWidget(@NotNull TerminalWidget widget) {
+    return ObjectUtils.tryCast(JBTerminalWidget.asJediTermWidget(widget), ShellTerminalWidget.class);
   }
 }
