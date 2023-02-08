@@ -9,8 +9,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 final class Xxh3HashingService {
-  static final int HASH_SIZE = 16;
-
   static long getStringHash(@NotNull String hashableString) {
     return Xxh3.hash(hashableString);
   }
