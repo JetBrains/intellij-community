@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
 import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.codereview.details.RequestState
 import com.intellij.collaboration.ui.codereview.details.ReviewRole
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindContent
@@ -27,7 +28,6 @@ import java.awt.event.ActionListener
 import javax.swing.JButton
 import javax.swing.JComponent
 
-// TODO: implement `more` button
 internal object GitLabMergeRequestDetailsActionsComponentFactory {
   private const val BUTTONS_GAP = 10
 
@@ -74,11 +74,13 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     }
     val moreActionsButton = createMoreButton(actionGroup)
 
-    return HorizontalListPanel(BUTTONS_GAP).apply {
+    val mainPanel = HorizontalListPanel(BUTTONS_GAP).apply {
       add(requestReviewButton)
       add(mergeReviewButton)
       add(moreActionsButton)
     }
+
+    return createActionsComponent(scope, reviewFlowVm, mainPanel)
   }
 
   private fun createActionsForReviewer(scope: CoroutineScope, reviewFlowVm: GitLabMergeRequestReviewFlowViewModel): JComponent {
@@ -93,10 +95,12 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
       bindVisibility(scope, reviewFlowVm.approvedBy.map { reviewFlowVm.currentUser in it })
     }
 
-    return HorizontalListPanel(BUTTONS_GAP).apply {
+    val mainPanel = HorizontalListPanel(BUTTONS_GAP).apply {
       add(approveButton)
       add(resumeReviewButton)
     }
+
+    return createActionsComponent(scope, reviewFlowVm, mainPanel)
   }
 
   private fun createActionsForGuest(
@@ -122,9 +126,42 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
 
     val moreActionsButton = createMoreButton(actionGroup)
 
-    return HorizontalListPanel(BUTTONS_GAP).apply {
+    val mainPanel = HorizontalListPanel(BUTTONS_GAP).apply {
       add(setMyselfAsReviewerButton)
       add(moreActionsButton)
+    }
+
+    return createActionsComponent(scope, reviewFlowVm, mainPanel)
+  }
+
+  private fun createActionsForClosedReview(scope: CoroutineScope, reviewFlowVm: GitLabMergeRequestReviewFlowViewModel): JComponent {
+    val reopenReviewButton = JButton(GitLabMergeRequestReopenAction(scope, reviewFlowVm)).apply {
+      isOpaque = false
+    }
+
+    return HorizontalListPanel(BUTTONS_GAP).apply {
+      add(reopenReviewButton)
+    }
+  }
+
+  private fun createActionsForMergedReview(): JComponent? = null
+
+  private fun createActionsForDraftReview(): JComponent? = null // TODO: implement draft state with actions
+
+  private fun createActionsComponent(
+    scope: CoroutineScope,
+    reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
+    mainPanel: JComponent
+  ): JComponent {
+    return Wrapper().apply {
+      bindContent(scope, reviewFlowVm.requestState.map { requestState ->
+        when (requestState) {
+          RequestState.OPENED -> mainPanel
+          RequestState.MERGED -> createActionsForMergedReview()
+          RequestState.CLOSED -> createActionsForClosedReview(scope, reviewFlowVm)
+          RequestState.DRAFT -> createActionsForDraftReview()
+        }
+      })
     }
   }
 

@@ -7,10 +7,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 
 internal interface GitLabMergeRequestDetailsInfoViewModel {
   val number: String
@@ -44,15 +42,7 @@ internal class GitLabMergeRequestDetailsInfoViewModelImpl(
   override val sourceBranch: Flow<String> = mergeRequest.sourceBranch
   override val hasConflicts: Flow<Boolean> = mergeRequest.hasConflicts
   override val isDraft: Flow<Boolean> = mergeRequest.isDraft
-  override val requestState: Flow<RequestState> = combine(mergeRequest.isDraft, mergeRequest.reviewState) { isDraft, requestState ->
-    if (isDraft) return@combine RequestState.DRAFT
-    return@combine when (requestState) {
-      GitLabMergeRequestState.CLOSED -> RequestState.CLOSED
-      GitLabMergeRequestState.MERGED -> RequestState.MERGED
-      GitLabMergeRequestState.OPENED -> RequestState.OPENED
-      else -> RequestState.OPENED // to avoid null state
-    }
-  }
+  override val requestState: Flow<RequestState> = mergeRequest.requestState
 
   private val _showTimelineRequests = MutableSharedFlow<Unit>()
   override val showTimelineRequests: Flow<Unit> = _showTimelineRequests.asSharedFlow()

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.ui.codereview.details.RequestState
 import com.intellij.collaboration.ui.codereview.details.ReviewRole
 import com.intellij.util.childScope
 import kotlinx.coroutines.CancellationException
@@ -9,7 +10,6 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
@@ -22,7 +22,7 @@ internal interface GitLabMergeRequestReviewFlowViewModel {
   val approvedBy: Flow<List<GitLabUserDTO>>
   val reviewers: Flow<List<GitLabUserDTO>>
   val role: Flow<ReviewRole>
-  val reviewState: Flow<GitLabMergeRequestState>
+  val requestState: Flow<RequestState>
   val isApproved: StateFlow<Boolean>
 
   fun merge()
@@ -65,7 +65,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     }
   }
 
-  override val reviewState: Flow<GitLabMergeRequestState> = mergeRequest.reviewState
+  override val requestState: Flow<RequestState> = mergeRequest.requestState
 
   override val isApproved: StateFlow<Boolean> = approvedBy
     .map { it.isNotEmpty() }

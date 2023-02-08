@@ -2,12 +2,14 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.ui.codereview.details.RequestState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceLabelEventDTO
@@ -31,8 +33,8 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val targetBranch: Flow<String>
   val sourceBranch: Flow<String>
   val hasConflicts: Flow<Boolean>
-  val reviewState: Flow<GitLabMergeRequestState>
   val isDraft: Flow<Boolean>
+  val requestState: Flow<RequestState>
   val approvedBy: Flow<List<GitLabUserDTO>>
   val reviewers: Flow<List<GitLabUserDTO>>
 
@@ -81,8 +83,16 @@ internal class LoadedGitLabMergeRequest(
   override val targetBranch: Flow<String> = mergeRequestState.map { it.targetBranch }
   override val sourceBranch: Flow<String> = mergeRequestState.map { it.sourceBranch }
   override val hasConflicts: Flow<Boolean> = mergeRequestState.map { it.conflicts }
-  override val reviewState: Flow<GitLabMergeRequestState> = mergeRequestState.map { it.state }
   override val isDraft: Flow<Boolean> = mergeRequestState.map { it.draft }
+  override val requestState: Flow<RequestState> = combine(isDraft, mergeRequestState.map { it.state }) { isDraft, requestState ->
+    if (isDraft) return@combine RequestState.DRAFT
+    return@combine when (requestState) {
+      GitLabMergeRequestState.CLOSED -> RequestState.CLOSED
+      GitLabMergeRequestState.MERGED -> RequestState.MERGED
+      GitLabMergeRequestState.OPENED -> RequestState.OPENED
+      else -> RequestState.OPENED // to avoid null state
+    }
+  }
   override val approvedBy: Flow<List<GitLabUserDTO>> = mergeRequestState.map { it.approvedBy }
   override val reviewers: Flow<List<GitLabUserDTO>> = mergeRequestState.map { it.reviewers }
 
