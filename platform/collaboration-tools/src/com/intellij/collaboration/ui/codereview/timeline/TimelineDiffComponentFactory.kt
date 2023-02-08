@@ -5,13 +5,21 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.diff.impl.patch.PatchHunk
+import com.intellij.openapi.diff.impl.patch.PatchLine
+import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.LineNumberConverter
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.LineNumberConverterAdapter
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch
+import com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.labels.LinkLabel
@@ -29,13 +37,83 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.NonNls
-import java.awt.Dimension
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
 object TimelineDiffComponentFactory {
+
+  fun createDiffComponent(project: Project, editorFactory: EditorFactory,
+                          patchHunk: PatchHunk, isMultiline: Boolean): JComponent {
+    val truncatedHunk = truncateHunk(patchHunk, isMultiline)
+    if (truncatedHunk.lines.any { it.type != PatchLine.Type.CONTEXT }) {
+      val appliedSplitHunks = GenericPatchApplier.SplitHunk.read(truncatedHunk).map {
+        AppliedTextPatch.AppliedSplitPatchHunk(it, -1, -1, AppliedTextPatch.HunkStatus.NOT_APPLIED)
+      }
+
+      val builder = PatchChangeBuilder()
+      builder.exec(appliedSplitHunks)
+
+      val patchContent = builder.patchContent.removeSuffix("\n")
+
+      return createDiffComponent(project, editorFactory, patchContent) { editor ->
+        editor.gutter.apply {
+          setLineNumberConverter(LineNumberConverterAdapter(builder.lineConvertor1.createConvertor()),
+                                 LineNumberConverterAdapter(builder.lineConvertor2.createConvertor()))
+        }
+
+        val hunk = builder.hunks.first()
+        DiffDrawUtil.createUnifiedChunkHighlighters(editor,
+                                                    hunk.patchDeletionRange,
+                                                    hunk.patchInsertionRange,
+                                                    null)
+      }
+    }
+    else {
+      val patchContent = truncatedHunk.text.removeSuffix("\n")
+
+      return createDiffComponent(project, editorFactory, patchContent) { editor ->
+        editor.gutter.apply {
+          setLineNumberConverter(
+            LineNumberConverter.Increasing { _, line -> line + truncatedHunk.startLineBefore },
+            LineNumberConverter.Increasing { _, line -> line + truncatedHunk.startLineAfter }
+          )
+        }
+      }
+    }
+  }
+
+  private const val SINGLE_LINE_DIFF_SIZE = 3
+  private const val MULTILINE_DIFF_SIZE = 10
+
+  private fun truncateHunk(hunk: PatchHunk, isMultiline: Boolean): PatchHunk {
+    val maxDiffSize = if (isMultiline) MULTILINE_DIFF_SIZE else SINGLE_LINE_DIFF_SIZE
+
+    if (hunk.lines.size <= maxDiffSize) return hunk
+
+    var startLineBefore: Int = hunk.startLineBefore
+    var startLineAfter: Int = hunk.startLineAfter
+
+    val toRemoveIdx = hunk.lines.lastIndex - maxDiffSize
+    for (i in 0..toRemoveIdx) {
+      val line = hunk.lines[i]
+      when (line.type) {
+        PatchLine.Type.CONTEXT -> {
+          startLineBefore++
+          startLineAfter++
+        }
+        PatchLine.Type.ADD -> startLineAfter++
+        PatchLine.Type.REMOVE -> startLineBefore++
+      }
+    }
+    val truncatedLines = hunk.lines.subList(toRemoveIdx + 1, hunk.lines.size)
+    return PatchHunk(startLineBefore, hunk.endLineBefore, startLineAfter, hunk.endLineAfter).apply {
+      for (line in truncatedLines) {
+        addLine(line)
+      }
+    }
+  }
 
   fun createDiffComponent(project: Project, editorFactory: EditorFactory,
                           text: CharSequence, modifyEditor: (EditorEx) -> Unit): JComponent =
