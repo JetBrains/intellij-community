@@ -17,6 +17,7 @@ import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -218,7 +219,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
       }
     }
     else if ("BUILDER_METHODS".equals(optionName)) {
-      if (value instanceof String strValue) {
+      if (value instanceof @Nls String strValue) {
         String tooltipText = ApplicationBundle.message("settings.code.style.builder.methods.tooltip");
         if (StringUtil.isEmptyOrSpaces(strValue)) {
           ColoredLabel hintLabel = new ColoredLabel(ApplicationBundle.message("settings.code.style.builder.method.names"), JBColor.gray);
