@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.projectImport.ProjectImportBuilder;
+import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
@@ -378,17 +379,21 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
 
   @Nullable
-  private List<Module> addModule(@Nullable AbstractProjectWizard wizard) {
+  private List<Module> addModule(Producer<@Nullable AbstractProjectWizard> createWizardAction) {
+    var wizard = createWizardAction.produce();
     if (null == wizard) return null;
 
-    var modules = doAddModule(wizard);
-    Disposer.dispose(wizard.getDisposable());
-    return modules;
+    try {
+      return doAddModule(wizard);
+    }
+    finally {
+      Disposer.dispose(wizard.getDisposable());
+    }
   }
 
   @Nullable
   private List<Module> doAddModule(@NotNull AbstractProjectWizard wizard) {
-    var builder = getProjectBuilder(wizard);
+    var builder = runWizard(wizard);
     if (null == builder) return null;
 
     final List<Module> modules = new ArrayList<>();
@@ -414,13 +419,13 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   @Nullable
   public List<Module> addImportModule(Component parent) {
     if (myProject.isDefault()) return null;
-    return addModule(getImportModuleWizard(parent));
+    return addModule(() -> createImportModuleWizard(parent));
   }
 
   @Nullable
   public List<Module> addNewModule() {
     if (myProject.isDefault()) return null;
-    return addModule(getNewModuleWizard());
+    return addModule(this::createNewModuleWizard);
   }
 
   private Module createModule(final ModuleBuilder builder) {
@@ -449,7 +454,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @Nullable
-  private ProjectBuilder getProjectBuilder(@Nullable AbstractProjectWizard wizard) {
+  private ProjectBuilder runWizard(@Nullable AbstractProjectWizard wizard) {
     if (wizard == null) return null;
 
     if (wizard.getStepCount() == 0) {
@@ -457,7 +462,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       if (!builder.validate(myProject, myProject)) {
         builder = null;
       }
-      Disposer.dispose(wizard.getDisposable());
       return builder;
     }
 
@@ -468,12 +472,12 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @Nullable
-  private AbstractProjectWizard getImportModuleWizard(Component dialogParent) {
+  private AbstractProjectWizard createImportModuleWizard(Component dialogParent) {
     return ImportModuleAction.selectFileAndCreateWizard(myProject, dialogParent);
   }
 
   @NotNull
-  private AbstractProjectWizard getNewModuleWizard() {
+  private AbstractProjectWizard createNewModuleWizard() {
     var wizardFactory = ApplicationManager.getApplication().getService(NewProjectWizardFactory.class);
     return wizardFactory.create(myProject, this);
   }
