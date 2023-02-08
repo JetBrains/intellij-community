@@ -12,13 +12,13 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ObjectUtils;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Function;
 
-public class SetInspectionOptionFix implements LocalQuickFix, LowPriorityAction, Iconable {
+public class SetInspectionOptionFix extends IntentionAndQuickFixAction implements LowPriorityAction, Iconable {
   private final String myShortName;
   private final String myProperty;
   private final @IntentionName String myMessage;
@@ -81,12 +81,8 @@ public class SetInspectionOptionFix implements LocalQuickFix, LowPriorityAction,
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    applyFix(project, descriptor.getPsiElement().getContainingFile());
-  }
-
-  public void applyFix(@NotNull Project project, @NotNull PsiFile psiFile) {
-    VirtualFile vFile = psiFile.getVirtualFile();
+  public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
+    VirtualFile vFile = file.getVirtualFile();
     setOption(project, vFile, myValue);
     UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
       @Override
@@ -102,14 +98,9 @@ public class SetInspectionOptionFix implements LocalQuickFix, LowPriorityAction,
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    return generatePreview(project, previewDescriptor.getPsiElement());
-  }
-
-  @NotNull
-  public IntentionPreviewInfo generatePreview(@NotNull Project project, PsiElement element) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     InspectionToolWrapper<?, ?> tool =
-      InspectionProfileManager.getInstance(project).getCurrentProfile().getInspectionTool(myShortName, element);
+      InspectionProfileManager.getInstance(project).getCurrentProfile().getInspectionTool(myShortName, file);
     if (tool == null) return IntentionPreviewInfo.EMPTY;
     InspectionProfileEntry inspection = myExtractor == null ? tool.getTool() : myExtractor.apply(tool.getTool());
     OptPane pane = inspection.getOptionsPane();

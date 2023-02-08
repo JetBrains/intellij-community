@@ -15,11 +15,9 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.makefinal.MakeVarEffectivelyFinalFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
-import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.*;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.UnimplementInterfaceAction;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
@@ -49,7 +47,9 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassKind;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyMemberType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -68,6 +68,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 public final class QuickFixFactoryImpl extends QuickFixFactory {
   private static final Logger LOG = Logger.getInstance(QuickFixFactoryImpl.class);
@@ -729,31 +730,15 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter, boolean excludingHierarchy) {
+  public @NotNull IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter,
+                                                                                boolean excludingHierarchy) {
     if (excludingHierarchy) {
-      final SetInspectionOptionFix myFix =
-        SetInspectionOptionFix.createFix(UnusedSymbolLocalInspectionBase.SHORT_NAME,
-                                         "myCheckParameterExcludingHierarchy",
-                                         JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false,
-                                         profileEntry -> profileEntry instanceof UnusedDeclarationInspectionBase
-                                                         ? ((UnusedDeclarationInspectionBase)profileEntry).getSharedLocalInspectionTool()
-                                                         : profileEntry);
-      return new AbstractIntentionAction() {
-        @Override
-        public @NotNull String getText() {
-          return JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text");
-        }
-
-        @Override
-        public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-          myFix.applyFix(project, file);
-        }
-
-        @Override
-        public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-          return myFix.generatePreview(project, file);
-        }
-      };
+      Function<InspectionProfileEntry, InspectionProfileEntry> extractor =
+        profileEntry -> profileEntry instanceof UnusedDeclarationInspectionBase
+                        ? ((UnusedDeclarationInspectionBase)profileEntry).getSharedLocalInspectionTool()
+                        : profileEntry;
+      return SetInspectionOptionFix.createFix(UnusedSymbolLocalInspectionBase.SHORT_NAME, "myCheckParameterExcludingHierarchy",
+                                              JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false, extractor);
     }
     else {
       return new SafeDeleteFix(parameter);
