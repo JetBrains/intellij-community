@@ -208,10 +208,20 @@ class UnindexedFilesIndexer extends DumbModeTask {
       mergedFilesToIndex.put(e.getKey(), mergedList);
     }
 
-    String mergedReason = "Merged " + StringUtil.trimStart(indexingReason, "Merged ") +
-                          " with " + StringUtil.trimStart(otherIndexingTask.indexingReason, "Merged ");
-
+    String mergedReason = mergeReasons(otherIndexingTask);
     return new UnindexedFilesIndexer(myProject, mergedFilesToIndex, mergedReason);
+  }
+
+  @NotNull
+  private String mergeReasons(@NotNull UnindexedFilesIndexer otherIndexingTask) {
+    String trimmedReason = StringUtil.trimStart(indexingReason, "Merged ");
+    String trimmedOtherReason = StringUtil.trimStart(otherIndexingTask.indexingReason, "Merged ");
+    if (otherIndexingTask.providerToFiles.isEmpty() && trimmedReason.endsWith(trimmedOtherReason)) {
+      return indexingReason;
+    }
+    else {
+      return "Merged " + trimmedReason + " with " + trimmedOtherReason;
+    }
   }
 
   private static double getPowerForSmoothProgressIndicator() {
@@ -230,6 +240,10 @@ class UnindexedFilesIndexer extends DumbModeTask {
   @TestOnly
   @NotNull Map<@NotNull IndexableFilesIterator, @NotNull Collection<@NotNull VirtualFile>> getProviderToFiles() {
     return providerToFiles;
+  }
+
+  public final @NotNull String getIndexingReason() {
+    return indexingReason;
   }
 
   @Override
