@@ -94,12 +94,14 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     includeIntoSourcesArchiveFilter = { JpsModule module, BuildContext buildContext -> true }
     additionalIdeJvmArguments = ["-XX:FlightRecorderOptions=stackdepth=256"]
 
-    productLayout.productApiModules = BaseIdeaPropertiesKt.JAVA_IDE_API_MODULES + ["intellij.cidr.common.testFramework.core"]
+    productLayout.productApiModules = BaseIdeaPropertiesKt.JAVA_IDE_API_MODULES
     productLayout.productImplementationModules = BaseIdeaPropertiesKt.JAVA_IDE_IMPLEMENTATION_MODULES +
                                                   ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.platform.main"] -
                                                   ["intellij.platform.jps.model.impl", "intellij.platform.jps.model.serialization"]
     productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources")
     productLayout.withAdditionalPlatformJar("resources.jar", "intellij.android.adt.branding")
+    productLayout.withAdditionalPlatformJar("testFramework.jar", "intellij.cidr.common.testFramework.core")
+
 
     def unknownExcludedPlugins = EXCLUDED_PLUGINS - INHERITED_PLUGINS
     assert unknownExcludedPlugins.empty : "AndroidStudioProperties.EXCLUDED_PLUGINS contains nonexistent plugins: $unknownExcludedPlugins"
