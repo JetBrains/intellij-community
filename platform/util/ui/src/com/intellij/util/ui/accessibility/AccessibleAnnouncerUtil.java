@@ -10,9 +10,6 @@ import javax.accessibility.Accessible;
 final public class AccessibleAnnouncerUtil {
   final private static AccessibleAnnouncer announcer = JBR.getAccessibleAnnouncer();
 
-  final public static int ANNOUNCE_WITHOUT_INTERRUPTING_CURRENT_OUTPUT = AccessibleAnnouncer.ANNOUNCE_WITHOUT_INTERRUPTING_CURRENT_OUTPUT;
-  final public static int ANNOUNCE_WITH_INTERRUPTING_CURRENT_OUTPUT = AccessibleAnnouncer.ANNOUNCE_WITH_INTERRUPTING_CURRENT_OUTPUT;
-
   private AccessibleAnnouncerUtil() {}
 
   /**
@@ -20,11 +17,15 @@ final public class AccessibleAnnouncerUtil {
    *
    * @param a         announce ovner
    * @param str       message for announsing
-   * @param priority  output interruption
+   * @param interruptCurrentOutput  output interruption
    */
-  public static void announce(@NotNull Accessible a, String str, int priority) {
+  public static void announce(@NotNull final Accessible a, final String str, final boolean interruptCurrentOutput) {
     if (announcer != null) {
-      announcer.announce(a, str, priority);
+      if (interruptCurrentOutput) {
+        announcer.announce(a, str, AccessibleAnnouncer.ANNOUNCE_WITH_INTERRUPTING_CURRENT_OUTPUT);
+        return;
+      }
+      announcer.announce(a, str, AccessibleAnnouncer.ANNOUNCE_WITHOUT_INTERRUPTING_CURRENT_OUTPUT);
     }
   }
 }
