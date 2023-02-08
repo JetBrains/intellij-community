@@ -98,9 +98,11 @@ public class XxHash3Test {
 
   @Test
   public void checkInputStreamAccessor() throws IOException {
-    checkHashing("com/intellij/profiler/async/windows/WinAsyncProfilerLocator");
-    checkHashing("test");
-    checkHashing("");
+    checkHashing("com/intellij/profiler/async/windows/WinAsyncProfilerLocator".getBytes(StandardCharsets.UTF_8));
+    checkHashing("test".getBytes(StandardCharsets.UTF_8));
+    checkHashing("".getBytes(StandardCharsets.UTF_8));
+    // Check hashing of array consists of one chunk
+    checkHashing(new byte[1042]);
   }
 
   private static void checkPackage(String s, long expected) {
@@ -111,12 +113,12 @@ public class XxHash3Test {
     assertThat(Xx3UnencodedString.hashUnencodedString(s)).describedAs("Hash as string of: " + s).isEqualTo(expected);
   }
 
-  private static void checkHashing(String s) throws IOException {
+  private static void checkHashing(byte[] bytes) throws IOException {
     long newHashValue;
-    try (InputStream inputStream = new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8))){
-      newHashValue = Xxh3.hash(inputStream, s.length());
+    try (InputStream inputStream = new ByteArrayInputStream(bytes)){
+      newHashValue = Xxh3.hash(inputStream, bytes.length);
     }
-    assertThat(newHashValue).isEqualTo(Xxh3.hash(s));
+    assertThat(newHashValue).isEqualTo(Xxh3.hash(bytes));
   }
 
   @SuppressWarnings("SameParameterValue")

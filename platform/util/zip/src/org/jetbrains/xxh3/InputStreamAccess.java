@@ -11,12 +11,16 @@ public class InputStreamAccess extends Access<InputStream> {
   private static final VarHandle LONG_HANDLE = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
   private static final VarHandle INT_HANDLE = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);
 
-  private final byte[] buffer;
+  private byte[] buffer;
   private int currentBlock;
+  private final int totalStreamLength;
+  private final int totalBlocks;
 
-  public InputStreamAccess() {
+  public InputStreamAccess(int streamLength) {
     currentBlock = -1;
     buffer = new byte[Xxh3Impl.getBlockLength()];
+    totalStreamLength = streamLength;
+    totalBlocks = streamLength / Xxh3Impl.getBlockLength();
   }
 
   @Override
@@ -44,6 +48,11 @@ public class InputStreamAccess extends Access<InputStream> {
       return positionInBuffer;
     }
     else if (requestedBlock > currentBlock) {
+      // If it's the last block we should read the rest stream
+      if (requestedBlock + 1 == totalBlocks) {
+        int remainingBufferSize = totalStreamLength - requestedBlock * Xxh3Impl.getBlockLength();
+        buffer = new byte[remainingBufferSize];
+      }
       try {
         input.read(buffer);
         currentBlock++;

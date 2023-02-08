@@ -28,7 +28,7 @@ public final class Xxh3 {
   }
 
   public static long hash(InputStream inputStream, int length) {
-    return Xxh3Impl.hash(inputStream, new InputStreamAccess(), 0, length, 0);
+    return Xxh3Impl.hash(inputStream, new InputStreamAccess(length), 0, length, 0);
   }
 
   public static long hash(byte[] input, int offset, int length) {
