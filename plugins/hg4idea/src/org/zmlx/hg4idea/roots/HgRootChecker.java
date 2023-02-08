@@ -8,12 +8,10 @@ import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.nio.file.Files;
-
 final class HgRootChecker extends VcsRootChecker {
   @Override
   public boolean isRoot(@NotNull VirtualFile file) {
-    return Files.exists(file.toNioPath().resolve(HgUtil.DOT_HG));
+    return file.findChild(HgUtil.DOT_HG) != null;
   }
 
   @NotNull
