@@ -81,17 +81,16 @@ internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
   }
   actions.add(Separator.create())
   if (Registry.`is`("ide.experimental.ui.redesigned.run.popup")) {
-    val allRunConfigurationsToggle = AllRunConfigurationsToggle()
-    actions.add(allRunConfigurationsToggle)
+    actions.add(AllRunConfigurationsToggle())
 
     val createActionFn: (RunnerAndConfigurationSettings) -> AnAction = { configuration ->
       createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project) {
-        allRunConfigurationsToggle.selected
+        RunConfigurationStartHistory.getInstance(project).state.allConfigurationsExpanded
       }
     }
     val createFolderFn: (String) -> DefaultActionGroup = { folderName ->
       HideableDefaultActionGroup(folderName) {
-        allRunConfigurationsToggle.selected
+        RunConfigurationStartHistory.getInstance(project).state.allConfigurationsExpanded
       }
     }
     RunConfigurationsComboBoxAction.addRunConfigurations(actions, project, createActionFn, createFolderFn)
@@ -143,16 +142,15 @@ private interface HideableAction {
 private class HideableDefaultActionGroup(@NlsSafe name: String, override val shouldBeShown: () -> Boolean)
   : DefaultActionGroup({ name }, true), DumbAware, HideableAction
 
-private class AllRunConfigurationsToggle : ToggleAction(
-  ExecutionBundle.message("run.toolbar.widget.all.configurations")), KeepingPopupOpenAction, DumbAware {
-  var selected = false
+private class AllRunConfigurationsToggle : ToggleAction(ExecutionBundle.message("run.toolbar.widget.all.configurations")),
+                                           KeepingPopupOpenAction, DumbAware {
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
-  override fun isSelected(e: AnActionEvent): Boolean = selected
+  override fun isSelected(e: AnActionEvent): Boolean = RunConfigurationStartHistory.getInstance(e.project!!).state.allConfigurationsExpanded
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    selected = state
+    RunConfigurationStartHistory.getInstance(e.project!!).state.allConfigurationsExpanded = state
 
     val inputEvent = e.inputEvent ?: return
     val jList = inputEvent.source as? JList<*>
@@ -164,7 +162,7 @@ private class AllRunConfigurationsToggle : ToggleAction(
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = true
-    e.presentation.icon = if (selected) AllIcons.General.ChevronDown else AllIcons.General.ChevronRight
+    e.presentation.icon = if (isSelected(e)) AllIcons.General.ChevronDown else AllIcons.General.ChevronRight
   }
 }
 
@@ -636,13 +634,17 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
     @XCollection(style = XCollection.Style.v2)
     @OptionTag("element")
     var history: MutableSet<Element>
+    
+    var allConfigurationsExpanded: Boolean
 
     constructor() {
       history = mutableSetOf()
+      allConfigurationsExpanded = false
     }
 
-    internal constructor(history: MutableSet<Element>) {
+    internal constructor(history: MutableSet<Element>, allConfigurationsExpanded: Boolean) {
       this.history = history
+      this.allConfigurationsExpanded = allConfigurationsExpanded
     }
   }
 
@@ -660,7 +662,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
   fun register(setting: RunnerAndConfigurationSettings) {
     _state = State(_state.history.take(recentLimit*2).toMutableList().apply {
       add(0, Element(setting.uniqueID))
-    }.toMutableSet())
+    }.toMutableSet(), _state.allConfigurationsExpanded)
   }
 
   private var _state = State()
