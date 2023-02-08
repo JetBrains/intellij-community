@@ -30,7 +30,7 @@ import java.nio.file.Paths
 import kotlin.io.path.exists
 import kotlin.io.path.reader
 
-private const val SCOPE_PREFIX = "ijscope:"
+private const val SCOPE_PREFIX = "scope#"
 
 class YamlInspectionConfigImpl(override val inspection: String,
                                override val enabled: Boolean?,
