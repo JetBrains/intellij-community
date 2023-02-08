@@ -6,9 +6,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.dto.*
+import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceLabelEventDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceMilestoneEventDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceStateEventDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
@@ -26,7 +31,8 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val targetBranch: Flow<String>
   val sourceBranch: Flow<String>
   val hasConflicts: Flow<Boolean>
-  val state: Flow<GitLabMergeRequestState>
+  val reviewState: Flow<GitLabMergeRequestState>
+  val isDraft: Flow<Boolean>
   val approvedBy: Flow<List<GitLabUserDTO>>
   val reviewers: Flow<List<GitLabUserDTO>>
 
@@ -75,7 +81,8 @@ internal class LoadedGitLabMergeRequest(
   override val targetBranch: Flow<String> = mergeRequestState.map { it.targetBranch }
   override val sourceBranch: Flow<String> = mergeRequestState.map { it.sourceBranch }
   override val hasConflicts: Flow<Boolean> = mergeRequestState.map { it.conflicts }
-  override val state: Flow<GitLabMergeRequestState> = mergeRequestState.map { it.state }
+  override val reviewState: Flow<GitLabMergeRequestState> = mergeRequestState.map { it.state }
+  override val isDraft: Flow<Boolean> = mergeRequestState.map { it.draft }
   override val approvedBy: Flow<List<GitLabUserDTO>> = mergeRequestState.map { it.approvedBy }
   override val reviewers: Flow<List<GitLabUserDTO>> = mergeRequestState.map { it.reviewers }
 

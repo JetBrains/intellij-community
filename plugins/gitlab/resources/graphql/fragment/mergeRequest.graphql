@@ -16,6 +16,7 @@ fragment mergeRequest on MergeRequest {
 
   conflicts
   state
+  draft
 
   author {
     ...user

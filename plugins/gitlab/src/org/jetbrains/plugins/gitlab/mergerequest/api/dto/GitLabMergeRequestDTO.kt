@@ -22,6 +22,7 @@ class GitLabMergeRequestDTO(
   val diffRefs: GitLabDiffRefs,
   val conflicts: Boolean,
   val state: GitLabMergeRequestState,
+  val draft: Boolean,
   val author: GitLabUserDTO,
   approvedBy: UserCoreConnection,
   reviewers: ReviewerConnection,

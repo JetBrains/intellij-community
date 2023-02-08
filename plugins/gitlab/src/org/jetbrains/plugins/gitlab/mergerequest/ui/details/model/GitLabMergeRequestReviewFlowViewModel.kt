@@ -22,7 +22,7 @@ internal interface GitLabMergeRequestReviewFlowViewModel {
   val approvedBy: Flow<List<GitLabUserDTO>>
   val reviewers: Flow<List<GitLabUserDTO>>
   val role: Flow<ReviewRole>
-  val reviewState: StateFlow<GitLabMergeRequestState>
+  val reviewState: Flow<GitLabMergeRequestState>
   val isApproved: StateFlow<Boolean>
 
   fun merge()
@@ -65,8 +65,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     }
   }
 
-  override val reviewState: StateFlow<GitLabMergeRequestState> = mergeRequest.state
-    .stateIn(scope, SharingStarted.Lazily, GitLabMergeRequestState.OPENED)
+  override val reviewState: Flow<GitLabMergeRequestState> = mergeRequest.reviewState
 
   override val isApproved: StateFlow<Boolean> = approvedBy
     .map { it.isNotEmpty() }
