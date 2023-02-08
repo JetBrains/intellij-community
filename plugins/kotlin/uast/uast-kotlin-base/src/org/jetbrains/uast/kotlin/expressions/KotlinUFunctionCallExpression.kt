@@ -7,6 +7,7 @@ import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.kotlin.internal.TypedResolveResult
@@ -125,7 +126,13 @@ class KotlinUFunctionCallExpression(
             if (it.selector == this) return@lz it.receiver
         }
 
-        val ktNameReferenceExpression = sourcePsi.calleeExpression as? KtNameReferenceExpression ?: return@lz null
+        val callee = sourcePsi.calleeExpression
+
+        if (callee is KtLambdaExpression && methodName == OperatorNameConventions.INVOKE.identifier) {
+            baseResolveProviderService.baseKotlinConverter.convertOrNull(callee, uastParent)?.let { return@lz it }
+        }
+
+        val ktNameReferenceExpression = callee as? KtNameReferenceExpression ?: return@lz null
         val callableDeclaration = baseResolveProviderService.resolveToDeclaration(ktNameReferenceExpression) ?: return@lz null
 
         val variable = when (callableDeclaration) {
