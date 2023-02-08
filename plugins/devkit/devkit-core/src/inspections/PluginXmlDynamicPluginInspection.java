@@ -1,12 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -29,10 +27,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
 
-import javax.swing.*;
 import java.util.Objects;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionBase {
   public boolean highlightNonDynamicEPUsages = false;
@@ -104,7 +102,7 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
     return new IntentionAndQuickFixAction() {
 
       @Override
-      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
         return IntentionPreviewInfo.EMPTY;
       }
 
