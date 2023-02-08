@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.CommonBundle;
@@ -267,7 +267,11 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     if (fileType instanceof UserFileType) {
       myOriginalToEditedMap.remove(fileType);
     }
+    List<FileNameMatcher> matchers = myTempPatternsTable.getAssociations(ftd);
     myTempPatternsTable.removeAllAssociations(ftd);
+    for (FileNameMatcher matcher : matchers) {
+      myTempTemplateDataLanguages.removeAssociation(matcher, null);
+    }
 
     updateFileTypeList();
     updateExtensionList();
@@ -339,9 +343,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
                                               CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
         if (ret == Messages.OK) {
           myTempPatternsTable.removeAssociation(matcher, registeredFtd);
-          if (oldLanguage != null) {
-            myTempTemplateDataLanguages.removeAssociation(matcher, oldLanguage);
-          }
+          myTempTemplateDataLanguages.removeAssociation(matcher, null);
         }
         else {
           return;
@@ -351,9 +353,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       if (item != null) {
         FileNameMatcher oldMatcher = FileTypeManager.parseFromString(item);
         myTempPatternsTable.removeAssociation(oldMatcher, ftd);
-        if (oldLanguage != null) {
-          myTempTemplateDataLanguages.removeAssociation(oldMatcher, oldLanguage);
-        }
+        myTempTemplateDataLanguages.removeAssociation(oldMatcher, oldLanguage);
       }
       myTempPatternsTable.addAssociation(matcher, ftd);
       Language language = dialog.getTemplateDataLanguage();
@@ -392,6 +392,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     FileNameMatcher matcher = FileTypeManager.parseFromString(extension);
 
     myTempPatternsTable.removeAssociation(matcher, ftd);
+    myTempTemplateDataLanguages.removeAssociation(matcher, null);
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myPatterns.myList, true));
   }
 
@@ -715,7 +716,6 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
     String title = FileTypesBundle.message("filetype.edit.hashbang.title");
 
-    Language oldLanguage = oldHashBang == null ? null : myTempTemplateDataLanguages.findAssociatedFileType(oldHashBang);
     String hashbang = Messages.showInputDialog(myHashBangs.myList, FileTypesBundle.message("filetype.edit.hashbang.prompt"), title, null, oldHashBang, null);
     if (StringUtil.isEmpty(hashbang)) {
       return; //canceled or empty
@@ -741,16 +741,10 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
         return;
       }
       myTempPatternsTable.removeHashBangPattern(hashbang, existingFtd);
-      if (oldLanguage != null) {
-        myTempTemplateDataLanguages.removeHashBangPattern(hashbang, oldLanguage);
-      }
       myTempPatternsTable.removeHashBangPattern(conflict.existingHashBang, conflict.fileType);
     }
     if (oldHashBang != null) {
       myTempPatternsTable.removeHashBangPattern(oldHashBang, ftd);
-      if (oldLanguage != null) {
-        myTempTemplateDataLanguages.removeHashBangPattern(oldHashBang, oldLanguage);
-      }
     }
     myTempPatternsTable.addHashBangPattern(hashbang, ftd);
 
