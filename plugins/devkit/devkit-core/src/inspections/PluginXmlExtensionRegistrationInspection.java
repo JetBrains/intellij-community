@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.IntentionActionBean;
@@ -61,8 +61,8 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
     }
 
     if (ServiceDescriptor.class.getName().equals(extensionPoint.getBeanClass().getStringValue())) {
-      GenericAttributeValue<?> serviceInterface = getAttribute(extension, "serviceInterface");
-      GenericAttributeValue<?> serviceImplementation = getAttribute(extension, "serviceImplementation");
+      GenericAttributeValue<?> serviceInterface = DevKitDomInspectionUtil.getAttribute(extension, "serviceInterface");
+      GenericAttributeValue<?> serviceImplementation = DevKitDomInspectionUtil.getAttribute(extension, "serviceImplementation");
       if (serviceInterface != null && serviceImplementation != null &&
           StringUtil.equals(serviceInterface.getStringValue(), serviceImplementation.getStringValue())) {
         if (hasMissingAttribute(extension, "testServiceImplementation")) {
@@ -116,7 +116,7 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
       // IntentionActionBean, since 223 only
       DomFixedChildDescription languageTagDescription = extension.getGenericInfo().getFixedChildDescription("language");
       if (languageTagDescription != null) {
-        GenericDomValue<?> languageTag = getTag(extension, "language");
+        GenericDomValue<?> languageTag = DevKitDomInspectionUtil.getTag(extension, "language");
         if (languageTag != null && !DomUtil.hasXml(languageTag)) {
           holder.createProblem(extension,
                                DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.language.tag",
