@@ -790,10 +790,13 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private void addSpellingCorrectionSuggestionIfAvailable(@NotNull String tabId, @NotNull String query) {
     if (mySpellingCorrector == null || !mySpellingCorrector.isAvailableInTab(tabId)) return;
 
-    final var correction = mySpellingCorrector.suggestCorrectionFor(query);
-    if (correction.getCorrection() == null) return;
-
-    myListModel.addElements(Collections.singletonList(new SearchEverywhereFoundElementInfo(correction, Integer.MAX_VALUE, new SearchEverywhereSpellingCorrectorContributor(mySearchField))));
+    var spellCheckResult = mySpellingCorrector.checkSpellingOf(query);
+    if (spellCheckResult instanceof SearchEverywhereSpellCheckResult.Correction correction) {
+      var elementInfo = new SearchEverywhereFoundElementInfo(correction,
+                                                             Integer.MAX_VALUE,
+                                                             new SearchEverywhereSpellingCorrectorContributor(mySearchField));
+      myListModel.addElements(Collections.singletonList(elementInfo));
+    }
   }
 
   private void registerAction(String actionID, Supplier<? extends AnAction> actionSupplier) {
@@ -1318,7 +1321,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       // If the selected element is a spelling correction, but there are more elements in the list
       // preselect the second element instead.
       var selectedItem = myResultsList.getSelectedValue();
-      if (selectedItem instanceof SearchEverywhereSpellingCorrection && myListModel.getSize() > 1) {
+      if (selectedItem instanceof SearchEverywhereSpellCheckResult.Correction && myListModel.getSize() > 1) {
         myResultsList.setSelectedIndex(1);
       }
 

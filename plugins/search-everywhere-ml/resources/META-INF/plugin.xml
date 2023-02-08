@@ -13,7 +13,7 @@
   ]]></description>
 
   <content>
-    <!--<module name="intellij.searchEverywhereMl.typos"/>-->
+    <module name="intellij.searchEverywhereMl.typos"/>
     <module name="intellij.searchEverywhereMl.yaml"/>
     <module name="intellij.searchEverywhereMl.vcs"/>
   </content>

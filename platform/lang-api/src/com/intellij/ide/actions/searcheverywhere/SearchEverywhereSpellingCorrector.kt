@@ -4,12 +4,10 @@ package com.intellij.ide.actions.searcheverywhere
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.Processor
-import com.intellij.util.applyIf
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -39,7 +37,7 @@ interface SearchEverywhereSpellingCorrector {
 
   fun isAvailableInTab(tabId: String): Boolean
 
-  fun suggestCorrectionFor(query: String): SearchEverywhereSpellingCorrection
+  fun checkSpellingOf(query: String): SearchEverywhereSpellCheckResult
 }
 
 @Internal
@@ -50,35 +48,25 @@ interface SearchEverywhereSpellingCorrectorFactory {
 }
 
 @Internal
-data class SearchEverywhereSpellingCorrection(val correction: String?, val confidence: Double?) {
-  val presentationText: String? = correction?.let { "Do you mean $correction?" }
-    ?.applyIf(showConfidence()) {
-      "$this (p=%.2f)".format(confidence)
-    }
-
-  private fun showConfidence(): Boolean = Registry.`is`("search.everywhere.ml.typos.show.confidence", false)
-}
-
-@Internal
-class SearchEverywhereSpellingCorrectorContributor(private val textComponent: JTextComponent) : SearchEverywhereContributor<SearchEverywhereSpellingCorrection> {
+class SearchEverywhereSpellingCorrectorContributor(private val textComponent: JTextComponent) : SearchEverywhereContributor<SearchEverywhereSpellCheckResult.Correction> {
   override fun getSearchProviderId(): String = this::class.java.simpleName
   override fun getGroupName(): String = "Spelling Corrector"
   override fun getSortWeight(): Int = 0
   override fun showInFindResults(): Boolean = false
-  override fun fetchElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in SearchEverywhereSpellingCorrection>) { }
-  override fun processSelectedItem(selected: SearchEverywhereSpellingCorrection, modifiers: Int, searchText: String): Boolean {
+  override fun fetchElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in SearchEverywhereSpellCheckResult.Correction>) { }
+  override fun processSelectedItem(selected: SearchEverywhereSpellCheckResult.Correction, modifiers: Int, searchText: String): Boolean {
     textComponent.text = selected.correction
     return false
   }
-  override fun getElementsRenderer(): ListCellRenderer<in SearchEverywhereSpellingCorrection> = SpellingCorrectionListCellRenderer()
-  override fun getDataForItem(element: SearchEverywhereSpellingCorrection, dataId: String): Any? = null
+  override fun getElementsRenderer(): ListCellRenderer<in SearchEverywhereSpellCheckResult.Correction> = SpellingCorrectionListCellRenderer()
+  override fun getDataForItem(element: SearchEverywhereSpellCheckResult.Correction, dataId: String): Any? = null
 
-  private class SpellingCorrectionListCellRenderer : SimpleColoredComponent(), ListCellRenderer<SearchEverywhereSpellingCorrection> {
+  private class SpellingCorrectionListCellRenderer : SimpleColoredComponent(), ListCellRenderer<SearchEverywhereSpellCheckResult.Correction> {
     private var selected = false
     private var foreground: Color? = null
     private var selectionForeground: Color? = null
-    override fun getListCellRendererComponent(list: JList<out SearchEverywhereSpellingCorrection>,
-                                              value: SearchEverywhereSpellingCorrection,
+    override fun getListCellRendererComponent(list: JList<out SearchEverywhereSpellCheckResult.Correction>,
+                                              value: SearchEverywhereSpellCheckResult.Correction,
                                               index: Int,
                                               isSelected: Boolean,
                                               cellHasFocus: Boolean): Component {

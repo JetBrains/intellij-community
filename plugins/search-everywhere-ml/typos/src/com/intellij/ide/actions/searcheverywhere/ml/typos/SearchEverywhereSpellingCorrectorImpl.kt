@@ -2,7 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere.ml.typos
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrection
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrector
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrectorFactory
 import com.intellij.openapi.application.ApplicationManager
@@ -10,28 +10,27 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 
-internal class SearchEverywhereSpellingCorrectorImpl(private val project: Project) : SearchEverywhereSpellingCorrector {
+private class SearchEverywhereSpellingCorrectorImpl(private val project: Project) : SearchEverywhereSpellingCorrector {
   override fun isAvailableInTab(tabId: String): Boolean = tabId == ActionSearchEverywhereContributor::class.java.simpleName
 
-  override fun suggestCorrectionFor(query: String): SearchEverywhereSpellingCorrection {
-    if (query.isBlank()) return SearchEverywhereSpellingCorrection(null,0.0)
+  override fun checkSpellingOf(query: String): SearchEverywhereSpellCheckResult {
+    if (query.isBlank()) return SearchEverywhereSpellCheckResult.NoCorrection
 
     return ActionsTabTypoFixSuggestionProvider(project)
              .suggestFixFor(query)
-             ?.takeIf { isAboveMinimumConfidence(it) }
-             ?.let { SearchEverywhereSpellingCorrection(it.suggestion, it.confidence) }
-           ?: SearchEverywhereSpellingCorrection(null, 0.0)
+             .takeIf { it is SearchEverywhereSpellCheckResult.Correction && isAboveMinimumConfidence(it) }
+           ?: SearchEverywhereSpellCheckResult.NoCorrection
   }
 
-  private fun isAboveMinimumConfidence(suggestedCorrection: ActionsTabTypoFixSuggestionProvider.CorrectionResult): Boolean {
+  private fun isAboveMinimumConfidence(suggestedCorrection: SearchEverywhereSpellCheckResult.Correction): Boolean {
     return suggestedCorrection.confidence >= Registry.doubleValue("search.everywhere.ml.typos.min.confidence")
   }
 }
 
-internal class SearchEverywhereSpellingCorrectorFactoryImpl : SearchEverywhereSpellingCorrectorFactory {
+private class SearchEverywhereSpellingCorrectorFactoryImpl : SearchEverywhereSpellingCorrectorFactory {
   override fun isAvailable(project: Project): Boolean {
     return ApplicationManager.getApplication().isInternal
-           && project.service<ActionsLanguageModel>().languageModel.isCompleted
+           && service<ActionsLanguageModel>().isComputed
   }
 
   override fun create(project: Project): SearchEverywhereSpellingCorrector = SearchEverywhereSpellingCorrectorImpl(project)
