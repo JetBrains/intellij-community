@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AdjustFunctionContextFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.reference.PsiMemberReference;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.jvm.JvmModifier;
@@ -192,7 +193,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       prepare(holder, file);
       if (updateWholeFile) {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-        if (progress == null) throw new IllegalStateException("Must be run under progress");
+        GlobalInspectionContextBase.assertUnderDaemonProgress();
         Project project = file.getProject();
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         TextRange dirtyScope = document == null ? null : DaemonCodeAnalyzerEx.getInstanceEx(project).getFileStatusMap().getFileDirtyScope(document, file, Pass.UPDATE_ALL);
@@ -734,8 +735,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         if (child instanceof PsiErrorElement && child.getPrevSibling() == identifier) return;
       }
     }
-    else if (parent instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)parent;
+    else if (parent instanceof PsiClass aClass) {
       if (aClass.isAnnotationType()) {
         add(checkFeature(identifier, HighlightingFeature.ANNOTATIONS));
       }
@@ -994,8 +994,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass, myHolder, false);
       }
     }
-    else if (parent instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)parent;
+    else if (parent instanceof PsiClass aClass) {
       try {
         if (!myHolder.hasErrorResults()) add(HighlightClassUtil.checkDuplicateNestedClass(aClass));
         if (!myHolder.hasErrorResults()) {

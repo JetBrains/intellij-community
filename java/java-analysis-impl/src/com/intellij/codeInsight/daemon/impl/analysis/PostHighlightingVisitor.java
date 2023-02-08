@@ -1,7 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.*;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.codeInsight.daemon.UnusedImportProvider;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -17,18 +20,13 @@ import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,86 +57,29 @@ class PostHighlightingVisitor {
   @NotNull private final Project myProject;
   private final PsiFile myFile;
   @NotNull private final Document myDocument;
-
-  private boolean myHasRedundantImports;
-  private int myCurrentEntryIndex;
-  private boolean myHasMisSortedImports;
+  private IntentionAction myOptimizeImportsFix; // when not null, there are redundant/missorted imports in the file
+  private int myCurrentEntryIndex = -1;
   private final UnusedSymbolLocalInspectionBase myUnusedSymbolInspection;
   private final HighlightDisplayKey myDeadCodeKey;
   private final HighlightInfoType myDeadCodeInfoType;
   private final UnusedDeclarationInspectionBase myDeadCodeInspection;
 
-  PostHighlightingVisitor(@NotNull PsiFile file,
-                          @NotNull Document document,
-                          @NotNull RefCountHolder refCountHolder) throws ProcessCanceledException {
+  PostHighlightingVisitor(@NotNull PsiFile file, @NotNull Document document, @NotNull RefCountHolder refCountHolder) throws ProcessCanceledException {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     myProject = file.getProject();
     myFile = file;
     myDocument = document;
-
-    myCurrentEntryIndex = -1;
-
     myRefCountHolder = refCountHolder;
-
-
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
-
     myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspectionBase.SHORT_NAME);
-
     myDeadCodeInspection = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, myFile);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || myDeadCodeInspection != null);
-
-    myUnusedSymbolInspection = myDeadCodeInspection != null ? myDeadCodeInspection.getSharedLocalInspectionTool() : null;
-
+    myUnusedSymbolInspection = myDeadCodeInspection == null ? null : myDeadCodeInspection.getSharedLocalInspectionTool();
     myDeadCodeInfoType = myDeadCodeKey == null ? HighlightInfoType.UNUSED_SYMBOL
                          : new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(myDeadCodeKey, myFile).getSeverity(),
                             ObjectUtils.notNull(profile.getEditorAttributes(myDeadCodeKey.toString(), myFile),
                                                 HighlightInfoType.UNUSED_SYMBOL.getAttributesKey()));
-  }
-
-  private void optimizeImportsOnTheFlyLater(@NotNull ProgressIndicator progress) {
-    if ((myHasRedundantImports || myHasMisSortedImports) && !progress.isCanceled()) {
-      scheduleOptimizeOnDaemonFinished();
-    }
-  }
-
-  private void scheduleOptimizeOnDaemonFinished() {
-    if (myProject.isDisposed()) {
-      return;
-    }
-    Disposable daemonDisposable = Disposer.newDisposable();
-    // schedule optimise action after all applyInformation() calls
-    myProject.getMessageBus().connect(daemonDisposable)
-      .subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
-        @Override
-        public void daemonFinished(@NotNull Collection<? extends FileEditor> __) {
-          Disposer.dispose(daemonDisposable);
-          ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
-            if (myProject.isDisposed() || !myFile.isValid() || !myFile.isWritable()) return;
-            if (((DaemonCodeAnalyzerEx)DaemonCodeAnalyzer.getInstance(myProject)).isErrorAnalyzingFinished(myFile)) {
-              long stampBefore = myFile.getModificationStamp();
-              IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
-              // later because should invoke when highlighting is finished (OptimizeImportsFix relies on that)
-              AppUIExecutor.onUiThread().later().withDocumentsCommitted(myProject).execute(() -> {
-                if (myProject.isDisposed()) return;
-                long stampAfter = myFile.getModificationStamp();
-                if (stampAfter == stampBefore) {
-                  if (optimizeImportsFix.isAvailable(myProject, null, myFile)) {
-                    optimizeImportsFix.invoke(myProject, null, myFile);
-                  }
-                }
-                else {
-                  scheduleOptimizeOnDaemonFinished();
-                }
-              });
-            }
-            else {
-              scheduleOptimizeOnDaemonFinished();
-            }
-          }));
-        }
-      });
   }
 
   void collectHighlights(@NotNull HighlightInfoHolder result, @NotNull ProgressIndicator progress) {
@@ -192,7 +132,10 @@ class PostHighlightingVisitor {
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
       fileStatusMap.setErrorFoundFlag(myProject, myDocument, true);
     }
-    optimizeImportsOnTheFlyLater(progress);
+    IntentionAction fix = myOptimizeImportsFix;
+    if (fix != null) {
+      OptimizeImportRestarter.getInstance(myProject).scheduleOnDaemonFinish(myFile, fix);
+    }
   }
 
   private boolean isUnusedImportEnabled(HighlightDisplayKey unusedImportKey) {
@@ -622,8 +565,9 @@ class PostHighlightingVisitor {
     }
 
     int entryIndex = JavaCodeStyleManager.getInstance(myProject).findEntryIndex(importStatement);
-    if (entryIndex < myCurrentEntryIndex) {
-      myHasMisSortedImports = true;
+    if (entryIndex < myCurrentEntryIndex && myOptimizeImportsFix == null) {
+      // mis-sorted imports found
+      myOptimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
     }
     myCurrentEntryIndex = entryIndex;
 
@@ -653,7 +597,9 @@ class PostHighlightingVisitor {
 
     IntentionAction switchFix = QuickFixFactory.getInstance().createEnableOptimizeImportsOnTheFlyFix();
     info.registerFix(switchFix, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
-    if (!predefinedImport) myHasRedundantImports = true;
+    if (!predefinedImport && myOptimizeImportsFix == null) {
+      myOptimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
+    }
     return info;
   }
 }
