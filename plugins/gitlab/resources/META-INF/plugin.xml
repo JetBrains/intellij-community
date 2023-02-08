@@ -39,6 +39,10 @@
     <fileEditorProvider implementation="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabFileEditorProvider"/>
   </extensions>
 
+  <extensions defaultExtensionNs="Git4Idea">
+    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.gitlab.git.http.GitLabGitHttpAuthDataProvider"/>
+  </extensions>
+
   <actions>
     <group id="GitLab.Merge.Requests.List.Actions">
       <action id="GitLab.Merge.Request.Show"
