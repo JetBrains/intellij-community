@@ -376,7 +376,7 @@ public final class CompleteReferenceExpression {
     return InheritanceUtil.isInheritor(qType, CommonClassNames.JAVA_UTIL_MAP);
   }
 
-  private class CompleteReferenceProcessor extends ResolverProcessorImpl implements Consumer<Object> {
+  private class CompleteReferenceProcessor extends ResolverProcessorImpl {
 
     private final Consumer<LookupElement> myConsumer;
 
@@ -448,18 +448,12 @@ public final class CompleteReferenceExpression {
           }
         }
 
-        consume(new GroovyResolveResultImpl(namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
+        processResult(new GroovyResolveResultImpl(namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
       }
       return true;
     }
 
-    @Override
-    public void consume(Object o) {
-      if (!(o instanceof GroovyResolveResult result)) {
-        LOG.error(o);
-        return;
-      }
-
+    private void processResult(GroovyResolveResult result) {
       if (!result.isStaticsOK()) {
         if (myInapplicable == null) myInapplicable = new ArrayList<>();
         myInapplicable.add(result);
