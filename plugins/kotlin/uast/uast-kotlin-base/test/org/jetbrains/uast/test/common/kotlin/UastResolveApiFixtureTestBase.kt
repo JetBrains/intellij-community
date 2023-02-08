@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertContainsElements
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertDoesntContain
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.test.env.findElementByText
@@ -1289,7 +1290,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
                 override fun visitCallExpression(node: UCallExpression): Boolean {
                     val resolved = node.resolve()
                     TestCase.assertNotNull(resolved)
-                    TestCase.assertEquals("invoke", resolved!!.name)
+                    TestCase.assertEquals(OperatorNameConventions.INVOKE.identifier, resolved!!.name)
 
                     val receiver = node.receiver
                     TestCase.assertNotNull(receiver)

@@ -9,8 +9,10 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
+import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 interface UastApiFixtureTestBase : UastPluginSelection {
     fun checkAssigningArrayElementType(myFixture: JavaCodeInsightTestFixture) {
@@ -284,6 +286,69 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         val uLambdaExpression = uFile.findElementByTextFromPsi<ULambdaExpression>("{ dummy() }")
             .orFail("cant convert to ULambdaExpression")
         TestCase.assertEquals("test.pkg.ThrowingRunnable", uLambdaExpression.functionalInterfaceType?.canonicalText)
+    }
+
+    fun checkInvokedLambdaBody(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Lambda {
+                  fun unusedLambda(s: String, o: Any) {
+                    {
+                      s === o
+                      o.toString()
+                      s.length
+                    }
+                  }
+
+                  fun invokedLambda(s: String, o: Any) {
+                    {
+                      s === o
+                      o.toString()
+                      s.length
+                    }()
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        var unusedLambda: ULambdaExpression? = null
+        var invokedLambda: ULambdaExpression? = null
+        uFile.accept(object : AbstractUastVisitor() {
+            private var containingUMethod: UMethod? = null
+
+            override fun visitMethod(node: UMethod): Boolean {
+                containingUMethod = node
+                return super.visitMethod(node)
+            }
+
+            override fun afterVisitMethod(node: UMethod) {
+                containingUMethod = null
+                super.afterVisitMethod(node)
+            }
+
+            override fun visitLambdaExpression(node: ULambdaExpression): Boolean {
+                if (containingUMethod?.name == "unusedLambda") {
+                    unusedLambda = node
+                }
+
+                return super.visitLambdaExpression(node)
+            }
+
+            override fun visitCallExpression(node: UCallExpression): Boolean {
+                if (node.methodName != OperatorNameConventions.INVOKE.identifier) return super.visitCallExpression(node)
+
+                val receiver = node.receiver
+                TestCase.assertNotNull(receiver)
+                TestCase.assertTrue(receiver is ULambdaExpression)
+                invokedLambda = receiver as ULambdaExpression
+
+                return super.visitCallExpression(node)
+            }
+        })
+        TestCase.assertNotNull(unusedLambda)
+        TestCase.assertNotNull(invokedLambda)
+        TestCase.assertEquals(unusedLambda!!.asRecursiveLogString(), invokedLambda!!.asRecursiveLogString())
     }
 
 }

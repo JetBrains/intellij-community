@@ -51,4 +51,8 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkFlexibleFunctionalInterfaceType(myFixture)
     }
 
+    fun testInvokedLambdaBody() {
+        checkInvokedLambdaBody(myFixture)
+    }
+
 }
