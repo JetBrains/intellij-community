@@ -116,11 +116,65 @@ public final class UITheme {
                                                    @Nullable UITheme parentTheme,
                                                    @Nullable ClassLoader provider,
                                                    @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
+    normalizeKeyPaths(theme);
     if (parentTheme != null) {
       importFromParentTheme(theme, parentTheme);
     }
     putDefaultsIfAbsent(theme);
     return loadFromJson(theme, provider, iconsMapper);
+  }
+
+  /**
+   * Flatten
+   * <pre>{@code "Editor": { "SearchField" : { "borderInsets" : "7,10,7,8" } }}</pre>
+   * to
+   * <pre>{@code "Editor.SearchField.borderInsets" : "7,10,7,8"}</pre>
+   * in internal representation.
+   * <p>
+   * We also resolve per-OS keys here:
+   * <pre> {@code
+   *  "Menu.borderColor": {
+   *      "os.default": "Grey12",
+   *      "os.windows": "Blue12"
+   *  }
+   * }</pre>
+   * <p>
+   * This is helpful when we need to check if some key was already set in {@link #putDefaultsIfAbsent},
+   * and to make overriding parentTheme keys independent of used form.
+   * <p>
+   * NB: we intentionally do not expand "*" patterns here.
+   */
+  private static void normalizeKeyPaths(@NotNull UITheme theme) {
+    if (theme.ui == null) return;
+
+    Map<String, Object> result = new LinkedHashMap<>();
+    for (Map.Entry<String, Object> entry : theme.ui.entrySet()) {
+      normalizeKeyValue(entry.getKey(), entry.getValue(), result);
+    }
+    theme.ui = result;
+  }
+
+  private static void normalizeKeyValue(@NotNull String keyPrefix,
+                                        @NotNull Object value,
+                                        @NotNull Map<String, Object> result) {
+    if (value instanceof Map) {
+      @SuppressWarnings("unchecked") Map<String, Object> valueMap = (Map<String, Object>)value;
+      if (isOSCustomization(valueMap)) {
+        Object osValue = getOSCustomization(valueMap);
+        if (osValue != null) {
+          normalizeKeyValue(keyPrefix, osValue, result);
+        }
+      }
+      else {
+        for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
+          String uiKey = createUIKey(keyPrefix, entry.getKey());
+          normalizeKeyValue(uiKey, entry.getValue(), result);
+        }
+      }
+    }
+    else {
+      result.put(keyPrefix, value);
+    }
   }
 
   private static void importFromParentTheme(@NotNull UITheme theme, @NotNull UITheme parentTheme) {
@@ -469,44 +523,31 @@ public final class UITheme {
   }
 
   private static void apply(@NotNull UITheme theme, String key, Object value, UIDefaults defaults) {
-    if (value instanceof Map) {
-      @SuppressWarnings("unchecked") Map<String, Object> map = (Map<String, Object>)value;
-      if (isOSCustomization(map)) {
-        applyOSCustomizations(theme, map, key, defaults);
+    String valueStr = value.toString();
+    Color color = null;
+    if (theme.colors != null) {
+      Object obj = theme.colors.get(valueStr);
+      if (obj != null) {
+        color = parseColor(obj.toString());
+        if (color != null && !key.startsWith("*")) {
+          defaults.put(key, color);
+          return;
+        }
       }
-      else {
-        for (Map.Entry<String, Object> o : map.entrySet()) {
-          apply(theme, createUIKey(key, o.getKey()), o.getValue(), defaults);
+    }
+    value = color == null ? parseValue(key, valueStr) : color;
+    if (key.startsWith("*.")) {
+      String tail = key.substring(1);
+      addPattern(key, value, defaults);
+
+      for (Object k : defaults.keySet().toArray()) {
+        if (k instanceof String && ((String)k).endsWith(tail)) {
+          defaults.put(k, value);
         }
       }
     }
     else {
-      String valueStr = value.toString();
-      Color color = null;
-      if (theme.colors != null) {
-        Object obj = theme.colors.get(valueStr);
-        if (obj != null) {
-          color = parseColor(obj.toString());
-          if (color != null && !key.startsWith("*")) {
-            defaults.put(key, color);
-            return;
-          }
-        }
-      }
-      value = color == null ? parseValue(key, valueStr) : color;
-      if (key.startsWith("*.")) {
-        String tail = key.substring(1);
-        addPattern(key, value, defaults);
-
-        for (Object k : defaults.keySet().toArray()) {
-          if (k instanceof String && ((String)k).endsWith(tail)) {
-            defaults.put(k, value);
-          }
-        }
-      }
-      else {
-        defaults.put(key, value);
-      }
+      defaults.put(key, value);
     }
   }
 
@@ -519,26 +560,23 @@ public final class UITheme {
     }
   }
 
-  private static void applyOSCustomizations(@NotNull UITheme theme,
-                                            Map<String, Object> map,
-                                            String key,
-                                            UIDefaults defaults) {
+  private static @Nullable Object getOSCustomization(@NotNull Map<String, Object> map) {
     String osKey = SystemInfoRt.isWindows ? OS_WINDOWS_KEY :
                    SystemInfoRt.isMac ? OS_MACOS_KEY :
                    SystemInfoRt.isLinux ? OS_LINUX_KEY : null;
     if (osKey != null && map.containsKey(osKey)) {
-      apply(theme, key, map.get(osKey), defaults);
+      return map.get(osKey);
     }
-    else if (map.containsKey(OS_DEFAULT_KEY)) {
-      apply(theme, key, map.get(OS_DEFAULT_KEY), defaults);
+    else {
+      return map.get(OS_DEFAULT_KEY);
     }
   }
 
   private static boolean isOSCustomization(Map<String, Object> map) {
-    return map.containsKey(OS_MACOS_KEY)
-           || map.containsKey(OS_WINDOWS_KEY)
-           || map.containsKey(OS_LINUX_KEY)
-           || map.containsKey(OS_DEFAULT_KEY);
+    return map.containsKey(OS_MACOS_KEY) ||
+           map.containsKey(OS_WINDOWS_KEY) ||
+           map.containsKey(OS_LINUX_KEY) ||
+           map.containsKey(OS_DEFAULT_KEY);
   }
 
   @SuppressWarnings("unchecked")
