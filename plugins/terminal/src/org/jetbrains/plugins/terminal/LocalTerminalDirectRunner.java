@@ -76,7 +76,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       rcfile = "jediterm-bash.in";
     }
     else if (ZSH_NAME.equals(shellName)) {
-      rcfile = ".zshenv";
+      rcfile = "zsh/.zshenv";
     }
     else if (FISH_NAME.equals(shellName)) {
       rcfile = "fish/init.fish";

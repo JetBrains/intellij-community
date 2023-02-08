@@ -19,6 +19,8 @@
 # If ZDOTDIR is unset, HOME is used instead.
 
 # This file is read, because IntelliJ launches zsh with custom ZDOTDIR.
+'builtin' local _INTELLIJ_ZDOTDIR="$ZDOTDIR"
+
 # Restore ZDOTDIR original value to load further zsh startup files correctly.
 if [[ -n "$_INTELLIJ_ORIGINAL_ZDOTDIR" ]]; then
   ZDOTDIR="$_INTELLIJ_ORIGINAL_ZDOTDIR"
@@ -83,6 +85,9 @@ function _jedi_precmd_hook() {
   builtin typeset -ga precmd_functions
   precmd_functions=(${precmd_functions:#_jedi_precmd_hook})
   builtin unset -f _jedi_precmd_hook
+
+  [ -r "$_INTELLIJ_ZDOTDIR/hooks.zsh" ] && source "$_INTELLIJ_ZDOTDIR/hooks.zsh"
+  'builtin' 'unset' '_INTELLIJ_ZDOTDIR'
 }
 
 builtin typeset -ga precmd_functions

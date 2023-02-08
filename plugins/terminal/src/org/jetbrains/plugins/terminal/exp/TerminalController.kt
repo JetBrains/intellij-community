@@ -20,6 +20,7 @@ import java.awt.Toolkit
 import java.net.URI
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.max
 import kotlin.math.min
 
@@ -775,6 +776,22 @@ class TerminalController(private val model: TerminalModel,
 
   override fun getWindowBackground(): com.jediterm.core.Color {
     return settings.terminalColorPalette.getBackground(model.styleState.background)
+  }
+
+  private val customCommandListeners: MutableList<TerminalCustomCommandListener> = CopyOnWriteArrayList()
+
+  override fun addCustomCommandListener(listener: TerminalCustomCommandListener) {
+    customCommandListeners.add(listener)
+  }
+
+  override fun removeCustomCommandListener(listener: TerminalCustomCommandListener) {
+    customCommandListeners.remove(listener)
+  }
+
+  override fun processCustomCommand(args: MutableList<String>) {
+    for (customCommandListener in customCommandListeners) {
+      customCommandListener.process(args)
+    }
   }
 
   private class DefaultTabulator(private var myWidth: Int,
