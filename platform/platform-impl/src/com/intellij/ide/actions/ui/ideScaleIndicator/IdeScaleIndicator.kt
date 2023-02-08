@@ -2,6 +2,8 @@
 package com.intellij.ide.actions.ui.ideScaleIndicator
 
 import com.intellij.ide.actions.ResetIdeScaleAction
+import com.intellij.ide.ui.UISettingsUtils
+import com.intellij.ide.ui.percentValue
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -28,7 +30,8 @@ class IdeScaleIndicator(percentage: Int) : JPanel() {
     update(event)
 
     AnActionLink(this, ActionPlaces.POPUP).also {
-      it.text = UIBundle.message("ide.scale.indicator.reset.scale.text")
+      it.text = UIBundle.message("ide.scale.indicator.reset.scale.format",
+                                 UISettingsUtils.currentDefaultScale.percentValue)
     }
   }
   var isHovered: Boolean = false
@@ -42,7 +45,7 @@ class IdeScaleIndicator(percentage: Int) : JPanel() {
       .cell(component = resetLink, verticalAlign = VerticalAlign.CENTER, resizableColumn = true)
       .columnsGaps(listOf(HorizontalGaps.EMPTY, HorizontalGaps(JBUIScale.scale(18))))
 
-    if (percentage == 100) resetLink.isVisible = false
+    if (percentage == UISettingsUtils.currentDefaultScale.percentValue) resetLink.isVisible = false
 
     val hoverListener: HoverListener = object : HoverListener() {
       override fun mouseEntered(component: Component, x: Int, y: Int) {

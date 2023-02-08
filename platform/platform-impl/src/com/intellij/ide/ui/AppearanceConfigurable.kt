@@ -161,6 +161,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       }.layout(RowLayout.INDEPENDENT)
 
       row(message("combobox.ide.scale.percent")) {
+        val defaultScale = UISettingsUtils.defaultScale(false)
         var resetZoom: Cell<ActionLink>? = null
 
         val model = IdeScaleTransformer.Settings.createIdeScaleComboboxModel()
@@ -168,15 +169,15 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           .bindItem( { settings.ideScale.percentStringValue }, { })
           .onChanged {
             IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, false)?.let { scale ->
-              resetZoom?.visible(scale != 1f)
+              resetZoom?.visible(scale.percentValue != defaultScale.percentValue)
               settings.ideScale = scale
               settings.fireUISettingsChanged()
             }
           }.gap(RightGap.SMALL)
 
         resetZoom = link(message("ide.scale.reset.link")) {
-          model.selectedItem = 1f.percentStringValue
-        }.apply { visible(settings.ideScale != 1f) }
+          model.selectedItem = defaultScale.percentStringValue
+        }.apply { visible(settings.ideScale.percentValue != defaultScale.percentValue) }
       }.layout(RowLayout.INDEPENDENT).topGap(TopGap.SMALL)
 
       row {

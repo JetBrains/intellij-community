@@ -48,6 +48,9 @@ class UISettingsUtils {
     fun scaleFontSize(fontSize: Float, scale: Float): Float =
       if (scale == 1f) fontSize
       else round(fontSize * scale)
+
+    val currentDefaultScale get() = defaultScale(UISettings.getInstance().presentationMode)
+    fun defaultScale(isPresentation: Boolean) = if (isPresentation) 1.75f else 1f
   }
 }
 

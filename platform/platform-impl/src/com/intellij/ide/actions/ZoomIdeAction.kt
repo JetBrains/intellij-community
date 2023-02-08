@@ -46,11 +46,12 @@ class ZoomOutIdeAction : ZoomIdeAction() {
 class ResetIdeScaleAction : ZoomIdeAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabled = UISettingsUtils.currentIdeScale != 1f
+    e.presentation.isEnabled =
+      UISettingsUtils.currentIdeScale.percentValue != UISettingsUtils.currentDefaultScale.percentValue
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    UISettingsUtils.setCurrentIdeScale(1f)
+    UISettingsUtils.setCurrentIdeScale(UISettingsUtils.currentDefaultScale)
     fireUISettingsChanged()
   }
 }
