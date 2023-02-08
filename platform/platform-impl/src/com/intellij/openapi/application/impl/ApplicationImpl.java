@@ -63,10 +63,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   static final boolean IMPLICIT_READ_ON_EDT_DISABLED = StartupUtil.isImplicitReadOnEDTDisabled();
   static final String MUST_NOT_EXECUTE_INSIDE_READ_ACTION = "Must not execute inside read action";
-  static final String MUST_EXECUTE_INSIDE_READ_ACTION = "Read access is allowed from inside read-action (or EDT) only (see Application.runReadAction())";
+  static final String MUST_EXECUTE_INSIDE_READ_ACTION = "Read access is allowed from inside read-action or Event Dispatch Thread (EDT) only (see Application.runReadAction())";
   static final String MUST_EXECUTE_INSIDE_WRITE_ACTION = "Write access is allowed inside write-action only (see Application.runWriteAction())";
-  static final String MUST_EXECUTE_UNDER_EDT = "Access is allowed from event dispatch thread only";
-  static final String MUST_NOT_EXECUTE_UNDER_EDT = "Access from event dispatch thread is not allowed";
+  static final String MUST_EXECUTE_UNDER_EDT = "Access is allowed from Event Dispatch Thread (EDT) only";
+  static final String MUST_NOT_EXECUTE_UNDER_EDT = "Access from Event Dispatch Thread (EDT) is not allowed";
 
   final ReadMostlyRWLock myLock;
 
@@ -1082,7 +1082,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public void assertTimeConsuming() {
     if (myTestModeFlag || myHeadlessMode || ShutDownTracker.isShutdownHookRunning()) return;
-    LOG.assertTrue(!isDispatchThread(), "This operation is time consuming and must not be called on EDT");
+    LOG.assertTrue(!isDispatchThread(), "This operation is time consuming and must not be called on Event Dispatch Thread (EDT)");
   }
 
   @Override
