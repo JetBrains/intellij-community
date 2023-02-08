@@ -17,20 +17,17 @@ import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.*;
 import java.util.logging.Formatter;
+import java.util.logging.*;
 
-/**
- * @author Eugene Zhuravlev
- */
 public final class ExternalJavacProcess {
   public static final String JPS_JAVA_COMPILING_TOOL_PROPERTY = "jps.java.compiling.tool";
   public static final int MINIMUM_REQUIRED_JAVA_VERSION = 7;
-  private final ChannelInitializer<?> myChannelInitializer;
   private final EventLoopGroup myEventLoopGroup;
   private final boolean myKeepRunning;
   private volatile ChannelFuture myConnectFuture;
@@ -55,20 +52,7 @@ public final class ExternalJavacProcess {
 
   public ExternalJavacProcess(boolean keepRunning) {
     myKeepRunning = keepRunning;
-    final JavacRemoteProto.Message msgDefaultInstance = JavacRemoteProto.Message.getDefaultInstance();
-
     myEventLoopGroup = new NioEventLoopGroup(1, myThreadPool);
-    myChannelInitializer = new ChannelInitializer() {
-      @Override
-      protected void initChannel(Channel channel) {
-        channel.pipeline().addLast(new ProtobufVarint32FrameDecoder(),
-                                   new ProtobufDecoder(msgDefaultInstance),
-                                   new ProtobufVarint32LengthFieldPrepender(),
-                                   new ProtobufEncoder(),
-                                   new CompilationRequestsHandler()
-                                   );
-      }
-    };
   }
 
   //static volatile long myGlobalStart;
@@ -110,8 +94,8 @@ public final class ExternalJavacProcess {
       System.exit(-1);
     }
 
-    final ExternalJavacProcess process = new ExternalJavacProcess(keepRunning);
     try {
+      final ExternalJavacProcess process = new ExternalJavacProcess(keepRunning);
       //final long connectStart = System.nanoTime();
       if (process.connect(host, port)) {
         //final long connectEnd = System.nanoTime();
@@ -131,9 +115,18 @@ public final class ExternalJavacProcess {
     }
   }
 
-  private  boolean connect(final String host, final int port) throws Throwable {
-    final Bootstrap bootstrap = new Bootstrap().group(myEventLoopGroup).channel(NioSocketChannel.class).handler(myChannelInitializer);
-    bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
+  private  boolean connect(final String host, final int port) {
+    final Bootstrap bootstrap = new Bootstrap().group(myEventLoopGroup).channel(NioSocketChannel.class).handler(new ChannelInitializer() {
+      @Override
+      protected void initChannel(Channel channel) {
+        channel.pipeline().addLast(new ProtobufVarint32FrameDecoder(),
+                                   new ProtobufDecoder(JavacRemoteProto.Message.getDefaultInstance()),
+                                   new ProtobufVarint32LengthFieldPrepender(),
+                                   new ProtobufEncoder(),
+                                   new CompilationRequestsHandler()
+        );
+      }
+    }).option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
     final ChannelFuture future = bootstrap.connect(host, port).syncUninterruptibly();
     if (future.isSuccess()) {
       myConnectFuture = future;
