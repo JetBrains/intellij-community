@@ -91,8 +91,8 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link LinkedList#LinkedList()}
-
+   * @deprecated Use {@link LinkedList#LinkedList()}<br>
+   *
    * DO NOT REMOVE this method until {@link ContainerUtil#newLinkedList(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
@@ -111,8 +111,8 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link ArrayList#ArrayList()}
-
+   * @deprecated Use {@link ArrayList#ArrayList()}<br>
+   *
    * DO NOT REMOVE this method until {@link ContainerUtil#newArrayList(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
@@ -133,7 +133,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link ArrayList#ArrayList(Collection)} instead
+   * @deprecated Use {@link ArrayList#ArrayList(Collection)} instead<br>
    *
    * DO NOT REMOVE this method until {@link ContainerUtil#newArrayList(Iterable)} is removed.
    * The former method is here to highlight incorrect usages of the latter.
@@ -251,8 +251,8 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link HashSet#HashSet()}
-
+   * @deprecated Use {@link HashSet#HashSet()}<br>
+   *
    * DO NOT REMOVE this method until {@link ContainerUtil#newHashSet(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
@@ -279,7 +279,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated use {@link HashSet#HashSet(Collection)}
+   * @deprecated use {@link HashSet#HashSet(Collection)}<br>
    *
    * DO NOT remove this method until {@link #newHashSet(Iterable)} is removed
    * The former method is here to highlight incorrect usages of the latter.
@@ -313,8 +313,8 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link LinkedHashSet#LinkedHashSet()}
-
+   * @deprecated Use {@link LinkedHashSet#LinkedHashSet()}<br>
+   *
    * DO NOT REMOVE this method until {@link ContainerUtil#newLinkedHashSet(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
@@ -334,7 +334,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated use {@link LinkedHashSet#LinkedHashSet(Collection)}
+   * @deprecated use {@link LinkedHashSet#LinkedHashSet(Collection)}<br>
    *
    * DO NOT remove this method until {@link #newLinkedHashSet(Iterable)} is removed
    * The former method is here to highlight incorrect usages of the latter.
@@ -449,13 +449,13 @@ public final class ContainerUtil {
   @SafeVarargs
   @Contract(pure = true)
   @Unmodifiable
-  public static @NotNull <E> ImmutableList<E> immutableList(E @NotNull ... array) {
+  public static @NotNull <E> ImmutableList<E> immutableList(@NotNull E @NotNull ... array) {
     return new ImmutableListBackedByArray<>(array);
   }
 
   /**
-   * @deprecated use {@link Collections#emptyList()}
-
+   * @deprecated use {@link Collections#emptyList()}<br>
+   *
    * DO NOT REMOVE this method until {@link ContainerUtil#immutableList(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
@@ -467,8 +467,8 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated use more standard/memory-conscious alternatives {@link List#of(Object)} or {@link Collections#singletonList(Object)} instead
-
+   * @deprecated use more standard/memory-conscious alternatives {@link List#of(Object)} or {@link Collections#singletonList(Object)} instead.<br>
+   *
    * DO NOT REMOVE this method until {@link ContainerUtil#immutableList(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
@@ -1646,7 +1646,7 @@ public final class ContainerUtil {
     return res;
   }
   /**
-   * @deprecated use {@link #getLastItem(List)}
+   * @deprecated use {@link #getLastItem(List)}<br>
    *
    * DO NOT remove this method until {@link #iterateAndGetLastItem(Iterable)} is removed
    * The former method is here to highlight incorrect usages of the latter.
@@ -2085,8 +2085,8 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated use {@link Collections#emptySet()} or {@link Set#of()} instead
-
+   * @deprecated use {@link Collections#emptySet()} or {@link Set#of()} instead<br>
+   *
    * DO NOT REMOVE this method until {@link ContainerUtil#set(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
@@ -2098,8 +2098,8 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated use {@link Collections#singleton(Object)} or {@link Set#of} instead
-
+   * @deprecated use {@link Collections#singleton(Object)} or {@link Set#of} instead<br>
+   *
    * DO NOT REMOVE this method until {@link ContainerUtil#set(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
@@ -2564,7 +2564,7 @@ public final class ContainerUtil {
    * It differs from the java.util.concurrent.CopyOnWriteArrayList in the following:
    * - faster modification in the uncontended case
    * - less memory
-   * - slower modification in highly contented case (which is the kind of situation you shouldn't use COWAL anyway)
+   * - slower modification in highly contented case (which is the kind of situation you shouldn't use COWAL anyway)<br>
    *
    * N.B. Avoid using {@code list.toArray(new T[list.size()])} on this list because it is inherently racey and
    * therefore can return array with null elements at the end.
@@ -2825,7 +2825,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated use the argument instead
+   * @deprecated use the argument instead<br>
    *
    * DO NOT remove this method until {@link #toCollection(Iterable)} is removed
    * The former method is here to highlight incorrect usages of the latter.
