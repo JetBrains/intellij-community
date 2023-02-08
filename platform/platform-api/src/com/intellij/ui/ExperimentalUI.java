@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.ColorUIResource;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -130,6 +129,7 @@ public abstract class ExperimentalUI {
   public abstract @NotNull Map<ClassLoader, Map<String, String>> getIconMappings();
 
   public abstract void onExpUIEnabled(boolean suggestRestart);
+
   public abstract void onExpUIDisabled(boolean suggestRestart);
 
   private static void patchUIDefaults(boolean isNewUiEnabled) {
@@ -138,10 +138,6 @@ public abstract class ExperimentalUI {
     }
 
     UIDefaults defaults = UIManager.getDefaults();
-    setUIProperty("EditorTabs.underlineArc", 4, defaults);
-    setUIProperty("ToolWindow.Button.selectedBackground", new ColorUIResource(0x3573f0), defaults);
-    setUIProperty("ToolWindow.Button.selectedForeground", new ColorUIResource(0xffffff), defaults);
-
     if (defaults.getColor("EditorTabs.hoverInactiveBackground") == null) {
       // avoid getting EditorColorsManager too early
       setUIProperty("EditorTabs.hoverInactiveBackground", (UIDefaults.LazyValue)__ -> {
@@ -179,7 +175,7 @@ public abstract class ExperimentalUI {
     }
 
     private static Icon loadIcon(String path) {
-      return IconLoader.getIcon(path, AllIcons .class.getClassLoader());
+      return IconLoader.getIcon(path, AllIcons.class.getClassLoader());
     }
   }
 }

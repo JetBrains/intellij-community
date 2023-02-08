@@ -9,6 +9,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ColorHexUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.DigestUtil;
@@ -89,7 +90,7 @@ public final class UITheme {
                                               @NotNull Function<? super String, String> iconsMapper) throws IOException {
     UITheme theme = JSON_READER.beanFrom(UITheme.class, stream);
     theme.id = themeId;
-    return loadFromJson(theme, provider, iconsMapper);
+    return postProcessTheme(theme, null, provider, iconsMapper);
   }
 
   public static @NotNull UITheme loadFromJson(byte[] data,
@@ -98,7 +99,7 @@ public final class UITheme {
                                               @NotNull Function<? super String, String> iconsMapper) throws IOException {
     UITheme theme = JSON_READER.beanFrom(UITheme.class, data);
     theme.id = themeId;
-    return loadFromJson(theme, provider, iconsMapper);
+    return postProcessTheme(theme, null, provider, iconsMapper);
   }
 
   public static @NotNull UITheme loadFromJson(@Nullable UITheme parentTheme,
@@ -108,9 +109,17 @@ public final class UITheme {
                                               @NotNull Function<? super String, String> iconsMapper) throws IOException {
     UITheme theme = JSON_READER.beanFrom(UITheme.class, data);
     theme.id = themeId;
+    return postProcessTheme(theme, parentTheme, provider, iconsMapper);
+  }
+
+  private static @NotNull UITheme postProcessTheme(@NotNull UITheme theme,
+                                                   @Nullable UITheme parentTheme,
+                                                   @Nullable ClassLoader provider,
+                                                   @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
     if (parentTheme != null) {
       importFromParentTheme(theme, parentTheme);
     }
+    putDefaultsIfAbsent(theme);
     return loadFromJson(theme, provider, iconsMapper);
   }
 
@@ -136,6 +145,24 @@ public final class UITheme {
       }
     }
     return result;
+  }
+
+  /**
+   * Ensure that the old themes are not missing some vital keys.
+   * <p>
+   * We are patching them here instead of using {@link com.intellij.ui.JBColor#namedColor} fallback
+   * to make sure {@link UIManager#getColor} works properly.
+   */
+  private static void putDefaultsIfAbsent(@NotNull UITheme theme) {
+    if (theme.ui == null) theme.ui = new LinkedHashMap<>();
+
+    if (ExperimentalUI.isNewUI()) {
+      theme.ui.putIfAbsent("EditorTabs.underlineArc", "4");
+
+      // require theme to specify ToolWindow stripe button colors explicitly, without "*"
+      theme.ui.putIfAbsent("ToolWindow.Button.selectedBackground", "#3573F0");
+      theme.ui.putIfAbsent("ToolWindow.Button.selectedForeground", "#FFFFFF");
+    }
   }
 
   private static @NotNull UITheme loadFromJson(@NotNull UITheme theme,
