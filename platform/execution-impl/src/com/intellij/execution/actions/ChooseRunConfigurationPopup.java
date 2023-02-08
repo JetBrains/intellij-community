@@ -387,7 +387,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
 
           final RunManager manager = RunManager.getInstance(project);
 
-          if (!manager.isRunWidgetActive()) RunManager.getInstance(project).setSelectedConfiguration(config);
+          if (!manager.isRiderRunWidgetActive()) RunManager.getInstance(project).setSelectedConfiguration(config);
           MacroManager.getInstance().cacheMacrosPreview(context);
           ExecutionUtil.doRunConfiguration(config, executor, null, null, context);
         }
@@ -634,7 +634,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
               if (dynamic) {
                 manager.setTemporaryConfiguration(settings);
               }
-              if (!manager.isRunWidgetActive()) manager.setSelectedConfiguration(settings);
+              if (!manager.isRiderRunWidgetActive()) manager.setSelectedConfiguration(settings);
               ExecutionUtil.runConfiguration(settings, executor);
             }
           });
