@@ -617,6 +617,13 @@
       "MarkerPopup": {
         "borderInsets": "6,8,6,10",
         "borderColor": "Grey11"
+      },
+      "GitLog": {
+        "headIconColor": "Yellow4",
+        "localBranchIconColor": "Green5",
+        "otherIconColor": "Grey6",
+        "remoteBranchIconColor": "Purple4",
+        "tagIconColor": "Grey6"
       }
     },
 
