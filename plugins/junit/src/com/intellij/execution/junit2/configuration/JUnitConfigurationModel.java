@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit2.configuration;
 
@@ -143,24 +143,20 @@ public class JUnitConfigurationModel {
       }
     }
     else if (!JUnitConfiguration.BY_SOURCE_CHANGES.equals(testObject)) {
-      if (JUnitConfiguration.TEST_PACKAGE.equals(testObject)) {
-        data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
-      }
-      else if (JUnitConfiguration.TEST_DIRECTORY.equals(testObject)) {
-        data.setDirName(getJUnitTextValue(DIR));
-      }
-      else if (JUnitConfiguration.TEST_CATEGORY.equals(testObject)) {
-        data.setCategoryName(getJUnitTextValue(CATEGORY));
-      }
-      else {
-        final LinkedHashSet<String> set = new LinkedHashSet<>();
-        final String[] patterns = getJUnitTextValue(PATTERN).split("\\|\\|");
-        for (String pattern : patterns) {
-          if (pattern.length() > 0) {
-            set.add(pattern);
+      switch (testObject) {
+        case JUnitConfiguration.TEST_PACKAGE -> data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
+        case JUnitConfiguration.TEST_DIRECTORY -> data.setDirName(getJUnitTextValue(DIR));
+        case JUnitConfiguration.TEST_CATEGORY -> data.setCategoryName(getJUnitTextValue(CATEGORY));
+        default -> {
+          final LinkedHashSet<String> set = new LinkedHashSet<>();
+          final String[] patterns = getJUnitTextValue(PATTERN).split("\\|\\|");
+          for (String pattern : patterns) {
+            if (pattern.length() > 0) {
+              set.add(pattern);
+            }
           }
+          data.setPatterns(set);
         }
-        data.setPatterns(set);
       }
       data.MAIN_CLASS_NAME = "";
       data.METHOD_NAME = "";

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,15 +31,17 @@ final class GuavaPredicatesUtil {
   @Nullable
   static TypeConversionDescriptorBase tryConvertIfPredicates(PsiMethod method, PsiExpression context) {
     final String name = method.getName();
-    if (name.equals("alwaysTrue") || name.equals("alwaysFalse")) {
-      return createConstantPredicate(name, name.contains("True"));
-    }
-    else if (name.equals("isNull") || name.equals("notNull")) {
-      final String operation = name.equals("isNull") ? "==" : "!=";
-      return new TypeConversionDescriptorWithLocalVariable(name, "$x$ -> $x$" + operation + " null");
-    }
-    else if (name.equals("equalTo")) {
-      return new TypeConversionDescriptorWithLocalVariable("equalTo", "$x$ -> java.util.Objects.equals($x$, $v$)");
+    switch (name) {
+      case "alwaysTrue", "alwaysFalse" -> {
+        return createConstantPredicate(name, name.contains("True"));
+      }
+      case "isNull", "notNull" -> {
+        final String operation = name.equals("isNull") ? "==" : "!=";
+        return new TypeConversionDescriptorWithLocalVariable(name, "$x$ -> $x$" + operation + " null");
+      }
+      case "equalTo" -> {
+        return new TypeConversionDescriptorWithLocalVariable("equalTo", "$x$ -> java.util.Objects.equals($x$, $v$)");
+      }
     }
     if (!isConvertablePredicatesMethod(method, (PsiMethodCallExpression)context)) return null;
     if (((PsiMethodCallExpression)context).getArgumentList().isEmpty()) {

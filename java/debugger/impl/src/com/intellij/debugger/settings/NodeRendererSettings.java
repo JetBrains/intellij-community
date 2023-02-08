@@ -176,18 +176,16 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
         continue;
       }
       try {
-        if (ToStringRenderer.UNIQUE_ID.equals(id)) {
-          myToStringRenderer.readExternal(elem);
-          if (!myToStringRenderer.isEnabled()) {
-            myToStringRenderer.setEnabled(true);
-            myToStringRenderer.setOnDemand(true);
+        switch (id) {
+          case ToStringRenderer.UNIQUE_ID -> {
+            myToStringRenderer.readExternal(elem);
+            if (!myToStringRenderer.isEnabled()) {
+              myToStringRenderer.setEnabled(true);
+              myToStringRenderer.setOnDemand(true);
+            }
           }
-        }
-        else if (ClassRenderer.UNIQUE_ID.equals(id)) {
-          myClassRenderer.readExternal(elem);
-        }
-        else if (PrimitiveRenderer.UNIQUE_ID.equals(id)) {
-          myPrimitiveRenderer.readExternal(elem);
+          case ClassRenderer.UNIQUE_ID -> myClassRenderer.readExternal(elem);
+          case PrimitiveRenderer.UNIQUE_ID -> myPrimitiveRenderer.readExternal(elem);
         }
       }
       catch (InvalidDataException e) {

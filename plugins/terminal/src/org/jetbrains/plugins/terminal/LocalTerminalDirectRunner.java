@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.CommandLineUtil;
@@ -71,16 +71,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Nullable
   private static String findRCFile(@NotNull String shellName) {
-    String rcfile = null;
-    if (BASH_NAME.equals(shellName) || SH_NAME.equals(shellName)) {
-      rcfile = "jediterm-bash.in";
-    }
-    else if (ZSH_NAME.equals(shellName)) {
-      rcfile = "zsh/.zshenv";
-    }
-    else if (FISH_NAME.equals(shellName)) {
-      rcfile = "fish/init.fish";
-    }
+    String rcfile = switch (shellName) {
+      case BASH_NAME, SH_NAME -> "jediterm-bash.in";
+      case ZSH_NAME -> "zsh/.zshenv";
+      case FISH_NAME -> "fish/init.fish";
+      default -> null;
+    };
     if (rcfile != null) {
       try {
         return findAbsolutePath(rcfile);

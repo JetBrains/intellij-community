@@ -1748,44 +1748,25 @@ public class JavaDocInfoGenerator {
       PsiElement element = elements[i];
       if (element instanceof PsiInlineDocTag tag) {
         String tagName = tag.getName();
-        if (tagName.equals(LINK_TAG)) {
-          generateLinkValue(tag, buffer, false);
-        }
-        else if (tagName.equals(LITERAL_TAG)) {
-          generateLiteralValue(buffer, tag, true);
-        }
-        else if (tagName.equals(CODE_TAG) || tagName.equals(SYSTEM_PROPERTY_TAG)) {
-          generateCodeValue(tag, buffer);
-        }
-        else if (tagName.equals(LINKPLAIN_TAG)) {
-          generateLinkValue(tag, buffer, true);
-        }
-        else if (tagName.equals(INHERIT_DOC_TAG)) {
-          if (provider == null) continue;
-          Pair<PsiElement[], InheritDocProvider<PsiElement[]>> inheritInfo = provider.getInheritDoc();
-          if (inheritInfo != null) {
-            generateValue(buffer, inheritInfo.first, inheritInfo.second);
+        switch (tagName) {
+          case LINK_TAG -> generateLinkValue(tag, buffer, false);
+          case LITERAL_TAG -> generateLiteralValue(buffer, tag, true);
+          case CODE_TAG, SYSTEM_PROPERTY_TAG -> generateCodeValue(tag, buffer);
+          case LINKPLAIN_TAG -> generateLinkValue(tag, buffer, true);
+          case INHERIT_DOC_TAG -> {
+            if (provider == null) continue;
+            Pair<PsiElement[], InheritDocProvider<PsiElement[]>> inheritInfo = provider.getInheritDoc();
+            if (inheritInfo != null) {
+              generateValue(buffer, inheritInfo.first, inheritInfo.second);
+            }
           }
-        }
-        else if (tagName.equals(DOC_ROOT_TAG)) {
-          buffer.append(getDocRoot());
-        }
-        else if (tagName.equals(VALUE_TAG)) {
-          generateValueValue(tag, buffer, element);
-        }
-        else if (tagName.equals(INDEX_TAG)) {
-          generateIndexValue(buffer, tag);
-        }
-        else if (tagName.equals(SUMMARY_TAG)) {
-          generateLiteralValue(buffer, tag, false);
-        }
-        else if (tagName.equals(SNIPPET_TAG)) {
-          generateSnippetValue(buffer, tag);
-        }
-        else if (tagName.equals(RETURN_TAG)) {
-          generateInlineReturnValue(buffer, tag, provider);
-        } else {
-          generateUnknownInlineTagValue(buffer, tag);
+          case DOC_ROOT_TAG -> buffer.append(getDocRoot());
+          case VALUE_TAG -> generateValueValue(tag, buffer, element);
+          case INDEX_TAG -> generateIndexValue(buffer, tag);
+          case SUMMARY_TAG -> generateLiteralValue(buffer, tag, false);
+          case SNIPPET_TAG -> generateSnippetValue(buffer, tag);
+          case RETURN_TAG -> generateInlineReturnValue(buffer, tag, provider);
+          default -> generateUnknownInlineTagValue(buffer, tag);
         }
       }
       else {
