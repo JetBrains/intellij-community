@@ -120,7 +120,8 @@ public class ObjectEquality {
     test(char.class == char.class);
   }
 
-  // A class having a private constructor is a hint that objects are interned,
+  // A class that has only private constructors
+  // is a hint that objects of this class are interned,
   // thereby making '==' and 'equals' equivalent.
   void comparePrivateConstructor(MyPrivateConstructor priv1, MyPrivateConstructor priv2, Object obj) {
     test(priv1 == priv2);
@@ -139,17 +140,51 @@ public class ObjectEquality {
 
   // When comparing two expressions whose declared type is an interface,
   // it is generally unknown whether the dynamic types may be compared using '==' or not.
-  void compareInterface(MyInterface i1, MyInterface i2, Object obj, MyFinal fin) {
-    test(i1 <warning descr="Object values are compared using '==', not 'equals()'">==</warning> i2);
+  void compareInterface(MyFinalInterface fini1, MyFinalInterface fini2, Object obj, MyFinal fin) {
+    test(fini1 <warning descr="Object values are compared using '==', not 'equals()'">==</warning> fini2);
 
-    test(i1 <warning descr="Object values are compared using '==', not 'equals()'">==</warning> obj);
-    test(obj <warning descr="Object values are compared using '==', not 'equals()'">==</warning> i1);
+    test(fini1 <warning descr="Object values are compared using '==', not 'equals()'">==</warning> obj);
+    test(obj <warning descr="Object values are compared using '==', not 'equals()'">==</warning> fini2);
 
-    test(i1 == fin);
-    test(fin == i1);
+    test(fini1 == fin);
+    test(fin == fini2);
   }
 
-  interface MyInterface {
+  void comparePrivateConstructorInterface(MyPrivateConstructorsInterface pci1, MyPrivateConstructorsInterface pci2) {
+    test(pci1 == pci2);
+  }
+
+  void incompatibleArguments(
+    MyFinalInterface fini,
+    MyUnimplementedInterface uni,
+    MyNonFinal nfin,
+    MyFinal fin
+  ) {
+    // There may be subclasses of MyNonFinal that implement MyFinalInterface.
+    test(fini <warning descr="Object values are compared using '==', not 'equals()'">==</warning> nfin);
+
+    test(uni == fini);
+
+    test(<error descr="Operator '==' cannot be applied to 'com.siyeh.igtest.bugs.object_equality.ObjectEquality.MyUnimplementedInterface', 'com.siyeh.igtest.bugs.object_equality.ObjectEquality.MyFinal'">uni == fin</error>);
+    test(<error descr="Operator '==' cannot be applied to 'com.siyeh.igtest.bugs.object_equality.ObjectEquality.MyFinal', 'com.siyeh.igtest.bugs.object_equality.ObjectEquality.MyUnimplementedInterface'">fin == uni</error>);
+  }
+
+  // An interface whose implementors are unknown.
+  interface MyUnimplementedInterface {
+  }
+
+  // An interface whose (currently visible) implementors are all final.
+  interface MyFinalInterface {
+  }
+
+  // An interface that is implement by a mixture of final and nonfinal types.
+  interface MyMixedFinalInterface {
+  }
+
+  // All currently visible implementers of this interface have only private constructors,
+  // which is a hint that objects of these classes are interned,
+  // thereby making '==' and 'equals' equivalent.
+  interface MyPrivateConstructorsInterface {
   }
 
   class MyClass {
@@ -159,10 +194,13 @@ public class ObjectEquality {
     FIRST, SECOND, THIRD;
   }
 
-  final class MyFinal implements MyInterface {
+  class MyNonFinal implements MyMixedFinalInterface {
   }
 
-  class MyPrivateConstructor {
+  final class MyFinal implements MyFinalInterface, MyMixedFinalInterface {
+  }
+
+  class MyPrivateConstructor implements MyPrivateConstructorsInterface {
     private MyPrivateConstructor() { }
   }
 
