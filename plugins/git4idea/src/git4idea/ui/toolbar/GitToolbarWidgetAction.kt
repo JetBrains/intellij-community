@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.ui.popup.util.PopupImplUtil
@@ -102,6 +103,12 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
       }
 
       GitWidgetState.NoVcs -> {
+        val activeVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
+        if (activeVcss.isNotEmpty()) {
+          e.presentation.isEnabledAndVisible = false
+          return
+        }
+
         val placeholder = getPlaceholder(project)
         with(e.presentation) {
           isEnabledAndVisible = true
