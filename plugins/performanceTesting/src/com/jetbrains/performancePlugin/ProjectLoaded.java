@@ -397,14 +397,14 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
   }
 
   public static void runScript(Project project, String script, boolean mustExitOnFailure) {
-    PlaybackRunner playback = new PlaybackRunnerExtended(script, new CommandLogger(), project);
+    PlaybackRunner playback = new PlaybackRunnerExtended(script, project);
     ActionCallback scriptCallback = playback.run();
     CommandsRunner.setActionCallback(scriptCallback);
     registerOnFinishRunnables(scriptCallback, mustExitOnFailure);
   }
 
   private static void runScriptFromFile(Project project) {
-    PlaybackRunner playback = new PlaybackRunnerExtended("%include " + getTestFile(), new CommandLogger(), project);
+    PlaybackRunner playback = new PlaybackRunnerExtended("%include " + getTestFile(), project);
     playback.setScriptDir(getTestFile().getParentFile());
     if (SystemProperties.getBooleanProperty(ReporterCommandAsTelemetrySpan.USE_SPAN_WRAPPER_FOR_COMMAND, false)) {
       playback.setCommandStartStopProcessor(new ReporterCommandAsTelemetrySpan());
@@ -422,10 +422,6 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
       .doWhenRejected(errorMessage -> {
         String message = "IDE will be terminated because some errors are detected while running the startup script: " + errorMessage;
 
-        if (System.getProperty("ide.performance.screenshot.on.failure") != null) {
-          TakeScreenshotCommand.takeScreenshotOfFrame(System.getProperty("ide.performance.screenshot.on.failure"));
-        }
-
         if (MUST_REPORT_TEAMCITY_TEST_FAILURE_ON_IDE_ERROR) {
           String testName = getTeamCityFailedTestName();
           reportTeamCityFailedTestAndBuildProblem(testName, message, "");
@@ -436,6 +432,10 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
         }
 
         LOG.error(message);
+
+        if (System.getProperty("ide.performance.screenshot.on.failure") != null) {
+          TakeScreenshotCommand.takeScreenshotOfFrame(System.getProperty("ide.performance.screenshot.on.failure"));
+        }
 
         String threadDump = "Thread dump before IDE termination:\n" + ThreadDumper.dumpThreadsToString();
         LOG.info(threadDump);
