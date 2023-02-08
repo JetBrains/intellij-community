@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.*;
@@ -7,7 +7,6 @@ import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.*;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -68,16 +67,14 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
    */
   private static boolean shouldPreserveSpace(ASTNode node, boolean defaultValue) {
     if (node.getPsi() instanceof XmlTag tag) {
-      if (tag != null) {
-        XmlAttribute spaceAttr = tag.getAttribute("xml:space");
-        if (spaceAttr != null) {
-          String value = spaceAttr.getValue();
-          if ("preserve".equals(value)) {
-            return true;
-          }
-          if ("default".equals(value)) {
-            return false;
-          }
+      XmlAttribute spaceAttr = tag.getAttribute("xml:space");
+      if (spaceAttr != null) {
+        String value = spaceAttr.getValue();
+        if ("preserve".equals(value)) {
+          return true;
+        }
+        if ("default".equals(value)) {
+          return false;
         }
       }
     }
@@ -382,8 +379,6 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   public abstract boolean isTextElement();
-
-  private static final Logger LOG = Logger.getInstance(AbstractXmlBlock.class);
 
   protected void createJspTextNode(final List<? super Block> localResult, final ASTNode child, final Indent indent) {
   }
