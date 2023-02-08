@@ -73,6 +73,7 @@ interface NotebookEditorAppearanceColors {
 
 interface NotebookEditorAppearanceFlags {
   fun shouldShowCellLineNumbers(): Boolean
+  fun shouldShowExecutionCounts(): Boolean
 }
 
 object DefaultNotebookEditorAppearanceSizes: NotebookEditorAppearanceSizes {
