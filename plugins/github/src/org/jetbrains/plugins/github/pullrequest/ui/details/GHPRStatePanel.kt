@@ -114,6 +114,14 @@ internal class GHPRStatePanel(
       }
     }
 
+    protected fun createMergeActionGroup(scope: CoroutineScope, reviewFlowVm: GHPRReviewFlowViewModel): ActionGroup {
+      return DefaultActionGroup(GithubBundle.message("pull.request.merge.commit.action"), true).apply {
+        add(GHPRCommitMergeAction(scope, reviewFlowVm).toAnAction())
+        add(GHPRRebaseMergeAction(scope, reviewFlowVm).toAnAction())
+        add(GHPRSquashMergeAction(scope, reviewFlowVm).toAnAction())
+      }
+    }
+
     class Author(
       scope: CoroutineScope,
       reviewDetailsVm: GHPRDetailsViewModel,
@@ -147,7 +155,7 @@ internal class GHPRStatePanel(
             actionGroup.removeAll()
             when (reviewState) {
               ReviewState.NEED_REVIEW, ReviewState.WAIT_FOR_UPDATES -> {
-                actionGroup.add(GHPRCommitMergeAction(scope, reviewFlowVm).toAnAction())
+                actionGroup.add(createMergeActionGroup(scope, reviewFlowVm))
                 actionGroup.add(GHPRCloseAction(scope, reviewFlowVm).toAnAction())
               }
               ReviewState.ACCEPTED -> {
@@ -186,7 +194,7 @@ internal class GHPRStatePanel(
             when (reviewState) {
               ReviewState.NEED_REVIEW, ReviewState.WAIT_FOR_UPDATES -> {
                 actionGroup.add(GHPRRequestReviewAction(scope, reviewFlowVm).toAnAction())
-                actionGroup.add(GHPRCommitMergeAction(scope, reviewFlowVm).toAnAction())
+                actionGroup.add(createMergeActionGroup(scope, reviewFlowVm))
                 actionGroup.add(GHPRCloseAction(scope, reviewFlowVm).toAnAction())
               }
               ReviewState.ACCEPTED -> {
@@ -244,7 +252,7 @@ internal class GHPRStatePanel(
         }
         val actionGroup = DefaultActionGroup(GithubBundle.message("pull.request.review.actions.more.name"), true).apply {
           add(GHPRRequestReviewAction(scope, reviewFlowVm).toAnAction())
-          add(GHPRCommitMergeAction(scope, reviewFlowVm).toAnAction())
+          add(createMergeActionGroup(scope, reviewFlowVm))
           add(GHPRCloseAction(scope, reviewFlowVm).toAnAction())
         }
         val moreButton = createMoreButton(actionGroup)

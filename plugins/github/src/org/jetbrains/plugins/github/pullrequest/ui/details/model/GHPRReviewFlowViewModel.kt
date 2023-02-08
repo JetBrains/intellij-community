@@ -19,9 +19,9 @@ internal interface GHPRReviewFlowViewModel {
   val userCanManageReview: Boolean
   val userCanMergeReview: Boolean
 
-  val isMergeAllowed: Boolean
-  val isRebaseAllowed: Boolean
-  val isSquashMergeAllowed: Boolean
+  val isMergeAllowed: Flow<Boolean>
+  val isRebaseAllowed: Flow<Boolean>
+  val isSquashMergeAllowed: Flow<Boolean>
 
   fun mergeReview()
   fun rebaseReview()

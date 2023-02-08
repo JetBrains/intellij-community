@@ -15,6 +15,7 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewDecision
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState
+import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataOperationsListener
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
@@ -43,6 +44,8 @@ internal class GHPRReviewFlowViewModelImpl(
 
   private val _isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
   override val isBusy: Flow<Boolean> = _isBusy.asStateFlow()
+
+  private val mergeabilityState: MutableStateFlow<GHPRMergeabilityState?> = MutableStateFlow(stateModel.mergeabilityState)
 
   override val requestedReviewersState: StateFlow<List<GHPullRequestRequestedReviewer>> = _requestedReviewersState.asStateFlow()
 
@@ -89,15 +92,20 @@ internal class GHPRReviewFlowViewModelImpl(
   override val userCanManageReview: Boolean = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) ||
                                               stateModel.viewerDidAuthor
 
-  override val userCanMergeReview: Boolean = stateModel.mergeabilityState?.canBeMerged == true &&
-                                             securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE) &&
+  override val userCanMergeReview: Boolean = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE) &&
                                              !securityService.isMergeForbiddenForProject()
 
-  override val isMergeAllowed: Boolean = securityService.isMergeAllowed()
+  override val isMergeAllowed: Flow<Boolean> = mergeabilityState.map { mergeabilityState ->
+    mergeabilityState?.canBeMerged == true && securityService.isRebaseMergeAllowed()
+  }
 
-  override val isRebaseAllowed: Boolean = stateModel.mergeabilityState?.canBeRebased == true && securityService.isRebaseMergeAllowed()
+  override val isRebaseAllowed: Flow<Boolean> = mergeabilityState.map { mergeabilityState ->
+    mergeabilityState?.canBeRebased == true && securityService.isRebaseMergeAllowed()
+  }
 
-  override val isSquashMergeAllowed: Boolean = securityService.isSquashMergeAllowed()
+  override val isSquashMergeAllowed: Flow<Boolean> = mergeabilityState.map { mergeabilityState ->
+    mergeabilityState?.canBeMerged == true && securityService.isSquashMergeAllowed()
+  }
 
   override fun mergeReview() = stateModel.submitMergeTask()
 
@@ -154,13 +162,15 @@ internal class GHPRReviewFlowViewModelImpl(
       _isBusy.value = stateModel.isBusy
     }
 
-    with(detailsDataProvider) {
-      addDetailsLoadedListener(disposable) {
-        val pullRequest = loadedDetails!!
-        _requestedReviewersState.value = pullRequest.reviewRequests.mapNotNull { it.requestedReviewer }
-        pullRequestReviewState.value = pullRequest.reviews.associate { (it.author as? GHUser ?: ghostUser) to it.state }
-        reviewDecision.value = pullRequest.reviewDecision
-      }
+    stateModel.addAndInvokeMergeabilityStateLoadingResultListener {
+      mergeabilityState.value = stateModel.mergeabilityState
+    }
+
+    detailsDataProvider.addDetailsLoadedListener(disposable) {
+      val pullRequest = detailsDataProvider.loadedDetails!!
+      _requestedReviewersState.value = pullRequest.reviewRequests.mapNotNull { it.requestedReviewer }
+      pullRequestReviewState.value = pullRequest.reviews.associate { (it.author as? GHUser ?: ghostUser) to it.state }
+      reviewDecision.value = pullRequest.reviewDecision
     }
 
     reviewDataProvider.addPendingReviewListener(disposable) {
