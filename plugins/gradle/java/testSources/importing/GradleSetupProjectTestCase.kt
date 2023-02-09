@@ -19,17 +19,14 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.utils.module.assertModules
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
-import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
-import org.jetbrains.plugins.gradle.util.getProjectDataLoadPromise
+import org.jetbrains.plugins.gradle.util.awaitProjectReload
 import org.jetbrains.plugins.gradle.util.whenResolveTaskStarted
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.runners.Parameterized
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration.Companion.minutes
 import com.intellij.testFramework.useProjectAsync as useProjectAsyncImpl
 
 abstract class GradleSetupProjectTestCase : GradleImportingTestCase() {
@@ -47,7 +44,7 @@ abstract class GradleSetupProjectTestCase : GradleImportingTestCase() {
     expectedImportActionsCounter = AtomicInteger(0)
     actualImportActionsCounter = AtomicInteger(0)
 
-    whenResolveTaskStarted({ actualImportActionsCounter.incrementAndGet() }, testDisposable)
+    whenResolveTaskStarted(testDisposable) { _, _ -> actualImportActionsCounter.incrementAndGet() }
     AutoImportProjectTracker.enableAutoReloadInTests(testDisposable)
   }
 
@@ -116,12 +113,7 @@ abstract class GradleSetupProjectTestCase : GradleImportingTestCase() {
 
   suspend fun waitForImport(action: suspend () -> Project): Project {
     expectedImportActionsCounter.incrementAndGet()
-    val promise = getProjectDataLoadPromise()
-    val result = action()
-    withTimeout(1.minutes) {
-      promise.asDeferred().join()
-    }
-    return result
+    return awaitProjectReload(action)
   }
 
   suspend fun importProjectAsync(projectFile: VirtualFile): Project {

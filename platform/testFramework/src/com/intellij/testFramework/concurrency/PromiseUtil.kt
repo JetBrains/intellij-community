@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.testFramework.observable
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.testFramework.concurrency
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.testFramework.PlatformTestUtil.waitForPromise
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.concurrency.Promise
@@ -22,8 +23,28 @@ fun <R> Promise<R>.waitForPromise(
   return result as R
 }
 
-suspend fun <R> Promise<R>.awaitPromise(timeout: Duration): R {
+fun <R> Promise<*>.waitForPromise(
+  timeout: Duration = 1.minutes,
+  action: ThrowableComputable<R, Throwable>
+): R {
+  val result = action.compute()
+  waitForPromise(timeout)
+  return result
+}
+
+suspend fun <R> Promise<R>.awaitPromise(
+  timeout: Duration = 1.minutes
+): R {
   return withTimeout(timeout) {
     await()
   }
+}
+
+suspend fun <R> Promise<*>.awaitPromise(
+  timeout: Duration = 1.minutes,
+  action: suspend () -> R
+): R {
+  val result = action()
+  awaitPromise(timeout)
+  return result
 }
