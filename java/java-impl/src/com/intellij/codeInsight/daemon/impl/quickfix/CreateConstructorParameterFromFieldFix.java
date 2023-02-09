@@ -147,7 +147,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     if (constructors.length == 0) {
       final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(myClass);
       ApplicationManager.getApplication().runWriteAction(() -> defaultConstructorFix.invoke(project, editor, file));
-      constructors = myClass.getConstructors();
+      constructors = getPhysicalConstructors(myClass);
     }
     final List<PsiMethod> filtered = getFilteredConstructors(constructors, getField());
     final List<SmartPsiElementPointer<PsiElement>> cleanupElements = new ArrayList<>();
@@ -216,7 +216,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   }
 
   private static PsiMethod[] getPhysicalConstructors(@NotNull PsiClass psiClass) {
-    return ContainerUtil.filter(psiClass.getConstructors(), c -> c.isPhysical()).toArray(PsiMethod[]::new);
+    return ContainerUtil.filter(psiClass.getConstructors(), c -> !(c instanceof SyntheticElement)).toArray(PsiMethod[]::new);
   }
 
   @NotNull
