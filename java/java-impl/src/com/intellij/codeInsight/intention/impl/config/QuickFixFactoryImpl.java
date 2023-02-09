@@ -154,7 +154,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                          @NotNull PsiClassType exceptionClass,
                                                          boolean shouldThrow,
                                                          boolean showContainingClass) {
-    return shouldThrow ? new MethodThrowsFix.Add(method, exceptionClass, showContainingClass) : new MethodThrowsFix.Remove(method, exceptionClass, showContainingClass);
+    return shouldThrow
+           ? new MethodThrowsFix.Add(method, exceptionClass, showContainingClass)
+           : new MethodThrowsFix.Remove(method, exceptionClass, showContainingClass);
   }
 
   @NotNull
@@ -205,19 +207,29 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   @Nullable
-  public IntentionAction createCreateClassOrPackageFix(@NotNull final PsiElement context, @NotNull final String qualifiedName, final boolean createClass, final String superClass) {
+  public IntentionAction createCreateClassOrPackageFix(@NotNull PsiElement context,
+                                                       @NotNull String qualifiedName,
+                                                       boolean createClass,
+                                                       String superClass) {
     return CreateClassOrPackageFix.createFix(qualifiedName, context, createClass ? ClassKind.CLASS : null, superClass);
   }
 
   @Override
   @Nullable
-  public IntentionAction createCreateClassOrInterfaceFix(@NotNull final PsiElement context, @NotNull final String qualifiedName, final boolean createClass, final String superClass) {
+  public IntentionAction createCreateClassOrInterfaceFix(@NotNull PsiElement context,
+                                                         @NotNull String qualifiedName,
+                                                         boolean createClass,
+                                                         String superClass) {
     return CreateClassOrPackageFix.createFix(qualifiedName, context, createClass ? ClassKind.CLASS : ClassKind.INTERFACE, superClass);
   }
 
   @NotNull
   @Override
-  public IntentionAction createCreateFieldOrPropertyFix(@NotNull final PsiClass aClass, @NotNull final String name, @NotNull final PsiType type, @NotNull final PropertyMemberType targetMember, final PsiAnnotation @NotNull ... annotations) {
+  public IntentionAction createCreateFieldOrPropertyFix(@NotNull PsiClass aClass,
+                                                        @NotNull String name,
+                                                        @NotNull PsiType type,
+                                                        @NotNull PropertyMemberType targetMember,
+                                                        PsiAnnotation @NotNull ... annotations) {
     return new CreateFieldOrPropertyFix(aClass, name, type, targetMember, annotations);
   }
 
@@ -393,7 +405,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createReplaceInaccessibleFieldWithGetterSetterFix(@NotNull PsiElement element, @NotNull PsiMethod getter, boolean isSetter) {
+  public IntentionAction createReplaceInaccessibleFieldWithGetterSetterFix(@NotNull PsiElement element,
+                                                                           @NotNull PsiMethod getter,
+                                                                           boolean isSetter) {
     return new ReplaceInaccessibleFieldWithGetterSetterFix(element, getter, isSetter);
   }
 
@@ -529,7 +543,12 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                                              @NotNull PsiElement context,
                                                                              boolean changeAllUsages,
                                                                              int minUsagesNumberToShowDialog) {
-    return new ChangeMethodSignatureFromUsageReverseOrderFix(targetMethod, expressions, substitutor, context, changeAllUsages, minUsagesNumberToShowDialog);
+    return new ChangeMethodSignatureFromUsageReverseOrderFix(targetMethod,
+                                                             expressions,
+                                                             substitutor,
+                                                             context,
+                                                             changeAllUsages,
+                                                             minUsagesNumberToShowDialog);
   }
 
   @NotNull
@@ -631,7 +650,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createReplacePrimitiveWithBoxedTypeAction(@NotNull PsiTypeElement element, @NotNull String typeName, @NotNull String boxedTypeName) {
+  public IntentionAction createReplacePrimitiveWithBoxedTypeAction(@NotNull PsiTypeElement element,
+                                                                   @NotNull String typeName,
+                                                                   @NotNull String boxedTypeName) {
     return new ReplacePrimitiveWithBoxedTypeAction(element, typeName, boxedTypeName);
   }
 
@@ -771,7 +792,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement, boolean useElementNameAsSuffix) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement,
+                                                                              boolean useElementNameAsSuffix) {
     return RenameToIgnoredFix.createRenameToIgnoreFix(namedElement, useElementNameAsSuffix);
   }
 
@@ -951,7 +973,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createPushDownMethodFix() {
-    return new RunRefactoringAction(JavaRefactoringActionHandlerFactory.getInstance().createPushDownHandler(), JavaBundle.message("push.method.down.command.name")) {
+    return new RunRefactoringAction(JavaRefactoringActionHandlerFactory.getInstance().createPushDownHandler(),
+                                    JavaBundle.message("push.method.down.command.name")) {
       @NotNull
       @Override
       public Priority getPriority() {
