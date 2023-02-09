@@ -125,6 +125,20 @@ suspend fun GitLabApi.mergeRequestAccept(
   return loadGQLResponse(request, GitLabMergeRequestResult::class.java, "mergeRequestAccept")
 }
 
+suspend fun GitLabApi.mergeRequestSetDraft(
+  project: GitLabProjectCoordinates,
+  mergeRequestId: GitLabMergeRequestId,
+  isDraft: Boolean
+): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
+  val parameters = mapOf(
+    "projectId" to project.projectPath.fullPath(),
+    "mergeRequestId" to mergeRequestId.iid,
+    "isDraft" to isDraft
+  )
+  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.mergeRequestSetDraft, parameters)
+  return loadGQLResponse(request, GitLabMergeRequestResult::class.java, "mergeRequestSetDraft")
+}
+
 private class GitLabMergeRequestResult(mergeRequest: GitLabMergeRequestDTO, errors: List<String>?)
   : GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>(errors) {
   override val value = mergeRequest

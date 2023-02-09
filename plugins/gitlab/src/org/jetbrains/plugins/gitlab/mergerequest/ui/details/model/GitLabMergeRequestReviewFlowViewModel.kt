@@ -37,6 +37,8 @@ internal interface GitLabMergeRequestReviewFlowViewModel {
 
   fun reopen()
 
+  fun postReview()
+
   fun setReviewers(reviewers: List<GitLabUserDTO>)
 
   fun setMyselfAsReviewer()
@@ -101,6 +103,10 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   override fun reopen() = runAction {
     mergeRequest.reopen()
+  }
+
+  override fun postReview() = runAction {
+    mergeRequest.postReview()
   }
 
   override fun setReviewers(reviewers: List<GitLabUserDTO>) = runAction {

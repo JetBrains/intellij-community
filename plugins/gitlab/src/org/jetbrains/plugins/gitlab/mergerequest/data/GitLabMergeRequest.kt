@@ -51,6 +51,8 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
 
   suspend fun reopen()
 
+  suspend fun postReview()
+
   suspend fun setReviewers(reviewers: List<GitLabUserDTO>)
 
   suspend fun getLabelEvents(): List<GitLabResourceLabelEventDTO>
@@ -160,6 +162,14 @@ internal class LoadedGitLabMergeRequest(
   override suspend fun reopen() {
     withContext(cs.coroutineContext + Dispatchers.IO) {
       val updatedMergeRequest = api.mergeRequestUpdate(glProject, mergeRequestDetailsState.value, GitLabMergeRequestNewState.OPEN)
+        .getResultOrThrow()
+      mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+    }
+  }
+
+  override suspend fun postReview() {
+    withContext(cs.coroutineContext + Dispatchers.IO) {
+      val updatedMergeRequest = api.mergeRequestSetDraft(glProject, mergeRequestDetailsState.value, isDraft = false)
         .getResultOrThrow()
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }

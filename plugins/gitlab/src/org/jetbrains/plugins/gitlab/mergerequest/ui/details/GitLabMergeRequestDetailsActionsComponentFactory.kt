@@ -146,7 +146,15 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
 
   private fun createActionsForMergedReview(): JComponent? = null
 
-  private fun createActionsForDraftReview(): JComponent? = null // TODO: implement draft state with actions
+  private fun createActionsForDraftReview(scope: CoroutineScope, reviewFlowVm: GitLabMergeRequestReviewFlowViewModel): JComponent {
+    val postReviewButton = JButton(GitLabMergeRequestPostReviewAction(scope, reviewFlowVm)).apply {
+      isOpaque = false
+    }
+
+    return HorizontalListPanel(BUTTONS_GAP).apply {
+      add(postReviewButton)
+    }
+  }
 
   private fun createActionsComponent(
     scope: CoroutineScope,
@@ -159,7 +167,7 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
           RequestState.OPENED -> mainPanel
           RequestState.MERGED -> createActionsForMergedReview()
           RequestState.CLOSED -> createActionsForClosedReview(scope, reviewFlowVm)
-          RequestState.DRAFT -> createActionsForDraftReview()
+          RequestState.DRAFT -> createActionsForDraftReview(scope, reviewFlowVm)
         }
       })
     }
