@@ -496,7 +496,7 @@ public final class ContainerUtil {
    * This collection doesn't contain {@link Collections.UnmodifiableList#list} and {@link Collections.UnmodifiableCollection#c} fields,
    * unlike the {@link Collections#unmodifiableList(List)}, so it might be useful in extremely space-conscious places.
    * (Subject to change in subsequent JDKs).
-   * Otherwise, please prefer {@link Collections#unmodifiableList(List)}.
+   * Otherwise, please prefer {@link Collections#unmodifiableList(List)} or {@link List#copyOf(Collection)}.
    */
   @Contract(pure = true)
   @Unmodifiable
