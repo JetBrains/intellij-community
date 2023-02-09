@@ -59,7 +59,7 @@ class MediatedProcess private constructor(
     }
   }
 
-  private val stdin: OutputStream = if (inFile == null) createOutputStream(0) else OutputStream.nullOutputStream()
+  private val stdin: OutputStream = if (inFile == null) createOutputStream(0) else OutputStream.nullOutputStream().also { it.close() }
   private val stdout: InputStream = if (outFile == null) createInputStream(1) else InputStream.nullInputStream()
   private val stderr: InputStream = if (errFile == null && !redirectErrorStream) createInputStream(2) else InputStream.nullInputStream()
 
