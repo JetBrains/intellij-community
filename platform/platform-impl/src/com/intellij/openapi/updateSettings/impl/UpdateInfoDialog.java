@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.WhatsNewAction;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
@@ -55,7 +54,6 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
   private final boolean myWriteProtected;
   private final @Nullable Pair<@NlsContexts.Label String, Boolean> myLicenseInfo;
   private final @Nullable File myTestPatch;
-  private final @Nullable AbstractAction myWhatsNewAction;
 
   public UpdateInfoDialog(@Nullable Project project,
                           @NotNull PlatformUpdates.Loaded loadedResult,
@@ -70,7 +68,6 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
     myWriteProtected = patches != null && !SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()));
     myLicenseInfo = getLicensingInfo(myLoadedResult);
     myTestPatch = null;
-    myWhatsNewAction = null;
     init();
     if (!ContainerUtil.isEmpty(incompatiblePlugins)) {
       String names = incompatiblePlugins.stream()
@@ -92,14 +89,6 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
     myWriteProtected = false;
     myLicenseInfo = getLicensingInfo(myLoadedResult);
     myTestPatch = patchFile;
-    String whatsNewUrl = myLoadedResult.getNewBuild().getBlogPost();
-    myWhatsNewAction = project == null || whatsNewUrl == null ? null : new AbstractAction("[T] What's New") {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        WhatsNewAction.openWhatsNewPage(project, whatsNewUrl);
-        close(OK_EXIT_CODE);
-      }
-    };
     init();
     setTitle("[TEST] " + getTitle());
   }
@@ -205,10 +194,6 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
     if (updateButton != null) {
       updateButton.putValue(DEFAULT_ACTION, Boolean.TRUE);
       actions.add(updateButton);
-    }
-
-    if (myWhatsNewAction != null) {
-      actions.add(myWhatsNewAction);
     }
 
     return actions.toArray(new Action[0]);
