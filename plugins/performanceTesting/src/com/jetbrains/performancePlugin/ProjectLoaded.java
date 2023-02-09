@@ -397,14 +397,14 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
   }
 
   public static void runScript(Project project, String script, boolean mustExitOnFailure) {
-    PlaybackRunner playback = new PlaybackRunnerExtended(script, project);
+    PlaybackRunner playback = new PlaybackRunnerExtended(script, new CommandLogger(), project);
     ActionCallback scriptCallback = playback.run();
     CommandsRunner.setActionCallback(scriptCallback);
     registerOnFinishRunnables(scriptCallback, mustExitOnFailure);
   }
 
   private static void runScriptFromFile(Project project) {
-    PlaybackRunner playback = new PlaybackRunnerExtended("%include " + getTestFile(), project);
+    PlaybackRunner playback = new PlaybackRunnerExtended("%include " + getTestFile(), new CommandLogger(), project);
     playback.setScriptDir(getTestFile().getParentFile());
     if (SystemProperties.getBooleanProperty(ReporterCommandAsTelemetrySpan.USE_SPAN_WRAPPER_FOR_COMMAND, false)) {
       playback.setCommandStartStopProcessor(new ReporterCommandAsTelemetrySpan());

@@ -25,7 +25,7 @@ public class ScriptRunner {
   }
 
   public void doRunScript(@NotNull final Project project, @NotNull String text, @Nullable File workingDir) {
-    PlaybackRunnerExtended runner = new PlaybackRunnerExtended(text, project);
+    PlaybackRunnerExtended runner = new PlaybackRunnerExtended(text, new CommandLogger(), project);
     runner.setScriptDir(workingDir);
 
     runner.setCommandStartStopProcessor(myScriptRunnerReporter != null
