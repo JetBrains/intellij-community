@@ -126,8 +126,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         it.withModule("intellij.cidr.debugger.commandInterpreterLang", it.mainJarName)
         it.withModule("intellij.cidr.core", it.mainJarName)
         it.withModule("intellij.cidr.util.execution", it.mainJarName)
-        it.withModule("intellij.cidr.util.serializer", it.mainJarName)
-        it.withModule("intellij.cidr.util.ui", it.mainJarName)
       },
       plugin("intellij.cidr.base.plugin") {
         it.withModule("intellij.c.dfa", it.mainJarName)
@@ -137,6 +135,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         it.withModule("intellij.cidr.lang.base", it.mainJarName)
         it.withModule("intellij.cidr.execution", it.mainJarName)
         it.withModule("intellij.cidr.util", it.mainJarName)
+        it.withModule("intellij.cidr.util.serializer", it.mainJarName)
+        it.withModule("intellij.cidr.util.ui", it.mainJarName)
         // Note the following are in CLionProperties.groovy but we don't include them since
         // they were never shipped with Android Studio before.
         //   * intellij.cidr.toolchains
