@@ -75,7 +75,12 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
     XDebugSessionTab tab;
     if (Registry.is("debugger.new.tool.window.layout")) {
-      tab = new XDebugSessionTab3(session, icon, environment);
+      if (XDebugSessionTabCustomizerKt.allowFramesViewCustomization(session.getDebugProcess())) {
+        tab = new XDebugSessionTab3(session, icon, environment);
+      }
+      else {
+        tab = new XDebugSessionTabNewUI(session, icon, environment);
+      }
     }
     else {
       tab = new XDebugSessionTab(session, icon, environment, true);
@@ -143,6 +148,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   protected void initDebuggerTab(XDebugSessionImpl session) {
+    createDefaultTabs(session);
+    CustomActionsListener.subscribe(this, () -> initToolbars(session));
+  }
+
+  protected final void createDefaultTabs(XDebugSessionImpl session) {
     Content framesContent = createFramesContent();
     myUi.addContent(framesContent, 0, PlaceInGrid.left, false);
 
@@ -151,8 +161,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     addVariablesAndWatches(session);
-
-    CustomActionsListener.subscribe(this, () -> initToolbars(session));
   }
 
   protected void initListeners(RunnerLayoutUi ui) {
