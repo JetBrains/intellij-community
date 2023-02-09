@@ -984,7 +984,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   @Override
-  public <T, E extends Throwable> T runWriteIntentAction(@NotNull ThrowableComputable<T, E> computation) throws E {
+  public <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
     boolean wilock = acquireWriteIntentLock(computation.getClass().getName());
     try {
       return computation.compute();
