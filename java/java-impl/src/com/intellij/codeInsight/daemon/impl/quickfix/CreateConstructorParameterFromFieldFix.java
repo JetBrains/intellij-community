@@ -96,6 +96,9 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     if (myFieldElement == null) {
       return IntentionPreviewInfo.EMPTY;
     }
+    if (copyFile instanceof SyntheticElement) {
+      return IntentionPreviewInfo.EMPTY;
+    }
     PsiField copyMyField = PsiTreeUtil.findSameElementInCopy(myFieldElement, copyFile);
     PsiMethod[] constructors = getPhysicalConstructors(copyMyClass);
     if (constructors.length == 0) {
