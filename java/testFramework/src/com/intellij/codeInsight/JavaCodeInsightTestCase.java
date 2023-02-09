@@ -189,6 +189,10 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
+  /**
+   * @deprecated use {@link #configureByFiles(File, VirtualFile...)} instead
+   */
+  @Deprecated
   public VirtualFile doConfigureByFiles(@Nullable File rawProjectRoot, VirtualFile @NotNull ... vFiles) throws IOException {
     return configureByFiles(rawProjectRoot, vFiles);
   }
@@ -251,7 +255,8 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     });
 
     if (editorInfos != null) {
-      openEditorsAndActivateLast(editorInfos);
+      List<Editor> list = openEditors(editorInfos);
+      setActiveEditor(ContainerUtil.getLastItem(list));
     }
 
     return toDir;
@@ -322,6 +327,10 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     myFile = getPsiFile(editor.getDocument());
   }
 
+  /**
+   * @deprecated usages must be inlined
+   */
+  @Deprecated
   protected @NotNull List<Editor> openEditorsAndActivateLast(@NotNull Map<VirtualFile, EditorInfo> editorInfos) {
     final List<Editor> list = openEditors(editorInfos);
     setActiveEditor(list.get(list.size() - 1));
@@ -374,6 +383,10 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     return false;
   }
 
+  /**
+   * @deprecated cursor and selection is automatically configured in {@code configureByFile*} methods 
+   */
+  @Deprecated
   protected void setupCursorAndSelection(final @NotNull Editor editor) {
     Document document = editor.getDocument();
     EditorTestUtil.CaretAndSelectionState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
@@ -381,6 +394,10 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
   }
 
+  /**
+   * @deprecated caret and selection are now configured directly in files, see {@link EditorTestUtil#extractCaretAndSelectionMarkers} 
+   */
+  @Deprecated
   @Override
   protected void configure(@NotNull String path, String dataName) throws Exception {
     super.configure(path, dataName);
@@ -453,7 +470,11 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     });
   }
 
+  /**
+   * @deprecated caret and selection are now configured directly in files, see {@link EditorTestUtil#extractCaretAndSelectionMarkers}
+   */
   @Override
+  @Deprecated
   protected void checkResult(String dataName) throws Exception {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     super.checkResult(dataName);
