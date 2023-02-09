@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.navigator;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
@@ -9,12 +9,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,7 +26,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
-import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
@@ -51,7 +48,11 @@ import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunner;
-import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenPlugin;
+import org.jetbrains.idea.maven.model.MavenProfileKind;
+import org.jetbrains.idea.maven.model.MavenProjectProblem;
+import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
@@ -83,7 +84,6 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   private static final Collection<String> BASIC_PHASES = MavenConstants.BASIC_PHASES;
   private static final Collection<String> PHASES = MavenConstants.PHASES;
 
-  private static final Comparator<MavenSimpleNode> NODE_COMPARATOR = (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true);
   private final ExecutorService boundedUpdateService;
 
   private final Project myProject;
@@ -175,7 +175,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
   }
 
-  private void updateUpTo(SimpleNode node) {
+  void updateUpTo(SimpleNode node) {
     SimpleNode each = node;
     while (each != null) {
       updateFrom(each);
@@ -357,202 +357,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     NONE, ERROR
   }
 
-  public abstract class MavenSimpleNode extends CachingSimpleNode {
-    private MavenSimpleNode myParent;
-    private ErrorLevel myErrorLevel = ErrorLevel.NONE;
-    private ErrorLevel myTotalErrorLevel = null;
-
-    public MavenSimpleNode(MavenSimpleNode parent) {
-      super(MavenProjectsStructure.this.myProject, null);
-      setParent(parent);
-    }
-
-    public void setParent(MavenSimpleNode parent) {
-      myParent = parent;
-    }
-
-    @Override
-    public NodeDescriptor getParentDescriptor() {
-      return myParent;
-    }
-
-    public <T extends MavenSimpleNode> T findParent(Class<T> parentClass) {
-      return ObjectUtils.doIfNotNull(myParent, it -> it.findNode(parentClass));
-    }
-
-    public <T extends MavenSimpleNode> T findNode(Class<T> parentClass) {
-      MavenSimpleNode node = this;
-      while (node != null && !parentClass.isInstance(node)) {
-        node = node.myParent;
-      }
-      //noinspection unchecked
-      return (T)node;
-    }
-
-    public boolean isVisible() {
-      return getDisplayKind() != DisplayKind.NEVER;
-    }
-
-    public DisplayKind getDisplayKind() {
-      Class[] visibles = getVisibleNodesClasses();
-      if (visibles == null) return DisplayKind.NORMAL;
-
-      for (Class each : visibles) {
-        if (each.isInstance(this)) return DisplayKind.ALWAYS;
-      }
-      return DisplayKind.NEVER;
-    }
-
-
-    @Override
-    protected SimpleNode[] buildChildren() {
-      List<? extends MavenSimpleNode> children = doGetChildren();
-      if (children.isEmpty()) return NO_CHILDREN;
-
-      List<MavenSimpleNode> result = new ArrayList<>();
-      for (MavenSimpleNode each : children) {
-        if (each.isVisible()) result.add(each);
-      }
-      return result.toArray(new MavenSimpleNode[0]);
-    }
-
-    protected List<? extends MavenSimpleNode> doGetChildren() {
-      return Collections.emptyList();
-    }
-
-    @Override
-    public synchronized void cleanUpCache() {
-      super.cleanUpCache();
-      myTotalErrorLevel = null;
-    }
-
-    protected void childrenChanged() {
-      MavenSimpleNode each = this;
-      while (each != null) {
-        each.cleanUpCache();
-        each = (MavenSimpleNode)each.getParent();
-      }
-      updateUpTo(this);
-    }
-
-    public synchronized ErrorLevel getTotalErrorLevel() {
-      if (myTotalErrorLevel == null) {
-        myTotalErrorLevel = calcTotalErrorLevel();
-      }
-      return myTotalErrorLevel;
-    }
-
-    private ErrorLevel calcTotalErrorLevel() {
-      ErrorLevel childrenErrorLevel = getChildrenErrorLevel();
-      return childrenErrorLevel.compareTo(myErrorLevel) > 0 ? childrenErrorLevel : myErrorLevel;
-    }
-
-    public ErrorLevel getChildrenErrorLevel() {
-      ErrorLevel result = ErrorLevel.NONE;
-      for (SimpleNode each : getChildren()) {
-        ErrorLevel eachLevel = ((MavenSimpleNode)each).getTotalErrorLevel();
-        if (eachLevel.compareTo(result) > 0) result = eachLevel;
-      }
-      return result;
-    }
-
-    public void setErrorLevel(ErrorLevel level) {
-      if (myErrorLevel == level) return;
-      myErrorLevel = level;
-      updateUpTo(this);
-    }
-
-    @Override
-    protected void doUpdate(@NotNull PresentationData presentation) {
-      setNameAndTooltip(presentation, getName(), null);
-    }
-
-    protected void setNameAndTooltip(@NotNull PresentationData presentation, String name, @Nullable @NlsContexts.Tooltip String tooltip) {
-      setNameAndTooltip(presentation, name, tooltip, (String)null);
-    }
-
-    protected void setNameAndTooltip(@NotNull PresentationData presentation, String name, @Nullable @NlsContexts.Tooltip String tooltip, @Nullable @NlsSafe String hint) {
-      setNameAndTooltip(presentation, name, tooltip, getPlainAttributes());
-      if (showDescriptions() && !StringUtil.isEmptyOrSpaces(hint)) {
-        presentation.addText(" (" + hint + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
-      }
-    }
-
-    protected void setNameAndTooltip(@NotNull PresentationData presentation, @NlsSafe String name, @Nullable @NlsContexts.Tooltip String tooltip, SimpleTextAttributes attributes) {
-      presentation.clearText();
-      presentation.addText(name, prepareAttributes(attributes));
-      getTemplatePresentation().setTooltip(tooltip);
-    }
-
-    private SimpleTextAttributes prepareAttributes(SimpleTextAttributes from) {
-      ErrorLevel level = getTotalErrorLevel();
-      Color waveColor = level == ErrorLevel.NONE ? null : JBColor.RED;
-      int style = from.getStyle();
-      if (waveColor != null) style |= SimpleTextAttributes.STYLE_WAVED;
-      return new SimpleTextAttributes(from.getBgColor(), from.getFgColor(), waveColor, style);
-    }
-
-    @Nullable
-    @NonNls
-    String getActionId() {
-      return null;
-    }
-
-    @Nullable
-    @NonNls
-    String getMenuId() {
-      return null;
-    }
-
-    @Nullable
-    public VirtualFile getVirtualFile() {
-      return null;
-    }
-
-    @Nullable
-    public Navigatable getNavigatable() {
-      return MavenNavigationUtil.createNavigatableForPom(getProject(), getVirtualFile());
-    }
-
-    @Override
-    public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
-      String actionId = getActionId();
-      if (actionId != null) {
-        MavenUIUtil.executeAction(actionId, TOOL_WINDOW_PLACE_ID, inputEvent);
-      }
-    }
-  }
-
-  public abstract class GroupNode extends MavenSimpleNode {
-    public GroupNode(MavenSimpleNode parent) {
-      super(parent);
-    }
-
-    @Override
-    public boolean isVisible() {
-      if (getDisplayKind() == DisplayKind.ALWAYS) return true;
-
-      for (SimpleNode each : getChildren()) {
-        if (((MavenSimpleNode)each).isVisible()) return true;
-      }
-      return false;
-    }
-
-    protected <T extends MavenSimpleNode> void insertSorted(List<T> list, T newObject) {
-      int pos = Collections.binarySearch(list, newObject, NODE_COMPARATOR);
-      list.add(pos >= 0 ? pos : -pos - 1, newObject);
-    }
-
-    protected void sort(List<? extends MavenSimpleNode> list) {
-      list.sort(NODE_COMPARATOR);
-    }
-  }
-
   public abstract class ProjectsGroupNode extends GroupNode {
     private final List<ProjectNode> myProjectNodes = new CopyOnWriteArrayList<>();
 
     public ProjectsGroupNode(MavenSimpleNode parent) {
-      super(parent);
+      super(parent, MavenProjectsStructure.this.myProject);
       getTemplatePresentation().setIcon(MavenIcons.ModulesClosed);
     }
 
@@ -570,19 +379,19 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       projectNode.setParent(this);
       insertSorted(myProjectNodes, projectNode);
 
-      childrenChanged();
+      childrenChanged(MavenProjectsStructure.this);
     }
 
     public void remove(ProjectNode projectNode) {
       projectNode.setParent(null);
       myProjectNodes.remove(projectNode);
 
-      childrenChanged();
+      childrenChanged(MavenProjectsStructure.this);
     }
 
     public void sortProjects() {
       sort(myProjectNodes);
-      childrenChanged();
+      childrenChanged(MavenProjectsStructure.this);
     }
   }
 
@@ -615,7 +424,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private final List<ProfileNode> myProfileNodes = new CopyOnWriteArrayList<>();
 
     public ProfilesNode(MavenSimpleNode parent) {
-      super(parent);
+      super(parent, MavenProjectsStructure.this.myProject);
       getTemplatePresentation().setIcon(MavenIcons.ProfilesClosed);
     }
 
@@ -642,7 +451,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myProfileNodes.clear();
       myProfileNodes.addAll(newNodes);
       sort(myProfileNodes);
-      childrenChanged();
+      childrenChanged(MavenProjectsStructure.this);
     }
 
     private ProfileNode findOrCreateNodeFor(String profileName) {
@@ -658,7 +467,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private MavenProfileKind myState;
 
     public ProfileNode(ProfilesNode parent, String profileName) {
-      super(parent);
+      super(parent, MavenProjectsStructure.this.myProject);
       myProfileName = profileName;
     }
 
@@ -791,7 +600,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
       myLifecycleNode = new LifecycleNode(this);
       myPluginsNode = new PluginsNode(this);
-      myDependenciesNode = new DependenciesNode(this, mavenProject);
+      myDependenciesNode = new DependenciesNode(this, MavenProjectsStructure.this.myProject, mavenProject);
       myRunConfigurationsNode = new RunConfigurationsNode(this);
 
       getTemplatePresentation().setIcon(MavenIcons.MavenProject);
@@ -819,12 +628,12 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private void updateProject() {
-      setErrorLevel(myMavenProject.getCacheProblems().isEmpty() ? ErrorLevel.NONE : ErrorLevel.ERROR);
+      setErrorLevel(MavenProjectsStructure.this, myMavenProject.getCacheProblems().isEmpty() ? ErrorLevel.NONE : ErrorLevel.ERROR);
       myLifecycleNode.updateGoalsList();
       myPluginsNode.updatePlugins(myMavenProject);
 
       if (isShown(DependencyNode.class)) {
-        myDependenciesNode.updateDependencies();
+        myDependenciesNode.updateDependencies(MavenProjectsStructure.this);
       }
 
       myRunConfigurationsNode.updateRunConfigurations(myMavenProject);
@@ -835,7 +644,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public void updateIgnored() {
-      getGroup().childrenChanged();
+      getGroup().childrenChanged(MavenProjectsStructure.this);
     }
 
     public void updateGoals() {
@@ -975,6 +784,22 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     protected String getMenuId() {
       return "Maven.NavigatorProjectMenu";
     }
+
+    @Override
+    public MavenProjectsStructure.DisplayKind getDisplayKind() {
+      Class[] visibles = MavenProjectsStructure.this.getVisibleNodesClasses();
+      if (visibles == null) return MavenProjectsStructure.DisplayKind.NORMAL;
+
+      for (Class each : visibles) {
+        if (each.isInstance(this)) return MavenProjectsStructure.DisplayKind.ALWAYS;
+      }
+      return MavenProjectsStructure.DisplayKind.NEVER;
+    }
+
+    @Override
+    public boolean showDescription() {
+      return MavenProjectsStructure.this.showDescriptions();
+    }
   }
 
   public class ModulesNode extends ProjectsGroupNode {
@@ -993,7 +818,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     protected final List<GoalNode> myGoalNodes = new CopyOnWriteArrayList<>();
 
     public GoalsGroupNode(MavenSimpleNode parent) {
-      super(parent);
+      super(parent, MavenProjectsStructure.this.myProject);
     }
 
     @Override
@@ -1008,7 +833,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private final String myDisplayName;
 
     public GoalNode(GoalsGroupNode parent, String goal, String displayName) {
-      super(parent);
+      super(parent, MavenProjectsStructure.this.myProject);
       myMavenProject = findParent(ProjectNode.class).getMavenProject();
       myGoal = goal;
       myDisplayName = displayName;
@@ -1085,6 +910,22 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     protected String getMenuId() {
       return "Maven.BuildMenu";
     }
+
+    @Override
+    public MavenProjectsStructure.DisplayKind getDisplayKind() {
+      Class[] visibles = MavenProjectsStructure.this.getVisibleNodesClasses();
+      if (visibles == null) return MavenProjectsStructure.DisplayKind.NORMAL;
+
+      for (Class each : visibles) {
+        if (each.isInstance(this)) return MavenProjectsStructure.DisplayKind.ALWAYS;
+      }
+      return MavenProjectsStructure.DisplayKind.NEVER;
+    }
+
+    @Override
+    public boolean showDescription() {
+      return MavenProjectsStructure.this.showDescriptions();
+    }
   }
 
   public class LifecycleNode extends GoalsGroupNode {
@@ -1103,7 +944,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public void updateGoalsList() {
-      childrenChanged();
+      childrenChanged(MavenProjectsStructure.this);
     }
   }
 
@@ -1123,7 +964,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private final List<PluginNode> myPluginNodes = new CopyOnWriteArrayList<>();
 
     public PluginsNode(ProjectNode parent) {
-      super(parent);
+      super(parent, MavenProjectsStructure.this.myProject);
       getTemplatePresentation().setIcon(AllIcons.Nodes.ConfigFolder);
     }
 
@@ -1176,7 +1017,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myPluginInfo = newPluginInfo;
       boolean hasPluginInfo = myPluginInfo != null;
 
-      setErrorLevel(myPluginInfo == null ? ErrorLevel.ERROR : ErrorLevel.NONE);
+      setErrorLevel(MavenProjectsStructure.this, myPluginInfo == null ? ErrorLevel.ERROR : ErrorLevel.NONE);
 
       if (hadPluginInfo == hasPluginInfo) return;
 
@@ -1189,7 +1030,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
       sort(myGoalNodes);
       updateFrom(this);
-      childrenChanged();
+      childrenChanged(MavenProjectsStructure.this);
     }
 
     @Override
@@ -1238,201 +1079,12 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
   }
 
-  public abstract class BaseDependenciesNode extends GroupNode {
-    protected final MavenProject myMavenProject;
-    private final List<DependencyNode> myChildren = new CopyOnWriteArrayList<>();
-
-    protected BaseDependenciesNode(MavenSimpleNode parent, MavenProject mavenProject) {
-      super(parent);
-      myMavenProject = mavenProject;
-    }
-
-    public MavenProject getMavenProject() {
-      return myMavenProject;
-    }
-
-    @Override
-    protected List<? extends MavenSimpleNode> doGetChildren() {
-      return myChildren;
-    }
-
-    protected void updateChildren(List<MavenArtifactNode> children, MavenProject mavenProject) {
-      List<DependencyNode> newNodes = null;
-      int validChildCount = 0;
-
-      for (MavenArtifactNode each : children) {
-        if (each.getState() != MavenArtifactState.ADDED &&
-            each.getState() != MavenArtifactState.CONFLICT &&
-            each.getState() != MavenArtifactState.DUPLICATE) {
-          continue;
-        }
-
-        if (newNodes == null) {
-          if (validChildCount < myChildren.size()) {
-            DependencyNode currentValidNode = myChildren.get(validChildCount);
-            if (currentValidNode.myArtifact.equals(each.getArtifact())
-                && currentValidNode.isUnresolved() == each.getArtifact().isFileUnresolved()) {
-              if (each.getState() == MavenArtifactState.ADDED) {
-                currentValidNode.updateChildren(each.getDependencies(), mavenProject);
-              }
-
-              validChildCount++;
-              continue;
-            }
-          }
-
-          newNodes = new ArrayList<>(children.size());
-          newNodes.addAll(myChildren.subList(0, validChildCount));
-        }
-
-        DependencyNode newNode = findOrCreateNodeFor(each, mavenProject, validChildCount);
-        newNodes.add(newNode);
-        if (each.getState() == MavenArtifactState.ADDED) {
-          newNode.updateChildren(each.getDependencies(), mavenProject);
-        }
-        newNode.updateDependency();
-      }
-
-      if (newNodes == null) {
-        if (validChildCount == myChildren.size()) {
-          return; // All nodes are valid, child did not changed.
-        }
-
-        assert validChildCount < myChildren.size();
-
-        newNodes = new ArrayList<>(myChildren.subList(0, validChildCount));
-      }
-
-      myChildren.clear();
-      myChildren.addAll(newNodes);
-      childrenChanged();
-    }
-
-    private DependencyNode findOrCreateNodeFor(MavenArtifactNode artifact, MavenProject mavenProject, int from) {
-      for (int i = from; i < myChildren.size(); i++) {
-        DependencyNode node = myChildren.get(i);
-        if (node.myArtifact.equals(artifact.getArtifact()) && node.isUnresolved() == artifact.getArtifact().isFileUnresolved()) {
-          return node;
-        }
-      }
-      return new DependencyNode(this, artifact, mavenProject, artifact.getArtifact().isFileUnresolved());
-    }
-
-    @Override
-    String getMenuId() {
-      return "Maven.DependencyMenu";
-    }
-  }
-
-  public class DependenciesNode extends BaseDependenciesNode {
-    public DependenciesNode(ProjectNode parent, MavenProject mavenProject) {
-      super(parent, mavenProject);
-      getTemplatePresentation().setIcon(AllIcons.Nodes.PpLibFolder);
-    }
-
-    @Override
-    public String getName() {
-      return message("view.node.dependencies");
-    }
-
-    public void updateDependencies() {
-      updateChildren(myMavenProject.getDependencyTree(), myMavenProject);
-    }
-  }
-
-  public class DependencyNode extends BaseDependenciesNode {
-    private final MavenArtifact myArtifact;
-    private final MavenArtifactNode myArtifactNode;
-    private final boolean myUnresolved;
-
-    public DependencyNode(MavenSimpleNode parent, MavenArtifactNode artifactNode, MavenProject mavenProject, boolean unresolved) {
-      super(parent, mavenProject);
-      myArtifactNode = artifactNode;
-      myArtifact = artifactNode.getArtifact();
-      myUnresolved = unresolved;
-      getTemplatePresentation().setIcon(AllIcons.Nodes.PpLib);
-    }
-
-    public MavenArtifact getArtifact() {
-      return myArtifact;
-    }
-
-    public boolean isUnresolved() {
-      return myUnresolved;
-    }
-
-    @Override
-    public String getName() {
-      return myArtifact.getDisplayStringForLibraryName();
-    }
-
-    private String getToolTip() {
-      final StringBuilder myToolTip = new StringBuilder();
-      String scope = myArtifactNode.getOriginalScope();
-
-      if (StringUtil.isNotEmpty(scope) && !MavenConstants.SCOPE_COMPILE.equals(scope)) {
-        myToolTip.append(scope).append(" ");
-      }
-      if (myArtifactNode.getState() == MavenArtifactState.CONFLICT) {
-        myToolTip.append("omitted for conflict");
-        if (myArtifactNode.getRelatedArtifact() != null) {
-          myToolTip.append(" with ").append(myArtifactNode.getRelatedArtifact().getVersion());
-        }
-      }
-      if (myArtifactNode.getState() == MavenArtifactState.DUPLICATE) {
-        myToolTip.append("omitted for duplicate");
-      }
-      return myToolTip.toString().trim();
-    }
-
-    @Override
-    protected void doUpdate(@NotNull PresentationData presentation) {
-      setNameAndTooltip(presentation, getName(), null, getToolTip());
-    }
-
-    @Override
-    protected void setNameAndTooltip(@NotNull PresentationData presentation, String name, @Nullable String tooltip, SimpleTextAttributes attributes) {
-      final SimpleTextAttributes mergedAttributes;
-      if (myArtifactNode.getState() == MavenArtifactState.CONFLICT || myArtifactNode.getState() == MavenArtifactState.DUPLICATE) {
-        mergedAttributes = SimpleTextAttributes.merge(attributes, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      } else {
-        mergedAttributes = attributes;
-      }
-      super.setNameAndTooltip(presentation, name, tooltip, mergedAttributes);
-    }
-
-    private void updateDependency() {
-      setErrorLevel(myUnresolved ? ErrorLevel.ERROR : ErrorLevel.NONE);
-    }
-
-    @Override
-    public Navigatable getNavigatable() {
-      final MavenArtifactNode parent = myArtifactNode.getParent();
-      final VirtualFile file;
-      if (parent == null) {
-        file = getMavenProject().getFile();
-      }
-      else {
-        final MavenId id = parent.getArtifact().getMavenId();
-        final MavenProject pr = myProjectsManager.findProject(id);
-        file = pr == null ? MavenNavigationUtil.getArtifactFile(getProject(), id) : pr.getFile();
-      }
-      return file == null ? null : MavenNavigationUtil.createNavigatableForDependency(getProject(), file, getArtifact());
-    }
-
-    @Override
-    public boolean isVisible() {
-      // show regardless absence of children
-      return getDisplayKind() != DisplayKind.NEVER;
-    }
-  }
-
   public class RunConfigurationsNode extends GroupNode {
 
     private final List<RunConfigurationNode> myChildren = new CopyOnWriteArrayList<>();
 
     public RunConfigurationsNode(ProjectNode parent) {
-      super(parent);
+      super(parent, MavenProjectsStructure.this.myProject);
       getTemplatePresentation().setIcon(Task);
     }
 
@@ -1478,7 +1130,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       }
 
       if (childChanged.get()) {
-        childrenChanged();
+        childrenChanged(MavenProjectsStructure.this);
       }
     }
   }
@@ -1487,7 +1139,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private final RunnerAndConfigurationSettings mySettings;
 
     public RunConfigurationNode(RunConfigurationsNode parent, RunnerAndConfigurationSettings settings) {
-      super(parent);
+      super(parent, MavenProjectsStructure.this.myProject);
       mySettings = settings;
       getTemplatePresentation().setIcon(ProgramRunnerUtil.getConfigurationIcon(settings, false));
     }
@@ -1557,7 +1209,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         if(isUnloading) return;
         myParentNode.myPluginNodes.addAll(pluginNodes);
         myParentNode.sort(myParentNode.myPluginNodes);
-        myParentNode.childrenChanged();
+        myParentNode.childrenChanged(MavenProjectsStructure.this);
       });
     }
   }

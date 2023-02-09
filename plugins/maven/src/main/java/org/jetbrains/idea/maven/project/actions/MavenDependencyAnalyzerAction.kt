@@ -7,7 +7,9 @@ import com.intellij.openapi.externalSystem.dependency.analyzer.*
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.module.Module
 import com.intellij.ui.treeStructure.SimpleTree
-import org.jetbrains.idea.maven.navigator.MavenProjectsStructure.*
+import org.jetbrains.idea.maven.navigator.structure.DependencyNode
+import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure.ProjectNode
+import org.jetbrains.idea.maven.navigator.structure.MavenSimpleNode
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 

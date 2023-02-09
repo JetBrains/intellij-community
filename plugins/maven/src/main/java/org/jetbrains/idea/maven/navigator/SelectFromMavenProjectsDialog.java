@@ -25,6 +25,8 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure;
+import org.jetbrains.idea.maven.navigator.structure.MavenSimpleNode;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
@@ -40,13 +42,13 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
 
   public SelectFromMavenProjectsDialog(Project project,
                                        @NlsContexts.DialogTitle String title,
-                                       final Class<? extends MavenProjectsStructure.MavenSimpleNode> nodeClass) {
+                                       final Class<? extends MavenSimpleNode> nodeClass) {
     this(project, title, nodeClass, null);
   }
 
   public SelectFromMavenProjectsDialog(Project project,
                                        @NlsContexts.DialogTitle String title,
-                                       final Class<? extends MavenProjectsStructure.MavenSimpleNode> nodeClass,
+                                       final Class<? extends MavenSimpleNode> nodeClass,
                                        @Nullable NodeSelector selector) {
     super(project, false);
     mySelector = selector;
