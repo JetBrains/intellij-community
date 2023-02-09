@@ -30,14 +30,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 public class WhatsNewAction extends AnAction implements DumbAware {
   private static final String ENABLE_NEW_UI_REQUEST = "enable-new-UI";
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean available = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl() != null;
+    var available = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl() != null;
     e.getPresentation().setEnabledAndVisible(available);
     if (available) {
       e.getPresentation().setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName()));
@@ -52,10 +51,10 @@ public class WhatsNewAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    String whatsNewUrl = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
+    var whatsNewUrl = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
     if (whatsNewUrl == null) throw new IllegalStateException();
 
-    Project project = e.getProject();
+    var project = e.getProject();
     if (project != null && JBCefApp.isSupported()) {
       openWhatsNewPage(project, whatsNewUrl);
     }
@@ -72,8 +71,8 @@ public class WhatsNewAction extends AnAction implements DumbAware {
   @ApiStatus.Internal
   public static void openWhatsNewPage(@NotNull Project project, @NotNull String url) {
     if (!JBCefApp.isSupported()) {
-      String name = ApplicationNamesInfo.getInstance().getFullProductName();
-      String version = ApplicationInfo.getInstance().getShortVersion();
+      var name = ApplicationNamesInfo.getInstance().getFullProductName();
+      var version = ApplicationInfo.getInstance().getShortVersion();
       UpdateChecker.getNotificationGroupForIdeUpdateResults()
         .createNotification(IdeBundle.message("whats.new.notification.text", name, version), NotificationType.INFORMATION)
         .setIcon(AllIcons.Nodes.PpWeb)
@@ -99,14 +98,14 @@ public class WhatsNewAction extends AnAction implements DumbAware {
       throw new IllegalStateException("JCEF is not supported on this system");
     }
 
-    boolean darkTheme = UIUtil.isUnderDarcula();
+    var darkTheme = UIUtil.isUnderDarcula();
 
-    Map<String, String> parameters = new HashMap<>();
+    var parameters = new HashMap<String, String>();
     parameters.put("var", "embed");
     if (darkTheme) {
       parameters.put("theme", "dark");
     }
-    Locale locale = Locale.getDefault();
+    var locale = Locale.getDefault();
     if (locale != null) {
       parameters.put("lang", locale.toLanguageTag().toLowerCase(Locale.ENGLISH));
     }

@@ -41,11 +41,7 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.updateSettings.impl.UpdateCheckerService.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
 import static com.intellij.openapi.util.Pair.pair;
 
-/**
- * @author pti
- */
 public final class UpdateInfoDialog extends AbstractUpdateDialog {
-
   private final @Nullable Project myProject;
   private final @NotNull PlatformUpdates.Loaded myLoadedResult;
   private final @Nullable Collection<PluginDownloader> myUpdatedPlugins;
@@ -216,7 +212,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
             command = UpdateInstaller.preparePatchCommand(List.of(myTestPatch), indicator);
           }
           else {
-            List<File> files = UpdateInstaller.downloadPatchChain(myLoadedResult.getPatches().getChain(), indicator);
+            @SuppressWarnings("DataFlowIssue") var files = UpdateInstaller.downloadPatchChain(myLoadedResult.getPatches().getChain(), indicator);
             command = UpdateInstaller.preparePatchCommand(files, indicator);
           }
         }
@@ -224,7 +220,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
           throw e;
         }
         catch (Exception e) {
-          Logger.getInstance(UpdateInstaller.class).warn(e);
+          Logger.getInstance(UpdateInfoDialog.class).warn(e);
 
           var title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
           var downloadUrl = UpdateInfoPanel.downloadUrl(myLoadedResult.getNewBuild(), myLoadedResult.getUpdatedChannel());
@@ -281,7 +277,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
       FileUtil.setExecutable(file);
     }
     catch (Exception e) {
-      Logger.getInstance(UpdateInstaller.class).error(e);
+      Logger.getInstance(UpdateInfoDialog.class).error(e);
       return;
     }
 
