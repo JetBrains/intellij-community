@@ -77,10 +77,6 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
   init {
     val idToName = LinkedHashMap<String, String>()
     idToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.getMainMenuTitle())
-    if (ToolbarSettings.getInstance().isAvailable) {
-      idToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR, ActionsTreeUtil.getExperimentalToolbar())
-      idToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN, ActionsTreeUtil.getExperimentalToolbarXamarin())
-    }
     if (ExperimentalUI.isNewUI()) {
       idToName.put(IdeActions.GROUP_MAIN_TOOLBAR_LEFT, ActionsTreeUtil.getMainToolbarLeft())
       idToName.put(IdeActions.GROUP_MAIN_TOOLBAR_CENTER, ActionsTreeUtil.getMainToolbarCenter())

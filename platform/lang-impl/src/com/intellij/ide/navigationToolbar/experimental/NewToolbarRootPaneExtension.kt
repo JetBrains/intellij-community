@@ -56,8 +56,8 @@ fun interface ExperimentalToolbarStateListener {
   fun refreshVisibility()
 }
 
-@Service
-private class NewToolbarRootPaneManager(private val project: Project) : SimpleModificationTracker() {
+
+open class NewToolbarRootPaneManager(private val project: Project) : SimpleModificationTracker() {
   companion object {
     fun getInstance(project: Project): NewToolbarRootPaneManager = project.service()
   }
@@ -124,13 +124,8 @@ private class NewToolbarRootPaneManager(private val project: Project) : SimpleMo
     return CustomActionsSchema.getInstance().getCorrectedAction(mainGroupName) as? ActionGroup
   }
 
-  private fun mainGroupName(): String {
-    return if (RunWidgetAvailabilityManager.getInstance(project).isAvailable()) {
-      IdeActions.GROUP_EXPERIMENTAL_TOOLBAR
-    }
-    else {
-      IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN
-    }
+  open fun mainGroupName(): String {
+      return IdeActions.GROUP_EXPERIMENTAL_TOOLBAR
   }
 
   private class MyActionToolbarImpl(place: String,
