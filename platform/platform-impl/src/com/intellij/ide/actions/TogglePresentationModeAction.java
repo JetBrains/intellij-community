@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -50,7 +52,13 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     log(String.format("Will tweak full screen mode for presentation=%b", inPresentation));
 
     UISettings.getInstance().setPresentationMode(inPresentation);
+    float oldScale = UISettingsUtils.getInstance().getCurrentIdeScale();
     UISettings.getInstance().fireUISettingsChanged();
+
+    // If IDE scale hasn't been changed, we need to updateUI here
+    if (oldScale == UISettingsUtils.getInstance().getCurrentIdeScale()) {
+      LafManager.getInstance().updateUI();
+    }
 
     Job callback = project == null ? CompletableDeferredKt.CompletableDeferred(Unit.INSTANCE) : tweakFrameFullScreen(project, inPresentation);
     callback.invokeOnCompletion(__ -> {
