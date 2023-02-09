@@ -110,6 +110,10 @@ fun MutableEntityStorage.modifyEntity(entity: LibraryPropertiesEntity,
   LibraryPropertiesEntity.Builder::class.java, entity, modification)
 //endregion
 
+/**
+ * Will represent an SDK in the project configuration. 
+ * Currently, these entities aren't synchronized with the project model, so until IDEA-306969 is implemented, it makes no sense to use them.  
+ */
 interface SdkEntity : WorkspaceEntity {
     val library: LibraryEntity
 
