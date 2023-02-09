@@ -413,7 +413,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     int selectionStart = selectionEnd = myEditor.getCaretModel().getOffset();
 
     if (data.getSelectionStartColumnNumber() >= 0) {
-      selectionStart = myEditor.logicalPositionToOffset(new LogicalPosition(data.getSelectionEndLineNumber() - 1, data.getSelectionStartColumnNumber() - 1));
+      selectionStart = myEditor.logicalPositionToOffset(new LogicalPosition(data.getSelectionStartLineNumber() - 1, data.getSelectionStartColumnNumber() - 1));
       selectionEnd = myEditor.logicalPositionToOffset(new LogicalPosition(data.getSelectionEndLineNumber() - 1, data.getSelectionEndColumnNumber() - 1));
     }
 
