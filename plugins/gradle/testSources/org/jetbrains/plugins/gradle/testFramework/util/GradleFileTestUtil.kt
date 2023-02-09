@@ -10,8 +10,7 @@ import com.intellij.testFramework.utils.vfs.getFile
 import com.intellij.openapi.vfs.writeText
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilder
-import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilderImpl
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfiguration
 
@@ -21,10 +20,10 @@ fun GradleImportingTestCase.importProject(
 
 fun buildSettings(
   useKotlinDsl: Boolean = false,
-  configure: GradleSettingScriptBuilder.() -> Unit
-) = GradleSettingScriptBuilderImpl()
+  configure: GradleSettingScriptBuilder<*>.() -> Unit
+) = GradleSettingScriptBuilder.create(useKotlinDsl)
   .apply(configure)
-  .generate(useKotlinDsl)
+  .generate()
 
 fun buildscript(
   gradleVersion: GradleVersion,
@@ -115,7 +114,7 @@ fun VirtualFile.getBuildFile(
 fun TestFilesConfiguration.withSettingsFile(
   relativeModulePath: String = ".",
   useKotlinDsl: Boolean = false,
-  configure: GradleSettingScriptBuilder.() -> Unit
+  configure: GradleSettingScriptBuilder<*>.() -> Unit
 ) = withSettingsFile(
   relativeModulePath = relativeModulePath,
   useKotlinDsl = useKotlinDsl,

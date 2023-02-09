@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.testFramework
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
@@ -53,7 +53,7 @@ interface GradleTestFixtureBuilder {
       }
     }
 
-    fun settingsFile(projectName: String, configure: GradleSettingScriptBuilder.(GradleVersion) -> Unit): GradleTestFixtureBuilder {
+    fun settingsFile(projectName: String, configure: GradleSettingScriptBuilder<*>.(GradleVersion) -> Unit): GradleTestFixtureBuilder {
       return create(projectName) { gradleVersion ->
         withSettingsFile {
           setProjectName(projectName)

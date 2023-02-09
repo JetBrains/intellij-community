@@ -1,17 +1,21 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.importing
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.frameworkSupport.settingsScript
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.AbstractScriptElementBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.script.KotlinScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 
-class GradleSettingScriptBuilderImpl : AbstractScriptElementBuilder(), GradleSettingScriptBuilder {
+@ApiStatus.NonExtendable
+abstract class AbstractGradleSettingScriptBuilder<Self : AbstractGradleSettingScriptBuilder<Self>>
+  : AbstractScriptElementBuilder(),
+    GradleSettingScriptBuilder<Self> {
 
   private var projectName: String? = null
   private val script = ScriptTreeBuilder()
   private var pluginManagement: ScriptTreeBuilder.() -> Unit = {}
+
+  protected abstract fun apply(action: Self.() -> Unit): Self
 
   override fun setProjectName(projectName: String) = apply {
     this.projectName = projectName
@@ -53,13 +57,5 @@ class GradleSettingScriptBuilderImpl : AbstractScriptElementBuilder(), GradleSet
     callIfNotEmpty("pluginManagement", pluginManagement)
     assignIfNotNull("rootProject.name", projectName)
     join(script)
-  }
-
-  override fun generate(useKotlinDsl: Boolean): String {
-    val builder = when (useKotlinDsl) {
-      true -> KotlinScriptBuilder()
-      else -> GroovyScriptBuilder()
-    }
-    return builder.generate(generateTree())
   }
 }
