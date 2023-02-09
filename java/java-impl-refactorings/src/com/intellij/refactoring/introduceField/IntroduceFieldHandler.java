@@ -78,6 +78,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
       enteredName = activeIntroducer.getInputName();
       replaceAll = activeIntroducer.isReplaceAllOccurrences();
       type = ((AbstractJavaInplaceIntroducer)activeIntroducer).getType();
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
       IntroduceFieldDialog.ourLastInitializerPlace = ((InplaceIntroduceFieldPopup)activeIntroducer).getInitializerPlace();
     }
 
@@ -104,8 +105,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
       myInplaceIntroduceFieldPopup =
         new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurrences, expr,
                                        new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurrences), editor,
-                                       allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll,
-                                       expr != null ? createOccurrenceManager(expr, parentClass) : null, project);
+                                       allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll, project);
       if (myInplaceIntroduceFieldPopup.startInplaceIntroduceTemplate()) {
         return null;
       }
