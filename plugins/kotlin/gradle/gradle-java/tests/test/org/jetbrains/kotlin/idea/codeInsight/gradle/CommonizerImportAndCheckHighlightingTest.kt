@@ -222,9 +222,9 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                  * has a proper libraryName and is *not* considered 'project level'
                  */
                 run {
-                    val platforms = if (isKgpDependencyResolutionEnabled() && HostManager.hostIsMac) // KTIJ-24573
-                        "linux_arm64, linux_x64, macos_x64, mingw_x64, mingw_x86"
-                    else "linux_arm64, linux_x64, mingw_x64, mingw_x86"
+                    val platforms = if (isKgpDependencyResolutionEnabled() && !HostManager.hostIsMac) // KTIJ-24573
+                        "linux_arm64, linux_x64, mingw_x64, mingw_x86"
+                    else "linux_arm64, linux_x64, macos_x64, mingw_x64, mingw_x86"
                     val withPosixLibraryNameRegex = Regex(
                         """Gradle: project:p1-cinterop-withPosix.*\($platforms\).*"""
                     )
