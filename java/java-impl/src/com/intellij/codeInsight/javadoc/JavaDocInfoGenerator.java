@@ -51,6 +51,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -64,10 +65,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -2600,7 +2603,7 @@ public class JavaDocInfoGenerator {
       buffer.append(label);
     }
     else if (target == null) {
-      buffer.append("<font color=red>").append(label).append("</font>");
+      buffer.append(getSpanForUnresolvedItem()).append(label).append("</span>");
     }
     else {
       String highlightedLabel = myIsSignatureGenerationInProgress && doHighlightSignatures() || doSemanticHighlightingOfLinks()
@@ -2608,6 +2611,13 @@ public class JavaDocInfoGenerator {
                                 : label;
       generateLink(buffer, target, highlightedLabel, plainLink);
     }
+  }
+  
+  static String getSpanForUnresolvedItem() {
+    TextAttributes attributes =
+      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
+    Color color = attributes.getForegroundColor();
+    return "<span style=\"color:" + ColorUtil.toHtmlColor(color)+"\">";
   }
 
   /**
@@ -2756,7 +2766,7 @@ public class JavaDocInfoGenerator {
           return typAnnoLength + text.length();
         }
         String canonicalText = type.getCanonicalText();
-        String text = "<font color=red>" + StringUtil.escapeXmlEntities(canonicalText) + "</font>";
+        String text = getSpanForUnresolvedItem() + StringUtil.escapeXmlEntities(canonicalText) + "</span>";
         buffer.append(text);
         return typAnnoLength + canonicalText.length();
       }
