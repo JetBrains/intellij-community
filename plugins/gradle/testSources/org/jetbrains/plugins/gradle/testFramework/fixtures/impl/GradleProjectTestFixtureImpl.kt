@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.externalSystem.util.refreshAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
 import com.intellij.openapi.observable.operation.core.getOperationPromise
@@ -27,6 +26,7 @@ import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWr
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
+import org.jetbrains.plugins.gradle.testFramework.util.refreshAndWait
 import org.jetbrains.plugins.gradle.testFramework.util.openProjectAsyncAndWait
 import org.jetbrains.plugins.gradle.testFramework.util.withSuppressedErrors
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -59,7 +59,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
       configureProject()
       excludeFiles(".gradle", "build")
       withFiles { generateGradleWrapper(it.toNioPath(), gradleVersion) }
-      withFiles { runBlocking { createProjectCaches(it) } }
+      withFiles { createProjectCaches(it) }
     }
   )
 
@@ -77,7 +77,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
 
   override fun tearDown() {
     runAll(
-      { fileFixture.root.refreshAndWait() },
+      { runBlocking { fileFixture.root.refreshAndWait() } },
       { projectOperations.getOperationPromise(testDisposable).waitForPromise() },
       { if (_project.isInitialized) runBlocking { _project.closeProjectAsync() } },
       { Disposer.dispose(testDisposable) },

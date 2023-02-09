@@ -5,18 +5,8 @@ package com.intellij.openapi.externalSystem.util
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.ui.UIUtil
 
-fun VirtualFile.refreshAndWait() {
-  invokeAndWaitIfNeeded {
-    runWriteAction {
-      refresh(false, true)
-    }
-    UIUtil.dispatchAllInvocationEvents()
-  }
-}
 
 fun <R> runReadAction(action: () -> R): R {
   return ApplicationManager.getApplication()
