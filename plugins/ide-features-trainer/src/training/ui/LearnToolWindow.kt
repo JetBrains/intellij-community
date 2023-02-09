@@ -16,6 +16,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.assertj.swing.timing.Timeout
 import training.actions.ChooseProgrammingLanguageForLearningAction
 import training.lang.LangManager
@@ -106,11 +107,11 @@ private fun adjustModulesPanel(contentPanel: JPanel): JPanel {
     add(JPanel().apply {
       alignmentX = SimpleToolWindowPanel.LEFT_ALIGNMENT
       layout = BoxLayout(this, BoxLayout.X_AXIS)
-      border = MatteBorder(JBUI.scale(1), 0, JBUI.scale(1), 0, JBUI.CurrentTheme.NotificationWarning.borderColor())
+      border = MatteBorder(0, 0, JBUI.scale(1), 0, UIUtil.CONTRAST_BORDER_COLOR)
 
       add(object : JPanel() {
         // It seems the new UI toolwindows redefine background recursively, so force background
-        override fun getBackground(): Color = JBUI.CurrentTheme.NotificationWarning.backgroundColor()
+        override fun getBackground(): Color = JBUI.CurrentTheme.Validator.warningBackgroundColor()
       }.apply<JPanel> {
         layout = BoxLayout(this, BoxLayout.X_AXIS)
         border = JBUI.Borders.empty(12)
