@@ -33,9 +33,11 @@ public abstract class MavenSimpleNode extends CachingSimpleNode {
   private MavenSimpleNode myParent;
   private MavenProjectsStructure.ErrorLevel myErrorLevel = MavenProjectsStructure.ErrorLevel.NONE;
   private MavenProjectsStructure.ErrorLevel myTotalErrorLevel = null;
+  protected final MavenProjectsStructure.Customization myCustomization;
 
-  public MavenSimpleNode(MavenSimpleNode parent, Project project) {
+  public MavenSimpleNode(MavenSimpleNode parent, Project project, MavenProjectsStructure.Customization customization) {
     super(project, null);
+    myCustomization = customization;
     setParent(parent);
   }
 
@@ -66,7 +68,13 @@ public abstract class MavenSimpleNode extends CachingSimpleNode {
   }
 
   public MavenProjectsStructure.DisplayKind getDisplayKind() {
-    return MavenProjectsStructure.DisplayKind.NORMAL;
+    Class[] visibles = myCustomization.visibleNodeClasses();
+    if (visibles == null) return MavenProjectsStructure.DisplayKind.NORMAL;
+
+    for (Class each : visibles) {
+      if (each.isInstance(this)) return MavenProjectsStructure.DisplayKind.ALWAYS;
+    }
+    return MavenProjectsStructure.DisplayKind.NEVER;
   }
 
   @Override

@@ -80,6 +80,7 @@ import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WIN
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
 public class MavenProjectsStructure extends SimpleTreeStructure {
+  public record Customization(Class<? extends MavenSimpleNode>[] visibleNodeClasses, boolean showDescriptions, boolean alwaysShowAllPhases) {}
   private static final URL ERROR_ICON_URL = MavenProjectsStructure.class.getResource("/general/error.png");
   private static final Collection<String> BASIC_PHASES = MavenConstants.BASIC_PHASES;
   private static final Collection<String> PHASES = MavenConstants.PHASES;
@@ -87,12 +88,13 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   private final ExecutorService boundedUpdateService;
 
   private final Project myProject;
+  private final Customization myCustomization;
   private final MavenProjectsManager myProjectsManager;
   private final MavenTasksManager myTasksManager;
   private final MavenShortcutsManager myShortcutsManager;
   private final MavenProjectsNavigator myProjectsNavigator;
 
-  private final RootNode myRoot = new RootNode();
+  private final RootNode myRoot;
   private final StructureTreeModel<MavenProjectsStructure> myModel;
   private final SimpleTree myTree;
   private volatile boolean isUnloading = false;
@@ -100,12 +102,15 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   private final Map<MavenProject, ProjectNode> myProjectToNodeMapping = new HashMap<>();
 
   public MavenProjectsStructure(Project project,
+                                Customization customization,
                                 MavenProjectsManager projectsManager,
                                 MavenTasksManager tasksManager,
                                 MavenShortcutsManager shortcutsManager,
                                 MavenProjectsNavigator projectsNavigator,
                                 SimpleTree tree) {
     myProject = project;
+    myCustomization = customization;
+    myRoot = new RootNode(myCustomization);
     myProjectsManager = projectsManager;
     myTasksManager = tasksManager;
     myShortcutsManager = shortcutsManager;
@@ -187,7 +192,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     for (MavenProject each : updated) {
       ProjectNode node = findNodeFor(each);
       if (node == null) {
-        node = new ProjectNode(each);
+        node = new ProjectNode(each, myCustomization);
         myProjectToNodeMapping.put(each, node);
       }
       doUpdateProject(node);
@@ -302,15 +307,18 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     ALWAYS, NEVER, NORMAL
   }
 
-  protected Class<? extends MavenSimpleNode>[] getVisibleNodesClasses() {
-    return null;
+  protected final Class<? extends MavenSimpleNode>[] getVisibleNodesClasses() {
+    return myCustomization.visibleNodeClasses();
   }
 
-  protected boolean showDescriptions() {
-    return true;
+  protected final boolean showDescriptions() {
+    return myCustomization.showDescriptions();
   }
 
   protected boolean showOnlyBasicPhases() {
+    if (myCustomization.alwaysShowAllPhases()) {
+      return false;
+    }
     return myProjectsNavigator.getShowBasicPhasesOnly();
   }
 
@@ -360,8 +368,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public abstract class ProjectsGroupNode extends GroupNode {
     private final List<ProjectNode> myProjectNodes = new CopyOnWriteArrayList<>();
 
-    public ProjectsGroupNode(MavenSimpleNode parent) {
-      super(parent, MavenProjectsStructure.this.myProject);
+    public ProjectsGroupNode(MavenSimpleNode parent, MavenProjectsStructure.Customization customization) {
+      super(parent, MavenProjectsStructure.this.myProject, customization);
       getTemplatePresentation().setIcon(MavenIcons.ModulesClosed);
     }
 
@@ -398,9 +406,9 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public class RootNode extends ProjectsGroupNode {
     private final ProfilesNode myProfilesNode;
 
-    public RootNode() {
-      super(null);
-      myProfilesNode = new ProfilesNode(this);
+    public RootNode(MavenProjectsStructure.Customization customization) {
+      super(null, customization);
+      myProfilesNode = new ProfilesNode(this, customization);
     }
 
     @Override
@@ -423,8 +431,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public class ProfilesNode extends GroupNode {
     private final List<ProfileNode> myProfileNodes = new CopyOnWriteArrayList<>();
 
-    public ProfilesNode(MavenSimpleNode parent) {
-      super(parent, MavenProjectsStructure.this.myProject);
+    public ProfilesNode(MavenSimpleNode parent, MavenProjectsStructure.Customization customization) {
+      super(parent, MavenProjectsStructure.this.myProject, customization);
       getTemplatePresentation().setIcon(MavenIcons.ProfilesClosed);
     }
 
@@ -458,7 +466,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       for (ProfileNode each : myProfileNodes) {
         if (each.getProfileName().equals(profileName)) return each;
       }
-      return new ProfileNode(this, profileName);
+      return new ProfileNode(this, profileName, myCustomization);
     }
   }
 
@@ -466,8 +474,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private final String myProfileName;
     private MavenProfileKind myState;
 
-    public ProfileNode(ProfilesNode parent, String profileName) {
-      super(parent, MavenProjectsStructure.this.myProject);
+    public ProfileNode(ProfilesNode parent, String profileName, MavenProjectsStructure.Customization customization) {
+      super(parent, MavenProjectsStructure.this.myProject, customization);
       myProfileName = profileName;
     }
 
@@ -594,14 +602,14 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     private @NlsContexts.Tooltip String myTooltipCache;
 
-    public ProjectNode(@NotNull MavenProject mavenProject) {
-      super(null);
+    public ProjectNode(@NotNull MavenProject mavenProject, MavenProjectsStructure.Customization customization) {
+      super(null, customization);
       myMavenProject = mavenProject;
 
-      myLifecycleNode = new LifecycleNode(this);
-      myPluginsNode = new PluginsNode(this);
-      myDependenciesNode = new DependenciesNode(this, MavenProjectsStructure.this.myProject, mavenProject);
-      myRunConfigurationsNode = new RunConfigurationsNode(this);
+      myLifecycleNode = new LifecycleNode(this, customization);
+      myPluginsNode = new PluginsNode(this, customization);
+      myDependenciesNode = new DependenciesNode(this, MavenProjectsStructure.this.myProject, mavenProject, myCustomization);
+      myRunConfigurationsNode = new RunConfigurationsNode(this, customization);
 
       getTemplatePresentation().setIcon(MavenIcons.MavenProject);
     }
@@ -786,25 +794,14 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     @Override
-    public MavenProjectsStructure.DisplayKind getDisplayKind() {
-      Class[] visibles = MavenProjectsStructure.this.getVisibleNodesClasses();
-      if (visibles == null) return MavenProjectsStructure.DisplayKind.NORMAL;
-
-      for (Class each : visibles) {
-        if (each.isInstance(this)) return MavenProjectsStructure.DisplayKind.ALWAYS;
-      }
-      return MavenProjectsStructure.DisplayKind.NEVER;
-    }
-
-    @Override
     public boolean showDescription() {
       return MavenProjectsStructure.this.showDescriptions();
     }
   }
 
   public class ModulesNode extends ProjectsGroupNode {
-    public ModulesNode(ProjectNode parent) {
-      super(parent);
+    public ModulesNode(ProjectNode parent, MavenProjectsStructure.Customization customization) {
+      super(parent, customization);
       getTemplatePresentation().setIcon(MavenIcons.ModulesClosed);
     }
 
@@ -817,8 +814,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public abstract class GoalsGroupNode extends GroupNode {
     protected final List<GoalNode> myGoalNodes = new CopyOnWriteArrayList<>();
 
-    public GoalsGroupNode(MavenSimpleNode parent) {
-      super(parent, MavenProjectsStructure.this.myProject);
+    public GoalsGroupNode(MavenSimpleNode parent, Customization customization) {
+      super(parent, MavenProjectsStructure.this.myProject, customization);
     }
 
     @Override
@@ -832,8 +829,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private final String myGoal;
     private final String myDisplayName;
 
-    public GoalNode(GoalsGroupNode parent, String goal, String displayName) {
-      super(parent, MavenProjectsStructure.this.myProject);
+    public GoalNode(GoalsGroupNode parent, String goal, String displayName, Customization customization) {
+      super(parent, MavenProjectsStructure.this.myProject, customization);
       myMavenProject = findParent(ProjectNode.class).getMavenProject();
       myGoal = goal;
       myDisplayName = displayName;
@@ -912,28 +909,17 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     @Override
-    public MavenProjectsStructure.DisplayKind getDisplayKind() {
-      Class[] visibles = MavenProjectsStructure.this.getVisibleNodesClasses();
-      if (visibles == null) return MavenProjectsStructure.DisplayKind.NORMAL;
-
-      for (Class each : visibles) {
-        if (each.isInstance(this)) return MavenProjectsStructure.DisplayKind.ALWAYS;
-      }
-      return MavenProjectsStructure.DisplayKind.NEVER;
-    }
-
-    @Override
     public boolean showDescription() {
       return MavenProjectsStructure.this.showDescriptions();
     }
   }
 
   public class LifecycleNode extends GoalsGroupNode {
-    public LifecycleNode(ProjectNode parent) {
-      super(parent);
+    public LifecycleNode(ProjectNode parent, Customization customization) {
+      super(parent, customization);
 
       for (String goal : PHASES) {
-        myGoalNodes.add(new StandardGoalNode(this, goal));
+        myGoalNodes.add(new StandardGoalNode(this, goal, customization));
       }
       getTemplatePresentation().setIcon(AllIcons.Nodes.ConfigFolder);
     }
@@ -949,8 +935,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public class StandardGoalNode extends GoalNode {
-    public StandardGoalNode(GoalsGroupNode parent, String goal) {
-      super(parent, goal, goal);
+    public StandardGoalNode(GoalsGroupNode parent, String goal, Customization customization) {
+      super(parent, goal, goal, customization);
     }
 
     @Override
@@ -963,8 +949,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public class PluginsNode extends GroupNode {
     private final List<PluginNode> myPluginNodes = new CopyOnWriteArrayList<>();
 
-    public PluginsNode(ProjectNode parent) {
-      super(parent, MavenProjectsStructure.this.myProject);
+    public PluginsNode(ProjectNode parent, Customization customization) {
+      super(parent, MavenProjectsStructure.this.myProject, customization);
       getTemplatePresentation().setIcon(AllIcons.Nodes.ConfigFolder);
     }
 
@@ -989,8 +975,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private final MavenPlugin myPlugin;
     private MavenPluginInfo myPluginInfo;
 
-    public PluginNode(PluginsNode parent, MavenPlugin plugin, MavenPluginInfo pluginInfo) {
-      super(parent);
+    public PluginNode(PluginsNode parent, MavenPlugin plugin, MavenPluginInfo pluginInfo, Customization customization) {
+      super(parent, customization);
       myPlugin = plugin;
 
       getTemplatePresentation().setIcon(MavenIcons.MavenPlugin);
@@ -1024,7 +1010,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myGoalNodes.clear();
       if (myPluginInfo != null) {
         for (MavenPluginInfo.Mojo mojo : myPluginInfo.getMojos()) {
-          myGoalNodes.add(new PluginGoalNode(this, mojo.getQualifiedGoal(), mojo.getGoal(), mojo.getDisplayName()));
+          myGoalNodes.add(new PluginGoalNode(this, mojo.getQualifiedGoal(), mojo.getGoal(), mojo.getDisplayName(), myCustomization));
         }
       }
 
@@ -1044,8 +1030,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     private final String myUnqualifiedGoal;
 
-    public PluginGoalNode(PluginNode parent, String goal, String unqualifiedGoal, String displayName) {
-      super(parent, goal, displayName);
+    public PluginGoalNode(PluginNode parent, String goal, String unqualifiedGoal, String displayName, Customization customization) {
+      super(parent, goal, displayName, customization);
       getTemplatePresentation().setIcon(MavenIcons.PluginGoal);
       myUnqualifiedGoal = unqualifiedGoal;
     }
@@ -1083,8 +1069,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     private final List<RunConfigurationNode> myChildren = new CopyOnWriteArrayList<>();
 
-    public RunConfigurationsNode(ProjectNode parent) {
-      super(parent, MavenProjectsStructure.this.myProject);
+    public RunConfigurationsNode(ProjectNode parent, Customization customization) {
+      super(parent, MavenProjectsStructure.this.myProject, customization);
       getTemplatePresentation().setIcon(Task);
     }
 
@@ -1120,7 +1106,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         MavenRunConfiguration mavenRunConfiguration = (MavenRunConfiguration)cfg.getConfiguration();
 
         if (VfsUtilCore.pathEqualsTo(mavenProject.getDirectoryFile(), mavenRunConfiguration.getRunnerParameters().getWorkingDirPath())) {
-          myChildren.add(new RunConfigurationNode(this, cfg));
+          myChildren.add(new RunConfigurationNode(this, cfg, myCustomization));
         }
       }
 
@@ -1138,8 +1124,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public class RunConfigurationNode extends MavenSimpleNode {
     private final RunnerAndConfigurationSettings mySettings;
 
-    public RunConfigurationNode(RunConfigurationsNode parent, RunnerAndConfigurationSettings settings) {
-      super(parent, MavenProjectsStructure.this.myProject);
+    public RunConfigurationNode(RunConfigurationsNode parent, RunnerAndConfigurationSettings settings, Customization customization) {
+      super(parent, MavenProjectsStructure.this.myProject, customization);
       mySettings = settings;
       getTemplatePresentation().setIcon(ProgramRunnerUtil.getConfigurationIcon(settings, false));
     }
@@ -1198,7 +1184,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       while(!isUnloading && iterator.hasNext()){
         MavenPlugin next = iterator.next();
         pluginInfos.add(new PluginNode(myParentNode, next, MavenArtifactUtil
-          .readPluginInfo(localRepository, next.getMavenId())));
+          .readPluginInfo(localRepository, next.getMavenId()), myCustomization));
       }
       updateNodesInEDT(pluginInfos);
     }

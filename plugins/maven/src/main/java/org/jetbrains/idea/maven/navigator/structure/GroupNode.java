@@ -12,8 +12,8 @@ import java.util.List;
 public abstract class GroupNode extends MavenSimpleNode {
   private static final Comparator<MavenSimpleNode> NODE_COMPARATOR = (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true);
 
-  public GroupNode(MavenSimpleNode parent, Project project) {
-    super(parent, project);
+  public GroupNode(MavenSimpleNode parent, Project project, MavenProjectsStructure.Customization customization) {
+    super(parent, project, customization);
   }
 
   @Override

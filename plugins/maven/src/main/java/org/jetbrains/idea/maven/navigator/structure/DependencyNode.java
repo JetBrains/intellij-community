@@ -24,8 +24,9 @@ public class DependencyNode extends BaseDependenciesNode {
                         Project project,
                         MavenArtifactNode artifactNode,
                         MavenProject mavenProject,
-                        boolean unresolved) {
-    super(parent, project, mavenProject);
+                        boolean unresolved,
+                        MavenProjectsStructure.Customization customization) {
+    super(parent, project, mavenProject, customization);
     myArtifactNode = artifactNode;
     myArtifact = artifactNode.getArtifact();
     myUnresolved = unresolved;

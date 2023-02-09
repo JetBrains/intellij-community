@@ -446,9 +446,14 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
   }
 
   private void initStructure() {
-    myStructure =
-      new MavenProjectsStructure(myProject, MavenProjectsManager.getInstance(myProject), MavenTasksManager.getInstance(myProject),
-                                 MavenShortcutsManager.getInstance(myProject), this, myTree);
+    var customization = new MavenProjectsStructure.Customization(null, true, false);
+    myStructure = new MavenProjectsStructure(myProject,
+                                             customization,
+                                             MavenProjectsManager.getInstance(myProject),
+                                             MavenTasksManager.getInstance(myProject),
+                                             MavenShortcutsManager.getInstance(myProject),
+                                             this,
+                                             myTree);
   }
 
   @ApiStatus.Internal

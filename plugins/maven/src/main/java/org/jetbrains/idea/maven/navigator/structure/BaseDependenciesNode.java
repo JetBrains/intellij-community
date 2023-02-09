@@ -22,8 +22,8 @@ public abstract class BaseDependenciesNode extends GroupNode {
   private final List<DependencyNode> myChildren = new CopyOnWriteArrayList<>();
   private final AtomicReference<ChildrenUpdate> myChildrenUpdate = new AtomicReference<>();
 
-  protected BaseDependenciesNode(MavenSimpleNode parent, Project project, MavenProject mavenProject) {
-    super(parent, project);
+  protected BaseDependenciesNode(MavenSimpleNode parent, Project project, MavenProject mavenProject, MavenProjectsStructure.Customization customization) {
+    super(parent, project, customization);
     myMavenProject = mavenProject;
   }
 
@@ -148,7 +148,7 @@ public abstract class BaseDependenciesNode extends GroupNode {
         return node;
       }
     }
-    return new DependencyNode(this, getProject(), artifact, mavenProject, artifact.getArtifact().isFileUnresolved());
+    return new DependencyNode(this, getProject(), artifact, mavenProject, artifact.getArtifact().isFileUnresolved(), myCustomization);
   }
 
   @Override

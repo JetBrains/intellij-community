@@ -410,7 +410,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     var rootNode = myStructure.getRootElement();
     var projectsManager = MavenProjectsManager.getInstance(myProject);
     var project = projectsManager.getProjects().get(0);
-    var node = myStructure.new ProjectNode(project);
+    var node = myStructure.new ProjectNode(project, myStructure.getRootElement().myCustomization);
     rootNode.add(node);
     var children = rootNode.doGetChildren();
     rootNode.remove(node);
@@ -433,7 +433,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
     var projectsManager = MavenProjectsManager.getInstance(myProject);
     var project = projectsManager.getProjects().get(0);
-    var node = myStructure.new ProjectNode(project);
+    var node = myStructure.new ProjectNode(project, myStructure.getRootElement().myCustomization);
     var projectNode = getRootNodes().get(0);
     projectNode.add(node);
     var children = projectNode.doGetChildren();

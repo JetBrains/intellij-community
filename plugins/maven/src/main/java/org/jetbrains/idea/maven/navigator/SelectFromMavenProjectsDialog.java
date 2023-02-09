@@ -57,28 +57,14 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
     myTree = new SimpleTree();
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
+    var customization = new MavenProjectsStructure.Customization(new Class[]{nodeClass}, false, true);
     MavenProjectsStructure treeStructure = new MavenProjectsStructure(project,
+                                                                      customization,
                                                                       MavenProjectsManager.getInstance(project),
                                                                       MavenTasksManager.getInstance(project),
                                                                       MavenShortcutsManager.getInstance(project),
                                                                       MavenProjectsNavigator.getInstance(project),
-                                                                      myTree) {
-      @Override
-      protected Class<? extends MavenSimpleNode>[] getVisibleNodesClasses() {
-        //noinspection unchecked
-        return new Class[]{nodeClass};
-      }
-
-      @Override
-      protected boolean showDescriptions() {
-        return false;
-      }
-
-      @Override
-      protected boolean showOnlyBasicPhases() {
-        return false;
-      }
-    };
+                                                                      myTree);
     treeStructure.update();
 
     if (mySelector != null) {
