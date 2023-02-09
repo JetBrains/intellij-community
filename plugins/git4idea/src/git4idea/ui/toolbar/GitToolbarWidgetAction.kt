@@ -103,12 +103,6 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
       }
 
       GitWidgetState.NoVcs -> {
-        val activeVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
-        if (activeVcss.isNotEmpty()) {
-          e.presentation.isEnabledAndVisible = false
-          return
-        }
-
         val placeholder = getPlaceholder(project)
         with(e.presentation) {
           isEnabledAndVisible = true
@@ -190,6 +184,11 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
 
     val isNonGitRepoExists = !VcsRepositoryManager.getInstance(project).repositories.isEmpty()
     if (isNonGitRepoExists) return GitWidgetState.OtherVcs
+
+    val activeVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
+    if (activeVcss.isNotEmpty()) {
+      return GitWidgetState.OtherVcs
+    }
 
     return GitWidgetState.NoVcs
   }
