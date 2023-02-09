@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNa
 import org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestMethodGradleConfigurationProducer
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducerTestCase
-import org.jetbrains.plugins.gradle.testFramework.util.buildSettings
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.Test
@@ -199,11 +199,11 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
             """.trimIndent()
         )
 
-        createProjectSubFile("settings.gradle", buildSettings {
+        createSettingsFile {
             setProjectName("project")
-        })
+        }
 
-        createProjectSubFile("build.gradle", buildscript {
+        createBuildFile {
             withPlugin("org.jetbrains.kotlin.multiplatform", KotlinGradlePluginVersions.lastStable.toString())
             withPrefix {
                 code(
@@ -248,7 +248,7 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
             """.trimIndent()
                 )
             }
-        })
+        }
 
         importProject()
         assertModulesContains(

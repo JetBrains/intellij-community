@@ -23,7 +23,6 @@ import kotlinx.coroutines.withTimeout
 import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.jetbrains.plugins.gradle.util.getProjectDataLoadPromise
 import org.jetbrains.plugins.gradle.util.whenResolveTaskStarted
@@ -68,7 +67,7 @@ abstract class GradleSetupProjectTestCase : GradleImportingTestCase() {
       includeBuild '../$name-composite'
       includeFlat '$name-module'
     """.trimIndent())
-    val buildScript = buildscript { withJavaPlugin() }
+    val buildScript = script { it.withJavaPlugin() }
     createProjectSubFile("$name-composite/build.gradle", buildScript)
     createProjectSubFile("$name-module/build.gradle", buildScript)
     createProjectSubFile("$name-project/module/build.gradle", buildScript)

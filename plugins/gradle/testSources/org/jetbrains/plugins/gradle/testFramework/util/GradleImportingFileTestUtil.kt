@@ -11,10 +11,6 @@ fun GradleImportingTestCase.importProject(
   configure: TestGradleBuildScriptBuilder.() -> Unit
 ) = importProject(script(configure))
 
-fun GradleImportingTestCase.buildscript(
-  configure: TestGradleBuildScriptBuilder.() -> Unit
-) = script(configure)
-
 fun GradleImportingTestCase.createSettingsFile(
   relativeModulePath: String = ".",
   useKotlinDsl: Boolean = false,

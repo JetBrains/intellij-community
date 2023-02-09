@@ -5,7 +5,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.SystemProperties
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript
+import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.isSupported
 import org.junit.Assume
@@ -152,7 +152,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
   fun `simple toolchain support`() {
     VfsRootAccess.allowRootAccess(testRootDisposable, SystemProperties.getUserHome() + "/.gradle/jdks")
     allowAccessToDirsIfExists()
-    importProject(buildscript {
+    importProject {
       withJavaPlugin()
       addPrefix("""
         java.toolchain.languageVersion.set(JavaLanguageVersion.of(17))
@@ -162,7 +162,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
             }
         }
       """.trimIndent())
-    })
+    }
     assertModules("project", "project.main", "project.test")
     assertModuleLanguageLevel("project.main", LanguageLevel.JDK_13)
     assertModuleLanguageLevel("project.test", LanguageLevel.JDK_17)
