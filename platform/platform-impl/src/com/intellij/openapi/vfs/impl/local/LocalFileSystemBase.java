@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.core.CoreBundle;
@@ -782,8 +782,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     PersistentFS.getInstance().clearIdCache();
   }
 
-  private static @Nullable FileAttributes getAttributesWithCustomTimestamp(@NotNull VirtualFile file) {
-    final FileAttributes attributes = FileSystemUtil.getAttributes(FileUtilRt.toSystemDependentName(file.getPath()));
+  private static @Nullable FileAttributes getAttributesWithCustomTimestamp(VirtualFile file) {
+    var pathStr = FileUtilRt.toSystemDependentName(file.getPath());
+    if (pathStr.length() == 2 && pathStr.charAt(1) == ':') pathStr += '\\';
+    var attributes = FileSystemUtil.getAttributes(pathStr);
     return copyWithCustomTimestamp(file, attributes);
   }
 
