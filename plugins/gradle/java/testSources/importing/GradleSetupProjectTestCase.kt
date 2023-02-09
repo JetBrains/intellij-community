@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.ide.actions.ImportProjectAction
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
@@ -9,12 +11,14 @@ import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificat
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.externalSystem.util.importProjectAsync
 import com.intellij.openapi.externalSystem.util.performAction
+import com.intellij.openapi.externalSystem.util.performOpenAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.utils.module.assertModules
 import kotlinx.coroutines.Dispatchers
@@ -116,8 +120,25 @@ abstract class GradleSetupProjectTestCase : GradleImportingTestCase() {
     return awaitProjectReload(action)
   }
 
+  suspend fun openPlatformProjectAsync(projectDirectory: VirtualFile): Project {
+    return closeOpenedProjectsIfFailAsync {
+      ProjectManagerEx.getInstanceEx().openProjectAsync(
+        projectStoreBaseDir = projectDirectory.toNioPath(),
+        options = OpenProjectTask {
+          forceOpenInNewFrame = true
+          useDefaultProjectAsTemplate = false
+          isRefreshVfsNeeded = false
+        }
+      )!!
+    }
+  }
+
   suspend fun importProjectAsync(projectFile: VirtualFile): Project {
-    return importProjectAsync(projectFile, SYSTEM_ID)
+    return performOpenAction(
+      action = ImportProjectAction(),
+      systemId = SYSTEM_ID,
+      selectedFile = projectFile
+    )
   }
 
   suspend fun attachProjectAsync(project: Project, projectFile: VirtualFile): Project {
