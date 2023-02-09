@@ -10,6 +10,8 @@ import com.intellij.collaboration.ui.util.bindContent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.ui.ScrollableContentBorder
+import com.intellij.ui.Side
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
@@ -33,6 +35,7 @@ internal class GitLabMergeRequestDetailsChangesComponentFactory(private val proj
     return TransparentScrollPane(wrapper).apply {
       horizontalScrollBarPolicy = HORIZONTAL_SCROLLBAR_NEVER
       verticalScrollBarPolicy = VERTICAL_SCROLLBAR_AS_NEEDED
+      ScrollableContentBorder.setup(scrollPane = this, sides = Side.TOP_AND_BOTTOM, targetComponent = wrapper)
     }
   }
 
