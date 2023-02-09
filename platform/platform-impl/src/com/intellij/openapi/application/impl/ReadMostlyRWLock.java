@@ -37,9 +37,9 @@ import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.cancelAc
  */
 final class ReadMostlyRWLock {
 
-  static final byte INITIAL = 0;
-  static final byte WRITE_REQUESTED = 1; // this writer is requesting or obtained the write access
-  static final byte WRITE_ACQUIRED = 2; // this writer obtained the write lock
+  private static final byte INITIAL = 0;
+  private static final byte WRITE_REQUESTED = 1; // this writer is requesting or obtained the write access
+  private static final byte WRITE_ACQUIRED = 2; // this writer obtained the write lock
 
   @NotNull final Thread writeThread;
   private final AtomicBoolean writeIntent = new AtomicBoolean(false);
