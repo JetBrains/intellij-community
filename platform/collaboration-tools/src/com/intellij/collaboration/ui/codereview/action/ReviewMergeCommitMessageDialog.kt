@@ -37,16 +37,6 @@ class ReviewMergeCommitMessageDialog(project: Project,
       .addToCenter(commitMessage)
   }
 
-  val message: Pair<String, String>
-    get() {
-      val text = commitMessage.comment
-
-      val idx = text.indexOf("\n\n")
-      return if (idx < 0) "" to text
-      else {
-        val subject = text.substring(0, idx)
-        if (subject.contains("\n")) "" to text
-        else subject to text.substring(idx + 2)
-      }
-    }
+  val message: String
+    get() = commitMessage.comment
 }

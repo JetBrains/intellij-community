@@ -41,9 +41,9 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
 
   val changes: Flow<GitLabMergeRequestChanges>
 
-  suspend fun merge()
+  suspend fun merge(commitMessage: String)
 
-  suspend fun squashAndMerge()
+  suspend fun squashAndMerge(commitMessage: String)
 
   suspend fun approve()
 
@@ -118,20 +118,26 @@ internal class LoadedGitLabMergeRequest(
     cs.async(Dispatchers.IO) { api.loadMergeRequestMilestoneEvents(glProject, mergeRequest).body().orEmpty() }
   }
 
-  override suspend fun merge() {
+  override suspend fun merge(commitMessage: String) {
     withContext(cs.coroutineContext + Dispatchers.IO) {
       val mergeRequest = mergeRequestDetailsState.value
-      val updatedMergeRequest = api.mergeRequestAccept(glProject, mergeRequest, mergeRequest.commits.last().sha, withSquash = false)
-        .getResultOrThrow()
+      val updatedMergeRequest = api.mergeRequestAccept(glProject,
+                                                       mergeRequest,
+                                                       commitMessage,
+                                                       mergeRequest.commits.last().sha,
+                                                       withSquash = false).getResultOrThrow()
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
   }
 
-  override suspend fun squashAndMerge() {
+  override suspend fun squashAndMerge(commitMessage: String) {
     withContext(cs.coroutineContext + Dispatchers.IO) {
       val mergeRequest = mergeRequestDetailsState.value
-      val updatedMergeRequest = api.mergeRequestAccept(glProject, mergeRequest, mergeRequest.commits.last().sha, withSquash = true)
-        .getResultOrThrow()
+      val updatedMergeRequest = api.mergeRequestAccept(glProject,
+                                                       mergeRequest,
+                                                       commitMessage,
+                                                       mergeRequest.commits.last().sha,
+                                                       withSquash = true).getResultOrThrow()
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
   }

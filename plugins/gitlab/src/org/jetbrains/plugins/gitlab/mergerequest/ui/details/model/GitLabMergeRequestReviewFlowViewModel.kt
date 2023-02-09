@@ -1,17 +1,25 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageDialog
 import com.intellij.collaboration.ui.codereview.details.RequestState
 import com.intellij.collaboration.ui.codereview.details.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.ReviewState
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.childScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
 internal interface GitLabMergeRequestReviewFlowViewModel {
@@ -53,6 +61,7 @@ internal interface GitLabMergeRequestReviewFlowViewModel {
 }
 
 internal class GitLabMergeRequestReviewFlowViewModelImpl(
+  private val project: Project,
   parentScope: CoroutineScope,
   override val currentUser: GitLabUserDTO,
   private val projectData: GitLabProject,
@@ -94,11 +103,50 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   }
 
   override fun merge() = runAction {
-    mergeRequest.merge()
+    val title = mergeRequest.title.stateIn(scope).value
+    val sourceBranch = mergeRequest.sourceBranch.stateIn(scope).value
+    val targetBranch = mergeRequest.targetBranch.stateIn(scope).value
+    val commitMessage: String? = withContext(scope.coroutineContext + Dispatchers.EDT) {
+      val dialog = ReviewMergeCommitMessageDialog(
+        project,
+        CollaborationToolsBundle.message("dialog.review.merge.commit.title"),
+        GitLabBundle.message("dialog.review.merge.commit.message.placeholder", sourceBranch, targetBranch),
+        title
+      )
+
+      if (!dialog.showAndGet()) {
+        return@withContext null
+      }
+
+      return@withContext dialog.message
+    }
+
+    if (commitMessage == null) return@runAction
+    mergeRequest.merge(commitMessage)
   }
 
   override fun squashAndMerge() = runAction {
-    mergeRequest.squashAndMerge()
+    val sourceBranch = mergeRequest.sourceBranch.stateIn(scope).value
+    val targetBranch = mergeRequest.targetBranch.stateIn(scope).value
+    val changesState = mergeRequest.changes.stateIn(scope).value
+    val commitMessage: String? = withContext(scope.coroutineContext + Dispatchers.EDT) {
+      val body = "* " + StringUtil.join(changesState.commits, { it.title }, "\n\n* ")
+      val dialog = ReviewMergeCommitMessageDialog(
+        project,
+        CollaborationToolsBundle.message("dialog.review.merge.commit.title.with.squash"),
+        GitLabBundle.message("dialog.review.merge.commit.message.placeholder", sourceBranch, targetBranch),
+        body
+      )
+
+      if (!dialog.showAndGet()) {
+        return@withContext null
+      }
+
+      return@withContext dialog.message
+    }
+
+    if (commitMessage == null) return@runAction
+    mergeRequest.squashAndMerge(commitMessage)
   }
 
   override fun approve() = runAction {
@@ -144,6 +192,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
         action()
       }
       catch (e: Exception) {
+        println(e.localizedMessage)
         if (e is CancellationException) throw e
         //TODO: handle???
       }

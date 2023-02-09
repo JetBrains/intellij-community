@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageDialog
@@ -95,14 +96,14 @@ class GHPRStateModelImpl(private val project: Project,
   override fun submitMergeTask() = submitTask {
     val mergeability = mergeabilityState ?: return@submitTask null
     val dialog = ReviewMergeCommitMessageDialog(project,
-                                                GithubBundle.message("pull.request.merge.message.dialog.title"),
+                                                CollaborationToolsBundle.message("dialog.review.merge.commit.title"),
                                                 GithubBundle.message("pull.request.merge.pull.request", details.number),
                                                 details.title)
     if (!dialog.showAndGet()) {
       return@submitTask null
     }
 
-    stateData.merge(EmptyProgressIndicator(), dialog.message, mergeability.headRefOid)
+    stateData.merge(EmptyProgressIndicator(), splitCommitMessage(dialog.message), mergeability.headRefOid)
   }
 
   override fun submitRebaseMergeTask() = submitTask {
@@ -115,7 +116,7 @@ class GHPRStateModelImpl(private val project: Project,
     changesData.loadCommitsFromApi().successOnEdt { commits ->
       val body = "* " + StringUtil.join(commits, { it.messageHeadline }, "\n\n* ")
       val dialog = ReviewMergeCommitMessageDialog(project,
-                                                  GithubBundle.message("pull.request.merge.message.dialog.title"),
+                                                  CollaborationToolsBundle.message("dialog.review.merge.commit.title.with.squash"),
                                                   GithubBundle.message("pull.request.merge.pull.request", details.number),
                                                   body)
       if (!dialog.showAndGet()) {
@@ -123,7 +124,7 @@ class GHPRStateModelImpl(private val project: Project,
       }
       dialog.message
     }.thenCompose { message ->
-      stateData.squashMerge(EmptyProgressIndicator(), message, mergeability.headRefOid)
+      stateData.squashMerge(EmptyProgressIndicator(), splitCommitMessage(message), mergeability.headRefOid)
     }
   }
 
@@ -150,4 +151,14 @@ class GHPRStateModelImpl(private val project: Project,
 
   override fun addAndInvokeActionErrorChangedListener(listener: () -> Unit) =
     SimpleEventListener.addAndInvokeListener(actionErrorEventDispatcher, listener)
+
+  private fun splitCommitMessage(commitMessage: String): Pair<String, String> {
+    val idx = commitMessage.indexOf("\n\n")
+    return if (idx < 0) "" to commitMessage
+    else {
+      val subject = commitMessage.substring(0, idx)
+      if (subject.contains("\n")) "" to commitMessage
+      else subject to commitMessage.substring(idx + 2)
+    }
+  }
 }

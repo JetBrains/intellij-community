@@ -68,7 +68,7 @@ internal class GitLabReviewTabComponentFactory(
     reviewId: GitLabMergeRequestId
   ): JComponent {
     val conn = projectContext.connection
-    val reviewDetailsVm = GitLabMergeRequestDetailsLoadingViewModelImpl(cs, conn.currentUser, conn.projectData, reviewId).apply {
+    val reviewDetailsVm = GitLabMergeRequestDetailsLoadingViewModelImpl(project, cs, conn.currentUser, conn.projectData, reviewId).apply {
       requestLoad()
     }
 
