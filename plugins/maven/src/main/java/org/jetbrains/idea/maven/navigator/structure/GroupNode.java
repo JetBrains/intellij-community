@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.treeStructure.SimpleNode;
 
@@ -12,8 +11,8 @@ import java.util.List;
 public abstract class GroupNode extends MavenSimpleNode {
   private static final Comparator<MavenSimpleNode> NODE_COMPARATOR = (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true);
 
-  public GroupNode(MavenSimpleNode parent, Project project, MavenProjectsStructure.Customization customization) {
-    super(parent, project, customization);
+  public GroupNode(MavenProjectsStructure structure, MavenSimpleNode parent) {
+    super(structure, parent);
   }
 
   @Override

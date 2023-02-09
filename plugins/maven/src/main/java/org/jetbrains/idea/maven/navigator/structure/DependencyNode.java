@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -20,13 +19,12 @@ public class DependencyNode extends BaseDependenciesNode {
   private final MavenArtifactNode myArtifactNode;
   private final boolean myUnresolved;
 
-  public DependencyNode(MavenSimpleNode parent,
-                        Project project,
+  public DependencyNode(MavenProjectsStructure structure,
+                        MavenSimpleNode parent,
                         MavenArtifactNode artifactNode,
                         MavenProject mavenProject,
-                        boolean unresolved,
-                        MavenProjectsStructure.Customization customization) {
-    super(parent, project, mavenProject, customization);
+                        boolean unresolved) {
+    super(structure, parent, mavenProject);
     myArtifactNode = artifactNode;
     myArtifact = artifactNode.getArtifact();
     myUnresolved = unresolved;
@@ -85,8 +83,8 @@ public class DependencyNode extends BaseDependenciesNode {
     super.setNameAndTooltip(presentation, name, tooltip, mergedAttributes);
   }
 
-  void updateDependency(MavenProjectsStructure mavenProjectsStructure) {
-    setErrorLevel(mavenProjectsStructure, myUnresolved ? MavenProjectsStructure.ErrorLevel.ERROR : MavenProjectsStructure.ErrorLevel.NONE);
+  void updateDependency() {
+    setErrorLevel(myUnresolved ? MavenProjectsStructure.ErrorLevel.ERROR : MavenProjectsStructure.ErrorLevel.NONE);
   }
 
   @Override

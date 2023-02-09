@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.model.MavenArtifactNode;
 import org.jetbrains.idea.maven.model.MavenArtifactState;
@@ -22,8 +21,10 @@ public abstract class BaseDependenciesNode extends GroupNode {
   private final List<DependencyNode> myChildren = new CopyOnWriteArrayList<>();
   private final AtomicReference<ChildrenUpdate> myChildrenUpdate = new AtomicReference<>();
 
-  protected BaseDependenciesNode(MavenSimpleNode parent, Project project, MavenProject mavenProject, MavenProjectsStructure.Customization customization) {
-    super(parent, project, customization);
+  protected BaseDependenciesNode(MavenProjectsStructure structure,
+                                 MavenSimpleNode parent,
+                                 MavenProject mavenProject) {
+    super(structure, parent);
     myMavenProject = mavenProject;
   }
 
@@ -73,22 +74,17 @@ public abstract class BaseDependenciesNode extends GroupNode {
     return myChildren;
   }
 
-  private record ChildrenUpdate(List<MavenArtifactNode> children,
-                                MavenProject mavenProject,
-                                MavenProjectsStructure mavenProjectsStructure) {
+  private record ChildrenUpdate(List<MavenArtifactNode> children, MavenProject mavenProject) {
   }
 
-  protected void updateChildren(List<MavenArtifactNode> children,
-                                MavenProject mavenProject,
-                                MavenProjectsStructure mavenProjectsStructure) {
-    myChildrenUpdate.set(new ChildrenUpdate(children, mavenProject, mavenProjectsStructure));
-    childrenChanged(mavenProjectsStructure);
+  protected void updateChildren(List<MavenArtifactNode> children, MavenProject mavenProject) {
+    myChildrenUpdate.set(new ChildrenUpdate(children, mavenProject));
+    childrenChanged();
   }
 
   private void doUpdateChildren(ChildrenUpdate childrenUpdate) {
     List<MavenArtifactNode> children = childrenUpdate.children();
     MavenProject mavenProject = childrenUpdate.mavenProject();
-    MavenProjectsStructure mavenProjectsStructure = childrenUpdate.mavenProjectsStructure();
 
     List<DependencyNode> newNodes = null;
     int validChildCount = 0;
@@ -106,7 +102,7 @@ public abstract class BaseDependenciesNode extends GroupNode {
           if (currentValidNode.getArtifact().equals(each.getArtifact())
               && currentValidNode.isUnresolved() == each.getArtifact().isFileUnresolved()) {
             if (each.getState() == MavenArtifactState.ADDED) {
-              currentValidNode.updateChildren(each.getDependencies(), mavenProject, mavenProjectsStructure);
+              currentValidNode.updateChildren(each.getDependencies(), mavenProject);
             }
 
             validChildCount++;
@@ -121,9 +117,9 @@ public abstract class BaseDependenciesNode extends GroupNode {
       DependencyNode newNode = findOrCreateNodeFor(each, mavenProject, validChildCount);
       newNodes.add(newNode);
       if (each.getState() == MavenArtifactState.ADDED) {
-        newNode.updateChildren(each.getDependencies(), mavenProject, mavenProjectsStructure);
+        newNode.updateChildren(each.getDependencies(), mavenProject);
       }
-      newNode.updateDependency(mavenProjectsStructure);
+      newNode.updateDependency();
     }
 
     if (newNodes == null) {
@@ -138,7 +134,7 @@ public abstract class BaseDependenciesNode extends GroupNode {
 
     myChildren.clear();
     myChildren.addAll(newNodes);
-    childrenChanged(mavenProjectsStructure);
+    childrenChanged();
   }
 
   private DependencyNode findOrCreateNodeFor(MavenArtifactNode artifact, MavenProject mavenProject, int from) {
@@ -148,7 +144,7 @@ public abstract class BaseDependenciesNode extends GroupNode {
         return node;
       }
     }
-    return new DependencyNode(this, getProject(), artifact, mavenProject, artifact.getArtifact().isFileUnresolved(), myCustomization);
+    return new DependencyNode(myMavenProjectsStructure, this, artifact, mavenProject, artifact.getArtifact().isFileUnresolved());
   }
 
   @Override

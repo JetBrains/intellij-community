@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,11 +32,11 @@ public abstract class MavenSimpleNode extends CachingSimpleNode {
   private MavenSimpleNode myParent;
   private MavenProjectsStructure.ErrorLevel myErrorLevel = MavenProjectsStructure.ErrorLevel.NONE;
   private MavenProjectsStructure.ErrorLevel myTotalErrorLevel = null;
-  protected final MavenProjectsStructure.Customization myCustomization;
+  protected final MavenProjectsStructure myMavenProjectsStructure;
 
-  public MavenSimpleNode(MavenSimpleNode parent, Project project, MavenProjectsStructure.Customization customization) {
-    super(project, null);
-    myCustomization = customization;
+  public MavenSimpleNode(MavenProjectsStructure structure, MavenSimpleNode parent) {
+    super(structure.getProject(), null);
+    myMavenProjectsStructure = structure;
     setParent(parent);
   }
 
@@ -68,7 +67,7 @@ public abstract class MavenSimpleNode extends CachingSimpleNode {
   }
 
   public MavenProjectsStructure.DisplayKind getDisplayKind() {
-    Class[] visibles = myCustomization.visibleNodeClasses();
+    Class[] visibles = myMavenProjectsStructure.getCustomization().visibleNodeClasses();
     if (visibles == null) return MavenProjectsStructure.DisplayKind.NORMAL;
 
     for (Class each : visibles) {
@@ -99,13 +98,13 @@ public abstract class MavenSimpleNode extends CachingSimpleNode {
     myTotalErrorLevel = null;
   }
 
-  protected void childrenChanged(MavenProjectsStructure mavenProjectsStructure) {
+  protected void childrenChanged() {
     MavenSimpleNode each = this;
     while (each != null) {
       each.cleanUpCache();
       each = (MavenSimpleNode)each.getParent();
     }
-    mavenProjectsStructure.updateUpTo(this);
+    myMavenProjectsStructure.updateUpTo(this);
   }
 
   public synchronized MavenProjectsStructure.ErrorLevel getTotalErrorLevel() {
@@ -129,10 +128,10 @@ public abstract class MavenSimpleNode extends CachingSimpleNode {
     return result;
   }
 
-  public void setErrorLevel(MavenProjectsStructure mavenProjectsStructure, MavenProjectsStructure.ErrorLevel level) {
+  public void setErrorLevel(MavenProjectsStructure.ErrorLevel level) {
     if (myErrorLevel == level) return;
     myErrorLevel = level;
-    mavenProjectsStructure.updateUpTo(this);
+    myMavenProjectsStructure.updateUpTo(this);
   }
 
   @Override

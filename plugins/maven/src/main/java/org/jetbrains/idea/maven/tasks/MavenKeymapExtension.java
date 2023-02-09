@@ -27,7 +27,7 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.navigator.SelectMavenGoalDialog;
-import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure;
+import org.jetbrains.idea.maven.navigator.structure.GoalNode;
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -91,7 +91,7 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
       public void onClick(MouseEvent e) {
         SelectMavenGoalDialog dialog = new SelectMavenGoalDialog(project);
         if (dialog.showAndGet() && dialog.getResult() != null) {
-          MavenProjectsStructure.GoalNode goalNode = dialog.getResult();
+          GoalNode goalNode = dialog.getResult();
           String goal = goalNode.getGoal();
           String actionId = MavenShortcutsManager.getInstance(project).getActionId(goalNode.getProjectPath(), goal);
           getOrRegisterAction(goalNode.getMavenProject(), actionId, goal);

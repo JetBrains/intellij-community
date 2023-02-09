@@ -304,7 +304,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     myNavigator.setShowIgnored(true);
     assertEquals(1, getRootNodes().size());
     assertEquals(1, myStructure.getRootElement().getChildren().length);
-    MavenProjectsStructure.ProjectNode projectNode = (MavenProjectsStructure.ProjectNode)myStructure.getRootElement().getChildren()[0];
+    ProjectNode projectNode = (ProjectNode)myStructure.getRootElement().getChildren()[0];
     assertEquals(myProjectPom, projectNode.getVirtualFile());
     assertEquals(1, projectNode.getProjectNodesInTests().size());
 
@@ -312,7 +312,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     waitForMavenUtilRunnablesComplete();
     assertEquals(2, getRootNodes().size());
     assertEquals(1, myStructure.getRootElement().getChildren().length); // only one of them is visible
-    projectNode = (MavenProjectsStructure.ProjectNode)myStructure.getRootElement().getChildren()[0];
+    projectNode = (ProjectNode)myStructure.getRootElement().getChildren()[0];
     assertEquals(m, projectNode.getVirtualFile());
     assertEquals(0, projectNode.getProjectNodesInTests().size());
   }
@@ -410,7 +410,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     var rootNode = myStructure.getRootElement();
     var projectsManager = MavenProjectsManager.getInstance(myProject);
     var project = projectsManager.getProjects().get(0);
-    var node = myStructure.new ProjectNode(project, myStructure.getRootElement().myCustomization);
+    var node = new ProjectNode(myStructure, project);
     rootNode.add(node);
     var children = rootNode.doGetChildren();
     rootNode.remove(node);
@@ -433,7 +433,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
     var projectsManager = MavenProjectsManager.getInstance(myProject);
     var project = projectsManager.getProjects().get(0);
-    var node = myStructure.new ProjectNode(project, myStructure.getRootElement().myCustomization);
+    var node = new ProjectNode(myStructure, project);
     var projectNode = getRootNodes().get(0);
     projectNode.add(node);
     var children = projectNode.doGetChildren();
@@ -501,7 +501,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     }
   }
 
-  private List<MavenProjectsStructure.ProjectNode> getRootNodes() {
+  private List<ProjectNode> getRootNodes() {
 
     return myStructure.getRootElement().getProjectNodesInTests();
   }

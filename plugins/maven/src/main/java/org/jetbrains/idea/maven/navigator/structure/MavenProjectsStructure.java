@@ -1,89 +1,38 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
-import com.intellij.execution.ProgramRunnerUtil;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
-import com.intellij.pom.NavigatableAdapter;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
-import icons.MavenIcons;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.dom.MavenPluginDomUtil;
-import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
-import org.jetbrains.idea.maven.dom.model.MavenDomProfiles;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
-import org.jetbrains.idea.maven.dom.plugin.MavenDomMojo;
-import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
-import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
-import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
-import org.jetbrains.idea.maven.execution.MavenRunner;
-import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.model.MavenProfileKind;
-import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
-import org.jetbrains.idea.maven.utils.MavenPluginInfo;
 import org.jetbrains.idea.maven.utils.MavenUIUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.event.InputEvent;
 import java.io.File;
-import java.net.URL;
-import java.util.List;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
-
-import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
-import static icons.ExternalSystemIcons.Task;
-import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
-import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
 public class MavenProjectsStructure extends SimpleTreeStructure {
   public record Customization(Class<? extends MavenSimpleNode>[] visibleNodeClasses, boolean showDescriptions, boolean alwaysShowAllPhases) {}
-  private static final URL ERROR_ICON_URL = MavenProjectsStructure.class.getResource("/general/error.png");
-  private static final Collection<String> BASIC_PHASES = MavenConstants.BASIC_PHASES;
-  private static final Collection<String> PHASES = MavenConstants.PHASES;
 
   private final ExecutorService boundedUpdateService;
 
@@ -110,7 +59,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
                                 SimpleTree tree) {
     myProject = project;
     myCustomization = customization;
-    myRoot = new RootNode(myCustomization);
+    myRoot = new RootNode(this);
     myProjectsManager = projectsManager;
     myTasksManager = tasksManager;
     myShortcutsManager = shortcutsManager;
@@ -131,7 +80,31 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     tree.setModel(new AsyncTreeModel(myModel, projectsNavigator));
   }
 
-  private void configureTree(final SimpleTree tree) {
+  Project getProject() {
+    return myProject;
+  }
+
+  MavenProjectsManager getProjectsManager() {
+    return myProjectsManager;
+  }
+
+  MavenProjectsNavigator getProjectsNavigator() {
+    return myProjectsNavigator;
+  }
+
+  public MavenTasksManager getTasksManager() {
+    return myTasksManager;
+  }
+
+  public MavenShortcutsManager getShortcutsManager() {
+    return myShortcutsManager;
+  }
+
+  Customization getCustomization() {
+    return myCustomization;
+  }
+
+  private static void configureTree(final SimpleTree tree) {
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
 
@@ -168,13 +141,13 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public void update() {
-    List<MavenProject> projects = myProjectsManager.getProjects();
+    List<MavenProject> projects = getProjectsManager().getProjects();
     Set<MavenProject> deleted = new HashSet<>(myProjectToNodeMapping.keySet());
     deleted.removeAll(projects);
     updateProjects(projects, deleted);
   }
 
-  private void updateFrom(SimpleNode node) {
+  void updateFrom(SimpleNode node) {
     if (node != null) {
       myModel.invalidate(node, true);
     }
@@ -192,7 +165,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     for (MavenProject each : updated) {
       ProjectNode node = findNodeFor(each);
       if (node == null) {
-        node = new ProjectNode(each, myCustomization);
+        node = new ProjectNode(this, each);
         myProjectToNodeMapping.put(each, node);
       }
       doUpdateProject(node);
@@ -214,8 +187,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     ProjectsGroupNode newParentNode = myRoot;
 
-    if (myProjectsNavigator.getGroupModules()) {
-      MavenProject aggregator = myProjectsManager.findAggregator(project);
+    if (getProjectsNavigator().getGroupModules()) {
+      MavenProject aggregator = getProjectsManager().findAggregator(project);
       if (aggregator != null) {
         ProjectNode aggregatorNode = findNodeFor(aggregator);
         if (aggregatorNode != null && aggregatorNode.isVisible()) {
@@ -227,8 +200,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     node.updateProject();
     reconnectNode(node, newParentNode);
 
-    ProjectsGroupNode newModulesParentNode = myProjectsNavigator.getGroupModules() && node.isVisible() ? node : myRoot;
-    for (MavenProject each : myProjectsManager.getModules(project)) {
+    ProjectsGroupNode newModulesParentNode = getProjectsNavigator().getGroupModules() && node.isVisible() ? node : myRoot;
+    for (MavenProject each : getProjectsManager().getModules(project)) {
       ProjectNode moduleNode = findNodeFor(each);
       if (moduleNode != null && !moduleNode.getParent().equals(newModulesParentNode)) {
         reconnectNode(moduleNode, newModulesParentNode);
@@ -236,7 +209,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
   }
 
-  private void reconnectNode(ProjectNode node, ProjectsGroupNode newParentNode) {
+  private static void reconnectNode(ProjectNode node, ProjectsGroupNode newParentNode) {
     ProjectsGroupNode oldParentNode = node.getGroup();
     if (oldParentNode == null || !oldParentNode.equals(newParentNode)) {
       if (oldParentNode != null) {
@@ -290,7 +263,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     return myProjectToNodeMapping.get(project);
   }
 
-  private boolean isShown(Class aClass) {
+  boolean isShown(Class aClass) {
     Class<? extends MavenSimpleNode>[] classes = getVisibleNodesClasses();
     if (classes == null) return true;
 
@@ -308,18 +281,14 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   protected final Class<? extends MavenSimpleNode>[] getVisibleNodesClasses() {
-    return myCustomization.visibleNodeClasses();
-  }
-
-  protected final boolean showDescriptions() {
-    return myCustomization.showDescriptions();
+    return getCustomization().visibleNodeClasses();
   }
 
   protected boolean showOnlyBasicPhases() {
-    if (myCustomization.alwaysShowAllPhases()) {
+    if (getCustomization().alwaysShowAllPhases()) {
       return false;
     }
-    return myProjectsNavigator.getShowBasicPhasesOnly();
+    return getProjectsNavigator().getShowBasicPhasesOnly();
   }
 
   public static <T extends MavenSimpleNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> nodeClass) {
@@ -365,811 +334,15 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     NONE, ERROR
   }
 
-  public abstract class ProjectsGroupNode extends GroupNode {
-    private final List<ProjectNode> myProjectNodes = new CopyOnWriteArrayList<>();
-
-    public ProjectsGroupNode(MavenSimpleNode parent, MavenProjectsStructure.Customization customization) {
-      super(parent, MavenProjectsStructure.this.myProject, customization);
-      getTemplatePresentation().setIcon(MavenIcons.ModulesClosed);
-    }
-
-    @Override
-    protected List<? extends MavenSimpleNode> doGetChildren() {
-      return myProjectNodes;
-    }
-
-    @TestOnly
-    public List<ProjectNode> getProjectNodesInTests() {
-      return myProjectNodes;
-    }
-
-    protected void add(ProjectNode projectNode) {
-      projectNode.setParent(this);
-      insertSorted(myProjectNodes, projectNode);
-
-      childrenChanged(MavenProjectsStructure.this);
-    }
-
-    public void remove(ProjectNode projectNode) {
-      projectNode.setParent(null);
-      myProjectNodes.remove(projectNode);
-
-      childrenChanged(MavenProjectsStructure.this);
-    }
-
-    public void sortProjects() {
-      sort(myProjectNodes);
-      childrenChanged(MavenProjectsStructure.this);
-    }
-  }
-
-  public class RootNode extends ProjectsGroupNode {
-    private final ProfilesNode myProfilesNode;
-
-    public RootNode(MavenProjectsStructure.Customization customization) {
-      super(null, customization);
-      myProfilesNode = new ProfilesNode(this, customization);
-    }
-
-    @Override
-    public boolean isVisible() {
-      return true;
-    }
-
-    @Override
-    protected List<? extends MavenSimpleNode> doGetChildren() {
-      var children = new CopyOnWriteArrayList<MavenSimpleNode>(List.of(myProfilesNode));
-      children.addAll(super.doGetChildren());
-      return children;
-    }
-
-    public void updateProfiles() {
-      myProfilesNode.updateProfiles();
-    }
-  }
-
-  public class ProfilesNode extends GroupNode {
-    private final List<ProfileNode> myProfileNodes = new CopyOnWriteArrayList<>();
-
-    public ProfilesNode(MavenSimpleNode parent, MavenProjectsStructure.Customization customization) {
-      super(parent, MavenProjectsStructure.this.myProject, customization);
-      getTemplatePresentation().setIcon(MavenIcons.ProfilesClosed);
-    }
-
-    @Override
-    protected List<? extends MavenSimpleNode> doGetChildren() {
-      return myProfileNodes;
-    }
-
-    @Override
-    public String getName() {
-      return message("view.node.profiles");
-    }
-
-    public void updateProfiles() {
-      Collection<Pair<String, MavenProfileKind>> profiles = myProjectsManager.getProfilesWithStates();
-
-      List<ProfileNode> newNodes = new ArrayList<>(profiles.size());
-      for (Pair<String, MavenProfileKind> each : profiles) {
-        ProfileNode node = findOrCreateNodeFor(each.first);
-        node.setState(each.second);
-        newNodes.add(node);
-      }
-
-      myProfileNodes.clear();
-      myProfileNodes.addAll(newNodes);
-      sort(myProfileNodes);
-      childrenChanged(MavenProjectsStructure.this);
-    }
-
-    private ProfileNode findOrCreateNodeFor(String profileName) {
-      for (ProfileNode each : myProfileNodes) {
-        if (each.getProfileName().equals(profileName)) return each;
-      }
-      return new ProfileNode(this, profileName, myCustomization);
-    }
-  }
-
-  public class ProfileNode extends MavenSimpleNode {
-    private final String myProfileName;
-    private MavenProfileKind myState;
-
-    public ProfileNode(ProfilesNode parent, String profileName, MavenProjectsStructure.Customization customization) {
-      super(parent, MavenProjectsStructure.this.myProject, customization);
-      myProfileName = profileName;
-    }
-
-    @Override
-    public String getName() {
-      return myProfileName;
-    }
-
-    public String getProfileName() {
-      return myProfileName;
-    }
-
-    public MavenProfileKind getState() {
-      return myState;
-    }
-
-    private void setState(MavenProfileKind state) {
-      myState = state;
-    }
-
-    @Override
-    @Nullable
-    @NonNls
-    protected String getActionId() {
-      return "Maven.ToggleProfile";
-    }
-
-    @Nullable
-    @Override
-    public Navigatable getNavigatable() {
-      if (myProject == null) return null;
-      final List<MavenDomProfile> profiles = new ArrayList<>();
-
-      // search in "Per User Maven Settings" - %USER_HOME%/.m2/settings.xml
-      // and in "Global Maven Settings" - %M2_HOME%/conf/settings.xml
-      for (VirtualFile virtualFile : myProjectsManager.getGeneralSettings().getEffectiveSettingsFiles()) {
-        if (virtualFile != null) {
-          final MavenDomSettingsModel model = MavenDomUtil.getMavenDomModel(myProject, virtualFile, MavenDomSettingsModel.class);
-          if (model != null) {
-            addProfiles(profiles, model.getProfiles().getProfiles());
-          }
-        }
-      }
-
-      for (MavenProject mavenProject : myProjectsManager.getProjects()) {
-        // search in "Profile descriptors" - located in project basedir (profiles.xml)
-        final VirtualFile mavenProjectFile = mavenProject.getFile();
-        final VirtualFile profilesXmlFile = MavenUtil.findProfilesXmlFile(mavenProjectFile);
-        if (profilesXmlFile != null) {
-          final MavenDomProfiles profilesModel = MavenDomUtil.getMavenDomProfilesModel(myProject, profilesXmlFile);
-          if (profilesModel != null) {
-            addProfiles(profiles, profilesModel.getProfiles());
-          }
-        }
-
-        // search in "Per Project" - Defined in the POM itself (pom.xml)
-        final MavenDomProjectModel projectModel = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProjectFile);
-        if (projectModel != null) {
-          addProfiles(profiles, projectModel.getProfiles().getProfiles());
-        }
-      }
-      return getNavigatable(profiles);
-    }
-
-    private Navigatable getNavigatable(@NotNull final List<MavenDomProfile> profiles) {
-      if (profiles.size() > 1) {
-        return new NavigatableAdapter() {
-          @Override
-          public void navigate(final boolean requestFocus) {
-            JBPopupFactory.getInstance()
-              .createPopupChooserBuilder(profiles)
-              .setRenderer(new DefaultListCellRenderer() {
-                @Override
-                public Component getListCellRendererComponent(JList list,
-                                                              Object value,
-                                                              int index,
-                                                              boolean isSelected,
-                                                              boolean cellHasFocus) {
-                  Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                  MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
-                  XmlElement xmlElement = mavenDomProfile.getXmlElement();
-                  if (xmlElement != null) {
-                    setText(xmlElement.getContainingFile().getVirtualFile().getPresentableUrl());
-                  }
-                  return result;
-                }
-              })
-              .setTitle(message("maven.notification.choose.file.to.open"))
-              .setItemChosenCallback((value) -> {
-                final Navigatable navigatable = getNavigatable(value);
-                if (navigatable != null) navigatable.navigate(requestFocus);
-              }).createPopup().showInFocusCenter();
-          }
-        };
-      }
-      else {
-        return getNavigatable(ContainerUtil.getFirstItem(profiles));
-      }
-    }
-
-    @Nullable
-    private Navigatable getNavigatable(@Nullable final MavenDomProfile profile) {
-      if (profile == null) return null;
-      XmlElement xmlElement = profile.getId().getXmlElement();
-      return xmlElement instanceof Navigatable ? (Navigatable)xmlElement : null;
-    }
-
-    private void addProfiles(@NotNull List<MavenDomProfile> result, @Nullable List<MavenDomProfile> profilesToAdd) {
-      if (profilesToAdd == null) return;
-      for (MavenDomProfile profile : profilesToAdd) {
-        if (StringUtil.equals(profile.getId().getValue(), myProfileName)) {
-          result.add(profile);
-        }
-      }
-    }
-  }
-
-  public class ProjectNode extends ProjectsGroupNode {
-    private final MavenProject myMavenProject;
-    private final LifecycleNode myLifecycleNode;
-    private final PluginsNode myPluginsNode;
-    private final DependenciesNode myDependenciesNode;
-    private final RunConfigurationsNode myRunConfigurationsNode;
-
-    private @NlsContexts.Tooltip String myTooltipCache;
-
-    public ProjectNode(@NotNull MavenProject mavenProject, MavenProjectsStructure.Customization customization) {
-      super(null, customization);
-      myMavenProject = mavenProject;
-
-      myLifecycleNode = new LifecycleNode(this, customization);
-      myPluginsNode = new PluginsNode(this, customization);
-      myDependenciesNode = new DependenciesNode(this, MavenProjectsStructure.this.myProject, mavenProject, myCustomization);
-      myRunConfigurationsNode = new RunConfigurationsNode(this, customization);
-
-      getTemplatePresentation().setIcon(MavenIcons.MavenProject);
-    }
-
-    public MavenProject getMavenProject() {
-      return myMavenProject;
-    }
-
-    public ProjectsGroupNode getGroup() {
-      return (ProjectsGroupNode)super.getParent();
-    }
-
-    @Override
-    public boolean isVisible() {
-      if (!myProjectsNavigator.getShowIgnored() && myProjectsManager.isIgnored(myMavenProject)) return false;
-      return super.isVisible();
-    }
-
-    @Override
-    protected List<? extends MavenSimpleNode> doGetChildren() {
-      var children = new CopyOnWriteArrayList<MavenSimpleNode>(List.of(myLifecycleNode, myPluginsNode, myRunConfigurationsNode, myDependenciesNode));
-      children.addAll(super.doGetChildren());
-      return children;
-    }
-
-    private void updateProject() {
-      setErrorLevel(MavenProjectsStructure.this, myMavenProject.getCacheProblems().isEmpty() ? ErrorLevel.NONE : ErrorLevel.ERROR);
-      myLifecycleNode.updateGoalsList();
-      myPluginsNode.updatePlugins(myMavenProject);
-
-      if (isShown(DependencyNode.class)) {
-        myDependenciesNode.updateDependencies(MavenProjectsStructure.this);
-      }
-
-      myRunConfigurationsNode.updateRunConfigurations(myMavenProject);
-
-      myTooltipCache = makeDescription();
-
-      updateFrom(getParent());
-    }
-
-    public void updateIgnored() {
-      getGroup().childrenChanged(MavenProjectsStructure.this);
-    }
-
-    public void updateGoals() {
-      updateFrom(myLifecycleNode);
-      updateFrom(myPluginsNode);
-    }
-
-    public void updateRunConfigurations() {
-      myRunConfigurationsNode.updateRunConfigurations(myMavenProject);
-      updateFrom(myRunConfigurationsNode);
-    }
-
-    @Override
-    public String getName() {
-      if (myProjectsNavigator.getAlwaysShowArtifactId()) {
-        return myMavenProject.getMavenId().getArtifactId();
-      }
-      else {
-        return myMavenProject.getDisplayName();
-      }
-    }
-
-    @Override
-    protected void doUpdate(@NotNull PresentationData presentation) {
-      String hint = null;
-
-      if (!myProjectsNavigator.getGroupModules()
-          && myProjectsManager.findAggregator(myMavenProject) == null
-          && myProjectsManager.getProjects().size() > myProjectsManager.getRootProjects().size()) {
-        hint = "root";
-      }
-
-      setNameAndTooltip(presentation, getName(), myTooltipCache, hint);
-    }
-
-    @Override
-    protected SimpleTextAttributes getPlainAttributes() {
-      if (myProjectsManager.isIgnored(myMavenProject)) {
-        return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY);
-      }
-      return super.getPlainAttributes();
-    }
-
-    @NlsContexts.DetailedDescription
-    private String makeDescription() {
-      StringBuilder desc = new StringBuilder();
-
-      desc.append("<html>")
-        .append("<table>");
-
-      desc.append("<tr>")
-        .append("<td nowrap>").append("<table>")
-        .append("<tr>")
-        .append("<td nowrap>").append(message("detailed.description.project")).append("</td>")
-        .append("<td nowrap>").append(myMavenProject.getMavenId()).append("</td>")
-        .append("</tr>")
-        .append("<tr>")
-        .append("<td nowrap>").append(message("detailed.description.location")).append("</td>")
-        .append("<td nowrap>").append(getPresentablePath(myMavenProject.getPath())).append("</td>")
-        .append("</tr>")
-        .append("</table>").append("</td>")
-        .append("</tr>");
-
-      appendProblems(desc);
-
-      desc.append("</table>")
-        .append("</html>");
-
-      return desc.toString(); //NON-NLS
-    }
-
-    private void appendProblems(StringBuilder desc) {
-      List<MavenProjectProblem> problems = myMavenProject.getCacheProblems();
-      if (problems.isEmpty()) return;
-
-      desc.append("<tr>" +
-                  "<td nowrap>" +
-                  "<table>");
-
-      boolean first = true;
-      for (MavenProjectProblem each : problems) {
-        desc.append("<tr>");
-        if (first) {
-          desc.append("<td nowrap valign=top>").append(MavenUtil.formatHtmlImage(ERROR_ICON_URL)).append("</td>");
-          desc.append("<td nowrap valign=top>").append(message("detailed.description.problems")).append("</td>");
-          first = false;
-        }
-        else {
-          desc.append("<td nowrap colspan=2></td>");
-        }
-        desc.append("<td nowrap valign=top>").append(wrappedText(each)).append("</td>");
-        desc.append("</tr>");
-      }
-      desc.append("</table>" +
-                  "</td>" +
-                  "</tr>");
-    }
-
-    private String wrappedText(MavenProjectProblem each) {
-      String description = ObjectUtils.chooseNotNull(each.getDescription(), each.getPath());
-      if (description == null) return "";
-
-      String text = StringUtil.replace(description, Arrays.asList("<", ">"), Arrays.asList("&lt;", "&gt;"));
-      StringBuilder result = new StringBuilder();
-      int count = 0;
-      for (int i = 0; i < text.length(); i++) {
-        char ch = text.charAt(i);
-        result.append(ch);
-
-        if (count++ > 80) {
-          if (ch == ' ') {
-            count = 0;
-            result.append("<br>");
-          }
-        }
-      }
-      return result.toString();
-    }
-
-    @Override
-    public VirtualFile getVirtualFile() {
-      return myMavenProject.getFile();
-    }
-
-    @Override
-    protected void setNameAndTooltip(@NotNull PresentationData presentation, String name, @Nullable String tooltip, SimpleTextAttributes attributes) {
-      super.setNameAndTooltip(presentation, name, tooltip, attributes);
-      if (myProjectsNavigator.getShowVersions()) {
-        presentation.addText(":" + myMavenProject.getMavenId().getVersion(),
-                           new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
-      }
-    }
-
-    @Override
-    @Nullable
-    @NonNls
-    protected String getMenuId() {
-      return "Maven.NavigatorProjectMenu";
-    }
-
-    @Override
-    public boolean showDescription() {
-      return MavenProjectsStructure.this.showDescriptions();
-    }
-  }
-
-  public class ModulesNode extends ProjectsGroupNode {
-    public ModulesNode(ProjectNode parent, MavenProjectsStructure.Customization customization) {
-      super(parent, customization);
-      getTemplatePresentation().setIcon(MavenIcons.ModulesClosed);
-    }
-
-    @Override
-    public String getName() {
-      return message("view.node.modules");
-    }
-  }
-
-  public abstract class GoalsGroupNode extends GroupNode {
-    protected final List<GoalNode> myGoalNodes = new CopyOnWriteArrayList<>();
-
-    public GoalsGroupNode(MavenSimpleNode parent, Customization customization) {
-      super(parent, MavenProjectsStructure.this.myProject, customization);
-    }
-
-    @Override
-    protected List<? extends MavenSimpleNode> doGetChildren() {
-      return myGoalNodes;
-    }
-  }
-
-  public abstract class GoalNode extends MavenSimpleNode {
-    private final MavenProject myMavenProject;
-    private final String myGoal;
-    private final String myDisplayName;
-
-    public GoalNode(GoalsGroupNode parent, String goal, String displayName, Customization customization) {
-      super(parent, MavenProjectsStructure.this.myProject, customization);
-      myMavenProject = findParent(ProjectNode.class).getMavenProject();
-      myGoal = goal;
-      myDisplayName = displayName;
-      getTemplatePresentation().setIcon(Task);
-    }
-
-    public MavenProject getMavenProject() {
-      return myMavenProject;
-    }
-
-    public String getProjectPath() {
-      return myMavenProject.getPath();
-    }
-
-    public String getGoal() {
-      return myGoal;
-    }
-
-    @Override
-    public String getName() {
-      return myDisplayName;
-    }
-
-    @Override
-    protected void doUpdate(@NotNull PresentationData presentation) {
-      String s1 = StringUtil.nullize(myShortcutsManager.getDescription(myMavenProject, myGoal));
-      String s2 = StringUtil.nullize(myTasksManager.getDescription(myMavenProject, myGoal));
-
-      String hint;
-      if (s1 == null) {
-        hint = s2;
-      }
-      else if (s2 == null) {
-        hint = s1;
-      }
-      else {
-        hint = s1 + ", " + s2;
-      }
-
-      setNameAndTooltip(presentation, getName(), null, hint);
-    }
-
-    @Override
-    protected SimpleTextAttributes getPlainAttributes() {
-      SimpleTextAttributes original = super.getPlainAttributes();
-
-      int style = original.getStyle();
-      Color color = original.getFgColor();
-      boolean custom = false;
-
-      if ("test".equals(myGoal) && MavenRunner.getInstance(myProject).getSettings().isSkipTests()) {
-        color = SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor();
-        style |= SimpleTextAttributes.STYLE_STRIKEOUT;
-        custom = true;
-      }
-      if (myGoal.equals(myMavenProject.getDefaultGoal())) {
-        style |= SimpleTextAttributes.STYLE_BOLD;
-        custom = true;
-      }
-      if (custom) return original.derive(style, color, null, null);
-      return original;
-    }
-
-    @Override
-    @Nullable
-    @NonNls
-    protected String getActionId() {
-      return "Maven.RunBuild";
-    }
-
-    @Override
-    @Nullable
-    @NonNls
-    protected String getMenuId() {
-      return "Maven.BuildMenu";
-    }
-
-    @Override
-    public boolean showDescription() {
-      return MavenProjectsStructure.this.showDescriptions();
-    }
-  }
-
-  public class LifecycleNode extends GoalsGroupNode {
-    public LifecycleNode(ProjectNode parent, Customization customization) {
-      super(parent, customization);
-
-      for (String goal : PHASES) {
-        myGoalNodes.add(new StandardGoalNode(this, goal, customization));
-      }
-      getTemplatePresentation().setIcon(AllIcons.Nodes.ConfigFolder);
-    }
-
-    @Override
-    public String getName() {
-      return message("view.node.lifecycle");
-    }
-
-    public void updateGoalsList() {
-      childrenChanged(MavenProjectsStructure.this);
-    }
-  }
-
-  public class StandardGoalNode extends GoalNode {
-    public StandardGoalNode(GoalsGroupNode parent, String goal, Customization customization) {
-      super(parent, goal, goal, customization);
-    }
-
-    @Override
-    public boolean isVisible() {
-      if (showOnlyBasicPhases() && !BASIC_PHASES.contains(getGoal())) return false;
-      return super.isVisible();
-    }
-  }
-
-  public class PluginsNode extends GroupNode {
-    private final List<PluginNode> myPluginNodes = new CopyOnWriteArrayList<>();
-
-    public PluginsNode(ProjectNode parent, Customization customization) {
-      super(parent, MavenProjectsStructure.this.myProject, customization);
-      getTemplatePresentation().setIcon(AllIcons.Nodes.ConfigFolder);
-    }
-
-    @Override
-    public String getName() {
-      return message("view.node.plugins");
-    }
-
-    @Override
-    protected List<? extends MavenSimpleNode> doGetChildren() {
-      return myPluginNodes;
-    }
-
-    public void updatePlugins(MavenProject mavenProject) {
-
-      List<MavenPlugin> plugins = mavenProject.getDeclaredPlugins();
-      boundedUpdateService.execute(new UpdatePluginsTreeTask(this, plugins));
-    }
-  }
-
-  public class PluginNode extends GoalsGroupNode {
-    private final MavenPlugin myPlugin;
-    private MavenPluginInfo myPluginInfo;
-
-    public PluginNode(PluginsNode parent, MavenPlugin plugin, MavenPluginInfo pluginInfo, Customization customization) {
-      super(parent, customization);
-      myPlugin = plugin;
-
-      getTemplatePresentation().setIcon(MavenIcons.MavenPlugin);
-      updatePlugin(pluginInfo);
-    }
-
-    public MavenPlugin getPlugin() {
-      return myPlugin;
-    }
-
-    @Override
-    public String getName() {
-      return myPluginInfo == null ? myPlugin.getDisplayString() : myPluginInfo.getGoalPrefix();
-    }
-
-    @Override
-    protected void doUpdate(@NotNull PresentationData presentation) {
-      setNameAndTooltip(presentation, getName(), null, myPluginInfo != null ? myPlugin.getDisplayString() : null);
-    }
-
-    public void updatePlugin(@Nullable MavenPluginInfo newPluginInfo) {
-      boolean hadPluginInfo = myPluginInfo != null;
-
-      myPluginInfo = newPluginInfo;
-      boolean hasPluginInfo = myPluginInfo != null;
-
-      setErrorLevel(MavenProjectsStructure.this, myPluginInfo == null ? ErrorLevel.ERROR : ErrorLevel.NONE);
-
-      if (hadPluginInfo == hasPluginInfo) return;
-
-      myGoalNodes.clear();
-      if (myPluginInfo != null) {
-        for (MavenPluginInfo.Mojo mojo : myPluginInfo.getMojos()) {
-          myGoalNodes.add(new PluginGoalNode(this, mojo.getQualifiedGoal(), mojo.getGoal(), mojo.getDisplayName(), myCustomization));
-        }
-      }
-
-      sort(myGoalNodes);
-      updateFrom(this);
-      childrenChanged(MavenProjectsStructure.this);
-    }
-
-    @Override
-    public boolean isVisible() {
-      // show regardless absence of children
-      return super.isVisible() || getDisplayKind() != DisplayKind.NEVER;
-    }
-  }
-
-  public class PluginGoalNode extends GoalNode {
-
-    private final String myUnqualifiedGoal;
-
-    public PluginGoalNode(PluginNode parent, String goal, String unqualifiedGoal, String displayName, Customization customization) {
-      super(parent, goal, displayName, customization);
-      getTemplatePresentation().setIcon(MavenIcons.PluginGoal);
-      myUnqualifiedGoal = unqualifiedGoal;
-    }
-
-    @Nullable
-    @Override
-    public Navigatable getNavigatable() {
-      PluginNode pluginNode = (PluginNode)getParent();
-
-      MavenDomPluginModel pluginModel = MavenPluginDomUtil.getMavenPluginModel(myProject,
-                                                                               pluginNode.getPlugin().getGroupId(),
-                                                                               pluginNode.getPlugin().getArtifactId(),
-                                                                               pluginNode.getPlugin().getVersion());
-
-      if (pluginModel == null) return null;
-
-      for (MavenDomMojo mojo : pluginModel.getMojos().getMojos()) {
-        final XmlElement xmlElement = mojo.getGoal().getXmlElement();
-
-        if (xmlElement instanceof Navigatable && Objects.equals(myUnqualifiedGoal, mojo.getGoal().getStringValue())) {
-          return new NavigatableAdapter() {
-            @Override
-            public void navigate(boolean requestFocus) {
-              ((Navigatable)xmlElement).navigate(requestFocus);
-            }
-          };
-        }
-      }
-
-      return null;
-    }
-  }
-
-  public class RunConfigurationsNode extends GroupNode {
-
-    private final List<RunConfigurationNode> myChildren = new CopyOnWriteArrayList<>();
-
-    public RunConfigurationsNode(ProjectNode parent, Customization customization) {
-      super(parent, MavenProjectsStructure.this.myProject, customization);
-      getTemplatePresentation().setIcon(Task);
-    }
-
-    @Override
-    public String getName() {
-      return message("view.node.run.configurations");
-    }
-
-    @Override
-    protected List<? extends MavenSimpleNode> doGetChildren() {
-      return myChildren;
-    }
-
-    public void updateRunConfigurations(MavenProject mavenProject) {
-      final var childChanged = new Ref<>(false);
-
-      Set<RunnerAndConfigurationSettings> settings = new HashSet<>(
-        RunManager.getInstance(myProject).getConfigurationSettingsList(MavenRunConfigurationType.getInstance()));
-
-      myChildren.forEach(node -> {
-        if (settings.remove(node.getSettings())) {
-          node.updateRunConfiguration();
-        }
-        else {
-          myChildren.remove(node);
-          childChanged.set(true);
-        }
-      });
-
-      int oldSize = myChildren.size();
-
-      for (RunnerAndConfigurationSettings cfg : settings) {
-        MavenRunConfiguration mavenRunConfiguration = (MavenRunConfiguration)cfg.getConfiguration();
-
-        if (VfsUtilCore.pathEqualsTo(mavenProject.getDirectoryFile(), mavenRunConfiguration.getRunnerParameters().getWorkingDirPath())) {
-          myChildren.add(new RunConfigurationNode(this, cfg, myCustomization));
-        }
-      }
-
-      if (oldSize != myChildren.size()) {
-        childChanged.set(true);
-        sort(myChildren);
-      }
-
-      if (childChanged.get()) {
-        childrenChanged(MavenProjectsStructure.this);
-      }
-    }
-  }
-
-  public class RunConfigurationNode extends MavenSimpleNode {
-    private final RunnerAndConfigurationSettings mySettings;
-
-    public RunConfigurationNode(RunConfigurationsNode parent, RunnerAndConfigurationSettings settings, Customization customization) {
-      super(parent, MavenProjectsStructure.this.myProject, customization);
-      mySettings = settings;
-      getTemplatePresentation().setIcon(ProgramRunnerUtil.getConfigurationIcon(settings, false));
-    }
-
-    public RunnerAndConfigurationSettings getSettings() {
-      return mySettings;
-    }
-
-    @Override
-    public String getName() {
-      return mySettings.getName();
-    }
-
-    @Override
-    protected void doUpdate(@NotNull PresentationData presentation) {
-      setNameAndTooltip(presentation,
-                        getName(),
-                        null,
-                        StringUtil.join(((MavenRunConfiguration)mySettings.getConfiguration()).getRunnerParameters().getGoals(), " "));
-    }
-
-    @Nullable
-    @Override
-    String getMenuId() {
-      return "Maven.RunConfigurationMenu";
-    }
-
-    public void updateRunConfiguration() {
-
-    }
-
-    @Override
-    public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
-      MavenActionsUsagesCollector
-        .trigger(myProject, MavenActionsUsagesCollector.EXECUTE_MAVEN_CONFIGURATION, TOOL_WINDOW_PLACE_ID, false, null);
-      ProgramRunnerUtil.executeConfiguration(mySettings, DefaultRunExecutor.getRunExecutorInstance());
-    }
+  void updatePluginsTree(PluginsNode pluginsNode, List<MavenPlugin> plugins) {
+    boundedUpdateService.execute(new MavenProjectsStructure.UpdatePluginsTreeTask(pluginsNode, plugins));
   }
 
   private class UpdatePluginsTreeTask implements Runnable {
     @NotNull private final PluginsNode myParentNode;
     private final List<MavenPlugin> myPlugins;
 
-    UpdatePluginsTreeTask(PluginsNode parentNode, List<MavenPlugin> plugins) {
+    UpdatePluginsTreeTask(@NotNull PluginsNode parentNode, List<MavenPlugin> plugins) {
       myParentNode = parentNode;
       myPlugins = plugins;
     }
@@ -1177,25 +350,26 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     public void run() {
-      File localRepository = myProjectsManager.getLocalRepository();
+      File localRepository = getProjectsManager().getLocalRepository();
 
       List<PluginNode> pluginInfos = new ArrayList<>();
       Iterator<MavenPlugin> iterator = myPlugins.iterator();
       while(!isUnloading && iterator.hasNext()){
         MavenPlugin next = iterator.next();
-        pluginInfos.add(new PluginNode(myParentNode, next, MavenArtifactUtil
-          .readPluginInfo(localRepository, next.getMavenId()), myCustomization));
+        var pluginInfo = MavenArtifactUtil.readPluginInfo(localRepository, next.getMavenId());
+        var pluginNode = new PluginNode(MavenProjectsStructure.this, myParentNode, next, pluginInfo);
+        pluginInfos.add(pluginNode);
       }
       updateNodesInEDT(pluginInfos);
     }
 
     private void updateNodesInEDT(List<PluginNode> pluginNodes) {
       ApplicationManager.getApplication().invokeLater(() -> {
-        myParentNode.myPluginNodes.clear();
+        myParentNode.getPluginNodes().clear();
         if(isUnloading) return;
-        myParentNode.myPluginNodes.addAll(pluginNodes);
-        myParentNode.sort(myParentNode.myPluginNodes);
-        myParentNode.childrenChanged(MavenProjectsStructure.this);
+        myParentNode.getPluginNodes().addAll(pluginNodes);
+        myParentNode.sort(myParentNode.getPluginNodes());
+        myParentNode.childrenChanged();
       });
     }
   }
