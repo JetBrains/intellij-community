@@ -562,13 +562,7 @@ public class JUnit4TestListener extends RunListener {
           .asSubclass(JUnitTestTreeNodeManager.class);
         result = junitNodeNamesManagerClass.newInstance();
       }
-      catch (ClassCastException ignored) {
-      }
-      catch (IllegalAccessException ignored) {
-      }
-      catch (InstantiationException ignored) {
-      }
-      catch (ClassNotFoundException ignored) {
+      catch (ClassCastException | ClassNotFoundException | InstantiationException | IllegalAccessException ignored) {
       }
     }
     return result;

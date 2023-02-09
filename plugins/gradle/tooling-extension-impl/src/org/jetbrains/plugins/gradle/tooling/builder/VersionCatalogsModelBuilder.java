@@ -72,16 +72,7 @@ public class VersionCatalogsModelBuilder extends AbstractModelBuilderService {
         return null;
       }
     }
-    catch (NoSuchFieldException e) {
-      return null;
-    }
-    catch (IllegalAccessException e) {
-      return null;
-    }
-    catch (NoSuchMethodException e) {
-      return null;
-    }
-    catch (InvocationTargetException e) {
+    catch (NoSuchFieldException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
       return null;
     }
   }

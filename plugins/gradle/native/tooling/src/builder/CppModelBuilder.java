@@ -340,11 +340,7 @@ public class CppModelBuilder implements ModelBuilderService {
       Logging.getLogger(CppModelBuilder.class)
         .warn("Can not find `" + methodName + "` for receiver [" + receiver + "], gradle version " + GradleVersion.current() , e);
     }
-    catch (IllegalAccessException e) {
-      Logging.getLogger(CppModelBuilder.class)
-        .warn("Can not call `" + methodName + "` for receiver [" + receiver + "], gradle version " + GradleVersion.current(), e);
-    }
-    catch (InvocationTargetException e) {
+    catch (IllegalAccessException | InvocationTargetException e) {
       Logging.getLogger(CppModelBuilder.class)
         .warn("Can not call `" + methodName + "` for receiver [" + receiver + "], gradle version " + GradleVersion.current(), e);
     }

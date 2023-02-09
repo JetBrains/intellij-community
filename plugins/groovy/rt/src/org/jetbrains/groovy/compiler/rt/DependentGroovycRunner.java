@@ -237,13 +237,7 @@ public final class DependentGroovycRunner {
               final CompilationUnitPatcher patcher = (CompilationUnitPatcher)patcherClass.newInstance();
               patchers.add(patcher);
             }
-            catch (InstantiationException e) {
-              addExceptionInfo(compilerMessages, e, "Couldn't instantiate " + s);
-            }
-            catch (IllegalAccessException e) {
-              addExceptionInfo(compilerMessages, e, "Couldn't instantiate " + s);
-            }
-            catch (ClassNotFoundException e) {
+            catch (InstantiationException | ClassNotFoundException | IllegalAccessException e) {
               addExceptionInfo(compilerMessages, e, "Couldn't instantiate " + s);
             }
           }
@@ -260,9 +254,6 @@ public final class DependentGroovycRunner {
 
         line = reader.readLine();
       }
-    }
-    catch (FileNotFoundException e) {
-      e.printStackTrace(err);
     }
     catch (IOException e) {
       e.printStackTrace(err);

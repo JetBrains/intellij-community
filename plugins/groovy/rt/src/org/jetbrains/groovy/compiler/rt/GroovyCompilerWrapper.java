@@ -51,10 +51,7 @@ public class GroovyCompilerWrapper {
     catch (CompilationFailedException e) {
       processCompilationException(e);
     }
-    catch (IOException e) {
-      processException(e, "");
-    }
-    catch (GroovyBugError e) {
+    catch (IOException | GroovyBugError e) {
       processException(e, "");
     }
     catch (NoClassDefFoundError e) {

@@ -180,11 +180,7 @@ public final class XSLTRunner implements XSLTMain {
 
         try {
             return (XSLTMain)Class.forName(mainClass).newInstance();
-        } catch (ClassNotFoundException e) {
-            throw new AssertionError(e);
-        } catch (IllegalAccessException e) {
-            throw new AssertionError(e);
-        } catch (InstantiationException e) {
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             throw new AssertionError(e);
         }
     }

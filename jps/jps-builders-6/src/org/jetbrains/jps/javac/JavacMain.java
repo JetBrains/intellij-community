@@ -238,10 +238,7 @@ public final class JavacMain {
 
       return task.call();
     }
-    catch(IllegalArgumentException e) {
-      diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
-    }
-    catch(IllegalStateException e) {
+    catch(IllegalArgumentException | IllegalStateException e) {
       diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
     }
     catch (CompilationCanceledException e) {

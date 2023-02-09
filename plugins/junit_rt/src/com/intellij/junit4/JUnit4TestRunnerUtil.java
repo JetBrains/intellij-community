@@ -71,10 +71,7 @@ public final class JUnit4TestRunnerUtil {
               Class.forName("org.junit.runner.Computer");
               allClasses = JUnit46ClassesRequestBuilder.getClassesRequest(suiteName, classes, classMethods, category);
             }
-            catch (ClassNotFoundException e) {
-              allClasses = getClassRequestsUsing44API(suiteName, classes);
-            }
-            catch (NoSuchMethodError e) {
+            catch (ClassNotFoundException | NoSuchMethodError e) {
               allClasses = getClassRequestsUsing44API(suiteName, classes);
             }
 
