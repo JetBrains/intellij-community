@@ -14,7 +14,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
+import org.jetbrains.plugins.github.pullrequest.action.ui.ReviewMergeCommitMessageDialog
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRChangesDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRStateDataProvider
@@ -94,7 +94,7 @@ class GHPRStateModelImpl(private val project: Project,
 
   override fun submitMergeTask() = submitTask {
     val mergeability = mergeabilityState ?: return@submitTask null
-    val dialog = GithubMergeCommitMessageDialog(project,
+    val dialog = ReviewMergeCommitMessageDialog(project,
                                                 GithubBundle.message("pull.request.merge.message.dialog.title"),
                                                 GithubBundle.message("pull.request.merge.pull.request", details.number),
                                                 details.title)
@@ -114,7 +114,7 @@ class GHPRStateModelImpl(private val project: Project,
     val mergeability = mergeabilityState ?: return@submitTask null
     changesData.loadCommitsFromApi().successOnEdt { commits ->
       val body = "* " + StringUtil.join(commits, { it.messageHeadline }, "\n\n* ")
-      val dialog = GithubMergeCommitMessageDialog(project,
+      val dialog = ReviewMergeCommitMessageDialog(project,
                                                   GithubBundle.message("pull.request.merge.message.dialog.title"),
                                                   GithubBundle.message("pull.request.merge.pull.request", details.number),
                                                   body)

@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.action.ui
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
@@ -9,12 +10,11 @@ import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.plugins.github.i18n.GithubBundle
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-class GithubMergeCommitMessageDialog(project: Project,
-                                     @NlsContexts.DialogTitle title: String,
+class ReviewMergeCommitMessageDialog(project: Project,
+                                     title: @NlsContexts.DialogTitle String,
                                      subject: String,
                                      body: String) : DialogWrapper(project) {
 
@@ -27,13 +27,13 @@ class GithubMergeCommitMessageDialog(project: Project,
     Disposer.register(disposable, commitMessage)
 
     setTitle(title)
-    setOKButtonText(GithubBundle.message("merge.commit.dialog.merge.button"))
+    setOKButtonText(CollaborationToolsBundle.message("dialog.review.merge.commit.button.merge"))
     init()
   }
 
   override fun createCenterPanel(): JComponent {
     return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP)
-      .addToTop(JLabel(GithubBundle.message("merge.commit.dialog.message")))
+      .addToTop(JLabel(CollaborationToolsBundle.message("dialog.review.merge.commit.message")))
       .addToCenter(commitMessage)
   }
 
