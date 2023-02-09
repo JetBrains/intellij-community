@@ -58,7 +58,7 @@ internal fun KotlinMPPGradleProjectResolver.Context.populateModuleDependenciesWi
         val projectArtifactDependencyResolver = KotlinProjectArtifactDependencyResolver()
         val resolvedSourceSetDependencies = sourceSetDependencies.flatMap { dependency ->
             if (dependency is IdeaKotlinProjectArtifactDependency)
-                projectArtifactDependencyResolver.resolve(projectDataNode, sourceSetDataNode, dependency)
+                projectArtifactDependencyResolver.resolve(this, sourceSetDataNode, dependency)
             else listOf(dependency)
         }.toSet()
 
