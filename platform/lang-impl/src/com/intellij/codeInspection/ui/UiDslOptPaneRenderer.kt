@@ -322,6 +322,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                 if (it.propertyName == "enabled") setEnabledRecursively(this, isEnabled)
               }
             }
+            .comment(component.description?.toString(), 50)
         }
 
         is OptTable -> {
@@ -351,6 +352,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                    .resizeY(true)
                    .createPanel()
                })
+            .comment(component.description?.toString(), 40)
             .align(Align.FILL)
         }
 

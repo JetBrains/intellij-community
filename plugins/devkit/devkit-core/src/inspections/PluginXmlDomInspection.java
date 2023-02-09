@@ -115,7 +115,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                  new JavaClassValidator().withTitle(DevKitBundle.message("inspections.plugin.xml.add.ignored.class.title")));
     if (ApplicationManager.getApplication().isInternal()) {
       return pane(ignoreClassList,
-                  OptPane.stringList("PLUGINS_MODULES", DevKitBundle.message("inspections.plugin.xml.plugin.modules.label")));
+                  OptPane.stringList("PLUGINS_MODULES", DevKitBundle.message("inspections.plugin.xml.plugin.modules.label"))
+                    .description(DevKitBundle.message("inspections.plugin.xml.plugin.modules.description"))
+      );
     }
     return pane(ignoreClassList);
   }
