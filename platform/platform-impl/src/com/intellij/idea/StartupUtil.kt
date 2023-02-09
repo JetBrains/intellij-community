@@ -292,11 +292,11 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
 
     // with the main dispatcher for non-technical reasons
-    appStarter.start(InitAppContext(context = mainScope.coroutineContext,
-                                    args = args,
-                                    appDeferred = appDeferred,
-                                    initLafJob = initLafJob,
-                                    euaTaskDeferred = euaTaskDeferred))
+      appStarter.start(InitAppContext(context = mainScope.coroutineContext,
+                                        args = args,
+                                        appDeferred = appDeferred,
+                                        initLafJob = initLafJob,
+                                        euaTaskDeferred = euaTaskDeferred))
   }
 }
 

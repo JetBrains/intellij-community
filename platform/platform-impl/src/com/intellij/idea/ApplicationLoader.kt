@@ -57,7 +57,8 @@ import java.util.function.BiFunction
 import kotlin.system.exitProcess
 
 @Suppress("SSBasedInspection")
-private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
+private val LOG: Logger
+  get() = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 fun initApplication(context: InitAppContext) {
   runBlocking(context.context) {
