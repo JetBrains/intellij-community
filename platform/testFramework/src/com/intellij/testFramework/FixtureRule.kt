@@ -438,12 +438,13 @@ suspend fun Project.closeProjectAsync(save: Boolean = false) {
 }
 
 suspend fun openProjectAsync(path: Path, vararg activities: ProjectActivity): Project {
-  return ProjectUtil.openOrImportAsync(path)!!
-    .withProjectAsync { project ->
-      for (activity in activities) {
-        activity.execute(project)
-      }
+  return closeOpenedProjectsIfFailAsync {
+    ProjectUtil.openOrImportAsync(path)!!
+  }.withProjectAsync { project ->
+    for (activity in activities) {
+      activity.execute(project)
     }
+  }
 }
 suspend fun openProjectAsync(virtualFile: VirtualFile, vararg activities: ProjectActivity): Project {
   return openProjectAsync(virtualFile.toNioPath(), *activities)
