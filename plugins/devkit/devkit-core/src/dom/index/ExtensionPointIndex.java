@@ -13,10 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.AstLoadingFilter;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
@@ -75,13 +72,13 @@ public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
 
   @NotNull
   public static List<ExtensionPoint> getExtensionPointCandidates(Project project, GlobalSearchScope scope) {
-    CommonProcessors.CollectProcessor<String> epNamesProcessor = new CommonProcessors.CollectProcessor<>();
-    FileBasedIndex.getInstance().processAllKeys(NAME, epNamesProcessor, scope, null);
-
     List<ExtensionPoint> result = new ArrayList<>();
-    for (String epName : epNamesProcessor.getResults()) {
-      ContainerUtil.addIfNotNull(result, findExtensionPoint(project, scope, epName));
-    }
+
+    FileBasedIndex.getInstance().processAllKeys(NAME, key -> {
+      ContainerUtil.addIfNotNull(result, findExtensionPoint(project, scope, key));
+      return true;
+    }, scope, null);
+
     return result;
   }
 
