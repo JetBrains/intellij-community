@@ -105,9 +105,16 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
     override fun resolveFinished(projectDataNode: DataNode<ProjectData>) {
         super.resolveFinished(projectDataNode)
         val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
+        val moduleDataNodes = mutableListOf<DataNode<ModuleData>>()
+
+        /* Call the 'afterResolveFinished' extensions for all multiplatform nodes */
         ExternalSystemApiUtil.findAll(projectDataNode, ProjectKeys.MODULE).forEach { moduleDataNode ->
             extensionInstance.afterResolveFinished(moduleDataNode.kotlinMppGradleProjectResolverContext ?: return@forEach)
+            moduleDataNodes.add(moduleDataNode)
         }
+
+        /* Remove the context from all nodes since we're done working with it */
+        moduleDataNodes.forEach { moduleDataNode -> moduleDataNode.kotlinMppGradleProjectResolverContext = null }
     }
 
     companion object {
