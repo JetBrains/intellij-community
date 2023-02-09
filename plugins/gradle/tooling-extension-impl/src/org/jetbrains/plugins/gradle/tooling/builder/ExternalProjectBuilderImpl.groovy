@@ -11,6 +11,7 @@ import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.ContentFilterable
 import org.gradle.api.file.FileCopyDetails
+import org.gradle.api.file.RegularFile
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
@@ -28,6 +29,7 @@ import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.MessageReporter
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
+import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
@@ -295,7 +297,9 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
       def jarTask = project.tasks.findByName(sourceSet.jarTaskName)
       if (jarTask instanceof AbstractArchiveTask) {
-        externalSourceSet.artifacts = [jarTask.archivePath]
+        externalSourceSet.artifacts = [ is67OrBetter ?
+                                        ReflectionUtil.reflectiveGetProperty(jarTask, "getArchiveFile", RegularFile.class).getAsFile() :
+                                        jarTask.archivePath ]
       }
 
       def sources = [:] as Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>
