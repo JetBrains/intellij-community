@@ -3,18 +3,17 @@
 package com.intellij.openapi.externalSystem.util
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThrowableRunnable
-import com.intellij.testFramework.runInEdtAndGet as runInEdtAndGetImpl
-import com.intellij.testFramework.runInEdtAndWait as runInEdtAndWaitImpl
 import com.intellij.util.ui.UIUtil
 
 fun VirtualFile.refreshAndWait() {
-  runWriteActionAndWait {
-    refresh(false, true)
-  }
-  runInEdtAndWait {
+  invokeAndWaitIfNeeded {
+    runWriteAction {
+      refresh(false, true)
+    }
     UIUtil.dispatchAllInvocationEvents()
   }
 }
@@ -30,7 +29,7 @@ fun <R> runWriteAction(action: () -> R): R {
 }
 
 fun <R> runWriteActionAndGet(action: () -> R): R {
-  return runInEdtAndGet {
+  return invokeAndWaitIfNeeded {
     runWriteAction {
       action()
     }
@@ -38,31 +37,9 @@ fun <R> runWriteActionAndGet(action: () -> R): R {
 }
 
 fun runWriteActionAndWait(action: ThrowableRunnable<*>) {
-  runInEdtAndWait {
+  invokeAndWaitIfNeeded {
     runWriteAction {
       action.run()
     }
-  }
-}
-
-fun <R> runInEdtAndGet(action: () -> R): R {
-  try {
-    return runInEdtAndGetImpl {
-      action()
-    }
-  }
-  catch (e: Throwable) {
-    throw Throwable(e)
-  }
-}
-
-fun runInEdtAndWait(action: ThrowableRunnable<*>) {
-  try {
-    runInEdtAndWaitImpl {
-      action.run()
-    }
-  }
-  catch (e: Throwable) {
-    throw Throwable(e)
   }
 }
