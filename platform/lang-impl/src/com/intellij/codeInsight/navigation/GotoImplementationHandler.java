@@ -269,7 +269,10 @@ public class GotoImplementationHandler extends GotoTargetHandler {
 
   public static @NotNull Comparator<PsiElement> projectElementsFirst(@NotNull Project project) {
     FileIndexFacade index = FileIndexFacade.getInstance(project);
-    return Comparator.comparing((PsiElement element) -> index.isInContent(element.getContainingFile().getVirtualFile())).reversed();
+    return Comparator.comparing((PsiElement element) -> {
+      PsiFile containingFile = element.getContainingFile();
+      return containingFile != null && index.isInContent(containingFile.getVirtualFile());
+    }).reversed();
   }
 
   public static <T> @NotNull Comparator<T> wrapIntoReadAction(@NotNull Comparator<? super T> base) {
