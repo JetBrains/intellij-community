@@ -36,6 +36,7 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
       row {
         checkBox(IdeBundle.message("checkbox.compact.mode"))
           .bindSelected(UISettings.getInstance()::compactMode)
+          .enabledIf(newUiCheckBox.selected)
         comment(IdeBundle.message("checkbox.compact.mode.description"))
       }
       if (SystemInfo.isWindows || SystemInfo.isXWindow) {
