@@ -2150,7 +2150,7 @@ public class JBTabsImpl extends JComponent
 
   void moveDraggedTabLabel() {
     if (myDragHelper != null && myDragHelper.myDragRec != null) {
-      final TabLabel selectedLabel = myInfo2Label.get(getSelectedInfo());
+      final TabLabel selectedLabel = myInfo2Label.get(getDraggedTabSelectionInfo());
       if (selectedLabel != null) {
         final Rectangle bounds = selectedLabel.getBounds();
         if (isHorizontalTabs()) {
@@ -2161,6 +2161,10 @@ public class JBTabsImpl extends JComponent
         }
       }
     }
+  }
+
+  protected @Nullable TabInfo getDraggedTabSelectionInfo() {
+    return getSelectedInfo();
   }
 
   private Dimension computeHeaderFitSize() {
