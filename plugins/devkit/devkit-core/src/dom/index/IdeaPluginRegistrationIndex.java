@@ -14,7 +14,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
@@ -260,9 +259,7 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
                                                            Class<T> domClazz,
                                                            boolean useParentDom,
                                                            Processor<? super T> processor) {
-    List<XmlTag> tags = collectTags(project, key, scope, types);
-
-    return ContainerUtil.process(tags, tag -> {
+    return processIndexEntries(project, key, scope, types, tag -> {
       final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
 
       T t;
@@ -278,13 +275,12 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     });
   }
 
-  @NotNull
-  private static List<XmlTag> collectTags(@NotNull Project project,
-                                          @NotNull String key,
-                                          GlobalSearchScope scope,
-                                          EnumSet<RegistrationType> types) {
-    List<XmlTag> tags = new SmartList<>();
-    FileBasedIndex.getInstance().processValues(NAME, key, null, (file, value) -> {
+  private static boolean processIndexEntries(@NotNull Project project,
+                                             @NotNull String key,
+                                             GlobalSearchScope scope,
+                                             EnumSet<RegistrationType> types,
+                                             Processor<XmlTag> processor) {
+    return FileBasedIndex.getInstance().processValues(NAME, key, null, (file, value) -> {
       for (RegistrationEntry entry : value) {
         if (!types.contains(entry.getRegistrationType())) {
           continue;
@@ -297,10 +293,9 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
           PsiElement psiElement = psiFile.findElementAt(entry.getOffset());
           return PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
         });
-        tags.add(xmlTag);
+        if (!processor.process(xmlTag)) return false;
       }
       return true;
     }, scope);
-    return tags;
   }
 }
