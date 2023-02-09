@@ -964,7 +964,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
     @Override
     public void extensionRemoved(@NotNull ServiceViewContributor<?> extension, @NotNull PluginDescriptor pluginDescriptor) {
-      ServiceEvent e = ServiceEvent.createSyncResetEvent(extension.getClass());
+      ServiceEvent e = ServiceEvent.createUnloadSyncResetEvent(extension.getClass());
       myModel.handle(e).onProcessed(o -> {
         eventHandled(e);
 
