@@ -2,46 +2,64 @@
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.getResolvedPath
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.projectImport.ProjectOpenProcessor
+import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.fixtures.TempDirTestFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.openProjectAsync
+import com.intellij.testFramework.utils.vfs.getDirectory
 import com.intellij.util.io.systemIndependentPath
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import javax.swing.Icon
 
-abstract class AutoLinkTestCase : ExternalSystemTestCase() {
+@TestApplication
+abstract class AutoLinkTestCase {
 
   lateinit var testDisposable: Disposable
-    private set
 
-  final override fun runInDispatchThread() = false
+  private lateinit var fileFixture: TempDirTestFixture
 
-  override fun setUp() {
-    super.setUp()
+  lateinit var testRoot: VirtualFile
+
+  @BeforeEach
+  fun setUp() {
     testDisposable = Disposer.newDisposable()
-  }
 
-  override fun tearDown() {
-    try {
-      Disposer.dispose(testDisposable)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
+    fileFixture = IdeaTestFixtureFactory.getFixtureFactory()
+      .createTempDirTestFixture()
+    fileFixture.setUp()
+
+    runWriteActionAndWait {
+      testRoot = fileFixture.findOrCreateDir("AutoLinkTestCase")
     }
   }
 
-  override fun getTestsTempDir() = "tmp${System.currentTimeMillis()}"
+  @AfterEach
+  fun tearDown() {
+    runAll(
+      { fileFixture.tearDown() },
+      { Disposer.dispose(testDisposable) }
+    )
+  }
 
-  override fun getExternalSystemConfigFileName() = throw UnsupportedOperationException()
+  suspend fun openProject(relativePath: String): Project {
+    val projectRoot = testRoot.getDirectory(relativePath)
+    return openProjectAsync(projectRoot, UnlinkedProjectStartupActivity())
+  }
 
   fun createUnlinkedProjectAware(systemId: String, buildFileExtension: String): MockUnlinkedProjectAware {
     return MockUnlinkedProjectAware(ProjectSystemId(systemId), buildFileExtension)
@@ -107,44 +125,23 @@ abstract class AutoLinkTestCase : ExternalSystemTestCase() {
     return projectOpenProcessor
   }
 
-  fun createDummyCompilerXml(relativePath: String) {
-    createProjectSubFile(relativePath, """
-      <?xml version="1.0" encoding="UTF-8"?>
-      <project version="4">
-        <component name="CompilerConfiguration">
-          <bytecodeTargetLevel target="14" />
-        </component>
-      </project>
-    """.trimIndent())
-  }
-
-  fun createDummyModulesXml(relativePath: String) {
-    createProjectSubFile(relativePath, """
-      <?xml version="1.0" encoding="UTF-8"?>
-      <project version="4">
-        <component name="ProjectModuleManager">
-          <modules>
-            <module fileurl="file://${'$'}PROJECT_DIR${'$'}/project.iml" filepath="${'$'}PROJECT_DIR${'$'}/project.iml" />
-          </modules>
-        </component>
-      </project>
-    """.trimIndent())
-  }
-
-  suspend fun openProjectAsync(virtualFile: VirtualFile): Project {
-    return openProjectAsync(virtualFile, UnlinkedProjectStartupActivity())
-  }
-
-  fun assertNotificationAware(project: Project, vararg projects: ExternalSystemProjectId) {
-    val message = when (projects.isEmpty()) {
-      true -> "Notification must be expired"
-      else -> "Notification must be notified"
+  suspend fun assertNotificationAware(project: Project, vararg projects: Pair<String, String>) {
+    val expectedProjectIds = readAction {
+      projects.map { (systemId, relativePath) ->
+        val externalProjectPath = testRoot.toNioPath().getResolvedPath(relativePath).toCanonicalPath()
+        ExternalSystemProjectId(ProjectSystemId(systemId), externalProjectPath)
+      }
     }
     val notificationAware = UnlinkedProjectNotificationAware.getInstance(project)
-    assertEquals(message, projects.toSet(), notificationAware.getProjectsWithNotification())
+    Assertions.assertEquals(expectedProjectIds.toSet(), notificationAware.getProjectsWithNotification()) {
+      when (projects.isEmpty()) {
+        true -> "Notification must be expired"
+        else -> "Notification must be notified"
+      }
+    }
   }
 
   fun assertLinkedProjects(unlinedProjectAware: MockUnlinkedProjectAware, linkedProjects: Int) {
-    assertEquals(linkedProjects, unlinedProjectAware.linkCounter.get())
+    Assertions.assertEquals(linkedProjects, unlinedProjectAware.linkCounter.get())
   }
 }
