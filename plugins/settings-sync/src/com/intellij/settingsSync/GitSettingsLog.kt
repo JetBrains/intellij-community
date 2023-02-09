@@ -23,6 +23,7 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.revwalk.filter.RevFilter
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.treewalk.TreeWalk
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
@@ -52,6 +53,8 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   }
 
   override fun initialize() {
+    configureJGit()
+
     val dotGit = settingsSyncStorage.resolve(".git")
     repository = FileRepositoryBuilder.create(dotGit.toFile())
     git = Git(repository)
@@ -66,6 +69,10 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     createBranchIfNeeded(MASTER_REF_NAME, newRepository)
     createBranchIfNeeded(CLOUD_REF_NAME, newRepository)
     createBranchIfNeeded(IDE_REF_NAME, newRepository)
+  }
+
+  private fun configureJGit() {
+    GpgSigner.setDefault(MockGpgSigner())
   }
 
   override fun logExistingSettings() {
@@ -479,5 +486,13 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
     const val DATE_PREFIX = "date: "
     val DATE_PATTERN = Pattern.compile("$DATE_PREFIX(\\d+)")
+  }
+
+  class MockGpgSigner : GpgSigner() {
+    override fun sign(commit: CommitBuilder?, gpgSigningKey: String?, committer: PersonIdent?, credentialsProvider: CredentialsProvider?) {}
+
+    override fun canLocateSigningKey(gpgSigningKey: String?, committer: PersonIdent?, credentialsProvider: CredentialsProvider?): Boolean {
+      return false
+    }
   }
 }
