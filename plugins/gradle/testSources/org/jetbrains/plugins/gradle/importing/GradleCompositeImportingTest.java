@@ -555,10 +555,17 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("3.1+")
   public void testSubstituteDependencyWithRootProject() throws Exception {
-    createSettingsFile("""
+    if (isGradleNewerOrSameAs("6.6")) {
+      createSettingsFile("""
+                         rootProject.name = "root-project"
+                         include 'sub-project'
+                         includeBuild('included-project') { dependencySubstitution { substitute module('my.grp:myId') using project(':') } }""");
+    } else {
+      createSettingsFile("""
                          rootProject.name = "root-project"
                          include 'sub-project'
                          includeBuild('included-project') { dependencySubstitution { substitute module('my.grp:myId') with project(':') } }""");
+    }
 
 
     createProjectSubFile("sub-project/build.gradle",
@@ -733,6 +740,28 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     importProject("");
 
     assertModules("root", "A", "AA", "AAA");
+  }
+
+  @Test
+  @TargetVersions("8.0-rc-3")
+  public void testNestedCompositeBuildsWithDuplicateNames() throws Exception {
+    createSettingsFile("""
+ rootProject.name = 'root'
+ includeBuild('doppelganger')
+ includeBuild('nested')
+""");
+
+    createProjectSubFile("nested/settings.gradle", """
+      includeBuild('doppelganger')
+      """);
+    createProjectSubFile("doppelganger/settings.gradle", "include('module')");
+    createProjectSubFile("doppelganger/module/build.gradle", "//empty");
+    createProjectSubFile("nested/doppelganger/settings.gradle", "include('module')");
+    createProjectSubFile("nested/doppelganger/module/build.gradle", "//empty");
+
+    importProject("");
+
+    assertModules("root", "nested", "doppelganger", "nested.doppelganger", "doppelganger.module", "nested.doppelganger.module");
   }
 
   @Test
