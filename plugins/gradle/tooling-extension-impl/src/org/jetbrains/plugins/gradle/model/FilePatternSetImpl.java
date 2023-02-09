@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.model;
 
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public final class FilePatternSetImpl implements FilePatternSet {
@@ -43,8 +44,8 @@ public final class FilePatternSetImpl implements FilePatternSet {
 
     FilePatternSetImpl set = (FilePatternSetImpl)o;
 
-    if (includes != null ? !includes.equals(set.includes) : set.includes != null) return false;
-    if (excludes != null ? !excludes.equals(set.excludes) : set.excludes != null) return false;
+    if (!Objects.equals(includes, set.includes)) return false;
+    if (!Objects.equals(excludes, set.excludes)) return false;
 
     return true;
   }

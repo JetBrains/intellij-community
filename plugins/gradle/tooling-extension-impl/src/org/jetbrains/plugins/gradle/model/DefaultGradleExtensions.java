@@ -4,10 +4,7 @@ package org.jetbrains.plugins.gradle.model;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
@@ -118,12 +115,12 @@ public class DefaultGradleExtensions implements GradleExtensions {
 
     DefaultGradleExtensions that = (DefaultGradleExtensions)o;
 
-    if (extensions != null ? !extensions.equals(that.extensions) : that.extensions != null) return false;
-    if (conventions != null ? !conventions.equals(that.conventions) : that.conventions != null) return false;
-    if (gradleProperties != null ? !gradleProperties.equals(that.gradleProperties) : that.gradleProperties != null) return false;
-    if (tasks != null ? !tasks.equals(that.tasks) : that.tasks != null) return false;
-    if (configurations != null ? !configurations.equals(that.configurations) : that.configurations != null) return false;
-    if (parentProjectPath != null ? !parentProjectPath.equals(that.parentProjectPath) : that.parentProjectPath != null) return false;
+    if (!Objects.equals(extensions, that.extensions)) return false;
+    if (!Objects.equals(conventions, that.conventions)) return false;
+    if (!Objects.equals(gradleProperties, that.gradleProperties)) return false;
+    if (!Objects.equals(tasks, that.tasks)) return false;
+    if (!Objects.equals(configurations, that.configurations)) return false;
+    if (!Objects.equals(parentProjectPath, that.parentProjectPath)) return false;
 
     return true;
   }
