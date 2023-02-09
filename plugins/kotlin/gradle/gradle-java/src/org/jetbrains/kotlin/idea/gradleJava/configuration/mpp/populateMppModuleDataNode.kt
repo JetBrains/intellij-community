@@ -55,7 +55,7 @@ import java.util.stream.Collectors
  * Creates and adds [GradleSourceSetData] nodes and [KotlinSourceSetInfo] for the given [moduleDataNode]
  * @param moduleDataNode: The node representing a specific Gradle project which contains multiplatform source sets
  */
-internal fun populateMppModuleDataNode(context: KotlinMPPGradleProjectResolver.Context) {
+internal fun populateMppModuleDataNode(context: KotlinMppGradleProjectResolver.Context) {
     KotlinMPPCompilerArgumentsCacheMergeManager.mergeCache(context.gradleModule, context.resolverCtx)
     context.initializeModuleData()
     context.createMppGradleSourceSetDataNodes()
@@ -190,7 +190,7 @@ internal fun doCreateSourceSetInfo(
     }
 }
 
-private fun KotlinMPPGradleProjectResolver.Context.initializeModuleData() {
+private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
     if (moduleDataNode.isMppDataInitialized) return
 
 
@@ -201,9 +201,9 @@ private fun KotlinMPPGradleProjectResolver.Context.initializeModuleData() {
         moduleDataNode.isMppDataInitialized = true
 
         // save artifacts locations.
-        val userData = projectDataNode.getUserData(KotlinMPPGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS)
+        val userData = projectDataNode.getUserData(KotlinMppGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS)
             ?: HashMap<String, MutableList<String>>().apply {
-                projectDataNode.putUserData(KotlinMPPGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS, this)
+                projectDataNode.putUserData(KotlinMppGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS, this)
             }
 
         mppModel.targets.filter { it.jar != null && it.jar!!.archiveFile != null }.forEach { target ->
@@ -237,7 +237,7 @@ private fun KotlinMPPGradleProjectResolver.Context.initializeModuleData() {
     }
 }
 
-private fun KotlinMPPGradleProjectResolver.Context.createMppGradleSourceSetDataNodes() {
+private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataNodes() {
     val mainModuleData = moduleDataNode.data
     val mainModuleConfigPath = mainModuleData.linkedExternalProjectPath
     val mainModuleFileDirectoryPath = mainModuleData.moduleFileDirectoryPath
@@ -396,7 +396,7 @@ private fun KotlinMPPGradleProjectResolver.Context.createMppGradleSourceSetDataN
             }
         }
 
-        val kotlinSourceSet = KotlinMPPGradleProjectResolver.createSourceSetInfo(mppModel, sourceSet, gradleModule, resolverCtx) ?: continue
+        val kotlinSourceSet = KotlinMppGradleProjectResolver.createSourceSetInfo(mppModel, sourceSet, gradleModule, resolverCtx) ?: continue
 
         val sourceSetDataNode = (existingSourceSetDataNode ?: moduleDataNode.createChild(GradleSourceSetData.KEY, sourceSetData)).also {
             it.addChild(DataNode(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet), it))
