@@ -13,10 +13,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.cellvalidators.CellComponentProvider
-import com.intellij.openapi.ui.cellvalidators.CellTooltipManager
-import com.intellij.openapi.ui.cellvalidators.TableCellValidator
-import com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
+import com.intellij.openapi.ui.cellvalidators.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -115,9 +112,11 @@ internal fun addColumnValidators(table: ListTable, components: List<OptStringLis
         val text = cellEditor.text ?: return@Supplier null
         val errorMessage = validator.getErrorMessage(project, text)
         if (errorMessage != null) {
+          ValidationUtils.setExtension(cellEditor, ValidationUtils.ERROR_EXTENSION, true)
           ValidationInfo(errorMessage, cellEditor)
         }
         else {
+          ValidationUtils.setExtension(cellEditor, ValidationUtils.ERROR_EXTENSION, false)
           null
         }
       }
