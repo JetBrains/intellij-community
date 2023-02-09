@@ -1083,8 +1083,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void assertTimeConsuming() {
-    if (myTestModeFlag || myHeadlessMode || ShutDownTracker.isShutdownHookRunning()) return;
-    LOG.assertTrue(!isDispatchThread(), "This operation is time consuming and must not be called on Event Dispatch Thread (EDT)");
+    assertIsNonDispatchThread();
   }
 
   @Override
