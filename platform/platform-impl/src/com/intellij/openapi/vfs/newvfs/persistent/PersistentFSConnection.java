@@ -37,7 +37,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Collections;
-import java.io.*;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -49,7 +48,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-final class PersistentFSConnection {
+@ApiStatus.Internal
+public final class PersistentFSConnection {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnection.class);
 
   static final int RESERVED_ATTR_ID = 0;

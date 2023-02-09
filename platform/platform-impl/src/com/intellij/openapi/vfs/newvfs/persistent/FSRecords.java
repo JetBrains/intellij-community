@@ -77,7 +77,7 @@ public final class FSRecords {
 
   //========== lifecycle: ========================================
 
-  static synchronized void connect(@NotNull VfsLog vfsLog) throws UncheckedIOException {
+  static synchronized void connect(final @NotNull VfsLog vfsLog) throws UncheckedIOException {
     impl = FSRecordsImpl.connect(Path.of(getCachesDir()), vfsLog);
   }
 

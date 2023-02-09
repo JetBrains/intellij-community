@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
@@ -128,7 +129,7 @@ public final class FSRecordsImpl {
   private static int calculateVersion() {
     //bumped main version (59 -> 60) because of VfsDependentEnumerator removal, and filenames change
     final int mainVFSFormatVersion = 60;
-    return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorage.RECORDS_STORAGE_KIND.ordinal()),  /* acceptable range is [0..255] */ 8,
+    return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.RECORDS_STORAGE_KIND.ordinal()),  /* acceptable range is [0..255] */ 8,
            nextMask(USE_CONTENT_HASHES,
            nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
            nextMask(false, // feel free to re-use
@@ -149,7 +150,8 @@ public final class FSRecordsImpl {
    *
    * @param storagesDirectoryPath directory there to put all FS-records files ('caches' directory)
    */
-  static FSRecordsImpl connect(final @NotNull Path storagesDirectoryPath) throws UncheckedIOException {
+  static FSRecordsImpl connect(final @NotNull Path storagesDirectoryPath,
+                               final @NotNull VfsLog vfsLog) throws UncheckedIOException {
     if (IOUtil.isSharedCachesEnabled()) {
       IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
     }
@@ -160,7 +162,8 @@ public final class FSRecordsImpl {
         storagesDirectoryPath,
         currentVersion,
         USE_CONTENT_HASHES,
-        invertedNameIndex
+        invertedNameIndex,
+        vfsLog.getInterceptors()
       );
       final PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(USE_CONTENT_HASHES, connection);
       final PersistentFSAttributeAccessor attributeAccessor = new PersistentFSAttributeAccessor(connection);

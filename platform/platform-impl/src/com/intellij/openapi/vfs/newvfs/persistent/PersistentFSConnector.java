@@ -45,10 +45,10 @@ final class PersistentFSConnector {
 
   private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT = new StorageLockContext(false, true);
 
-  public static @NotNull PersistentFSConnection connect(final @NotNull String cachesDir,
+  public static @NotNull PersistentFSConnection connect(final @NotNull Path cachesDir,
                                                         final int version,
                                                         final boolean useContentHashes,
-                                                        final @NotNull /*OutParam*/ InvertedNameIndex invertedNameIndex
+                                                        final @NotNull /*OutParam*/ InvertedNameIndex invertedNameIndex,
                                                         final List<ConnectionInterceptor> interceptors) {
     ourOpenCloseLock.lock();
     try {
@@ -89,9 +89,10 @@ final class PersistentFSConnector {
       catch (IOException e) {
         LOG.info("Init VFS attempt #" + i + " failed: " + e.getMessage());
 
-        if(exception==null){
+        if (exception == null) {
           exception = e;
-        }else{
+        }
+        else {
           exception.addSuppressed(e);
         }
       }
@@ -196,7 +197,8 @@ final class PersistentFSConnector {
         contentsStorage,
         contentHashesEnumerator,
         attributesEnumerator,
-        freeRecords
+        freeRecords,
+        interceptors
       );
 
       if (needInitialization) {//just-initialized connection is dirty (i.e. must be saved)
