@@ -12,7 +12,6 @@ import git4idea.branch.GitBranchType
 import git4idea.branch.GitBranchUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
-import git4idea.ui.branch.popup.GitBranchesTreePopup
 import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import javax.swing.tree.TreePath
 import kotlin.properties.Delegates.observable
@@ -22,8 +21,6 @@ class GitBranchesTreeMultiRepoFilteringModel(
   private val repositories: List<GitRepository>,
   private val topLevelActions: List<Any> = emptyList()
 ) : AbstractTreeModel(), GitBranchesTreeModel {
-
-  private val branchesSubtreeSeparator = GitBranchesTreePopup.createTreeSeparator()
 
   private val branchManager = project.service<GitBranchManager>()
 
@@ -96,9 +93,7 @@ class GitBranchesTreeMultiRepoFilteringModel(
   }
 
   private fun getTopLevelNodes(): List<Any> {
-    val repositoriesExpanded = listOf(branchesSubtreeSeparator) + repositories
-
-    return topLevelActions + GitBranchType.LOCAL + GitBranchType.REMOTE + repositoriesExpanded
+    return topLevelActions + GitBranchType.LOCAL + GitBranchType.REMOTE + repositories
   }
 
   private fun getBranchTreeNodes(branchType: GitBranchType, path: List<String>, repository: GitRepository? = null): List<Any> {
