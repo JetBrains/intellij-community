@@ -15,7 +15,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettin
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfiguration
 
 
-fun buildSettings(
+fun settingsScript(
   useKotlinDsl: Boolean = false,
   configure: GradleSettingScriptBuilder<*>.() -> Unit
 ) = GradleSettingScriptBuilder.create(useKotlinDsl)
@@ -38,7 +38,7 @@ fun VirtualFile.createSettingsFile(
 ) = createSettingsFile(
   relativeModulePath = relativeModulePath,
   useKotlinDsl = useKotlinDsl,
-  content = buildSettings(useKotlinDsl, configure)
+  content = settingsScript(useKotlinDsl, configure)
 )
 
 @RequiresWriteLock
@@ -102,7 +102,7 @@ fun TestFilesConfiguration.withSettingsFile(
 ) = withSettingsFile(
   relativeModulePath = relativeModulePath,
   useKotlinDsl = useKotlinDsl,
-  content = buildSettings(useKotlinDsl, configure)
+  content = settingsScript(useKotlinDsl, configure)
 )
 
 fun TestFilesConfiguration.withBuildFile(

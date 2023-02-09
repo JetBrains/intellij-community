@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.frameworkSupport
 
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
-import org.jetbrains.plugins.gradle.testFramework.util.buildSettings
+import org.jetbrains.plugins.gradle.testFramework.util.settingsScript
 import org.junit.jupiter.api.Assertions.assertEquals
 
 abstract class GradleSettingsScriptBuilderTestCase {
@@ -12,7 +12,7 @@ abstract class GradleSettingsScriptBuilderTestCase {
     kotlinScript: String,
     configure: GradleSettingScriptBuilder<*>.() -> Unit
   ) {
-    assertEquals(groovyScript, buildSettings(useKotlinDsl = false, configure))
-    assertEquals(kotlinScript, buildSettings(useKotlinDsl = true, configure))
+    assertEquals(groovyScript, settingsScript(useKotlinDsl = false, configure))
+    assertEquals(kotlinScript, settingsScript(useKotlinDsl = true, configure))
   }
 }
