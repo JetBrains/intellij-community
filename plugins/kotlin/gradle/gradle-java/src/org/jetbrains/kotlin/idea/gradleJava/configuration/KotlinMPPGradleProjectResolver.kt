@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.notification.*
 import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.*
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
@@ -28,6 +29,14 @@ import java.util.*
 @Order(ExternalSystemConstants.UNORDERED + 1)
 open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
+    interface Context {
+        val mppModel: KotlinMPPGradleModel
+        val resolverCtx: ProjectResolverContext
+        val gradleModule: IdeaModule
+        val projectDataNode: DataNode<ProjectData>
+        val moduleDataNode: DataNode<ModuleData>
+    }
+
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
         return setOf(
             KotlinMPPGradleModelBuilder::class.java, KotlinTarget::class.java,
@@ -51,39 +60,38 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
     override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {
         val moduleDataNode = super.createModule(gradleModule, projectDataNode) ?: return null
-        val mppModel = resolverCtx.getMppModel(gradleModule) ?: return moduleDataNode
-
-        populateMppModuleDataNode(gradleModule, moduleDataNode, projectDataNode, mppModel, resolverCtx)
+        val model = resolverCtx.getMppModel(gradleModule) ?: return moduleDataNode
+        val context = KotlinMPPGradleProjectResolver.Context(model, resolverCtx, gradleModule, projectDataNode, moduleDataNode)
+        moduleDataNode.kotlinMppGradleProjectResolverContext = context
+        populateMppModuleDataNode(context)
         return moduleDataNode
     }
 
-    override fun populateModuleContentRoots(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
-        val mppModel = resolverCtx.getMppModel(gradleModule)
-            ?: return super.populateModuleContentRoots(gradleModule, ideModule)
+    override fun populateModuleContentRoots(gradleModule: IdeaModule, moduleDataNode: DataNode<ModuleData>) {
+        val context = moduleDataNode.kotlinMppGradleProjectResolverContext
+            ?: return super.populateModuleContentRoots(gradleModule, moduleDataNode)
 
-        reportMultiplatformNotifications(mppModel, resolverCtx)
-        populateContentRoots(gradleModule, ideModule, resolverCtx)
-        populateExternalSystemRunTasks(gradleModule, ideModule, resolverCtx)
+        reportMultiplatformNotifications(context.mppModel, resolverCtx)
+        context.populateContentRoots()
+        populateExternalSystemRunTasks(gradleModule, moduleDataNode, resolverCtx)
     }
 
-    override fun populateModuleCompileOutputSettings(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
-        val mppModel = resolverCtx.getMppModel(gradleModule)
-            ?: return super.populateModuleCompileOutputSettings(gradleModule, ideModule)
-
-        populateModuleCompileOutputSettings(gradleModule, ideModule, mppModel, resolverCtx)
+    override fun populateModuleCompileOutputSettings(gradleModule: IdeaModule, moduleDataNode: DataNode<ModuleData>) {
+        moduleDataNode.kotlinMppGradleProjectResolverContext?.populateModuleCompileOutputSettings()
+            ?: return super.populateModuleCompileOutputSettings(gradleModule, moduleDataNode)
     }
 
-    override fun populateModuleDependencies(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>, ideProject: DataNode<ProjectData>) {
-        val mppModel = resolverCtx.getExtraProject(gradleModule, KotlinMPPGradleModel::class.java)
-        if (mppModel == null) {
-            resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java)?.sourceSets?.values?.forEach { sourceSet ->
-                sourceSet.dependencies.modifyDependenciesOnMppModules(ideProject)
-            }
-
-            super.populateModuleDependencies(gradleModule, ideModule, ideProject) //TODO add dependencies on mpp module
+    override fun populateModuleDependencies(
+        gradleModule: IdeaModule,
+        moduleDataNode: DataNode<ModuleData>,
+        projectDataNode: DataNode<ProjectData>
+    ) {
+        moduleDataNode.kotlinMppGradleProjectResolverContext?.populateModuleDependencies() ?: run {
+            /* Not a multiplatform project: Help non-mpp projects to resolve multiplatform dependencies */
+            resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java)
+                ?.sourceSets?.values?.forEach { sourceSet -> sourceSet.dependencies.modifyDependenciesOnMppModules(projectDataNode) }
+            super.populateModuleDependencies(gradleModule, moduleDataNode, projectDataNode)
         }
-
-        populateModuleDependencies(gradleModule, ideProject, ideModule, resolverCtx)
     }
 
     override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
@@ -94,20 +102,18 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         super.populateModuleExtraModels(gradleModule, ideModule)
     }
 
+    override fun resolveFinished(projectDataNode: DataNode<ProjectData>) {
+        super.resolveFinished(projectDataNode)
+        val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
+        ExternalSystemApiUtil.findAll(projectDataNode, ProjectKeys.MODULE).forEach { moduleDataNode ->
+            extensionInstance.afterResolveFinished(moduleDataNode.kotlinMppGradleProjectResolverContext ?: return@forEach)
+        }
+    }
+
     companion object {
         val MPP_CONFIGURATION_ARTIFACTS =
             Key.create<MutableMap<String/* artifact path */, MutableList<String> /* module ids*/>>("gradleMPPArtifactsMap")
         val proxyObjectCloningCache = WeakHashMap<Any, Any>()
-
-        fun populateModuleDependencies(
-            gradleModule: IdeaModule,
-            ideProject: DataNode<ProjectData>,
-            ideModule: DataNode<ModuleData>,
-            resolverCtx: ProjectResolverContext
-        ) {
-            val mppModel = resolverCtx.getMppModel(gradleModule) ?: return
-            populateModuleDependencies(gradleModule, ideProject, ideModule, resolverCtx, mppModel)
-        }
 
         internal fun getSiblingKotlinModuleData(
             kotlinComponent: KotlinComponent,
@@ -119,13 +125,8 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             return ideModule.findChildModuleById(usedModuleId)
         }
 
-        val KotlinComponent.sourceType
-            get() = if (isTestComponent) ExternalSystemSourceType.TEST else ExternalSystemSourceType.SOURCE
-
-        val KotlinComponent.resourceType
-            get() = if (isTestComponent) ExternalSystemSourceType.TEST_RESOURCE else ExternalSystemSourceType.RESOURCE
-
-        fun createSourceSetInfo(mppModel: KotlinMPPGradleModel, sourceSet: KotlinSourceSet, gradleModule: IdeaModule,
+        fun createSourceSetInfo(
+            mppModel: KotlinMPPGradleModel, sourceSet: KotlinSourceSet, gradleModule: IdeaModule,
             resolverCtx: ProjectResolverContext
         ): KotlinSourceSetInfo? = doCreateSourceSetInfo(mppModel, sourceSet, gradleModule, resolverCtx)
 
@@ -161,3 +162,8 @@ fun ProjectResolverContext.getMppModel(gradleModule: IdeaModule): KotlinMPPGradl
         } else mppModel
     }
 
+internal val KotlinComponent.sourceType
+    get() = if (isTestComponent) ExternalSystemSourceType.TEST else ExternalSystemSourceType.SOURCE
+
+internal val KotlinComponent.resourceType
+    get() = if (isTestComponent) ExternalSystemSourceType.TEST_RESOURCE else ExternalSystemSourceType.RESOURCE
