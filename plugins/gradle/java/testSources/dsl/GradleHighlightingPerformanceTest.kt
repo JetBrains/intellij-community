@@ -78,7 +78,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
       addBuildScriptRepository("mavenCentral()")
       addBuildScriptClasspath("io.github.http-builder-ng:http-builder-ng-apache:1.0.3")
       addImport("groovyx.net.http.HttpBuilder")
-      withTask("bitbucketJenkinsTest") {
+      call("tasks.create", "bitbucketJenkinsTest") {
         call("doLast") {
           property("bitbucket", call("HttpBuilder.configure") {
             assign("request.uri", "https://127.0.0.1")

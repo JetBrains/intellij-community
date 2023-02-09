@@ -10,8 +10,8 @@ import com.intellij.testFramework.utils.vfs.getFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfiguration
 
 
@@ -24,8 +24,9 @@ fun buildSettings(
 
 fun buildScript(
   gradleVersion: GradleVersion,
-  configure: TestGradleBuildScriptBuilder.() -> Unit
-) = TestGradleBuildScriptBuilder(gradleVersion)
+  useKotlinDsl: Boolean = false,
+  configure: GradleBuildScriptBuilder<*>.() -> Unit
+) = GradleBuildScriptBuilder.create(gradleVersion, useKotlinDsl)
   .apply(configure)
   .generate()
 
@@ -44,11 +45,12 @@ fun VirtualFile.createSettingsFile(
 fun VirtualFile.createBuildFile(
   gradleVersion: GradleVersion,
   relativeModulePath: String = ".",
-  configure: TestGradleBuildScriptBuilder.() -> Unit
+  useKotlinDsl: Boolean = false,
+  configure: GradleBuildScriptBuilder<*>.() -> Unit
 ) = createBuildFile(
   relativeModulePath = relativeModulePath,
-  useKotlinDsl = false,
-  content = buildScript(gradleVersion, configure)
+  useKotlinDsl = useKotlinDsl,
+  content = buildScript(gradleVersion, useKotlinDsl, configure)
 )
 
 @RequiresWriteLock
@@ -106,11 +108,12 @@ fun TestFilesConfiguration.withSettingsFile(
 fun TestFilesConfiguration.withBuildFile(
   gradleVersion: GradleVersion,
   relativeModulePath: String = ".",
-  configure: TestGradleBuildScriptBuilder.() -> Unit
+  useKotlinDsl: Boolean = false,
+  configure: GradleBuildScriptBuilder<*>.() -> Unit
 ) = withBuildFile(
   relativeModulePath = relativeModulePath,
-  useKotlinDsl = false,
-  content = buildScript(gradleVersion, configure)
+  useKotlinDsl = useKotlinDsl,
+  content = buildScript(gradleVersion, useKotlinDsl, configure)
 )
 
 fun TestFilesConfiguration.withSettingsFile(

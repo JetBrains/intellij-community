@@ -15,8 +15,8 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import org.gradle.tooling.LongRunningOperation
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.DistributionType
@@ -147,7 +147,7 @@ class GradleTaskManagerTest: UsefulTestCase() {
     return listener
   }
 
-  private fun createBuildFile(gradleVersion: GradleVersion, configure: TestGradleBuildScriptBuilder.() -> Unit) {
+  private fun createBuildFile(gradleVersion: GradleVersion, configure: GradleBuildScriptBuilder<*>.() -> Unit) {
     runWriteAction {
       val projectRoot = PlatformTestUtil.getOrCreateProjectBaseDir(myProject)
       projectRoot.createBuildFile(gradleVersion, configure = configure)
