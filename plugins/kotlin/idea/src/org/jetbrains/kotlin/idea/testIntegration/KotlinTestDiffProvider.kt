@@ -36,7 +36,7 @@ class KotlinTestDiffProvider : JvmTestDiffProvider() {
         if (call !is KtCallExpression) return null
         val expr = if (param == null) {
             val uCallElement = call.toUElementOfType<UCallExpression>() ?: return null
-            val assertHint = UAssertHint.createAssertEqualsUHint(uCallElement) ?: return null
+            val assertHint = UAssertHint.createAssertEqualsHint(uCallElement) ?: return null
             if (assertHint.expected.getExpressionType() != PsiType.getJavaLangString(call.manager, call.resolveScope)) return null
             if (assertHint.actual.getExpressionType() != PsiType.getJavaLangString(call.manager, call.resolveScope)) return null
             assertHint.expected.sourcePsi ?: return null
