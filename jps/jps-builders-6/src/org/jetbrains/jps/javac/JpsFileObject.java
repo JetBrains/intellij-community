@@ -61,10 +61,8 @@ public abstract class JpsFileObject extends SimpleJavaFileObject {
   @NotNull
   protected static CharSequence loadCharContent(@NotNull File file, @Nullable String encoding) throws IOException {
     // FileUtil.loadText clones char array if length mismatch
-    FileInputStream stream = new FileInputStream(file);
-    try {
-      final Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
-      try {
+    try (FileInputStream stream = new FileInputStream(file)) {
+      try (Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding)) {
         // channel allows to avoid extra call to get file size because fd is reused, see Files.readAllBytes
         char[] chars = new char[(int)stream.getChannel().size()];
         int count = 0;
@@ -77,12 +75,6 @@ public abstract class JpsFileObject extends SimpleJavaFileObject {
         }
         return CharBuffer.wrap(chars, 0, count);
       }
-      finally {
-        reader.close();
-      }
-    }
-    finally {
-      stream.close();
     }
   }
 

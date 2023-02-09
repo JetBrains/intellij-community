@@ -16,8 +16,7 @@ public class ForkedDebuggerHelper {
 
   // copied from NetUtils
   protected static int findAvailableSocketPort() throws IOException {
-    final ServerSocket serverSocket = new ServerSocket(0);
-    try {
+    try (ServerSocket serverSocket = new ServerSocket(0)) {
       int port = serverSocket.getLocalPort();
       // workaround for linux : calling close() immediately after opening socket
       // may result that socket is not closed
@@ -32,9 +31,6 @@ public class ForkedDebuggerHelper {
         }
       }
       return port;
-    }
-    finally {
-      serverSocket.close();
     }
   }
 

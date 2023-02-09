@@ -48,8 +48,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
   @Override
   public byte[] write(IdeaProject ideaProject, Class<? extends IdeaProject> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = createIonWriter().build(out);
-    try {
+    try (IonWriter writer = createIonWriter().build(out)) {
       GradleVersion gradleVersion = getBuildGradleVersion(ideaProject);
       myWriteContext.setGradleVersion(gradleVersion);
       writer.stepIn(IonType.STRUCT);
@@ -57,25 +56,18 @@ public final class IdeaProjectSerializationService implements SerializationServi
       writer.stepOut();
       writeProject(writer, myWriteContext, ideaProject);
     }
-    finally {
-      writer.close();
-    }
     return out.toByteArray();
   }
 
   @Override
   public IdeaProject read(byte[] object, Class<? extends IdeaProject> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       if (reader.next() == null) return null;
       reader.stepIn();
       String gradleVersion = assertNotNull(readString(reader, "gradleVersion"));
       reader.stepOut();
       myReadContext.setGradleVersion(GradleVersion.version(gradleVersion));
       return readProject(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 

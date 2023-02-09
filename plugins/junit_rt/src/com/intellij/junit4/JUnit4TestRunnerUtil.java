@@ -34,9 +34,8 @@ public final class JUnit4TestRunnerUtil {
         // all tests in the package specified
         try {
           final Map<String, Set<String>> classMethods = new HashMap<>();
-          BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(suiteClassName.substring(1)),
-                                                                           StandardCharsets.UTF_8));
-          try {
+          try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(suiteClassName.substring(1)),
+                                                                                StandardCharsets.UTF_8))) {
             final String packageName = reader.readLine();
             if (packageName == null) return null;
 
@@ -112,9 +111,6 @@ public final class JUnit4TestRunnerUtil {
                 return "Tests";
               }
             });
-          }
-          finally {
-            reader.close();
           }
         }
         catch (IOException e) {

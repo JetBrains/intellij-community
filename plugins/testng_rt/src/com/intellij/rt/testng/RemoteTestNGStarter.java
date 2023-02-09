@@ -43,12 +43,8 @@ public final class RemoteTestNGStarter {
         final int port = Integer.parseInt(arg.substring(SOCKET.length()));
         try {
           final Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), port);  //start collecting tests
-          final DataInputStream os = new DataInputStream(socket.getInputStream());
-          try {
+          try (DataInputStream os = new DataInputStream(socket.getInputStream())) {
             os.readBoolean();//wait for ready flag
-          }
-          finally {
-            os.close();
           }
         }
         catch (IOException e) {

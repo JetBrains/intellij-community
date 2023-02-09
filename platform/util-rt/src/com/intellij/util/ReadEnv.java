@@ -9,9 +9,8 @@ import java.util.Map;
 
 public final class ReadEnv {
   public static void main(String[] args) throws Exception {
-    @SuppressWarnings("UseOfSystemOutOrSystemErr") Writer out = new BufferedWriter(new OutputStreamWriter(System.out,
-                                                                                                          StandardCharsets.UTF_8));
-    try {
+    try (Writer out = new BufferedWriter(new OutputStreamWriter(System.out,
+                                                                StandardCharsets.UTF_8))) {
       for (Map.Entry<String, String> each : System.getenv().entrySet()) {
         // On Windows, the environment may include variables that start with '=' (https://stackoverflow.com/questions/30102750).
         // Such variables break the output parser and are unimportant, hence are filtered out.
@@ -22,9 +21,6 @@ public final class ReadEnv {
         out.write(each.getValue());
         out.write('\0');
       }
-    }
-    finally {
-      out.close();
     }
   }
 }

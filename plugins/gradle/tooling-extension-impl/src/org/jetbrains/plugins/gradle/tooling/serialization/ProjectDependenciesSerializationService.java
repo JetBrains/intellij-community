@@ -31,24 +31,16 @@ public final class ProjectDependenciesSerializationService implements Serializat
   @Override
   public byte[] write(ProjectDependencies dependencies, Class<? extends ProjectDependencies> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = createIonWriter().build(out);
-    try {
+    try (IonWriter writer = createIonWriter().build(out)) {
       write(writer, myWriteContext, dependencies);
-    }
-    finally {
-      writer.close();
     }
     return out.toByteArray();
   }
 
   @Override
   public ProjectDependencies read(byte[] object, Class<? extends ProjectDependencies> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return read(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 

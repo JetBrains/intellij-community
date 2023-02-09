@@ -81,13 +81,9 @@ public final class TestNGXmlSuiteHelper {
 
   public static void writeToFile(Logger logger, File xmlFile, String content) {
     try {
-      OutputStream stream = new FileOutputStream(xmlFile, false);
-      try {
+      try (OutputStream stream = new FileOutputStream(xmlFile, false)) {
         byte[] text = content.getBytes(StandardCharsets.UTF_8);
         stream.write(text, 0, text.length);
-      }
-      finally {
-        stream.close();
       }
     }
     catch (IOException e) {

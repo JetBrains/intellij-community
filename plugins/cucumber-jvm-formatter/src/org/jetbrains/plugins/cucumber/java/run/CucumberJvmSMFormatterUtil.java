@@ -105,9 +105,7 @@ public final class CucumberJvmSMFormatterUtil {
 
   private static String readLineWithNumber(String filePath, int lineNumber) throws IOException {
     int currentLineNumber = 0;
-    FileReader fileStream = null;
-    try {
-      fileStream = new FileReader(filePath);
+    try (FileReader fileStream = new FileReader(filePath)) {
       BufferedReader bufferedReader = new BufferedReader(fileStream);
       String line;
       while ((line = bufferedReader.readLine()) != null) {
@@ -115,11 +113,6 @@ public final class CucumberJvmSMFormatterUtil {
         if (currentLineNumber == lineNumber) {
           return line;
         }
-      }
-    }
-    finally {
-      if (fileStream != null) {
-        fileStream.close();
       }
     }
     return null;

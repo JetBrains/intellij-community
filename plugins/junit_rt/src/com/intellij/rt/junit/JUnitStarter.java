@@ -120,12 +120,8 @@ public final class JUnitStarter {
           }
           try {
             final Socket socket = new Socket(InetAddress.getByName(host), port);  //start collecting tests
-            final DataInputStream os = new DataInputStream(socket.getInputStream());
-            try {
+            try (DataInputStream os = new DataInputStream(socket.getInputStream())) {
               os.readBoolean();//wait for ready flag
-            }
-            finally {
-              os.close();
             }
           }
           catch (IOException e) {
@@ -247,18 +243,14 @@ public final class JUnitStarter {
 
   public static void printClassesList(List<String> classNames, String packageName, String category, String filters, File tempFile)
     throws IOException {
-    final PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(tempFile), StandardCharsets.UTF_8));
 
-    try {
+    try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(tempFile), StandardCharsets.UTF_8))) {
       writer.println(packageName); //package name
       writer.println(category); //category
       writer.println(filters); //patterns
       for (String name : classNames) {
         writer.println(name);
       }
-    }
-    finally {
-      writer.close();
     }
   }
 }

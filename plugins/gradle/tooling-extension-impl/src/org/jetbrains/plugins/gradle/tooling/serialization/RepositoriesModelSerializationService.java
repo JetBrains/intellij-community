@@ -32,24 +32,16 @@ public class RepositoriesModelSerializationService implements SerializationServi
   @Override
   public byte[] write(RepositoriesModel repositoriesModel, Class<? extends RepositoriesModel> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = createIonWriter().build(out);
-    try {
+    try (IonWriter writer = createIonWriter().build(out)) {
       write(writer, myWriteContext, repositoriesModel);
-    }
-    finally {
-      writer.close();
     }
     return out.toByteArray();
   }
 
   @Override
   public RepositoriesModel read(byte[] object, Class<? extends RepositoriesModel> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return read(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 

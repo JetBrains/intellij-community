@@ -36,24 +36,16 @@ public final class ExternalProjectSerializationService implements SerializationS
   @Override
   public byte[] write(ExternalProject project, Class<? extends ExternalProject> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out);
-    try {
+    try (IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out)) {
       writeProject(writer, myWriteContext, project);
-    }
-    finally {
-      writer.close();
     }
     return out.toByteArray();
   }
 
   @Override
   public ExternalProject read(byte[] object, Class<? extends ExternalProject> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return readProject(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 

@@ -32,24 +32,16 @@ public final class ExternalTestsSerializationService implements SerializationSer
   @Override
   public byte[] write(ExternalTestsModel testsModel, Class<? extends ExternalTestsModel> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out);
-    try {
+    try (IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out)) {
       write(writer, myWriteContext, testsModel);
-    }
-    finally {
-      writer.close();
     }
     return out.toByteArray();
   }
 
   @Override
   public ExternalTestsModel read(byte[] object, Class<? extends ExternalTestsModel> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return read(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 

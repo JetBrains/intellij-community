@@ -88,12 +88,8 @@ public abstract class ForkedByModuleSplitter {
         if ("ARGS_FILE".equals(myDynamicClasspath)) {
           File argFile = File.createTempFile("arg_file", null);
           argFile.deleteOnExit();
-          FileOutputStream writer = new FileOutputStream(argFile);
-          try {
+          try (FileOutputStream writer = new FileOutputStream(argFile)) {
             writer.write(classpath.getBytes(Charset.defaultCharset()));
-          }
-          finally {
-            writer.close();
           }
           builder.add("@" + argFile.getAbsolutePath());
         }
@@ -131,16 +127,12 @@ public abstract class ForkedByModuleSplitter {
       @Override
       public void run() {
         try {
-          final BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-          try {
+          try (BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             while (true) {
               String line = inputReader.readLine();
               if (line == null) break;
               outputStream.println(line);
             }
-          }
-          finally {
-            inputReader.close();
           }
         }
         catch (UnsupportedEncodingException ignored) { }
@@ -154,8 +146,7 @@ public abstract class ForkedByModuleSplitter {
   //read file with classes grouped by module
   protected int splitPerModule(String repeatCount) throws IOException {
     int result = 0;
-    final BufferedReader perDirReader = new BufferedReader(new FileReader(myWorkingDirsPath));
-    try {
+    try (BufferedReader perDirReader = new BufferedReader(new FileReader(myWorkingDirsPath))) {
       final String packageName = perDirReader.readLine();
       String workingDir;
       while ((workingDir = perDirReader.readLine()) != null) {
@@ -186,16 +177,15 @@ public abstract class ForkedByModuleSplitter {
           }
 
           String filters = perDirReader.readLine();
-          final int childResult = startPerModuleFork(moduleName, classNames, packageName, workingDir, classpath, moduleOptions, repeatCount, result, filters != null ? filters : "");
+          final int childResult =
+            startPerModuleFork(moduleName, classNames, packageName, workingDir, classpath, moduleOptions, repeatCount, result,
+                               filters != null ? filters : "");
           result = Math.min(childResult, result);
         }
         catch (Exception e) {
           e.printStackTrace();
         }
       }
-    }
-    finally {
-      perDirReader.close();
     }
     return result;
   }

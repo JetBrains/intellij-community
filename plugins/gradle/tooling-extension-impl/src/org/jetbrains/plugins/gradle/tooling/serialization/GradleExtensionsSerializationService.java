@@ -28,24 +28,16 @@ public final class GradleExtensionsSerializationService implements Serialization
   @Override
   public byte[] write(GradleExtensions gradleExtensions, Class<? extends GradleExtensions> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out);
-    try {
+    try (IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out)) {
       write(writer, myWriteContext, gradleExtensions);
-    }
-    finally {
-      writer.close();
     }
     return out.toByteArray();
   }
 
   @Override
   public GradleExtensions read(byte[] object, Class<? extends GradleExtensions> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return read(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 

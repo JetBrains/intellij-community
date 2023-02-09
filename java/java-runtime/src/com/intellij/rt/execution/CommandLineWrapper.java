@@ -69,8 +69,7 @@ public final class CommandLineWrapper {
     List<String> properties = Collections.emptyList();
     String[] mainArgs;
 
-    JarInputStream inputStream = new JarInputStream(new FileInputStream(jarFile));
-    try {
+    try (JarInputStream inputStream = new JarInputStream(new FileInputStream(jarFile))) {
       Manifest manifest = inputStream.getManifest();
 
       String vmOptions = manifest != null ? manifest.getMainAttributes().getValue("VM-Options") : null;
@@ -88,7 +87,6 @@ public final class CommandLineWrapper {
       }
     }
     finally {
-      inputStream.close();
       jarFile.deleteOnExit();
     }
 
@@ -194,15 +192,13 @@ public final class CommandLineWrapper {
 
   /** @noinspection ResultOfMethodCallIgnored */
   private static List<String> readLinesAndDeleteFile(File file) throws IOException {
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
-    try {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
       List<String> lines = new ArrayList<>();
       String line;
       while ((line = reader.readLine()) != null) lines.add(line);
       return lines;
     }
     finally {
-      reader.close();
       file.delete();
     }
   }

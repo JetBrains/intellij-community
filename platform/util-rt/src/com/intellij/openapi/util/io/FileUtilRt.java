@@ -627,23 +627,17 @@ public class FileUtilRt {
   @NotNull
   public static char[] loadFileText(@NotNull File file, @Nullable String encoding) throws IOException {
     InputStream stream = new FileInputStream(file);
-    Reader reader = encoding == null ? new InputStreamReader(stream, Charset.defaultCharset()) : new InputStreamReader(stream, encoding);
-    try {
+    try (Reader reader = encoding == null
+                         ? new InputStreamReader(stream, Charset.defaultCharset())
+                         : new InputStreamReader(stream, encoding)) {
       return loadText(reader, (int)file.length());
-    }
-    finally {
-      reader.close();
     }
   }
 
   @NotNull
   public static char[] loadFileText(@NotNull File file, @NotNull Charset encoding) throws IOException {
-    Reader reader = new InputStreamReader(new FileInputStream(file), encoding);
-    try {
+    try (Reader reader = new InputStreamReader(new FileInputStream(file), encoding)) {
       return loadText(reader, (int)file.length());
-    }
-    finally {
-      reader.close();
     }
   }
 
@@ -682,13 +676,9 @@ public class FileUtilRt {
   @NotNull
   public static List<String> loadLines(@NotNull String path, @Nullable String encoding) throws IOException {
     InputStream stream = new FileInputStream(path);
-    BufferedReader reader =
-      new BufferedReader(encoding == null ? new InputStreamReader(stream, Charset.defaultCharset()) : new InputStreamReader(stream, encoding));
-    try {
+    try (BufferedReader reader = new BufferedReader(
+      encoding == null ? new InputStreamReader(stream, Charset.defaultCharset()) : new InputStreamReader(stream, encoding))) {
       return loadLines(reader);
-    }
-    finally {
-      reader.close();
     }
   }
 
@@ -925,18 +915,10 @@ public class FileUtilRt {
       return;
     }
 
-    FileOutputStream fos = new FileOutputStream(toFile);
-    try {
-      FileInputStream fis = new FileInputStream(fromFile);
-      try {
+    try (FileOutputStream fos = new FileOutputStream(toFile)) {
+      try (FileInputStream fis = new FileInputStream(fromFile)) {
         copy(fis, fos);
       }
-      finally {
-        fis.close();
-      }
-    }
-    finally {
-      fos.close();
     }
 
     long timeStamp = fromFile.lastModified();
@@ -950,18 +932,10 @@ public class FileUtilRt {
 
   public static void copy(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
     if (USE_FILE_CHANNELS && inputStream instanceof FileInputStream && outputStream instanceof FileOutputStream) {
-      FileChannel fromChannel = ((FileInputStream)inputStream).getChannel();
-      try {
-        FileChannel toChannel = ((FileOutputStream)outputStream).getChannel();
-        try {
+      try (FileChannel fromChannel = ((FileInputStream)inputStream).getChannel()) {
+        try (FileChannel toChannel = ((FileOutputStream)outputStream).getChannel()) {
           fromChannel.transferTo(0, Long.MAX_VALUE, toChannel);
         }
-        finally {
-          toChannel.close();
-        }
-      }
-      finally {
-        fromChannel.close();
       }
     }
     else {
