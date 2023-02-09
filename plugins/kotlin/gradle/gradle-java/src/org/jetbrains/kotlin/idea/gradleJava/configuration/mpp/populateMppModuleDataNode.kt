@@ -3,10 +3,8 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
 import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import com.intellij.openapi.externalSystem.model.project.ModuleData
-import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
@@ -27,8 +25,6 @@ import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.UnsafeTestSourceSetHeuristicApi
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.predictedProductionSourceSetName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.*
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.resourceType
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.sourceType
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinMppGradleProjectResolverExtension.Result.Skip
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
@@ -59,16 +55,10 @@ import java.util.stream.Collectors
  * Creates and adds [GradleSourceSetData] nodes and [KotlinSourceSetInfo] for the given [moduleDataNode]
  * @param moduleDataNode: The node representing a specific Gradle project which contains multiplatform source sets
  */
-internal fun populateMppModuleDataNode(
-    gradleModule: IdeaModule,
-    moduleDataNode: DataNode<ModuleData>,
-    projectDataNode: DataNode<ProjectData>,
-    mppModel: KotlinMPPGradleModel,
-    resolverCtx: ProjectResolverContext,
-) {
-    KotlinMPPCompilerArgumentsCacheMergeManager.mergeCache(gradleModule, resolverCtx)
-    initializeModuleData(gradleModule, moduleDataNode, projectDataNode, mppModel, resolverCtx)
-    createMppGradleSourceSetDataNodes(gradleModule, moduleDataNode, mppModel, resolverCtx)
+internal fun populateMppModuleDataNode(context: KotlinMPPGradleProjectResolver.Context) {
+    KotlinMPPCompilerArgumentsCacheMergeManager.mergeCache(context.gradleModule, context.resolverCtx)
+    context.initializeModuleData()
+    context.createMppGradleSourceSetDataNodes()
 }
 
 internal fun shouldDelegateToOtherPlugin(compilation: KotlinCompilation): Boolean =
@@ -200,14 +190,9 @@ internal fun doCreateSourceSetInfo(
     }
 }
 
-private fun initializeModuleData(
-    gradleModule: IdeaModule,
-    moduleDataNode: DataNode<ModuleData>,
-    projectDataNode: DataNode<ProjectData>,
-    mppModel: KotlinMPPGradleModel,
-    resolverCtx: ProjectResolverContext
-) {
+private fun KotlinMPPGradleProjectResolver.Context.initializeModuleData() {
     if (moduleDataNode.isMppDataInitialized) return
+
 
     /* Populate 'MPP_CONFIGURATION_ARTIFACTS' for every production source set */
     run {
@@ -252,21 +237,14 @@ private fun initializeModuleData(
     }
 }
 
-private fun createMppGradleSourceSetDataNodes(
-    gradleModule: IdeaModule,
-    mainModuleNode: DataNode<ModuleData>,
-    mppModel: KotlinMPPGradleModel,
-    resolverCtx: ProjectResolverContext
-) {
-    val mainModuleData = mainModuleNode.data
+private fun KotlinMPPGradleProjectResolver.Context.createMppGradleSourceSetDataNodes() {
+    val mainModuleData = moduleDataNode.data
     val mainModuleConfigPath = mainModuleData.linkedExternalProjectPath
     val mainModuleFileDirectoryPath = mainModuleData.moduleFileDirectoryPath
 
-    val extensionContext = KotlinMppGradleProjectResolverExtension.Context(mppModel, resolverCtx, gradleModule, mainModuleNode)
     val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
 
     val externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java) ?: return
-    val projectDataNode = ExternalSystemApiUtil.findParent(mainModuleNode, ProjectKeys.PROJECT) ?: return
 
     val moduleGroup: Array<String>? = if (!resolverCtx.isUseQualifiedModuleNames) {
         val gradlePath = gradleModule.gradleProject.path
@@ -288,7 +266,7 @@ private fun createMppGradleSourceSetDataNodes(
             it.archiveFile = target.jar?.archiveFile
             it.konanArtifacts = target.konanArtifacts
         }
-        mainModuleNode.createChild(KotlinTargetData.KEY, targetData)
+        moduleDataNode.createChild(KotlinTargetData.KEY, targetData)
 
         val compilationIds = LinkedHashSet<String>()
         for (compilation in target.compilations) {
@@ -297,7 +275,7 @@ private fun createMppGradleSourceSetDataNodes(
             if (existingSourceSetDataNode?.kotlinSourceSetData?.sourceSetInfo != null) continue
 
             /* Execute extensions and do not create any GradleSourceSetData node if any extension wants us to Skip */
-            if (extensionInstance.beforeMppGradleSourceSetDataNodeCreation(extensionContext, compilation) == Skip) {
+            if (extensionInstance.beforeMppGradleSourceSetDataNodeCreation(this, compilation) == Skip) {
                 continue
             }
 
@@ -350,7 +328,7 @@ private fun createMppGradleSourceSetDataNodes(
             }
 
             val compilationDataNode =
-                (existingSourceSetDataNode ?: mainModuleNode.createChild(GradleSourceSetData.KEY, compilationData)).also {
+                (existingSourceSetDataNode ?: moduleDataNode.createChild(GradleSourceSetData.KEY, compilationData)).also {
                     it.addChild(DataNode(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet), it))
                 }
             if (existingSourceSetDataNode == null) {
@@ -358,7 +336,7 @@ private fun createMppGradleSourceSetDataNodes(
             }
 
             /* Execution all extensions after we freshly created a GradleSourceSetData node for the given compilation */
-            extensionInstance.afterMppGradleSourceSetDataNodeCreated(extensionContext, compilation, compilationDataNode)
+            extensionInstance.afterMppGradleSourceSetDataNodeCreated(this, compilation, compilationDataNode)
         }
 
         targetData.moduleIds = compilationIds
@@ -375,12 +353,12 @@ private fun createMppGradleSourceSetDataNodes(
         if (existingSourceSetDataNode?.kotlinSourceSetData != null) continue
 
         /* Execute extensions and do not create any GradleSourceSetData node if any extension wants us to Skip */
-        if (extensionInstance.beforeMppGradleSourceSetDataNodeCreation(extensionContext, sourceSet) == Skip) {
+        if (extensionInstance.beforeMppGradleSourceSetDataNodeCreation(this, sourceSet) == Skip) {
             continue
         }
 
         val sourceSetData = existingSourceSetDataNode?.data ?: createGradleSourceSetData(
-            sourceSet, gradleModule, mainModuleNode, resolverCtx
+            sourceSet, gradleModule, moduleDataNode, resolverCtx
         ).also {
             it.group = externalProject.group
             it.version = externalProject.version
@@ -420,7 +398,7 @@ private fun createMppGradleSourceSetDataNodes(
 
         val kotlinSourceSet = KotlinMPPGradleProjectResolver.createSourceSetInfo(mppModel, sourceSet, gradleModule, resolverCtx) ?: continue
 
-        val sourceSetDataNode = (existingSourceSetDataNode ?: mainModuleNode.createChild(GradleSourceSetData.KEY, sourceSetData)).also {
+        val sourceSetDataNode = (existingSourceSetDataNode ?: moduleDataNode.createChild(GradleSourceSetData.KEY, sourceSetData)).also {
             it.addChild(DataNode(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet), it))
         }
         if (existingSourceSetDataNode == null) {
@@ -428,7 +406,7 @@ private fun createMppGradleSourceSetDataNodes(
         }
 
         /* Execution all extensions after we freshly created a GradleSourceSetData node for the given compilation */
-        extensionInstance.afterMppGradleSourceSetDataNodeCreated(extensionContext, sourceSet, sourceSetDataNode)
+        extensionInstance.afterMppGradleSourceSetDataNodeCreated(this, sourceSet, sourceSetDataNode)
     }
 }
 
