@@ -38,7 +38,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
 
   open val goToClassSearchQuery: String ="bufre"
 
-  open val projectFilesScopeName: String = ProjectScope.getProjectFilesScopeName()
+  open val projectFilesScopeName: String get() = ProjectScope.getProjectFilesScopeName()
 
   open val showQuickDock: Boolean = true
 
@@ -117,8 +117,8 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     task(EverythingGlobalScope.getNameText()) {
       text(LessonsBundle.message("search.everywhere.use.all.places",
                                  strong(projectFilesScopeName), strong(it)))
-      triggerAndFullHighlight().component {
-        button: ActionButtonWithText -> button.accessibleContext.accessibleName.isToStringContains(projectFilesScopeName)
+      triggerAndFullHighlight().component { button: ActionButtonWithText ->
+        button.accessibleContext.accessibleName.isToStringContains(projectFilesScopeName)
       }
       triggerUI().component { button: ActionButtonWithText ->
         button.accessibleContext.accessibleName == it
