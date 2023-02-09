@@ -12,16 +12,54 @@ import git4idea.remote.GitHttpAuthDataProvider
 import git4idea.remote.hosting.GitHostingUrlUtil
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Base class that provides a business logic part of [GitHttpAuthDataProvider] interface,
+ * that can be extended by git hosting providers such as Space, GitHub, GitLab, BitBucket, etc.
+ *
+ * This logic can be described as: if user is logged in plugin (so their account is stored in [accountManager])
+ * then their token will be passed as password for http remote operations.
+ *
+ * If user is logged in more than one account and user has chosen the default account (should be stored in [getDefaultAccountHolder])
+ * then this default account's details will be used.
+ *
+ * If authorization with given credentials failed, account will be stored to [HostedGitAuthenticationFailureManager]
+ * and not used in the future attempts (until account token change or project reopen)
+ *
+ * Clients' auth data providers should be registered in plugin.xml with "Git4Idea.GitHttpAuthDataProvider" extension.
+ */
 @ApiStatus.Experimental
 abstract class HostedGitHttpAuthDataProvider<A : ServerAccount> : GitHttpAuthDataProvider {
   abstract val providerId: String
 
+  /**
+   * Account manager that holds accounts and their credentials.
+   *
+   * In common, it is an application service.
+   */
   abstract val accountManager: AccountManager<A, String>
 
+  /**
+   * Provider of the default account selected by user.
+   * So that if there are more than one account in [accountManager],
+   * then [DefaultAccountHolder.account] will be used as login and credentials provider
+   *
+   * In common, it is a project service.
+   */
   abstract fun getDefaultAccountHolder(project: Project): DefaultAccountHolder<A>
 
+  /**
+   * Holder for accounts and their creds that failed to access git remotes operations.
+   * Such accounts won't be provided to git http remote operations until creds changed or IDE restarted.
+   *
+   * In common, clients should implement their own project service to keep such accounts.
+   */
   abstract fun getAuthFailureManager(project: Project): HostedGitAuthenticationFailureManager<A>
 
+  /**
+   * Provides login that will be passed to git remote http operation.
+   * Or [null] if login cannot be acquired, in this case nothing will be passed to git http remote operations and
+   * user will be asked to input username and password themselves.
+   */
   abstract suspend fun getAccountLogin(account: A, token: String): String?
 
   override fun isSilent(): Boolean = true
