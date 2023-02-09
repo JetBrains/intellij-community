@@ -15,14 +15,16 @@
  */
 package org.jetbrains.idea.maven.navigator;
 
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.importing.FilesList;
 import org.jetbrains.idea.maven.project.importing.MavenImportFlow;
@@ -451,6 +453,37 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     for (var child : children) {
       assertNotNull(child);
     }
+  }
+
+  @Test
+  public void testAddAndRemoveMavenRunConfiguration() throws Exception {
+    myProjectsManager.fireActivatedInTests();
+
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
+
+    VirtualFile m = createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      """);
+    readFiles(myProjectPom, m);
+
+    assertEquals(1, getRootNodes().size());
+    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
+
+    var runManager = RunManagerImpl.getInstanceImpl(myProject);
+    var mavenTemplateConfiguration = MavenRunConfigurationType.getInstance().getConfigurationFactories()[0].createTemplateConfiguration(myProject);
+    var mavenConfiguration = MavenRunConfigurationType.getInstance().getConfigurationFactories()[0].createConfiguration("myConfiguration", mavenTemplateConfiguration);
+    var configuration = new RunnerAndConfigurationSettingsImpl(runManager, mavenConfiguration);
+    runManager.addConfiguration(configuration);
+    runManager.removeConfiguration(configuration);
   }
 
   private void readFiles(VirtualFile... files) throws Exception {
