@@ -537,9 +537,11 @@ final class ServiceTreeView extends ServiceView {
     }
 
     private void updateNavBar() {
-      myNavBarPanel.hidePopup();
-      myNavBarPanel.getModel().updateModel((Object)null);
-      myNavBarPanel.getUpdateQueue().rebuildUi();
+      AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+        myNavBarPanel.hidePopup();
+        myNavBarPanel.getModel().updateModel((Object)null);
+        myNavBarPanel.getUpdateQueue().rebuildUi();
+      });
     }
   }
 
