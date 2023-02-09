@@ -166,7 +166,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       }
     }
 
-    if (!validClass(myParentClass, editor)) {
+    if (!validClass(myParentClass, selectedExpr, editor)) {
       return true;
     }
 
@@ -262,7 +262,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     return myParentClass;
   }
 
-  protected abstract boolean validClass(PsiClass parentClass, Editor editor);
+  protected abstract boolean validClass(PsiClass parentClass, PsiExpression selectedExpr, Editor editor);
 
   private static PsiElement getNormalizedAnchor(PsiElement anchorElement) {
     PsiElement child = anchorElement;

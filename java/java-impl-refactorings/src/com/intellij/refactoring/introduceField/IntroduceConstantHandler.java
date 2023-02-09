@@ -257,7 +257,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
   }
 
   @Override
-  protected boolean validClass(PsiClass parentClass, Editor editor) {
+  protected boolean validClass(PsiClass parentClass, PsiExpression selectedExpr, Editor editor) {
     return true;
   }
 
