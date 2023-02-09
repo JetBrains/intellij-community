@@ -168,7 +168,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
       myTreeModel.setComparator(createComparator());
     }
   };
-  private final Option mySortBySeverity = new Option() {
+  protected final Option mySortBySeverity = new Option() {
     @Override
     public boolean isSelected() {
       return myState.getSortBySeverity();
@@ -507,12 +507,12 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   }
 
   @Nullable
-  Option getSortBySeverity() {
-    return this instanceof HighlightingPanel ? mySortBySeverity : null;
+  protected Option getSortBySeverity() {
+    return null;
   }
 
   @Nullable
-  Option getSortByName() {
+  protected Option getSortByName() {
     return mySortByName;
   }
 
@@ -520,7 +520,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     return option != null && option.isSelected();
   }
 
-  private static boolean isNullableOrSelected(@Nullable Option option) {
+  protected static boolean isNullableOrSelected(@Nullable Option option) {
     return option == null || option.isSelected();
   }
 }
