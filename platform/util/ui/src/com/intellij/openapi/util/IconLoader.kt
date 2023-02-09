@@ -54,7 +54,8 @@ private val LOOKUP = MethodHandles.lookup()
 private val iconCache = ConcurrentHashMap<Pair<String, ClassLoader?>, CachedImageIcon>(100, 0.9f, 2)
 
 // contains mapping between icons and disabled icons
-private val iconToDisabledIcon = CollectionFactory.createConcurrentWeakMap<() -> RGBImageFilter, MutableMap<Icon, Icon>>()
+private val iconToDisabledIcon = ConcurrentHashMap<() -> RGBImageFilter, MutableMap<Icon, Icon>>()
+private val standardDisablingFilter: () -> RGBImageFilter = { UIUtil.getGrayFilter() }
 
 @Volatile
 private var STRICT_GLOBAL = false
@@ -414,9 +415,9 @@ object IconLoader {
     }
 
     val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
-    val filter = disableFilter ?: { UIUtil.getGrayFilter() } /* returns laf-aware instance */
+    val filter = disableFilter ?: standardDisablingFilter /* returns laf-aware instance */
     return iconToDisabledIcon
-      .computeIfAbsent(filter) { CollectionFactory.createConcurrentWeakMap() }
+      .computeIfAbsent(filter) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
       .computeIfAbsent(effectiveIcon) { filterIcon(icon = it, filterSupplier = filter) }
   }
 
