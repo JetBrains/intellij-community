@@ -96,11 +96,8 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     if (myFieldElement == null) {
       return IntentionPreviewInfo.EMPTY;
     }
-    if (copyFile instanceof SyntheticElement) {
-      return IntentionPreviewInfo.EMPTY;
-    }
     PsiField copyMyField = PsiTreeUtil.findSameElementInCopy(myFieldElement, copyFile);
-    PsiMethod[] constructors = getPhysicalConstructors(copyMyClass);
+    PsiMethod[] constructors = getNonSyntheticConstructors(copyMyClass);
     if (constructors.length == 0) {
       final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(copyMyClass);
       defaultConstructorFix.invoke(project, editor, copyFile);
@@ -146,11 +143,11 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
-    PsiMethod[] constructors = getPhysicalConstructors(myClass);
+    PsiMethod[] constructors = getNonSyntheticConstructors(myClass);
     if (constructors.length == 0) {
       final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(myClass);
       ApplicationManager.getApplication().runWriteAction(() -> defaultConstructorFix.invoke(project, editor, file));
-      constructors = getPhysicalConstructors(myClass);
+      constructors = getNonSyntheticConstructors(myClass);
     }
     final List<PsiMethod> filtered = getFilteredConstructors(constructors, getField());
     final List<SmartPsiElementPointer<PsiElement>> cleanupElements = new ArrayList<>();
@@ -218,7 +215,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     GlobalInspectionContextBase.cleanupElements(project, null, cleanupElements);
   }
 
-  private static PsiMethod[] getPhysicalConstructors(@NotNull PsiClass psiClass) {
+  private static PsiMethod[] getNonSyntheticConstructors(@NotNull PsiClass psiClass) {
     return ContainerUtil.filter(psiClass.getConstructors(), c -> !(c instanceof SyntheticElement)).toArray(PsiMethod[]::new);
   }
 
