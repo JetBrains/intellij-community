@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.AppMode;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -11,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -19,6 +21,8 @@ import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.Urls;
 import com.intellij.util.ui.UIUtil;
@@ -83,7 +87,12 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     else {
       openWhatsNewPage(project, url, (HTMLEditorProvider.JsQueryHandler.Java)(id, jsRequest) -> {
         if (ENABLE_NEW_UI_REQUEST.equals(jsRequest)) {
-          //todo[KB] please put the implementation here
+          if (!ExperimentalUI.isNewUI()) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              Registry.get("ide.experimental.ui").setValue(true);
+              UISettings.getInstance().fireUISettingsChanged();
+            });
+          }
           return "true";
         }
         else {
