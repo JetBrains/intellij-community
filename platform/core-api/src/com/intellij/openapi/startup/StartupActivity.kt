@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 
 /**
- * @deprecated Use [ProjectActivity]
+ * Use [ProjectActivity]
  */
 @Obsolete
 interface StartupActivity {
