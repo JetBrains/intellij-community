@@ -596,11 +596,11 @@
         "borderColor": "Grey4"
       },
       "GitLog": {
-        "headIconColor": "Yellow7",
+        "headIconColor": "Yellow8",
         "localBranchIconColor": "Green6",
-        "otherIconColor": "Grey7",
-        "remoteBranchIconColor": "Purple7",
-        "tagIconColor": "Grey7"
+        "otherIconColor": "Grey8",
+        "remoteBranchIconColor": "Purple8",
+        "tagIconColor": "Grey8"
       }
     },
 
