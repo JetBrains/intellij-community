@@ -6,6 +6,7 @@ import com.intellij.rt.execution.junit.RepeatCount;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -246,7 +247,7 @@ public final class JUnitStarter {
 
   public static void printClassesList(List<String> classNames, String packageName, String category, String filters, File tempFile)
     throws IOException {
-    final PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(tempFile), "UTF-8"));
+    final PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(tempFile), StandardCharsets.UTF_8));
 
     try {
       writer.println(packageName); //package name

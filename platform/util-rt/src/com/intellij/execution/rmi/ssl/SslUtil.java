@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.X509TrustManager;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -37,12 +38,7 @@ public final class SslUtil {
 
   @NotNull
   public static InputStream stringStream(@NotNull String str) {
-    try {
-      return new ByteArrayInputStream(str.getBytes("UTF-8"));
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
+    return new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
   }
 
   @NotNull

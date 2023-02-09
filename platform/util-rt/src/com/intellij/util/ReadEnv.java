@@ -4,11 +4,13 @@ package com.intellij.util;
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public final class ReadEnv {
   public static void main(String[] args) throws Exception {
-    @SuppressWarnings("UseOfSystemOutOrSystemErr") Writer out = new BufferedWriter(new OutputStreamWriter(System.out, "UTF-8"));
+    @SuppressWarnings("UseOfSystemOutOrSystemErr") Writer out = new BufferedWriter(new OutputStreamWriter(System.out,
+                                                                                                          StandardCharsets.UTF_8));
     try {
       for (Map.Entry<String, String> each : System.getenv().entrySet()) {
         // On Windows, the environment may include variables that start with '=' (https://stackoverflow.com/questions/30102750).

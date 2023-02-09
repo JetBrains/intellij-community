@@ -12,6 +12,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -720,12 +721,8 @@ public class InstrumentationClassFinder {
           for (int j = 0; j < bytes.size(); j++) {
             bytesArray[j] = (byte)bytes.get(j).intValue();
           }
-          try {
-            decoded.append(new String(bytesArray, "UTF-8"));
-            continue;
-          }
-          catch (UnsupportedEncodingException ignored) {
-          }
+          decoded.append(new String(bytesArray, StandardCharsets.UTF_8));
+          continue;
         }
       }
 

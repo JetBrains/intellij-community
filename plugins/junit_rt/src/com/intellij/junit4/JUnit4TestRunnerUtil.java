@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -33,7 +34,8 @@ public final class JUnit4TestRunnerUtil {
         // all tests in the package specified
         try {
           final Map<String, Set<String>> classMethods = new HashMap<String, Set<String>>();
-          BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(suiteClassName.substring(1)), "UTF-8"));
+          BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(suiteClassName.substring(1)),
+                                                                           StandardCharsets.UTF_8));
           try {
             final String packageName = reader.readLine();
             if (packageName == null) return null;

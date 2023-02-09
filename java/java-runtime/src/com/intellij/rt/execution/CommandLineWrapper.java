@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -193,7 +194,7 @@ public final class CommandLineWrapper {
 
   /** @noinspection ResultOfMethodCallIgnored */
   private static List<String> readLinesAndDeleteFile(File file) throws IOException {
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
     try {
       List<String> lines = new ArrayList<String>();
       String line;

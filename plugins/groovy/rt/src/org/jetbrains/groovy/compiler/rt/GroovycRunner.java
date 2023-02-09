@@ -8,7 +8,7 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -95,7 +95,7 @@ public final class GroovycRunner {
     final List<URL> urls = new ArrayList<URL>();
     try {
       //noinspection IOResourceOpenedButNotSafelyClosed
-      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(argsPath), Charset.forName("UTF-8")));
+      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(argsPath), StandardCharsets.UTF_8));
       String classpath = reader.readLine();
       for (String s : classpath.split(File.pathSeparator)) {
         urls.add(new File(s).toURI().toURL());

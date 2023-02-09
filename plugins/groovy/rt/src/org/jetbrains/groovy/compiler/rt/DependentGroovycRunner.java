@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
@@ -208,7 +208,7 @@ public final class DependentGroovycRunner {
       //noinspection IOResourceOpenedButNotSafelyClosed
       stream = new FileInputStream(argsFile);
       //noinspection IOResourceOpenedButNotSafelyClosed
-      reader = new BufferedReader(new InputStreamReader(stream, Charset.forName("UTF-8")));
+      reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
 
       reader.readLine(); // skip classpath
 

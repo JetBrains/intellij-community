@@ -17,6 +17,7 @@ package com.intellij.rt.execution.testFrameworks;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -130,7 +131,7 @@ public abstract class ForkedByModuleSplitter {
       @Override
       public void run() {
         try {
-          final BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+          final BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
           try {
             while (true) {
               String line = inputReader.readLine();

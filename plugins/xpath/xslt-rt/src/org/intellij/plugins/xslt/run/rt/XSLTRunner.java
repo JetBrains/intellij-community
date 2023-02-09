@@ -25,6 +25,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
@@ -98,7 +99,7 @@ public final class XSLTRunner implements XSLTMain {
                         if (out != null) {
                             result = new StreamResult(new ForkedOutputStream(new OutputStream[]{ socketStream, fileStream }));
                         } else {
-                            result = new StreamResult(new OutputStreamWriter(socketStream, "UTF-8"));
+                            result = new StreamResult(new OutputStreamWriter(socketStream, StandardCharsets.UTF_8));
                         }
                     } catch (SocketTimeoutException ignored) {
                         System.err.println("Plugin did not connect to runner within timeout. Run aborted.");
