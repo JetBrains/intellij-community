@@ -84,11 +84,11 @@ abstract class GradleUntrustedProjectTestCase {
   }
 
   suspend fun initGradleProject(relativePath: String) {
-    val projectRoot = writeAction {
-      testRoot.findOrCreateDirectory(relativePath)
-    }
-    projectRoot.createSettingsFile {
-      setProjectName(projectRoot.name)
+    writeAction {
+      val projectRoot = testRoot.findOrCreateDirectory(relativePath)
+      projectRoot.createSettingsFile {
+        setProjectName(projectRoot.name)
+      }
     }
   }
 

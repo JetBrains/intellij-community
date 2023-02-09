@@ -148,8 +148,10 @@ class GradleTaskManagerTest: UsefulTestCase() {
   }
 
   private fun createBuildFile(gradleVersion: GradleVersion, configure: TestGradleBuildScriptBuilder.() -> Unit) {
-    val projectRoot = runWriteAction { PlatformTestUtil.getOrCreateProjectBaseDir(myProject) }
-    projectRoot.createBuildFile(gradleVersion, configure = configure)
+    runWriteAction {
+      val projectRoot = PlatformTestUtil.getOrCreateProjectBaseDir(myProject)
+      projectRoot.createBuildFile(gradleVersion, configure = configure)
+    }
   }
 }
 
