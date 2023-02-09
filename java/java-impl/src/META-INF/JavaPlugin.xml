@@ -1313,6 +1313,8 @@
                  description="Using new optimised JavaInjectedFileChangesHandler when editing code injected to Java in the fragment editor"/>
     <registryKey key="java.jspecify.annotations.available" defaultValue="true" restartRequired="true"
                  description="Experimental support for experimental annotations"/>
+    <registryKey key="ide.new.project.model.artifacts.sync.initialization" defaultValue="true" restartRequired="false"
+                 description="Enable locks during artifacts initialization"/>
     <deadCode implementation="com.intellij.codeInspection.deadCode.DeprecatedEntryPoint"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.java18api.Java8MapApiInspectionMerger"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionMerger"/>
