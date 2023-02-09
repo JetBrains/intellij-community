@@ -28,12 +28,12 @@ public final class JUnit4TestRunnerUtil {
     if (suiteClassNames.length == 0) {
       return null;
     }
-    ArrayList<Class<?>> result = new ArrayList<Class<?>>();
+    ArrayList<Class<?>> result = new ArrayList<>();
     for (String suiteClassName : suiteClassNames) {
       if (suiteClassName.charAt(0) == '@') {
         // all tests in the package specified
         try {
-          final Map<String, Set<String>> classMethods = new HashMap<String, Set<String>>();
+          final Map<String, Set<String>> classMethods = new HashMap<>();
           BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(suiteClassName.substring(1)),
                                                                            StandardCharsets.UTF_8));
           try {
@@ -53,7 +53,7 @@ public final class JUnit4TestRunnerUtil {
                 className = line.substring(0, idx);
                 Set<String> methodNames = classMethods.get(className);
                 if (methodNames == null) {
-                  methodNames = new HashSet<String>();
+                  methodNames = new HashSet<>();
                   classMethods.put(className, methodNames);
                 }
                 methodNames.add(line.substring(idx + 1));

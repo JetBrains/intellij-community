@@ -51,7 +51,7 @@ public class FileUtilRt {
 
   @NotNull
   public static List<String> splitPath(@NotNull String path, char separatorChar) {
-    List<String> list = new ArrayList<String>();
+    List<String> list = new ArrayList<>();
     int index = 0;
     int nextSeparator;
     while ((nextSeparator = path.indexOf(separatorChar, index)) != -1) {
@@ -431,7 +431,7 @@ public class FileUtilRt {
 
     @NotNull
     private static Queue<String> createFilesToDelete() {
-      final ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<String>();
+      final ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<>();
       Runtime.getRuntime().addShutdownHook(new Thread("FileUtil deleteOnExit") {
         @Override
         public void run() {
@@ -694,7 +694,7 @@ public class FileUtilRt {
 
   @NotNull
   public static List<String> loadLines(@NotNull BufferedReader reader) throws IOException {
-    List<String> lines = new ArrayList<String>();
+    List<String> lines = new ArrayList<>();
     String line;
     while ((line = reader.readLine()) != null) {
       lines.add(line);

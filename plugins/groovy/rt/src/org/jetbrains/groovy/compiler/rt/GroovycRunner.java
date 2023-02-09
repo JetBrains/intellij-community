@@ -92,7 +92,7 @@ public final class GroovycRunner {
 
   @Nullable
   private static ClassLoader buildMainLoader(String argsPath, PrintStream err) {
-    final List<URL> urls = new ArrayList<URL>();
+    final List<URL> urls = new ArrayList<>();
     try {
       //noinspection IOResourceOpenedButNotSafelyClosed
       BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(argsPath), StandardCharsets.UTF_8));

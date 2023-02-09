@@ -80,7 +80,7 @@ public class ForkedDebuggerHelper {
     for (int i = 0; i < args.length; i++) {
       String arg = args[i];
       if (arg.startsWith(DEBUG_SOCKET)) {
-        final List<String> list = new ArrayList<String>(Arrays.asList(args));
+        final List<String> list = new ArrayList<>(Arrays.asList(args));
         list.remove(arg);
         args = list.toArray(new String[0]);
         myDebugPort = Integer.parseInt(arg.substring(DEBUG_SOCKET.length()));

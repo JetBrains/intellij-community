@@ -27,7 +27,7 @@ public final class TestRunnerUtil {
     if (suiteClassNames.length == 0) {
       return null;
     }
-    ArrayList<Test> result = new ArrayList<Test>();
+    ArrayList<Test> result = new ArrayList<>();
     for (String suiteClassName : suiteClassNames) {
       Test test;
       if (suiteClassName.charAt(0) == '@') {
@@ -44,7 +44,7 @@ public final class TestRunnerUtil {
             reader.readLine(); //category
             reader.readLine();//filters
 
-            vector = new ArrayList<String>();
+            vector = new ArrayList<>();
             String line;
             while ((line = reader.readLine()) != null) {
               vector.add(line);

@@ -28,7 +28,7 @@ public final class SslUtil {
     throws IOException, CertificateException {
     String string = FileUtilRt.loadFile(new File(caCertPath));
     String[] tokens = string.split(END_CERTIFICATE);
-    List<X509Certificate> certs = new ArrayList<X509Certificate>(tokens.length);
+    List<X509Certificate> certs = new ArrayList<>(tokens.length);
     for (String token : tokens) {
       if (token == null || token.trim().length() == 0) continue;
       certs.add(readCertificate(stringStream(token + END_CERTIFICATE)));

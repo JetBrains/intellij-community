@@ -37,9 +37,9 @@ public final class JUnitStarter {
   public static String ourRepeatCount;
 
   public static void main(String[] args) {
-    List<String> argList = new ArrayList<String>(Arrays.asList(args));
+    List<String> argList = new ArrayList<>(Arrays.asList(args));
 
-    final ArrayList<String> listeners = new ArrayList<String>();
+    final ArrayList<String> listeners = new ArrayList<>();
     final String[] name = new String[1];
 
     String agentName = processParameters(argList, listeners, name);
@@ -58,7 +58,7 @@ public final class JUnitStarter {
 
   private static String processParameters(List<String> args, final List<? super String> listeners, String[] params) {
     String agentName = isJUnit5Preferred() ? JUNIT5_RUNNER_NAME : JUNIT4_RUNNER_NAME;
-    List<String> result = new ArrayList<String>(args.size());
+    List<String> result = new ArrayList<>(args.size());
     for (String arg : args) {
       if (arg.startsWith(IDE_VERSION)) {
         //ignore
@@ -226,7 +226,7 @@ public final class JUnitStarter {
       IdeaTestRunner<?> testRunner = (IdeaTestRunner<?>)getAgentClass(agentName).newInstance();
       if (ourCommandFileName != null) {
         if (!"none".equals(ourForkMode) || ourWorkingDirs != null && new File(ourWorkingDirs).length() > 0) {
-          final List<String> newArgs = new ArrayList<String>();
+          final List<String> newArgs = new ArrayList<>();
           newArgs.add(agentName);
           newArgs.addAll(listeners);
           return new JUnitForkedSplitter(ourWorkingDirs, ourForkMode, newArgs)

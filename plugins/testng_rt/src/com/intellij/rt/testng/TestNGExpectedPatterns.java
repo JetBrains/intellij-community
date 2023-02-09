@@ -12,7 +12,7 @@ class TestNGExpectedPatterns extends AbstractExpectedPatterns {
   private static final Pattern SOFT_ASSERT_PATTERN = Pattern.compile("expected \\[(.*)] but found \\[(.*)]", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
   private static final Pattern SOFT_ASSERT_CHAINED_PATTERN = Pattern.compile("but found \\[(.*)]", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 
-  private static final List<Pattern> PATTERNS = new ArrayList<Pattern>();
+  private static final List<Pattern> PATTERNS = new ArrayList<>();
 
   private static final String[] PATTERN_STRINGS = new String[]{
     "expected same with:\\<(.*)\\> but was:\\<(.*)\\>",

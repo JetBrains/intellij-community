@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TasksFactory {
   private static final boolean TASKS_REFRESH_REQUIRED =
     GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("5.0")) < 0;
-  private final Map<Project, Set<Task>> allTasks = new ConcurrentHashMap<Project, Set<Task>>();
+  private final Map<Project, Set<Task>> allTasks = new ConcurrentHashMap<>();
   private final Set<Project> processedRootProjects = Collections.newSetFromMap(new ConcurrentHashMap<Project, Boolean>());
   @NotNull private final MessageReporter myMessageReporter;
 
@@ -44,7 +44,7 @@ public class TasksFactory {
 
   @NotNull
   private Map<Project, Set<Task>> getAllTasks(@NotNull Project root) {
-    final Map<Project, Set<Task>> foundTargets = new TreeMap<Project, Set<Task>>();
+    final Map<Project, Set<Task>> foundTargets = new TreeMap<>();
     for (final Project project : root.getAllprojects()) {
       try {
         retryOnce(new Runnable() {
@@ -52,7 +52,7 @@ public class TasksFactory {
           public void run() {
             maybeRefreshTasks(project);
             TaskContainer projectTasks = project.getTasks();
-            foundTargets.put(project, new TreeSet<Task>(projectTasks));
+            foundTargets.put(project, new TreeSet<>(projectTasks));
           }
         });
       }
@@ -87,7 +87,7 @@ public class TasksFactory {
       collectTasks(rootProject);
     }
 
-    Set<Task> tasks = new LinkedHashSet<Task>(getTasksNullsafe(project));
+    Set<Task> tasks = new LinkedHashSet<>(getTasksNullsafe(project));
     for (Project subProject : project.getSubprojects()) {
       tasks.addAll(getTasksNullsafe(subProject));
     }

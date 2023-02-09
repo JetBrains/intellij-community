@@ -63,7 +63,7 @@ public final class RemoteVariableImpl extends UnicastRemoteObject implements Rem
   }
 
   public static List<RemoteDebugger.Variable> convert(List<? extends Debugger.Variable> list) throws RemoteException {
-    List<RemoteDebugger.Variable> variables = new ArrayList<RemoteDebugger.Variable>(list.size());
+    List<RemoteDebugger.Variable> variables = new ArrayList<>(list.size());
     for (final Debugger.Variable variable : list) {
       variables.add(new RemoteVariableImpl(variable));
     }

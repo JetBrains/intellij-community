@@ -30,7 +30,7 @@ import static org.codehaus.groovy.runtime.StringGroovyMethods.capitalize;
 public class VersionCatalogsModelBuilder extends AbstractModelBuilderService {
   @Override
   public Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {
-    Map<String, String> result = new HashMap<String, String>();
+    Map<String, String> result = new HashMap<>();
     SettingsInternal settings = ((GradleInternal)project.getGradle()).getSettings();
     MutableVersionCatalogContainer catalogs = settings.getDependencyResolutionManagement().getVersionCatalogs();
     for (VersionCatalogBuilder builder : catalogs) {

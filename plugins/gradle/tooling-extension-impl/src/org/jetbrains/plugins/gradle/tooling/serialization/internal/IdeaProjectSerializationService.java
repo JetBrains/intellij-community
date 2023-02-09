@@ -469,7 +469,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     reader.next();
     assertFieldName(reader, "ideaModules");
     reader.stepIn();
-    List<InternalIdeaModule> ideaModules = new ArrayList<InternalIdeaModule>();
+    List<InternalIdeaModule> ideaModules = new ArrayList<>();
     InternalIdeaModule ideaModule;
     while ((ideaModule = readModule(reader, context)) != null) {
       ideaModule.setParent(project);
@@ -500,7 +500,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     reader.next();
     assertFieldName(reader, "dependencies");
     reader.stepIn();
-    List<InternalIdeaDependency> dependencies = new ArrayList<InternalIdeaDependency>();
+    List<InternalIdeaDependency> dependencies = new ArrayList<>();
     InternalIdeaDependency dependency;
     while ((dependency = readDependency(reader, context)) != null) {
       dependencies.add(dependency);
@@ -561,7 +561,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     reader.next();
     assertFieldName(reader, "contentRoots");
     reader.stepIn();
-    List<InternalIdeaContentRoot> contentRoots = new ArrayList<InternalIdeaContentRoot>();
+    List<InternalIdeaContentRoot> contentRoots = new ArrayList<>();
     InternalIdeaContentRoot child;
     while ((child = readContentRoot(reader)) != null) {
       contentRoots.add(child);
@@ -594,7 +594,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
 
     reader.stepIn();
-    Set<InternalIdeaSourceDirectory> sourceDirectories = new LinkedHashSet<InternalIdeaSourceDirectory>();
+    Set<InternalIdeaSourceDirectory> sourceDirectories = new LinkedHashSet<>();
     InternalIdeaSourceDirectory sourceDirectory;
     while ((sourceDirectory = readSourceDirectory(reader)) != null) {
       sourceDirectories.add(sourceDirectory);
@@ -669,7 +669,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
           reader.next();
           assertFieldName(reader, "children");
           reader.stepIn();
-          List<InternalGradleProject> children = new ArrayList<InternalGradleProject>();
+          List<InternalGradleProject> children = new ArrayList<>();
           InternalGradleProject child;
           while ((child = readGradleProject(reader, context, null)) != null) {
             children.add(child);
@@ -682,7 +682,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
           reader.next();
           assertFieldName(reader, "tasks");
           reader.stepIn();
-          List<InternalGradleTask> tasks = new ArrayList<InternalGradleTask>();
+          List<InternalGradleTask> tasks = new ArrayList<>();
           InternalGradleTask task;
           while ((task = readGradleTask(reader, context)) != null) {
             tasks.add(task);
@@ -812,14 +812,14 @@ public final class IdeaProjectSerializationService implements SerializationServi
   }
 
   private static class ReadContext {
-    private final IntObjectMap<InternalIdeaProject> projectsMap = new IntObjectMap<InternalIdeaProject>();
-    private final IntObjectMap<InternalIdeaJavaLanguageSettings> languageSettingsMap = new IntObjectMap<InternalIdeaJavaLanguageSettings>();
-    private final IntObjectMap<InternalGradleProject> gradleProjectsMap = new IntObjectMap<InternalGradleProject>();
-    private final IntObjectMap<InternalProjectIdentifier> projectsIdentifiersMap = new IntObjectMap<InternalProjectIdentifier>();
-    private final IntObjectMap<InternalBuildIdentifier> buildsIdentifiersMap = new IntObjectMap<InternalBuildIdentifier>();
-    private final IntObjectMap<InternalGradleTask> tasksMap = new IntObjectMap<InternalGradleTask>();
-    private final IntObjectMap<InternalIdeaCompilerOutput> compilerOutputsMap = new IntObjectMap<InternalIdeaCompilerOutput>();
-    private final IntObjectMap<InternalIdeaDependency> dependenciesMap = new IntObjectMap<InternalIdeaDependency>();
+    private final IntObjectMap<InternalIdeaProject> projectsMap = new IntObjectMap<>();
+    private final IntObjectMap<InternalIdeaJavaLanguageSettings> languageSettingsMap = new IntObjectMap<>();
+    private final IntObjectMap<InternalGradleProject> gradleProjectsMap = new IntObjectMap<>();
+    private final IntObjectMap<InternalProjectIdentifier> projectsIdentifiersMap = new IntObjectMap<>();
+    private final IntObjectMap<InternalBuildIdentifier> buildsIdentifiersMap = new IntObjectMap<>();
+    private final IntObjectMap<InternalGradleTask> tasksMap = new IntObjectMap<>();
+    private final IntObjectMap<InternalIdeaCompilerOutput> compilerOutputsMap = new IntObjectMap<>();
+    private final IntObjectMap<InternalIdeaDependency> dependenciesMap = new IntObjectMap<>();
 
     private GradleVersionComparator myGradleVersionComparator;
 
@@ -836,7 +836,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
       myGradleVersionComparator = new GradleVersionComparator(gradleVersion);
     }
 
-    private final ObjectCollector<IdeaProject, IOException> ideaProjectsCollector = new ObjectCollector<IdeaProject, IOException>(
+    private final ObjectCollector<IdeaProject, IOException> ideaProjectsCollector = new ObjectCollector<>(
       new TObjectHashingStrategy<IdeaProject>() {
         @Override
         public int computeHashCode(IdeaProject object) {
@@ -859,7 +859,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
         }
       });
 
-    private final ObjectCollector<GradleProject, IOException> gradleProjectsCollector = new ObjectCollector<GradleProject, IOException>(
+    private final ObjectCollector<GradleProject, IOException> gradleProjectsCollector = new ObjectCollector<>(
       new TObjectHashingStrategy<GradleProject>() {
         @Override
         public int computeHashCode(GradleProject object) {
@@ -874,7 +874,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
       });
 
     private final ObjectCollector<IdeaCompilerOutput, IOException> ideaCompilerOutputCollector =
-      new ObjectCollector<IdeaCompilerOutput, IOException>(
+      new ObjectCollector<>(
         new TObjectHashingStrategy<IdeaCompilerOutput>() {
           @Override
           public int computeHashCode(IdeaCompilerOutput object) {
@@ -890,7 +890,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
           }
         });
 
-    private final ObjectCollector<GradleTask, IOException> gradleTasksCollector = new ObjectCollector<GradleTask, IOException>(
+    private final ObjectCollector<GradleTask, IOException> gradleTasksCollector = new ObjectCollector<>(
       new TObjectHashingStrategy<GradleTask>() {
         @Override
         public int computeHashCode(GradleTask object) {
@@ -912,7 +912,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
 
     private final ObjectCollector<IdeaDependency, IOException> ideaDependenciesCollector =
-      new ObjectCollector<IdeaDependency, IOException>(
+      new ObjectCollector<>(
         new TObjectHashingStrategy<IdeaDependency>() {
           @Override
           public int computeHashCode(IdeaDependency object) {
@@ -972,7 +972,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
         });
 
     private final ObjectCollector<IdeaJavaLanguageSettings, IOException> ideaJavaLanguageSettingsCollector =
-      new ObjectCollector<IdeaJavaLanguageSettings, IOException>(
+      new ObjectCollector<>(
         new TObjectHashingStrategy<IdeaJavaLanguageSettings>() {
           @Override
           public int computeHashCode(final IdeaJavaLanguageSettings object) {
@@ -993,7 +993,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
         });
 
     private final ObjectCollector<ProjectIdentifier, IOException> projectIdentifiersCollector =
-      new ObjectCollector<ProjectIdentifier, IOException>(
+      new ObjectCollector<>(
         new TObjectHashingStrategy<ProjectIdentifier>() {
           @Override
           public int computeHashCode(ProjectIdentifier object) {
@@ -1013,7 +1013,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
 
     private final ObjectCollector<BuildIdentifier, IOException> buildIdentifiersCollector =
-      new ObjectCollector<BuildIdentifier, IOException>(
+      new ObjectCollector<>(
         new TObjectHashingStrategy<BuildIdentifier>() {
           @Override
           public int computeHashCode(BuildIdentifier object) {

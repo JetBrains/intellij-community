@@ -182,7 +182,7 @@ public final class GradleExtensionsSerializationService implements Serialization
   }
 
   private static List<DefaultGradleConfiguration> readConfigurations(IonReader reader, ReadContext context) {
-    List<DefaultGradleConfiguration> list = new ArrayList<DefaultGradleConfiguration>();
+    List<DefaultGradleConfiguration> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     DefaultGradleConfiguration configuration;
@@ -214,7 +214,7 @@ public final class GradleExtensionsSerializationService implements Serialization
   }
 
   private static List<DefaultGradleConvention> readConventions(IonReader reader, ReadContext context) {
-    List<DefaultGradleConvention> list = new ArrayList<DefaultGradleConvention>();
+    List<DefaultGradleConvention> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     DefaultGradleConvention entry;
@@ -241,7 +241,7 @@ public final class GradleExtensionsSerializationService implements Serialization
   }
 
   private static List<DefaultGradleExtension> readExtensions(IonReader reader, ReadContext context) {
-    List<DefaultGradleExtension> list = new ArrayList<DefaultGradleExtension>();
+    List<DefaultGradleExtension> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     DefaultGradleExtension entry;
@@ -268,7 +268,7 @@ public final class GradleExtensionsSerializationService implements Serialization
   }
 
   private static List<DefaultGradleProperty> readGradleProperties(IonReader reader, ReadContext context) {
-    List<DefaultGradleProperty> list = new ArrayList<DefaultGradleProperty>();
+    List<DefaultGradleProperty> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     DefaultGradleProperty entry;
@@ -295,19 +295,19 @@ public final class GradleExtensionsSerializationService implements Serialization
   }
 
   private static class ReadContext {
-    private final IntObjectMap<DefaultGradleExtensions> objectMap = new IntObjectMap<DefaultGradleExtensions>();
-    private final IntObjectMap<DefaultGradleConfiguration> configurationsMap = new IntObjectMap<DefaultGradleConfiguration>();
-    private final IntObjectMap<DefaultGradleConvention> conventionsMap = new IntObjectMap<DefaultGradleConvention>();
-    private final IntObjectMap<DefaultGradleExtension> extensionsMap = new IntObjectMap<DefaultGradleExtension>();
-    private final IntObjectMap<DefaultGradleProperty> propertiesMap = new IntObjectMap<DefaultGradleProperty>();
+    private final IntObjectMap<DefaultGradleExtensions> objectMap = new IntObjectMap<>();
+    private final IntObjectMap<DefaultGradleConfiguration> configurationsMap = new IntObjectMap<>();
+    private final IntObjectMap<DefaultGradleConvention> conventionsMap = new IntObjectMap<>();
+    private final IntObjectMap<DefaultGradleExtension> extensionsMap = new IntObjectMap<>();
+    private final IntObjectMap<DefaultGradleProperty> propertiesMap = new IntObjectMap<>();
   }
 
   private static class WriteContext {
-    private final ObjectCollector<GradleExtensions, IOException> objectCollector = new ObjectCollector<GradleExtensions, IOException>();
+    private final ObjectCollector<GradleExtensions, IOException> objectCollector = new ObjectCollector<>();
     private final ObjectCollector<GradleConfiguration, IOException> configurationsCollector =
-      new ObjectCollector<GradleConfiguration, IOException>();
+      new ObjectCollector<>();
     private final ObjectCollector<GradleProperty, IOException> propertiesCollector =
-      new ObjectCollector<GradleProperty, IOException>();
+      new ObjectCollector<>();
   }
 }
 

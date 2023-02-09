@@ -31,7 +31,7 @@ public final class ExternalJavacProcess {
   private final EventLoopGroup myEventLoopGroup;
   private final boolean myKeepRunning;
   private volatile ChannelFuture myConnectFuture;
-  private final ConcurrentMap<UUID, Boolean> myCanceled = new ConcurrentHashMap<UUID, Boolean>();
+  private final ConcurrentMap<UUID, Boolean> myCanceled = new ConcurrentHashMap<>();
   private final Executor myThreadPool = Executors.newCachedThreadPool();
 
   static {
@@ -246,9 +246,9 @@ public final class ExternalJavacProcess {
 
               final List<File> upgradeModulePath = toFiles(request.getUpgradeModulePathList());
 
-              final Map<File, Set<File>> outs = new HashMap<File, Set<File>>();
+              final Map<File, Set<File>> outs = new HashMap<>();
               for (JavacRemoteProto.Message.Request.OutputGroup outputGroup : request.getOutputList()) {
-                final Set<File> srcRoots = new HashSet<File>();
+                final Set<File> srcRoots = new HashSet<>();
                 for (String root : outputGroup.getSourceRootList()) {
                   srcRoots.add(new File(root));
                 }
@@ -348,7 +348,7 @@ public final class ExternalJavacProcess {
   }
 
   private static List<File> toFiles(List<String> paths) {
-    final List<File> files = new ArrayList<File>(paths.size());
+    final List<File> files = new ArrayList<>(paths.size());
     for (String path : paths) {
       files.add(new File(path));
     }

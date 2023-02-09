@@ -9,13 +9,13 @@ public final class FilePatternSetImpl implements FilePatternSet {
   private Set<String> excludes;
 
   public FilePatternSetImpl(Set<String> includes, Set<String> excludes) {
-    this.includes = new LinkedHashSet<String>(includes);
-    this.excludes = new LinkedHashSet<String>(excludes);
+    this.includes = new LinkedHashSet<>(includes);
+    this.excludes = new LinkedHashSet<>(excludes);
   }
 
   public FilePatternSetImpl() {
-    includes = new LinkedHashSet<String>(0);
-    excludes = new LinkedHashSet<String>(0);
+    includes = new LinkedHashSet<>(0);
+    excludes = new LinkedHashSet<>(0);
   }
 
   @Override

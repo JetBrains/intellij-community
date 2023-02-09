@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class BreakpointManagerImpl implements BreakpointManager {
-  private final Map<Integer, Map<String, Breakpoint>> myBreakpoints = new HashMap<Integer, Map<String, Breakpoint>>();
+  private final Map<Integer, Map<String, Breakpoint>> myBreakpoints = new HashMap<>();
 
   @Override
   public Breakpoint setBreakpoint(File file, int line) {
@@ -41,7 +41,7 @@ public final class BreakpointManagerImpl implements BreakpointManager {
 
   @Override
   public synchronized List<Breakpoint> getBreakpoints() {
-    List<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
+    List<Breakpoint> breakpoints = new ArrayList<>();
     for (Map<String, Breakpoint> map : myBreakpoints.values()) {
       breakpoints.addAll(map.values());
     }
@@ -61,7 +61,7 @@ public final class BreakpointManagerImpl implements BreakpointManager {
     final Map<String, Breakpoint> s = myBreakpoints.get(line);
     final BreakpointImpl bp = new BreakpointImpl(uri, line);
     if (s == null) {
-      final HashMap<String, Breakpoint> map = new HashMap<String, Breakpoint>();
+      final HashMap<String, Breakpoint> map = new HashMap<>();
       map.put(uri, bp);
       myBreakpoints.put(line, map);
     } else {

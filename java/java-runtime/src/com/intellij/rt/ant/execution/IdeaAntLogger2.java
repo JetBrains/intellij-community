@@ -48,7 +48,7 @@ public final class IdeaAntLogger2 extends DefaultLogger {
   private final ThreadLocal<Deque<String>> myCallingTasks = new ThreadLocal<Deque<String>>() {
     @Override
     protected Deque<String> initialValue() {
-      return new ArrayDeque<String>();
+      return new ArrayDeque<>();
     }
   };
 

@@ -46,7 +46,7 @@ public abstract class ForkedByModuleSplitter {
                             String repeatCount) throws Exception {
     args = myForkedDebuggerHelper.excludeDebugPortFromArgs(args);
 
-    myVMParameters = new ArrayList<String>();
+    myVMParameters = new ArrayList<>();
     final BufferedReader bufferedReader = new BufferedReader(new FileReader(commandLinePath));
     myDynamicClasspath = bufferedReader.readLine();
     try {
@@ -70,7 +70,7 @@ public abstract class ForkedByModuleSplitter {
                                String classpath,
                                List<String> moduleOptions,
                                String repeatCount) throws IOException, InterruptedException {
-    List<String> vmParameters = new ArrayList<String>(myVMParameters);
+    List<String> vmParameters = new ArrayList<>(myVMParameters);
 
     myForkedDebuggerHelper.setupDebugger(vmParameters);
     final ProcessBuilder builder = new ProcessBuilder();
@@ -161,7 +161,7 @@ public abstract class ForkedByModuleSplitter {
       while ((workingDir = perDirReader.readLine()) != null) {
         final String moduleName = perDirReader.readLine();
         final String classpath = perDirReader.readLine();
-        List<String> moduleOptions = new ArrayList<String>();
+        List<String> moduleOptions = new ArrayList<>();
         String modulePath = perDirReader.readLine();
         if (modulePath != null && modulePath.length() > 0) {
           moduleOptions.add("-p");
@@ -173,7 +173,7 @@ public abstract class ForkedByModuleSplitter {
         }
         try {
 
-          List<String> classNames = new ArrayList<String>();
+          List<String> classNames = new ArrayList<>();
           final int classNamesSize = Integer.parseInt(perDirReader.readLine());
           for (int i = 0; i < classNamesSize; i++) {
             String className = perDirReader.readLine();

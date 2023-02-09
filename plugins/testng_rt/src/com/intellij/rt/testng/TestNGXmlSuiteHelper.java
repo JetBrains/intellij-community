@@ -41,16 +41,16 @@ public final class TestNGXmlSuiteHelper {
                                 XmlSuite xmlSuite) {
     XmlTest xmlTest = new XmlTest(xmlSuite);
     xmlTest.setName(name);
-    List<XmlClass> xmlClasses = new ArrayList<XmlClass>();
+    List<XmlClass> xmlClasses = new ArrayList<>();
     int idx = 0;
     for (String className : map.keySet()) {
       final XmlClass xmlClass = new XmlClass(className, idx++, false);
       final Map<String, List<String>> collection = map.get(className);
       if (collection != null) {
-        final ArrayList<XmlInclude> includedMethods = new ArrayList<XmlInclude>();
+        final ArrayList<XmlInclude> includedMethods = new ArrayList<>();
         int mIdx = 0;
         for (String methodName : collection.keySet()) {
-          final List<Integer> includes = new ArrayList<Integer>();
+          final List<Integer> includes = new ArrayList<>();
           for (String include : collection.get(methodName)) {
             try {
               includes.add(Integer.parseInt(include));

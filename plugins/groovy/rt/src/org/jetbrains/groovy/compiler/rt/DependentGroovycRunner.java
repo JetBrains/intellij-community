@@ -51,10 +51,10 @@ public final class DependentGroovycRunner {
     config.setOutput(new PrintWriter(err));
     config.setWarningLevel(WarningMessage.PARANOIA);
 
-    final List<GroovyCompilerMessage> compilerMessages = new ArrayList<GroovyCompilerMessage>();
-    final List<CompilationUnitPatcher> patchers = new ArrayList<CompilationUnitPatcher>();
-    final List<File> srcFiles = new ArrayList<File>();
-    final Map<String, File> class2File = new HashMap<String, File>();
+    final List<GroovyCompilerMessage> compilerMessages = new ArrayList<>();
+    final List<CompilationUnitPatcher> patchers = new ArrayList<>();
+    final List<File> srcFiles = new ArrayList<>();
+    final Map<String, File> class2File = new HashMap<>();
 
     final String[] finalOutputRef = new String[1];
     fillFromArgsFile(argsFile, config, patchers, compilerMessages, srcFiles, class2File, finalOutputRef, err);
@@ -63,7 +63,7 @@ public final class DependentGroovycRunner {
     String[] finalOutputs = finalOutputRef[0].split(File.pathSeparator);
 
     if (forStubs) {
-      Map<String, Object> options = new HashMap<String, Object>();
+      Map<String, Object> options = new HashMap<>();
       options.put(STUB_DIR, config.getTargetDirectory());
       options.put("keepStubs", Boolean.TRUE);
       config.setJointCompilationOptions(options);
@@ -507,7 +507,7 @@ public final class DependentGroovycRunner {
   }
 
   private static void pauseAndWaitForJavac(Queue<? super Object> mailbox) {
-    LinkedBlockingQueue<String> fromJps = new LinkedBlockingQueue<String>();
+    LinkedBlockingQueue<String> fromJps = new LinkedBlockingQueue<>();
     mailbox.offer(fromJps); // signal that stubs are generated
     while (true) {
       try {

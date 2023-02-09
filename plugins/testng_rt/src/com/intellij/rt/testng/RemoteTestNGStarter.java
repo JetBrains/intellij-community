@@ -21,7 +21,7 @@ public final class RemoteTestNGStarter {
     String param = null;
     String commandFileName = null;
     String workingDirs = null;
-    List<String> resultArgs = new ArrayList<String>();
+    List<String> resultArgs = new ArrayList<>();
     for (; i < args.length; i++) {
       String arg = args[i];
       if (arg.startsWith("@name")) {
@@ -66,7 +66,7 @@ public final class RemoteTestNGStarter {
 
     final BufferedReader reader = new BufferedReader(new FileReader(temp));
 
-    final List<String> newArgs = new ArrayList<String>();
+    final List<String> newArgs = new ArrayList<>();
     try {
       final String cantRunMessage = "CantRunException";
       while (true) {

@@ -77,7 +77,7 @@ public final class Comparing {
       return false;
     }
 
-    Set<T> aSet = new HashSet<T>(a);
+    Set<T> aSet = new HashSet<>(a);
     for (T t : b) {
       if (!aSet.contains(t)) {
         return false;
@@ -97,7 +97,7 @@ public final class Comparing {
       return false;
     }
 
-    Set<T> aSet = new HashSet<T>(Arrays.asList(a));
+    Set<T> aSet = new HashSet<>(Arrays.asList(a));
     for (T t : b) {
       if (!aSet.contains(t)) {
         return false;

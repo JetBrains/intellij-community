@@ -59,8 +59,8 @@ public final class JUnit46ClassesRequestBuilder {
   }
 
   private static List<Runner> collectWrappedRunners(Class<?>[] classes) throws InitializationError {
-    final List<Runner> runners = new ArrayList<Runner>();
-    final List<Class<?>> nonSuiteClasses = new ArrayList<Class<?>>();
+    final List<Runner> runners = new ArrayList<>();
+    final List<Class<?>> nonSuiteClasses = new ArrayList<>();
     final SuiteMethodBuilder suiteMethodBuilder = new SuiteMethodBuilder();
     for (Class<?> aClass : classes) {
       if (suiteMethodBuilder.hasSuiteMethod(aClass)) {

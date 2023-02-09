@@ -99,7 +99,7 @@ public final class ExternalJavacMessageHandler {
 
           final JavaFileManager.Location location = outputObject.hasLocation()? StandardLocation.locationFor(outputObject.getLocation()) : null;
 
-          Collection<URI> sources = new ArrayList<URI>();
+          Collection<URI> sources = new ArrayList<>();
           for (String uri : outputObject.getSourceUriList()) {
             sources.add(URI.create(uri));
           }

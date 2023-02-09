@@ -290,7 +290,7 @@ public final class Iterators {
 
   public static <T> Iterator<T> filterWithOrder(final Iterator<? extends T> from, final Iterator<? extends BooleanFunction<? super T>> predicates) {
     return flat(map(predicates, new Function<BooleanFunction<? super T>, Iterator<T>>() {
-      final List<T> buffer = new LinkedList<T>();
+      final List<T> buffer = new LinkedList<>();
       @Override
       public Iterator<T> fun(BooleanFunction<? super T> pred) {
         if (!buffer.isEmpty()) {

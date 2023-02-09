@@ -159,14 +159,14 @@ public final class AnnotationProcessingModelSerializationService implements Seri
 
   private static class WriteContext {
     private final ObjectCollector<AnnotationProcessingModel, IOException> objectCollector =
-      new ObjectCollector<AnnotationProcessingModel, IOException>();
+      new ObjectCollector<>();
 
     private final ObjectCollector<AnnotationProcessingConfig, IOException> configCollector =
-      new ObjectCollector<AnnotationProcessingConfig, IOException>();
+      new ObjectCollector<>();
   }
 
   private static class ReadContext {
-    private final IntObjectMap<AnnotationProcessingModelImpl> objectMap = new IntObjectMap<AnnotationProcessingModelImpl>();
-    private final IntObjectMap<AnnotationProcessingConfigImpl> configMap = new IntObjectMap<AnnotationProcessingConfigImpl>();
+    private final IntObjectMap<AnnotationProcessingModelImpl> objectMap = new IntObjectMap<>();
+    private final IntObjectMap<AnnotationProcessingConfigImpl> configMap = new IntObjectMap<>();
   }
 }

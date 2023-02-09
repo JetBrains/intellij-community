@@ -23,37 +23,37 @@ public class DefaultGradleExtensions implements GradleExtensions {
   private String parentProjectPath;
 
   public DefaultGradleExtensions() {
-    extensions = new ArrayList<DefaultGradleExtension>(0);
-    conventions = new ArrayList<DefaultGradleConvention>(0);
-    gradleProperties = new ArrayList<DefaultGradleProperty>(0);
-    tasks = new ArrayList<DefaultExternalTask>(0);
-    configurations = new ArrayList<DefaultGradleConfiguration>(0);
+    extensions = new ArrayList<>(0);
+    conventions = new ArrayList<>(0);
+    gradleProperties = new ArrayList<>(0);
+    tasks = new ArrayList<>(0);
+    configurations = new ArrayList<>(0);
   }
 
   public DefaultGradleExtensions(@NotNull GradleExtensions extensions) {
     parentProjectPath = extensions.getParentProjectPath();
 
-    this.extensions = new ArrayList<DefaultGradleExtension>(extensions.getExtensions().size());
+    this.extensions = new ArrayList<>(extensions.getExtensions().size());
     for (GradleExtension extension : extensions.getExtensions()) {
       this.extensions.add(new DefaultGradleExtension(extension));
     }
 
-    conventions = new ArrayList<DefaultGradleConvention>(extensions.getConventions().size());
+    conventions = new ArrayList<>(extensions.getConventions().size());
     for (GradleConvention convention : extensions.getConventions()) {
       conventions.add(new DefaultGradleConvention(convention));
     }
 
-    gradleProperties = new ArrayList<DefaultGradleProperty>(extensions.getGradleProperties().size());
+    gradleProperties = new ArrayList<>(extensions.getGradleProperties().size());
     for (GradleProperty property : extensions.getGradleProperties()) {
       gradleProperties.add(new DefaultGradleProperty(property));
     }
 
-    tasks = new ArrayList<DefaultExternalTask>(extensions.getTasks().size());
+    tasks = new ArrayList<>(extensions.getTasks().size());
     for (ExternalTask entry : extensions.getTasks()) {
       tasks.add(new DefaultExternalTask(entry));
     }
 
-    configurations = new ArrayList<DefaultGradleConfiguration>(extensions.getConfigurations().size());
+    configurations = new ArrayList<>(extensions.getConfigurations().size());
     for (GradleConfiguration entry : extensions.getConfigurations()) {
       configurations.add(new DefaultGradleConfiguration(entry));
     }

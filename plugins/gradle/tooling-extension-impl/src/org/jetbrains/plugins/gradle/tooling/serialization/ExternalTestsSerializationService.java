@@ -122,7 +122,7 @@ public final class ExternalTestsSerializationService implements SerializationSer
   }
 
   private static List<ExternalTestSourceMapping> readTestSourceMappings(IonReader reader, ReadContext context) {
-    List<ExternalTestSourceMapping> list = new ArrayList<ExternalTestSourceMapping>();
+    List<ExternalTestSourceMapping> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     ExternalTestSourceMapping testSourceMapping;
@@ -153,14 +153,14 @@ public final class ExternalTestsSerializationService implements SerializationSer
   }
 
   private static class ReadContext {
-    private final IntObjectMap<ExternalTestsModel> objectMap = new IntObjectMap<ExternalTestsModel>();
-    private final IntObjectMap<ExternalTestSourceMapping> testSourceMapping = new IntObjectMap<ExternalTestSourceMapping>();
+    private final IntObjectMap<ExternalTestsModel> objectMap = new IntObjectMap<>();
+    private final IntObjectMap<ExternalTestSourceMapping> testSourceMapping = new IntObjectMap<>();
   }
 
   private static class WriteContext {
-    private final ObjectCollector<ExternalTestsModel, IOException> objectCollector = new ObjectCollector<ExternalTestsModel, IOException>();
+    private final ObjectCollector<ExternalTestsModel, IOException> objectCollector = new ObjectCollector<>();
     private final ObjectCollector<ExternalTestSourceMapping, IOException> mappingCollector =
-      new ObjectCollector<ExternalTestSourceMapping, IOException>();
+      new ObjectCollector<>();
   }
 }
 

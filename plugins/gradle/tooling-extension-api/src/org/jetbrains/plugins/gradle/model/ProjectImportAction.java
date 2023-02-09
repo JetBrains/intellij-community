@@ -44,9 +44,9 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   public static final String IDEA_BACKGROUND_CONVERT = "idea.background.convert";
   public static final String IDEA_MODELS_PARALLEL_FETCH = "idea.models.parallel.fetch";
 
-  private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new LinkedHashSet<ProjectImportModelProvider>();
-  private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new LinkedHashSet<ProjectImportModelProvider>();
-  private final Set<Class<?>> myTargetTypes = new LinkedHashSet<Class<?>>();
+  private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new LinkedHashSet<>();
+  private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new LinkedHashSet<>();
+  private final Set<Class<?>> myTargetTypes = new LinkedHashSet<>();
   private final boolean myIsPreviewMode;
   private final boolean myIsCompositeBuildsSupported;
   private boolean myUseProjectsLoadedPhase;
@@ -77,7 +77,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   @ApiStatus.Internal
   public Set<Class<?>> getModelProvidersClasses() {
-    Set<Class<?>> result = new LinkedHashSet<Class<?>>();
+    Set<Class<?>> result = new LinkedHashSet<>();
     for (ProjectImportModelProvider provider : myProjectsLoadedModelProviders) {
       result.add(provider.getClass());
     }
@@ -161,7 +161,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   }
 
   private static void setupIncludedBuildsHierarchy(List<Build> builds, Set<GradleBuild> gradleBuilds) {
-    Map<File, Build> rootDirsToBuilds = new HashMap<File, Build>();
+    Map<File, Build> rootDirsToBuilds = new HashMap<>();
     for (Build build : builds) {
       rootDirsToBuilds.put(build.getBuildIdentifier().getRootDir(), build);
     }
@@ -222,8 +222,8 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     if (!myIsCompositeBuildsSupported) {
       return Collections.emptySet();
     }
-    Set<String> processedBuildsPaths = new HashSet<String>();
-    Set<GradleBuild> nestedBuilds = new LinkedHashSet<GradleBuild>();
+    Set<String> processedBuildsPaths = new HashSet<>();
+    Set<GradleBuild> nestedBuilds = new LinkedHashSet<>();
     String rootBuildPath = rootBuild.getBuildIdentifier().getRootDir().getPath();
     processedBuildsPaths.add(rootBuildPath);
     Queue<GradleBuild> queue = new ArrayDeque<>(rootBuild.getIncludedBuilds());
@@ -240,7 +240,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   private void fetchProjectBuildModels(BuildController controller, final boolean isProjectsLoadedAction, GradleBuild build) {
     // Prepare nested build actions.
-    List<BuildAction<List<Runnable>>> buildActions = new ArrayList<BuildAction<List<Runnable>>>();
+    List<BuildAction<List<Runnable>>> buildActions = new ArrayList<>();
     for (final BasicGradleProject gradleProject : build.getProjects()) {
       buildActions.add(
         new BuildAction<List<Runnable>>() {
@@ -253,7 +253,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
 
     // Execute nested build actions.
-    List<List<Runnable>> addFetchedModelActions = new ArrayList<List<Runnable>>(buildActions.size());
+    List<List<Runnable>> addFetchedModelActions = new ArrayList<>(buildActions.size());
     if (myParallelModelsFetch) {
       addFetchedModelActions.addAll(controller.run(buildActions));
     }
@@ -312,10 +312,10 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
                                           @NotNull final BasicGradleProject project,
                                           boolean isProjectsLoadedAction) {
     try {
-      final List<Runnable> result = new ArrayList<Runnable>();
+      final List<Runnable> result = new ArrayList<>();
       Set<ProjectImportModelProvider> modelProviders = getModelProviders(isProjectsLoadedAction);
       for (ProjectImportModelProvider extension : modelProviders) {
-        final Set<String> obtainedModels = new HashSet<String>();
+        final Set<String> obtainedModels = new HashSet<>();
         long startTime = System.currentTimeMillis();
         ProjectModelConsumer modelConsumer = new ProjectModelConsumer() {
           @Override
@@ -360,7 +360,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     try {
       Set<ProjectImportModelProvider> modelProviders = getModelProviders(isProjectsLoadedAction);
       for (ProjectImportModelProvider extension : modelProviders) {
-        final Set<String> obtainedModels = new HashSet<String>();
+        final Set<String> obtainedModels = new HashSet<>();
         long startTime = System.currentTimeMillis();
         BuildModelConsumer modelConsumer = new BuildModelConsumer() {
           @Override
@@ -415,7 +415,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   }
 
   private Set<ProjectImportModelProvider> getModelProviders(boolean isProjectsLoadedAction) {
-    Set<ProjectImportModelProvider> modelProviders = new LinkedHashSet<ProjectImportModelProvider>();
+    Set<ProjectImportModelProvider> modelProviders = new LinkedHashSet<>();
     if (!myUseProjectsLoadedPhase) {
       modelProviders.addAll(myProjectsLoadedModelProviders);
       modelProviders.addAll(myBuildFinishedModelProviders);
@@ -447,8 +447,8 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   // Note: This class is NOT thread safe and it is supposed to be used from a single thread.
   //       Performance logging related methods are thread safe.
   public static final class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
-    @NotNull private final List<Build> includedBuilds = new ArrayList<Build>();
-    private final Map<String, Long> performanceTrace = new ConcurrentHashMap<String, Long>();
+    @NotNull private final List<Build> includedBuilds = new ArrayList<>();
+    private final Map<String, Long> performanceTrace = new ConcurrentHashMap<>();
     private transient Map<String, String> myBuildsKeyPrefixesMapping;
 
     public AllModels(@NotNull Build mainBuild) {
@@ -508,7 +508,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       if (buildEnvironment != null) {
         pathsConverter.consume(buildEnvironment);
       }
-      myBuildsKeyPrefixesMapping = new HashMap<String, String>();
+      myBuildsKeyPrefixesMapping = new HashMap<>();
       convertPaths(pathsConverter, getMainBuild());
       for (Build includedBuild : includedBuilds) {
         convertPaths(pathsConverter, includedBuild);
@@ -536,7 +536,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   private final static class DefaultBuild implements Build, Serializable {
     private final String myName;
     private final DefaultBuildIdentifier myBuildIdentifier;
-    private final Collection<Project> myProjects = new ArrayList<Project>(0);
+    private final Collection<Project> myProjects = new ArrayList<>(0);
 
     private DefaultBuildIdentifier myParentBuildIdentifier = null;
 

@@ -306,7 +306,7 @@ public final class ProjectDependenciesSerializationService implements Serializat
   }
 
   private static List<ComponentDependencies> readComponentsDependencies(IonReader reader, ReadContext context) {
-    List<ComponentDependencies> list = new ArrayList<ComponentDependencies>();
+    List<ComponentDependencies> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     ComponentDependencies componentDependencies;
@@ -404,7 +404,7 @@ public final class ProjectDependenciesSerializationService implements Serializat
   }
 
   private static Collection<? extends DependencyNode> readDependencyNodes(IonReader reader, ReadContext context) {
-    List<DependencyNode> list = new ArrayList<DependencyNode>();
+    List<DependencyNode> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     DependencyNode node;
@@ -416,19 +416,19 @@ public final class ProjectDependenciesSerializationService implements Serializat
   }
 
   private static class ReadContext {
-    private final IntObjectMap<ProjectDependenciesImpl> objectMap = new IntObjectMap<ProjectDependenciesImpl>();
-    private final IntObjectMap<ComponentDependencies> componentDependenciesMap = new IntObjectMap<ComponentDependencies>();
-    private final IntObjectMap<DependencyNode> nodesMap = new IntObjectMap<DependencyNode>();
+    private final IntObjectMap<ProjectDependenciesImpl> objectMap = new IntObjectMap<>();
+    private final IntObjectMap<ComponentDependencies> componentDependenciesMap = new IntObjectMap<>();
+    private final IntObjectMap<DependencyNode> nodesMap = new IntObjectMap<>();
     private final ConcurrentMap<String, String> stringCache = new ConcurrentHashMap<>();
   }
 
   private static class WriteContext {
     private final ObjectCollector<ProjectDependencies, IOException> objectCollector =
-      new ObjectCollector<ProjectDependencies, IOException>();
+      new ObjectCollector<>();
     private final ObjectCollector<ComponentDependencies, IOException> componentDependenciesCollector =
-      new ObjectCollector<ComponentDependencies, IOException>();
+      new ObjectCollector<>();
     private final ObjectCollector<DependencyNode, IOException> dependencyNodeCollector =
-      new ObjectCollector<DependencyNode, IOException>();
+      new ObjectCollector<>();
   }
 }
 

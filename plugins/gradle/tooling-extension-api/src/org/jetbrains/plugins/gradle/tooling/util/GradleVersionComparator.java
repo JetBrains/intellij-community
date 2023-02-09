@@ -9,8 +9,8 @@ import java.util.Map;
 
 public final class GradleVersionComparator implements Comparable<GradleVersion> {
   private final GradleVersion myVersion;
-  private final Map<String, Integer> myResults = new HashMap<String, Integer>();
-  private final Map<String, GradleVersion> myVersionsMap = new HashMap<String, GradleVersion>();
+  private final Map<String, Integer> myResults = new HashMap<>();
+  private final Map<String, GradleVersion> myVersionsMap = new HashMap<>();
 
   public GradleVersionComparator(@NotNull GradleVersion gradleVersion) {
     myVersion = gradleVersion;

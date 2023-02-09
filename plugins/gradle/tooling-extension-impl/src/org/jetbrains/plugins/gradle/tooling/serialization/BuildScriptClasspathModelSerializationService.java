@@ -126,7 +126,7 @@ public final class BuildScriptClasspathModelSerializationService implements Seri
   }
 
   private static List<ClasspathEntryModel> readClasspath(IonReader reader) {
-    List<ClasspathEntryModel> list = new ArrayList<ClasspathEntryModel>();
+    List<ClasspathEntryModel> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     ClasspathEntryModel entry;
@@ -153,13 +153,13 @@ public final class BuildScriptClasspathModelSerializationService implements Seri
     private boolean isFirstModelRead;
     private File gradleHomeDir;
     private String gradleVersion;
-    private final IntObjectMap<BuildScriptClasspathModelImpl> objectMap = new IntObjectMap<BuildScriptClasspathModelImpl>();
+    private final IntObjectMap<BuildScriptClasspathModelImpl> objectMap = new IntObjectMap<>();
   }
 
   private static class WriteContext {
     private boolean isFirstModelWritten;
     private final ObjectCollector<BuildScriptClasspathModel, IOException> objectCollector =
-      new ObjectCollector<BuildScriptClasspathModel, IOException>();
+      new ObjectCollector<>();
   }
 }
 
