@@ -1,0 +1,13 @@
+// "Copy '@Deprecated' annotation from 'MyInterface.deprecatedFun' to 'MyImplementation.deprecatedFun'" "true"
+// WITH_STDLIB
+
+interface MyInterface {
+    @Deprecated("A \"deprecated\" message with quotes")
+    fun deprecatedFun()
+}
+
+class MyImplementation : MyInterface {
+    @Deprecated("A \"deprecated\" message with quotes")
+    override fun deprecatedFun() {
+    }
+}

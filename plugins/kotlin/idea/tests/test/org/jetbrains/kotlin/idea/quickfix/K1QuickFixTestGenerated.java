@@ -11338,6 +11338,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/override/overrideDeprecation/copyDeprecationProperty.kt");
             }
 
+            @TestMetadata("copyDeprecationWithEscapedMessage.kt")
+            public void testCopyDeprecationWithEscapedMessage() throws Exception {
+                runTest("testData/quickfix/override/overrideDeprecation/copyDeprecationWithEscapedMessage.kt");
+            }
+
             @TestMetadata("suppressWarning.kt")
             public void testSuppressWarning() throws Exception {
                 runTest("testData/quickfix/override/overrideDeprecation/suppressWarning.kt");
