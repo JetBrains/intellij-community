@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -18,8 +18,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributeView;
+import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.time.Instant;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,6 +44,33 @@ public abstract class FileAttributesReadingTest {
     public static void setUpClass() {
       System.setProperty(FileSystemUtil.FORCE_USE_NIO2_KEY, "true");
       assertEquals("Nio2", getMediatorName());
+    }
+
+    @Test
+    public void winReparsePointAttributeConversion() {
+      assumeWindows();
+
+      var nioAttributes = new BasicFileAttributes() {
+        @Override public FileTime lastModifiedTime() { return FileTime.from(Instant.now()); }
+        @Override public FileTime lastAccessTime() { return lastModifiedTime(); }
+        @Override public FileTime creationTime() { return lastModifiedTime(); }
+        @Override public boolean isRegularFile() { return false; }
+        @Override public boolean isDirectory() { return true; }
+        @Override public boolean isSymbolicLink() { return false; }
+        @Override public boolean isOther() { return true; }
+        @Override public long size() { return 0; }
+        @Override public Object fileKey() { return null; }
+      };
+
+      var rootAttributes = FileAttributes.fromNio(Path.of(System.getenv("SystemDrive") + '\\'), nioAttributes);
+      assertTrue(rootAttributes.isDirectory());
+      assertEquals(FileAttributes.Type.DIRECTORY, rootAttributes.getType());
+      assertFalse(rootAttributes.isSymLink());
+
+      var dirAttributes = FileAttributes.fromNio(Path.of(System.getenv("USERPROFILE")), nioAttributes);
+      assertTrue(dirAttributes.isDirectory());
+      assertEquals(FileAttributes.Type.DIRECTORY, dirAttributes.getType());
+      assertTrue(dirAttributes.isSymLink());
     }
   }
 
