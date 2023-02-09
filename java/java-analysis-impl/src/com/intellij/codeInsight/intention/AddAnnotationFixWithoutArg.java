@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,7 +43,10 @@ public class AddAnnotationFixWithoutArg extends AddAnnotationFix {
       PsiModifierListOwner owner = (PsiModifierListOwner)getStartElement();
       PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, myAnnotation);
       if (annotation == null) return;
-      if (EDT.isCurrentThreadEdt()) editor.getCaretModel().moveToOffset(annotation.getParameterList().getTextOffset() + 1);
+      if (EDT.isCurrentThreadEdt()) {
+        editor.getCaretModel().moveToOffset(annotation.getParameterList().getTextOffset() + 1);
+        EditorModificationUtilEx.scrollToCaret(editor);
+      }
     }
   }
 }
