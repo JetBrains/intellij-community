@@ -315,7 +315,9 @@ Android Studio: workaround for b/218317110 */
 
       spec.withCustomVersion(object : PluginLayout.VersionEvaluator {
         override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String {
+/* Android Studio: our build number format differs from upstream.
           val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|SNAPSHOT.*)\$").matcher(ideBuildVersion)
+*/        val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+__BUILD_NUMBER__)\$").matcher(ideBuildVersion)
           if (ijBuildNumber.matches()) {
             val major = ijBuildNumber.group(1)
             val minor = ijBuildNumber.group(2)
