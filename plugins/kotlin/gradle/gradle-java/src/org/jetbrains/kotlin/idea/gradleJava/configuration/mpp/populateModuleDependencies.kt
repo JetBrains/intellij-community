@@ -7,14 +7,14 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectArtifactDependency
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinDependenciesContainer
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.projectModel.KotlinGradlePluginVersionDependentApi
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 @OptIn(KotlinGradlePluginVersionDependentApi::class)
-internal fun KotlinMPPGradleProjectResolver.Context.populateModuleDependencies() {
+internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependencies() {
     val dependenciesContainer = mppModel.dependencies
     if (dependenciesContainer != null) {
         populateModuleDependenciesWithDependenciesContainer(dependenciesContainer)
@@ -26,7 +26,7 @@ internal fun KotlinMPPGradleProjectResolver.Context.populateModuleDependencies()
 /**
  *  New Kotlin Gradle Plugin versions will provide this dependencies container
  */
-internal fun KotlinMPPGradleProjectResolver.Context.populateModuleDependenciesWithDependenciesContainer(
+internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependenciesWithDependenciesContainer(
     dependencies: IdeaKotlinDependenciesContainer
 ) {
     mppModel.dependencyMap.values.modifyDependenciesOnMppModules(projectDataNode)
@@ -79,12 +79,12 @@ internal fun KotlinMPPGradleProjectResolver.Context.populateModuleDependenciesWi
  * Implementation for older Kotlin Gradle plugins that will use
  * IntelliJ injected code to resolve dependencies
  */
-internal fun KotlinMPPGradleProjectResolver.Context.populateModuleDependenciesWithoutDependenciesContainer() {
+internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependenciesWithoutDependenciesContainer() {
     val context = createKotlinMppPopulateModuleDependenciesContext(
         gradleModule = gradleModule, ideProject = projectDataNode, ideModule = moduleDataNode, resolverCtx = resolverCtx
     ) ?: return
 
-    KotlinMPPGradleProjectResolver.populateModuleDependenciesByCompilations(context)
-    KotlinMPPGradleProjectResolver.populateModuleDependenciesByPlatformPropagation(context)
-    KotlinMPPGradleProjectResolver.populateModuleDependenciesBySourceSetVisibilityGraph(context)
+    KotlinMppGradleProjectResolver.populateModuleDependenciesByCompilations(context)
+    KotlinMppGradleProjectResolver.populateModuleDependenciesByPlatformPropagation(context)
+    KotlinMppGradleProjectResolver.populateModuleDependenciesBySourceSetVisibilityGraph(context)
 }

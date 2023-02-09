@@ -6,22 +6,22 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.util.Key
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 internal var DataNode<out ModuleData>.kotlinMppGradleProjectResolverContext by UserDataProperty(
-    Key.create<KotlinMPPGradleProjectResolver.Context>("kotlinMppGradleProjectResolverExtensionContext")
+    Key.create<KotlinMppGradleProjectResolver.Context>("kotlinMppGradleProjectResolverExtensionContext")
 )
 
-fun KotlinMPPGradleProjectResolver.Companion.Context(
+fun KotlinMppGradleProjectResolver.Companion.Context(
     model: KotlinMPPGradleModel,
     resolverCtx: ProjectResolverContext,
     gradleModule: IdeaModule,
     projectDataNode: DataNode<ProjectData>,
     moduleDataNode: DataNode<ModuleData>
-): KotlinMPPGradleProjectResolver.Context = KotlinMPPGradleProjectResolverContextImpl(
+): KotlinMppGradleProjectResolver.Context = KotlinMPPGradleProjectResolverContextImpl(
     model, resolverCtx, gradleModule, projectDataNode, moduleDataNode
 )
 
@@ -31,4 +31,4 @@ private class KotlinMPPGradleProjectResolverContextImpl(
     override val gradleModule: IdeaModule,
     override val projectDataNode: DataNode<ProjectData>,
     override val moduleDataNode: DataNode<ModuleData>
-) : KotlinMPPGradleProjectResolver.Context
+) : KotlinMppGradleProjectResolver.Context
