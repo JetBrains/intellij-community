@@ -176,14 +176,13 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               }
             }.gap(RightGap.SMALL)
 
-          try {
-            val zoomInString = KeymapUtil.getShortcutText("ZoomInIdeAction")
-            val zoomOutString = KeymapUtil.getShortcutText("ZoomOutIdeAction")
-            val resetScaleString = KeymapUtil.getShortcutText("ResetIdeScaleAction")
+          val zoomInString = KeymapUtil.getShortcutTextOrNull("ZoomInIdeAction")
+          val zoomOutString = KeymapUtil.getShortcutTextOrNull("ZoomOutIdeAction")
+          val resetScaleString = KeymapUtil.getShortcutTextOrNull("ResetIdeScaleAction")
 
+          if (zoomInString != null && zoomOutString != null && resetScaleString != null) {
             zoomComboBox.comment(message("combobox.ide.scale.comment.format", zoomInString, zoomOutString, resetScaleString))
           }
-          catch (_: Throwable) {}
 
           resetZoom = link(message("ide.scale.reset.link")) {
             model.selectedItem = defaultScale.percentStringValue

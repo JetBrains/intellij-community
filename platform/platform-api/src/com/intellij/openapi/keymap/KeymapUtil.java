@@ -55,6 +55,19 @@ public final class KeymapUtil {
     return getShortcutText(shortcut);
   }
 
+  @NlsSafe
+  @Nullable
+  public static String getShortcutTextOrNull(@NotNull @NonNls String actionId) {
+    KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
+    if (shortcut == null) return null;
+    try {
+      return getShortcutText(shortcut);
+    }
+    catch (Throwable t) {
+      return null;
+    }
+  }
+
   @NotNull
   public static @NlsSafe String getShortcutText(@NotNull Shortcut shortcut) {
     String s = "";

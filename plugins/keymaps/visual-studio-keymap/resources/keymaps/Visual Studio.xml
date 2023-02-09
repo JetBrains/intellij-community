@@ -584,6 +584,8 @@
 
   <action id="EditorDecreaseFontSizeGlobal"/>
   <action id="EditorIncreaseFontSizeGlobal"/>
+  <action id="ZoomInIdeAction"/>
+  <action id="ZoomOutIdeAction"/>
 
 
   <!--KNOWN CONFLICTS: https://youtrack.jetbrains.com/issue/IDEA-268674-->
