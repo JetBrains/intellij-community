@@ -10,10 +10,10 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeReq
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 
-internal class GitLabMergeRequestMergeAction(
+internal class GitLabMergeRequestSquashAndMergeAction(
   scope: CoroutineScope,
   private val reviewFlowVm: GitLabMergeRequestReviewFlowViewModel
-) : AbstractAction(CollaborationToolsBundle.message("review.details.action.merge")) {
+) : AbstractAction(CollaborationToolsBundle.message("review.details.action.squash.and.merge")) {
   init {
     scope.launch {
       combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.requestState) { isBusy, requestState ->
@@ -23,5 +23,5 @@ internal class GitLabMergeRequestMergeAction(
     }
   }
 
-  override fun actionPerformed(e: ActionEvent?) = reviewFlowVm.merge()
+  override fun actionPerformed(e: ActionEvent?) = reviewFlowVm.squashAndMerge()
 }

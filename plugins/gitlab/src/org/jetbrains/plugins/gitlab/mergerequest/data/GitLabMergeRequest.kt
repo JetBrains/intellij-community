@@ -43,6 +43,8 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
 
   suspend fun merge()
 
+  suspend fun squashAndMerge()
+
   suspend fun approve()
 
   suspend fun unApprove()
@@ -119,7 +121,16 @@ internal class LoadedGitLabMergeRequest(
   override suspend fun merge() {
     withContext(cs.coroutineContext + Dispatchers.IO) {
       val mergeRequest = mergeRequestDetailsState.value
-      val updatedMergeRequest = api.mergeRequestAccept(glProject, mergeRequest, mergeRequest.commits.last().sha)
+      val updatedMergeRequest = api.mergeRequestAccept(glProject, mergeRequest, mergeRequest.commits.last().sha, withSquash = false)
+        .getResultOrThrow()
+      mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+    }
+  }
+
+  override suspend fun squashAndMerge() {
+    withContext(cs.coroutineContext + Dispatchers.IO) {
+      val mergeRequest = mergeRequestDetailsState.value
+      val updatedMergeRequest = api.mergeRequestAccept(glProject, mergeRequest, mergeRequest.commits.last().sha, withSquash = true)
         .getResultOrThrow()
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }

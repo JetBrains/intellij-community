@@ -114,12 +114,14 @@ suspend fun GitLabApi.mergeRequestSetReviewers(
 suspend fun GitLabApi.mergeRequestAccept(
   project: GitLabProjectCoordinates,
   mergeRequestId: GitLabMergeRequestId,
-  sha: String
+  sha: String,
+  withSquash: Boolean
 ): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
   val parameters = mapOf(
     "projectId" to project.projectPath.fullPath(),
     "mergeRequestId" to mergeRequestId.iid,
-    "sha" to sha
+    "sha" to sha,
+    "withSquash" to withSquash
   )
   val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.mergeRequestAccept, parameters)
   return loadGQLResponse(request, GitLabMergeRequestResult::class.java, "mergeRequestAccept")

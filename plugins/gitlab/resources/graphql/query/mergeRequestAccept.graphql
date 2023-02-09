@@ -1,8 +1,9 @@
-mutation ($projectId: ID!, $mergeRequestId: String!, $sha: String!) {
+mutation ($projectId: ID!, $mergeRequestId: String!, $sha: String!, $withSquash: Boolean) {
   mergeRequestAccept(input: {
     projectPath: $projectId,
     iid: $mergeRequestId,
-    sha: $sha
+    sha: $sha,
+    squash: $withSquash
   }) {
     mergeRequest {
       ...mergeRequest

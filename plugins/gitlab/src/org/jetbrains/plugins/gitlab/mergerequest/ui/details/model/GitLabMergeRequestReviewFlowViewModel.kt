@@ -25,9 +25,12 @@ internal interface GitLabMergeRequestReviewFlowViewModel {
   val role: Flow<ReviewRole>
   val requestState: Flow<RequestState>
   val isApproved: StateFlow<Boolean>
+  val reviewState: Flow<ReviewState>
   val reviewerAndReviewState: Flow<Map<GitLabUserDTO, ReviewState>>
 
   fun merge()
+
+  fun squashAndMerge()
 
   fun approve()
 
@@ -77,6 +80,11 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     .map { it.isNotEmpty() }
     .stateIn(scope, SharingStarted.Lazily, false)
 
+  override val reviewState: Flow<ReviewState> = isApproved.map { isApproved ->
+    // TODO: add ReviewState.WAIT_FOR_UPDATES state
+    if (isApproved) ReviewState.ACCEPTED else ReviewState.NEED_REVIEW
+  }
+
   override val reviewerAndReviewState: Flow<Map<GitLabUserDTO, ReviewState>> = combine(reviewers, approvedBy) { reviewers, approvedBy ->
     mutableMapOf<GitLabUserDTO, ReviewState>().apply {
       reviewers.forEach { reviewer -> put(reviewer, ReviewState.NEED_REVIEW) }
@@ -87,6 +95,10 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   override fun merge() = runAction {
     mergeRequest.merge()
+  }
+
+  override fun squashAndMerge() = runAction {
+    mergeRequest.squashAndMerge()
   }
 
   override fun approve() = runAction {
