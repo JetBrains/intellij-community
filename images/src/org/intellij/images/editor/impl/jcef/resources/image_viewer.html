@@ -242,19 +242,22 @@
   }
 
   // Fixes the image, if not possible sets the error message
-  function _verifyImage() {
+  function _sanitizeImage() {
     let image = gUI.image.contentDocument
     if (!image) {
       return
     }
     for (let e of image.getElementsByTagName('svg')) {
-      if (e.getAttribute('height') || e.getAttribute('width')) continue
+      let heightAttribute = e.getAttribute('height')
+      let widthAttribute = e.getAttribute('width')
+      if ((heightAttribute || widthAttribute) && !(heightAttribute?.endsWith('%') || widthAttribute?.endsWith('%'))) continue
 
       let vb = e.viewBox
       if (!vb || !vb.baseVal) {
         _setError()
       }
       e.setAttribute('width', vb.baseVal.width + 'px')
+      e.setAttribute('height', vb.baseVal.height + 'px')
     }
 
     if (image.getElementsByTagName('parsererror').length > 0) {
@@ -274,7 +277,7 @@
     gUI.view_port.addEventListener('scroll', () => _updateInfo())
 
     gUI.image.addEventListener('load', () => {
-      _verifyImage()
+      _sanitizeImage()
       setZoom(gState.zoom)
     })
 
