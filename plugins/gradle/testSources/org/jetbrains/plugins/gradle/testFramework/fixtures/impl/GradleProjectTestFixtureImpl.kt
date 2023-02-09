@@ -115,21 +115,6 @@ internal class GradleProjectTestFixtureImpl private constructor(
     progressManager.addNotificationListener(reloadListener, testDisposable)
   }
 
-  override fun reloadProject() {
-    if (fileFixture.isModified()) {
-      fileFixture.addIllegalOperationError("Unexpected reload with modified project files")
-    }
-    fileFixture.withSuppressedErrors {
-      waitForProjectReload {
-        ExternalSystemUtil.refreshProject(
-          fileFixture.root.path,
-          ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
-        )
-      }
-      fileFixture.root.refreshAndWait()
-    }
-  }
-
   companion object {
 
     private suspend fun createProjectCaches(projectRoot: VirtualFile) {
