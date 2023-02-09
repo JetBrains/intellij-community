@@ -13,6 +13,7 @@ import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.impl.artifacts.InvalidArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
 import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*

@@ -10,7 +10,7 @@ import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import com.intellij.workspaceModel.ide.toVirtualFileUrl
@@ -176,12 +176,14 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
 
   private suspend fun loadProjectIntellijProject(): Pair<MutableEntityStorage, JpsProjectSerializers> {
     val mutableEntityStorage = MutableEntityStorage.create()
-    val jpsProjectSerializer = JpsProjectEntitiesLoader.loadProject(configLocation = createProjectConfigLocation(),
+    val configLocation = createProjectConfigLocation()
+    val context = SerializationContextForTests(virtualFileManager, CachingJpsFileContentReader(configLocation))
+    val jpsProjectSerializer = JpsProjectEntitiesLoader.loadProject(configLocation = configLocation,
                                                                     builder = mutableEntityStorage,
                                                                     orphanage = mutableEntityStorage,
                                                                     externalStoragePath = Paths.get("/tmp"),
                                                                     errorReporter = TestErrorReporter,
-                                                                    virtualFileManager = virtualFileManager)
+                                                                    context = context)
     return mutableEntityStorage to jpsProjectSerializer
   }
 

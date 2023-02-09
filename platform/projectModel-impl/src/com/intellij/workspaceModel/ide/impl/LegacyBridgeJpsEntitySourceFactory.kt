@@ -5,15 +5,17 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable
+import com.intellij.platform.workspaceModel.jps.*
+import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalEntitiesSerializers
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
-object JpsEntitySourceFactory {
+object LegacyBridgeJpsEntitySourceFactory {
   fun createEntitySourceForModule(project: Project,
                                   baseModuleDir: VirtualFileUrl,
                                   externalSource: ProjectModelExternalSource?,
@@ -38,7 +40,7 @@ object JpsEntitySourceFactory {
   private fun createInternalEntitySourceForModule(project: Project,
                                                   baseModuleDir: VirtualFileUrl): JpsFileEntitySource? {
     val location = getJpsProjectConfigLocation(project) ?: return null
-    return JpsFileEntitySource.FileInDirectory(baseModuleDir, location)
+    return JpsProjectFileEntitySource.FileInDirectory(baseModuleDir, location)
   }
 
   fun createEntitySourceForProjectLibrary(project: Project,
@@ -56,35 +58,20 @@ object JpsEntitySourceFactory {
 
   fun createEntitySourceForGlobalLibrary(): EntitySource {
     val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
-    val globalLibrariesFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(ApplicationLibraryTable.getExternalFileName()).absolutePath)
+    val globalLibrariesFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(JpsGlobalEntitiesSerializers.GLOBAL_LIBRARIES_FILE_NAME).absolutePath)
     return JpsGlobalFileEntitySource(globalLibrariesFile)
   }
 
   private fun createInternalEntitySourceForProjectLibrary(project: Project): JpsFileEntitySource? {
     val location = getJpsProjectConfigLocation(project) ?: return null
-    return createJpsEntitySourceForProjectLibrary(location)
+    return JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(location)
   }
 
   fun createEntitySourceForArtifact(project: Project, externalSource: ProjectModelExternalSource?): EntitySource {
     val location = getJpsProjectConfigLocation(project) ?: return NonPersistentEntitySource
-    val internalFile = createJpsEntitySourceForArtifact(location)
+    val internalFile = JpsEntitySourceFactory.createJpsEntitySourceForArtifact(location)
     if (externalSource == null) return internalFile
     return JpsImportedEntitySource(internalFile, externalSource.id, project.isExternalStorageEnabled)
-  }
-
-  fun createJpsEntitySourceForProjectLibrary(configLocation: JpsProjectConfigLocation): JpsFileEntitySource {
-    return createJpsEntitySource(configLocation, "libraries")
-  }
-
-  fun createJpsEntitySourceForArtifact(configLocation: JpsProjectConfigLocation): JpsFileEntitySource {
-    return createJpsEntitySource(configLocation, "artifacts")
-  }
-
-  private fun createJpsEntitySource(configLocation: JpsProjectConfigLocation, directoryLocation: String) = when (configLocation) {
-    is JpsProjectConfigLocation.DirectoryBased -> JpsFileEntitySource.FileInDirectory(configLocation.ideaFolder.append(directoryLocation),
-                                                                                      configLocation)
-    is JpsProjectConfigLocation.FileBased -> JpsFileEntitySource.ExactFile(configLocation.iprFile, configLocation)
-    else -> error("Unexpected state")
   }
 
 }

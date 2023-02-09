@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.workspaceModel.jps.JpsGlobalFileEntitySource
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
@@ -63,7 +64,7 @@ class JpsGlobalModelSynchronizerImpl: JpsGlobalModelSynchronizer {
   }
 
   fun saveGlobalEntities(writer: JpsFileContentWriter) {
-    val serializer = JpsGlobalEntitiesSerializers.createApplicationSerializers()
+    val serializer = JpsGlobalEntitiesSerializers.createApplicationSerializers(VirtualFileUrlManager.getGlobalInstance())
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage.current
     val libraryEntities = entityStorage.entities(LibraryEntity::class.java).toList()
     if (serializer != null) {
@@ -74,7 +75,7 @@ class JpsGlobalModelSynchronizerImpl: JpsGlobalModelSynchronizer {
 
   private fun loadGlobalEntitiesToEmptyStorage(mutableStorage: MutableEntityStorage, initialEntityStorage: VersionedEntityStorage): () -> Unit {
     val contentReader = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentReader()
-    val serializer = JpsGlobalEntitiesSerializers.createApplicationSerializers()
+    val serializer = JpsGlobalEntitiesSerializers.createApplicationSerializers(VirtualFileUrlManager.getGlobalInstance())
     val errorReporter = object : ErrorReporter {
       override fun reportError(message: String, file: VirtualFileUrl) {
         LOG.warn(message)

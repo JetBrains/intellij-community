@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
-import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
+import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
@@ -41,7 +41,7 @@ internal class GlobalModifiableLibraryTableBridgeImpl(private val libraryTable: 
       tableId = libraryTableId,
       name = name,
       excludedRoots = emptyList(),
-      source = JpsEntitySourceFactory.createEntitySourceForGlobalLibrary()
+      source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForGlobalLibrary()
     )
 
     if (type != null) {

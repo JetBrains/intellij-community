@@ -22,6 +22,10 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.workspaceModel.jps.CustomModuleEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsFileDependentEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.precomputeExtensionModel
 import com.intellij.util.graph.*
@@ -342,7 +346,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       is CustomModuleEntitySource -> moduleSource.internalSource
       else -> moduleEntity.entitySource
     }
-    if (entitySource !is JpsFileEntitySource.FileInDirectory) {
+    if (entitySource !is JpsProjectFileEntitySource.FileInDirectory) {
       return null
     }
     return entitySource.directory
@@ -497,25 +501,6 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
           }
         }
       }
-    }
-
-    @JvmStatic
-    fun getPathsToModuleFiles(element: Element): Set<ModulePath> {
-      val paths = LinkedHashSet<ModulePath>()
-      val modules = element.getChild(JpsProjectLoader.MODULES_TAG)
-      if (modules == null) return paths
-      for (moduleElement in modules.getChildren(JpsProjectLoader.MODULE_TAG)) {
-        val fileUrlValue = moduleElement.getAttributeValue(JpsProjectLoader.FILE_URL_ATTRIBUTE)
-        val filepath = if (fileUrlValue == null) { // support for older formats
-          moduleElement.getAttributeValue(JpsProjectLoader.FILE_PATH_ATTRIBUTE)
-        }
-        else {
-          VirtualFileManager.extractPath(fileUrlValue)
-        }
-        paths.add(ModulePath(path = FileUtilRt.toSystemIndependentName(filepath!!),
-                             group = moduleElement.getAttributeValue(JpsProjectLoader.GROUP_ATTRIBUTE)))
-      }
-      return paths
     }
 
     private fun buildModuleGraph(storage: EntityStorage, includeTests: Boolean): Graph<Module> {

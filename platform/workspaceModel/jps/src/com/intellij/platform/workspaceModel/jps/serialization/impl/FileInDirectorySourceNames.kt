@@ -1,11 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.ide.impl
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.workspaceModel.jps.serialization.impl
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.workspaceModel.ide.CustomModuleEntitySource
-import com.intellij.workspaceModel.ide.JpsFileDependentEntitySource
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.platform.workspaceModel.jps.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -19,10 +16,10 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
  * storage from binary cache.
  */
 class FileInDirectorySourceNames private constructor(entitiesBySource: Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>) {
-  private val mainEntityToSource: Map<Pair<Class<out WorkspaceEntity>, String>, JpsFileEntitySource.FileInDirectory>
+  private val mainEntityToSource: Map<Pair<Class<out WorkspaceEntity>, String>, JpsProjectFileEntitySource.FileInDirectory>
 
   init {
-    val sourcesMap = HashMap<Pair<Class<out WorkspaceEntity>, String>, JpsFileEntitySource.FileInDirectory>()
+    val sourcesMap = HashMap<Pair<Class<out WorkspaceEntity>, String>, JpsProjectFileEntitySource.FileInDirectory>()
     for ((source, entities) in entitiesBySource) {
       val (type, entityName) = when {
         ModuleEntity::class.java in entities -> ModuleEntity::class.java to (entities.getValue(ModuleEntity::class.java).first() as ModuleEntity).name
@@ -41,18 +38,18 @@ class FileInDirectorySourceNames private constructor(entitiesBySource: Map<Entit
           // In internal store (i.e. under `.idea` folder) each library or artifact has its own file, and we can distinguish them only by file name
           else -> FileUtil.sanitizeFileName(entityName) + ".xml"
         }
-        sourcesMap[type to fileName] = getInternalFileSource(source) as JpsFileEntitySource.FileInDirectory
+        sourcesMap[type to fileName] = getInternalFileSource(source) as JpsProjectFileEntitySource.FileInDirectory
       }
     }
     mainEntityToSource = sourcesMap
   }
 
-  fun findSource(entityClass: Class<out WorkspaceEntity>, fileName: String): JpsFileEntitySource.FileInDirectory? =
+  fun findSource(entityClass: Class<out WorkspaceEntity>, fileName: String): JpsProjectFileEntitySource.FileInDirectory? =
     mainEntityToSource[entityClass to fileName]
 
   companion object {
     fun from(storage: EntityStorage) = FileInDirectorySourceNames(
-      storage.entitiesBySource { getInternalFileSource(it) is JpsFileEntitySource.FileInDirectory }
+      storage.entitiesBySource { getInternalFileSource(it) is JpsProjectFileEntitySource.FileInDirectory }
     )
 
     fun empty() = FileInDirectorySourceNames(emptyMap())

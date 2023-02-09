@@ -20,7 +20,7 @@ import com.intellij.packaging.impl.elements.FileCopyPackagingElement
 import com.intellij.testFramework.*
 import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleRootsSerializer
 import com.intellij.workspaceModel.storage.DummyParentEntitySource

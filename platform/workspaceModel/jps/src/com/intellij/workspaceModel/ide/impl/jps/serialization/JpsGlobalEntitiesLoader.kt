@@ -3,22 +3,20 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable
-import com.intellij.workspaceModel.ide.JpsGlobalFileEntitySource
-import com.intellij.workspaceModel.ide.getGlobalInstance
+import com.intellij.platform.workspaceModel.jps.JpsGlobalFileEntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.TestOnly
 
 object JpsGlobalEntitiesSerializers {
+  const val GLOBAL_LIBRARIES_FILE_NAME: String = "applicationLibraries"
   private var forceEnableLoading = false
   private val prohibited: Boolean
     get() = !forceEnableLoading && ApplicationManager.getApplication().isUnitTestMode
 
-  fun createApplicationSerializers(): JpsFileEntitiesSerializer<LibraryEntity>? {
+  fun createApplicationSerializers(virtualFileUrlManager: VirtualFileUrlManager): JpsFileEntitiesSerializer<LibraryEntity>? {
     if (prohibited) return null
-    val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
-    val globalLibrariesFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(ApplicationLibraryTable.getExternalFileName()).absolutePath)
+    val globalLibrariesFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(GLOBAL_LIBRARIES_FILE_NAME).absolutePath)
     val globalLibrariesEntitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
     return JpsGlobalLibrariesFileSerializer(globalLibrariesEntitySource)
   }

@@ -21,9 +21,13 @@ import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
+import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
@@ -346,11 +350,13 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   override fun loadModuleToBuilder(moduleName: String, filePath: String, diff: MutableEntityStorage): ModuleEntity {
     val builder = MutableEntityStorage.create()
     var errorMessage: String? = null
-    JpsProjectEntitiesLoader.loadModule(Path.of(filePath), getJpsProjectConfigLocation(project)!!, builder, object : ErrorReporter {
+    val configLocation = getJpsProjectConfigLocation(project)!!
+    val context = SingleImlSerializationContext(virtualFileManager, CachingJpsFileContentReader(configLocation))
+    JpsProjectEntitiesLoader.loadModule(Path.of(filePath), configLocation, builder, object : ErrorReporter {
       override fun reportError(message: String, file: VirtualFileUrl) {
         errorMessage = message
       }
-    }, virtualFileManager)
+    }, context)
     if (errorMessage != null) {
       throw IOException("Failed to load module from $filePath: $errorMessage")
     }
@@ -381,4 +387,12 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       }
     }
   }
+}
+
+private class SingleImlSerializationContext(override val virtualFileUrlManager: VirtualFileUrlManager,
+                                            override val fileContentReader: JpsFileContentReader) : SerializationContext {
+  override val isExternalStorageEnabled: Boolean
+    get() = false
+  override val fileInDirectorySourceNames: FileInDirectorySourceNames
+    get() = FileInDirectorySourceNames.empty()
 }

@@ -13,7 +13,7 @@ import com.intellij.packaging.impl.artifacts.ArtifactUtil
 import com.intellij.packaging.impl.elements.ArchivePackagingElement
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
+import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
@@ -157,7 +157,7 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
   // (And also avoid keeping intermediate data in memory)
   fun applyToStorage() {
     for (artifact in artifacts) {
-      val source = JpsEntitySourceFactory.createEntitySourceForArtifact(project, artifact.externalSource)
+      val source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForArtifact(project, artifact.externalSource)
       val rootElement = artifact.rootElement
       val rootElementEntity = rootElement.getOrAddEntity(storage, source, project) as CompositePackagingElementEntity
 

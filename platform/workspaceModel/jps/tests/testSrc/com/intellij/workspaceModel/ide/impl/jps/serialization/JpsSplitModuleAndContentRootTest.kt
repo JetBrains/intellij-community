@@ -6,6 +6,9 @@ import com.intellij.facet.mock.registerFacetType
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.*
@@ -309,7 +312,7 @@ class JpsSplitModuleAndContentRootTest {
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRoot = moduleEntity.contentRoots.single()
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
-      assertTrue(contentRoot.entitySource is JpsFileEntitySource.FileInDirectory)
+      assertTrue(contentRoot.entitySource is JpsProjectFileEntitySource.FileInDirectory)
     }
   }
 
@@ -322,7 +325,7 @@ class JpsSplitModuleAndContentRootTest {
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
 
       // Will throw an exception if something is wrong
-      contentRoots.single { it.entitySource is JpsFileEntitySource.FileInDirectory }
+      contentRoots.single { it.entitySource is JpsProjectFileEntitySource.FileInDirectory }
       contentRoots.single { it.entitySource is JpsImportedEntitySource }
     }
   }
@@ -344,7 +347,7 @@ class JpsSplitModuleAndContentRootTest {
       val contentRoots = moduleEntity.contentRoots
       assertEquals(2, contentRoots.size)
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
-      contentRoots.single { it.entitySource is JpsFileEntitySource.FileInDirectory }
+      contentRoots.single { it.entitySource is JpsProjectFileEntitySource.FileInDirectory }
       contentRoots.single { it.entitySource is JpsImportedEntitySource }
     }
   }
@@ -356,8 +359,8 @@ class JpsSplitModuleAndContentRootTest {
       val contentRoot = moduleEntity.contentRoots.single()
       val sourceRoot = contentRoot.sourceRoots.single()
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
-      assertTrue(contentRoot.entitySource is JpsFileEntitySource.FileInDirectory)
-      assertTrue(sourceRoot.entitySource is JpsFileEntitySource.FileInDirectory)
+      assertTrue(contentRoot.entitySource is JpsProjectFileEntitySource.FileInDirectory)
+      assertTrue(sourceRoot.entitySource is JpsProjectFileEntitySource.FileInDirectory)
     }
   }
 
@@ -369,7 +372,7 @@ class JpsSplitModuleAndContentRootTest {
       val sourceRoot = contentRootEntity.sourceRoots.single()
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
       assertTrue(contentRootEntity.entitySource is JpsImportedEntitySource)
-      assertTrue(sourceRoot.entitySource is JpsFileEntitySource.FileInDirectory)
+      assertTrue(sourceRoot.entitySource is JpsProjectFileEntitySource.FileInDirectory)
     }
   }
 
@@ -383,7 +386,7 @@ class JpsSplitModuleAndContentRootTest {
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
       assertTrue(contentRootEntity.entitySource is JpsImportedEntitySource)
       assertEquals(2, sourceRoots.size)
-      assertTrue(sourceRoots.all { it.entitySource is JpsFileEntitySource.FileInDirectory })
+      assertTrue(sourceRoots.all { it.entitySource is JpsProjectFileEntitySource.FileInDirectory })
     }
   }
 
@@ -410,7 +413,7 @@ class JpsSplitModuleAndContentRootTest {
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
       assertTrue(contentRootEntity.entitySource is JpsImportedEntitySource)
       assertEquals(2, sourceRoots.size)
-      assertTrue(sourceRoots.singleOrNull { it.entitySource is JpsFileEntitySource.FileInDirectory } != null)
+      assertTrue(sourceRoots.singleOrNull { it.entitySource is JpsProjectFileEntitySource.FileInDirectory } != null)
       assertTrue(sourceRoots.singleOrNull { it.entitySource is JpsImportedEntitySource } != null)
     }
   }
@@ -423,7 +426,7 @@ class JpsSplitModuleAndContentRootTest {
       val exclude = contentRootEntity.excludedUrls.single()
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
       assertTrue(contentRootEntity.entitySource is JpsImportedEntitySource)
-      assertTrue(exclude.entitySource is JpsFileEntitySource.FileInDirectory)
+      assertTrue(exclude.entitySource is JpsProjectFileEntitySource.FileInDirectory)
     }
   }
 
@@ -435,7 +438,7 @@ class JpsSplitModuleAndContentRootTest {
       val exclude = contentRootEntity.excludedUrls
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
       assertTrue(contentRootEntity.entitySource is JpsImportedEntitySource)
-      assertTrue(exclude.all { it.entitySource is JpsFileEntitySource.FileInDirectory })
+      assertTrue(exclude.all { it.entitySource is JpsProjectFileEntitySource.FileInDirectory })
     }
   }
 
@@ -450,7 +453,7 @@ class JpsSplitModuleAndContentRootTest {
       assertEquals(2, contentRoots.size)
       assertEquals(2, exclude.size)
       assertTrue(contentRoots.all { it.entitySource is JpsImportedEntitySource })
-      assertTrue(exclude.all { it.entitySource is JpsFileEntitySource.FileInDirectory })
+      assertTrue(exclude.all { it.entitySource is JpsProjectFileEntitySource.FileInDirectory })
     }
   }
 
@@ -475,7 +478,7 @@ class JpsSplitModuleAndContentRootTest {
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
       assertTrue(contentRootEntity.entitySource is JpsImportedEntitySource)
       assertEquals(2, exclude.size)
-      assertTrue(exclude.singleOrNull { it.entitySource is JpsFileEntitySource.FileInDirectory } != null)
+      assertTrue(exclude.singleOrNull { it.entitySource is JpsProjectFileEntitySource.FileInDirectory } != null)
       assertTrue(exclude.singleOrNull { it.entitySource is JpsImportedEntitySource } != null)
     }
   }
