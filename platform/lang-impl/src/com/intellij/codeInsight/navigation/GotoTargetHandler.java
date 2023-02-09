@@ -355,10 +355,12 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
         if (hasDifferentNames) {
           for (ItemWithPresentation item : myItems) {
             if (item.item instanceof Pointer<?>) {
-              Object o = ((Pointer<?>)item.item).dereference();
-              if (o instanceof PsiElement) {
-                item.presentation = ReadAction.compute(() -> computePresentation((PsiElement)o, hasDifferentNames));
-              }
+              ReadAction.run(() -> {
+                Object o = ((Pointer<?>)item.item).dereference();
+                if (o instanceof PsiElement) {
+                  item.presentation = computePresentation((PsiElement)o, hasDifferentNames);
+                }
+              });
             }
           }
         }
