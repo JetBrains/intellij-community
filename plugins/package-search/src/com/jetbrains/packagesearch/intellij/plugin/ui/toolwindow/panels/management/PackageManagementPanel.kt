@@ -44,16 +44,17 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computeModuleTreeModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
+import com.jetbrains.packagesearch.intellij.plugin.util.combine
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import org.jetbrains.idea.packagesearch.SortMetric
 import java.awt.Dimension
 import javax.swing.JScrollPane
 
@@ -73,6 +74,7 @@ internal class PackageManagementPanel(private val project: Project) : PackageSea
         internal class PackagesListPanel {
             internal val onlyMultiplatformStateFlow = MutableStateFlow(false)
             internal val onlyStableStateFlow = MutableStateFlow(false)
+            internal val sortMetricStateFlow = MutableStateFlow(SortMetric.NONE)
             internal val searchQueryStateFlow = MutableStateFlow("")
             internal val searchResultsUiStateOverridesState: MutableStateFlow<Map<PackageIdentifier, SearchResultUiState>> =
                 MutableStateFlow(emptyMap())
@@ -158,15 +160,17 @@ internal class PackageManagementPanel(private val project: Project) : PackageSea
             project.packageSearchProjectService.repositoriesDeclarationsByModuleFlow,
             project.service<UIState>().packagesListPanel.table.selectedPackageStateFlow,
             project.service<UIState>().modulesTree.targetModulesStateFlow,
-            project.service<UIState>().packagesListPanel.onlyStableStateFlow
+            project.service<UIState>().packagesListPanel.onlyStableStateFlow,
+            project.service<UIState>().packagesListPanel.sortMetricStateFlow,
         ) { allKnownRepositories, repositoriesDeclarationsByModule,
-            selectedUiPackageModel, targetModules, onlyStable ->
+            selectedUiPackageModel, targetModules, onlyStable, sortMetric ->
             PackageDetailsPanel.ViewModel(
                 selectedPackageModel = selectedUiPackageModel,
                 repositoriesDeclarationsByModule = repositoriesDeclarationsByModule,
                 allKnownRepositories = allKnownRepositories,
                 targetModules = targetModules,
                 onlyStable = onlyStable,
+                sortMetric = sortMetric,
                 invokeLaterScope = project.lifecycleScope
             )
         }
