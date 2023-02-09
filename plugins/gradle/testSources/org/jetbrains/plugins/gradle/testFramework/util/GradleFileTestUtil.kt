@@ -22,7 +22,7 @@ fun buildSettings(
   .apply(configure)
   .generate()
 
-fun buildscript(
+fun buildScript(
   gradleVersion: GradleVersion,
   configure: TestGradleBuildScriptBuilder.() -> Unit
 ) = TestGradleBuildScriptBuilder(gradleVersion)
@@ -48,7 +48,7 @@ fun VirtualFile.createBuildFile(
 ) = createBuildFile(
   relativeModulePath = relativeModulePath,
   useKotlinDsl = false,
-  content = buildscript(gradleVersion, configure)
+  content = buildScript(gradleVersion, configure)
 )
 
 @RequiresWriteLock
@@ -110,7 +110,7 @@ fun TestFilesConfiguration.withBuildFile(
 ) = withBuildFile(
   relativeModulePath = relativeModulePath,
   useKotlinDsl = false,
-  content = buildscript(gradleVersion, configure)
+  content = buildScript(gradleVersion, configure)
 )
 
 fun TestFilesConfiguration.withSettingsFile(

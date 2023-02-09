@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.frameworkSupport
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.*
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript
+import org.jetbrains.plugins.gradle.testFramework.util.buildScript
 import org.junit.jupiter.api.Test
 
 class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
@@ -275,7 +275,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
 
   @Test
   fun `test child build script build`() {
-    assertThat(buildscript(GradleVersion.current()) {
+    assertThat(buildScript(GradleVersion.current()) {
       withJavaPlugin()
       allprojects {
         withJavaPlugin()
