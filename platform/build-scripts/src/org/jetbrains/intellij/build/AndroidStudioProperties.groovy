@@ -20,7 +20,6 @@ import groovy.transform.CompileStatic
 import kotlin.coroutines.Continuation
 import kotlinx.collections.immutable.ExtensionsKt
 import org.jetbrains.intellij.build.impl.BaseLayout
-import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 
 import java.nio.file.Path
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -71,7 +70,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     "intellij.statsCollector",
     "intellij.xpath",
     "intellij.xslt.debugger",
-    KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
   )
 
   @Override

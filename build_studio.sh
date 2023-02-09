@@ -32,6 +32,7 @@ readonly AS_BUILD_NUMBER="$(sed "s/SNAPSHOT/__BUILD_NUMBER__/" "${PROG_DIR}/buil
 declare -ar BUILD_PROPERTIES=(
   "-Dintellij.build.output.root=${OUT}"
   "-Dbuild.number=${AS_BUILD_NUMBER}"
+  "-Dkotlin.plugin.kind=AS"
   "-Dintellij.build.dev.mode=false"
   "-Dintellij.build.run.steps.in.parallel=false"
   "-Dcompile.parallel=true"
