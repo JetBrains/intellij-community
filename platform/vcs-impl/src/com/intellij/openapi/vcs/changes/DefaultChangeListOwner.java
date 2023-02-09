@@ -19,12 +19,12 @@ public class DefaultChangeListOwner implements ChangeListOwner {
   }
 
   @Override
-  public void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes) {
+  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<Change> changes) {
     ChangeListManager.getInstance(myProject).moveChangesTo(list, changes);
   }
 
   @Override
   public void addUnversionedFiles(@NotNull LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles) {
-    ScheduleForAdditionAction.addUnversionedFilesToVcsInBackground(myProject, list, unversionedFiles);
+    ScheduleForAdditionAction.Manager.addUnversionedFilesToVcsInBackground(myProject, list, unversionedFiles);
   }
 }

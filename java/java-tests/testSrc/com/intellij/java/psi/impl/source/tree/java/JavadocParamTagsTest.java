@@ -25,9 +25,6 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- *  @author dsl
- */
 public class JavadocParamTagsTest extends LightIdeaTestCase {
   public void testDeleteTag1() {
     final PsiElementFactory factory = getFactory();

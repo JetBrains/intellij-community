@@ -10,9 +10,6 @@ import org.jetbrains.idea.svn.config.SvnIniFile;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class ProxyModule extends BaseCommandRuntimeModule {
 
   public ProxyModule(@NotNull CommandRuntime runtime) {

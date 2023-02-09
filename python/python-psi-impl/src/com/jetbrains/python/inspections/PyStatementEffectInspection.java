@@ -31,9 +31,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyStatementEffectInspection extends PyInspection {
 
   @NotNull
@@ -97,8 +94,7 @@ public class PyStatementEffectInspection extends PyInspection {
           return true;
         }
       }
-      else if (expression instanceof PyBinaryExpression) {
-        final PyBinaryExpression binary = (PyBinaryExpression)expression;
+      else if (expression instanceof PyBinaryExpression binary) {
 
         final PyElementType operator = binary.getOperator();
         if (PyTokenTypes.COMPARISON_OPERATIONS.contains(operator)) return false;
@@ -127,16 +123,13 @@ public class PyStatementEffectInspection extends PyInspection {
           }
         }
       }
-      else if (expression instanceof PyConditionalExpression) {
-        PyConditionalExpression conditionalExpression = (PyConditionalExpression)expression;
+      else if (expression instanceof PyConditionalExpression conditionalExpression) {
         return hasEffect(conditionalExpression.getTruePart()) || hasEffect(conditionalExpression.getFalsePart());
       }
-      else if (expression instanceof PyParenthesizedExpression) {
-        PyParenthesizedExpression parenthesizedExpression = (PyParenthesizedExpression)expression;
+      else if (expression instanceof PyParenthesizedExpression parenthesizedExpression) {
         return hasEffect(parenthesizedExpression.getContainedExpression());
       }
-      else if (expression instanceof PyReferenceExpression) {
-        PyReferenceExpression referenceExpression = (PyReferenceExpression)expression;
+      else if (expression instanceof PyReferenceExpression referenceExpression) {
         ResolveResult[] results = referenceExpression.getReference(getResolveContext()).multiResolve(true);
         for (ResolveResult res : results) {
           if (res.getElement() instanceof PyFunction) {
@@ -155,8 +148,7 @@ public class PyStatementEffectInspection extends PyInspection {
           }
         }
       }
-      else if (expression instanceof PyPrefixExpression) {
-        final PyPrefixExpression prefixExpr = (PyPrefixExpression)expression;
+      else if (expression instanceof PyPrefixExpression prefixExpr) {
         return prefixExpr.getOperator() == PyTokenTypes.AWAIT_KEYWORD;
       }
       else if (expression instanceof PyNoneLiteralExpression && ((PyNoneLiteralExpression)expression).isEllipsis()) {

@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 /**
- * Handler for inlay clicks.
+ * Handler for inlay clicks (must be clicked while holding ctrl).
  * It can be found by id,
  * which is provided during the construction of inlay in [com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder].
  * Must have reasonable equals.

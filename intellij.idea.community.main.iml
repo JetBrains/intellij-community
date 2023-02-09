@@ -97,7 +97,6 @@
     <orderEntry type="module" module-name="intellij.platform.remoteServers.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.properties.resource.bundle.editor" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.dom.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.colorSchemes" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.javaFX.community" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.javaFX.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.langInjection.tests" scope="TEST" />
@@ -132,7 +131,6 @@
     <orderEntry type="module" module-name="intellij.completionMlRanking.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.debugger.streams" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="jgoodies-common" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="commons-net" level="project" />
     <orderEntry type="module" module-name="intellij.testng.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.editorconfig" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.changeReminder" scope="RUNTIME" />
@@ -195,10 +193,10 @@
     <orderEntry type="module" module-name="intellij.devkit.workspaceModel.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.remoteControl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.webSymbols" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.fullLine" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.fullLine.java" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.fullLine.kotlin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.performanceTesting" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.smart.update" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.analysis" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.html.tools" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.html.tools.tests" scope="TEST" />
   </component>
 </module>

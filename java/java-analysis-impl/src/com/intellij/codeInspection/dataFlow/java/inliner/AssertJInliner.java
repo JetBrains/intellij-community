@@ -92,16 +92,20 @@ public class AssertJInliner implements CallInliner {
         }
       }
       case "isTrue" -> {
-        if (PsiType.BOOLEAN.equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
-          builder.ensure(RelationType.EQ, DfTypes.TRUE, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
+        if (PsiTypes.booleanType().equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
+          builder
+            .boxUnbox(valueToCheck, PsiTypes.booleanType())
+            .ensure(RelationType.EQ, DfTypes.TRUE, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         }
         else if (type instanceof PsiClassType) {
           builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         }
       }
       case "isFalse" -> {
-        if (PsiType.BOOLEAN.equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
-          builder.ensure(RelationType.EQ, DfTypes.FALSE, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
+        if (PsiTypes.booleanType().equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
+          builder
+            .boxUnbox(valueToCheck, PsiTypes.booleanType())
+            .ensure(RelationType.EQ, DfTypes.FALSE, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         }
         else if (type instanceof PsiClassType) {
           builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);

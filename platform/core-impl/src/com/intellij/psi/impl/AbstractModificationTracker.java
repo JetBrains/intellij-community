@@ -22,7 +22,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Roman.Chernyatchik
- * @deprecated see {@link com.intellij.psi.util.PsiModificationTracker#OUT_OF_CODE_BLOCK_MODIFICATION_COUNT}
+ * @deprecated it's better to avoid processing PSI changes at all, see {@link com.intellij.psi.PsiTreeChangeEvent} for more details; if you
+ * really need this, implement {@link PsiTreeChangePreprocessor} directly.
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval

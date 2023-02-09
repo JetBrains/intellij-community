@@ -4,6 +4,8 @@ package com.intellij.openapi.externalSystem.service.ui.completion
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.properties.whenPropertyChanged
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.observable.util.whenListChanged
@@ -14,7 +16,7 @@ import com.intellij.ui.*
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
-open class TextCompletionComboBox<T>(
+class TextCompletionComboBox<T>(
   project: Project?,
   private val converter: TextCompletionComboBoxConverter<T>
 ) : TextCompletionField<T>(project) {
@@ -36,6 +38,13 @@ open class TextCompletionComboBox<T>(
 
   fun bindSelectedItem(property: ObservableMutableProperty<T>) {
     selectedItemProperty.bind(property)
+  }
+
+  fun bindCompletionVariants(property: ObservableProperty<List<T>>) {
+    collectionModel.replaceAll(property.get())
+    property.whenPropertyChanged {
+      collectionModel.replaceAll(it)
+    }
   }
 
   init {

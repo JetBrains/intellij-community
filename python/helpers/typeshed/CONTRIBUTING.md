@@ -15,7 +15,7 @@ are important to the project's success.
       but [contact us](README.md#discussion) before starting significant work.
     * Create your stubs, considering [what to include](#what-to-include) and
       conforming to the [coding style](#stub-file-coding-style).
-4. [Format and check your stubs](#formatting-stubs).
+4. Optionally [format and check your stubs](#code-formatting).
 5. Optionally [run the tests](tests/README.md).
 6. [Submit your changes](#submitting-changes) by opening a pull request.
 
@@ -26,9 +26,11 @@ it takes a bit longer. For more details, read below.
 
 ### Code away!
 
-Typeshed runs continuous integration (CI) on all pull requests. This will
-automatically fix formatting (using `black`, `isort`) and run tests.
-It means you can ignore all local setup on your side, focus on the
+Typeshed runs continuous integration (CI) on all pull requests. This means that
+if you file a pull request (PR), our full test suite -- including our linter,
+`flake8` -- is run on your PR. It also means that bots will automatically apply
+changes to your PR (using `pycln`, `black` and `isort`) to fix any formatting issues.
+This frees you up to ignore all local setup on your side, focus on the
 code and rely on the CI to fix everything, or point you to the places that
 need fixing.
 
@@ -46,57 +48,67 @@ please refer to this
 
 ### Linux/Mac OS
 
-On Linux and Mac OS, you will be able to run the full test suite on Python 3.8
-or 3.9. Running the tests on <=3.7 is not supported, and the pytype tests
-[cannot currently be run on Python 3.10](https://github.com/google/pytype/issues/1022).
-
+On Linux and Mac OS, you will be able to run the full test suite on Python 3.8,
+3.9 or 3.10.
 To install the necessary requirements, run the following commands from a
 terminal window:
 
 ```
-$ python3 -m venv .venv3
-$ source .venv3/bin/activate
-(.venv3)$ pip install -U pip
-(.venv3)$ pip install -r requirements-tests.txt
+$ python3 -m venv .venv
+$ source .venv/bin/activate
+(.venv)$ pip install -U pip
+(.venv)$ pip install -r requirements-tests.txt
 ```
 
 ### Windows
 
-If you are using a Windows operating system, you will not be able to run the
-full test suite. One option is to install
+If you are using a Windows operating system, you will not be able to run the pytype
+tests, as pytype
+[does not currently support running on Windows](https://github.com/google/pytype#requirements).
+One option is to install
 [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/faq),
 which will allow you to run the full suite of tests. If you choose to install
 WSL, follow the Linux/Mac OS instructions above.
 
-If you do not wish to install WSL, you will not be able to run the pytype
-tests, as pytype
-[does not currently support running on Windows](https://github.com/google/pytype#requirements).
-However, the upside of this is that you will be able to run all
-Windows-compatible tests on Python 3.9, 3.8 or 3.10, as it is only the pytype
-tests that cannot currently be run on 3.10.
-
-To install all non-pytype requirements on Windows without WSL, run the
-following commands from a Windows terminal:
+If you do not wish to install WSL, run the following commands from a Windows
+terminal to install all non-pytype requirements:
 
 ```
-> python3 -m venv .venv3
-> ".venv3/Scripts/activate"
-(.venv3) > python -m pip install -U pip
-(.venv3) > python -m pip install -r requirements-tests.txt
+> python -m venv .venv
+> ".venv/scripts/activate"
+(.venv) > pip install -U pip
+(.venv) > pip install -r requirements-tests.txt
 ```
 
 ## Code formatting
 
-The code is formatted by `black` and `isort`.
+The code is formatted using `black` and `isort`. Unused imports are also
+auto-removed using `pycln`.
 
 The repository is equipped with a [`pre-commit.ci`](https://pre-commit.ci/)
 configuration file. This means that you don't *need* to do anything yourself to
 run the code formatters. When you push a commit, a bot will run those for you
-right away and add a commit to your PR. Neat, no?
+right away and add a commit to your PR.
 
-That being said, if you *want* to run the checks locally when you commit, you
-can install the hooks: please refer to the [pre-commit](https://pre-commit.com/)
-documentation.
+That being said, if you *want* to run the checks locally when you commit,
+you're free to do so. Either run `pycln`, `black` and `isort` manually...
+
+```
+pycln --all .
+isort .
+black .
+```
+
+...Or install the pre-commit hooks: please refer to the
+[pre-commit](https://pre-commit.com/) documentation.
+
+Our code is also linted using `flake8`, with plugins `flake8-pyi` and `flake8-bugbear`. As with our other checks, running
+flake8 before filing a PR is not required. However, if you wish to run flake8
+locally, install the test dependencies as outlined above, and then run:
+
+```
+flake8 .
+```
 
 ## Where to make changes
 
@@ -170,10 +182,16 @@ supported:
   [removing obsolete third-party libraries](#third-party-library-removal-policy).
   It contains the first version of the corresponding library that ships
   its own `py.typed` file.
-* `stubtest` (default: `true`): Whether stubtest should be run against this
-  package. Please avoid setting this to `false`, and add a comment if you have
+* `no_longer_updated` (optional): This field is set to `true` before removing
+  stubs for other reasons than the upstream library shipping with type
+  information.
+
+In addition, we specify configuration for stubtest in the `tool.stubtest` table.
+This has the following keys:
+* `skip` (default: `false`): Whether stubtest should be run against this
+  package. Please avoid setting this to `true`, and add a comment if you have
   to.
-* `stubtest_apt_dependencies` (default: `[]`): A list of Ubuntu APT packages
+* `apt_dependencies` (default: `[]`): A list of Ubuntu APT packages
   that need to be installed for stubtest to run successfully. These are
   usually packages needed to pip install the implementation distribution.
 
@@ -236,8 +254,6 @@ Accepted features that *cannot* yet be used in typeshed include:
 - [PEP 570](https://www.python.org/dev/peps/pep-0570/) (positional-only
   arguments): see [#4972](https://github.com/python/typeshed/issues/4972),
   use argument names prefixed with `__` instead
-- [PEP 613](https://www.python.org/dev/peps/pep-0613/) (TypeAlias):
-  see [#4913](https://github.com/python/typeshed/issues/4913)
 
 The following features are partially supported:
 - [PEP 585](https://www.python.org/dev/peps/pep-0585/) (builtin
@@ -316,7 +332,7 @@ project's tracker to fix their documentation.
 You can use checks
 like `if sys.version_info >= (3, 8):` to denote new functionality introduced
 in a given Python version or solve type differences.  When doing so, only use
-one-tuples or two-tuples. Because of this, if a given functionality was
+two-tuples. Because of this, if a given functionality was
 introduced in, say, Python 3.7.4, your check:
 
 * should be expressed as `if sys.version_info >= (3, 7):`
@@ -478,26 +494,6 @@ into any of those categories, use your best judgement.
 * Use `HasX` for protocols that have readable and/or writable attributes
   or getter/setter methods (e.g. `HasItems`, `HasFileno`).
 
-## Formatting stubs
-
-Stubs should be reformatted with the formatters
-[black](https://github.com/psf/black) and
-[isort](https://github.com/PyCQA/isort) before submission. They
-should also be checked for common problems by using
-[flake8](https://flake8.pycqa.org/en/latest/) and the flake8 plugins
-[flake8-pyi](https://github.com/ambv/flake8-pyi) and
-[flake8-bugbear](https://github.com/PyCQA/flake8-bugbear).
-All of these packages have been installed if you followed the
-[setup instructions above](#preparing-the-environment).
-
-To format and check your stubs, run the following commands:
-
-```
-(.venv3)$ black stdlib stubs
-(.venv3)$ isort stdlib stubs
-(.venv3)$ flake8
-```
-
 
 ## Submitting Changes
 
@@ -529,7 +525,7 @@ if it consisted of several smaller commits.
 
 ## Third-party library removal policy
 
-Third-party packages are generally removed from typeshed when one of the
+Third-party stubs are generally removed from typeshed when one of the
 following criteria is met:
 
 * The upstream package ships a `py.typed` file for at least six months, or
@@ -543,6 +539,21 @@ If a package ships its own `py.typed` file, please follow these steps:
    ["removal" label](https://github.com/python/typeshed/labels/removal).
 3. Open a PR that sets the `obsolete_since` field in the `METADATA.toml`
    file to the first version of the package that shipped `py.typed`.
+4. After at least six months, open a PR to remove the stubs.
+
+If third-party stubs should be removed for other reasons, please follow these
+steps:
+
+1. Open an issue explaining why the stubs should be removed.
+2. A maintainer will add the
+   ["removal" label](https://github.com/python/typeshed/labels/removal).
+3. Open a PR that sets the `no_longer_updated` field in the `METADATA.toml`
+   file to `true`.
+4. When a new version of the package was automatically uploaded to PyPI
+   (which usually takes up to 3 hours), open a PR to remove the stubs.
+
+If feeling kindly, please update [mypy](https://github.com/python/mypy/blob/master/mypy/stubinfo.py)
+for any stub obsoletions or removals.
 
 ## Maintainer guidelines
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -227,16 +226,14 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
           else {
             element = editorFile.findElementAt(editor.getCaretModel().getOffset());
 
-            SelectionModel selectionModel = editor.getSelectionModel();
-            if (selectionModel.hasSelection()) {
-              int selectionStart = selectionModel.getSelectionStart();
-              PsiClass psiClass = PsiTreeUtil.getParentOfType(editorFile.findElementAt(selectionStart), PsiClass.class);
+            @NotNull TextRange range = editor.getCaretModel().getCurrentCaret().getSelectionRange();
+            if (!range.isEmpty()) {
+              PsiClass psiClass = PsiTreeUtil.getParentOfType(editorFile.findElementAt(range.getStartOffset()), PsiClass.class);
               if (psiClass != null) {
-                TextRange selectionRange = new TextRange(selectionStart, selectionModel.getSelectionEnd());
                 PsiMethod[] methodsInSelection = Arrays.stream(psiClass.getMethods())
                   .filter(method -> {
                     TextRange methodTextRange = method.getTextRange();
-                    return methodTextRange != null && selectionRange.contains(methodTextRange);
+                    return methodTextRange != null && range.contains(methodTextRange);
                   })
                   .toArray(PsiMethod[]::new);
                 if (methodsInSelection.length > 0) {
@@ -378,8 +375,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     if (element == null || !element.isValid()) return null;
     final Project project = element.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (element instanceof PsiPackage) {
-      final PsiPackage aPackage = (PsiPackage)element;
+    if (element instanceof PsiPackage aPackage) {
       final PsiDirectory[] directories = aPackage.getDirectories(GlobalSearchScope.projectScope(project));
       for (final PsiDirectory directory : directories) {
         if (isSource(directory, fileIndex)) return aPackage;

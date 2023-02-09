@@ -4,7 +4,6 @@ package com.intellij.refactoring.extractMethod.newImpl.inplace
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.FinishMarkAction
 import com.intellij.openapi.command.impl.StartMarkAction
@@ -24,6 +23,7 @@ import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractSelector
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addInlaySettingsElement
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.checkReferenceIdentifier
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createChangeBasedDisposable
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createChangeSignatureGotIt
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createGreedyRangeMarker
@@ -33,8 +33,6 @@ import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtil
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.showInEditor
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.suggested.range
-import com.intellij.refactoring.util.CommonRefactoringUtil
-import org.jetbrains.annotations.Nls
 
 class InplaceMethodExtractor(private val editor: Editor,
                              private val range: TextRange,
@@ -94,9 +92,11 @@ class InplaceMethodExtractor(private val editor: Editor,
                                       callIdentifier.textRange.endOffset)
       Disposer.register(disposable, codePreview)
 
-      val templateState = ExtractMethodTemplateBuilder(editor, ExtractMethodHandler.getRefactoringName())
+      val templateField = TemplateField(callIdentifier.textRange, listOf(methodIdentifier.textRange))
         .withCompletionNames(suggestedNames.toList())
-        .withCompletionAdvertisement(InplaceRefactoring.getPopupOptionsAdvertisement())
+        .withCompletionHint(InplaceRefactoring.getPopupOptionsAdvertisement())
+        .withValidation { variableRange -> checkReferenceIdentifier(editor, file, variableRange) }
+      val templateState = ExtractMethodTemplateBuilder(editor, ExtractMethodHandler.getRefactoringName())
         .enableRestartForHandler(ExtractMethodHandler::class.java)
         .onBroken {
           editorState.revert()
@@ -111,14 +111,7 @@ class InplaceMethodExtractor(private val editor: Editor,
           extractor.replaceDuplicates(editor, extractedMethod)
         }
         .disposeWithTemplate(disposable)
-        .withValidation { variableRange ->
-          val errorMessage = getIdentifierError(file, variableRange)
-          if (errorMessage != null) {
-            CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, ExtractMethodHandler.getRefactoringName(), null)
-          }
-          errorMessage == null
-        }
-        .createTemplate(file, methodIdentifier.textRange, callIdentifier.textRange)
+        .createTemplate(file, listOf(templateField))
       afterTemplateStart(templateState)
     } catch (e: Throwable) {
       Disposer.dispose(disposable)
@@ -161,18 +154,6 @@ class InplaceMethodExtractor(private val editor: Editor,
     popupProvider.setShowDialogAction { actionEvent -> restartInDialog(actionEvent == null) }
     addInlaySettingsElement(templateState, popupProvider)?.also { inlay ->
       Disposer.register(disposable, inlay)
-    }
-  }
-
-  private fun getIdentifierError(file: PsiFile, variableRange: TextRange): @Nls String? {
-    val methodName = file.viewProvider.document.getText(variableRange)
-    val call = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiMethodCallExpression::class.java, false)
-    return if (! PsiNameHelper.getInstance(project).isIdentifier(methodName)) {
-      JavaRefactoringBundle.message("extract.method.error.invalid.name")
-    } else if (call?.resolveMethod() == null) {
-      JavaRefactoringBundle.message("extract.method.error.method.conflict")
-    } else {
-      null
     }
   }
 

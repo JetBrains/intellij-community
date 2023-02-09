@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,18 +18,33 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Pattern;
 
 public class PatternPackageSet extends PatternBasedPackageSet {
-  @NonNls public static final String SCOPE_TEST = "test";
-  @NonNls public static final String SCOPE_SOURCE = "src";
-  @NonNls public static final String SCOPE_LIBRARY = "lib";
-  @NonNls public static final String SCOPE_PROBLEM = "problem";
-  public static final String SCOPE_ANY = "";
+  public enum Scope {
+    SOURCE("src"), 
+    TEST("test"), 
+    LIBRARY("lib"), 
+    PROBLEM("problem"), 
+    ANY("");
+    private final String myId;
+
+    Scope(@NotNull String id) {
+      myId = id;
+    }
+
+    public String getId() {
+      return myId;
+    }
+
+    public static @Nullable Scope findById(@Nullable String id) {
+      return ContainerUtil.find(values(), value -> value.getId().equals(id));
+    }
+  }
 
   private final Pattern myPattern;
   private final String myAspectJSyntaxPattern;
-  private final String myScope;
+  private final Scope myScope;
 
   public PatternPackageSet(@NonNls @Nullable String aspectPattern,
-                           @NotNull String scope,
+                           @NotNull Scope scope,
                            @NonNls String modulePattern) {
     super(modulePattern);
     myAspectJSyntaxPattern = aspectPattern;
@@ -39,40 +55,28 @@ public class PatternPackageSet extends PatternBasedPackageSet {
   @Override
   public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (matchesScope(file, project, fileIndex)) {
-      if (myPattern == null) {
-        return true;
-      }
-      String packageName = getPackageName(file, project);
-      if (packageName != null && myPattern.matcher(packageName).matches()) {
-        return true;
-      }
+    if (!matchesScope(file, project, fileIndex)) {
+      return false;
     }
-    return false;
+    if (myPattern == null) {
+      return true;
+    }
+    String packageName = getPackageName(file, project);
+    return packageName != null && myPattern.matcher(packageName).matches();
   }
 
-  private boolean matchesScope(VirtualFile file, Project project, ProjectFileIndex fileIndex) {
-    if (file == null) return false;
+  private boolean matchesScope(@NotNull VirtualFile file, @NotNull Project project, @NotNull ProjectFileIndex fileIndex) {
     boolean isSource = fileIndex.isInSourceContent(file);
-    if (myScope == SCOPE_ANY) {
-      return fileIndex.isInContent(file) && matchesModule(file, fileIndex);
-    }
-    if (myScope == SCOPE_SOURCE) {
-      return isSource && !TestSourcesFilter.isTestSources(file, project) && matchesModule(file, fileIndex);
-    }
-    if (myScope == SCOPE_LIBRARY) {
-      return fileIndex.isInLibrary(file) && matchesLibrary(myModulePattern, file, fileIndex);
-    }
-    if (myScope == SCOPE_TEST) {
-      return isSource && TestSourcesFilter.isTestSources(file, project) && matchesModule(file, fileIndex);
-    }
-    if (myScope == SCOPE_PROBLEM) {
-      return isSource && WolfTheProblemSolver.getInstance(project).isProblemFile(file) && matchesModule(file, fileIndex);
-    }
-    throw new RuntimeException("Unknown scope: " + myScope);
+    return switch (myScope) {
+      case ANY -> fileIndex.isInContent(file) && matchesModule(file, fileIndex);
+      case SOURCE -> isSource && !TestSourcesFilter.isTestSources(file, project) && matchesModule(file, fileIndex);
+      case LIBRARY -> fileIndex.isInLibrary(file) && matchesLibrary(myModulePattern, file, fileIndex);
+      case TEST -> isSource && TestSourcesFilter.isTestSources(file, project) && matchesModule(file, fileIndex);
+      case PROBLEM -> isSource && WolfTheProblemSolver.getInstance(project).isProblemFile(file) && matchesModule(file, fileIndex);
+    };
   }
 
-  private static String getPackageName(VirtualFile file, Project project) {
+  private static String getPackageName(@NotNull VirtualFile file, @NotNull Project project) {
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return null;
     return StringUtil.getQualifiedName(PackageIndex.getInstance(project).getPackageNameByDirectory(dir), file.getNameWithoutExtension());
@@ -93,15 +97,15 @@ public class PatternPackageSet extends PatternBasedPackageSet {
   @Override
   public String getText() {
     StringBuilder buf = new StringBuilder();
-    if (myScope != SCOPE_ANY) {
-      buf.append(myScope);
+    if (myScope != Scope.ANY) {
+      buf.append(myScope.myId);
     }
 
     if (myModulePattern != null || myModuleGroupPattern != null) {
       buf.append("[").append(myModulePatternText).append("]");
     }
 
-    if (buf.length() > 0) {
+    if (!buf.isEmpty()) {
       buf.append(':');
     }
 

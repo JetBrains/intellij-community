@@ -10,14 +10,18 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.actions.TerminalActionUtil;
+import com.intellij.terminal.ui.TerminalWidget;
+import com.intellij.terminal.ui.TtyConnectorAccessor;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -26,6 +30,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
+import com.jediterm.core.compatibility.Point;
+import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.SubstringFinder;
 import com.jediterm.terminal.TerminalColor;
@@ -37,9 +43,8 @@ import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.model.hyperlinks.LinkInfo;
 import com.jediterm.terminal.model.hyperlinks.LinkResult;
 import com.jediterm.terminal.model.hyperlinks.LinkResultItem;
-import com.jediterm.terminal.ui.JediTermWidget;
-import com.jediterm.terminal.ui.TerminalAction;
-import com.jediterm.terminal.ui.TerminalPanel;
+import com.jediterm.terminal.ui.*;
+import com.jediterm.terminal.ui.hyperlinks.LinkInfoEx;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import com.jediterm.terminal.util.Pair;
 import org.jetbrains.annotations.Nls;
@@ -47,9 +52,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -82,6 +87,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     myProject = project;
     addHyperlinkFilter(line -> runFilters(project, line));
     Disposer.register(parent, this);
+    Disposer.register(this, myBridge);
     setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
       @Override
       public Component getDefaultComponent(Container aContainer) {
@@ -122,11 +128,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   private @NotNull LinkInfo convertInfo(@NotNull Project project, @NotNull HyperlinkInfo info) {
-    LinkInfo.Builder builder = new LinkInfo.Builder().setNavigateCallback(() -> {
+    LinkInfoEx.Builder builder = new LinkInfoEx.Builder().setNavigateCallback(() -> {
       info.navigate(project);
     });
     if (info instanceof HyperlinkWithPopupMenuInfo) {
-      builder.setPopupMenuGroupProvider(new LinkInfo.PopupMenuGroupProvider() {
+      builder.setPopupMenuGroupProvider(new LinkInfoEx.PopupMenuGroupProvider() {
         @Override
         public @NotNull List<TerminalAction> getPopupMenuGroup(@NotNull MouseEvent event) {
           ActionGroup group = ((HyperlinkWithPopupMenuInfo)info).getPopupMenuGroup(event);
@@ -136,7 +142,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       });
     }
     if (info instanceof HyperlinkWithHoverInfo) {
-      builder.setHoverConsumer(new LinkInfo.HoverConsumer() {
+      builder.setHoverConsumer(new LinkInfoEx.HoverConsumer() {
         @Override
         public void onMouseEntered(@NotNull JComponent hostComponent, @NotNull Rectangle linkBounds) {
           ((HyperlinkWithHoverInfo)info).onMouseEntered(hostComponent, linkBounds);
@@ -181,17 +187,17 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   @Override
   public void setTtyConnector(@NotNull TtyConnector ttyConnector) {
     super.setTtyConnector(ttyConnector);
+    myBridge.getTtyConnectorAccessor().setTtyConnector(ttyConnector);
     myTerminalTitle.change(terminalTitleState -> {
       if (terminalTitleState.getDefaultTitle() == null) {
-        terminalTitleState.setDefaultTitle(getDefaultSessionName());
+        terminalTitleState.setDefaultTitle(getDefaultSessionName(ttyConnector));
       }
       return null;
     });
   }
 
-  public @Nls @Nullable String getDefaultSessionName() {
-    TtyConnector connector = getTtyConnector();
-    return connector != null ? connector.getName() : null; //NON-NLS
+  public @Nls @Nullable String getDefaultSessionName(@NotNull TtyConnector connector) {
+    return connector.getName(); //NON-NLS
   }
 
   @Override
@@ -216,7 +222,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
         TerminalColor backgroundColor = mySettingsProvider.getFoundPatternColor().getBackground();
         if (backgroundColor != null) {
-          g.setColor(mySettingsProvider.getTerminalColorPalette().getBackground(backgroundColor));
+          g.setColor(AwtTransformers.toAwtColor(mySettingsProvider.getTerminalColorPalette().getBackground(backgroundColor)));
         }
         int anchorHeight = Math.max(2, height / modelHeight);
         for (SubstringFinder.FindResult.FindItem r : result.getItems()) {
@@ -262,51 +268,47 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   @Override
-  protected SearchComponent createSearchComponent() {
-    return new SearchComponent() {
+  protected @NotNull JediTermSearchComponent createSearchComponent() {
+    return new JediTermSearchComponent() {
       private final SearchTextField myTextField = new SearchTextField(false);
 
       @Override
-      public String getText() {
-        return myTextField.getText();
-      }
-
-      @Override
-      public boolean ignoreCase() {
-        return false;
-      }
-
-      @Override
-      public JComponent getComponent() {
+      public @NotNull JComponent getComponent() {
         myTextField.setOpaque(false);
         return myTextField;
       }
 
-      @Override
-      public void addDocumentChangeListener(DocumentListener listener) {
-        myTextField.addDocumentListener(listener);
+      private void searchSettingsChanged(@NotNull JediTermSearchComponentListener listener) {
+        listener.searchSettingsChanged(myTextField.getText(), false);
       }
 
       @Override
-      public void addKeyListener(KeyListener listener) {
+      public void addListener(@NotNull JediTermSearchComponentListener listener) {
+        myTextField.addDocumentListener(new DocumentListener() {
+          @Override
+          public void insertUpdate(DocumentEvent e) {
+            searchSettingsChanged(listener);
+          }
+
+          @Override
+          public void removeUpdate(DocumentEvent e) {
+            searchSettingsChanged(listener);
+          }
+
+          @Override
+          public void changedUpdate(DocumentEvent e) {
+            searchSettingsChanged(listener);
+          }
+        });
+      }
+
+      @Override
+      public void addKeyListener(@NotNull KeyListener listener) {
         myTextField.addKeyboardListener(listener);
       }
 
       @Override
-      public void addIgnoreCaseListener(ItemListener listener) {
-
-      }
-
-      @Override
       public void onResultUpdated(SubstringFinder.FindResult result) {
-      }
-
-      @Override
-      public void nextFindResultItem(SubstringFinder.FindResult.FindItem item) {
-      }
-
-      @Override
-      public void prevFindResultItem(SubstringFinder.FindResult.FindItem item) {
       }
     };
   }
@@ -324,10 +326,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     return (JBTerminalSystemSettingsProviderBase)mySettingsProvider;
   }
 
-  public void moveDisposable(@NotNull Disposable newParent) {
-    Disposer.register(newParent, this);
-  }
-
   public void notifyStarted() {
     if (myListener != null) {
       myListener.onTerminalStarted();
@@ -338,7 +336,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   @Override
   public Object getData(@NotNull String dataId) {
     if (SELECTED_TEXT_DATA_KEY.is(dataId)) {
-      return getSelectedText(getTerminalPanel());
+      return getSelectedText();
     }
     if (TERMINAL_DATA_KEY.is(dataId)) {
       return this;
@@ -360,13 +358,21 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     }
   }
 
+  public @NotNull String getText() {
+    return getText(getTerminalPanel());
+  }
+
+  public @Nullable String getSelectedText() {
+    return getSelectedText(getTerminalPanel());
+  }
+
   static @NotNull String getText(@NotNull TerminalPanel terminalPanel) {
     TerminalTextBuffer buffer = terminalPanel.getTerminalTextBuffer();
     buffer.lock();
     try {
       TerminalSelection selection = new TerminalSelection(
         new Point(0, -buffer.getHistoryLinesCount()),
-        new Point(terminalPanel.getWidth(), buffer.getScreenLinesCount()));
+        new Point(terminalPanel.getColumnCount(), buffer.getScreenLinesCount() - 1));
       Pair<Point, Point> points = selection.pointsForRun(terminalPanel.getColumnCount());
       return SelectionUtil.getSelectionText(points.first, points.second, buffer);
     }
@@ -391,5 +397,109 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   public @NotNull TerminalTitle getTerminalTitle() {
     return myTerminalTitle;
+  }
+
+  private final TerminalWidgetBridge myBridge = new TerminalWidgetBridge();
+
+  public @NotNull TerminalWidget asNewWidget() {
+    return myBridge;
+  }
+
+  public static @Nullable JBTerminalWidget asJediTermWidget(@NotNull TerminalWidget widget) {
+    return widget instanceof TerminalWidgetBridge bridge ? bridge.widget() : null;
+  }
+
+  private class TerminalWidgetBridge implements TerminalWidget {
+
+    private final TtyConnectorAccessor myTtyConnectorAccessor = new TtyConnectorAccessor();
+
+    private @NotNull JBTerminalWidget widget() {
+      return JBTerminalWidget.this;
+    }
+
+    @Override
+    public @NotNull JComponent getComponent() {
+      return widget().getComponent();
+    }
+
+    @Override
+    public JComponent getPreferredFocusableComponent() {
+      return widget().getPreferredFocusableComponent();
+    }
+
+    @NotNull
+    @Override
+    public TerminalTitle getTerminalTitle() {
+      return widget().myTerminalTitle;
+    }
+
+    @Override
+    public void connectToTty(@NotNull TtyConnector ttyConnector) {
+      widget().createTerminalSession(ttyConnector);
+      widget().start();
+      widget().getComponent().revalidate();
+      widget().notifyStarted();
+      myTtyConnectorAccessor.setTtyConnector(ttyConnector);
+    }
+
+    @Override
+    public @Nullable TermSize getTermSize() {
+      return widget().getTerminalPanel().getTerminalSizeFromComponent();
+    }
+
+    @Override
+    public void writePlainMessage(@NotNull @Nls String message) {
+      widget().writePlainMessage(message);
+    }
+
+    @Override
+    public void setCursorVisible(boolean visible) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        widget().getTerminalPanel().setCursorVisible(false);
+      }, myProject.getDisposed());
+    }
+
+    @Override
+    public void dispose() {
+      // JBTerminalWidget should be registered in Disposer independently
+    }
+
+    @Override
+    public @NotNull TtyConnectorAccessor getTtyConnectorAccessor() {
+      return myTtyConnectorAccessor;
+    }
+
+    @Override
+    public boolean hasFocus() {
+      return widget().getTerminalPanel().hasFocus();
+    }
+
+    @Override
+    public void requestFocus() {
+      IdeFocusManager.getInstance(myProject).requestFocus(widget().getTerminalPanel(), true);
+    }
+
+    @Override
+    public void addTerminationCallback(@NotNull Runnable onTerminated, @NotNull Disposable parentDisposable) {
+      TerminalWidgetListener listener = new TerminalWidgetListener() {
+        @Override
+        public void allSessionsClosed(com.jediterm.terminal.ui.TerminalWidget widget) {
+          onTerminated.run();
+        }
+      };
+      widget().addListener(listener);
+      Disposer.register(parentDisposable, () -> {
+        widget().removeListener(listener);
+      });
+    }
+
+    @Override
+    public void addNotification(@NotNull JComponent notificationComponent, @NotNull Disposable disposable) {
+      widget().add(notificationComponent, BorderLayout.NORTH);
+      Disposer.register(disposable, () -> {
+        widget().remove(notificationComponent);
+        widget().revalidate();
+      });
+    }
   }
 }

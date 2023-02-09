@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -40,6 +40,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -539,8 +540,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     for (PsiReference reference : calls) {
       final PsiElement referenceElement = reference.getElement();
       final PsiElement parent = referenceElement.getParent();
-      if (parent instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression call = (PsiMethodCallExpression)parent;
+      if (parent instanceof PsiMethodCallExpression call) {
         if (isInMovedElement(call)) {
           continue;
         }
@@ -575,18 +575,14 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       final PsiElement referenceElement = reference.getElement();
 
       final PsiElement parent = referenceElement.getParent();
-      if (parent instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression call = (PsiMethodCallExpression)parent;
+      if (parent instanceof PsiMethodCallExpression call) {
         if (!isInMovedElement(call)) {
           usages.add(new RetargetStaticMethodCall(call, fullyQualifiedName));
         }
-      } else if (parent instanceof PsiImportStaticStatement) {
-        final PsiJavaCodeReferenceElement importReference = ((PsiImportStaticStatement)parent).getImportReference();
-        if (importReference != null) {
-          final PsiElement qualifier = importReference.getQualifier();
-          if (qualifier instanceof PsiJavaCodeReferenceElement) {
-            usages.add(new ReplaceClassReference((PsiJavaCodeReferenceElement)qualifier, fullyQualifiedName));
-          }
+      } else if (parent instanceof PsiImportStaticStatement importStaticStatement) {
+        final PsiJavaCodeReferenceElement importReference = importStaticStatement.getImportReference();
+        if (importReference != null && importReference.getQualifier() instanceof PsiJavaCodeReferenceElement qualifier) {
+          usages.add(new ReplaceClassReference(qualifier, fullyQualifiedName));
         }
       }
     }
@@ -640,8 +636,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
         continue;
       }
 
-      if (element instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression exp = (PsiReferenceExpression)element;
+      if (element instanceof PsiReferenceExpression exp) {
         if (PsiUtil.isIncrementDecrementOperation(exp.getParent())) {
           usages.add(isStatic
                      ? new ReplaceStaticVariableIncrementDecrement(exp, qualifiedName)
@@ -788,12 +783,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
   private static boolean isSuperMethod(PsiMethod method, PsiMethod movedMethod) {
     final PsiMethod[] superMethods = movedMethod.findSuperMethods();
-    for (PsiMethod testMethod : superMethods) {
-      if (testMethod.equals(method)) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(method, superMethods);
   }
 
   private static boolean usesDefaultClone(PsiClass aClass) {

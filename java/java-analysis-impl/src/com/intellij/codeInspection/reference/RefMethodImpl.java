@@ -5,6 +5,8 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.util.Predicates;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -18,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private static final int IS_APPMAIN_MASK            = 0b1_00000000_00000000; // 17th bit
@@ -43,7 +46,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
     setConstructor(method.isConstructor());
     PsiType returnType = method.getReturnType();
-    setFlag(returnType == null || PsiType.VOID.equals(returnType) ||
+    setFlag(returnType == null || PsiTypes.voidType().equals(returnType) ||
             returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID), IS_RETURN_VALUE_USED_MASK);
   }
 
@@ -93,10 +96,10 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       setAbstract(javaPsi.hasModifierProperty(PsiModifier.ABSTRACT));
 
       setLibraryOverride(javaPsi.hasModifierProperty(PsiModifier.NATIVE));
-      if (PsiModifier.PUBLIC == getAccessModifier()) {
+      if (PsiModifier.PUBLIC.equals(getAccessModifier())) {
         setAppMain(isAppMain(javaPsi, this));
       }
-      if (PsiModifier.PRIVATE != getAccessModifier() && !isStatic()) {
+      if (!PsiModifier.PRIVATE.equals(getAccessModifier()) && !isStatic()) {
         initializeSuperMethods(javaPsi);
       }
     }
@@ -122,7 +125,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   private static boolean isAppMain(PsiMethod psiMethod, RefMethod refMethod) {
     if (!refMethod.isStatic()) return false;
-    if (!PsiType.VOID.equals(psiMethod.getReturnType())) return false;
+    if (!PsiTypes.voidType().equals(psiMethod.getReturnType())) return false;
 
     PsiMethod appMainPattern = ((RefMethodImpl)refMethod).getRefJavaManager().getAppMainPattern();
     if (MethodSignatureUtil.areSignaturesEqual(psiMethod, appMainPattern)) return true;
@@ -143,11 +146,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       if (body == null) return;
 
       List<UExpression> statements =
-        body instanceof UBlockExpression ? ((UBlockExpression)body).getExpressions() : Collections.singletonList(body);
+        body instanceof UBlockExpression blockExpression ? blockExpression.getExpressions() : Collections.singletonList(body);
       boolean isBaseExplicitlyCalled = false;
       if (!statements.isEmpty()) {
         UExpression first = statements.get(0);
-        if (first instanceof UCallExpression && ((UCallExpression)first).getKind() == UastCallKind.CONSTRUCTOR_CALL) {
+        if (first instanceof UCallExpression callExpression && callExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
           isBaseExplicitlyCalled = true;
         }
       }
@@ -231,8 +234,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       if (refManager.belongsToScope(psiSuperMethod)) {
         PsiElement sourceElement = RefJavaUtilImpl.returnToPhysical(psiSuperMethod);
         RefElement refElement = refManager.getReference(sourceElement);
-        if (refElement instanceof RefMethodImpl) {
-          RefMethodImpl refSuperMethod = (RefMethodImpl)refElement;
+        if (refElement instanceof RefMethodImpl refSuperMethod) {
           addSuperMethod(refSuperMethod);
           refManager.executeTask(() -> refSuperMethod.markExtended(this));
         }
@@ -251,9 +253,9 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (mySuperMethods == null) {
       mySuperMethods = refSuperMethod;
     }
-    else if (mySuperMethods instanceof RefMethod) {
+    else if (mySuperMethods instanceof RefMethod refMethod) {
       ArrayList<RefMethod> list = new ArrayList<>(2);
-      list.add((RefMethod)mySuperMethods);
+      list.add(refMethod);
       list.add(refSuperMethod);
       mySuperMethods = list;
     }
@@ -322,8 +324,8 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
-    if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitMethod(this));
+    if (visitor instanceof RefJavaVisitor refJavaVisitor) {
+      ApplicationManager.getApplication().runReadAction(() -> refJavaVisitor.visitMethod(this));
     }
     else {
       super.accept(visitor);
@@ -508,32 +510,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       }
     }
     else {
-      String newTemplate = null;
-      final RefJavaUtil refUtil = RefJavaUtil.getInstance();
-      if (expression instanceof ULiteralExpression) {
-        ULiteralExpression psiLiteralExpression = (ULiteralExpression)expression;
-        newTemplate = String.valueOf(psiLiteralExpression.getValue());
-      }
-      else if (expression instanceof UResolvable) {
-        UResolvable referenceExpression = (UResolvable)expression;
-        UElement resolved = UResolvableKt.resolveToUElement(referenceExpression);
-        if (resolved instanceof UField) {
-          UField uField = (UField)resolved;
-          PsiField psi = (PsiField)uField.getJavaPsi();
-          if (uField.isStatic() &&
-              uField.isFinal() &&
-              refUtil.compareAccess(refUtil.getAccessModifier(psi), getAccessModifier()) >= 0) {
-            newTemplate = PsiFormatUtil.formatVariable(psi, PsiFormatUtilBase.SHOW_NAME |
-                                                            PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
-                                                            PsiFormatUtilBase.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
-          }
-        }
-      }
-      else if (refUtil.isCallToSuperMethod(expression, getUastElement())) return;
+      if (RefJavaUtil.getInstance().isCallToSuperMethod(expression, getUastElement())) return;
+      String newTemplate = createReturnValueTemplate(expression, this);
 
       synchronized (this) {
-        //noinspection StringEquality
-        if (myReturnValueTemplate == RETURN_VALUE_UNDEFINED) {
+        if (Strings.areSameInstance(myReturnValueTemplate, RETURN_VALUE_UNDEFINED)) {
           myReturnValueTemplate = newTemplate;
         }
         else if (!Objects.equals(myReturnValueTemplate, newTemplate)) {
@@ -567,8 +548,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public synchronized String getReturnValueIfSame() {
-    //noinspection StringEquality
-    if (myReturnValueTemplate == RETURN_VALUE_UNDEFINED) return null;
+    if (Strings.areSameInstance(myReturnValueTemplate, RETURN_VALUE_UNDEFINED)) return null;
     return myReturnValueTemplate;
   }
 
@@ -674,8 +654,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   public static boolean isEmptyExpression(@Nullable UExpression expression) {
     if (expression == null) return true;
-    if (expression instanceof UBlockExpression) return ((UBlockExpression)expression).getExpressions().isEmpty();
-    return false;
+    return expression instanceof UBlockExpression blockExpression && blockExpression.getExpressions().isEmpty();
   }
 
   @Nullable
@@ -691,5 +670,33 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       parentRef = refManager.getReference(containingDeclaration, true);
     }
     return parentRef;
+  }
+
+  public static @Nullable String createReturnValueTemplate(UExpression expression) {
+    return createReturnValueTemplate(expression, Predicates.alwaysTrue());
+  }
+
+  public static @Nullable String createReturnValueTemplate(UExpression expression, @NotNull RefMethodImpl refMethod) {
+    RefJavaUtil refUtil = RefJavaUtil.getInstance();
+    return createReturnValueTemplate(expression,
+                               field -> refUtil.compareAccess(refUtil.getAccessModifier(field), refMethod.getAccessModifier()) >= 0);
+  }
+
+  private static @Nullable String createReturnValueTemplate(UExpression expression, @NotNull Predicate<PsiField> myPredicate) {
+    if (expression instanceof ULiteralExpression literalExpression) {
+      return String.valueOf(literalExpression.getValue());
+    }
+    else if (expression instanceof UResolvable resolvable) {
+      UElement resolved = UResolvableKt.resolveToUElement(resolvable);
+      if (resolved instanceof UField uField && uField.isStatic() && uField.isFinal()) {
+        PsiField psi = (PsiField)uField.getJavaPsi();
+        if (psi != null && myPredicate.test(psi)) {
+          return PsiFormatUtil.formatVariable(psi, PsiFormatUtilBase.SHOW_NAME |
+                                                   PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                   PsiFormatUtilBase.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
+        }
+      }
+    }
+    return null;
   }
 }

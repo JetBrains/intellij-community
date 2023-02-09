@@ -7,7 +7,6 @@ import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.refactoring.suggested.endOffset
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.Contract
@@ -107,7 +106,7 @@ object UastFacade : UastLanguagePlugin {
     ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, object: DynamicPluginListener {
       override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         // avoid Language mem-leak on its plugin unload
-        cachedLastPlugin = this@UastFacade
+        clearCachedPlugin()
       }
     })
     UastLanguagePlugin.extensionPointName.addChangeListener({ exposedListeners.forEach(UastPluginListener::onPluginsChanged) }, null)
@@ -132,6 +131,9 @@ object UastFacade : UastLanguagePlugin {
 
     }.also { exposedListeners.add(it) }
 
+  fun clearCachedPlugin() {
+    cachedLastPlugin = this
+  }
 }
 
 
@@ -175,18 +177,6 @@ fun <T : UElement> PsiFile.findUElementAt(offset: Int, cls: Class<out T>): T? {
   val uElement = element.toUElement() ?: return null
   @Suppress("UNCHECKED_CAST")
   return uElement.withContainingElements.firstOrNull { cls.isInstance(it) } as T?
-}
-
-fun <T : UElement> PsiFile.findFirstUElementInRange(startOffset: Int, endOffset: Int, cls: Class<out T>): T? {
-  var currentOffset = startOffset
-  while (currentOffset != endOffset) {
-    val currentPsi = findElementAt(currentOffset)
-    val uElement = currentPsi.toUElement()?.withContainingElements?.firstOrNull { cls.isInstance(it) }
-    @Suppress("UNCHECKED_CAST")
-    if (uElement != null) return uElement as T?
-    currentOffset = currentPsi?.endOffset ?: return null
-  }
-  return null
 }
 
 /**

@@ -50,7 +50,7 @@ abstract class AbstractMoveOnCutPasteTest : AbstractCopyPasteTest() {
 
         val shouldBeAvailable = InTextDirectivesUtils.getPrefixedBoolean(testFileText, IS_AVAILABLE_DIRECTIVE) ?: true
         val cookie = editor.getUserData(MoveDeclarationsEditorCookie.KEY)
-        val processor = cookie?.let { MoveDeclarationsProcessor.build(editor, cookie) }
+        val processor = cookie?.let { MoveDeclarationsProcessor.build(file, cookie) }
 
         TestCase.assertEquals(shouldBeAvailable, processor != null)
 

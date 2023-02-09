@@ -45,10 +45,10 @@ class ModulesEditorToolbarDecorator(
                 ),
                 allowAndroid = isRootModule
                         && isMultiplatformProject()
-                        && allModules.none { it.configurator == AndroidSinglePlatformModuleConfigurator },
+                        && allModules.none { it.configurator is AndroidSinglePlatformModuleConfiguratorBase },
                 allowIos = isRootModule
                         && isMultiplatformProject()
-                        && allModules.none { it.configurator == IOSSinglePlatformModuleConfigurator },
+                        && allModules.none { it.configurator is IOSSinglePlatformModuleConfiguratorBase },
                 allModules = allModules,
                 createModule = model::add
             )
@@ -81,7 +81,10 @@ class ModulesEditorToolbarDecorator(
         setRemoveAction { model.removeSelected() }
         setRemoveActionUpdater { event ->
             event.presentation.apply {
-                isEnabled = tree.selectedSettingItem is Module
+                isEnabled = when (val selected = tree.selectedSettingItem) {
+                    is Module -> selected.canBeRemoved
+                    else -> false
+                }
                 text = KotlinNewProjectWizardUIBundle.message(
                     "editor.modules.remove.tooltip",
                     selectedModuleKindText?.let { " ${it.capitalize(Locale.US)}" }.orEmpty()

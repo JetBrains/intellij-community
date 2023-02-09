@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
@@ -356,7 +357,9 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
                     holder.registerProblem(
                         nameIdentifier,
                         KotlinBundle.message("equals.hashcode.in.object.declaration"),
-                        DeletePsiElementsFix(listOf(equalsDeclaration, hashCodeDeclaration))
+                        DeletePsiElementsFix(
+                            listOfNotNull(equalsDeclaration?.createSmartPointer(), hashCodeDeclaration?.createSmartPointer())
+                        )
                     )
                 }
 

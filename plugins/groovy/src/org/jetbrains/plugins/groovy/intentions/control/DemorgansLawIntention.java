@@ -107,8 +107,7 @@ public class DemorgansLawIntention extends MutablyNamedIntention {
   }
 
   private static boolean isConjunctionExpression(PsiElement exp, IElementType conjunctionType) {
-    if (!(exp instanceof GrBinaryExpression)) return false;
-    final GrBinaryExpression binExp = (GrBinaryExpression)exp;
+    if (!(exp instanceof GrBinaryExpression binExp)) return false;
     final IElementType tokenType = binExp.getOperationTokenType();
     return conjunctionType.equals(tokenType);
   }

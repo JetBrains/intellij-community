@@ -32,7 +32,7 @@ public final class StdArrangementExtendableSettings extends StdArrangementSettin
   }
 
   public StdArrangementExtendableSettings(@NotNull List<? extends ArrangementGroupingRule> groupingRules,
-                                          @NotNull List<ArrangementSectionRule> sectionRules,
+                                          @NotNull List<? extends ArrangementSectionRule> sectionRules,
                                           @NotNull Collection<? extends StdArrangementRuleAliasToken> rulesAliases) {
     super(groupingRules, sectionRules);
     myRulesAliases.addAll(rulesAliases);

@@ -193,8 +193,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
       List<Object> anEnum = propertyNamesSchema.getEnum();
       if (anEnum == null) return;
       for (Object o : anEnum) {
-        if (!(o instanceof String)) continue;
-        String key = ((String)o);
+        if (!(o instanceof String key)) continue;
         key = !shouldWrapInQuotes(key, false) ? key : StringUtil.wrapWithDoubleQuote(key);
         myVariants.add(LookupElementBuilder.create(StringUtil.unquoteString(key)));
       }
@@ -369,7 +368,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
     }
 
     private void addStringVariant(String defaultValueString) {
-      if (!StringUtil.isEmpty(defaultValueString)) {
+      if (defaultValueString != null) {
         String normalizedValue = defaultValueString;
         boolean shouldQuote = myWalker.requiresValueQuotes();
         boolean isQuoted = StringUtil.isQuotedString(normalizedValue);

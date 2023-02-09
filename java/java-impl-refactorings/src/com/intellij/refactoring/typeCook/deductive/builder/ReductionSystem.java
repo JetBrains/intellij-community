@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook.deductive.builder;
 
 import com.intellij.openapi.project.Project;
@@ -28,9 +14,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
-/**
- * @author db
- */
 public class ReductionSystem {
   final Set<Constraint> myConstraints = new HashSet<>();
   final Set<PsiElement> myElements;
@@ -105,12 +88,9 @@ public class ReductionSystem {
         continue;
       }
 
-      if (element instanceof PsiParameter) {
-        final PsiParameter param = (PsiParameter)element;
+      if (element instanceof PsiParameter param) {
         final PsiElement declarationScope = param.getDeclarationScope();
-        if (declarationScope instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)declarationScope;
-
+        if (declarationScope instanceof PsiMethod method) {
           buffer.append("   parameter " + method.getParameterList().getParameterIndex(param) + " of " + memberString(method));
         }
         else {
@@ -366,8 +346,7 @@ public class ReductionSystem {
     if (element instanceof PsiParameter) {
       final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
 
-      if (scope instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)scope;
+      if (scope instanceof PsiMethod method) {
         return "parameter " + (method.getParameterList().getParameterIndex(((PsiParameter)element))) + " of " + method.getName();
       }
     }
@@ -384,8 +363,7 @@ public class ReductionSystem {
 
     class Substitutor {
       PsiType substitute(final PsiType t) {
-        if (t instanceof PsiWildcardType) {
-          final PsiWildcardType wcType = (PsiWildcardType)t;
+        if (t instanceof PsiWildcardType wcType) {
           final PsiType bound = wcType.getBound();
 
           if (bound == null) {

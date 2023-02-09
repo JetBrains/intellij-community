@@ -17,15 +17,13 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.RunConfigurationStartHistory;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunState;
-import com.intellij.execution.ui.RunStatusHistory;
+import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -112,8 +110,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     AnAction toolbarAction;
     AnAction runContextAction;
     AnAction runNonExistingContextAction;
-    if (executor instanceof ExecutorGroup) {
-      ExecutorGroup<?> executorGroup = (ExecutorGroup<?>)executor;
+    if (executor instanceof ExecutorGroup<?> executorGroup) {
       ActionGroup toolbarActionGroup = new SplitButtonAction(new ExecutorGroupActionGroup(executorGroup, ExecutorAction::new));
       Presentation presentation = toolbarActionGroup.getTemplatePresentation();
       presentation.setIcon(executor.getIcon());
@@ -134,17 +131,17 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     AnAction action = registerAction(actionManager, executor.getContextActionId(), runContextAction, myContextActionIdToAction);
     if (isExecutorInMainGroup(executor)) {
-      Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP))
-        .add(action, new Constraints(Anchor.BEFORE, RUN_CONTEXT_GROUP_MORE), actionManager);
+      DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP));
+      ((ActionManagerImpl) actionManager).addToGroup(group, action, new Constraints(Anchor.BEFORE, RUN_CONTEXT_GROUP_MORE));
     }
     else {
-      Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP_MORE))
-        .add(action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"), actionManager);
+      DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP_MORE));
+      ((ActionManagerImpl) actionManager).addToGroup(group, action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"));
     }
 
     AnAction nonExistingAction = registerAction(actionManager, newConfigurationContextActionId(executor), runNonExistingContextAction, myContextActionIdToAction);
-    Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP_MORE))
-      .add(nonExistingAction, new Constraints(Anchor.BEFORE, "CreateNewRunConfiguration"), actionManager);
+    DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP_MORE));
+    ((ActionManagerImpl) actionManager).addToGroup(group, nonExistingAction, new Constraints(Anchor.BEFORE, "CreateNewRunConfiguration"));
 
     initRunToolbarExecutorActions(executor, actionManager);
 
@@ -154,9 +151,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   private synchronized void initRunToolbarExecutorActions(@NotNull Executor executor, @NotNull ActionManager actionManager) {
     if (ToolbarSettings.getInstance().isAvailable()) {
       RunToolbarProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
-        if (executor instanceof ExecutorGroup) {
+        if (executor instanceof ExecutorGroup<?> executorGroup) {
 
-          ExecutorGroup<?> executorGroup = (ExecutorGroup<?>)executor;
           if (process.getShowInBar()) {
             ActionGroup wrappedAction = new RunToolbarExecutorGroupAction(
               new RunToolbarExecutorGroup(executorGroup, (ex) -> new RunToolbarGroupProcessAction(process, ex), process));
@@ -206,7 +202,10 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
   private static void registerActionInGroup(@NotNull ActionManager actionManager, @NotNull String actionId, @NotNull AnAction anAction, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
     AnAction action = registerAction(actionManager, actionId, anAction, map);
-    ((DefaultActionGroup)actionManager.getAction(groupId)).add(action, actionManager);
+    AnAction group = actionManager.getAction(groupId);
+    if (group != null) {
+      ((ActionManagerImpl) actionManager).addToGroup((DefaultActionGroup) group, action, Constraints.LAST);
+    }
   }
 
   private static @NotNull AnAction registerAction(@NotNull ActionManager actionManager,
@@ -256,7 +255,6 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     AnAction action = map.get(actionId);
     if (action != null) {
-      group.remove(action, actionManager);
       actionManager.unregisterAction(actionId);
       map.remove(actionId);
     }
@@ -290,6 +288,14 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       }
     }
   }
+
+  public enum ExecutorActionStatus {
+    NORMAL,
+    LOADING,
+    RUNNING
+  }
+
+  public static final Key<ExecutorActionStatus> EXECUTOR_ACTION_STATUS = Key.create("EXECUTOR_ACTION_STATUS");
 
   public static class ExecutorAction extends AnAction implements DumbAware {
     private static final Key<RunCurrentFileInfo> CURRENT_FILE_RUN_CONFIGS_KEY = Key.create("CURRENT_FILE_RUN_CONFIGS");
@@ -330,13 +336,14 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         }
 
         // We can consider to add spinning to the inlined run actions. But there is a problem with redrawing
-        if (ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
+        if (ActionPlaces.NEW_UI_RUN_TOOLBAR.equals(e.getPlace())) {
           RunStatusHistory startHistory = RunStatusHistory.getInstance(project);
 
           boolean isLoading = startHistory.firstOrNull(selectedSettings, it ->
             (it.getExecutorId().equals(myExecutor.getId()) && it.getState() == RunState.SCHEDULED)
           ) != null;
           if (isLoading) {
+            presentation.putClientProperty(EXECUTOR_ACTION_STATUS, ExecutorActionStatus.LOADING);
             SpinningProgressIcon spinningIcon = presentation.getClientProperty(spinningIconKey);
             if (spinningIcon == null) {
               spinningIcon = new SpinningProgressIcon();
@@ -345,12 +352,18 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
             }
             presentation.setDisabledIcon(spinningIcon);
           } else {
+            if (!getRunningDescriptors(project, selectedSettings).isEmpty()) {
+              presentation.putClientProperty(EXECUTOR_ACTION_STATUS, ExecutorActionStatus.RUNNING);
+            }
+            else {
+              presentation.putClientProperty(EXECUTOR_ACTION_STATUS, ExecutorActionStatus.NORMAL);
+            }
             presentation.putClientProperty(spinningIconKey, null);
             presentation.setDisabledIcon(null);
           }
         }
 
-        presentation.setIcon(getInformativeIcon(project, selectedSettings));
+        presentation.setIcon(getInformativeIcon(project, selectedSettings, e));
         RunConfiguration configuration = selectedSettings.getConfiguration();
         if (!isSuppressed(project)) {
           if (configuration instanceof CompoundRunConfiguration) {
@@ -425,7 +438,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
           return RunCurrentFileActionStatus.createDisabled(tooltip, myExecutor.getIcon());
         }
 
-        return getRunCurrentFileActionStatus(psiFile, resetCache);
+        return getRunCurrentFileActionStatus(psiFile, resetCache, e);
       }
 
       Editor editor = e.getData(CommonDataKeys.EDITOR);
@@ -442,10 +455,11 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         return RunCurrentFileActionStatus.createDisabled(tooltip, myExecutor.getIcon());
       }
 
-      return getRunCurrentFileActionStatus(psiFile, resetCache);
+      return getRunCurrentFileActionStatus(psiFile, resetCache, e);
     }
 
-    private @NotNull RunCurrentFileActionStatus getRunCurrentFileActionStatus(@NotNull PsiFile psiFile, boolean resetCache) {
+    private @NotNull RunCurrentFileActionStatus getRunCurrentFileActionStatus(@NotNull PsiFile psiFile, boolean resetCache,
+                                                                              @NotNull AnActionEvent e) {
       List<RunnerAndConfigurationSettings> runConfigs = getRunConfigsForCurrentFile(psiFile, resetCache);
       if (runConfigs.isEmpty()) {
         String tooltip = ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.not.runnable");
@@ -459,14 +473,14 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
       Icon icon = myExecutor.getIcon();
       if (runnableConfigs.size() == 1) {
-        icon = getInformativeIcon(psiFile.getProject(), runnableConfigs.get(0));
+        icon = getInformativeIcon(psiFile.getProject(), runnableConfigs.get(0), e);
       }
       else {
         // myExecutor.getIcon() is the least preferred icon
         // AllIcons.Actions.Restart is more preferred
         // Other icons are the most preferred ones (like ExecutionUtil.getLiveIndicator())
         for (RunnerAndConfigurationSettings config : runnableConfigs) {
-          Icon anotherIcon = getInformativeIcon(psiFile.getProject(), config);
+          Icon anotherIcon = getInformativeIcon(psiFile.getProject(), config, e);
           if (icon == myExecutor.getIcon() || (anotherIcon != myExecutor.getIcon() && anotherIcon != AllIcons.Actions.Restart)) {
             icon = anotherIcon;
           }
@@ -532,10 +546,10 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       return false;
     }
 
-    protected Icon getInformativeIcon(@NotNull Project project, @NotNull RunnerAndConfigurationSettings selectedConfiguration) {
+    protected Icon getInformativeIcon(@NotNull Project project, @NotNull RunnerAndConfigurationSettings selectedConfiguration,
+                                      @NotNull AnActionEvent e) {
       RunConfiguration configuration = selectedConfiguration.getConfiguration();
-      if (configuration instanceof RunnerIconProvider) {
-        RunnerIconProvider provider = (RunnerIconProvider)configuration;
+      if (configuration instanceof RunnerIconProvider provider) {
         Icon icon = provider.getExecutorIcon(configuration, myExecutor);
         if (icon != null) {
           return icon;
@@ -560,7 +574,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         return ExecutionUtil.getLiveIndicator(myExecutor.getIcon());
       }
       else {
-        return IconUtil.addText(myExecutor.getIcon(), Integer.toString(runningDescriptors.size()));
+        return IconUtil.addText(myExecutor.getIcon(), RunToolbarWidgetKt.runCounterToString(e, runningDescriptors.size()));
       }
     }
 
@@ -688,7 +702,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         Presentation presentation = e.getPresentation();
         presentation.setText(ExecutionBundle.message("choose.run.popup.edit"));
         presentation.setDescription(ExecutionBundle.message("choose.run.popup.edit.description"));
-        presentation.setIcon(AllIcons.Actions.EditSource);
+        presentation.setIcon(!ExperimentalUI.isNewUI() ? AllIcons.Actions.EditSource : null);
       }
     }
 

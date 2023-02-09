@@ -39,7 +39,7 @@ class XmlTagTreeHighlightingConfigurable : UiDslUnnamedConfigurable.Simple() {
       indent {
         row(XmlBundle.message("settings.levels.to.highlight")) {
           spinner(1..50)
-            .bindIntValue({ options.tagTreeHighlightingLevelCount }, { options.tagTreeHighlightingLevelCount = it })
+            .bindIntValue(options::getTagTreeHighlightingLevelCount, options::setTagTreeHighlightingLevelCount)
             .onApply { clearTagTreeHighlighting() }
             .align(AlignX.FILL)
           cell()

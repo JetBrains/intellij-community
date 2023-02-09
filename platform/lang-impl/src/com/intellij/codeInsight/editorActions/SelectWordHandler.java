@@ -2,7 +2,6 @@
 
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.Language;
@@ -30,6 +29,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -216,14 +216,9 @@ public class SelectWordHandler extends EditorActionHandler.ForEachCaret {
 
   private static boolean isLanguageExtension(@NotNull final PsiFile file, @NotNull final PsiElement elementAt) {
     final Language elementLanguage = elementAt.getLanguage();
-    if (file.getLanguage() instanceof CompositeLanguage) {
-      CompositeLanguage compositeLanguage = (CompositeLanguage) file.getLanguage();
+    if (file.getLanguage() instanceof CompositeLanguage compositeLanguage) {
       final Language[] extensions = compositeLanguage.getLanguageExtensionsForFile(file);
-      for(Language extension: extensions) {
-        if (extension == elementLanguage) {
-          return true;
-        }
-      }
+      return ArrayUtil.contains(elementLanguage, extensions);
     }
     return false;
   }

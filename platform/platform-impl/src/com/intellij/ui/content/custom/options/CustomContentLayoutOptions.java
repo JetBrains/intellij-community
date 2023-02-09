@@ -1,6 +1,7 @@
 package com.intellij.ui.content.custom.options;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Experimental
@@ -19,7 +20,7 @@ public interface CustomContentLayoutOptions {
 
   void onHide();
 
-  @NotNull
+  @NotNull @Nls
   String getDisplayName();
 
   boolean isHideOptionVisible();

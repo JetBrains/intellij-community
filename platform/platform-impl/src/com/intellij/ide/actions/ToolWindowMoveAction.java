@@ -1,20 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.FusAwareAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowInfo;
-import com.intellij.openapi.wm.impl.ToolWindowMoveToAction;
+import com.intellij.openapi.wm.impl.SquareStripeButton;
+import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nls;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -38,14 +38,14 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
       String bottom = UIBundle.message("tool.window.move.to.bottom.action.name");
       String right = UIBundle.message("tool.window.move.to.right.action.name");
       return switch (this) {
-        case LeftTop -> left + " " + top;
-        case BottomLeft -> ExperimentalUI.isNewUI() ? left + " " + bottom : bottom + " " + left;
-        case BottomRight -> ExperimentalUI.isNewUI() ? right + " " + bottom : bottom + " " + right;
-        case RightTop -> right + " " + top;
-        case LeftBottom -> ExperimentalUI.isNewUI() ? bottom + " " + left : left + " " + bottom;
-        case RightBottom -> ExperimentalUI.isNewUI() ? bottom + " " + right : right + " " + bottom;
-        case TopRight -> top + " " + right;
-        case TopLeft -> top + " " + left;
+        case LeftTop     -> left   + " " + top;
+        case BottomLeft  -> bottom + " " + left;
+        case BottomRight -> bottom + " " + right;
+        case RightTop    -> right  + " " + top;
+        case LeftBottom  -> left   + " " + bottom;
+        case RightBottom -> right  + " " + bottom;
+        case TopRight    -> top    + " " + right;
+        case TopLeft     -> top    + " " + left;
       };
     }
 
@@ -98,8 +98,17 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     }
 
     public void applyTo(@NotNull ToolWindow window) {
-      window.setAnchor(getAnchor(), null);
-      window.setSplitMode(isSplit(), null);
+      applyTo(window, -1);
+    }
+
+    public void applyTo(@NotNull ToolWindow window, int order) {
+      if (window instanceof ToolWindowImpl toolWindow) {
+        toolWindow.setSideToolAndAnchor(getAnchor(), isSplit(), order);
+      }
+      else {
+        window.setAnchor(getAnchor(), null);
+        window.setSplitMode(isSplit(), null);
+      }
     }
   }
 
@@ -119,6 +128,11 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     ToolWindow window = e.getData(PlatformDataKeys.TOOL_WINDOW);
     if (window != null) {
       return window;
+    }
+
+    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    if (component instanceof SquareStripeButton) {
+      return ((SquareStripeButton)component).getToolWindow();
     }
 
     String id = manager.getActiveToolWindowId();
@@ -162,36 +176,25 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     return Collections.emptyList();
   }
 
-  public static final class Group extends DefaultActionGroup {
-    private boolean isInitialized = false;
+  public static class Group extends DefaultActionGroup implements DumbAware {
     public Group() {
       super(UIBundle.messagePointer("tool.window.move.to.action.group.name"), true);
+      addAll(generateActions());
     }
 
-    @Override
-    public boolean isDumbAware() {
-      return true;
+    protected @NotNull List<? extends AnAction> generateActions() {
+      return Arrays.stream(Anchor.values())
+        .filter(x -> isAllowed(x))
+        .map(x -> new ToolWindowMoveAction(x))
+        .toList();
     }
 
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      if (!isInitialized) {
-        if (ExperimentalUI.isNewUI()) {
-          addAll(new ToolWindowMoveToAction.Group().getChildren(e));
-        }
-        else {
-          for (Anchor anchor : Anchor.values()) {
-            add(new ToolWindowMoveAction(anchor));
-          }
-        }
-        isInitialized = true;
+    protected boolean isAllowed(Anchor anchor) {
+      if (ExperimentalUI.isNewUI()) {
+        return anchor != Anchor.TopLeft && anchor != Anchor.TopRight;
       }
-      super.update(e);
-    }
 
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return true;
     }
   }
 }

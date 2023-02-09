@@ -73,12 +73,12 @@ abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
             val (managerClassFiles, managerSourceFiles) = getDependenciesFromManager(ktsFile)
             val (sdkClasses, sdkSources) = getSdkDependencies(ktsFile)
 
-            val entityStorage = WorkspaceModel.getInstance(myProject).entityStorage.current
+            val entityStorage = WorkspaceModel.getInstance(myProject).currentSnapshot
             val scriptEntity = entityStorage.entities(KotlinScriptEntity::class.java).find { it.path.contains(fileName) }
                 ?: error("Workspace model is unaware of script $fileName")
 
-            val entityClassFiles = scriptEntity.listDependencies(KotlinScriptLibraryRootTypeId.COMPILED)
-            val entitySourceFiles = scriptEntity.listDependencies(KotlinScriptLibraryRootTypeId.SOURCES)
+            val entityClassFiles = scriptEntity.listDependencies(myProject, KotlinScriptLibraryRootTypeId.COMPILED)
+            val entitySourceFiles = scriptEntity.listDependencies(myProject, KotlinScriptLibraryRootTypeId.SOURCES)
 
             assertEquals("Class dependencies for $fileName are not equivalent", entityClassFiles, managerClassFiles + sdkClasses)
             assertEquals("Source dependencies for $fileName are not equivalent", entitySourceFiles, managerSourceFiles + sdkSources)

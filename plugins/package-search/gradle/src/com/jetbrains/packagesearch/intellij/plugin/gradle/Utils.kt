@@ -16,33 +16,51 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.gradle
 
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
-import kotlinx.coroutines.CoroutineScope
+import com.jetbrains.packagesearch.intellij.plugin.gradle.tooling.GradleConfigurationReportModel
+import kotlinx.serialization.Serializable
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 internal fun StringBuilder.appendEscapedToRegexp(text: String) =
     StringUtil.escapeToRegexp(text, this)
 
 val BuildSystemType.Companion.GRADLE_GROOVY
-    get() = BuildSystemType(
-        name = "GRADLE", language = "groovy", dependencyAnalyzerKey = GradleConstants.SYSTEM_ID,
-        statisticsKey = "gradle-groovy"
-    )
+    get() = BuildSystemType(name = "GRADLE", language = "groovy", dependencyAnalyzerKey = GradleConstants.SYSTEM_ID)
+
 val BuildSystemType.Companion.GRADLE_KOTLIN
-    get() = BuildSystemType(
-        name = "GRADLE", language = "kotlin", dependencyAnalyzerKey = GradleConstants.SYSTEM_ID,
-        statisticsKey = "gradle-kts"
-    )
+    get() = BuildSystemType(name = "GRADLE", language = "kotlin", dependencyAnalyzerKey = GradleConstants.SYSTEM_ID)
 
 // for gradle modules which only contain another gradle modules (in other words,for modules without its own build file)
 val BuildSystemType.Companion.GRADLE_CONTAINER
-    get() = BuildSystemType(
-        name = "GRADLE", language = "any", dependencyAnalyzerKey = GradleConstants.SYSTEM_ID,
-        statisticsKey = "gradle"
+    get() = BuildSystemType(name = "GRADLE", language = "any", dependencyAnalyzerKey = GradleConstants.SYSTEM_ID)
+
+internal fun GradleConfigurationReportModel.toPublic() = PublicGradleConfigurationReportModel(
+    projectDir,
+    configurations.map {
+        PublicGradleConfigurationReportModel.Configuration(
+            it.name,
+            it.dependencies.map { PublicGradleConfigurationReportModel.Dependency(it.groupId, it.artifactId, it.version) }
+        )
+    }
+)
+
+@Serializable
+data class PublicGradleConfigurationReportModel(
+    val projectDir: String,
+    val configurations: List<Configuration>
+) {
+
+    @Serializable
+    data class Configuration(
+        val name: String,
+        val dependencies: List<Dependency>
     )
 
-internal val Project.lifecycleScope: CoroutineScope
-    get() = service<PackageSearchGradleLifecycleScope>()
+    @Serializable
+    data class Dependency(
+        val groupId: String,
+        val artifactId: String,
+        val version: String
+    )
+}

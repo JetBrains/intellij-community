@@ -3,15 +3,12 @@ package com.intellij.dependencytoolwindow
 
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ProducerScope
@@ -37,26 +34,10 @@ val <T : Any> ExtensionPointName<T>.extensionsFlow: Flow<List<T>>
     awaitClose { removeExtensionPointListener(listener) }
   }
 
-@Service(Service.Level.PROJECT)
-internal class DependencyToolwindowLifecycleScope : CoroutineScope, Disposable {
+internal fun Project.onDispose(action: () -> Unit) =
+  Disposer.register(this, action)
 
-  val dispatcher = AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()
-
-  override val coroutineContext =
-    SupervisorJob() + CoroutineName(this::class.qualifiedName!!) + dispatcher
-
-  override fun dispose() {
-    cancel("Disposing ${this::class.simpleName}")
-  }
-}
-
-internal val Project.lifecycleScope: DependencyToolwindowLifecycleScope
-  get() = service()
-
-internal val Project.contentIdMap
-  get() = service<ContentIdMapService>().idMap.value
-
-fun <L : Any, K> Project.messageBusFlow(
+internal fun <L : Any, K> Project.messageBusFlow(
   topic: Topic<L>,
   initialValue: (suspend () -> K)? = null,
   listener: suspend ProducerScope<K>.() -> L

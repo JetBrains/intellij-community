@@ -56,6 +56,9 @@ public abstract class LafManager {
 
   public abstract void setPreferredLightLaf(@NotNull UIManager.LookAndFeelInfo value);
 
+  @ApiStatus.Internal
+  public void applyDensity() { }
+
   /**
    * @deprecated Use {@link LafManagerListener#TOPIC}
    */

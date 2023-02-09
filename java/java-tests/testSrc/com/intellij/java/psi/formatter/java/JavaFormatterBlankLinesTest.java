@@ -17,8 +17,6 @@ package com.intellij.java.psi.formatter.java;
 
 /**
  * Is intended to hold specific java formatting tests for 'blank lines' settings.
- *
- * @author Denis Zhdanov
  */
 public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix;
 
@@ -920,6 +920,26 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/changeSignature/jk/jkAddSecondaryConstructorParameter.before.Main.java");
             }
 
+            @TestMetadata("jkAddSuperPrimaryConstructorParameter.before.Main.java")
+            public void testJkAddSuperPrimaryConstructorParameter() throws Exception {
+                runTest("testData/quickfix/changeSignature/jk/jkAddSuperPrimaryConstructorParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkAddSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java")
+            public void testJkAddSuperPrimaryConstructorParameterOnUnresolvedCall() throws Exception {
+                runTest("testData/quickfix/changeSignature/jk/jkAddSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java");
+            }
+
+            @TestMetadata("jkAddSuperSecondaryConstructor.before.Main.java")
+            public void testJkAddSuperSecondaryConstructor() throws Exception {
+                runTest("testData/quickfix/changeSignature/jk/jkAddSuperSecondaryConstructor.before.Main.java");
+            }
+
+            @TestMetadata("jkAddSuperSecondaryConstructorOnUnresolvedCall.before.Main.java")
+            public void testJkAddSuperSecondaryConstructorOnUnresolvedCall() throws Exception {
+                runTest("testData/quickfix/changeSignature/jk/jkAddSuperSecondaryConstructorOnUnresolvedCall.before.Main.java");
+            }
+
             @TestMetadata("jkChangeFunctionParameter.before.Main.java")
             public void testJkChangeFunctionParameter() throws Exception {
                 runTest("testData/quickfix/changeSignature/jk/jkChangeFunctionParameter.before.Main.java");
@@ -933,6 +953,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("jkChangeSecondaryConstructorParameter.before.Main.java")
             public void testJkChangeSecondaryConstructorParameter() throws Exception {
                 runTest("testData/quickfix/changeSignature/jk/jkChangeSecondaryConstructorParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkChangeSuperPrimaryConstructorParameter.before.Main.java")
+            public void testJkChangeSuperPrimaryConstructorParameter() throws Exception {
+                runTest("testData/quickfix/changeSignature/jk/jkChangeSuperPrimaryConstructorParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkChangeSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java")
+            public void testJkChangeSuperPrimaryConstructorParameterOnUnresolvedCall() throws Exception {
+                runTest("testData/quickfix/changeSignature/jk/jkChangeSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java");
             }
 
             @TestMetadata("jkKeepValOnAddingParameter1.before.Main.java")
@@ -963,6 +993,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("jkRemoveSecondaryConstructorParameter.before.Main.java")
             public void testJkRemoveSecondaryConstructorParameter() throws Exception {
                 runTest("testData/quickfix/changeSignature/jk/jkRemoveSecondaryConstructorParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkRemoveSuperPrimaryConstructorParameter.before.Main.java")
+            public void testJkRemoveSuperPrimaryConstructorParameter() throws Exception {
+                runTest("testData/quickfix/changeSignature/jk/jkRemoveSuperPrimaryConstructorParameter.before.Main.java");
+            }
+
+            @TestMetadata("jkRemoveSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java")
+            public void testJkRemoveSuperPrimaryConstructorParameterOnUnresolvedCall() throws Exception {
+                runTest("testData/quickfix/changeSignature/jk/jkRemoveSuperPrimaryConstructorParameterOnUnresolvedCall.before.Main.java");
             }
         }
 

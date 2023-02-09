@@ -1,4 +1,4 @@
-// "Replace with toArray" "true-preview"
+// "Collapse loop with stream 'toArray()'" "true-preview"
 import java.util.*;
 
 public class Main {

@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
-import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
@@ -32,10 +32,8 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.isOneSegmentFQN
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
-import org.jetbrains.kotlin.util.OperatorNameConventions
 
 class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
     override fun bindToElement(ktReference: KtReference, element: PsiElement): PsiElement = when (ktReference) {
@@ -91,34 +89,11 @@ class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
         }
     }
 
-    override fun KtArrayAccessReference.renameTo(newElementName: String): KtExpression {
-        return renameImplicitConventionalCall(newElementName)
-    }
-
     override fun KDocReference.renameTo(newElementName: String): PsiElement? {
         val textRange = element.getNameTextRange()
         val newText = textRange.replace(element.text, newElementName)
         val newLink = KDocElementFactory(element.project).createNameFromText(newText)
         return element.replace(newLink)
-    }
-
-    override fun KtInvokeFunctionReference.renameTo(newElementName: String): PsiElement {
-        val callExpression = expression
-        val fullCallExpression = callExpression.getQualifiedExpressionForSelectorOrThis()
-        if (newElementName == OperatorNameConventions.GET.asString() && callExpression.typeArguments.isEmpty()) {
-            val arrayAccessExpression = KtPsiFactory(callExpression.project).buildExpression {
-                if (fullCallExpression is KtQualifiedExpression) {
-                    appendExpression(fullCallExpression.receiverExpression)
-                    appendFixedText(fullCallExpression.operationSign.value)
-                }
-                appendExpression(callExpression.calleeExpression)
-                appendFixedText("[")
-                appendExpressions(callExpression.valueArguments.map { it.getArgumentExpression() })
-                appendFixedText("]")
-            }
-            return fullCallExpression.replace(arrayAccessExpression)
-        }
-        return renameImplicitConventionalCall(newElementName)
     }
 
     override fun SyntheticPropertyAccessorReference.renameTo(newElementName: String): KtElement? {
@@ -215,9 +190,6 @@ class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
         )
         return expression.replaced(newArgument)
     }
-
-    override fun convertOperatorToFunctionCall(opExpression: KtOperationExpression): Pair<KtExpression, KtSimpleNameExpression> =
-      OperatorToFunctionIntention.convert(opExpression)
 
     private fun KtExpression.createCall(
       psiFactory: KtPsiFactory,
@@ -321,21 +293,15 @@ class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
             ?: error("No selector for $newElement")
         return selector as KtNameReferenceExpression
     }
-}
 
-internal fun AbstractKtReference<out KtExpression>.renameImplicitConventionalCall(newName: String): KtExpression {
-    val (newExpression, newNameElement) = OperatorToFunctionIntention.convert(expression)
-    if (OperatorNameConventions.INVOKE.asString() == newName && newExpression is KtDotQualifiedExpression) {
+    override fun replaceWithImplicitInvokeInvocation(newExpression: KtDotQualifiedExpression): KtExpression? {
         val canMoveLambda = newExpression.getPossiblyQualifiedCallExpression()?.canMoveLambdaOutsideParentheses() == true
-        OperatorToFunctionIntention.replaceExplicitInvokeCallWithImplicit(newExpression)?.let { newQualifiedExpression ->
+        return OperatorToFunctionConverter.replaceExplicitInvokeCallWithImplicit(newExpression)?.let { newQualifiedExpression ->
             newQualifiedExpression.getPossiblyQualifiedCallExpression()
                 ?.takeIf { canMoveLambda }
                 ?.let(KtCallExpression::moveFunctionLiteralOutsideParentheses)
 
-            return newQualifiedExpression
+            newQualifiedExpression
         }
     }
-
-    newNameElement.mainReference.handleElementRename(newName)
-    return newExpression
 }

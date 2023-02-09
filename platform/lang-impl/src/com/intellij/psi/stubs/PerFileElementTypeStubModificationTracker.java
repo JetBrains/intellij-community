@@ -7,9 +7,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.StubFileElementType;
@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -95,8 +94,8 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
         }
         continue;
       }
-      Project project = ProjectLocator.getInstance().guessProjectForFile(file);
-      if (project != null && project.isDisposed()) continue;
+      Project project = ((FileBasedIndexImpl)FileBasedIndex.getInstance()).findProjectForFileId(((VirtualFileWithId)file).getId());
+      if (project == null || project.isDisposed()) continue;
       IndexedFile indexedFile = new IndexedFileImpl(file, project);
       var current = determineCurrentFileElementType(indexedFile);
       var beforeSuitableTypes = determinePreviousFileElementType(FileBasedIndex.getFileId(file), myStubUpdatingIndexStorage.getValue());
@@ -171,9 +170,10 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     }
     PsiFile psi = PsiDocumentManager.getInstance(info.project).getPsiFile(doc);
     DocumentContent content = FileBasedIndexImpl.findLatestContent(doc, psi);
-    return FileContentImpl.createByContent(info.file, () -> {
+    var file = info.file;
+    return FileContentImpl.createByContent(file, () -> {
       var text = content.getText();
-      return text.toString().getBytes(StandardCharsets.UTF_8);
+      return text.toString().getBytes(file.getCharset());
     }, info.project);
   }
 

@@ -12,7 +12,8 @@ _Schema: TypeAlias = Mapping[str, Any]
 class _Validator:
     VALIDATORS: ClassVar[dict[Any, Any]]
     META_SCHEMA: ClassVar[dict[Any, Any]]
-    TYPE_CHECKER: Any
+    TYPE_CHECKER: ClassVar[Any]
+    FORMAT_CHECKER: ClassVar[Any]
     @staticmethod
     def ID_OF(schema: _Schema) -> str: ...
     schema: _Schema
@@ -32,9 +33,17 @@ class _Validator:
 
 def validates(version: str) -> Callable[..., Any]: ...
 def create(
-    meta_schema, validators=..., version: Any | None = ..., type_checker=..., id_of=..., applicable_validators=...
+    meta_schema,
+    validators=...,
+    version: Any | None = ...,
+    type_checker=...,
+    format_checker=...,
+    id_of=...,
+    applicable_validators=...,
 ) -> type[_Validator]: ...
-def extend(validator, validators=..., version: Any | None = ..., type_checker: Any | None = ...): ...
+def extend(
+    validator, validators=..., version: Any | None = ..., type_checker: Any | None = ..., format_checker: Any | None = ...
+): ...
 
 # At runtime these are fields that are assigned the return values of create() calls.
 class Draft3Validator(_Validator): ...

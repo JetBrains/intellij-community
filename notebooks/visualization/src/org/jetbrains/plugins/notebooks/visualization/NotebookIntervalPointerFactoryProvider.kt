@@ -1,12 +1,13 @@
 package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.lang.LanguageExtension
-import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.project.Project
 
 private const val ID: String = "org.jetbrains.plugins.notebooks.notebookIntervalPointerFactoryProvider"
 
 interface NotebookIntervalPointerFactoryProvider {
-  fun create(editor: Editor): NotebookIntervalPointerFactory
+  fun create(project: Project, document: Document): NotebookIntervalPointerFactory
 
   companion object : LanguageExtension<NotebookIntervalPointerFactoryProvider>(ID)
 }

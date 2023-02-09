@@ -29,9 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * Author: Alexey.Ivanov
- */
 public class PyParameterListFixer extends PyFixer<PyParameterList> {
   public PyParameterListFixer() {
     super(PyParameterList.class);

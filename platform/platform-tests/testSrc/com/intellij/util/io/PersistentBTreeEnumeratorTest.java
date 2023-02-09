@@ -201,10 +201,10 @@ public class PersistentBTreeEnumeratorTest {
 
     // ensure enumerator didn't request any page
 
-    int pageLoadDiff = statsAfter.getPageLoad() - statsBefore.getPageLoad();
-    int pageMissDiff = statsAfter.getPageMiss() - statsBefore.getPageMiss();
-    int pageHitDiff = statsAfter.getPageHit() - statsBefore.getPageHit();
-    int pageFastHitDiff = statsAfter.getPageFastCacheHit() - statsBefore.getPageFastCacheHit();
+    int pageLoadDiff = statsAfter.getRegularPageLoads() - statsBefore.getRegularPageLoads();
+    int pageMissDiff = statsAfter.getPageLoadsAboveSizeThreshold() - statsBefore.getPageLoadsAboveSizeThreshold();
+    int pageHitDiff = statsAfter.getPageHits() - statsBefore.getPageHits();
+    int pageFastHitDiff = statsAfter.getPageFastCacheHits() - statsBefore.getPageFastCacheHits();
 
     assertEquals(0, pageLoadDiff);
     assertEquals(0, pageMissDiff);
@@ -244,10 +244,10 @@ public class PersistentBTreeEnumeratorTest {
 
     // ensure enumerator didn't request any page
 
-    int pageLoadDiff = statsAfter.getPageLoad() - statsBefore.getPageLoad();
-    int pageMissDiff = statsAfter.getPageMiss() - statsBefore.getPageMiss();
-    int pageHitDiff = statsAfter.getPageHit() - statsBefore.getPageHit();
-    int pageFastHitDiff = statsAfter.getPageFastCacheHit() - statsBefore.getPageFastCacheHit();
+    int pageLoadDiff = statsAfter.getRegularPageLoads() - statsBefore.getRegularPageLoads();
+    int pageMissDiff = statsAfter.getPageLoadsAboveSizeThreshold() - statsBefore.getPageLoadsAboveSizeThreshold();
+    int pageHitDiff = statsAfter.getPageHits() - statsBefore.getPageHits();
+    int pageFastHitDiff = statsAfter.getPageFastCacheHits() - statsBefore.getPageFastCacheHits();
 
     assertEquals(1, pageLoadDiff);
     assertEquals(0, pageMissDiff);
@@ -273,10 +273,10 @@ public class PersistentBTreeEnumeratorTest {
     // ensure we don't cache anything
     StorageLockContext.assertNoBuffersLocked();
 
-    int pageLoadDiff = statsAfter.getPageLoad() - statsBefore.getPageLoad();
-    int pageMissDiff = statsAfter.getPageMiss() - statsBefore.getPageMiss();
-    int pageHitDiff = statsAfter.getPageHit() - statsBefore.getPageHit();
-    int pageFastHitDiff = statsAfter.getPageFastCacheHit() - statsBefore.getPageFastCacheHit();
+    int pageLoadDiff = statsAfter.getRegularPageLoads() - statsBefore.getRegularPageLoads();
+    int pageMissDiff = statsAfter.getPageLoadsAboveSizeThreshold() - statsBefore.getPageLoadsAboveSizeThreshold();
+    int pageHitDiff = statsAfter.getPageHits() - statsBefore.getPageHits();
+    int pageFastHitDiff = statsAfter.getPageFastCacheHits() - statsBefore.getPageFastCacheHits();
 
     assertEquals(3, pageLoadDiff);
     assertEquals(0, pageMissDiff);
@@ -307,9 +307,9 @@ public class PersistentBTreeEnumeratorTest {
 
     // ensure enumerator didn't request any page
 
-    int pageLoadDiff = statsAfter.getPageLoad() - statsBefore.getPageLoad();
-    int pageMissDiff = statsAfter.getPageMiss() - statsBefore.getPageMiss();
-    int pageHitDiff = statsAfter.getPageHit() - statsBefore.getPageHit();
+    int pageLoadDiff = statsAfter.getRegularPageLoads() - statsBefore.getRegularPageLoads();
+    int pageMissDiff = statsAfter.getPageLoadsAboveSizeThreshold() - statsBefore.getPageLoadsAboveSizeThreshold();
+    int pageHitDiff = statsAfter.getPageHits() - statsBefore.getPageHits();
 
     assertEquals(4, pageLoadDiff);
     assertEquals(0, pageMissDiff);

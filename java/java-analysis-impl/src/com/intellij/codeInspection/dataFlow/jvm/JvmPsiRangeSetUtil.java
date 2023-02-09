@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -20,7 +20,7 @@ import java.util.Objects;
 /**
  * Utility methods to use {@link LongRangeSet} in JVM.
  */
-public class JvmPsiRangeSetUtil {
+public final class JvmPsiRangeSetUtil {
   private static final LongRangeSet BYTE_RANGE = LongRangeSet.range(Byte.MIN_VALUE, Byte.MAX_VALUE);
   private static final LongRangeSet CHAR_RANGE = LongRangeSet.range(Character.MIN_VALUE, Character.MAX_VALUE);
   private static final LongRangeSet SHORT_RANGE = LongRangeSet.range(Short.MIN_VALUE, Short.MAX_VALUE);
@@ -108,22 +108,22 @@ public class JvmPsiRangeSetUtil {
     if (!TypeConversionUtil.isIntegralNumberType(type)) {
       throw new IllegalArgumentException(type.toString());
     }
-    if (type.equals(PsiType.LONG)) return range;
+    if (type.equals(PsiTypes.longType())) return range;
     if (range.isEmpty()) return range;
     Long value = range.getConstantValue();
     if (value != null) {
       long point = value;
       long newValue;
-      if (PsiType.CHAR.equals(type)) {
+      if (PsiTypes.charType().equals(type)) {
         newValue = (char)point;
       }
-      else if (PsiType.INT.equals(type)) {
+      else if (PsiTypes.intType().equals(type)) {
         newValue = (int)point;
       }
-      else if (PsiType.SHORT.equals(type)) {
+      else if (PsiTypes.shortType().equals(type)) {
         newValue = (short)point;
       }
-      else if (PsiType.BYTE.equals(type)) {
+      else if (PsiTypes.byteType().equals(type)) {
         newValue = (byte)point;
       }
       else {
@@ -139,22 +139,22 @@ public class JvmPsiRangeSetUtil {
   }
 
   private static @NotNull LongRangeSet castContinuousRange(@NotNull LongRangeSet range, @NotNull PsiPrimitiveType type) {
-    if (PsiType.BYTE.equals(type)) {
+    if (PsiTypes.byteType().equals(type)) {
       LongRangeSet result = mask(range, Byte.SIZE, type);
       assert BYTE_RANGE.contains(result) : range;
       return result;
     }
-    if (PsiType.SHORT.equals(type)) {
+    if (PsiTypes.shortType().equals(type)) {
       LongRangeSet result = mask(range, Short.SIZE, type);
       assert SHORT_RANGE.contains(result) : range;
       return result;
     }
-    if (PsiType.INT.equals(type)) {
+    if (PsiTypes.intType().equals(type)) {
       LongRangeSet result = mask(range, Integer.SIZE, type);
       assert INT_RANGE.contains(result) : range;
       return result;
     }
-    if (PsiType.CHAR.equals(type)) {
+    if (PsiTypes.charType().equals(type)) {
       if (range.min() <= Character.MIN_VALUE && range.max() >= Character.MAX_VALUE) return CHAR_RANGE;
       if (range.min() >= Character.MIN_VALUE && range.max() <= Character.MAX_VALUE) return range;
       return range.bitwiseAnd(LongRangeSet.point(0xFFFF));
@@ -198,19 +198,19 @@ public class JvmPsiRangeSetUtil {
           result = result.meet(fromAnnotation(annotation));
         }
       }
-      if (type.equals(PsiType.BYTE)) {
+      if (type.equals(PsiTypes.byteType())) {
         return BYTE_RANGE.meet(result);
       }
-      if (type.equals(PsiType.CHAR)) {
+      if (type.equals(PsiTypes.charType())) {
         return CHAR_RANGE.meet(result);
       }
-      if (type.equals(PsiType.SHORT)) {
+      if (type.equals(PsiTypes.shortType())) {
         return SHORT_RANGE.meet(result);
       }
-      if (type.equals(PsiType.INT)) {
+      if (type.equals(PsiTypes.intType())) {
         return INT_RANGE.meet(result);
       }
-      if (type.equals(PsiType.LONG)) {
+      if (type.equals(PsiTypes.longType())) {
         return result;
       }
     }
@@ -218,10 +218,10 @@ public class JvmPsiRangeSetUtil {
   }
 
   public static @NotNull LongRangeType getLongRangeType(@NotNull PsiType jvmType) {
-    if (jvmType.equals(PsiType.LONG)) {
+    if (jvmType.equals(PsiTypes.longType())) {
       return LongRangeType.INT64;
     }
-    else if (jvmType.equals(PsiType.INT)) {
+    else if (jvmType.equals(PsiTypes.intType())) {
       return LongRangeType.INT32;
     }
     throw new UnsupportedOperationException();

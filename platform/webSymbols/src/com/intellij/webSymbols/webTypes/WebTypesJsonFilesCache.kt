@@ -19,7 +19,7 @@ class WebTypesJsonFilesCache {
 
   companion object {
 
-    const val WEB_TYPES_FILE_SUFFIX = ".web-types.json"
+    private const val WEB_TYPES_FILE_SUFFIX = ".web-types.json"
 
     fun fromUrlNoCache(url: String): WebTypes =
       getWebTypesJson(url).readWebTypes()

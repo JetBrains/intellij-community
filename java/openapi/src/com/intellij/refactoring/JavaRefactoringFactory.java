@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author dsl
- */
 public abstract class JavaRefactoringFactory extends RefactoringFactory {
   public static JavaRefactoringFactory getInstance(Project project) {
     return (JavaRefactoringFactory)project.getService(RefactoringFactory.class);

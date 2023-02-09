@@ -3,6 +3,7 @@ package com.intellij.testFramework
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -10,7 +11,6 @@ import com.intellij.testFramework.common.runAllCatching
 import com.intellij.util.SmartList
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
 import org.jetbrains.annotations.ApiStatus
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -24,6 +24,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.function.Predicate
+import kotlin.io.path.exists
 import kotlin.properties.Delegates
 
 /**
@@ -184,6 +185,10 @@ fun Path.refreshVfs() {
   // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
   val virtualFile = (LocalFileSystem.getInstance() ?: return).refreshAndFindFileByNioFile(this) ?: return
   VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
+}
+
+fun Path.refreshVfs(relativePath: String) {
+  getResolvedPath(relativePath).refreshVfs()
 }
 
 private fun generateName(fileName: String): String {

@@ -20,13 +20,12 @@ class DeclarativeInlayEditorMouseListener : EditorMouseListener {
     val bounds = inlay.bounds ?: return
     val inlayPoint = Point(bounds.x, bounds.y)
     val translated = Point(event.x - inlayPoint.x, event.y - inlayPoint.y)
-    if (isControlDown(event)) {
-      renderer.handleLeftClick(e, translated)
-      return
-    }
     if (SwingUtilities.isRightMouseButton(event) && !SwingUtilities.isLeftMouseButton(event)) {
       renderer.handleRightClick(e)
+      return
     }
+    val controlDown = isControlDown(event)
+    renderer.handleLeftClick(e, translated, controlDown)
   }
 
   private fun isControlDown(e: MouseEvent): Boolean = (SystemInfo.isMac && e.isMetaDown) || e.isControlDown

@@ -18,9 +18,6 @@ package com.intellij.refactoring.util.occurrences;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 
-/**
- * @author dsl
- */
 public interface OccurrenceManager {
   PsiExpression[] getOccurrences();
   boolean isInFinalContext();

@@ -41,7 +41,7 @@ public final class GroovyConsoleRootType extends ConsoleRootType {
   @NotNull
   @Override
   public String getContentPathName(@NotNull String id) {
-    assert id == CONTENT_ID;
+    assert id.equals(CONTENT_ID);
     return CONTENT_ID;
   }
 

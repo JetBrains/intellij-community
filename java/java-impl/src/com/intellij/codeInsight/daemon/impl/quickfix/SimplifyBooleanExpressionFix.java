@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
@@ -76,14 +76,9 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
       if (parent instanceof PsiWhileStatement || parent instanceof PsiForStatement) return true;
       // code like "if (foo || alwaysFalseWithSideEffects) {}"
-      if (parent instanceof PsiPolyadicExpression) {
-        PsiPolyadicExpression polyadic = (PsiPolyadicExpression)parent;
-        if (polyadic.getOperationTokenType().equals(JavaTokenType.OROR)
-            && PsiTreeUtil.isAncestor(ArrayUtil.getLastElement(polyadic.getOperands()), subExpression, false)
-            && PsiUtil.skipParenthesizedExprUp(parent.getParent()) instanceof PsiIfStatement) {
-          return true;
-        }
-      }
+      return parent instanceof PsiPolyadicExpression polyadic && polyadic.getOperationTokenType().equals(JavaTokenType.OROR)
+             && PsiTreeUtil.isAncestor(ArrayUtil.getLastElement(polyadic.getOperands()), subExpression, false)
+             && PsiUtil.skipParenthesizedExprUp(parent.getParent()) instanceof PsiIfStatement;
     }
     return false;
   }
@@ -187,8 +182,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
       // Prevent extracting while condition to internal 'if'
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      if (parent instanceof PsiWhileStatement) {
-        PsiWhileStatement whileStatement = (PsiWhileStatement)parent;
+      if (parent instanceof PsiWhileStatement whileStatement) {
         if (whileStatement.getCondition() != null) {
           PsiStatement replacement =
             factory.createStatementFromText("if(" + whileStatement.getCondition().getText() + ");", whileStatement);
@@ -196,13 +190,11 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
           subExpression = Objects.requireNonNull(ifStatement.getCondition());
         }
       }
-      else if (parent instanceof PsiPolyadicExpression) {
-        PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
-        if (JavaTokenType.OROR.equals(polyadicExpression.getOperationTokenType())) {
-          PsiExpression expression = expandLastIfDisjunct(polyadicExpression, subExpression, factory);
-          if (expression != null) {
-            return expression;
-          }
+      else if (parent instanceof PsiPolyadicExpression polyadicExpression &&
+               JavaTokenType.OROR.equals(polyadicExpression.getOperationTokenType())) {
+        PsiExpression expression = expandLastIfDisjunct(polyadicExpression, subExpression, factory);
+        if (expression != null) {
+          return expression;
         }
       }
     }
@@ -229,7 +221,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
 
   private static boolean simplifyIfOrLoopStatement(final PsiExpression expression) throws IncorrectOperationException {
     boolean condition = Boolean.parseBoolean(expression.getText());
-    if (!(expression instanceof PsiLiteralExpression) || !PsiType.BOOLEAN.equals(expression.getType())) return false;
+    if (!(expression instanceof PsiLiteralExpression) || !PsiTypes.booleanType().equals(expression.getType())) return false;
 
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == expression) {
@@ -288,8 +280,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
     if (parent instanceof PsiCodeBlock && blockAlwaysReturns(statement)) {
       removeFollowingStatements(orig, (PsiCodeBlock)parent);
     }
-    else if (grandParent instanceof PsiCodeBlock && parent instanceof PsiIfStatement) {
-      PsiIfStatement ifStmt = (PsiIfStatement)parent;
+    else if (grandParent instanceof PsiCodeBlock && parent instanceof PsiIfStatement ifStmt) {
       if (ifStmt.getElseBranch() == orig && blockAlwaysReturns(ifStmt.getThenBranch()) && blockAlwaysReturns(statement)) {
         removeFollowingStatements(ifStmt, (PsiCodeBlock)grandParent);
       }
@@ -413,7 +404,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
   }
 
   public static boolean canBeSimplified(@NotNull PsiExpression expression) {
-    if (!(expression instanceof PsiConditionalExpression) && !PsiType.BOOLEAN.equals(expression.getType())) return false;
+    if (!(expression instanceof PsiConditionalExpression) && !PsiTypes.booleanType().equals(expression.getType())) return false;
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiLambdaExpression &&
         !LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)parent, () -> createSimplifiedReplacement(expression))) {

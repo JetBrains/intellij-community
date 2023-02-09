@@ -31,4 +31,8 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
     fun testPropertyAccessorModifierListOffsets() {
         checkPropertyAccessorModifierListOffsets(myFixture)
     }
+
+    fun testThrowsList() {
+        checkThrowsList(myFixture)
+    }
 }

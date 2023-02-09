@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.HttpRequests
-import com.intellij.util.io.exists
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
 import org.jetbrains.annotations.ApiStatus
@@ -20,6 +19,7 @@ import java.net.URLConnection
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.zip.ZipInputStream
+import kotlin.io.path.exists
 
 private val LOG = Logger.getInstance(MarketplacePluginDownloadService::class.java)
 

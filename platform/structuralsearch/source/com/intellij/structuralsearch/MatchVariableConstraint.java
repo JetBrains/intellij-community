@@ -3,7 +3,7 @@ package com.intellij.structuralsearch;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -410,10 +411,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof MatchVariableConstraint)) return false;
+    if (!(o instanceof MatchVariableConstraint other)) return false;
     if (!super.equals(o)) return false;
-
-    final MatchVariableConstraint other = (MatchVariableConstraint)o;
 
     if (exprTypeWithinHierarchy != other.exprTypeWithinHierarchy) return false;
     if (formalArgTypeWithinHierarchy != other.formalArgTypeWithinHierarchy) return false;
@@ -586,8 +585,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     if (!contextConstraint.isEmpty()) element.setAttribute(CONTEXT, contextConstraint);
 
     if (additionalConstraints != null && !additionalConstraints.isEmpty()) {
-      final SmartList<String> list = new SmartList<>(additionalConstraints.keySet());
-      Collections.sort(list);
+      List<String> list = ContainerUtil.sorted(additionalConstraints.keySet());
       for (String key : list) {
         final String value = additionalConstraints.get(key);
         if (value != null) {

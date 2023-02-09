@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import com.intellij.codeInspection.BatchQuickFix;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -28,6 +30,9 @@ import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -36,12 +41,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public class ProtectedMemberInFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    return new InspectionGadgetsFix[] {
+    return new InspectionGadgetsFix[]{
       new WeakenVisibilityFix()
     };
   }
@@ -67,7 +73,15 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
 
     @Override
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      applyFix(project, new CommonProblemDescriptor[] {descriptor}, List.of(), null);
+      PsiElement element = descriptor.getPsiElement();
+      ReadAction.nonBlocking(() -> prepareDataForFix(element))
+        .finishOnUiThread(ModalityState.NON_MODAL, data -> applyInWriteCommand(project, List.of(element), () -> data.apply()))
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
 
     @Override
@@ -75,33 +89,53 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
                          CommonProblemDescriptor @NotNull [] descriptors,
                          @NotNull List<PsiElement> psiElementsToIgnore,
                          @Nullable Runnable refreshViews) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        for (CommonProblemDescriptor descriptor : descriptors) {
-          performFix((ProblemDescriptor)descriptor);
-        }
-      }, InspectionGadgetsBundle.message("weaken.visibility.quickfix"), true, project);
+      List<PsiElement> elements = Stream.of(descriptors).map(d -> ((ProblemDescriptor)d).getPsiElement()).toList();
+      ReadAction.nonBlocking(() -> ContainerUtil.map(elements, WeakenVisibilityFix::prepareDataForFix))
+        .finishOnUiThread(ModalityState.NON_MODAL, data -> {
+          applyInWriteCommand(project, elements, () -> {
+            for (FixData fixData : data) {
+              fixData.apply();
+            }
+          });
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
+
+    private static void applyInWriteCommand(@NotNull Project project, List<PsiElement> elements,
+                                            @NotNull ThrowableRunnable<RuntimeException> action) {
+      WriteCommandAction.writeCommandAction(project, elements)
+        .withName(InspectionGadgetsBundle.message("make.static.quickfix"))
+        .withGlobalUndo()
+        .run(action);
     }
 
     @Override
     public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      performFix(previewDescriptor);
+      FixData data = prepareDataForFix(previewDescriptor.getPsiElement());
+      if (data != null) {
+        data.apply();
+      }
       return IntentionPreviewInfo.DIFF;
     }
 
-    private static void performFix(ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    private static FixData prepareDataForFix(PsiElement element) {
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMember)) return;
-      final PsiMember member = (PsiMember)grandParent;
+      if (!(grandParent instanceof PsiMember member)) return null;
       final PsiModifierList modifierList = member.getModifierList();
-      if (modifierList == null) return;
+      if (modifierList == null) return null;
       final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
       modifierListCopy.setModifierProperty(PsiModifier.PRIVATE, true);
       final boolean canBePrivate = ReferencesSearch.search(member, member.getUseScope()).allMatch(
         reference -> JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, reference.getElement(),
                                                   findAccessObjectClass(reference, member), null));
-      modifierList.setModifierProperty(canBePrivate ? PsiModifier.PRIVATE : PsiModifier.PACKAGE_LOCAL, true);
+      return new FixData(canBePrivate, modifierList);
+    }
+
+    private record FixData(boolean canBePrivate, PsiModifierList modifierList) {
+      void apply() {
+        modifierList.setModifierProperty(canBePrivate ? PsiModifier.PRIVATE : PsiModifier.PACKAGE_LOCAL, true);
+      }
     }
 
     @Nullable

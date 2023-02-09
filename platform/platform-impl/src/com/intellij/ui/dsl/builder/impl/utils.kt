@@ -27,7 +27,14 @@ internal enum class DslComponentPropertyInternal {
    *
    * Value: true
    */
-  CELL_LABEL
+  CELL_LABEL,
+
+  /**
+   * Range of allowed integer values in text fields
+   *
+   * Value: IntRange
+   */
+  INT_TEXT_RANGE
 }
 
 /**
@@ -78,19 +85,18 @@ internal fun prepareVisualPaddings(component: JComponent): Gaps {
 }
 
 internal fun getComponentGaps(left: Int, right: Int, component: JComponent, spacing: SpacingConfiguration): Gaps {
-  val top = getDefaultVerticalGap(component, spacing)
-  val bottom = if (component.getClientProperty(DslComponentProperty.NO_BOTTOM_GAP) == true) 0 else top
-  return Gaps(top = top, left = left, bottom = bottom, right = right)
+  val defaultVerticalGap = if (component is JPanel) 0 else spacing.verticalComponentGap
+  val policy = component.getClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP) as VerticalComponentGap?
+  return Gaps(top = calculateVerticalGap(defaultVerticalGap, spacing, policy?.top), left = left,
+              bottom = calculateVerticalGap(defaultVerticalGap, spacing, policy?.bottom), right = right)
 }
 
-/**
- * Returns default top and bottom gap for [component]
- */
-private fun getDefaultVerticalGap(component: JComponent, spacing: SpacingConfiguration): Int {
-  val noDefaultVerticalGap = component is JPanel
-                             && component.getClientProperty(DslComponentProperty.TOP_BOTTOM_GAP) != true
-
-  return if (noDefaultVerticalGap) 0 else spacing.verticalComponentGap
+private fun calculateVerticalGap(defaultVerticalGap: Int, spacing: SpacingConfiguration, policy: Boolean?): Int {
+  return when (policy) {
+    true -> spacing.verticalComponentGap
+    false -> 0
+    null -> defaultVerticalGap
+  }
 }
 
 internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, action: HyperlinkEventAction): DslLabel {

@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.javabeans;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -26,7 +26,8 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ClassWithoutNoArgConstructorInspection extends BaseInspection {
 
@@ -36,9 +37,9 @@ public class ClassWithoutNoArgConstructorInspection extends BaseInspection {
   public boolean m_ignoreClassesWithNoConstructors = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("class.without.no.arg.constructor.ignore.option"),
-                                          this, "m_ignoreClassesWithNoConstructors");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreClassesWithNoConstructors", InspectionGadgetsBundle.message("class.without.no.arg.constructor.ignore.option")));
   }
 
   @Override

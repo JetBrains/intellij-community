@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
@@ -94,8 +94,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       Disposer.register(this, (Disposable)model);
     }
     foreground = Invoker.forEventDispatchThread(this);
-    if (model instanceof InvokerSupplier) {
-      InvokerSupplier supplier = (InvokerSupplier)model;
+    if (model instanceof InvokerSupplier supplier) {
       background = supplier.getInvoker();
     }
     else {
@@ -544,8 +543,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       Node loaded = new Node(object, LeafState.get(object, model));
       if (loaded.leafState == LeafState.ALWAYS || isObsolete()) return loaded;
 
-      if (model instanceof ChildrenProvider) {
-        ChildrenProvider<?> provider = (ChildrenProvider<?>)model;
+      if (model instanceof ChildrenProvider<?> provider) {
         List<?> children = provider.getChildren(object);
         if (children == null) throw new ProcessCanceledException(); // cancel this command
         loaded.children = load(children.size(), index -> children.get(index));
@@ -693,7 +691,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
   }
 
   private static final class CommandQueue<T extends Command> {
-    private final Deque<T> deque = new ArrayDeque<>();
+    private final Deque<T> deque = new LinkedList<>();
     private volatile boolean closed;
 
     T get() {
@@ -881,7 +879,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     }
 
     private void updatePaths(@NotNull Object oldObject, @NotNull Object newObject) {
-      if (paths.stream().anyMatch(path -> contains(path, oldObject))) {
+      if (ContainerUtil.exists(paths, path -> contains(path, oldObject))) {
         // replace instance of user's object in all internal maps to avoid memory leaks
         List<TreePath> updated = ContainerUtil.map(paths, path -> update(path, oldObject, newObject));
         paths.clear();

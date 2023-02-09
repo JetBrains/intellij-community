@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -29,17 +15,13 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 public class UnwrapElseBranchAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance(UnwrapElseBranchAction.class);
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiElement parent = element.getParent();
-    if (parent instanceof PsiIfStatement) {
-      PsiIfStatement ifStatement = (PsiIfStatement)parent;
+    if (parent instanceof PsiIfStatement ifStatement) {
       PsiStatement elseBranch = ifStatement.getElseBranch();
       PsiElement grandParent = ifStatement.getParent();
       if (elseBranch != null && grandParent != null) {
@@ -61,26 +43,16 @@ public class UnwrapElseBranchAction extends PsiElementBaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (element instanceof PsiKeyword && ((PsiKeyword)element).getTokenType() == JavaTokenType.ELSE_KEYWORD) {
-      PsiElement parent = element.getParent();
-      if (parent instanceof PsiIfStatement) {
-        PsiIfStatement ifStatement = (PsiIfStatement)parent;
-        PsiStatement elseBranch = ifStatement.getElseBranch();
-        if (elseBranch != null) {
-          PsiStatement thenBranch = ifStatement.getThenBranch();
-          boolean thenCompletesNormally = ControlFlowUtils.statementMayCompleteNormally(thenBranch);
-          boolean elseCompletesNormally = ControlFlowUtils.statementMayCompleteNormally(elseBranch);
-          if (!thenCompletesNormally ||
-              elseCompletesNormally ||
-              !nextStatementMayBecomeUnreachable(ifStatement)) {
-            if (thenCompletesNormally) {
-              setText(JavaBundle.message("intention.unwrap.else.branch.changes.semantics"));
-            }
-            else {
-              return false;
-            }
-            return true;
-          }
+    if (element instanceof PsiKeyword keyword && keyword.getTokenType() == JavaTokenType.ELSE_KEYWORD &&
+        element.getParent() instanceof PsiIfStatement ifStatement) {
+      PsiStatement elseBranch = ifStatement.getElseBranch();
+      if (elseBranch != null) {
+        PsiStatement thenBranch = ifStatement.getThenBranch();
+        boolean thenCompletesNormally = ControlFlowUtils.statementMayCompleteNormally(thenBranch);
+        boolean elseCompletesNormally = ControlFlowUtils.statementMayCompleteNormally(elseBranch);
+        if (thenCompletesNormally && (elseCompletesNormally || !nextStatementMayBecomeUnreachable(ifStatement))) {
+          setText(JavaBundle.message("intention.unwrap.else.branch.changes.semantics"));
+          return true;
         }
       }
     }
@@ -100,8 +72,7 @@ public class UnwrapElseBranchAction extends PsiElementBaseIntentionAction {
     }
 
     PsiElement parent = statement.getParent();
-    if (parent instanceof PsiIfStatement) {
-      PsiIfStatement ifStatement = (PsiIfStatement)parent;
+    if (parent instanceof PsiIfStatement ifStatement) {
       PsiStatement thenBranch = ifStatement.getThenBranch();
       PsiStatement elseBranch = ifStatement.getElseBranch();
       if (thenBranch == statement && ControlFlowUtils.statementMayCompleteNormally(elseBranch) ||
@@ -110,8 +81,8 @@ public class UnwrapElseBranchAction extends PsiElementBaseIntentionAction {
       }
       return nextStatementMayBecomeUnreachable(ifStatement);
     }
-    if (parent instanceof PsiLabeledStatement) {
-      return nextStatementMayBecomeUnreachable((PsiLabeledStatement)parent);
+    if (parent instanceof PsiLabeledStatement labeledStatement) {
+      return nextStatementMayBecomeUnreachable(labeledStatement);
     }
     if (parent instanceof PsiCodeBlock) {
       PsiStatement parentStatement = ObjectUtils.tryCast(parent.getParent(), PsiStatement.class);

@@ -134,19 +134,19 @@ def format_rest(docstring):
             return HTMLTranslator.starttag(self, node, tagname, suffix, **attributes)
 
         def visit_rubric(self, node):
-            self.body.append(self.starttag(node, 'h1', '', CLASS='rubric'))
+            self.body.append(self.starttag(node, 'h4', '', CLASS='rubric'))
 
         def depart_rubric(self, node):
-            self.body.append('</h1>\n')
+            self.body.append('</h4>\n')
 
         def visit_note(self, node):
-            self.body.append('<h1 class="heading">Note</h1>\n')
+            self.body.append('<h4 class="heading">Note</h4>\n')
 
         def depart_note(self, node):
             pass
 
         def visit_seealso(self, node):
-            self.body.append('<h1 class="heading">See Also</h1>\n')
+            self.body.append('<h4 class="heading">See Also</h4>\n')
 
         def depart_seealso(self, node):
             pass

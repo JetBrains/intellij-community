@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author Irina Chernushina
  * @author Konstantin Bulenkov
  */
 public abstract class AnnotationFieldGutter implements ActiveAnnotationGutter {

@@ -42,9 +42,7 @@ public class IndentImpl implements Indent{
   }
 
   public boolean equals(Object o) {
-    if (!(o instanceof IndentImpl)) return false;
-
-    IndentImpl indent = (IndentImpl)o;
+    if (!(o instanceof IndentImpl indent)) return false;
 
     if (myIndentLevel != indent.myIndentLevel) return false;
     if (mySpaceCount != indent.mySpaceCount) return false;

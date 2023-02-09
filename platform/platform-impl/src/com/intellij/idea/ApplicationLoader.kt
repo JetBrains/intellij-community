@@ -1,14 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ApplicationLoader")
 @file:Internal
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("RAW_RUN_BLOCKING")
 package com.intellij.idea
 
 import com.intellij.diagnostic.*
 import com.intellij.history.LocalHistory
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.ui.IconMapLoader
@@ -44,37 +45,41 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.*
-import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
-import java.util.concurrent.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction
 import kotlin.system.exitProcess
 
 @Suppress("SSBasedInspection")
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
-fun initApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
-  runBlocking(rootTask()) {
-    doInitApplication(rawArgs, appDeferred)
+fun initApplication(context: InitAppContext) {
+  runBlocking(context.context) {
+    doInitApplication(rawArgs = context.args,
+                      appDeferred = context.appDeferred,
+                      initLafJob = context.initLafJob,
+                      euaTaskDeferred = context.euaTaskDeferred)
   }
 }
 
-private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
+// executed in the main scope with a sequential dispatcher - don't forget this
+private suspend fun doInitApplication(rawArgs: List<String>,
+                                      appDeferred: Deferred<Application>,
+                                      initLafJob: Job,
+                                      euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?) {
   val initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization")
   val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
     PluginManagerCore.getInitPluginFuture().await()
   }
 
-  val (app, initLafJob) = initAppActivity.runChild("app waiting") {
-    @Suppress("UNCHECKED_CAST")
-    appDeferred.await() as Pair<ApplicationImpl, Job?>
+  val app = initAppActivity.runChild("app waiting") {
+    appDeferred.await() as ApplicationImpl
   }
 
   initAppActivity.runChild("app component registration") {
@@ -84,40 +89,35 @@ private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferr
                            listenerCallbacks = null)
   }
 
+  val loadIconMapping = if (app.isHeadlessEnvironment) null else app.coroutineScope.launchAndMeasure("icon mapping loading") {
+    try {
+      service<IconMapLoader>().preloadIconMapping()
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+    }
+  }
 
   withContext(Dispatchers.IO) {
     initConfigurationStore(app)
   }
 
-  val loadIconMapping: Job = if (app.isHeadlessEnvironment) {
-    CompletableDeferred(value = Unit)
-  }
-  else {
-    app.coroutineScope.launchAndMeasure("icon mapping loading", Dispatchers.IO) {
-      try {
-        service<IconMapLoader>().preloadIconMapping()
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
-    }
-  }
-
   coroutineScope {
-    // LaF must be initialized before app init because icons maybe requested and as result,
-    // scale must be already initialized (especially important for Linux)
+    // LaF must be initialized before app init because icons maybe requested and, as a result,
+    // a scale must be already initialized (especially important for Linux)
     runActivity("init laf waiting") {
-      initLafJob?.join()
+      initLafJob.join()
     }
 
-    // executed in main thread
+    euaTaskDeferred?.await()?.invoke()
+
+    // executed in the main scope
     launch {
-      loadIconMapping.join()
+      loadIconMapping?.join()
       val lafManagerDeferred = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
-        // don't wait for result - we just need to trigger initialization if not yet created
         app.getServiceAsync(LafManager::class.java)
       }
       if (!app.isHeadlessEnvironment) {
@@ -128,7 +128,7 @@ private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferr
     }
 
     withContext(Dispatchers.Default) {
-      val args = processProgramArguments(rawArgs)
+      val args = rawArgs.filterNot { CommandLineArgs.isKnownArgument(it) }
 
       val deferredStarter = runActivity("app starter creation") {
         createAppStarterAsync(args)
@@ -151,7 +151,7 @@ private suspend fun initApplicationImpl(args: List<String>,
   val appInitializedListeners = coroutineScope {
     preloadCriticalServices(app)
 
-    app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this)
+    app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this, asyncScope = app.coroutineScope)
 
     launch {
       initAppActivity.runChild("old component init task creating", app::createInitOldComponentsTask)?.let { loadComponentInEdtTask ->
@@ -204,13 +204,14 @@ private suspend fun initApplicationImpl(args: List<String>,
       }
     }
   }
-  // no need to use pool once started
+  // no need to use a pool once started
   ZipFilePool.POOL = null
 }
 
 fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
   launch {
-    // LocalHistory wants ManagingFS, it should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner
+    // LocalHistory wants ManagingFS.
+    // It should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner.
     app.getServiceAsync(ManagingFS::class.java).join()
     // PlatformVirtualFileManager also wants ManagingFS
     launch { app.getServiceAsync(VirtualFileManager::class.java) }
@@ -277,10 +278,6 @@ private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
     AsyncProcessIcon("")
     AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
     AnimatedIcon.FS()
-  }
-  launch {
-    // IDEA-170295
-    PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
   }
 
   if (!app.isUnitTestMode && System.getProperty("enable.activity.preloading", "true").toBoolean()) {
@@ -358,6 +355,7 @@ private fun addActivateAndWindowsCliListeners() {
 
   EXTERNAL_LISTENER = BiFunction { currentDirectory, args ->
     LOG.info("External Windows command received")
+    @Suppress("RAW_RUN_BLOCKING")
     runBlocking(Dispatchers.Default) {
       val result = handleExternalCommand(args.asList(), currentDirectory)
       try {
@@ -371,7 +369,9 @@ private fun addActivateAndWindowsCliListeners() {
 
   ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
     override fun appWillBeClosed(isRestart: Boolean) {
-      addExternalInstanceListener { CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down"))) }
+      addExternalInstanceListener {
+        CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")))
+      }
       EXTERNAL_LISTENER = BiFunction { _, _ -> AppExitCodes.ACTIVATE_DISPOSING }
     }
   })
@@ -381,7 +381,10 @@ private suspend fun handleExternalCommand(args: List<String>, currentDirectory: 
   if (args.isNotEmpty() && args[0].contains(URLUtil.SCHEME_SEPARATOR)) {
     val result = CommandLineProcessorResult(project = null, result = CommandLineProcessor.processProtocolCommand(args[0]))
     withContext(Dispatchers.EDT) {
-      if (!result.showErrorIfFailed()) {
+      if (result.hasError) {
+        result.showError()
+      }
+      else {
         CommandLineProcessor.findVisibleFrame()?.let { frame ->
           AppIcon.getInstance().requestFocus(frame)
         }
@@ -416,38 +419,10 @@ fun initConfigurationStore(app: ApplicationImpl) {
 
   activity = activity.endAndStart("init app store")
 
-  // we set it after beforeApplicationLoaded call, because the app store can depend on stream provider state
+  // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
   app.stateStore.setPath(configPath)
   StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
   activity.end()
-}
-
-/**
- * The method looks for `-Dkey=value` program arguments and stores some of them in system properties.
- * We should use it for a limited number of safe keys; one of them is a list of required plugins.
- */
-@Suppress("SpellCheckingInspection")
-private fun processProgramArguments(args: List<String>): List<String> {
-  if (args.isEmpty()) {
-    return emptyList()
-  }
-
-  // no need to have it as a file-level constant - processProgramArguments called at most once.
-  val safeJavaEnvParameters = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
-  val arguments = mutableListOf<String>()
-  for (arg in args) {
-    if (arg.startsWith("-D")) {
-      val keyValue = arg.substring(2).split('=')
-      if (keyValue.size == 2 && safeJavaEnvParameters.contains(keyValue[0])) {
-        System.setProperty(keyValue[0], keyValue[1])
-        continue
-      }
-    }
-    if (!CommandLineArgs.isKnownArgument(arg)) {
-      arguments.add(arg)
-    }
-  }
-  return arguments
 }
 
 fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedListener>, asyncScope: CoroutineScope) {

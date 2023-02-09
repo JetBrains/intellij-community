@@ -28,9 +28,6 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
-/**
- * @author dsl
- */
 public class CodeFragmentTableCellRenderer implements TableCellRenderer {
   private final Project myProject;
   private final FileType myFileType;

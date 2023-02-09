@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author irengrig
- */
 public abstract class MoreAction extends DumbAwareAction implements CustomComponentAction {
   protected final JLabel myLabel;
   private final JPanel myPanel;

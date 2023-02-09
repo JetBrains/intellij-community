@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename;
 
@@ -613,6 +613,16 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameFunctionTypeParameterRedeclaration/renameFunctionTypeParameterRedeclaration.test");
     }
 
+    @TestMetadata("renameGetToInvoke2/renameGetToInvoke.test")
+    public void testRenameGetToInvoke2_RenameGetToInvoke() throws Exception {
+        runTest("testData/refactoring/rename/renameGetToInvoke2/renameGetToInvoke.test");
+    }
+
+    @TestMetadata("renameGetToInvoke/renameGetToInvoke.test")
+    public void testRenameGetToInvoke_RenameGetToInvoke() throws Exception {
+        runTest("testData/refactoring/rename/renameGetToInvoke/renameGetToInvoke.test");
+    }
+
     @TestMetadata("renameGet/get.test")
     public void testRenameGet_Get() throws Exception {
         runTest("testData/refactoring/rename/renameGet/get.test");
@@ -668,6 +678,21 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameJavaSyntheticIsPropertyByGetterRef/renameJavaSyntheticIsPropertyByGetterRef.test");
     }
 
+    @TestMetadata("renameJavaSyntheticIsPropertyByRef0/renameJavaSyntheticIsPropertyByRef0.test")
+    public void testRenameJavaSyntheticIsPropertyByRef0_RenameJavaSyntheticIsPropertyByRef0() throws Exception {
+        runTest("testData/refactoring/rename/renameJavaSyntheticIsPropertyByRef0/renameJavaSyntheticIsPropertyByRef0.test");
+    }
+
+    @TestMetadata("renameJavaSyntheticIsPropertyByRef1/renameJavaSyntheticIsPropertyByRef1.test")
+    public void testRenameJavaSyntheticIsPropertyByRef1_RenameJavaSyntheticIsPropertyByRef1() throws Exception {
+        runTest("testData/refactoring/rename/renameJavaSyntheticIsPropertyByRef1/renameJavaSyntheticIsPropertyByRef1.test");
+    }
+
+    @TestMetadata("renameJavaSyntheticIsPropertyBySetterRef/renameJavaSyntheticIsPropertyBySetterRef.test")
+    public void testRenameJavaSyntheticIsPropertyBySetterRef_RenameJavaSyntheticIsPropertyBySetterRef() throws Exception {
+        runTest("testData/refactoring/rename/renameJavaSyntheticIsPropertyBySetterRef/renameJavaSyntheticIsPropertyBySetterRef.test");
+    }
+
     @TestMetadata("renameJavaSyntheticPropertyByGetterRef/renameJavaSyntheticPropertyByGetterRef.test")
     public void testRenameJavaSyntheticPropertyByGetterRef_RenameJavaSyntheticPropertyByGetterRef() throws Exception {
         runTest("testData/refactoring/rename/renameJavaSyntheticPropertyByGetterRef/renameJavaSyntheticPropertyByGetterRef.test");
@@ -676,6 +701,16 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("renameJavaSyntheticPropertyByGetterSetterRef/renameJavaSyntheticPropertyByGetterSetterRef.test")
     public void testRenameJavaSyntheticPropertyByGetterSetterRef_RenameJavaSyntheticPropertyByGetterSetterRef() throws Exception {
         runTest("testData/refactoring/rename/renameJavaSyntheticPropertyByGetterSetterRef/renameJavaSyntheticPropertyByGetterSetterRef.test");
+    }
+
+    @TestMetadata("renameJavaSyntheticPropertyByRef0/renameJavaSyntheticPropertyByRef0.test")
+    public void testRenameJavaSyntheticPropertyByRef0_RenameJavaSyntheticPropertyByRef0() throws Exception {
+        runTest("testData/refactoring/rename/renameJavaSyntheticPropertyByRef0/renameJavaSyntheticPropertyByRef0.test");
+    }
+
+    @TestMetadata("renameJavaSyntheticPropertyByRef1/renameJavaSyntheticPropertyByRef1.test")
+    public void testRenameJavaSyntheticPropertyByRef1_RenameJavaSyntheticPropertyByRef1() throws Exception {
+        runTest("testData/refactoring/rename/renameJavaSyntheticPropertyByRef1/renameJavaSyntheticPropertyByRef1.test");
     }
 
     @TestMetadata("renameJavaSyntheticPropertyBySetterRef/renameJavaSyntheticPropertyBySetterRef.test")

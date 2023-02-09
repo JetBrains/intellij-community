@@ -4,9 +4,9 @@ package com.intellij.facet.impl.pointers
 import com.intellij.facet.pointers.FacetPointersManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 
-internal class FacetPointersPostStartupActivity : ProjectPostStartupActivity {
+internal class FacetPointersPostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val manager = FacetPointersManager.getInstance(project)
     if (manager is FacetPointersManagerImpl) {

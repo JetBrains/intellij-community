@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -19,9 +19,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
   protected static final Logger LOG = Logger.getInstance(CreateClassFromUsageBaseFix.class);
   protected CreateClassKind myKind;
@@ -93,8 +90,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
     }
     else if (parent instanceof PsiReferenceList) {
       if (myKind == CreateClassKind.ENUM || myKind == CreateClassKind.RECORD) return false;
-      if (parent.getParent() instanceof PsiClass) {
-        PsiClass psiClass = (PsiClass)parent.getParent();
+      if (parent.getParent() instanceof PsiClass psiClass) {
         if (psiClass.getPermitsList() == parent) {
           if (myKind == CreateClassKind.INTERFACE && !psiClass.isInterface()) return false;
           return true;
@@ -105,8 +101,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
         }
         if (psiClass.getImplementsList() == parent && myKind == CreateClassKind.INTERFACE) return true;
       }
-      else if (parent.getParent() instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)parent.getParent();
+      else if (parent.getParent() instanceof PsiMethod method) {
         if (method.getThrowsList() == parent && myKind == CreateClassKind.CLASS) return true;
       }
     }
@@ -181,8 +176,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
     if (ggParent instanceof PsiClass && ((PsiClass)ggParent).getPermitsList() == parent) {
       return ((PsiClass)ggParent).getQualifiedName();
     }
-    else if (ggParent instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)ggParent;
+    else if (ggParent instanceof PsiMethod method) {
       if (method.getThrowsList() == parent) {
         superClassName = "java.lang.Exception";
       }

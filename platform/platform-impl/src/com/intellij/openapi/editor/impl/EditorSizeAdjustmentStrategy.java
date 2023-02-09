@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -12,20 +12,18 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * This class is aimed to help {@link EditorImpl the editor} when user extensively modifies the longest line
+ * This class is aimed to help {@linkplain EditorImpl the editor} when the user extensively modifies the longest line
  * at the document (e.g. is typing at its end).
- * <p/>
- * The problem is that the longest line's width is a {@link JComponent#getPreferredSize() preferred size's width} as well.
- * So, every time width of the longest line is changed, editor's preferred size is changed too and that triggers the whole
- * component repaint.
- * <p/>
- * This component comes into the play here - it's assumed that editor notifies it every time preferred size is changed and
- * receives instructions for the further actions. For example, we can reserve additional space if we see that preferred size
- * is permanently increasing (the user is typing at the end of the longest line) etc. See method javadocs for more details.
- * <p/>
+ * <p>
+ * The problem is that the longest line's width determines the width of {@link JComponent#getPreferredSize()}.
+ * So, every time the width of the longest line is changed,
+ * the editor's preferred size is changed too and that triggers the whole component repaint.
+ * <p>
+ * This component comes into the play here - it's assumed that the editor notifies it every time the preferred size is changed and
+ * receives instructions for the further actions. For example, we can reserve additional space if we see that the preferred size
+ * is permanently increasing (the user is typing at the end of the longest line) etc.
+ * <p>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 final class EditorSizeAdjustmentStrategy {
   /**
@@ -34,7 +32,7 @@ final class EditorSizeAdjustmentStrategy {
   private static final long TIMING_TTL_MILLIS = 10000L;
 
   /**
-   * Constant that indicates minimum number of preferred size changes per target amount of time that is considered to be frequent.
+   * The minimum number of preferred size changes per target amount of time that is considered to be frequent.
    */
   private static final int FREQUENT_SIZE_CHANGES_NUMBER = 10;
 

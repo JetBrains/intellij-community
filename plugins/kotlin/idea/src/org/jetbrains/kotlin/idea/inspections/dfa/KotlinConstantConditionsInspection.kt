@@ -17,6 +17,10 @@ import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.java.JavaBundle
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
@@ -57,6 +61,8 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         TRUE, FALSE, NULL, ZERO, UNKNOWN
     }
 
+    var warnOnConstantRefs = true
+
     private class KotlinDfaListener : DfaListener {
         val constantConditions = hashMapOf<KotlinAnchor, ConstantValue>()
         val problems = hashMapOf<KotlinProblem, ThreeState>()
@@ -91,6 +97,12 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             }
             constantConditions[anchor] = newVal
         }
+    }
+
+    override fun getOptionsPane(): OptPane {
+        return pane(
+            checkbox("warnOnConstantRefs", JavaBundle.message("inspection.data.flow.warn.when.reading.a.value.guaranteed.to.be.constant"))
+        )
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -164,27 +176,30 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         if (!shouldSuppress(cv, expr)) {
                             val key = when (cv) {
                                 ConstantValue.TRUE ->
-                                    if (shouldReportAsValue(expr))
+                                    if (shouldReportAsValue(cv, expr))
                                         "inspection.message.value.always.true"
                                     else if (logicalChain(expr))
                                         "inspection.message.condition.always.true.when.reached"
                                     else
                                         "inspection.message.condition.always.true"
                                 ConstantValue.FALSE ->
-                                    if (shouldReportAsValue(expr))
+                                    if (shouldReportAsValue(cv, expr))
                                         "inspection.message.value.always.false"
                                     else if (logicalChain(expr))
                                         "inspection.message.condition.always.false.when.reached"
                                     else
                                         "inspection.message.condition.always.false"
+
                                 ConstantValue.NULL -> "inspection.message.value.always.null"
                                 ConstantValue.ZERO -> "inspection.message.value.always.zero"
                                 else -> throw IllegalStateException("Unexpected constant: $cv")
                             }
                             val highlightType =
-                                if (shouldReportAsValue(expr)) ProblemHighlightType.WEAK_WARNING
+                                if (shouldReportAsValue(cv, expr)) ProblemHighlightType.WEAK_WARNING
                                 else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-                            holder.registerProblem(expr, KotlinBundle.message(key, expr.text), highlightType)
+                            if (warnOnConstantRefs || highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
+                                holder.registerProblem(expr, KotlinBundle.message(key, expr.text), highlightType)
+                            }
                         }
                     }
                     is KotlinWhenConditionAnchor -> {
@@ -248,8 +263,16 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         return false
     }
 
-    private fun shouldReportAsValue(expr: KtExpression) =
-        expr is KtSimpleNameExpression || expr is KtQualifiedExpression && expr.selectorExpression is KtSimpleNameExpression
+    private fun shouldReportAsValue(cv: ConstantValue, expr: KtExpression): Boolean {
+        if (expr !is KtSimpleNameExpression && !(expr is KtQualifiedExpression && expr.selectorExpression is KtSimpleNameExpression)) {
+            return false
+        }
+        var parent = expr.parent
+        while (parent is KtParenthesizedExpression) parent = parent.parent
+        if (parent is KtBinaryExpression && (cv == ConstantValue.TRUE || cv == ConstantValue.FALSE)) return false
+        if (parent is KtContainerNode && parent.parent is KtIfExpression) return false
+        return parent !is KtWhenConditionWithExpression
+    }
 
     private fun logicalChain(expr: KtExpression): Boolean {
         var context = expr
@@ -510,6 +533,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 }
             }
             if (isAlsoChain(expression) || isLetConstant(expression) || isUpdateChain(expression)) return true
+            val kotlinType = expression.getKotlinType() ?: return false
             when (value) {
                 ConstantValue.TRUE -> {
                     if (isAndOrConditionWithNothingOperand(expression, KtTokens.OROR)) return true
@@ -548,6 +572,16 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         // zero value is passed as argument to another method or used for array access. Often, such a warning is annoying
                         return true
                     }
+                    if (parent is KtBinaryExpression) {
+                        val token = parent.operationToken
+                        if (token === KtTokens.EQEQ || token === KtTokens.EXCLEQ || token === KtTokens.EQEQEQ || token === KtTokens.EXCLEQEQEQ) {
+                            // like if (x == 0) when 'x' is known to be 0: report 'always true' instead
+                            val left = parent.left
+                            if (left != null && ConstantExpressionEvaluator.getConstant(left, bindingContext)?.getValue(kotlinType) == 0) return true
+                            val right = parent.right
+                            if (right != null && ConstantExpressionEvaluator.getConstant(right, bindingContext)?.getValue(kotlinType) == 0) return true
+                        }
+                    }
                 }
                 ConstantValue.NULL -> {
                     if (parent is KtProperty && parent.typeReference == null && expression is KtSimpleNameExpression) {
@@ -569,7 +603,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                             return true
                         }
                     }
-                    val kotlinType = expression.getKotlinType()
                     if (kotlinType.toDfType() == DfTypes.NULL) {
                         // According to type system, nothing but null could be stored in such an expression (likely "Void?" type)
                         return true

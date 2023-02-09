@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook.deductive.builder;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -186,7 +186,7 @@ public class SystemBuilder {
                                                  PsiSubstitutor partialSubstitutor,
                                                  PsiElement parent,
                                                  ReductionSystem system) {
-    PsiType substitution = PsiType.NULL;
+    PsiType substitution = PsiTypes.nullType();
     PsiResolveHelper helper = JavaPsiFacade.getInstance(typeParameter.getProject()).getResolveHelper();
     if (parameters.length > 0) {
       for (int j = 0; j < arguments.length; j++) {
@@ -211,11 +211,11 @@ public class SystemBuilder {
           break;
         }
         else if (currentSubstitution instanceof PsiWildcardType) {
-          if (substitution instanceof PsiWildcardType) return PsiType.NULL;
+          if (substitution instanceof PsiWildcardType) return PsiTypes.nullType();
         }
-        else if (PsiType.NULL.equals(currentSubstitution)) continue;
+        else if (PsiTypes.nullType().equals(currentSubstitution)) continue;
 
-        if (PsiType.NULL.equals(substitution)) {
+        if (PsiTypes.nullType().equals(substitution)) {
           substitution = currentSubstitution;
           continue;
         }
@@ -228,7 +228,7 @@ public class SystemBuilder {
       }
     }
 
-    if (PsiType.NULL.equals(substitution)) {
+    if (PsiTypes.nullType().equals(substitution)) {
       substitution = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, system);
     }
     return substitution;
@@ -239,12 +239,9 @@ public class SystemBuilder {
                                                      PsiElement parent,
                                                      ReductionSystem system) {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();
-    PsiType substitution = PsiType.NULL;
-    if (owner instanceof PsiMethod) {
-      if (parent instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression methodCall = (PsiMethodCallExpression)parent;
-        substitution = inferMethodTypeParameterFromParent(methodCall.getParent(), methodCall, typeParameter, substitutor, system);
-      }
+    PsiType substitution = PsiTypes.nullType();
+    if (owner instanceof PsiMethod && parent instanceof PsiMethodCallExpression methodCall) {
+      substitution = inferMethodTypeParameterFromParent(methodCall.getParent(), methodCall, typeParameter, substitutor, system);
     }
     return substitution;
   }
@@ -280,7 +277,7 @@ public class SystemBuilder {
     PsiType guess = JavaPsiFacade.getInstance(parent.getProject()).getResolveHelper()
       .getSubstitutionForTypeParameter(typeParameter, returnType, type, false, PsiUtil.getLanguageLevel(parent));
 
-    if (PsiType.NULL.equals(guess)) {
+    if (PsiTypes.nullType().equals(guess)) {
       PsiType superType = substitutor.substitute(typeParameter.getSuperTypes()[0]);
       return superType == null ? PsiType.getJavaLangObject(methodCall.getManager(), methodCall.getResolveScope()) : superType;
     }
@@ -317,8 +314,7 @@ public class SystemBuilder {
     else if (expr instanceof PsiAssignmentExpression) {
       return evaluateType(((PsiAssignmentExpression)expr).getLExpression(), system);
     }
-    else if (expr instanceof PsiCallExpression) {
-      final PsiCallExpression call = (PsiCallExpression)expr;
+    else if (expr instanceof PsiCallExpression call) {
       final PsiMethod method = call.resolveMethod();
 
       if (method != null) {
@@ -402,8 +398,7 @@ public class SystemBuilder {
                 final PsiClass aClass = result.getElement();
 
                 if (aClass != null) {
-                  if (aClass instanceof PsiTypeParameter) {
-                    final PsiTypeParameter tp = (PsiTypeParameter)aClass;
+                  if (aClass instanceof PsiTypeParameter tp) {
                     final PsiClassType[] exTypes = tp.getExtendsListTypes();
 
                     PsiType pv = mapping.get(tp);
@@ -437,8 +432,7 @@ public class SystemBuilder {
                               PsiType type = aSubst.substitute(param);
 
                               if (type != null) {
-                                if (type instanceof PsiWildcardType) {
-                                  final PsiWildcardType wildcard = (PsiWildcardType)type;
+                                if (type instanceof PsiWildcardType wildcard) {
                                   final PsiType bound = wildcard.getBound();
                                   if (bound != null) {
                                     final PsiManager manager = param.getManager();
@@ -475,8 +469,7 @@ public class SystemBuilder {
                   for (final PsiTypeParameter p : substitutionMap.keySet()) {
                     final PsiType pType = substitutionMap.get(p);
 
-                    if (pType instanceof PsiWildcardType) {
-                      final PsiWildcardType wildcard = (PsiWildcardType)pType;
+                    if (pType instanceof PsiWildcardType wildcard) {
                       final PsiType theBound = wildcard.getBound();
 
                       if (theBound != null) {
@@ -566,8 +559,7 @@ public class SystemBuilder {
     else if (expr instanceof PsiConditionalExpression) {
       return evaluateType(((PsiConditionalExpression)expr).getThenExpression(), system);
     }
-    else if (expr instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression ref = (PsiReferenceExpression)expr;
+    else if (expr instanceof PsiReferenceExpression ref) {
       final PsiExpression qualifier = ref.getQualifierExpression();
 
       if (qualifier == null) {
@@ -583,8 +575,7 @@ public class SystemBuilder {
           final PsiClass aClass = result.getElement();
           final PsiSubstitutor aSubst = result.getSubstitutor();
 
-          if (element instanceof PsiField) {
-            final PsiField field = (PsiField)element;
+          if (element instanceof PsiField field) {
             final PsiType fieldType = getType(field);
             final PsiClass superClass = field.getContainingClass();
 
@@ -642,11 +633,9 @@ public class SystemBuilder {
         }
       }
 
-      if (element instanceof PsiParameter) {
-        PsiParameter parameter = (PsiParameter)element;
+      if (element instanceof PsiParameter parameter) {
         final PsiElement declarationScope = parameter.getDeclarationScope();
-        if (declarationScope instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)declarationScope;
+        if (declarationScope instanceof PsiMethod method) {
           final PsiSearchHelper helper = PsiSearchHelper.getInstance(myManager.getProject());
           SearchScope scope = getScope(helper, method);
 
@@ -814,8 +803,7 @@ public class SystemBuilder {
   }
 
   PsiType replaceWildCards(final PsiType type, final ReductionSystem system, final PsiSubstitutor definedSubst) {
-    if (type instanceof PsiWildcardType) {
-      final PsiWildcardType wildcard = (PsiWildcardType)type;
+    if (type instanceof PsiWildcardType wildcard) {
       final PsiType var = myTypeVariableFactory.create();
       final PsiType bound = wildcard.getBound();
 

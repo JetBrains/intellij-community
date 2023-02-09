@@ -78,7 +78,7 @@ final class StrippedLongSet {
   }
 
   StrippedLongSet() {
-    this(Hash.DEFAULT_INITIAL_SIZE, Hash.DEFAULT_LOAD_FACTOR);
+    this(Hash.DEFAULT_INITIAL_SIZE, Hash.FAST_LOAD_FACTOR);
   }
 
   private int realSize() {
@@ -101,7 +101,7 @@ final class StrippedLongSet {
       long curr;
       final long[] key = this.keys;
       // The starting point.
-      if (!((curr = key[pos = (int)Hash.mix(k) & mask]) == 0)) {
+      if (!((curr = key[pos = (int)k & mask]) == 0)) {
         if (curr == k) {
           return false;
         }
@@ -137,7 +137,7 @@ final class StrippedLongSet {
           key[last] = 0;
           return;
         }
-        slot = (int)Hash.mix(curr) & mask;
+        slot = (int)curr & mask;
         if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
           break;
         }
@@ -177,7 +177,7 @@ final class StrippedLongSet {
     final long[] key = this.keys;
     int pos;
     // The starting point.
-    if ((curr = key[pos = (int)Hash.mix(k) & mask]) == 0) {
+    if ((curr = key[pos = (int)k & mask]) == 0) {
       return false;
     }
     if (k == curr) {
@@ -201,7 +201,7 @@ final class StrippedLongSet {
     final long[] key = this.keys;
     int pos;
     // The starting point.
-    if ((curr = key[pos = (int)Hash.mix(k) & mask]) == 0) {
+    if ((curr = key[pos = (int)k & mask]) == 0) {
       return false;
     }
     if (k == curr) {
@@ -280,7 +280,7 @@ final class StrippedLongSet {
     int i = n, pos;
     for (int j = realSize(); j-- != 0; ) {
       while (key[--i] == 0) ;
-      if (!(newKey[pos = (int)Hash.mix(key[i]) & mask] == 0)) {
+      if (!(newKey[pos = (int)key[i] & mask] == 0)) {
         while (!(newKey[pos = pos + 1 & mask] == 0)) ;
       }
       newKey[pos] = key[i];

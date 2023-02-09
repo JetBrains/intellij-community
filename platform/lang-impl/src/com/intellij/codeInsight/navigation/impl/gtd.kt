@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
 @ApiStatus.Internal
 fun gotoDeclaration(file: PsiFile, offset: Int): GTDActionData? {
@@ -53,7 +54,8 @@ internal fun TargetData.toGTDActionData(project: Project): GTDActionData {
   return TargetGTDActionData(project, this)
 }
 
-private class TargetGTDActionData(private val project: Project, private val targetData: TargetData) : GTDActionData {
+@Internal
+class TargetGTDActionData(private val project: Project, private val targetData: TargetData) : GTDActionData {
 
   @Suppress("DEPRECATION")
   @Deprecated("Unused in v2 implementation")
@@ -92,6 +94,8 @@ private class TargetGTDActionData(private val project: Project, private val targ
       }
     }
   }
+
+  fun isDeclared() = targetData is TargetData.Declared
 
   private fun extractSingleTargetResult(symbol: Symbol, navigationProvider: Any?): SingleTarget? {
     val el = PsiSymbolService.getInstance().extractElementFromSymbol(symbol) ?: return null

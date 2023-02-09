@@ -69,10 +69,9 @@ public class ConstantValueVariableUseInspection extends BaseInspection implement
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiExpression)) {
+      if (!(element instanceof PsiExpression expression)) {
         return;
       }
-      final PsiExpression expression = (PsiExpression)element;
       PsiReplacementUtil.replaceExpression(expression, myText);
     }
   }
@@ -116,10 +115,9 @@ public class ConstantValueVariableUseInspection extends BaseInspection implement
       if (body == null) {
         return false;
       }
-      if (!(condition instanceof PsiPolyadicExpression)) {
+      if (!(condition instanceof PsiPolyadicExpression polyadicExpression)) {
         return false;
       }
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (JavaTokenType.ANDAND == tokenType) {
         for (PsiExpression operand : polyadicExpression.getOperands()) {
@@ -154,25 +152,23 @@ public class ConstantValueVariableUseInspection extends BaseInspection implement
       if (constantType == null) {
         return false;
       }
-      if (PsiType.DOUBLE.equals(constantType)) {
+      if (PsiTypes.doubleType().equals(constantType)) {
         final Object result = ExpressionUtils.computeConstantExpression(constantExpression, false);
         if (Double.valueOf(0.0).equals(result) || Double.valueOf(-0.0).equals(result)) {
           return false;
         }
       }
       expression = PsiUtil.skipParenthesizedExprDown(expression);
-      if (!(expression instanceof PsiReferenceExpression)) {
+      if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
         return false;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiVariable)) {
+      if (!(target instanceof PsiVariable variable)) {
         return false;
       }
       if (target instanceof PsiField) {
         return false;
       }
-      final PsiVariable variable = (PsiVariable)target;
       final VariableReadVisitor visitor = new VariableReadVisitor(variable);
       body.accept(visitor);
       if (!visitor.isRead()) {

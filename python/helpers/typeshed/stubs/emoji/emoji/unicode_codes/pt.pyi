@@ -1,2 +1,0 @@
-EMOJI_UNICODE_PORTUGUESE: dict[str, str]
-UNICODE_EMOJI_PORTUGUESE: dict[str, str]

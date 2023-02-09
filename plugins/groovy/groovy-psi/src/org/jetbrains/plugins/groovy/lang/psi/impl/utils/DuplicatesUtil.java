@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -11,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 import java.util.*;
 
-/**
- * @author ilyas
- */
 public final class DuplicatesUtil {
   public static void collectMethodDuplicates(Map<GrMethod, List<GrMethod>> map, HashSet<? super GrMethod> duplicateMethodsWarning, HashSet<? super GrMethod> duplicateMethodsErrors) {
     for (GrMethod method : map.keySet()) {
@@ -29,7 +27,7 @@ public final class DuplicatesUtil {
           if (typeElement != null) {
             methodReturnType = typeElement.getType();
           } else {
-            methodReturnType = PsiType.NULL;
+            methodReturnType = PsiTypes.nullType();
           }
 
           duplicateMethodsWarning.add(duplicateMethod);

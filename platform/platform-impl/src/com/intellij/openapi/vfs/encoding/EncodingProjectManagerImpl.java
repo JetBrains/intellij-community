@@ -19,9 +19,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -69,7 +69,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     public boolean equals(VirtualFilePointer o1, VirtualFilePointer o2) {
       String u1 = o1.getUrl();
       String u2 = o2.getUrl();
-      return u1 == u2 || (SystemInfoRt.isFileSystemCaseSensitive ? u1.equals(u2) : u1.equalsIgnoreCase(u2));
+      return Strings.areSameInstance(u1, u2) || (SystemInfoRt.isFileSystemCaseSensitive ? u1.equals(u2) : u1.equalsIgnoreCase(u2));
     }
   });
   private volatile Charset myProjectCharset;
@@ -77,18 +77,6 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public EncodingProjectManagerImpl(@NotNull Project project) {
     myProject = project;
     myIdeEncodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
-  }
-
-  static final class EncodingProjectManagerStartUpActivity implements StartupActivity.DumbAware {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      // do not try to init on EDT due to VFS usage in loadState
-      EncodingProjectManagerImpl service = (EncodingProjectManagerImpl)getInstance(project);
-
-      ApplicationManager.getApplication().invokeLater(() -> {
-        service.reloadAlreadyLoadedDocuments();
-      }, project.getDisposed());
-    }
   }
 
   @Override
@@ -167,7 +155,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     myModificationTracker.incModificationCount();
   }
 
-  private void reloadAlreadyLoadedDocuments() {
+  void reloadAlreadyLoadedDocuments() {
     if (myMapping.isEmpty()) {
       return;
     }
@@ -292,7 +280,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   }
 
   public void setMapping(@NotNull Map<? extends VirtualFile, ? extends Charset> mapping) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
     final Map<VirtualFilePointer, Charset> newMap = new HashMap<>(mapping.size());
 
@@ -321,7 +309,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
 
   public void setPointerMapping(@NotNull Map<? extends VirtualFilePointer, ? extends Charset> mapping) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
     final Map<VirtualFilePointer, Charset> newMap = new HashMap<>(mapping.size());
 

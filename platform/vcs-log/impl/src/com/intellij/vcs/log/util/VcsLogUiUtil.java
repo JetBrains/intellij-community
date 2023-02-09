@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -43,11 +43,10 @@ import java.util.Collection;
 import java.util.List;
 
 public final class VcsLogUiUtil {
-  @NotNull
-  public static JComponent installProgress(@NotNull JComponent component,
-                                           @NotNull VcsLogData logData,
-                                           @NotNull String logId,
-                                           @NotNull Disposable disposableParent) {
+  public static @NotNull JComponent installProgress(@NotNull JComponent component,
+                                                    @NotNull VcsLogData logData,
+                                                    @NotNull String logId,
+                                                    @NotNull Disposable disposableParent) {
     ProgressStripe progressStripe =
       new ProgressStripe(component, disposableParent,
                          ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
@@ -92,8 +91,7 @@ public final class VcsLogUiUtil {
     return ContainerUtil.find(keys, key -> VisiblePackRefresherImpl.isVisibleKeyFor(key, logId)) != null;
   }
 
-  @NotNull
-  public static JScrollPane setupScrolledGraph(@NotNull VcsLogGraphTable graphTable, int border) {
+  public static @NotNull JScrollPane setupScrolledGraph(@NotNull VcsLogGraphTable graphTable, int border) {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(graphTable, border);
     ClientProperty.put(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
     graphTable.viewportSet(scrollPane.getViewport());
@@ -110,8 +108,7 @@ public final class VcsLogUiUtil {
     IdeTooltipManager.getInstance().show(tooltip, false);
   }
 
-  @NotNull
-  public static History installNavigationHistory(@NotNull AbstractVcsLogUi ui) {
+  public static @NotNull History installNavigationHistory(@NotNull AbstractVcsLogUi ui) {
     History history = new History(new VcsLogPlaceNavigator(ui));
     ui.getTable().getSelectionModel().addListSelectionListener((e) -> {
       if (!history.isNavigatingNow() && !e.getValueIsAdjusting()) {
@@ -121,10 +118,8 @@ public final class VcsLogUiUtil {
     return history;
   }
 
-  @NotNull
-  @Nls
-  public static String shortenTextToFit(@NotNull @Nls String text, @NotNull FontMetrics fontMetrics, int availableWidth, int maxLength,
-                                        @NotNull @Nls String symbol) {
+  public static @NotNull @Nls String shortenTextToFit(@NotNull @Nls String text, @NotNull FontMetrics fontMetrics, int availableWidth, int maxLength,
+                                                      @NotNull @Nls String symbol) {
     if (fontMetrics.stringWidth(text) <= availableWidth) return text;
 
     for (int i = text.length(); i > maxLength; i--) {
@@ -154,16 +149,15 @@ public final class VcsLogUiUtil {
     return EditorTabDiffPreviewManager.getInstance(project).isEditorDiffPreviewAvailable();
   }
 
-  @NotNull
-  public static Dimension expandToFitToolbar(@NotNull Dimension size, @NotNull JComponent toolbar) {
+  public static @NotNull Dimension expandToFitToolbar(@NotNull Dimension size, @NotNull JComponent toolbar) {
     Dimension preferredSize = toolbar.getPreferredSize();
     int minToolbarSize = Math.round(Math.min(preferredSize.width, preferredSize.height) * 1.5f);
     return new Dimension(Math.max(size.width, minToolbarSize), Math.max(size.height, minToolbarSize));
   }
 
   private static final class VcsLogPlaceNavigator implements Place.Navigator {
-    @NonNls private static final String PLACE_KEY = "Vcs.Log.Ui.History.PlaceKey";
-    @NotNull private final AbstractVcsLogUi myUi;
+    private static final @NonNls String PLACE_KEY = "Vcs.Log.Ui.History.PlaceKey";
+    private final @NotNull AbstractVcsLogUi myUi;
 
     private VcsLogPlaceNavigator(@NotNull AbstractVcsLogUi ui) {
       myUi = ui;
@@ -182,9 +176,8 @@ public final class VcsLogUiUtil {
       if (place == null) return ActionCallback.DONE;
 
       Object value = place.getPath(PLACE_KEY);
-      if (!(value instanceof CommitId)) return ActionCallback.REJECTED;
+      if (!(value instanceof CommitId commitId)) return ActionCallback.REJECTED;
 
-      CommitId commitId = (CommitId)value;
       ActionCallback callback = new ActionCallback();
 
       ListenableFuture<Boolean> future = VcsLogNavigationUtil.jumpToCommit(myUi, commitId.getHash(), commitId.getRoot(),

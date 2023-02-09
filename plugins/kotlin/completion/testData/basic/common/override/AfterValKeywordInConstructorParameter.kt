@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 interface I {
     fun foo()
     val someVal: Int

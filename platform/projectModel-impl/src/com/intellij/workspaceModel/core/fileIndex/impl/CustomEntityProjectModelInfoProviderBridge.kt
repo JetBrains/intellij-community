@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider
@@ -10,7 +10,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
 internal class CustomEntityProjectModelInfoProviderBridge<E : WorkspaceEntity>(private val provider: CustomEntityProjectModelInfoProvider<E>) 
-  : WorkspaceFileIndexContributor<E> {
+  : WorkspaceFileIndexContributor<E>, PlatformInternalWorkspaceFileIndexContributor {
   
   override val entityClass: Class<E>
     get() = provider.entityClass

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.CodeStyleBundle;
@@ -31,18 +31,14 @@ public abstract class IndentStatusBarUIContributor implements CodeStyleStatusBar
    *
    * @return The indent options source hint or {@code null} if not available.
    */
-  @Nullable
-  public abstract @NlsContexts.HintText String getHint();
+  public abstract @Nullable @NlsContexts.HintText String getHint();
 
-  @Nullable
   @Override
-  public String getTooltip() {
+  public @Nullable String getTooltip() {
     return createTooltip(getIndentInfo(myIndentOptions), getHint());
   }
 
-  @Nls
-  @NotNull
-  public static String getIndentInfo(@NotNull IndentOptions indentOptions) {
+  public static @Nls @NotNull String getIndentInfo(@NotNull IndentOptions indentOptions) {
     return indentOptions.USE_TAB_CHARACTER
            ? CodeStyleBundle.message("indent.status.bar.tab")
            : CodeStyleBundle.message("indent.status.bar.spaces", indentOptions.INDENT_SIZE);
@@ -56,19 +52,17 @@ public abstract class IndentStatusBarUIContributor implements CodeStyleStatusBar
     return true;
   }
 
-  @NotNull
-  public static @NlsContexts.Tooltip String createTooltip(@Nls String indentInfo, @NlsContexts.HintText String hint) {
+  public static @NotNull @NlsContexts.Tooltip String createTooltip(@Nls String indentInfo, @NlsContexts.HintText String hint) {
     HtmlBuilder builder = new HtmlBuilder();
-    builder.append(CodeStyleBundle.message("indent.status.bar.indent.tooltip")).append(indentInfo);
+    builder.append(CodeStyleBundle.message("indent.status.bar.indent.tooltip")).append(" ").append(indentInfo);
     if (hint != null) {
-      builder.nbsp(2).append(HtmlChunk.span("color:"+ColorUtil.toHtmlColor(JBColor.GRAY)).addText(hint));
+      builder.nbsp(2).append(HtmlChunk.span("color: "+ColorUtil.toHtmlColor(JBColor.GRAY)).addText(hint));
     }
     return builder.wrapWith("html").toString();
   }
 
-  @NotNull
   @Override
-  public String getStatusText(@NotNull PsiFile psiFile) {
+  public @NotNull String getStatusText(@NotNull PsiFile psiFile) {
     String widgetText = getIndentInfo(myIndentOptions);
     IndentOptions projectIndentOptions = CodeStyle.getSettings(psiFile.getProject()).getLanguageIndentOptions(psiFile.getLanguage());
     if (!projectIndentOptions.equals(myIndentOptions)) {

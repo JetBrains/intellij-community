@@ -13,6 +13,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
@@ -127,9 +128,24 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     return true;
   }
 
-  String getFilterText() {
+  void setFilterText(@NotNull String text) {
+    mySearch.setText(text);
+  }
+
+  public boolean isEmptyFilter() {
+    return StringUtil.isEmpty(mySearch.getText());
+  }
+
+  @NotNull String getFilterText() {
     String text = mySearch.getText();
     return text == null ? "" : text.trim();
+  }
+
+  @NotNull String getSpotlightFilterText() {
+    if (myHits != null) {
+      return myHits.getSpotlightFilter();
+    }
+    return getFilterText();
   }
 
   private void setHoldingFilter(boolean holding) {
@@ -168,6 +184,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     String text = getFilterText();
     if (text.isEmpty()) {
       myContext.setHoldingFilter(false);
+      myHits = null;
       myFiltered = null;
     }
     else {

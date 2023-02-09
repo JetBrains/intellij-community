@@ -42,8 +42,8 @@ class ScriptClassRootsBuilder(
         customDefinitionsUsed = true
     }
 
-    fun dontWarnAboutDependenciesExistence() {
-        shouldWarnAboutDependenciesExistence = false
+    fun warnAboutDependenciesExistence(enabled: Boolean) {
+        shouldWarnAboutDependenciesExistence = enabled
     }
 
     fun withClasspathVfsHint(hint: MutableMap<String, VirtualFile?>?) {

@@ -4,17 +4,17 @@ Reports a Java Map.<code>forEach</code> method call that can be replaced with Ko
 <p><b>Example:</b></p>
 <pre><code>
   fun test(map: HashMap&lt;Int, String>) {
-      map.forEach { (key, value) ->
+      map.forEach { key, value ->
           foo(key, value)
       }
   }
 
   fun foo(i: Int, s: String) {}
 </code></pre>
-<p>The quick fix removes parentheses:</p>
+<p>The quick-fix adds parentheses:</p>
 <pre><code>
   fun test(map: HashMap&lt;Int, String>) {
-      map.forEach { key, value ->
+      map.forEach { (key, value) ->
           foo(key, value)
       }
   }

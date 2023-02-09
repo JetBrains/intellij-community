@@ -20,6 +20,52 @@ die () {
     exit 1
 }
 
+expBackOffRetry() {
+  FACTOR=2
+  WAIT_SECONDS=1
+
+  ATTEMPTS=4
+  ATTEMPT_COUNTER=1
+
+  # Workaround for dash (/bin/sh is usually symlinked to /bin/dash): SAVED_TRAPS="$(trap)" won't work in dash/zsh
+  SAVED_TRAPS_FILE="$(mktemp "$JPS_BOOTSTRAP_PREPARE_DIR/saved_traps.XXXXXXXXX")"
+  trap > "$SAVED_TRAPS_FILE"
+  SAVED_TRAPS="$(cat "$SAVED_TRAPS_FILE")"
+  rm "$SAVED_TRAPS_FILE"
+
+  # Cancel by user (SIGINT) != failed attempt -> handle via trap
+  CANCELLED="false"
+  trap "CANCELLED=true" INT HUP
+
+  while true; do
+    COMMAND_FAILED=false
+    "$@" || COMMAND_FAILED=true
+
+    if [ "$COMMAND_FAILED" = "false" ] || [ "$ATTEMPT_COUNTER" -ge "$ATTEMPTS" ] || [ "$CANCELLED" = "true" ]; then
+      break
+    fi
+
+    warn "Eval '$*': attempt $ATTEMPT_COUNTER failed. Retrying in $WAIT_SECONDS seconds..."
+    sleep "$WAIT_SECONDS"
+
+    ATTEMPT_COUNTER="$((ATTEMPT_COUNTER + 1))"
+    WAIT_SECONDS="$((WAIT_SECONDS * FACTOR))"
+  done
+
+  # Restore traps
+  eval "$SAVED_TRAPS"
+
+  if [ "$COMMAND_FAILED" = "false" ]; then
+    return 0
+  fi
+
+  if [ "$CANCELLED" = "false" ]; then
+    warn "Eval '$*': attempts limit exceeded, tried $ATTEMPTS times."
+  fi
+
+  return 1
+}
+
 darwin=false
 case "$(uname)" in
   Darwin* )
@@ -72,10 +118,14 @@ else
 
   if command -v curl >/dev/null 2>&1; then
       if [ -t 1 ]; then CURL_PROGRESS="--progress-bar"; else CURL_PROGRESS=""; fi
-      curl -fsSL $CURL_PROGRESS --output "${JVM_TEMP_FILE}" "$JVM_URL"
+      CURL_OPTIONS="-fsSL"
+      if [ "${JBR_DOWNLOAD_CURL_VERBOSE:-false}" = "true" ]; then CURL_OPTIONS="-fvL"; fi
+      # CURL_PROGRESS may be empty, with quotes this interpreted by curl as malformed URL
+      # shellcheck disable=SC2086
+      expBackOffRetry curl "$CURL_OPTIONS" $CURL_PROGRESS --output "${JVM_TEMP_FILE}" "$JVM_URL"
   elif command -v wget >/dev/null 2>&1; then
       if [ -t 1 ]; then WGET_PROGRESS=""; else WGET_PROGRESS="-nv"; fi
-      wget $WGET_PROGRESS -O "${JVM_TEMP_FILE}" "$JVM_URL"
+      expBackOffRetry wget $WGET_PROGRESS -O "${JVM_TEMP_FILE}" "$JVM_URL"
   else
       die "ERROR: Please install wget or curl"
   fi

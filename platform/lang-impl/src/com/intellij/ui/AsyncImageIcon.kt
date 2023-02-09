@@ -5,12 +5,16 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.ui.icons.CopyableIcon
+import com.intellij.ui.paint.withTxAndClipAligned
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.UserScaleContext
 import com.intellij.util.IconUtil
+import com.intellij.util.childScope
+import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
@@ -30,13 +34,15 @@ import javax.swing.Icon
  */
 @ApiStatus.Experimental
 class AsyncImageIcon private constructor(
-  private val scope: CoroutineScope,
+  parentCs: CoroutineScope,
   defaultIcon: Icon,
   private val scale: Float = 1.0f,
   // allows keeping cache after scale and copy functions
   cache: UserScaleContext.Cache<ImageRequest, ScaleContext>?,
   private val imageLoader: suspend (ScaleContext, Int, Int) -> Image?
 ) : Icon, ScalableIcon, CopyableIcon {
+
+  private val cs = parentCs.childScope(Dispatchers.Main)
 
   constructor(
     scope: CoroutineScope,
@@ -55,7 +61,7 @@ class AsyncImageIcon private constructor(
 
   private fun requestImage(scaleCtx: ScaleContext): ImageRequest {
     val request = ImageRequest()
-    scope.launch {
+    cs.launch {
       try {
         request.image = imageLoader(scaleCtx, iconWidth, iconHeight)
       }
@@ -90,15 +96,17 @@ class AsyncImageIcon private constructor(
     }
     else {
       val bounds = Rectangle(x, y, iconWidth, iconHeight)
-      StartupUiUtil.drawImage(g, image, bounds, c)
+      withTxAndClipAligned(g, x, y, iconWidth, iconHeight) {
+        StartupUiUtil.drawImage(g, image, bounds, c)
+      }
     }
   }
 
-  override fun copy(): Icon = AsyncImageIcon(scope, defaultIcon, scale, imageRequestsCache, imageLoader)
+  override fun copy(): Icon = AsyncImageIcon(cs, defaultIcon, scale, imageRequestsCache, imageLoader)
 
   override fun getScale(): Float = scale
 
-  override fun scale(scaleFactor: Float): Icon = AsyncImageIcon(scope, defaultIcon, scaleFactor, imageRequestsCache, imageLoader)
+  override fun scale(scaleFactor: Float): Icon = AsyncImageIcon(cs, defaultIcon, scaleFactor, imageRequestsCache, imageLoader)
 
   companion object {
     private val LOG = logger<AsyncImageIcon>()

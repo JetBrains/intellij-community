@@ -3,13 +3,11 @@
 package org.jetbrains.kotlin.idea.searching.usages
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.util.Processor
@@ -17,11 +15,15 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.CHECK_SUPER_METHODS_YES_NO_DIALOG
 import org.jetbrains.kotlin.idea.base.util.showYesNoCancelDialog
@@ -70,19 +72,25 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
                 (extensionReceiver as? KtImplicitReceiverValue)?.symbol == companionObjectSymbol
     }
 
-    override fun isDataClassComponentFunction(element: KtParameter): Boolean {
-        // TODO: implement this
-        return false
-    }
-
-    override fun getTopMostOverriddenElementsToHighlight(target: PsiElement): List<PsiElement> {
-        // TODO: implement this
-        return emptyList()
-    }
-
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String {
-        // TODO: implement this
-        return (declaration as? KtNamedDeclaration)?.name ?: "SUPPORT FOR FIR"
+        return analyzeInModalWindow(declaration, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            declaration.getSymbol().render(noAnnotationsShortNameRenderer())
+        }
+    }
+
+    private fun noAnnotationsShortNameRenderer(): KtDeclarationRenderer {
+        return KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+            annotationRenderer = annotationRenderer.with {
+                annotationFilter = KtRendererAnnotationsFilter.NONE
+            }
+        }
+    }
+
+    override fun formatJavaOrLightMethod(method: PsiMethod): String {
+        val unwrapped = method.unwrapped as KtDeclaration
+        return analyzeInModalWindow(unwrapped, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            unwrapped.getSymbol().render(noAnnotationsShortNameRenderer())
+        }
     }
 
     override fun isKotlinConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean {
@@ -113,8 +121,10 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
     }
 
     override fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> {
-        // TODO: implement this
-        return emptyList()
+        if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return emptyList()
+        return analyzeInModalWindow(declaration, KotlinBundle.message("find.usages.progress.text.declaration.superMethods")) {
+            (declaration.getSymbol() as? KtCallableSymbol)?.getAllOverriddenSymbols()?.mapNotNull { it.psi }?.toList().orEmpty()
+        }
     }
 
     override fun checkSuperMethods(
@@ -184,9 +194,6 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         }
     }
 
-    override fun sourcesAndLibraries(delegate: GlobalSearchScope, project: Project): GlobalSearchScope {
-        return delegate
-    }
 }
 
 // temp duplicate of org.jetbrains.kotlin.idea.refactoring.formatPsiClass

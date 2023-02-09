@@ -160,9 +160,7 @@ public class ReplaceOptions implements JDOMExternalizable {
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ReplaceOptions)) return false;
-
-    final ReplaceOptions replaceOptions = (ReplaceOptions)o;
+    if (!(o instanceof ReplaceOptions replaceOptions)) return false;
 
     if (myToReformatAccordingToStyle != replaceOptions.myToReformatAccordingToStyle) return false;
     if (toShortenFQN != replaceOptions.toShortenFQN) return false;

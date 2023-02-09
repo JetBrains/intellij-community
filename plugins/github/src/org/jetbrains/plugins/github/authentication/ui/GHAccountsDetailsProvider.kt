@@ -17,6 +17,7 @@ import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import java.awt.Image
@@ -59,7 +60,8 @@ internal class GHAccountsDetailsProvider(
     }
     catch (e: Throwable) {
       val errorMessage = ExceptionUtil.getPresentableMessage(e)
-      return Result.Error(errorMessage, false)
+      val needReLogin = e is GithubAuthenticationException
+      return Result.Error(errorMessage, needReLogin)
     }
     if (!GHSecurityUtil.isEnoughScopes(scopes.orEmpty())) {
       return Result.Error(GithubBundle.message("account.scopes.insufficient"), true)

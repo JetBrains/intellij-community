@@ -102,7 +102,7 @@ class KDocNameCompletionSession(
         val nameFilter = descriptorNameFilter.toNameFilter()
         return if (qualifiedLink.isNotEmpty()) {
             val parentDescriptors =
-                resolveKDocLink(bindingContext, resolutionFacade, declarationDescriptor, kDocLink.getTagIfSubject(), qualifiedLink)
+                resolveKDocLink(bindingContext, resolutionFacade, declarationDescriptor, kDocLink, kDocLink.getTagIfSubject(), qualifiedLink)
             parentDescriptors.flatMap {
                 val scope = getKDocLinkMemberScope(it, contextScope)
                 scope.getContributedDescriptors(nameFilter = nameFilter)

@@ -2,20 +2,21 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.util.SmartList;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 /**
  * @author Dmitry Batkovich
@@ -83,16 +84,14 @@ public abstract class CollectionsListSettings {
     return myCollectionClassesRequiringCapacity;
   }
 
-  public JComponent createOptionsPanel() {
-    final ListTable table = new ListTable(new ListWrappingTableModel(myCollectionClassesRequiringCapacity,
-                                                                     QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.options.column.title")));
-    final var panel = new InspectionOptionsPanel();
-    panel.addGrowing(UiUtils.createAddRemoveTreeClassChooserPanel(
-      QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.options.dialog.title"),
-      QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.options.label"),
-      table,
-      true,
-      CommonClassNames.JAVA_LANG_OBJECT));
-    return panel;
+  public @NotNull OptPane getOptionPane() {
+    return pane(stringList("myCollectionClassesRequiringCapacity",
+                           QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.options.label"),
+                           new JavaClassValidator().withTitle(
+                            QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.options.dialog.title"))));
+  }
+  
+  public @NotNull OptionController getOptionController() {
+    return OptionController.fieldsOf(this);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.lang.Language;
@@ -63,10 +63,9 @@ public interface EditorColors {
 
   ColorKey GUTTER_BACKGROUND = ColorKey.createColorKey("GUTTER_BACKGROUND", new JBColor(0xf0f0f0, 0x313335));
   /**
-   * @deprecated use {@link #GUTTER_BACKGROUND}
+   * This key is used in New UI only (instead of GUTTER_BACKGROUND) and it is null by default.
    */
-  @Deprecated(forRemoval = true)
-  ColorKey LEFT_GUTTER_BACKGROUND = GUTTER_BACKGROUND;
+  ColorKey EDITOR_GUTTER_BACKGROUND = ColorKey.createColorKey("EDITOR_GUTTER_BACKGROUND");
   ColorKey NOTIFICATION_BACKGROUND = ColorKey.createColorKey("NOTIFICATION_BACKGROUND");
 
   ColorKey TEARLINE_COLOR = ColorKey.createColorKey("TEARLINE_COLOR");
@@ -129,7 +128,7 @@ public interface EditorColors {
     return currentKey;
   }
 
-  class GlobalScheme {
+  final class GlobalScheme {
     @Nullable
     public static Color getColor(@NotNull ColorKey key) {
       return EditorColorsManager.getInstance().getGlobalScheme().getColor(key);

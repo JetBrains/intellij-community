@@ -30,9 +30,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public class PrevNextParameterHandler extends EditorActionHandler {
   public PrevNextParameterHandler(boolean isNextParameterHandler) {
     myIsNextParameterHandler = isNextParameterHandler;

@@ -11,7 +11,6 @@ import java.util.List;
 /**
  * Root types that can be queried from OrderEntry.
  *
- * @author dsl
  * @see OrderEntry
  */
 public class OrderRootType {

@@ -20,7 +20,6 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
-import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
 import org.jdom.Element
@@ -30,6 +29,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
+import kotlin.io.path.exists
 
 open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonStarterInitialStep(
   contextProvider.wizardContext,
@@ -44,7 +44,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonS
 
   private val contentPanel: DialogPanel by lazy { createComponent() }
 
-  protected lateinit var languageRow: Row
+  private lateinit var languageRow: Row
 
   @Volatile
   private var isDisposed: Boolean = false
@@ -122,7 +122,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonS
       if (starterSettings.projectTypes.isNotEmpty()) {
         val messages = starterSettings.customizedMessages
         row(messages?.projectTypeLabel ?: JavaStartersBundle.message("title.project.build.system.label")) {
-          segmentedButton(starterSettings.projectTypes, StarterProjectType::title)
+          segmentedButton(starterSettings.projectTypes, StarterProjectType::title, StarterProjectType::description)
             .bind(projectTypeProperty)
 
           bottomGap(BottomGap.SMALL)

@@ -26,9 +26,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementAnimationPanel extends JPanel {
 
   @NotNull private final JComponent myContent;

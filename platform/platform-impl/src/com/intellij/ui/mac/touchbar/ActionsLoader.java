@@ -17,7 +17,7 @@ import java.awt.event.InputEvent;
 import java.util.HashMap;
 import java.util.Map;
 
-class ActionsLoader {
+final class ActionsLoader {
   private static final Logger LOG = Logger.getInstance(ActionsLoader.class);
   private static final boolean ENABLE_FN_MODE = Boolean.getBoolean("touchbar.fn.mode.enable");
   private static int FN_WIDTH = Integer.getInteger("touchbar.fn.width", 68);
@@ -195,8 +195,7 @@ class ActionsLoader {
     ret.put(0L, result);
 
     Customizer customizer = new Customizer(null, null, (parentInfo, butt, presentation) -> {
-      if (butt.getAnAction() instanceof FNKeyAction) {
-        final FNKeyAction act = ((FNKeyAction)butt.getAnAction());
+      if (butt.getAnAction() instanceof FNKeyAction act) {
         butt.setWidth(FN_WIDTH);
         butt.setIcon(null);
         final String hint = presentation.getText() == null || presentation.getText().isEmpty() ? " " : presentation.getText();

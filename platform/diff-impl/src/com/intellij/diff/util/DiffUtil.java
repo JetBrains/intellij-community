@@ -24,8 +24,6 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.GeneralSettings;
-import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -48,8 +46,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -86,7 +82,6 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.impl.source.tree.injected.EditorWindowTracker;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -173,24 +168,39 @@ public final class DiffUtil {
 
   @Nullable
   public static EditorHighlighter createEditorHighlighter(@Nullable Project project, @NotNull DocumentContent content) {
-    FileType type = content.getContentType();
-    VirtualFile file = content.getHighlightFile();
-    Language language = content.getUserData(DiffUserDataKeys.LANGUAGE);
-
     EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
+
+    VirtualFile file = FileDocumentManager.getInstance().getFile(content.getDocument());
+    FileType contentType = content.getContentType();
+    VirtualFile highlightFile = content.getHighlightFile();
+    Language language = content.getUserData(DiffUserDataKeys.LANGUAGE);
+    boolean hasContentType = contentType != null &&
+                             contentType != PlainTextFileType.INSTANCE &&
+                             contentType != UnknownFileType.INSTANCE;
+
     if (language != null) {
-      SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
+      SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, highlightFile);
       return highlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
     }
+
+    if (highlightFile != null && highlightFile.isValid()) {
+      if (!hasContentType ||
+          FileTypeRegistry.getInstance().isFileOfType(highlightFile, contentType) ||
+          highlightFile instanceof LightVirtualFile) {
+        return highlighterFactory.createEditorHighlighter(project, highlightFile);
+      }
+    }
+
     if (file != null && file.isValid()) {
-      if ((type == null || type == PlainTextFileType.INSTANCE) ||
-          FileTypeRegistry.getInstance().isFileOfType(file, type) ||
-          file instanceof LightVirtualFile) {
+      FileType type = file.getFileType();
+      boolean hasFileType = !type.isBinary() && type != PlainTextFileType.INSTANCE;
+      if (!hasContentType || hasFileType) {
         return highlighterFactory.createEditorHighlighter(project, file);
       }
     }
-    if (type != null) {
-      return highlighterFactory.createEditorHighlighter(project, type);
+
+    if (contentType != null) {
+      return highlighterFactory.createEditorHighlighter(project, contentType);
     }
     return null;
   }
@@ -201,14 +211,7 @@ public final class DiffUtil {
   }
 
   public static void setEditorHighlighter(@Nullable Project project, @NotNull EditorEx editor, @NotNull DocumentContent content) {
-    Disposable disposable = null;
-    if (editor instanceof EditorImpl) {
-      disposable = ((EditorImpl)editor).getDisposable();
-    }
-    else if (editor instanceof EditorWindow) {
-      disposable = ((EditorWindow)editor);
-    }
-    if (disposable == null) return;
+    Disposable disposable = ((EditorImpl)editor).getDisposable();
     if (project != null) {
       DiffEditorHighlighterUpdater updater = new DiffEditorHighlighterUpdater(project, disposable, editor, content);
       updater.updateHighlightersAsync();
@@ -266,38 +269,8 @@ public final class DiffUtil {
     EditorKind kind = EditorKind.DIFF;
     EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project, kind) : factory.createEditor(document, project, kind));
 
-    if (document instanceof DocumentWindow && project != null) {
-      PsiFile injectedFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (injectedFile != null) {
-        FoldingModelEx model = editor.getFoldingModel();
-        int length = editor.getDocument().getTextLength();
-        model.runBatchFoldingOperation(() -> {
-          int start = 0;
-          int end = -1;
-          for (Segment range : ((DocumentWindow)document).getHostRanges()) {
-            FoldRegion region = model.addFoldRegion(start, range.getStartOffset(), "");
-            if (region != null) {
-              region.setExpanded(false);
-            }
-            end = range.getEndOffset();
-          }
-          if (end > 0) {
-            FoldRegion region = model.addFoldRegion(end, length, "");
-            if (region != null) {
-              region.setExpanded(false);
-            }
-          }
-        });
-
-        editor = (EditorEx)EditorWindowTracker.getInstance().createEditor(((DocumentWindow)document), editor, injectedFile);
-      }
-    }
-
     editor.getSettings().setShowIntentionBulb(false);
-    MarkupModelEx model = editor.getMarkupModel();
-    if (model instanceof EditorMarkupModel editorMarkupModel) {
-      editorMarkupModel.setErrorStripeVisible(true);
-    }
+    ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
     editor.getGutterComponentEx().setShowDefaultGutterPopup(false);
 
     if (enableFolding) {
@@ -658,7 +631,8 @@ public final class DiffUtil {
     if (content instanceof DocumentContent) {
       Document document = ((DocumentContent)content).getDocument();
       if (FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)) {
-        components.add(wrapEditorNotificationComponent(DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded"))));
+        components.add(wrapEditorNotificationComponent(
+          DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded"))));
       }
     }
 

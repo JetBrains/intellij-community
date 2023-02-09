@@ -798,6 +798,31 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  public void testExcludedFoldersWithIdeaPlugin() throws Exception {
+    createProjectSubDirs("submodule");
+    importProject(
+      """
+        apply plugin: 'idea'
+        idea {
+          module {
+            excludeDirs += file('submodule')
+          }
+        }"""
+    );
+
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+    assertExcludes("project", ".gradle", "build", "submodule");
+
+    importProject(
+      "apply plugin: 'idea'\n"
+    );
+
+    assertContentRoots("project", getProjectPath());
+    assertExcludes("project", ".gradle", "build");
+  }
+
+  @Test
   public void testSharedSourceFolders() throws Exception {
     createProjectSubFile("settings.gradle", "include 'app1', 'app2'");
     createProjectSubFile("shared/resources/resource.txt");
@@ -886,7 +911,9 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
         "        }",
         "        integrationTest(JvmTestSuite) { ",
         "            dependencies {",
-        "                implementation project ",
+        isGradleNewerOrSameAs("7.6")
+        ? "                implementation project() "
+        : "                implementation project ",
         "            }",
         "        }",
         "    }",

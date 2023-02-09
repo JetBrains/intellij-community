@@ -39,9 +39,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author ven
- */
 public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
   private static final String EVAL_NAME = "_JETGROOVY_EVAL_";
   private static final String IMPORTS = "___$$IMPORTS$$___";

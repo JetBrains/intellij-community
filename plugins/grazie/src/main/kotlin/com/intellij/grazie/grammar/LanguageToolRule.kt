@@ -16,7 +16,7 @@ import java.net.URL
 import java.util.*
 
 class LanguageToolRule(
-  private val lang: Lang, private val ltRule: org.languagetool.rules.Rule
+  private val lang: Lang, val ltRule: org.languagetool.rules.Rule
 ) : Rule(LangTool.globalIdPrefix(lang) + ltRule.id, ltRule.description, categories(ltRule, lang)) {
 
   override fun isEnabledByDefault(): Boolean = LangTool.isRuleEnabledByDefault(lang, ltRule.id)
@@ -33,7 +33,7 @@ class LanguageToolRule(
         tr {
           td {
             valign = "top"
-            style = "padding-bottom: 5px; padding-right: 5px; color: gray;"
+            style = "padding-bottom: 5px; padding-right: 5px; color: gray; white-space: nowrap;"
             +GrazieBundle.message("grazie.settings.grammar.rule.incorrect")
           }
           td {
@@ -46,7 +46,7 @@ class LanguageToolRule(
           tr {
             td {
               valign = "top"
-              style = "padding-bottom: 10px; padding-right: 5px; color: gray;"
+              style = "padding-bottom: 10px; padding-right: 5px; color: gray; white-space: nowrap;"
               +GrazieBundle.message("grazie.settings.grammar.rule.correct")
             }
             td {

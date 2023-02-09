@@ -10,7 +10,7 @@ import javax.swing.JComponent
 
 class SettingsComponentToTest(private val id: String): ComponentToTest {
   override fun build(disposable: Disposable): JComponent {
-    val configurable = ShowSettingsUtilImpl.getConfigurables(null, true).filterIsInstance<ConfigurableWithId>().first { it.id == id }
+    val configurable = ShowSettingsUtilImpl.getConfigurables(null, true, true).filterIsInstance<ConfigurableWithId>().first { it.id == id }
     return ConfigurableCardPanel.createConfigurableComponent(configurable)
   }
 

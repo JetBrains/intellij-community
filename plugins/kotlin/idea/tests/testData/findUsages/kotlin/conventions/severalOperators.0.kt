@@ -39,5 +39,5 @@ fun test4() {
     tt() - tt()
 }
 
-// FIR_COMPARISON
+
 // IGNORE_FIR_LOG

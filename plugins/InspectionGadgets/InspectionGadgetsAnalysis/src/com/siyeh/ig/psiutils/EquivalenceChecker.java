@@ -27,6 +27,7 @@ import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -175,6 +176,9 @@ public class EquivalenceChecker {
     }
     if (statement1 instanceof PsiForeachStatement) {
       return forEachStatementsMatch((PsiForeachStatement)statement1, (PsiForeachStatement)statement2);
+    }
+    if (statement1 instanceof PsiForeachPatternStatement) {
+      return forEachPatternStatementsMatch((PsiForeachPatternStatement)statement1, (PsiForeachPatternStatement)statement2);
     }
     if (statement1 instanceof PsiIfStatement) {
       return ifStatementsMatch((PsiIfStatement)statement1, (PsiIfStatement)statement2);
@@ -369,6 +373,22 @@ public class EquivalenceChecker {
     final PsiParameter parameter1 = statement1.getIterationParameter();
     final PsiParameter parameter2 = statement2.getIterationParameter();
     if (!variableSignatureMatch(parameter1, parameter2)) {
+      return EXACT_MISMATCH;
+    }
+    final PsiStatement body1 = statement1.getBody();
+    final PsiStatement body2 = statement2.getBody();
+    return statementsMatch(body1, body2).partialIfExactMismatch(body1, body2);
+  }
+
+  private Match forEachPatternStatementsMatch(PsiForeachPatternStatement statement1, PsiForeachPatternStatement statement2) {
+    final PsiExpression value1 = statement1.getIteratedValue();
+    final PsiExpression value2 = statement2.getIteratedValue();
+    if (!expressionsMatch(value1, value2).isExactMatch()) {
+      return EXACT_MISMATCH;
+    }
+    final PsiPattern pattern1 = statement1.getIterationPattern();
+    final PsiPattern pattern2 = statement2.getIterationPattern();
+    if (!patternsMatch(pattern1, pattern2).isExactMatch()) {
       return EXACT_MISMATCH;
     }
     final PsiStatement body1 = statement1.getBody();
@@ -773,8 +793,7 @@ public class EquivalenceChecker {
   }
 
   private static PsiElement unwrapLambdaBody(PsiElement element) {
-    while (element instanceof PsiCodeBlock) {
-      final PsiCodeBlock codeBlock = (PsiCodeBlock)element;
+    while (element instanceof PsiCodeBlock codeBlock) {
       final PsiStatement[] statements = codeBlock.getStatements();
       if (statements.length != 1) {
         break;
@@ -797,7 +816,7 @@ public class EquivalenceChecker {
   }
 
   protected Match literalExpressionsMatch(PsiLiteralExpression expression1, PsiLiteralExpression expression2) {
-    if (PsiType.NULL.equals(expression1.getType()) && PsiType.NULL.equals(expression2.getType())) {
+    if (PsiTypes.nullType().equals(expression1.getType()) && PsiTypes.nullType().equals(expression2.getType())) {
       return EXACT_MATCH;
     }
     final Object value1 = expression1.getValue();
@@ -825,8 +844,7 @@ public class EquivalenceChecker {
     else {
       return EXACT_MISMATCH; // incomplete code
     }
-    if (element1 instanceof PsiMember) {
-      final PsiMember member1 = (PsiMember)element1;
+    if (element1 instanceof PsiMember member1) {
       if (member1.hasModifierProperty(PsiModifier.STATIC)) {
         return EXACT_MATCH;
       }
@@ -999,8 +1017,8 @@ public class EquivalenceChecker {
     List<PsiMember> children2 = PsiTreeUtil.getChildrenOfTypeAsList(class2, PsiMember.class);
     int size = children1.size();
     if (size != children2.size()) return EXACT_MISMATCH;
-    children1.sort(MEMBER_COMPARATOR);
-    children2.sort(MEMBER_COMPARATOR);
+    children1 = ContainerUtil.sorted(children1, MEMBER_COMPARATOR);
+    children2 = ContainerUtil.sorted(children2, MEMBER_COMPARATOR);
     for (int i = 0; i < size; i++) {
       // first pass checks only signatures for accurate reference tracking
       PsiElement child1 = children1.get(i);

@@ -74,7 +74,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       }
 
       Map<@NonNls String, @NlsContexts.ConfigurableName String> map = new HashMap<>();
-      for (Configurable configurable : ShowSettingsUtilImpl.getConfigurables(getProject(), true)) {
+      for (Configurable configurable : ShowSettingsUtilImpl.getConfigurables(getProject(), true, true)) {
         if (configurable instanceof SearchableConfigurable) {
           map.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
         }
@@ -272,8 +272,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     }
 
     private static int getTypeWeight(@NotNull Object value) {
-      if (value instanceof ActionWrapper) {
-        ActionWrapper actionWrapper = (ActionWrapper)value;
+      if (value instanceof ActionWrapper actionWrapper) {
         if ((ApplicationManager.getApplication().isDispatchThread() || actionWrapper.hasPresentation()) &&
             actionWrapper.isAvailable()) {
           return 0;
@@ -290,8 +289,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     @Override
     public final boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof MatchedValue)) return false;
-      MatchedValue value1 = (MatchedValue)o;
+      if (!(o instanceof MatchedValue value1)) return false;
       return Objects.equals(value, value1.value) &&
              Objects.equals(pattern, value1.pattern);
     }
@@ -785,8 +783,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       String pattern = ((MatchedValue)matchedValue).pattern;
 
       Border eastBorder = JBUI.Borders.emptyRight(2);
-      if (value instanceof ActionWrapper) {
-        ActionWrapper actionWithParentGroup = (ActionWrapper)value;
+      if (value instanceof ActionWrapper actionWithParentGroup) {
         AnAction anAction = actionWithParentGroup.getAction();
         boolean toggle = anAction instanceof ToggleAction;
         String groupName = actionWithParentGroup.getAction() instanceof ApplyIntentionAction ? null : actionWithParentGroup.getGroupName();

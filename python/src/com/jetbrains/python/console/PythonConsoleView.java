@@ -61,7 +61,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.actions.CommandQueueListener;
-import com.jetbrains.python.console.completion.ConsolePandasColumnNameCompletionContributor;
+import com.jetbrains.python.console.completion.PythonPandasColumnNameCompletionContributor;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
@@ -243,7 +243,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   public void setExecutionHandler(@NotNull PythonConsoleExecuteActionHandler consoleExecuteActionHandler) {
     myExecuteActionHandler = consoleExecuteActionHandler;
     if (myExecuteActionHandler.getConsoleCommunication() instanceof PydevConsoleCommunication pydevConsoleCommunication) {
-      pydevConsoleCommunication.addFrameListener(ConsolePandasColumnNameCompletionContributor.Companion.getConsoleListener());
+      pydevConsoleCommunication.addFrameListener(PythonPandasColumnNameCompletionContributor.Companion.getConsoleListener());
     }
   }
 
@@ -622,8 +622,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public void restoreWindow() {
     Component component = getComponent(0);
-    if (mySplitView != null && component instanceof JBSplitter) {
-      JBSplitter pane = (JBSplitter)component;
+    if (mySplitView != null && component instanceof JBSplitter pane) {
       removeAll();
       Disposer.dispose(mySplitView);
       mySplitView = null;
@@ -731,6 +730,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return super.getActionUpdateThread();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -277,8 +278,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
                 containerType2Usage.putValue(usage.getContainingElement().getTypeName(), usage);
               }
 
-              List<String> types = new ArrayList<>(containerType2Usage.keySet());
-              Collections.sort(types);
+              List<String> types = ContainerUtil.sorted(containerType2Usage.keySet());
 
               final StringBuilder sb = new StringBuilder("Library '");
               Library libraryModel = myContext.getLibraryModel(library);
@@ -359,8 +359,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
       final Object o = getSelectedObject();
-      if (o instanceof LibraryEx) {
-        final LibraryEx selected = (LibraryEx)o;
+      if (o instanceof LibraryEx selected) {
         final String newName = Messages.showInputDialog(JavaUiBundle.message("label.enter.library.name"), JavaUiBundle.message(
           "dialog.title.copy.library"), null, selected.getName() + "2", new NonEmptyInputValidator());
         if (newName == null) return;

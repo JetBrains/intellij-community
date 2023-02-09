@@ -9,7 +9,6 @@ import com.intellij.openapi.components.service
 internal class SearchEverywhereCommonFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
   companion object {
     internal val PRIORITY_DATA_KEY = EventFields.Int("priority")
-    internal val TOTAL_SYMBOLS_AMOUNT_DATA_KEY = EventFields.Int("totalSymbolsAmount")
 
     internal val STATISTICIAN_USE_COUNT_DATA_KEY = EventFields.Int("statUseCount")
     internal val STATISTICIAN_IS_MOST_POPULAR_DATA_KEY = EventFields.Boolean("statIsMostPopular")
@@ -21,7 +20,7 @@ internal class SearchEverywhereCommonFeaturesProvider : SearchEverywhereElementF
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
     return listOf(
-      PRIORITY_DATA_KEY, TOTAL_SYMBOLS_AMOUNT_DATA_KEY,
+      PRIORITY_DATA_KEY,
       STATISTICIAN_USE_COUNT_DATA_KEY, STATISTICIAN_IS_MOST_POPULAR_DATA_KEY,
       STATISTICIAN_RECENCY_DATA_KEY, STATISTICIAN_IS_MOST_RECENT_DATA_KEY,
     )
@@ -34,7 +33,6 @@ internal class SearchEverywhereCommonFeaturesProvider : SearchEverywhereElementF
                                   cache: FeaturesProviderCache?): List<EventPair<*>> {
     val features = arrayListOf<EventPair<*>>(
       PRIORITY_DATA_KEY.with(elementPriority),
-      TOTAL_SYMBOLS_AMOUNT_DATA_KEY.with(searchQuery.length),
     )
     addStatisticianFeatures(element, features)
     return features

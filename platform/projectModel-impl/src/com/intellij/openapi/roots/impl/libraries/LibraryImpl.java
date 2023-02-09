@@ -53,7 +53,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   private final ModifiableRootModel myRootModel;
   private boolean myDisposed;
   private final Disposable myPointersDisposable = Disposer.newDisposable();
-  private final ProjectModelExternalSource myExternalSource;
+  private ProjectModelExternalSource myExternalSource;
   private final EventDispatcher<RootSetChangedListener> myDispatcher = EventDispatcher.create(RootSetChangedListener.class);
   private LibraryRootPointerListener myRootPointerListener;
 
@@ -449,6 +449,11 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @Override
   public PersistentLibraryKind<?> getKind() {
     return myKind;
+  }
+
+  @Override
+  public void setExternalSource(@NotNull ProjectModelExternalSource externalSource) {
+    myExternalSource = externalSource;
   }
 
   @Override

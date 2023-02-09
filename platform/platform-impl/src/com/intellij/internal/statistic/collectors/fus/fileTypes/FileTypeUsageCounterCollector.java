@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
-import com.intellij.codeInsight.actions.ReaderModeSettings;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
@@ -121,7 +120,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
                                 @NotNull VirtualFile file,
                                 @Nullable FileEditor fileEditor,
                                 long timeToShow, long durationMs) {
-    final FileEditorComposite composite = FileEditorManagerEx.getInstanceEx(project).getComposite(file);
+    FileEditorComposite composite = FileEditorManagerEx.getInstanceEx(project).getComposite(file);
     OPEN.log(project, pairs -> {
       pairs.addAll(buildCommonEventPairs(project, file, true));
       if (fileEditor != null) {
@@ -152,7 +151,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
                                                                    @NotNull VirtualFile file,
                                                                    boolean withWritable) {
     FileType fileType = file.getFileType();
-    List<EventPair<?>> data = ContainerUtil.newArrayList(
+    List<EventPair<?>> data = List.of(
       EventFields.PluginInfoFromInstance.with(fileType),
       EventFields.FileType.with(fileType),
       EventFields.AnonymizedPath.with(file.getPath()),
@@ -160,13 +159,12 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     );
 
     if (withWritable) {
-      data.add(IS_WRITABLE.with(file.isWritable()));
+      data = ContainerUtil.append(data, IS_WRITABLE.with(file.isWritable()));
     }
     return data;
   }
 
-  private static void addFileNamePattern(@NotNull List<EventPair<?>> data,
-                                         @NotNull VirtualFile file) {
+  private static void addFileNamePattern(@NotNull List<EventPair<?>> data, @NotNull VirtualFile file) {
     FileType fileType = file.getFileType();
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (!(fileTypeManager instanceof FileTypeManagerImpl)) {
@@ -205,9 +203,8 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     @Attribute("implementationClass")
     public String implementationClass;
 
-    @Nullable
     @Override
-    protected String getImplementationClassName() {
+    protected @Nullable String getImplementationClassName() {
       return implementationClass;
     }
 
@@ -218,15 +215,13 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
   }
 
   public static final class FileTypeSchemaValidator extends CustomValidationRule {
-    @NotNull
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return "file_type_schema";
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
 
       for (FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor> ext : EP.getExtensionList()) {
@@ -239,7 +234,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     }
   }
 
-  static class MyAnActionListener implements AnActionListener {
+  static final class MyAnActionListener implements AnActionListener {
     private static final Key<Long> LAST_EDIT_USAGE = Key.create("LAST_EDIT_USAGE");
 
     @Override
@@ -270,16 +265,14 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     }
   }
 
-  public static class FileNamePatternCustomValidationRule extends CustomValidationRule {
-    @NotNull
+  static final class FileNamePatternCustomValidationRule extends CustomValidationRule {
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return FILE_NAME_PATTERN;
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       final Object fileTypeName = context.eventData.get("file_type");
       final FileType fileType = fileTypeName != null ? FileTypeManager.getInstance().findFileTypeByName(fileTypeName.toString()) : null;
       if (fileType == null || fileType == UnknownFileType.INSTANCE)

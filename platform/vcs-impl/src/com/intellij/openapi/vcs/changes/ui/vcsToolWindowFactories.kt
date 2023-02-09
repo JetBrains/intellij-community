@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ToolWindowEmptyStateAction.rebuildContentUi
 import com.intellij.ide.impl.isTrusted
@@ -15,7 +16,9 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.C
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.StatusText
+import javax.swing.JComponent
 
 private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
 
@@ -88,9 +91,17 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
 }
 
 internal class SwitchToCommitDialogHint(toolWindow: ToolWindowEx, toolbar: ActionToolbar) : ChangesViewContentManagerListener {
+  private val toolwindowGearButton: (ActionToolbar) -> JComponent = { toolbar ->
+    // see com.intellij.openapi.wm.impl.ToolWindowImpl.GearActionGroup / com.intellij.toolWindow.ToolWindowHeader.ShowOptionsAction
+    val gearIcon = if (ExperimentalUI.isNewUI()) AllIcons.Actions.More else AllIcons.General.GearPlain
+    findToolbarActionButton(toolbar) { it.templatePresentation.icon == gearIcon } ?: toolbar.component
+  }
+
   private val actionToolbarTooltip =
-    ActionToolbarGotItTooltip("changes.view.toolwindow", message("switch.to.commit.dialog.hint.text"),
-                              toolWindow.disposable, toolbar, gearButtonOrToolbar)
+    ActionToolbarGotItTooltip("changes.view.toolwindow",
+                              if (ExperimentalUI.isNewUI()) message("switch.to.commit.dialog.hint.text.new.ui")
+                              else message("switch.to.commit.dialog.hint.text"),
+                              toolWindow.disposable, toolbar, toolwindowGearButton)
 
   init {
     toolWindow.project.messageBus.connect(actionToolbarTooltip.tooltipDisposable).subscribe(ChangesViewContentManagerListener.TOPIC, this)

@@ -3,10 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
@@ -20,6 +17,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.applyIf
+import com.intellij.util.ui.EDT.isCurrentThreadEdt
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
@@ -82,7 +83,6 @@ abstract class ScriptClassRootsUpdater(
             override fun projectClosing(project: Project) {
                 scheduledUpdate?.apply {
                     cancel()
-                    awaitCompletion()
                 }
             }
         })
@@ -153,7 +153,7 @@ abstract class ScriptClassRootsUpdater(
     fun addConfiguration(vFile: VirtualFile, configuration: ScriptCompilationConfigurationWrapper) {
         update {
             val builder = classpathRoots.builder(project)
-            builder.dontWarnAboutDependenciesExistence()
+            builder.warnAboutDependenciesExistence(false)
             builder.add(vFile, configuration)
             cache.set(builder.build())
         }
@@ -205,17 +205,35 @@ abstract class ScriptClassRootsUpdater(
             if (underProgressManager) {
                 ProgressManager.checkCanceled()
             }
+
             if (disposable.disposed) return
 
-            runInEdt(ModalityState.NON_MODAL) {
-                runWriteAction {
-                    if (scriptsAsEntities) { // (updates.changed && !updates.hasNewRoots)
-                        val manager = VirtualFileManager.getInstance()
-                        updates.cache.scriptsPaths().takeUnless { it.isEmpty() }?.asSequence()
-                            ?.map { checkNotNull(manager.findFileByNioPath(Paths.get(it))) { "Couldn't find script as a VFS file: $it" } }
-                            ?.let { project.syncScriptEntities(it) }
-                    }
+            if (scriptsAsEntities) { // (updates.changed && !updates.hasNewRoots)
+                val manager = VirtualFileManager.getInstance()
+                val updatedScriptPaths = when (updates) {
+                    is ScriptClassRootsCache.IncrementalUpdates -> updates.updatedScripts
+                    else -> updates.cache.scriptsPaths()
                 }
+
+                updatedScriptPaths.takeUnless { it.isEmpty() }?.asSequence()
+                    ?.map {
+                        val byNioPath = manager.findFileByNioPath(Paths.get(it))
+                        if (byNioPath == null) { // e.g. jupyter notebooks have their .kts in memory only
+                            val path = it.applyIf(it.startsWith("/")) { it.replaceFirst("/", "") }
+                            LightVirtualFile(path)
+                        } else {
+                            byNioPath
+                        }
+                    }
+                    ?.let { updatedScriptFiles ->
+                        val actualScriptPaths = updates.cache.scriptsPaths()
+                        val (filesToAddOrUpdate, filesToRemove) = updatedScriptFiles.partition { actualScriptPaths.contains(it.path) }
+
+                        // Here we're sometimes under read-lock.
+                        // There is no way to acquire write-lock (on EDT) without releasing this thread.
+
+                        applyDiffToModelAsync(filesToAddOrUpdate, filesToRemove)
+                    }
             }
 
             if (updates.hasNewRoots) {
@@ -277,6 +295,42 @@ abstract class ScriptClassRootsUpdater(
             }
         } finally {
             scheduledUpdate = null
+        }
+    }
+
+    private fun applyDiffToModelAsync(
+        filesToAddOrUpdate: List<VirtualFile>,
+        filesToRemove: List<VirtualFile>
+    ) {
+        if (ApplicationManager.getApplication().isUnitTestMode || !isCurrentThreadEdt()) {
+            applyDiffToModel(filesToAddOrUpdate, filesToRemove)
+        } else {
+            if (project.isDisposed) return
+            BackgroundTaskUtil.executeOnPooledThread(KotlinPluginDisposable.getInstance(project)) {
+                applyDiffToModel(filesToAddOrUpdate, filesToRemove)
+            }
+        }
+    }
+
+    private fun applyDiffToModel(
+        filesToAddOrUpdate: List<VirtualFile>,
+        filesToRemove: List<VirtualFile>
+    ) {
+        if (project.isDisposed) return
+
+        val builderSnapshot = WorkspaceModel.getInstance(project).getBuilderSnapshot()
+        builderSnapshot.syncScriptEntities(project, filesToAddOrUpdate, filesToRemove) // time-consuming call
+        val replacement = builderSnapshot.getStorageReplacement()
+
+        runInEdt(ModalityState.NON_MODAL) {
+            val replaced = runWriteAction {
+                if (project.isDisposed) false
+                else WorkspaceModel.getInstance(project).replaceProjectModel(replacement)
+            }
+            if (!replaced) {
+                // initiate update once again
+                applyDiffToModelAsync(filesToAddOrUpdate, filesToRemove)
+            }
         }
     }
 

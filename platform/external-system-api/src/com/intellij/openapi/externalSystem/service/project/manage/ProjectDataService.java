@@ -48,7 +48,6 @@ import java.util.Collection;
  * </pre>
  * 
  * 
- * @author Denis Zhdanov
  * @param <E>  target external project data type
  * @param <I>  target ide project data type
  */

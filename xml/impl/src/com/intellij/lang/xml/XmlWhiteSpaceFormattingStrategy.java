@@ -30,9 +30,6 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class XmlWhiteSpaceFormattingStrategy extends WhiteSpaceFormattingStrategyAdapter {
 
   private static void addWhitespaceToTagBody(final ASTNode treePrev, final LeafElement whiteSpaceElement) {

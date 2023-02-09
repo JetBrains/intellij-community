@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -64,9 +64,11 @@ public class SAJDWPRemoteConnection extends PidRemoteConnection {
           commandLine.getParametersList().replaceOrPrepend("-agentlib:jdwp", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n");
         }
         startServer(commandLine, false);
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
         throw e;
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         throw new IOException("Unable to start sa-jdwp server", e);
       }
 

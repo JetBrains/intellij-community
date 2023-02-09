@@ -1,27 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType.*
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.FAILURE
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
-import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event.*
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event.UPDATE
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.ReloadStatus.IN_PROGRESS
+import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.Parallel.Companion.parallel
 import com.intellij.openapi.util.Ref
+import com.intellij.testFramework.utils.vfs.getDocument
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.util.AlarmFactory
+import com.intellij.util.Alarm
 import org.jetbrains.concurrency.AsyncPromise
-import org.junit.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.writeText
 
 class AutoReloadTest : AutoReloadTestCase() {
 
-  @Test
   fun `test simple modification tracking`() {
     test { settingsFile ->
       settingsFile.appendString("println 'hello'")
@@ -57,7 +57,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test modification tracking disabled by ES plugin`() {
     val autoImportAwareCondition = Ref.create(true)
     testWithDummyExternalSystem(autoImportAwareCondition) { settingsFile ->
@@ -77,7 +76,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test simple modification tracking in xml`() {
     test {
       val settingsFile = createSettingsVirtualFile("settings.xml")
@@ -126,7 +124,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test unrecognized settings file`() {
     test {
       val settingsFile = createSettingsVirtualFile("settings.elvish")
@@ -155,7 +152,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test deletion tracking`() {
     test { settingsFile ->
       settingsFile.modify(EXTERNAL)
@@ -182,7 +178,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test directory deletion tracking`() {
     test {
       val directory = findOrCreateDirectory("directory")
@@ -200,7 +195,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test modification tracking with several settings files`() {
     test { settingsFile ->
       settingsFile.replaceContent("println 'hello'")
@@ -235,7 +229,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test modification tracking with several sub projects`() {
     val systemId1 = ProjectSystemId("External System 1")
     val systemId2 = ProjectSystemId("External System 2")
@@ -249,8 +242,8 @@ class AutoReloadTest : AutoReloadTestCase() {
     val scriptFile1 = createFile("script1.groovy")
     val scriptFile2 = createFile("script2.groovy")
 
-    projectAware1.registerSettingsFile(scriptFile1.path)
-    projectAware2.registerSettingsFile(scriptFile2.path)
+    projectAware1.registerSettingsFile(scriptFile1)
+    projectAware2.registerSettingsFile(scriptFile2)
 
     register(projectAware1)
     register(projectAware2)
@@ -291,7 +284,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     assertNotificationAware(event = "project refresh")
   }
 
-  @Test
   fun `test project link-unlink`() {
     test { settingsFile ->
       settingsFile.modify(INTERNAL)
@@ -305,7 +297,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test external modification tracking`() {
     test {
       var settingsFile = it
@@ -382,11 +373,10 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test tracker store and restore`() {
     val projectAware = mockProjectAware()
     val settingsFile = findOrCreateFile(SETTINGS_FILE)
-    projectAware.registerSettingsFile(settingsFile.path)
+    projectAware.registerSettingsFile(settingsFile)
 
     var state = testProjectTrackerState(projectAware) {
       assertState(numReload = 1, notified = false, event = "register project without cache")
@@ -430,7 +420,7 @@ class AutoReloadTest : AutoReloadTestCase() {
   }
 
   fun `test move and rename settings files`() {
-    test("settings.groovy") { settingsFile ->
+    test { settingsFile ->
       registerSettingsFile("script.groovy")
       registerSettingsFile("dir/script.groovy")
       registerSettingsFile("dir1/script.groovy")
@@ -473,14 +463,14 @@ class AutoReloadTest : AutoReloadTestCase() {
 
       settingsFile.rename("configuration.groovy")
       assertState(numReload = 1, notified = true, event = "rename")
-      settingsFile.rename("settings.groovy")
+      settingsFile.rename(SETTINGS_FILE)
       assertState(numReload = 1, notified = false, event = "revert rename")
     }
   }
 
   fun `test document changes between save`() {
     test { settingsFile ->
-      val settingsDocument = settingsFile.asDocument()
+      val settingsDocument = settingsFile.getDocument()
 
       settingsDocument.replaceContent("println 'hello'")
       assertState(numReload = 0, notified = true, event = "change")
@@ -529,8 +519,7 @@ class AutoReloadTest : AutoReloadTestCase() {
   }
 
   fun `test files generation during refresh`() {
-    test {
-      val settingsFile = createFile(SETTINGS_FILE)
+    test { settingsFile ->
       assertState(numReload = 0, notified = false, event = "some file is created")
       onceWhenReloading {
         registerSettingsFile(settingsFile)
@@ -560,7 +549,7 @@ class AutoReloadTest : AutoReloadTestCase() {
   fun `test disabling of auto-import`() {
     val projectAware = mockProjectAware()
     val settingsFile = findOrCreateFile(SETTINGS_FILE)
-    projectAware.registerSettingsFile(settingsFile.path)
+    projectAware.registerSettingsFile(settingsFile)
 
     var state = testProjectTrackerState(projectAware) {
       assertState(numReload = 1, autoReloadType = SELECTIVE, notified = false, event = "register project without cache")
@@ -598,7 +587,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test activation of auto-import`() {
     val systemId = ProjectSystemId("External System")
     val projectId1 = ExternalSystemProjectId(systemId, projectPath)
@@ -652,7 +640,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     assertActivationStatus(projectId1, projectId2, event = "refresh project")
   }
 
-  @Test
   fun `test merging of refreshes with different nature`() {
     test { settingsFile ->
       enableAsyncExecution()
@@ -672,7 +659,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test enabling-disabling internal-external changes importing`() {
     test { settingsFile ->
       settingsFile.modify(INTERNAL)
@@ -720,7 +706,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test failure auto-reload with enabled auto-reload of any changes`() {
     test { settingsFile ->
       setAutoReloadType(ALL)
@@ -745,7 +730,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test up-to-date promise after modifications with enabled auto-import`() {
     test { settingsFile ->
       for (collisionPassType in ReloadCollisionPassType.values()) {
@@ -770,7 +754,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test providing explicit reload`() {
     test { settingsFile ->
       onceWhenReloading {
@@ -789,7 +772,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test settings files modification partition`() {
     test {
       val settingsFile1 = createSettingsVirtualFile("settings1.groovy")
@@ -836,7 +818,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test settings files cache`() {
     test {
       val settings1File = createSettingsVirtualFile("settings1.groovy")
@@ -909,7 +890,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test configuration for unknown file type`() {
     test("unknown") { settingsFile ->
       settingsFile.replaceContent(byteArrayOf(1, 2, 3))
@@ -926,7 +906,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test reload during reload`() {
     test { settingsFile ->
       enableAsyncExecution()
@@ -952,7 +931,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test modification during reload`() {
     test { settingsFile ->
       enableAsyncExecution()
@@ -969,7 +947,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test generation during reload`() {
     test {
       onceWhenReloading {
@@ -991,13 +968,11 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test merge project reloads`() {
     test { settingsFile ->
       enableAsyncExecution()
       setDispatcherMergingSpan(100)
-      val alarmFactory = AlarmFactory.getInstance()
-      val alarm = alarmFactory.create()
+      val alarm = Alarm()
       repeat(10) { iteration ->
         val promise = AsyncPromise<Unit>()
         alarm.addRequest({
@@ -1016,13 +991,12 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  @Test
   fun `test handle explicit settings files list change event`() {
     initialize()
     setAutoReloadType(ALL)
 
-    val settingsFile1 = createFile("script1.groovy").path
-    val settingsFile2 = createFile("script2.groovy").path
+    val settingsFile1 = createFile("script1.groovy")
+    val settingsFile2 = createFile("script2.groovy")
 
     val projectAware = mockProjectAware()
     projectAware.registerSettingsFile(settingsFile1)
@@ -1037,7 +1011,6 @@ class AutoReloadTest : AutoReloadTestCase() {
     assertProjectAware(projectAware, numReload = 2, event = "handle settings files list change event when file added")
   }
 
-  @Test
   fun `test partial ignoring settings files modification events`() {
     test {
       ignoreSettingsFileWhen("ignored.groovy") { it.event == UPDATE }

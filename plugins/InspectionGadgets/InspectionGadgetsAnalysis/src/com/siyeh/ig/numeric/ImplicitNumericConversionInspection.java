@@ -17,7 +17,7 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,7 +38,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ImplicitNumericConversionInspection extends BaseInspection {
 
@@ -52,15 +53,13 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
   public boolean ignoreConstantConversions = false;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("implicit.numeric.conversion.ignore.widening.conversion.option"),
-                             "ignoreWideningConversions");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("implicit.numeric.conversion.ignore.char.conversion.option"),
-                             "ignoreCharConversions");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("implicit.numeric.conversion.ignore.constant.conversion.option"),
-                             "ignoreConstantConversions");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreWideningConversions",
+               InspectionGadgetsBundle.message("implicit.numeric.conversion.ignore.widening.conversion.option")),
+      checkbox("ignoreCharConversions", InspectionGadgetsBundle.message("implicit.numeric.conversion.ignore.char.conversion.option")),
+      checkbox("ignoreConstantConversions",
+               InspectionGadgetsBundle.message("implicit.numeric.conversion.ignore.constant.conversion.option")));
   }
 
   @Override
@@ -123,8 +122,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       }
       else {
         final PsiElement parent = expression.getParent();
-        if (parent instanceof PsiAssignmentExpression) {
-          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+        if (parent instanceof PsiAssignmentExpression assignmentExpression) {
           final PsiJavaToken sign = assignmentExpression.getOperationSign();
           if (!JavaTokenType.EQ.equals(sign.getTokenType())) {
             replaceCompoundAssignment(assignmentExpression);
@@ -185,34 +183,34 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
         return null;
       }
       final String text = expression.getText();
-      if (expressionType.equals(PsiType.INT) && expectedType.equals(PsiType.LONG)) {
+      if (expressionType.equals(PsiTypes.intType()) && expectedType.equals(PsiTypes.longType())) {
         return text + 'L';
       }
-      if (expressionType.equals(PsiType.INT) && expectedType.equals(PsiType.FLOAT)) {
+      if (expressionType.equals(PsiTypes.intType()) && expectedType.equals(PsiTypes.floatType())) {
         if (!isDecimalLiteral(text)) {
           return null;
         }
         return text + ".0F";
       }
-      if (expressionType.equals(PsiType.INT) && expectedType.equals(PsiType.DOUBLE)) {
+      if (expressionType.equals(PsiTypes.intType()) && expectedType.equals(PsiTypes.doubleType())) {
         if (!isDecimalLiteral(text)) {
           return null;
         }
         return text + ".0";
       }
-      if (expressionType.equals(PsiType.LONG) && expectedType.equals(PsiType.FLOAT)) {
+      if (expressionType.equals(PsiTypes.longType()) && expectedType.equals(PsiTypes.floatType())) {
         if (!isDecimalLiteral(text)) {
           return null;
         }
         return text.substring(0, text.length() - 1) + ".0F";
       }
-      if (expressionType.equals(PsiType.LONG) && expectedType.equals(PsiType.DOUBLE)) {
+      if (expressionType.equals(PsiTypes.longType()) && expectedType.equals(PsiTypes.doubleType())) {
         if (!isDecimalLiteral(text)) {
           return null;
         }
         return text.substring(0, text.length() - 1) + ".0";
       }
-      if (expressionType.equals(PsiType.DOUBLE) && expectedType.equals(PsiType.FLOAT)) {
+      if (expressionType.equals(PsiTypes.doubleType()) && expectedType.equals(PsiTypes.floatType())) {
         final int length = text.length();
         if (text.charAt(length - 1) == 'd' || text.charAt(length - 1) == 'D') {
           return text.substring(0, length - 1) + 'F';
@@ -221,7 +219,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
           return text + 'F';
         }
       }
-      if (expressionType.equals(PsiType.FLOAT) && expectedType.equals(PsiType.DOUBLE)) {
+      if (expressionType.equals(PsiTypes.floatType()) && expectedType.equals(PsiTypes.doubleType())) {
         final int length = text.length();
         return text.substring(0, length - 1);
       }
@@ -234,10 +232,9 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
     }
 
     private static boolean isNegatedLiteral(PsiExpression expression) {
-      if (!(expression instanceof PsiPrefixExpression)) {
+      if (!(expression instanceof PsiPrefixExpression prefixExpression)) {
         return false;
       }
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
       final IElementType tokenType = prefixExpression.getOperationTokenType();
       if (!JavaTokenType.MINUS.equals(tokenType)) {
         return false;
@@ -248,8 +245,10 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
   }
 
   private static boolean isCharConversion(PsiType expressionType, PsiType convertedType) {
-    return PsiType.CHAR.equals(expressionType) && !PsiType.FLOAT.equals(convertedType) && !PsiType.DOUBLE.equals(convertedType) ||
-           PsiType.CHAR.equals(convertedType) && !PsiType.FLOAT.equals(expressionType) && !PsiType.DOUBLE.equals(expressionType);
+    return PsiTypes.charType().equals(expressionType) && !PsiTypes.floatType().equals(convertedType) && !PsiTypes.doubleType()
+      .equals(convertedType) ||
+           PsiTypes.charType().equals(convertedType) && !PsiTypes.floatType().equals(expressionType) && !PsiTypes.doubleType()
+             .equals(expressionType);
   }
 
   private class ImplicitNumericConversionVisitor extends BaseInspectionVisitor {
@@ -319,8 +318,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       if (parent instanceof PsiParenthesizedExpression) {
         return;
       }
-      if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+      if (parent instanceof PsiAssignmentExpression assignmentExpression) {
         if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ) {
           if (assignmentExpression.getLExpression() == expression) {
             final PsiExpression rhs = assignmentExpression.getRExpression();
@@ -358,8 +356,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       if (expressionType.equals(convertedType)) return false;
       if (ignoreConstantConversions) {
         PsiExpression rootExpression = expression;
-        while (rootExpression instanceof PsiParenthesizedExpression) {
-          final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)rootExpression;
+        while (rootExpression instanceof PsiParenthesizedExpression parenthesizedExpression) {
           rootExpression = parenthesizedExpression.getExpression();
         }
         if (rootExpression instanceof PsiLiteralExpression || PsiUtil.isConstantExpression(rootExpression)) {

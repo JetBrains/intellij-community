@@ -20,7 +20,7 @@ fun testing() {
 
 package testing
 
-import java.util.Collections.min
+import kotlin.math.min
 
 fun testing() {
     val x = <caret>min(1, 2)

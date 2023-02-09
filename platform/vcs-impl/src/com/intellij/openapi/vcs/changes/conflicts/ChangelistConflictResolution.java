@@ -39,7 +39,7 @@ public enum ChangelistConflictResolution {
     @Override
     public boolean resolveConflict(Project project, Collection<? extends Change> changes, VirtualFile selected) {
       LocalChangeList changeList = getManager(project).getChangeList(changes.iterator().next());
-      return CommitChangeListDialog.commitChanges(project, changes, changeList, new ShelveChangesCommitExecutor(project), null);
+      return CommitChangeListDialog.commitWithExecutor(project, changes, changeList, new ShelveChangesCommitExecutor(project), null, null);
     }},
 
   MOVE {

@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.SmartList
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
@@ -96,7 +95,7 @@ abstract class AbstractKotlinUVariable(
 
         override val javaPsi: PsiAnnotation = psiAnnotation
         override val psi: PsiAnnotation = javaPsi
-        override val sourcePsi: PsiElement? = psiAnnotation.safeAs<KtLightAbstractAnnotation>()?.kotlinOrigin
+        override val sourcePsi: PsiElement? = (psiAnnotation as? KtLightAbstractAnnotation)?.kotlinOrigin
 
         override val attributeValues: List<UNamedExpression> by lz {
             psi.parameterList.attributes.map { WrappedUNamedExpression(it, this) }
@@ -105,7 +104,7 @@ abstract class AbstractKotlinUVariable(
         override val uastAnchor: UIdentifier by lz {
             KotlinUIdentifier(
                 { javaPsi.nameReferenceElement?.referenceNameElement },
-                sourcePsi.safeAs<KtAnnotationEntry>()?.typeReference?.nameElement,
+                (sourcePsi as? KtAnnotationEntry)?.typeReference?.nameElement,
                 this
             )
         }

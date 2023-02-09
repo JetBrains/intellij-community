@@ -6,6 +6,10 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
+import com.intellij.codeInspection.options.OptDropdown
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.*
+import com.intellij.codeInspection.options.OptionController
 import com.intellij.java.JavaBundle
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
@@ -15,21 +19,13 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaVersionService
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastVisitorAdapter
-import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.jdom.Element
 import org.jetbrains.uast.*
-import java.awt.BorderLayout
-import java.awt.event.ActionListener
-import javax.swing.*
 
 /**
  * In order to add the support for new API in the most recent JDK execute:
@@ -47,55 +43,24 @@ import javax.swing.*
 class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.ERROR
 
-  override fun createOptionsPanel(): JComponent {
-    val projectRb = JRadioButton(JavaBundle.message("radio.button.respecting.to.project.language.level.settings"))
-    val customRb = JRadioButton(JavaBundle.message("radio.button.higher.than"))
-    val panel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false)).apply {
-      add(JLabel(JavaBundle.message("label.forbid.api.usages")))
-      add(projectRb)
-      add(customRb)
-      ButtonGroup().apply {
-        add(projectRb)
-        add(customRb)
-      }
-    }
+  private var effectiveLanguageLevel: LanguageLevel? = null
 
-    val llCombo = object : ComboBox<LanguageLevel>(LanguageLevel.values()) {
-      override fun setEnabled(b: Boolean) {
-        if (b == customRb.isSelected) {
-          super.setEnabled(b)
-        }
-      }
-    }.apply {
-      selectedItem = if (effectiveLanguageLevel != null) effectiveLanguageLevel else LanguageLevel.JDK_1_3
-      renderer = SimpleListCellRenderer.create("") { obj -> obj.presentableText }
-      addActionListener { effectiveLanguageLevel = selectedItem as LanguageLevel }
-    }
-
-
-    val comboPanel = JPanel(BorderLayout()).apply {
-      border = JBUI.Borders.emptyLeft(20)
-      add(llCombo, BorderLayout.WEST)
-    }
-    panel.add(comboPanel)
-
-    val actionListener = ActionListener {
-      if (projectRb.isSelected) {
-        effectiveLanguageLevel = null
-      }
-      else {
-        effectiveLanguageLevel = llCombo.selectedItem as LanguageLevel
-      }
-      UIUtil.setEnabled(comboPanel, !projectRb.isSelected, true)
-    }
-    projectRb.addActionListener(actionListener)
-    customRb.addActionListener(actionListener)
-    projectRb.isSelected = effectiveLanguageLevel == null
-    customRb.isSelected = effectiveLanguageLevel != null
-    UIUtil.setEnabled(comboPanel, !projectRb.isSelected, true)
-    return panel
+  override fun getOptionsPane(): OptPane {
+    var levels: List<OptDropdown.Option> = LanguageLevel.values().map { option(it.name, it.presentableText) }
+    levels = listOf(option("null", JavaBundle.message("label.forbid.api.usages.project"))) + levels
+    return pane(
+      dropdown("effectiveLanguageLevel", JavaBundle.message("label.forbid.api.usages"), *levels.toTypedArray())
+    )
   }
 
+  override fun getOptionController(): OptionController {
+    return super.getOptionController().onValue(
+      "effectiveLanguageLevel",
+      { effectiveLanguageLevel?.name ?: "null" },
+      { value -> effectiveLanguageLevel = if (value == "null") null else LanguageLevel.valueOf(value) }
+    )
+  }
+  
   override fun readSettings(node: Element) {
     val element = node.getChild(EFFECTIVE_LL)
     if (element != null) {
@@ -257,12 +222,14 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     holder.registerProblem(reference, message, fix)
   }
 
+  fun getEffectiveLanguageLevel(module: Module): LanguageLevel {
+    return effectiveLanguageLevel ?: LanguageLevelUtil.getEffectiveLanguageLevel(module)
+  }
+
   companion object {
     private val overrideModifierLanguages = listOf("kotlin", "scala")
 
     private val logger = logger<JavaApiUsageInspection>()
-
-    private var effectiveLanguageLevel: LanguageLevel? = null
 
     private const val EFFECTIVE_LL = "effectiveLL"
 
@@ -271,9 +238,5 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     private val generifiedClasses = setOf("javax.swing.JComboBox", "javax.swing.ListModel", "javax.swing.JList")
 
     private val defaultMethods = setOf("java.util.Iterator#remove()")
-
-    fun getEffectiveLanguageLevel(module: Module): LanguageLevel {
-      return effectiveLanguageLevel ?: LanguageLevelUtil.getEffectiveLanguageLevel(module)
-    }
   }
 }

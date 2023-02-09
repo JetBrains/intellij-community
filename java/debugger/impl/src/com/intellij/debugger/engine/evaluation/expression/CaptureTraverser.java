@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.psi.PsiClass;
@@ -42,7 +42,7 @@ public final class CaptureTraverser {
    * Looks for a captured outer this having inner this
    *
    * @param objRef an inner this object
-   * @return a reference to the outer class instance, or null if not found or this traverser is not valid. 
+   * @return a reference to the outer class instance, or null if not found or this traverser is not valid.
    * Direct traverser simply return the argument.
    */
   @Contract("null -> null")

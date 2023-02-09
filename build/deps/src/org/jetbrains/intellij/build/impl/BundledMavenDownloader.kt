@@ -7,6 +7,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.readBytes
 
 object BundledMavenDownloader {
   private val mavenCommonLibs: List<String> = listOf(
@@ -21,7 +23,7 @@ object BundledMavenDownloader {
 
   @JvmStatic
   fun main(args: Array<String>) {
-    val communityRoot = BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory()
+    val communityRoot = BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory
     val distRoot = downloadMavenDistribution(communityRoot)
     val commonLibs = downloadMavenCommonLibs(communityRoot)
 
@@ -29,16 +31,11 @@ object BundledMavenDownloader {
     println("Maven common libs at $commonLibs")
   }
 
-  private fun fileChecksum(path: Path): String? {
-    return try {
-      val md5 = MessageDigest.getInstance("MD5")
-      md5.update(Files.readAllBytes(path))
-      val digest = md5.digest()
-      BigInteger(1, digest).toString(32)
-    }
-    catch (e: Exception) {
-      null
-    }
+  private fun fileChecksum(path: Path): String {
+    val md5 = MessageDigest.getInstance("MD5")
+    md5.update(path.readBytes())
+    val digest = md5.digest()
+    return BigInteger(1, digest).toString(32)
   }
 
   fun downloadMavenCommonLibs(communityRoot: BuildDependenciesCommunityRoot): Path {
@@ -60,49 +57,46 @@ object BundledMavenDownloader {
       targetToSourceFiles[targetFile] = sourceFile
     }
 
-    Files.list(root).use { stream ->
-      stream.forEach { file: Path? ->
-        run {
-          if (!targetToSourceFiles.containsKey(file)) {
-            BuildDependenciesUtil.deleteFileOrFolder(file)
+    root.listDirectoryEntries().forEach {  file ->
+      if (!targetToSourceFiles.containsKey(file)) {
+        BuildDependenciesUtil.deleteFileOrFolder(file)
+      }
+    }
+
+    synchronized(this) {
+      for (targetFile in targetToSourceFiles.keys) {
+        val sourceFile = targetToSourceFiles[targetFile]!!
+        if (!Files.exists(targetFile)) {
+          Files.copy(sourceFile, targetFile)
+        }
+        else {
+          val sourceCheckSum = fileChecksum(sourceFile)
+          val targetCheckSum = fileChecksum(targetFile)
+          if (sourceCheckSum != targetCheckSum) {
+            Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING)
           }
         }
       }
     }
-
-    for (targetFile in targetToSourceFiles.keys) {
-      val sourceFile = targetToSourceFiles[targetFile]!!
-      if (!Files.exists(targetFile)) {
-        Files.copy(sourceFile, targetFile)
-      } else {
-        val sourceCheckSum = fileChecksum(sourceFile)
-        val targetCheckSum = fileChecksum(targetFile)
-        if (!sourceCheckSum.equals(targetCheckSum)) {
-          Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING)
-        }
-      }
-    }
-
     return root
   }
 
   fun downloadMavenDistribution(communityRoot: BuildDependenciesCommunityRoot): Path {
+    val extractDir = communityRoot.communityRoot.resolve("plugins/maven/maven36-server-impl/lib/maven3")
     val properties = BuildDependenciesDownloader.getDependenciesProperties(communityRoot)
     val bundledMavenVersion = properties.property("bundledMavenVersion")
-
-    val uri = BuildDependenciesDownloader.getUriForMavenArtifact(
-      BuildDependenciesConstants.MAVEN_CENTRAL_URL,
-      "org.apache.maven",
-      "apache-maven",
-      bundledMavenVersion,
-      "bin",
-      "zip"
-    )
-    val zipPath = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, uri)
-
-    val extractDir = communityRoot.communityRoot.resolve("plugins/maven/maven36-server-impl/lib/maven3")
-    BuildDependenciesDownloader.extractFile(zipPath, extractDir, communityRoot, BuildDependenciesExtractOptions.STRIP_ROOT)
-
+    synchronized(this) {
+      val uri = BuildDependenciesDownloader.getUriForMavenArtifact(
+        BuildDependenciesConstants.MAVEN_CENTRAL_URL,
+        "org.apache.maven",
+        "apache-maven",
+        bundledMavenVersion,
+        "bin",
+        "zip"
+      )
+      val zipPath = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, uri)
+      BuildDependenciesDownloader.extractFile(zipPath, extractDir, communityRoot, BuildDependenciesExtractOptions.STRIP_ROOT)
+    }
     return extractDir
   }
 }

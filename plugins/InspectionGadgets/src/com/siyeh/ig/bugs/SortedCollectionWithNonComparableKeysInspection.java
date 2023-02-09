@@ -5,6 +5,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
@@ -19,18 +20,19 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Set;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class SortedCollectionWithNonComparableKeysInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Set<String> COLLECTIONS = Set.of(
     "java.util.TreeSet", "java.util.TreeMap", "java.util.concurrent.ConcurrentSkipListSet", "java.util.concurrent.ConcurrentSkipListMap");
 
   public boolean IGNORE_TYPE_PARAMETERS;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      JavaBundle.message("inspection.sorted.collection.with.non.comparable.keys.option.type.parameters"), this,
-      "IGNORE_TYPE_PARAMETERS");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("IGNORE_TYPE_PARAMETERS",
+               JavaBundle.message("inspection.sorted.collection.with.non.comparable.keys.option.type.parameters")));
   }
 
   @NotNull

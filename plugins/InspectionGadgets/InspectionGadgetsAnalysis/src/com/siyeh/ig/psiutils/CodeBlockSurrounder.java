@@ -5,6 +5,7 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.codeInspection.ConditionalBreakInInfiniteLoopInspection;
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -129,8 +130,7 @@ public abstract class CodeBlockSurrounder {
         ((PsiAssignmentExpression)parent).getRExpression() == myExpression) {
       return ParentContext.ASSIGNMENT;
     }
-    if (parent instanceof PsiLocalVariable) {
-      PsiLocalVariable var = (PsiLocalVariable)parent;
+    if (parent instanceof PsiLocalVariable var) {
       if (!var.getTypeElement().isInferredType() || PsiTypesUtil.isDenotableType(var.getType(), parent)) {
         return ParentContext.ASSIGNMENT;
       }
@@ -138,11 +138,36 @@ public abstract class CodeBlockSurrounder {
     if (parent instanceof PsiReturnStatement || parent instanceof PsiYieldStatement || parent instanceof PsiThrowStatement) {
       return ParentContext.RETURN;
     }
-    if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getElseBranch() == null &&
-        ((PsiIfStatement)parent).getThenBranch() != null) {
-      return ParentContext.SIMPLE_IF_CONDITION;
+    if (parent instanceof PsiIfStatement ifStatement && ifStatement.getThenBranch() != null) {
+      PsiStatement elseBranch = ifStatement.getElseBranch();
+      if (elseBranch == null) {
+        return ParentContext.SIMPLE_IF_CONDITION;
+      }
+      // SIMPLE_IF_CONDITION is used now only to split 'if' with polyadic, so we may assume that at least first
+      // operand should be kept. If the subsequent conditions in else branches are mutually exclusive with this one,
+      // then it's still safe to split.
+      // TODO: support splitting at other operand, not only at 0
+      if (!(PsiUtil.skipParenthesizedExprDown(myExpression) instanceof PsiPolyadicExpression polyadic) || 
+          !polyadic.getOperationTokenType().equals(JavaTokenType.ANDAND)) {
+        return ParentContext.UNKNOWN;
+      }
+      if (isExclusiveElseBranch(polyadic.getOperands()[0], elseBranch)) {
+        return ParentContext.SIMPLE_IF_CONDITION;
+      }
     }
     return ParentContext.UNKNOWN;
+  }
+
+  private static boolean isExclusiveElseBranch(@NotNull PsiExpression condition, @Nullable PsiStatement branch) {
+    while (true) {
+      if (branch == null || ControlFlowUtils.statementIsEmpty(branch)) return true;
+      if (!(ControlFlowUtils.stripBraces(branch) instanceof PsiIfStatement ifStatement)) return false;
+      PsiExpression nextCondition = ifStatement.getCondition();
+      if (nextCondition == null) return false;
+      PsiStatement elseBranch = ifStatement.getElseBranch();
+      if (!DfaPsiUtil.mutuallyExclusive(condition, nextCondition)) return false;
+      branch = elseBranch;
+    }
   }
 
   /**
@@ -219,8 +244,7 @@ public abstract class CodeBlockSurrounder {
       if (parent instanceof PsiLambdaExpression) {
         return new LambdaCodeBlockSurrounder(expression, (PsiLambdaExpression)parent);
       }
-      if (parent instanceof PsiPolyadicExpression) {
-        PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+      if (parent instanceof PsiPolyadicExpression polyadicExpression) {
         IElementType type = polyadicExpression.getOperationTokenType();
         if (type.equals(JavaTokenType.ANDAND) && polyadicExpression.getOperands()[0] != cur) {
           PsiElement conditionParent = PsiUtil.skipParenthesizedExprUp(polyadicExpression.getParent());
@@ -290,9 +314,8 @@ public abstract class CodeBlockSurrounder {
     }
     if (parent instanceof PsiResourceVariable) {
       PsiResourceList list = tryCast(parent.getParent(), PsiResourceList.class);
-      if (list != null && list.getParent() instanceof PsiTryStatement) {
+      if (list != null && list.getParent() instanceof PsiTryStatement tryStatement) {
         Iterator<PsiResourceListElement> iterator = list.iterator();
-        PsiTryStatement tryStatement = (PsiTryStatement)list.getParent();
         if (iterator.hasNext() && iterator.next() == parent && tryStatement.getCatchBlocks().length == 0 
             && tryStatement.getFinallyBlock() == null) {
           return forStatement(tryStatement, expression);
@@ -421,7 +444,7 @@ public abstract class CodeBlockSurrounder {
     LambdaCodeBlockSurrounder(@NotNull PsiExpression expression, @NotNull PsiLambdaExpression lambda) {
       super(expression);
       myLambda = lambda;
-      myVoidMode = PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(myLambda));
+      myVoidMode = PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(myLambda));
     }
 
     @Override
@@ -753,8 +776,7 @@ public abstract class CodeBlockSurrounder {
         (PsiConditionalExpression)PsiUtil.skipParenthesizedExprDown(upstreamResult.getExpression()));
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(ternary.getParent());
       PsiStatement statement = upstreamResult.getAnchor();
-      if (parent instanceof PsiLocalVariable) {
-        PsiLocalVariable variable = (PsiLocalVariable)parent;
+      if (parent instanceof PsiLocalVariable variable) {
         variable.normalizeDeclaration();
         PsiDeclarationStatement declaration = (PsiDeclarationStatement)variable.getParent();
         PsiAssignmentExpression assignment = ExpressionUtils.splitDeclaration(declaration, project);

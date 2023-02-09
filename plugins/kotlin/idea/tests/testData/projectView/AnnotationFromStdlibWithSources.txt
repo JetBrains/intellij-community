@@ -1,0 +1,147 @@
+Node: AnnotationTarget
+User object class: KtClassOrObjectTreeNode
+
+Value: CLASS
+Value file: kotlin-stdlib.jar!/kotlin/annotation/AnnotationTarget.class
+
+Navigation item #0: CLASS
+Navigation item file #0: kotlin-stdlib.jar!/kotlin/annotation/AnnotationTarget.class
+Navigation item #1: CLASS
+Navigation item file #1: kotlin-stdlib-sources.jar!/kotlin/annotation/Annotations.kt
+
+
+-Project
+ +PsiDirectory: src
+ -External Libraries
+  +Library: < java 11 >
+  -Library: kotlin-stdlib
+   -PsiDirectory: kotlin-stdlib.jar
+    -PsiDirectory: kotlin
+     -PsiDirectory: annotation
+      AnnotationRetention
+      [AnnotationTarget]
+      MustBeDocumented
+      Repeatable
+      Retention
+      Target
+     +PsiDirectory: collections
+     +PsiDirectory: comparisons
+     +PsiDirectory: concurrent
+     +PsiDirectory: contracts
+     +PsiDirectory: coroutines
+     +PsiDirectory: enums
+     +PsiDirectory: experimental
+     +PsiDirectory: internal
+     +PsiDirectory: io
+     +PsiDirectory: jdk7
+     +PsiDirectory: js
+     +PsiDirectory: jvm
+     +PsiDirectory: math
+     +PsiDirectory: properties
+     +PsiDirectory: random
+     +PsiDirectory: ranges
+     +PsiDirectory: reflect
+     +PsiDirectory: sequences
+     +PsiDirectory: streams
+     +PsiDirectory: system
+     +PsiDirectory: text
+     +PsiDirectory: time
+     _Assertions
+     BuilderInference
+     ContextFunctionTypeParams
+     DeepRecursiveFunction
+     DeepRecursiveScope
+     DeepRecursiveScopeImpl.class
+     Deprecated
+     DeprecatedSinceKotlin
+     DeprecationLevel
+     DslMarker
+     ExperimentalMultiplatform
+     ExperimentalStdlibApi
+     ExperimentalSubclassOptIn
+     ExperimentalUnsignedTypes
+     ExtensionFunctionType
+     Function
+     InitializedLazyImpl
+     kotlin.kotlin_builtins
+     KotlinNothingValueException
+     KotlinNullPointerException
+     KotlinVersion
+     KotlinVersionCurrentValue.class
+     Lazy
+     LazyThreadSafetyMode
+     Metadata
+     NotImplementedError
+     NoWhenBranchMatchedException
+     OptIn
+     OptionalExpectation
+     OverloadResolutionByLambdaReturnType
+     Pair
+     ParameterName
+     PublishedApi
+     ReplaceWith
+     RequiresOptIn
+     Result
+     SafePublicationLazyImpl.class
+     SinceKotlin
+     SubclassOptInRequired
+     Suppress
+     SynchronizedLazyImpl.class
+     Triple
+     TypeCastException
+     UByte
+     UByteArray
+     UInt
+     UIntArray
+     ULong
+     ULongArray
+     UNINITIALIZED_VALUE
+     UninitializedPropertyAccessException
+     Unit
+     UnsafeLazyImpl
+     UnsafeVariance
+     UShort
+     UShortArray
+     WasExperimental
+     ArrayIntrinsicsKt
+     CharCodeJVMKt
+     CharCodeKt
+     CompareToKt
+     DeepRecursiveKt
+     ExceptionsKt
+     ExceptionsKt__ExceptionsKt
+     HashCodeKt
+     LateinitKt
+     LazyKt
+     LazyKt__LazyJVMKt
+     LazyKt__LazyKt
+     NumbersKt
+     NumbersKt__BigDecimalsKt
+     NumbersKt__BigIntegersKt
+     NumbersKt__FloorDivModKt
+     NumbersKt__NumbersJVMKt
+     NumbersKt__NumbersKt
+     PreconditionsKt
+     PreconditionsKt__AssertionsJVMKt
+     PreconditionsKt__PreconditionsKt
+     PropertyReferenceDelegatesKt
+     ResultKt
+     StandardKt
+     StandardKt__StandardKt
+     StandardKt__SynchronizedKt
+     SuspendKt
+     ThrowsKt
+     TuplesKt
+     TypeAliasesKt
+     UByteArrayKt
+     UByteKt
+     UIntArrayKt
+     UIntKt
+     ULongArrayKt
+     ULongKt
+     UnsignedKt
+     UNumbersKt
+     UShortArrayKt
+     UShortKt
+    +PsiDirectory: META-INF
+   +PsiDirectory: kotlin-stdlib-common.jar

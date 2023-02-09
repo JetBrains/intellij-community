@@ -154,6 +154,6 @@ final class InlayModelWindow implements InlayModel {
   }
 
   private static void logUnsupported() {
-   // LOG.error("Inlay operations are not supported for injected editors");
+    LOG.error("Inlay operations are not supported for injected editors");
   }
 }

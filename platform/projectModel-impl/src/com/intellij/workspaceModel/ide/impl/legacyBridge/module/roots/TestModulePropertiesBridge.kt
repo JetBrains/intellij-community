@@ -22,8 +22,8 @@ class TestModulePropertiesBridge(private val currentModule: Module): TestModuleP
 
   override fun getProductionModule(): Module? {
     val moduleId = getModuleEntity()?.testProperties?.productionModuleId ?: return null
-    val moduleEntity = workspaceModel.entityStorage.current.resolve(moduleId) ?: return null
-    return moduleEntity.findModule(workspaceModel.entityStorage.current)
+    val moduleEntity = workspaceModel.currentSnapshot.resolve(moduleId) ?: return null
+    return moduleEntity.findModule(workspaceModel.currentSnapshot)
   }
 
   override fun setProductionModuleName(moduleName: String?) {
@@ -57,6 +57,6 @@ class TestModulePropertiesBridge(private val currentModule: Module): TestModuleP
   }
 
   private fun getModuleEntity(): ModuleEntity? {
-    return workspaceModel.entityStorage.current.resolve(ModuleId(currentModule.name))
+    return workspaceModel.currentSnapshot.resolve(ModuleId(currentModule.name))
   }
 }

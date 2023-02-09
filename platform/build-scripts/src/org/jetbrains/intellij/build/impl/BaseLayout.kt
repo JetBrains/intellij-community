@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.containers.MultiMap
@@ -11,20 +11,20 @@ import java.util.*
  */
 open class BaseLayout {
   companion object {
-    const val APP_JAR = "app.jar"
+    const val APP_JAR: String = "app.jar"
   }
 
-  // one module can be packed into several JARs, that's why we have map "jar to modules" and not "module to jar"
+  // one module can be packed into several JARs; that's why we have map "jar to modules" and not "module to jar"
   private val _jarToModules = TreeMap<String, MutableList<String>>()
 
   /** JAR name (or path relative to 'lib' directory) to names of modules */
   val jarToModules: Map<String, List<String>>
     get() = Collections.unmodifiableMap(_jarToModules)
 
-  /** artifact name to relative output path */
+  /** artifact name to a relative output path */
   internal var includedArtifacts: PersistentMap<String, String> = persistentMapOf()
 
-  /** list of additional resources which should be included into the distribution */
+  /** list of additional resources which should be included in the distribution */
   internal var resourcePaths: PersistentList<ModuleResourceData> = persistentListOf()
 
   /** module name to entries which should be excluded from its output */
@@ -38,14 +38,20 @@ open class BaseLayout {
   /** module name to name of the module library */
   val excludedModuleLibraries: MultiMap<String, String> = MultiMap.createLinked()
 
-  /** JAR name -> name of project library which content should be unpacked */
+  /** JAR name -> name of a project library which content should be unpacked */
   val projectLibrariesToUnpack: MultiMap<String, String> = MultiMap.createLinked()
   val modulesWithExcludedModuleLibraries: MutableList<String> = mutableListOf()
 
-  // only as guard for checkAndAssociateModuleNameWithJarPath - do not use it, because strictly speaking for one module maybe several JARs
+  // only as guard for checkAndAssociateModuleNameWithJarPath - do not use it, because strictly speaking for one module, maybe several JARs
   private val _includedModuleNamesToJarPath = mutableMapOf<String, String>()
   val includedModuleNames: Set<String>
     get() = Collections.unmodifiableSet(_includedModuleNamesToJarPath.keys)
+
+  fun withModules(moduleNames: List<String>, relativeJarPath: String) {
+    for (moduleName in moduleNames) {
+      withModule(moduleName = moduleName, relativeJarPath = relativeJarPath)
+    }
+  }
 
   fun withModule(moduleName: String, relativeJarPath: String) {
     require(!moduleName.isEmpty()) {
@@ -59,7 +65,7 @@ open class BaseLayout {
         return
       }
 
-      // allow to put module to several JARs if JAR located in another dir
+      // allow putting module to several JARs if JAR located in another dir
       // (e.g. intellij.spring.customNs packed into main JAR and customNs/customNs.jar)
       check(previousJarPath.contains('/') || relativeJarPath.contains('/')) {
         "Module '$moduleName' cannot be packed into $relativeJarPath because it is already configured to be packed into $previousJarPath"
@@ -100,7 +106,7 @@ open class BaseLayout {
   /**
    * Include the module library to the plugin distribution. Please note that it makes sense to call this method only
    * for additional modules which aren't copied directly to the 'lib' directory of the plugin distribution, because for ordinary modules
-   * their module libraries are included into the layout automatically.
+   * their module libraries are included in the layout automatically.
    * @param relativeOutputPath target path relative to 'lib' directory
    */
   fun withModuleLibrary(libraryName: String, moduleName: String, relativeOutputPath: String) {

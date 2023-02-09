@@ -8,6 +8,7 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -55,6 +56,11 @@ public final class TreeModelWrapper implements StructureViewModel, ProvidingTree
 
   private boolean isFiltered(@NotNull TreeAction action) {
     return action instanceof Sorter && !((Sorter)action).isVisible() || myStructureView.isActionActive(action.getName());
+  }
+
+  @Override
+  public @NotNull FileStatus getElementStatus(Object element) {
+    return myModel.getElementStatus(element);
   }
 
   @Override

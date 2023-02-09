@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -22,9 +22,6 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final String JAVA_LANG_REFLECT_METHOD = "java.lang.reflect.Method";
@@ -126,11 +123,8 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
                                                                 int argumentOffset,
                                                                 @NotNull Predicate<? super PsiMethodCallExpression> methodPredicate) {
     final PsiExpression definition = findDefinition(PsiUtil.skipParenthesizedExprDown(qualifier));
-    if (definition instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression definitionCall = (PsiMethodCallExpression)definition;
-      if (methodPredicate.test(definitionCall)) {
-        return JavaLangClassMemberReference.getReflectionMethodArguments(definitionCall, argumentOffset);
-      }
+    if (definition instanceof PsiMethodCallExpression definitionCall && methodPredicate.test(definitionCall)) {
+      return JavaLangClassMemberReference.getReflectionMethodArguments(definitionCall, argumentOffset);
     }
     return null;
   }
@@ -159,8 +153,7 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
 
   @Nullable
   private static PsiExpression unwrapDisambiguatingCastToObject(@Nullable PsiExpression expression) {
-    if (expression instanceof PsiTypeCastExpression) {
-      final PsiTypeCastExpression typeCast = (PsiTypeCastExpression)expression;
+    if (expression instanceof PsiTypeCastExpression typeCast) {
       final PsiTypeElement castElement = typeCast.getCastType();
       if (castElement != null && castElement.getType().equalsToText(JAVA_LANG_OBJECT)) {
         return typeCast.getOperand();
@@ -169,13 +162,6 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
     return null;
   }
 
-  static class Arguments {
-    final PsiExpression[] expressions;
-    final boolean varargAsArray;
-
-    Arguments(PsiExpression[] expressions, boolean varargAsArray) {
-      this.expressions = expressions;
-      this.varargAsArray = varargAsArray;
-    }
+  record Arguments(PsiExpression[] expressions, boolean varargAsArray) {
   }
 }

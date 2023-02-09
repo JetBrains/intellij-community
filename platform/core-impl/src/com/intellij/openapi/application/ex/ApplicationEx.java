@@ -47,9 +47,12 @@ public interface ApplicationEx extends Application {
    * Acquires IW lock if it's not acquired by the current thread.
    *
    * @param invokedClassFqn fully qualified name of the class requiring the write-intent lock.
+   * @return {@code true} if lock was acquired by this call, {@code false} if lock was taken already.
    */
   @ApiStatus.Internal
-  default void acquireWriteIntentLock(@NotNull String invokedClassFqn) { }
+  default boolean acquireWriteIntentLock(@NotNull String invokedClassFqn) {
+    return false;
+  }
 
   /**
    * Releases IW lock.
@@ -133,6 +136,10 @@ public interface ApplicationEx extends Application {
 
   void assertIsDispatchThread(@Nullable JComponent component);
 
+  /**
+   * Use {@link #assertIsNonDispatchThread()}
+   */
+  @Deprecated
   void assertTimeConsuming();
 
   /**

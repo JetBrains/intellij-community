@@ -747,28 +747,6 @@ public final class ArrayUtil {
     return -1;
   }
 
-  @Contract(pure=true)
-  public static <T> int lastIndexOf(T @NotNull [] src, T obj, @NotNull BiPredicate<? super T, ? super T> predicate) {
-    for (int i = src.length - 1; i >= 0; i--) {
-      T o = src[i];
-      if (predicate.test(obj, o)) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  @Contract(pure=true)
-  public static <T> int lastIndexOf(@NotNull List<? extends T> src, T obj, @NotNull BiPredicate<? super T, ? super T> comparator) {
-    for (int i = src.size() - 1; i >= 0; i--) {
-      T o = src.get(i);
-      if (comparator.test(obj, o)) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
   @SafeVarargs
   @Contract(pure=true)
   public static <T> boolean contains(@Nullable T o, T @NotNull ... objects) {

@@ -26,9 +26,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public class MavenRunnerParametersPanel implements PanelWithAnchor, MavenSettingsObservable {
   private JPanel panel;
   protected LabeledComponent<TextFieldWithBrowseButton> workingDirComponent;

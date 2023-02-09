@@ -1564,19 +1564,17 @@ public class Mappings {
               }
 
               if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) != 0 && (d.removedModifiers() & Opcodes.ACC_PRIVATE) == 0) {
-                if (!constrained) {
-                  debug("Added public or package-private method became protected --- affect method usages with protected constraint");
-                  if (!affected) {
-                    myFuture.affectMethodUsages(m, propagated.get(), m.createUsage(myContext, it.name), usages, state.myDependants);
-                    state.myAffectedUsages.addAll(usages);
-                    affected = true;
-                  }
-
-                  for (final UsageRepr.Usage usage : usages) {
-                    state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(it));
-                  }
-                  constrained = true;
+                debug("Added public or package-private method became protected --- affect method usages with protected constraint");
+                if (!affected) {
+                  myFuture.affectMethodUsages(m, propagated.get(), m.createUsage(myContext, it.name), usages, state.myDependants);
+                  state.myAffectedUsages.addAll(usages);
+                  affected = true;
                 }
+
+                for (final UsageRepr.Usage usage : usages) {
+                  state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(it));
+                }
+                constrained = true;
               }
             }
           }

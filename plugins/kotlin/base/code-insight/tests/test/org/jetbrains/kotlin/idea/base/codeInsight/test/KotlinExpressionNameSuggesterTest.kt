@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.base.codeInsight.test
 
 import com.intellij.psi.util.findParentOfType
-import com.intellij.testFramework.LightProjectDescriptor
 import junit.framework.TestCase
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -18,7 +17,7 @@ class KotlinExpressionNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCa
     override val pluginKind: KotlinPluginKind
         get() = KotlinPluginKind.FIR_PLUGIN
 
-    fun testNumericLiteral() = test("5", "int", "i", "n")
+    fun testNumericLiteral() = test("5", "i", "n")
     fun testStringLiteral() = test("\"foo\"", "string", "str", "s", "text")
     fun testClassLiteral() = test("String::class", "klass", "clazz", "declaration")
     fun testIntArray() = test("intArrayOf(1, 2, 3)", "ints")

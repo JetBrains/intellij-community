@@ -36,9 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processLocals;
 
-/**
- * @author ven
- */
 public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrCodeBlock, GrControlFlowOwner {
   private static final Key<CachedValue<GroovyControlFlow>> CONTROL_FLOW = Key.create("Control flow");
 
@@ -135,8 +132,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
   private boolean mayUseNewLinesAsSeparators() {
     PsiElement parent = this;
     while (parent != null) {
-      if (parent instanceof GrString) {
-        GrString grString = (GrString) parent;
+      if (parent instanceof GrString grString) {
         return !grString.isPlainString();
       }
       parent = parent.getParent();

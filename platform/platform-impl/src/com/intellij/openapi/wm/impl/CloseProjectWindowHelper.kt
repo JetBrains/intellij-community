@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
@@ -16,7 +16,6 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.cancel
 
 open class CloseProjectWindowHelper {
   companion object {
@@ -54,8 +53,6 @@ open class CloseProjectWindowHelper {
   @RequiresEdt
   protected open fun closeProjectAndShowWelcomeFrameIfNoProjectOpened(project: Project?) {
     runInAutoSaveDisabledMode {
-      @Suppress("DEPRECATION")
-      project?.coroutineScope?.cancel()
       if (project != null && project.isOpen) {
         ProjectManager.getInstance().closeAndDispose(project)
       }

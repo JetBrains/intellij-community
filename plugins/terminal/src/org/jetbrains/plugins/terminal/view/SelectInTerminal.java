@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.TerminalBundle;
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory;
-import org.jetbrains.plugins.terminal.TerminalView;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
 /**
  * @see org.jetbrains.plugins.terminal.action.RevealFileInTerminalAction
@@ -31,7 +31,7 @@ public class SelectInTerminal implements SelectInTarget {
   public void selectIn(SelectInContext context, boolean requestFocus) {
     Project project = context.getProject();
     VirtualFile selectedFile = context.getVirtualFile();
-    TerminalView.getInstance(project).openTerminalIn(selectedFile);
+    TerminalToolWindowManager.getInstance(project).openTerminalIn(selectedFile);
   }
 
   @Override

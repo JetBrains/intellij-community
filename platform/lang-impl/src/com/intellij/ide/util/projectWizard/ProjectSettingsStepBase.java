@@ -53,7 +53,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   protected DirectoryProjectGenerator<T> myProjectGenerator;
   protected AbstractNewProjectStep.AbstractCallback<T> myCallback;
   protected TextFieldWithBrowseButton myLocationField;
-  protected File myProjectDirectory;
+  protected NotNullLazyValue<File> myProjectDirectory;
   protected JButton myCreateButton;
   protected JLabel myErrorLabel;
   protected NotNullLazyValue<ProjectGeneratorPeer<T>> myLazyGeneratorPeer;
@@ -65,7 +65,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     getTemplatePresentation().setText(projectGenerator.getName());
     myProjectGenerator = projectGenerator;
     myCallback = callback;
-    myProjectDirectory = findSequentNonExistingUntitled();
+    myProjectDirectory = NotNullLazyValue.lazy(() -> findSequentNonExistingUntitled());
   }
 
   @Override
@@ -309,8 +309,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
 
   protected LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {
     myLocationField = new TextFieldWithBrowseButton();
-    myProjectDirectory = findSequentNonExistingUntitled();
-    final String projectLocation = myProjectDirectory.toString();
+    final String projectLocation = myProjectDirectory.get().toString();
     myLocationField.setText(projectLocation);
     final int index = projectLocation.lastIndexOf(File.separator);
     if (index > 0) {

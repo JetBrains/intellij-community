@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -59,11 +59,9 @@ public class MyTestInjector {
     final ConcatenationAwareInjector injector = (injectionPlacesRegistrar, operands) -> {
       PsiElement operand = operands[0];
       if (!(operand instanceof PsiLiteralExpression)) return;
-      if (!(operand.getParent() instanceof PsiExpressionList)) return;
-      PsiExpressionList expressionList = (PsiExpressionList)operand.getParent();
+      if (!(operand.getParent() instanceof PsiExpressionList expressionList)) return;
       int i = ArrayUtil.indexOf(expressionList.getExpressions(), operand);
-      if (!(operand.getParent().getParent() instanceof PsiMethodCallExpression)) return;
-      PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand.getParent().getParent();
+      if (!(operand.getParent().getParent() instanceof PsiMethodCallExpression methodCallExpression)) return;
       PsiMethod method = methodCallExpression.resolveMethod();
       if (method == null) return;
       PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -155,8 +153,7 @@ public class MyTestInjector {
     }, parent);
 
     final LanguageInjector myInjector = (host, placesToInject) -> {
-      if (host instanceof XmlAttributeValue) {
-        XmlAttributeValue value = (XmlAttributeValue)host;
+      if (host instanceof XmlAttributeValue value) {
         PsiElement parent1 = value.getParent();
         if (parent1 instanceof XmlAttribute) {
           @NonNls String attrName = ((XmlAttribute)parent1).getLocalName();
@@ -175,9 +172,8 @@ public class MyTestInjector {
           }
         }
       }
-      if (host instanceof XmlText) {
+      if (host instanceof XmlText xmlText) {
         // inject to xml tags named 'ql'
-        final XmlText xmlText = (XmlText)host;
         XmlTag tag = xmlText.getParentTag();
         if (tag == null) return;
         if ("ql".equals(tag.getLocalName())) {
@@ -245,13 +241,12 @@ public class MyTestInjector {
         String text = host.getText();
         if (text.startsWith("/*--{") && text.endsWith("}--*/")) {
           TextRange textRange = new TextRange(4, text.length()-4);
-          if (!(host.getParent()instanceof PsiMethod)) return;
-          PsiMethod method = (PsiMethod)host.getParent();
+          if (!(host.getParent() instanceof PsiMethod method)) return;
           if (!method.hasModifierProperty(PsiModifier.NATIVE) || !method.hasModifierProperty(PsiModifier.PUBLIC)) return;
-          String paramList = "";
+          StringBuilder paramList = new StringBuilder();
           for (PsiParameter parameter : method.getParameterList().getParameters()) {
-            if (!paramList.isEmpty()) paramList += ",";
-            paramList += parameter.getName();
+            if (paramList.length() > 0) paramList.append(",");
+            paramList.append(parameter.getName());
           }
           @NonNls String header = "function " + method.getName() + "("+paramList+") {";
           Language gwt = Language.findLanguageByID("GWT JavaScript");

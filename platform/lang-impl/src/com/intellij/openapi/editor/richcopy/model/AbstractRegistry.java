@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class AbstractRegistry<T> {
   @SuppressWarnings("SSBasedInspection")
   @NotNull private final Int2ObjectOpenHashMap<T> myDataById = new Int2ObjectOpenHashMap<>();

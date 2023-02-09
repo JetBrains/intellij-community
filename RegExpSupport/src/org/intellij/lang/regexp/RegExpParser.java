@@ -602,10 +602,11 @@ public class RegExpParser implements PsiParser, LightPsiParser {
       // merge surrogate pairs into single regexp char
       if (!Character.isSupplementaryCodePoint(value1) && Character.isHighSurrogate((char)value1)) {
         final String text2 = builder.getTokenText();
-        assert text2 != null;
-        final int value2 = RegExpCharImpl.unescapeChar(text2);
-        if (!Character.isSupplementaryCodePoint(value2) && Character.isLowSurrogate((char)value2)) {
-          builder.advanceLexer();
+        if (text2 != null) {
+          final int value2 = RegExpCharImpl.unescapeChar(text2);
+          if (!Character.isSupplementaryCodePoint(value2) && Character.isLowSurrogate((char)value2)) {
+            builder.advanceLexer();
+          }
         }
       }
       marker.done(RegExpElementTypes.CHAR);

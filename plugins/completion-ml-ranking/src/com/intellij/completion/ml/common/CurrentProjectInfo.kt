@@ -10,8 +10,8 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.util.Alarm
 import com.intellij.util.Time
-import com.intellij.util.io.exists
 import java.nio.file.Paths
+import kotlin.io.path.exists
 
 class CurrentProjectInfo(project: Project) : Disposable {
   private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)

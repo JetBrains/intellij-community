@@ -35,7 +35,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   private volatile boolean myFinished;
   private volatile long myProgressLimit;
   private final AtomicLong myProgressCount = new AtomicLong();
-  private volatile long myNextChunkThreshold; // the value myProgressCount should exceed to generate next fireProgressAdvanced event
+  private final AtomicLong myNextChunkThreshold = new AtomicLong(); // the value myProgressCount should exceed to generate next fireProgressAdvanced event
   @NotNull
   private final @Nls String myPresentableName;
   protected final PsiFile myFile;
@@ -150,17 +150,16 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
 
   public void setProgressLimit(long limit) {
     myProgressLimit = limit;
-    myNextChunkThreshold = Math.max(1, limit / 100); // 1% precision
+    myNextChunkThreshold.set(Math.max(1, limit / 100)); // 1% precision
   }
 
   public void advanceProgress(long delta) {
+    // session can be null in e.g., inspection batch mode
     if (myHighlightingSession != null) {
-      // session can be null in e.g. inspection batch mode
       long current = myProgressCount.addAndGet(delta);
-      if (current >= myNextChunkThreshold) {
-        double progress = getProgress();
-        myNextChunkThreshold += Math.max(1, myProgressLimit / 100);
-        myHighlightInfoProcessor.progressIsAdvanced(myHighlightingSession, getEditor(), progress);
+      if (current >= myNextChunkThreshold.get() &&
+          current >= myNextChunkThreshold.updateAndGet(old -> current >= old ? old+Math.max(1, myProgressLimit / 100) : old)) {
+        myHighlightInfoProcessor.progressIsAdvanced(myHighlightingSession, getEditor(), getProgress());
       }
     }
   }

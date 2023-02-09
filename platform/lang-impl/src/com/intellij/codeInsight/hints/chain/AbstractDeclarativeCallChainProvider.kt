@@ -11,8 +11,12 @@ import com.intellij.psi.PsiWhiteSpace
 abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : PsiElement, ExpressionType, TypeComputationContext> : InlayHintsProvider {
 
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
+    if (!isAvailable(file, editor)) return null
     return Collector(file)
   }
+
+  protected data class ExpressionWithType<ExpressionType>(val expression: PsiElement, val type: ExpressionType)
+
 
   inner class Collector(private val file: PsiFile) : SharedBypassCollector {
     override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
@@ -22,7 +26,6 @@ abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : Psi
                                             ?.takeIf { it.getParentDotQualifiedExpression() == null }
                                           ?: return
 
-      data class ExpressionWithType(val expression: PsiElement, val type: ExpressionType)
 
       val context = getTypeComputationContext(topmostDotQualifiedExpression)
 
@@ -50,6 +53,7 @@ abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : Psi
           .map { it.first }
           .toList()
       if (someTypeIsUnknown) return
+      if (isChainUnacceptable(reversedChain)) return
 
       if (reversedChain.asSequence().distinctBy { it.type }.count() < uniqueTypeCount) return
 
@@ -62,10 +66,6 @@ abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : Psi
     }
   }
 
-  override fun createCollectorForPreview(file: PsiFile, editor: Editor): InlayHintsCollector {
-    return Collector(file)
-  }
-
   protected abstract fun ExpressionType.buildTree(
     expression: PsiElement,
     project: Project,
@@ -73,9 +73,17 @@ abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : Psi
     treeBuilder: PresentationTreeBuilder
   )
 
+  protected open fun isAvailable(file: PsiFile, editor: Editor): Boolean {
+    return true
+  }
+
   protected abstract fun PsiElement.getType(context: TypeComputationContext): ExpressionType?
 
   protected abstract val dotQualifiedClass: Class<DotQualifiedExpression>
+
+  protected open fun isChainUnacceptable(chain: List<ExpressionWithType<ExpressionType & Any>>) : Boolean {
+    return false
+  }
 
   /**
    * Implementation must NOT skip parentheses and postfix operators

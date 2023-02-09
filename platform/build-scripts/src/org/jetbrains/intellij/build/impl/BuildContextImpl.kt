@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
 
@@ -13,8 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
-import org.jetbrains.intellij.build.dependencies.DependenciesProperties
-import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
@@ -24,7 +22,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 
@@ -35,7 +32,7 @@ class BuildContextImpl private constructor(
   override val linuxDistributionCustomizer: LinuxDistributionCustomizer?,
   internal val macDistributionCustomizer: MacDistributionCustomizer?,
   override val proprietaryBuildTools: ProprietaryBuildTools,
-) : BuildContext {
+) : BuildContext, CompilationContext by compilationContext {
   private val distFiles = ConcurrentLinkedQueue<DistFile>()
 
   private val extraExecutablePatterns = AtomicReference<PersistentMap<OsFamily, PersistentList<String>>>(persistentHashMapOf())
@@ -54,7 +51,7 @@ class BuildContextImpl private constructor(
 
   override var bootClassPathJarNames = persistentListOf("util.jar", "util_rt.jar")
 
-  override val applicationInfo: ApplicationInfoProperties = ApplicationInfoPropertiesImpl(project, productProperties, options).patch(this)
+  override val applicationInfo = ApplicationInfoPropertiesImpl(this)
   private var builtinModulesData: BuiltinModulesFileData? = null
 
   init {
@@ -144,69 +141,22 @@ class BuildContextImpl private constructor(
   }
 
   override fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile> {
-    if (os == null && arch == null) {
-      return java.util.List.copyOf(distFiles)
-    }
-
-    return distFiles.filter {
-       (os == null || it.os == null || it.os == os) && (arch == null || it.arch == null || it.arch == arch)
-    }
+    return distFiles.asSequence().filter {
+      (os == null && arch == null) ||
+      (os == null || it.os == null || it.os == os) &&
+      (arch == null || it.arch == null || it.arch == arch)
+    }.sortedWith(
+      compareBy<DistFile> { it.relativePath }
+        .thenBy { it.os }
+        .thenBy { it.arch }
+    ).toList()
   }
 
   override fun findApplicationInfoModule(): JpsModule {
     return findRequiredModule(productProperties.applicationInfoModule)
   }
 
-  override val options: BuildOptions
-    get() = compilationContext.options
-
-  @Suppress("SSBasedInspection")
-  override val messages: BuildMessages
-    get() = compilationContext.messages
-  override val dependenciesProperties: DependenciesProperties
-    get() = compilationContext.dependenciesProperties
-  override val paths: BuildPaths
-    get() = compilationContext.paths
-  override val bundledRuntime: BundledRuntime
-    get() = compilationContext.bundledRuntime
-  override val project: JpsProject
-    get() = compilationContext.project
-  override val projectModel: JpsModel
-    get() = compilationContext.projectModel
-  override val compilationData: JpsCompilationData
-    get() = compilationContext.compilationData
-  override val stableJavaExecutable: Path
-    get() = compilationContext.stableJavaExecutable
-  override val stableJdkHome: Path
-    get() = compilationContext.stableJdkHome
-  override val classesOutputDirectory: Path
-    get() = compilationContext.classesOutputDirectory
-
-  override fun findRequiredModule(name: String): JpsModule {
-    return compilationContext.findRequiredModule(name)
-  }
-
-  override fun findModule(name: String): JpsModule? {
-    return compilationContext.findModule(name)
-  }
-
-  override fun getModuleOutputDir(module: JpsModule): Path {
-    return compilationContext.getModuleOutputDir(module)
-  }
-
-  override fun getModuleTestsOutputPath(module: JpsModule): String {
-    return compilationContext.getModuleTestsOutputPath(module)
-  }
-
-  override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
-    return compilationContext.getModuleRuntimeClasspath(module, forTests)
-  }
-
   override fun notifyArtifactBuilt(artifactPath: Path) {
-    compilationContext.notifyArtifactWasBuilt(artifactPath)
-  }
-
-  override fun notifyArtifactWasBuilt(artifactPath: Path) {
     compilationContext.notifyArtifactWasBuilt(artifactPath)
   }
 
@@ -294,9 +244,9 @@ class BuildContextImpl private constructor(
     }
     jvmArgs.add("-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".let { if (isScript) '"' + it + '"' else it })
     jvmArgs.add("-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".let { if (isScript) '"' + it + '"' else it })
-    // prefer bundled JNA dispatcher lib
+    // require bundled JNA dispatcher lib
     jvmArgs.add("-Djna.nosys=true")
-    jvmArgs.add("-Djna.nounpack=true")
+    jvmArgs.add("-Djna.noclasspath=true")
 
     if (productProperties.platformPrefix != null) {
       jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
@@ -355,6 +305,6 @@ private fun getSourceRootsWithPrefixes(module: JpsModule): Sequence<Pair<Path, S
     }
 }
 
-private fun readSnapshotBuildNumber(communityHome: BuildDependenciesCommunityRoot): String {
+internal fun readSnapshotBuildNumber(communityHome: BuildDependenciesCommunityRoot): String {
   return Files.readString(communityHome.communityRoot.resolve("build.txt")).trim { it <= ' ' }
 }

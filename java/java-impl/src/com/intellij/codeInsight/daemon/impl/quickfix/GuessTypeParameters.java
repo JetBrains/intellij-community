@@ -23,9 +23,6 @@ import java.util.Map;
 import static com.intellij.codeInsight.ExpectedTypeInfo.*;
 import static com.intellij.util.containers.ContainerUtil.map;
 
-/**
- * @author ven
-  */
 public class GuessTypeParameters {
 
   private static final Logger LOG = Logger.getInstance(GuessTypeParameters.class);
@@ -216,7 +213,7 @@ public class GuessTypeParameters {
 
     @Override
     public PsiType visitType(@NotNull PsiType type) {
-      if (type.equals(PsiType.NULL)) return PsiType.getJavaLangObject(myManager, myResolveScope);
+      if (type.equals(PsiTypes.nullType())) return PsiType.getJavaLangObject(myManager, myResolveScope);
       return type;
     }
 
@@ -253,9 +250,6 @@ public class GuessTypeParameters {
   }
 
   private static boolean hasNullSubstitutions(@NotNull PsiSubstitutor substitutor) {
-    for (PsiType type : substitutor.getSubstitutionMap().values()) {
-      if (type == null) return true;
-    }
-    return false;
+    return substitutor.getSubstitutionMap().containsValue(null);
   }
 }

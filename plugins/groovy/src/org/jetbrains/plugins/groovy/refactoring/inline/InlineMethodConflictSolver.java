@@ -21,7 +21,6 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
  * Utility class to solve name conflicts related to local variable names of method to be inlined
- * @author ilyas
  */
 public final class InlineMethodConflictSolver {
   private InlineMethodConflictSolver() {}
@@ -91,8 +90,7 @@ public final class InlineMethodConflictSolver {
       }
       if (child instanceof GrAssignmentExpression) {
         GrExpression lValue = ((GrAssignmentExpression) child).getLValue();
-        if (lValue instanceof GrReferenceExpression) {
-          GrReferenceExpression expr = (GrReferenceExpression) lValue;
+        if (lValue instanceof GrReferenceExpression expr) {
           if (expr.getQualifierExpression() == null && name.equals(expr.getReferenceName())) {
             return false;
           }

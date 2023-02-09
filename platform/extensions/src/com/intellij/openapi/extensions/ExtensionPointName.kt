@@ -53,8 +53,8 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     return findFirstSafe(predicate, getPointImpl(null))
   }
 
-  fun <R> computeSafeIfAny(processor: Function<in T, out R?>): R? {
-    return computeSafeIfAny(processor, getPointImpl(null))
+  fun <R> computeSafeIfAny(processor: Function<T, out R>): R? {
+    return computeSafeIfAny(processor = processor, iterable = getPointImpl(null))
   }
 
   val extensionsIfPointIsRegistered: List<T>
@@ -217,6 +217,9 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     val implementationClass: Class<T>?
 
     val pluginDescriptor: PluginDescriptor
+
+    @get:ApiStatus.Internal
+    val order: LoadingOrder
   }
 
   @ApiStatus.Internal
@@ -239,6 +242,9 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
           return object : LazyExtension<T> {
             override val id: String?
               get() = adapter.orderId
+
+            override val order: LoadingOrder
+              get() = adapter.order
 
             override val instance: T?
               get() = createOrError(adapter = adapter, point = point)

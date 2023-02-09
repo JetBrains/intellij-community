@@ -148,7 +148,11 @@ public class GitPushOperation {
 
         if (!result.rejected.isEmpty()) {
 
-          if (myForceMode.isForce() || pushingToNotTrackedBranch(result.rejected) || pushingNotCurrentBranch(result.rejected)) break;
+          if (myForceMode.isForce() ||
+              pushingToNotTrackedBranch(result.rejected) ||
+              pushingNotCurrentBranch(result.rejected)) {
+            break;
+          }
 
           // propose to update if rejected
           if (pushAttempt == 0 && !mySettings.autoUpdateIfPushRejected()) {
@@ -202,7 +206,7 @@ public class GitPushOperation {
         pushSpec = new PushSpec<>(source, target);
       }
       String baseRef = pushSpec.getTarget().getBranch().getFullName();
-      String currentRef = pushSpec.getSource().getBranch().getFullName();
+      String currentRef = pushSpec.getSource().getRevision();
       return GitRebaseOverMergeProblem.hasProblem(myProject, repo.getRoot(), baseRef, currentRef) ? repo.getRoot() : null;
     });
   }
@@ -217,7 +221,7 @@ public class GitPushOperation {
     boolean pushingToNotTrackedBranch = ContainerUtil.exists(rejected.entrySet(), entry -> {
       GitRepository repository = entry.getKey();
       GitLocalBranch currentBranch = repository.getCurrentBranch();
-      assert currentBranch != null;
+      if (currentBranch == null) return true;
       GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, currentBranch);
       return trackInfo == null || !trackInfo.getRemoteBranch().getFullName().equals(entry.getValue().getTargetBranch());
     });
@@ -228,8 +232,9 @@ public class GitPushOperation {
   private static boolean pushingNotCurrentBranch(@NotNull Map<GitRepository, GitPushRepoResult> rejected) {
     boolean pushingNotCurrentBranch = ContainerUtil.exists(rejected.entrySet(), entry -> {
       GitRepository repository = entry.getKey();
-      String currentBranch = Objects.requireNonNull(repository.getCurrentBranch()).getFullName();
-      return !StringUtil.equals(currentBranch, entry.getValue().getSourceBranch());
+      GitLocalBranch currentBranch = repository.getCurrentBranch();
+      String pushedBranch = entry.getValue().getSourceBranch();
+      return currentBranch == null || !StringUtil.equals(currentBranch.getFullName(), pushedBranch);
     });
     LOG.debug("Pushing non current branch condition is [" + pushingNotCurrentBranch + "]");
     return pushingNotCurrentBranch;
@@ -281,11 +286,11 @@ public class GitPushOperation {
       ResultWithOutput resultWithOutput = doPush(repository, spec);
       LOG.debug("Pushed to " + DvcsUtil.getShortRepositoryName(repository) + ": " + resultWithOutput);
 
-      GitLocalBranch source = spec.getSource().getBranch();
+      GitPushSource pushSource = spec.getSource();
       GitPushTarget target = spec.getTarget();
       GitPushRepoResult repoResult;
       if (resultWithOutput.isError()) {
-        repoResult = GitPushRepoResult.error(source, target.getBranch(), resultWithOutput.getErrorAsString());
+        repoResult = GitPushRepoResult.error(pushSource, target.getBranch(), resultWithOutput.getErrorAsString());
       }
       else {
         List<GitPushNativeResult> nativeResults = resultWithOutput.parsedResults;
@@ -298,7 +303,7 @@ public class GitPushOperation {
         List<GitPushNativeResult> tagResults = filter(nativeResults, result ->
           !result.equals(sourceResult) && (result.getType() == NEW_REF || result.getType() == FORCED_UPDATE));
         int commits = collectNumberOfPushedCommits(repository.getRoot(), sourceResult);
-        repoResult = GitPushRepoResult.convertFromNative(sourceResult, tagResults, commits, source, target.getBranch());
+        repoResult = GitPushRepoResult.convertFromNative(sourceResult, tagResults, commits, pushSource, target.getBranch());
       }
 
       LOG.debug("Converted result: " + repoResult);
@@ -309,7 +314,7 @@ public class GitPushOperation {
     for (GitRepository repository : repositories) {
       if (!results.containsKey(repository)) {
         PushSpec<GitPushSource, GitPushTarget> spec = myPushSpecs.get(repository);
-        results.put(repository, GitPushRepoResult.notPushed(spec.getSource().getBranch(), spec.getTarget().getBranch()));
+        results.put(repository, GitPushRepoResult.notPushed(spec.getSource(), spec.getTarget().getBranch()));
       }
     }
     return results;
@@ -371,7 +376,8 @@ public class GitPushOperation {
     GitRemoteBranch targetBranch = pushTarget.getBranch();
 
     GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(myProgressIndicator);
-    boolean setUpstream = pushTarget.isNewBranchCreated() &&
+    boolean setUpstream = sourceBranch != null &&
+                          pushTarget.isNewBranchCreated() &&
                           pushSource.isBranchRef() &&
                           !branchTrackingInfoIsSet(repository, sourceBranch);
     String tagMode = myTagMode == null ? null : myTagMode.getArgument();

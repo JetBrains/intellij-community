@@ -24,6 +24,8 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
   private Supplier<? extends Dimension> editorSizeSupplier = () -> JBUI.emptySize();
   private TableCellValidator cellValidator;
 
+  private Icon customIcon;
+
   @ApiStatus.Experimental
   public ValidatingTableCellRendererWrapper(TableCellRenderer delegate) {
     this.delegate = delegate;
@@ -46,6 +48,12 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
     return this;
   }
 
+  @ApiStatus.Experimental
+  public ValidatingTableCellRendererWrapper withCustomIcon(Icon icon) {
+    this.customIcon = icon;
+    return this;
+  }
+
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
@@ -59,7 +67,11 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
 
     if (cellValidator != null) {
       ValidationInfo result = cellValidator.validate(value, row, column);
-      iconLabel.setIcon(result == null ? null : result.warning ? AllIcons.General.BalloonWarning : AllIcons.General.BalloonError);
+      if (customIcon != null) {
+        iconLabel.setIcon(result == null ? null : customIcon);
+      }else{
+        iconLabel.setIcon(result == null ? null : result.warning ? AllIcons.General.BalloonWarning : AllIcons.General.BalloonError);
+      }
       iconLabel.setBorder(result == null ? null: iconBorder());
       putClientProperty(CELL_VALIDATION_PROPERTY, result);
     }

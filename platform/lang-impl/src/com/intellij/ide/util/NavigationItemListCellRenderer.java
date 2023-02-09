@@ -103,8 +103,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
         setIcon(IconUtil.getEmptyIcon(false));
         append(LangBundle.message("label.invalid"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
-      else if (value instanceof NavigationItem) {
-        NavigationItem item = (NavigationItem)value;
+      else if (value instanceof NavigationItem item) {
         ItemPresentation presentation = item.getPresentation();
         assert presentation != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation(): element " +
           item + ", class " + item.getClass().getName();

@@ -19,9 +19,9 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleFileIndex;
@@ -34,7 +34,8 @@ import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ModuleWithTooFewClassesInspection extends BaseGlobalInspection {
 
@@ -51,14 +52,13 @@ public class ModuleWithTooFewClassesInspection extends BaseGlobalInspection {
                                                            @NotNull AnalysisScope analysisScope,
                                                            @NotNull InspectionManager inspectionManager,
                                                            @NotNull GlobalInspectionContext globalInspectionContext) {
-    if (!(refEntity instanceof RefModule)) {
+    if (!(refEntity instanceof RefModule refModule)) {
       return null;
     }
     final Project project = inspectionManager.getProject();
     if (ModuleManager.getInstance(project).getModules().length == 1) {
       return null;
     }
-    final RefModule refModule = (RefModule)refEntity;
     final ModuleFileIndex index = ModuleRootManager.getInstance(refModule.getModule()).getFileIndex();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final int[] count = {0};
@@ -81,7 +81,8 @@ public class ModuleWithTooFewClassesInspection extends BaseGlobalInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("module.with.too.few.classes.min.option"), this, "limit");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("limit", InspectionGadgetsBundle.message("module.with.too.few.classes.min.option"), 2, 1000));
   }
 }

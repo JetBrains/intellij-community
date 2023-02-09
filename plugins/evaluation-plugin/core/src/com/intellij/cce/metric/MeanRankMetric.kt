@@ -5,7 +5,8 @@ import com.intellij.cce.metric.util.Sample
 
 class MeanRankMetric : Metric {
   private val sample = Sample()
-
+  override val name = NAME
+  override val valueType = MetricValueType.DOUBLE
   override val value: Double
     get() = sample.mean()
 
@@ -24,8 +25,7 @@ class MeanRankMetric : Metric {
     return fileSample.mean()
   }
 
-  override val name: String = "Mean Rank"
-
-  override val valueType = MetricValueType.DOUBLE
-
+  companion object {
+    const val NAME = "Mean Rank"
+  }
 }

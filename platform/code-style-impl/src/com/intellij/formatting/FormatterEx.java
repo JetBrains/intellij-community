@@ -53,7 +53,7 @@ public abstract class FormatterEx implements Formatter {
                                          final PsiFile file,
                                          final TextRange textRange);
 
-  public abstract void setProgressTask(@NotNull FormattingProgressTask progressIndicator);
+  public abstract void setProgressTask(@NotNull FormattingProgressCallback progressIndicator);
 
   /**
    * Calculates minimum spacing, allowed by formatting model (in columns) for a block starting at given offset,

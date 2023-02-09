@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.impl.RemoveRedundantParameterTypesFix;
@@ -216,8 +216,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
                                         @NotNull PsiVariable firstParam,
                                         @NotNull PsiVariable secondParam,
                                         @Nullable PsiVariable previousResult) {
-      if (statement instanceof PsiDeclarationStatement) {
-        PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
+      if (statement instanceof PsiDeclarationStatement declaration) {
         PsiElement[] elements = declaration.getDeclaredElements();
         if (elements.length == 0) return null;
         PsiLocalVariable variable = tryCast(elements[0], PsiLocalVariable.class);
@@ -240,8 +239,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
                                                 @NotNull PsiVariable variable) {
       PsiExpression first = null;
       PsiExpression second = null;
-      if (expr instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression call = (PsiMethodCallExpression)expr;
+      if (expr instanceof PsiMethodCallExpression call) {
         PsiExpression[] parameters = call.getArgumentList().getExpressions();
         if (PrimitiveComparison.from(call) != null) {
           first = parameters[0];
@@ -251,8 +249,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           second = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
         }
       }
-      else if (expr instanceof PsiBinaryExpression) {
-        PsiBinaryExpression binOp = (PsiBinaryExpression)expr;
+      else if (expr instanceof PsiBinaryExpression binOp) {
         if(binOp.getOperationTokenType() != JavaTokenType.MINUS) return null;
         first = binOp.getLOperand();
         if(getComparingMethodName(first.getType(), true) == null) return null;
@@ -302,8 +299,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     PsiExpression body = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
     PsiExpression left;
     @NonNls String methodName = null;
-    if (body instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression methodCall = (PsiMethodCallExpression)body;
+    if (body instanceof PsiMethodCallExpression methodCall) {
       if (MethodCallUtils.isCompareToCall(methodCall)) {
         left = methodCall.getMethodExpression().getQualifierExpression();
         PsiExpression right = ArrayUtil.getFirstElement(methodCall.getArgumentList().getExpressions());
@@ -326,8 +322,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
         left = comparison.getKeyExtractor();
       }
     }
-    else if (body instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binOp = (PsiBinaryExpression)body;
+    else if (body instanceof PsiBinaryExpression binOp) {
       if (!binOp.getOperationTokenType().equals(JavaTokenType.MINUS)) return null;
       left = binOp.getLOperand();
       PsiType type = left.getType();
@@ -533,8 +528,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getStartElement();
-      if (!(element instanceof PsiLambdaExpression)) return;
-      PsiLambdaExpression lambda = (PsiLambdaExpression)element;
+      if (!(element instanceof PsiLambdaExpression lambda)) return;
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length != 2) return;
       boolean keepParameterTypes = parameters[0].getTypeElement() != null;
@@ -562,8 +556,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     }
 
     private static void normalizeLambda(PsiExpression expression, PsiElementFactory factory, boolean keepParameterTypes) {
-      if (!(expression instanceof PsiLambdaExpression)) return;
-      PsiLambdaExpression lambda = (PsiLambdaExpression)expression;
+      if (!(expression instanceof PsiLambdaExpression lambda)) return;
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       PsiElement body = lambda.getBody();
       if (body == null) return;

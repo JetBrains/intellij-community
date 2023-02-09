@@ -17,7 +17,7 @@ interface WebSymbolHtmlAttributeValueTypeSupport : WebSymbolTypeSupport {
 
   fun createNumberType(symbol: WebSymbol): Any?
 
-  fun createEnumType(symbol: WebSymbol, values: List<WebSymbol>): Any?
+  fun createEnumType(symbol: WebSymbol, values: List<WebSymbolCodeCompletionItem>): Any?
 
   fun getEnumValues(symbol: WebSymbol, type: Any?): List<WebSymbolCodeCompletionItem>?
 

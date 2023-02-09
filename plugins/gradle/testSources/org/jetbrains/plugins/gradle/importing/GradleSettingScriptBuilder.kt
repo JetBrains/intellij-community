@@ -2,9 +2,10 @@
 package org.jetbrains.plugins.gradle.importing
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.frameworkSupport.script.*
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElementBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 
 @ApiStatus.NonExtendable
 interface GradleSettingScriptBuilder : ScriptElementBuilder {
@@ -16,6 +17,8 @@ interface GradleSettingScriptBuilder : ScriptElementBuilder {
   fun includeFlat(name: String): GradleSettingScriptBuilder
 
   fun includeBuild(name: String): GradleSettingScriptBuilder
+
+  fun pluginManagement(configure: ScriptTreeBuilder.() -> Unit)
 
   fun enableFeaturePreview(featureName: String): GradleSettingScriptBuilder
 

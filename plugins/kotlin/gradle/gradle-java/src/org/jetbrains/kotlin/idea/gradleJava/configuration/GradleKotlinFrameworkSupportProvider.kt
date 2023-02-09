@@ -251,7 +251,7 @@ abstract class GradleKotlinJSFrameworkSupportProvider(
 
     abstract fun additionalSubTargetSettings(): String?
 
-    override fun getPluginId() = KotlinJsGradleModuleConfigurator.KOTLIN_JS
+    override fun getPluginId() = "kotlin2js"
     override fun getPluginExpression() = "id 'org.jetbrains.kotlin.js'"
     override fun getDependencies(sdk: Sdk?) = listOf(MAVEN_JS_STDLIB_ID)
     override fun getTestDependencies() = listOf(MAVEN_JS_TEST_ID)

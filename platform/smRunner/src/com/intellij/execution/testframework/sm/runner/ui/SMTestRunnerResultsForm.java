@@ -785,7 +785,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       writeState();
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
       try {
-        SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
+        SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
         TransformerHandler handler = transformerFactory.newTransformerHandler();
         handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
         handler.getTransformer().setOutputProperty(OutputKeys.VERSION, "1.1");

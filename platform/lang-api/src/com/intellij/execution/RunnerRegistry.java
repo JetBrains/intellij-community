@@ -23,13 +23,4 @@ public final class RunnerRegistry {
   public ProgramRunner getRunner(@NotNull String executorId, @Nullable RunProfile settings) {
     return settings == null ? null : ProgramRunner.getRunner(executorId, settings);
   }
-
-  /**
-   * @deprecated Use {@link ProgramRunner#findRunnerById(String)}
-   */
-  @Nullable
-  @Deprecated(forRemoval = true)
-  public ProgramRunner findRunnerById(@NotNull String id) {
-    return ProgramRunner.findRunnerById(id);
-  }
 }

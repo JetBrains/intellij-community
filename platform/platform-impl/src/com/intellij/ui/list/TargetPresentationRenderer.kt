@@ -8,6 +8,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.UpdateScaleHelper
 import java.awt.BorderLayout
 import java.awt.Component
 import java.util.function.Function
@@ -31,6 +32,7 @@ internal class TargetPresentationRenderer<T>(
     horizontalAlignment = SwingConstants.RIGHT // align icon to the right
     isOpaque = false
   }
+  private val updateScaleHelper = UpdateScaleHelper()
 
   override fun getListCellRendererComponent(list: JList<out T>,
                                             value: T,
@@ -69,6 +71,8 @@ internal class TargetPresentationRenderer<T>(
       mainComponent.accessibleContext?.accessibleName,
       myLocationComponent.accessibleContext?.accessibleName
     ).joinToString(separator = " ")
+
+    updateScaleHelper.saveScaleAndUpdateUIIfChanged(myComponent);
 
     return myComponent
   }

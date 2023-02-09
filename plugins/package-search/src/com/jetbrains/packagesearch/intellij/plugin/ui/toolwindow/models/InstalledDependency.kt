@@ -16,6 +16,7 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
+import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 
@@ -37,3 +38,13 @@ internal data class InstalledDependency(val groupId: String, val artifactId: Str
         fun from(standardV2Package: ApiStandardPackage) = InstalledDependency(standardV2Package.groupId, standardV2Package.artifactId)
     }
 }
+
+internal fun DeclaredDependency.asInstalledDependencyOrNull(): InstalledDependency? {
+    return InstalledDependency(
+        coordinates.groupId ?: return null,
+        coordinates.artifactId ?: return null
+    )
+}
+
+internal fun DeclaredDependency.asInstalledDependency() = asInstalledDependencyOrNull()
+    ?: error("$this has either groupId or artifactId set to null")

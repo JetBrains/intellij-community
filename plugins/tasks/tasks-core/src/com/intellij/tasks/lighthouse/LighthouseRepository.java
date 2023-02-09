@@ -293,9 +293,8 @@ public class LighthouseRepository extends BaseRepositoryImpl {
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
-    if (!(o instanceof LighthouseRepository)) return false;
+    if (!(o instanceof LighthouseRepository that)) return false;
 
-    LighthouseRepository that = (LighthouseRepository)o;
     if (getProjectId() != null ? !getProjectId().equals(that.getProjectId()) : that.getProjectId() != null) return false;
     return true;
   }

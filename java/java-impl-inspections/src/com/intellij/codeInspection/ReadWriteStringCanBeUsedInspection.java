@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -159,8 +159,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
   }
   static boolean isUtf8Charset(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression instanceof PsiReferenceExpression) {
-      PsiReferenceExpression ref = (PsiReferenceExpression)expression;
+    if (expression instanceof PsiReferenceExpression ref) {
       if (!"UTF_8".equals(ref.getReferenceName())) {
         return false;
       }

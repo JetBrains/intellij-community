@@ -27,7 +27,7 @@ import javax.swing.*;
 
 public abstract class AbstractWizardStepEx implements Step, Disposable {
 
-  protected enum CommitType {
+  public enum CommitType {
     Prev, Next, Finish
   }
 

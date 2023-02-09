@@ -3,51 +3,10 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.tasks.Exec
-import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheAwareImpl
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.createCachedArgsInfo
 import org.jetbrains.kotlin.idea.projectModel.*
 import java.io.File
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.createCachedArgsInfo
-
-class KotlinSourceSetProto(
-    val name: String,
-    private val languageSettings: KotlinLanguageSettings,
-    private val sourceDirs: Set<File>,
-    private val resourceDirs: Set<File>,
-    private val regularDependencies: () -> Array<KotlinDependencyId>,
-    private val intransitiveDependencies: () -> Array<KotlinDependencyId>,
-    val dependsOnSourceSets: Set<String>,
-    val additionalVisibleSourceSets: Set<String>,
-    val androidSourceSetInfo: KotlinAndroidSourceSetInfo?
-) {
-    fun buildKotlinSourceSetImpl(
-        doBuildDependencies: Boolean,
-        allSourceSetsProtosByNames: Map<String, KotlinSourceSetProto>,
-    ) = KotlinSourceSetImpl(
-        name = name,
-        languageSettings = languageSettings,
-        sourceDirs = sourceDirs,
-        resourceDirs = resourceDirs,
-        regularDependencies = if (doBuildDependencies) regularDependencies() else emptyArray(),
-        intransitiveDependencies = if (doBuildDependencies) intransitiveDependencies() else emptyArray(),
-
-        // .toMutableSet, because Android IDE plugin depends on this
-        //  KotlinAndroidMPPGradleProjectResolver.kt: private fun KotlinMPPGradleModel.mergeSourceSets
-        declaredDependsOnSourceSets = dependsOnSourceSets.toMutableSet(),
-        allDependsOnSourceSets = allDependsOnSourceSets(allSourceSetsProtosByNames).toMutableSet(),
-        additionalVisibleSourceSets = additionalVisibleSourceSets.toMutableSet(),
-        androidSourceSetInfo = androidSourceSetInfo
-    )
-}
-
-fun KotlinSourceSetProto.allDependsOnSourceSets(sourceSetsByName: Map<String, KotlinSourceSetProto>): Set<String> {
-    return mutableSetOf<String>().apply {
-        addAll(dependsOnSourceSets)
-        dependsOnSourceSets.map(sourceSetsByName::getValue).forEach { dependsOnSourceSet ->
-            addAll(dependsOnSourceSet.allDependsOnSourceSets(sourceSetsByName))
-        }
-    }
-}
 
 class KotlinAndroidSourceSetInfoImpl(
     override val kotlinSourceSetName: String,
@@ -61,7 +20,7 @@ class KotlinAndroidSourceSetInfoImpl(
     )
 }
 
-class KotlinSourceSetImpl(
+class KotlinSourceSetImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) constructor(
     override val name: String,
     override val languageSettings: KotlinLanguageSettings,
     override val sourceDirs: Set<File>,
@@ -69,16 +28,18 @@ class KotlinSourceSetImpl(
     override val regularDependencies: Array<KotlinDependencyId>,
     override val intransitiveDependencies: Array<KotlinDependencyId>,
     override val declaredDependsOnSourceSets: Set<String>,
-    @Suppress("OverridingDeprecatedMember")
     override val allDependsOnSourceSets: Set<String>,
     override val additionalVisibleSourceSets: Set<String>,
     override val androidSourceSetInfo: KotlinAndroidSourceSetInfo?,
     override val actualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
     override var isTestComponent: Boolean = false,
+    override val extras: IdeaKotlinExtras = IdeaKotlinExtras.empty(),
 ) : KotlinSourceSet {
 
     override val dependencies: Array<KotlinDependencyId> = regularDependencies + intransitiveDependencies
 
+
+    @OptIn(KotlinGradlePluginVersionDependentApi::class)
     @Suppress("DEPRECATION")
     constructor(kotlinSourceSet: KotlinSourceSet) : this(
         name = kotlinSourceSet.name,
@@ -91,6 +52,7 @@ class KotlinSourceSetImpl(
         allDependsOnSourceSets = kotlinSourceSet.allDependsOnSourceSets.toMutableSet(),
         additionalVisibleSourceSets = kotlinSourceSet.additionalVisibleSourceSets.toMutableSet(),
         androidSourceSetInfo = kotlinSourceSet.androidSourceSetInfo?.let(::KotlinAndroidSourceSetInfoImpl),
+        extras = IdeaKotlinExtras.copy(kotlinSourceSet.extras),
         actualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms),
         isTestComponent = kotlinSourceSet.isTestComponent
     )
@@ -167,21 +129,20 @@ data class KotlinCompilationCoordinatesImpl(
     )
 }
 
-@Suppress("DEPRECATION_ERROR")
+@Suppress("DEPRECATION_ERROR", "OVERRIDE_DEPRECATION")
 data class KotlinCompilationImpl(
     override val name: String,
     override val allSourceSets: Set<KotlinSourceSet>,
     override val declaredSourceSets: Set<KotlinSourceSet>,
     override val dependencies: Array<KotlinDependencyId>,
     override val output: KotlinCompilationOutput,
-    @Suppress("OverridingDeprecatedMember", "DEPRECATION_ERROR")
     override val arguments: KotlinCompilationArguments,
-    @Suppress("OverridingDeprecatedMember", "DEPRECATION_ERROR")
     override val dependencyClasspath: Array<String>,
     override val cachedArgsInfo: CachedArgsInfo<*>,
     override val kotlinTaskProperties: KotlinTaskProperties,
     override val nativeExtensions: KotlinNativeCompilationExtensions?,
-    override val associateCompilations: Set<KotlinCompilationCoordinates>
+    override val associateCompilations: Set<KotlinCompilationCoordinates>,
+    override val extras: IdeaKotlinExtras = IdeaKotlinExtras.empty()
 ) : KotlinCompilation {
 
     // create deep copy
@@ -196,7 +157,8 @@ data class KotlinCompilationImpl(
         cachedArgsInfo = createCachedArgsInfo(kotlinCompilation.cachedArgsInfo, cloningCache),
         kotlinTaskProperties = KotlinTaskPropertiesImpl(kotlinCompilation.kotlinTaskProperties),
         nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl),
-        associateCompilations = cloneCompilationCoordinatesWithCaching(kotlinCompilation.associateCompilations, cloningCache)
+        associateCompilations = cloneCompilationCoordinatesWithCaching(kotlinCompilation.associateCompilations, cloningCache),
+        extras = IdeaKotlinExtras.copy(kotlinCompilation.extras)
     ) {
         disambiguationClassifier = kotlinCompilation.disambiguationClassifier
         platform = kotlinCompilation.platform
@@ -247,7 +209,8 @@ data class KotlinTargetImpl(
     override val testRunTasks: Collection<KotlinTestRunTask>,
     override val nativeMainRunTasks: Collection<KotlinNativeMainRunTask>,
     override val jar: KotlinTargetJar?,
-    override val konanArtifacts: List<KonanArtifactModel>
+    override val konanArtifacts: List<KonanArtifactModel>,
+    override val extras: IdeaKotlinExtras
 ) : KotlinTarget {
     override fun toString() = name
 
@@ -283,7 +246,8 @@ data class KotlinTargetImpl(
                 }
         },
         KotlinTargetJarImpl(target.jar?.archiveFile),
-        target.konanArtifacts.map { KonanArtifactModelImpl(it) }.toList()
+        target.konanArtifacts.map { KonanArtifactModelImpl(it) }.toList(),
+        IdeaKotlinExtras.copy(target.extras)
     )
 }
 
@@ -362,8 +326,6 @@ class KotlinPlatformContainerImpl() : KotlinPlatformContainer {
 
     override val platforms: Set<KotlinPlatform>
         get() = myPlatforms ?: defaultCommonPlatform
-
-    override fun supports(simplePlatform: KotlinPlatform): Boolean = platforms.contains(simplePlatform)
 
     override fun pushPlatforms(platforms: Iterable<KotlinPlatform>) {
         myPlatforms = (myPlatforms ?: LinkedHashSet()).apply {

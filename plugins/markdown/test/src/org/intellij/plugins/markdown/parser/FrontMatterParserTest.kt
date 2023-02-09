@@ -20,7 +20,10 @@ class FrontMatterParserTest: LightPlatformCodeInsightTestCase() {
   val rule = RegistryKeyRule("markdown.experimental.frontmatter.support.enable", true)
 
   @Test
-  fun `test header block`() = doTest()
+  fun `test yaml header`() = doTest()
+
+  @Test
+  fun `test toml header`() = doTest()
 
   private fun doTest() {
     val testName = getTestName(true)

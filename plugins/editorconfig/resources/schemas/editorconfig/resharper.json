@@ -1111,24 +1111,6 @@
     "type": "option",
     "key": {
       "type": "constant",
-      "value": "resharper_modifiers_order",
-      "documentation": "Modifiers - Modifiers order"
-    },
-    "value": {}
-  },
-  {
-    "type": "option",
-    "key": {
-      "type": "constant",
-      "value": "resharper_csharp_modifiers_order",
-      "documentation": "Modifiers - Modifiers order"
-    },
-    "value": {}
-  },
-  {
-    "type": "option",
-    "key": {
-      "type": "constant",
       "value": "resharper_namespace_body",
       "documentation": "Code body - Namespaces"
     },
@@ -8816,15 +8798,6 @@
     "type": "option",
     "key": {
       "type": "constant",
-      "value": "resharper_linebreak_before_elements",
-      "documentation": "Around tags - Place these elements on new line"
-    },
-    "value": {}
-  },
-  {
-    "type": "option",
-    "key": {
-      "type": "constant",
       "value": "resharper_spaces_around_eq_in_pi_attribute",
       "documentation": "Processing instructions - Spaces around '=' in attribute"
     },
@@ -10285,15 +10258,6 @@
     "type": "option",
     "key": {
       "type": "constant",
-      "value": "resharper_xmldoc_linebreak_before_elements",
-      "documentation": "Around tags - Place these elements on new line regardless"
-    },
-    "value": {}
-  },
-  {
-    "type": "option",
-    "key": {
-      "type": "constant",
       "value": "resharper_xmldoc_spaces_around_eq_in_pi_attribute",
       "documentation": "Processing instructions - Spaces around '=' in attribute"
     },
@@ -11548,42 +11512,6 @@
     "value": {
       "type": "JetBrains_ReSharper_Feature_Services_Cpp_CodeStyle_NamespaceIndentationKind"
     }
-  },
-  {
-    "type": "option",
-    "key": {
-      "type": "constant",
-      "value": "resharper_macro_block_begin",
-      "documentation": "Braces layout - Regular expression for macros starting a block"
-    },
-    "value": {}
-  },
-  {
-    "type": "option",
-    "key": {
-      "type": "constant",
-      "value": "resharper_cpp_macro_block_begin",
-      "documentation": "Braces layout - Regular expression for macros starting a block"
-    },
-    "value": {}
-  },
-  {
-    "type": "option",
-    "key": {
-      "type": "constant",
-      "value": "resharper_macro_block_end",
-      "documentation": "Braces layout - Regular expression for macros ending a block."
-    },
-    "value": {}
-  },
-  {
-    "type": "option",
-    "key": {
-      "type": "constant",
-      "value": "resharper_cpp_macro_block_end",
-      "documentation": "Braces layout - Regular expression for macros ending a block."
-    },
-    "value": {}
   },
   {
     "type": "option",

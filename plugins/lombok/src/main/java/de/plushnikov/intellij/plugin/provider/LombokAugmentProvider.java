@@ -25,7 +25,7 @@ import static de.plushnikov.intellij.plugin.util.LombokLibraryUtil.hasLombokLibr
  * @author Plushnikov Michail
  */
 public class LombokAugmentProvider extends PsiAugmentProvider {
-  private static class Holder {
+  private static final class Holder {
     static final Collection<ModifierProcessor> modifierProcessors = LombokProcessorManager.getLombokModifierProcessors();
   }
 
@@ -88,7 +88,9 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
                                                         @NotNull final Class<Psi> type,
                                                         @Nullable String nameHint) {
     final List<Psi> emptyResult = Collections.emptyList();
-    if ((type != PsiClass.class && type != PsiField.class && type != PsiMethod.class) || !(element instanceof PsiExtensibleClass)) {
+    if ((type != PsiClass.class && type != PsiField.class && type != PsiMethod.class) || !(element instanceof PsiExtensibleClass)
+        || (element instanceof PsiCompiledElement) // skip compiled classes
+        ) {
       return emptyResult;
     }
 

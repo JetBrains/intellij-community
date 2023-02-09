@@ -68,7 +68,7 @@ fun selectElementsWithTargetParent(
     file: KtFile,
     @NlsContexts.DialogTitle title: String,
     elementKinds: Collection<ElementKind>,
-    elementValidator: (List<PsiElement>) -> String?,
+    elementValidator: (List<PsiElement>) -> @NlsContexts.DialogMessage String?,
     getContainers: (elements: List<PsiElement>, commonParent: PsiElement) -> List<PsiElement>,
     continuation: (elements: List<PsiElement>, targetParent: PsiElement) -> Unit
 ) {

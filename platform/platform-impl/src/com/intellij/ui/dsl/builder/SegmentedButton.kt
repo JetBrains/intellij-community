@@ -4,8 +4,7 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.validation.CellValidation
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -25,12 +24,6 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
   override fun enabled(isEnabled: Boolean): SegmentedButton<T>
 
-  @Deprecated("Use align method instead")
-  override fun horizontalAlign(horizontalAlign: HorizontalAlign): SegmentedButton<T>
-
-  @Deprecated("Use align method instead")
-  override fun verticalAlign(verticalAlign: VerticalAlign): SegmentedButton<T>
-
   override fun align(align: Align): SegmentedButton<T>
 
   override fun resizableColumn(): SegmentedButton<T>
@@ -45,6 +38,8 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
   fun bind(property: ObservableMutableProperty<T>): SegmentedButton<T>
 
+  @ApiStatus.Experimental
+  // todo union whenItemSelected methods into onChange
   fun whenItemSelected(parentDisposable: Disposable? = null, listener: (T) -> Unit): SegmentedButton<T>
 
   @ApiStatus.Experimental
@@ -55,4 +50,6 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
    * Default value is [DEFAULT_MAX_BUTTONS_COUNT]
    */
   fun maxButtonsCount(value: Int): SegmentedButton<T>
+
+  fun validation(init: CellValidation<SegmentedButton<T>>.() -> Unit): SegmentedButton<T>
 }

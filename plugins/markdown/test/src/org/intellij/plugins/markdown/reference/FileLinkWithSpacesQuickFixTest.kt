@@ -2,7 +2,6 @@ package org.intellij.plugins.markdown.reference
 
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.editor.tables.TableTestUtils
 import org.intellij.plugins.markdown.lang.references.paths.MarkdownLinkDestinationWithSpacesInspection
 import org.junit.Test
 
@@ -26,13 +25,11 @@ class FileLinkWithSpacesQuickFixTest: LightPlatformCodeInsightFixture4TestCase()
   }
 
   private fun doTest(content: String, after: String, targetText: String) {
-    TableTestUtils.runWithChangedSettings(myFixture.project) {
-      myFixture.configureByText("some.md", content)
-      myFixture.enableInspections(MarkdownLinkDestinationWithSpacesInspection())
-      val fix = myFixture.getAllQuickFixes().find { it.text == targetText }
-      assertNotNull(fix)
-      myFixture.launchAction(fix!!)
-      myFixture.checkResult(after)
-    }
+    myFixture.configureByText("some.md", content)
+    myFixture.enableInspections(MarkdownLinkDestinationWithSpacesInspection())
+    val fix = myFixture.getAllQuickFixes().find { it.text == targetText }
+    assertNotNull(fix)
+    myFixture.launchAction(fix!!)
+    myFixture.checkResult(after)
   }
 }

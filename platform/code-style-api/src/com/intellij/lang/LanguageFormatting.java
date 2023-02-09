@@ -49,8 +49,7 @@ public final class LanguageFormatting extends LanguageExtension<FormattingModelB
   @Nullable
   private FormattingModelBuilder findCustomFormattingModelBuilder(@NotNull Language language, @NotNull PsiElement context) {
     for (FormattingModelBuilder builder : allForLanguage(language)) {
-      if (builder instanceof CustomFormattingModelBuilder) {
-        final CustomFormattingModelBuilder custom = (CustomFormattingModelBuilder)builder;
+      if (builder instanceof CustomFormattingModelBuilder custom) {
         if (custom.isEngagedToFormat(context)) return builder;
       }
     }

@@ -145,8 +145,7 @@ public class AsyncProjectViewSupport {
   }
 
   public ActionCallback select(JTree tree, Object object, VirtualFile file) {
-    if (object instanceof AbstractTreeNode) {
-      AbstractTreeNode node = (AbstractTreeNode)object;
+    if (object instanceof AbstractTreeNode node) {
       object = node.getValue();
       LOG.debug("select AbstractTreeNode");
     }
@@ -189,12 +188,10 @@ public class AsyncProjectViewSupport {
   private static boolean selectPaths(@NotNull JTree tree, @NotNull List<TreePath> paths, @NotNull TreeVisitor visitor) {
     if (paths.isEmpty()) return false;
     if (paths.size() > 1) {
-      if (visitor instanceof ProjectViewNodeVisitor) {
-        ProjectViewNodeVisitor nodeVisitor = (ProjectViewNodeVisitor)visitor;
+      if (visitor instanceof ProjectViewNodeVisitor nodeVisitor) {
         return selectPaths(tree, new SelectionDescriptor(nodeVisitor.getElement(), nodeVisitor.getFile(), paths));
       }
-      if (visitor instanceof ProjectViewFileVisitor) {
-        ProjectViewFileVisitor fileVisitor = (ProjectViewFileVisitor)visitor;
+      if (visitor instanceof ProjectViewFileVisitor fileVisitor) {
         return selectPaths(tree, new SelectionDescriptor(null, fileVisitor.getElement(), paths));
       }
     }

@@ -12,23 +12,21 @@
   <content>
     <module name="intellij.markdown.fenceInjection"/>
     <module name="intellij.markdown.frontmatter"/>
+    <module name="intellij.markdown.frontmatter.yaml"/>
+    <module name="intellij.markdown.frontmatter.toml"/>
   </content>
 
   <description><![CDATA[
-<p>Allows editing Markdown files within the IDE and seeing the rendered HTML in a live preview.
+<p>Provides editing assistance for Markdown files within the IDE.</p>
 </br>
-</br>
-Includes the following features:</p>
 <ul>
-<li>Highlighting, Completion, Links navigation, Drag and drop image to markup, and Insert actions (for images, tables, and links).</li>
-<li>Live HTML preview (except Android Studio, see <a href="https://issuetracker.google.com/issues/159933628?pli=1#comment7">issue and workaround</a>).</li>
-<li>Live Table editing.</li>
-<li>Document structure view.</li>
-<li>Full HTML syntax support out of the box.</li>
-<li>Embedded language support inside code blocks.</li>
-<li>Visualizing diagrams for the Mermaid and PlantUML languages.</li>
+<li>Full support for vanilla Markdown syntax: highlighting, completion, navigation, inspection, intentions, and much more.</li>
+<li>Live HTML preview, customizable with CSS (except Android Studio, see <a href="https://issuetracker.google.com/issues/159933628?pli=1#comment7">issue and workaround</a>).</li>
+<li>Assistance for editing tables and lists: automatic alignment and numbering.</li>
+<li>Drag and drop to insert images.</li>
+<li>Language injection in code blocks.</li>
 <li>Pandoc Converter for HTML, Microsoft Word, and PDF formats.</li>
-<li>Ability to customize stylesheets (CSS) for a live preview.</li>
+<li>Support for PlantUML diagram rendering (you can add support for Mermaid diagrams with a <a href="https://plugins.jetbrains.com/plugin/20146-mermaid">separate plugin</a>).</li>
 </ul>
 ]]></description>
 
@@ -123,6 +121,9 @@ Includes the following features:</p>
 
     <typedHandler implementation="org.intellij.plugins.markdown.editor.headers.HeaderLevelInferenceTypedHandler"/>
 
+    <codeInsight.fillParagraph language="Markdown"
+                               implementationClass="org.intellij.plugins.markdown.editor.MarkdownParagraphFillHandler"/>
+
     <httpRequestHandler implementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthCallbackHandler"/>
 
     <renameHandler implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownFileRenameHandler"/>
@@ -169,7 +170,7 @@ Includes the following features:</p>
                          order="after MarkdownImagePasteProvider"
                          implementation="org.intellij.plugins.markdown.editor.paste.FileLinkPasteProvider"/>
     <customFileDropHandler id="MarkdownEditorFileDropHandler"
-                           implementation="org.intellij.plugins.markdown.editor.paste.EditorFileDropHandler"/>
+                           implementation="org.intellij.plugins.markdown.editor.paste.MarkdownFileDropHandler"/>
 
     <spellchecker.support language="Markdown"
                           implementationClass="org.intellij.plugins.markdown.spellchecking.MarkdownSpellcheckingStrategy"/>
@@ -203,6 +204,9 @@ Includes the following features:</p>
 
     <applicationConfigurable parentId="Settings.Markdown"
                              provider="org.intellij.plugins.markdown.google.ui.GoogleSettingsConfigurableProvider"/>
+
+    <editorSmartKeysConfigurable instance="org.intellij.plugins.markdown.settings.MarkdownSmartKeysConfigurable"
+                                 id="editor.preferences.markdownOptions"/>
 
     <!--suppress DeprecatedClassUsageInspection -->
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
@@ -320,8 +324,6 @@ Includes the following features:</p>
     <codeInsight.lineMarkerProvider language="Markdown"
                                     implementationClass="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceDownloadLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="Markdown"
-                                    implementationClass="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceDownloadLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="Markdown"
                                     implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureMarkdownImageLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="HTML"
                                     implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureHtmlImageLineMarkerProvider"/>
@@ -329,6 +331,9 @@ Includes the following features:</p>
                                     implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureTextHtmlImageLineMarkerProvider"/>
 
     <focusModeProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownFocusModeProvider"/>
+
+    <codeInsight.lineMarkerProvider language="Markdown"
+                                    implementationClass="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidLineMarkerAdvertisementProvider"/>
 
     <intentionAction>
       <language>Markdown</language>
@@ -361,6 +366,7 @@ Includes the following features:</p>
 
     <notificationGroup id="Markdown" displayType="BALLOON" bundle="messages.MarkdownBundle" key="notification.group.markdown"/>
 
+    <!--region Registry keys-->
     <registryKey key="markdown.clear.cache.interval"
                  defaultValue="600000"
                  description="Interval in milliseconds defining how often Markdown plugin caches (e.g. PlantUML diagrams) should be cleared"/>
@@ -395,14 +401,6 @@ Includes the following features:</p>
                  defaultValue="false"
                  description="Temporarily disabling the use of Google accounts, as the functionality is available only for internal users"/>
 
-    <registryKey key="markdown.tables.editing.support.enable"
-                 defaultValue="true"
-                 description="Enables Markdown tables editing support"/>
-
-    <registryKey key="markdown.lists.renumber.on.type.enable"
-                 defaultValue="false"
-                 description="Enables auto renumbering of list items on type"/>
-
     <registryKey key="markdown.experimental.boundary.precise.scroll.enable"
                  defaultValue="true"
                  description="Enables precise scrolling on the document boundaries (direct passing of scroll events from IDE to JCEF preview).
@@ -421,6 +419,7 @@ Includes the following features:</p>
     <registryKey key="markdown.validate.short.links"
                  defaultValue="false"
                  description="Enables validation for short style links by checking existing labeled link definitions in the current file."/>
+    <!--endregion-->
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
     <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>
@@ -457,11 +456,6 @@ Includes the following features:</p>
 
     <fenceLanguageProvider id="DefaultMermaidCodeFenceLanguageProvider"
                            implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
-    <browserPreviewExtensionProvider id="DefaultMermaidBrowserExtensionProvider"
-                                     implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidBrowserExtension$Provider"/>
-    <!--suppress PluginXmlValidity -->
-    <fenceGeneratingProvider id="DefaultMermaidCodeGeneratingProviderExtension"
-                             implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeGeneratingProviderExtension"/>
 
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.highlighter.CodeFenceCopyButtonBrowserExtension$Provider"/>
 

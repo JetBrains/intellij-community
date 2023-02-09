@@ -48,9 +48,10 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   @NonNls private static final String VARIANT = "JTextField.variant";
   @NonNls private static final String INPLACE_HISTORY = "JTextField.Search.InplaceHistory";
   @NonNls private static final String ON_CLEAR = "JTextField.Search.CancelAction";
+  @NonNls private static final String SEARCH_ICON = "JTextField.Search.Icon";
   @NonNls private static final String HISTORY_POPUP_ENABLED = "History.Popup.Enabled";
 
-  protected final LinkedHashMap<String, IconHolder> icons = new LinkedHashMap<>();
+  private final LinkedHashMap<String, IconHolder> icons = new LinkedHashMap<>();
   private final Handler handler = new Handler();
   private boolean monospaced;
   private Object variant;
@@ -208,8 +209,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   @Override
   public boolean value(Object o) {
-    if (o instanceof MouseEvent) {
-      MouseEvent me = (MouseEvent)o;
+    if (o instanceof MouseEvent me) {
       if (getActionUnder(me.getPoint()) != null) {
         if (me.getID() == MouseEvent.MOUSE_CLICKED) {
           //noinspection SSBasedInspection
@@ -289,6 +289,8 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       }
       else if (VARIANT.equals(event.getPropertyName())) {
         setVariant(event.getNewValue());
+      } else if (SEARCH_ICON.equals(event.getPropertyName())) {
+        updateIcons();
       }
     }
 
@@ -304,16 +306,20 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
     @Override
     public void insertUpdate(DocumentEvent event) {
-      changedUpdate(event);
+      updateIcons();
     }
 
     @Override
     public void removeUpdate(DocumentEvent event) {
-      changedUpdate(event);
+      updateIcons();
     }
 
     @Override
     public void changedUpdate(DocumentEvent event) {
+      updateIcons();
+    }
+
+    private void updateIcons() {
       if (!icons.isEmpty()) {
         for (IconHolder holder : icons.values()) {
           updateIcon(holder);
@@ -454,7 +460,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       g.setClip(clip);
       for (IconHolder holder : icons.values()) {
         if (holder.icon != null) {
-          if (ExperimentalUI.isNewUI() && holder.hovered && holder.isClickable() && holder.icon != AllIcons.Actions.CloseHovered) {
+          if (holder.hovered && holder.isClickable() && holder.icon != AllIcons.Actions.CloseHovered && ExperimentalUI.isNewUI()) {
             GraphicsUtil.setupAAPainting(g);
             int arc = DarculaUIUtil.BUTTON_ARC.get();
             g.setColor(JBUI.CurrentTheme.ActionButton.hoverBackground());
@@ -549,8 +555,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       icons.clear();
       if (ExtendableTextComponent.VARIANT.equals(variant)) {
         JTextComponent component = getComponent();
-        if (component instanceof ExtendableTextComponent) {
-          ExtendableTextComponent field = (ExtendableTextComponent)component;
+        if (component instanceof ExtendableTextComponent field) {
           for (Extension extension : field.getExtensions()) {
             if (extension != null) addExtension(extension);
           }
@@ -562,7 +567,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
           addExtension((Extension)extension);
         }
         addExtension(new SearchExtension());
-        addExtension(new ClearExtension());
+        if (getComponent().getClientProperty("JTextField.Search.HideClearAction") == null) {
+          addExtension(new ClearExtension());
+        }
       }
     }
     updateIconsLayout(new Rectangle(getComponent().getSize())); // Effectively update margins
@@ -625,6 +632,10 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
     @Override
     public Icon getIcon(boolean hovered) {
+      Icon icon = (Icon)getComponent().getClientProperty(SEARCH_ICON);
+      if (icon != null) {
+        return icon;
+      }
       return getSearchIcon(hovered, isSearchFieldWithHistoryPopup(TextFieldWithPopupHandlerUI.this.getComponent()));
     }
 

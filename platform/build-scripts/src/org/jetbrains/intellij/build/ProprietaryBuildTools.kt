@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import io.opentelemetry.api.common.AttributeKey
@@ -9,11 +9,11 @@ import org.jetbrains.intellij.build.fus.FeatureUsageStatisticsProperties
 import java.nio.file.Path
 
 /**
- * Describes proprietary tools which are used to build the product. Pass the instance of this class to {@link BuildContext#createContext} method.
+ * Describes proprietary tools which are used to build the product. Pass the instance of this class to [org.jetbrains.intellij.build.impl.BuildContextImpl.createContext] method.
  */
 class ProprietaryBuildTools(
   /**
-   * This tool is required to sign *.exe files in Windows distribution. If it is {@code null} the files won't be signed and Windows may show
+   * This tool is required to sign files in distribution. If it is null the files won't be signed and OS may show
    * a warning when user tries to run them.
    */
   val signTool: SignTool,
@@ -37,7 +37,7 @@ class ProprietaryBuildTools(
   /**
    * Properties required to bundle a default version of feature usage statistics white list into IDE
    */
-  val featureUsageStatisticsProperties: FeatureUsageStatisticsProperties?,
+  val featureUsageStatisticsProperties: List<FeatureUsageStatisticsProperties>?,
 
   /**
    * Generation of shared indexes and other tasks may require a valid license to run,

@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -181,9 +182,9 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
     }
 
     private void computeSettings() {
-      PsiFile file = getPsiFile();
-      if (file == null) {
-        LOG.warn("PSI file has expired, cancelling computation");
+      VirtualFile file = myViewProvider.getVirtualFile();
+      PsiFile psiFile = getPsiFile();
+      if (psiFile == null) {
         cancel();
         return;
       }
@@ -192,18 +193,18 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
         if (LOG.isDebugEnabled()) {
           LOG.debug("Computation started for " + file.getName());
         }
-        CodeStyleSettings currSettings = getCurrentSettings(file);
+        CodeStyleSettings currSettings = getCurrentSettings(psiFile);
         myOldTrackerSetting = currSettings.getModificationTracker().getModificationCount();
         //noinspection TestOnlyProblems
         if (currSettings != mySettingsManager.getTemporarySettings()) {
-          TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(file, currSettings);
-          modifiableSettings.applyIndentOptionsFromProviders(file);
+          TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(myViewProvider, currSettings);
+          modifiableSettings.applyIndentOptionsFromProviders(myProject, file);
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Created TransientCodeStyleSettings for " + file.getName() + ", tab size " + modifiableSettings.getIndentOptionsByFile(file).TAB_SIZE);
+            LOG.debug("Created TransientCodeStyleSettings for " + file.getName());
           }
 
           for (CodeStyleSettingsModifier modifier : CodeStyleSettingsModifier.EP_NAME.getExtensionList()) {
-            if (modifier.modifySettings(modifiableSettings, file)) {
+            if (modifier.modifySettings(modifiableSettings, psiFile)) {
               LOG.debug("Modifier: " + modifier.getClass().getName());
               modifiableSettings.setModifier(modifier);
               currSettings = modifiableSettings;
@@ -276,10 +277,7 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
         runnable.run();
       }
       if (!myProject.isDisposed()) {
-        PsiFile psiFile = getPsiFile();
-        if (psiFile != null) {
-          CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(psiFile);
-        }
+        CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(myViewProvider.getVirtualFile());
       }
       myComputation.reset();
     }
@@ -293,7 +291,7 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
     }
   }
 
-  private PsiFile getPsiFile() {
+  private @Nullable PsiFile getPsiFile() {
     return myViewProvider.getPsi(myViewProvider.getBaseLanguage());
   }
 

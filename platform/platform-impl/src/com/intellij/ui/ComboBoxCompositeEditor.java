@@ -12,8 +12,6 @@ import java.util.function.BiFunction;
 import static java.awt.GridBagConstraints.CENTER;
 
 /**
- * @author Denis Fokin
- *
  * JComboBox<String> comboBox = new ComboBox<>(new String[] {"First", "Second", "Third"});
  * comboBox.setEditable(true);
  * comboBox.setEditor(new ComboBoxCompositeEditor(new EditorTextField(), new JLabel(AllIcons.Icon_CE)));
@@ -154,7 +152,10 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
   };
 
   private final ComboBoxCompositeEditorStrategy jLabelStrategy =  new ComboBoxCompositeEditorStrategy() {
-    final BiConsumer<I, JLabel> defaultOnSetHandler = (anObject, component) ->  component.setText((anObject == null) ? "" : anObject.toString());
+    final BiConsumer<I, JLabel> defaultOnSetHandler = (anObject, component) -> {
+      //noinspection HardCodedStringLiteral
+      component.setText((anObject == null) ? "" : anObject.toString());
+    };
 
     @Override
     public void setItem(F component, I anObject) {

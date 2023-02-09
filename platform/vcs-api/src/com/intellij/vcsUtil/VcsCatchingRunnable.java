@@ -7,9 +7,6 @@ import com.intellij.util.SmartList;
 import java.util.List;
 import java.util.function.Supplier;
 
-/**
- * @author irengrig
- */
 public abstract class VcsCatchingRunnable implements Runnable, Supplier<List<VcsException>> {
   private final List<VcsException> myExceptions;
 

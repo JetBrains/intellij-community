@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.codeInsight.hint.HintManager
@@ -14,8 +14,6 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.JarFileSystem
@@ -40,7 +38,7 @@ import kotlin.math.max
  * Contains non-stable and not well-designed API. Will be changed in 2020.2
  */
 @ApiStatus.Experimental
-class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFactory {
+class PresentationFactory(private val editor: Editor) : InlayPresentationFactory {
   private val textMetricsStorage = InlayHintsUtils.getTextMetricStorage(editor)
   private val offsetFromTopProvider = object : InsetValueProvider {
     override val top: Int

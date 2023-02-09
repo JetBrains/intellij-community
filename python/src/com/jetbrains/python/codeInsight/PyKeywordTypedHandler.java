@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Handles overtyping ':' in definitions.
- * User: dcheryasov
  */
 public class PyKeywordTypedHandler extends TypedHandlerDelegate {
   @NotNull

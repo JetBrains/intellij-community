@@ -17,9 +17,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Pavel.Dolgov
- */
 public class MergePackageAccessibilityStatementsFix
   extends MergeModuleStatementsFix<PsiPackageAccessibilityStatement> {
 

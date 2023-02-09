@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -10,7 +10,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.ReferenceAdjuster;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
@@ -83,8 +82,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
             refElement = helper.resolveReferencedClass(reference.getClassNameText(), ref);
           }
 
-          if (refElement instanceof PsiClass) {
-            PsiClass psiClass = (PsiClass)refElement;
+          if (refElement instanceof PsiClass psiClass) {
             if (isInsideDocComment ? useFqInJavadoc : useFqInCode) {
               String qName = psiClass.getQualifiedName();
               if (qName == null) return element;
@@ -271,7 +269,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
               return false;
             }
             if (!refClass.hasModifierProperty(PsiModifier.STATIC)) {
-              PsiElement enclosingStaticElement = getEnclosingStaticElementOrDummy(psiReference);
+              PsiElement enclosingStaticElement = PsiUtil.getEnclosingStaticElement(psiReference, null);
               if (enclosingStaticElement != null && !PsiTreeUtil.isAncestor(enclosingStaticElement, refClass, false)) {
                 return false;
               }
@@ -304,20 +302,6 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
       return helper.resolveReferencedVariable(referenceText, psiReference) == null;
     }
     return false;
-  }
-
-  @Nullable
-  private static PsiElement getEnclosingStaticElementOrDummy(@NotNull PsiElement place) {
-    PsiElement parent = place;
-    while (parent != null) {
-      if (parent instanceof DummyHolder) return parent;
-      if (parent instanceof PsiFile) break;
-      if (parent instanceof PsiModifierListOwner && ((PsiModifierListOwner)parent).hasModifierProperty(PsiModifier.STATIC)) {
-        return parent;
-      }
-      parent = parent.getParent();
-    }
-    return null;
   }
 
   @NotNull

@@ -8,19 +8,19 @@ import com.intellij.ui.content.Content
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
-import org.jetbrains.plugins.terminal.TerminalView
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 
 class RenameTerminalSessionAction : ToolWindowTabRenameActionBase(
   TerminalToolWindowFactory.TOOL_WINDOW_ID,
   TerminalBundle.message("action.RenameSession.newSessionName.label")
 ), DumbAware {
   override fun getContentDisplayNameToEdit(content: Content, project: Project): String =
-    TerminalView.getWidgetByContent(content)?.terminalTitle?.let {
+    TerminalToolWindowManager.getWidgetByContent(content)?.terminalTitle?.let {
       it.userDefinedTitle ?: it.applicationTitle ?: it.defaultTitle
     } ?: content.displayName
 
   override fun applyContentDisplayName(content: Content, project: Project, @Nls newContentName: String) {
-    TerminalView.getWidgetByContent(content)?.terminalTitle?.change {
+    TerminalToolWindowManager.getWidgetByContent(content)?.terminalTitle?.change {
       userDefinedTitle = newContentName
     }
   }

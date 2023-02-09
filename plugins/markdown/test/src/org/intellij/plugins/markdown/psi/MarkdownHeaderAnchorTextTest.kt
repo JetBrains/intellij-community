@@ -95,7 +95,7 @@ open class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
     val content = """
     # -  ^Foo* ?baR <baz
     """.trimIndent()
-    doTest(content, "--foo--bar--baz")
+    doTest(content, "--foo-bar-baz")
   }
 
   fun `test unicode`() {
@@ -103,6 +103,20 @@ open class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
     # This header has Unicode in it 한글
     """.trimIndent()
     doTest(content, "this-header-has-unicode-in-it-한글")
+  }
+
+  fun `test floating point number and parenthesis`() {
+    val content = """
+    # This header has 3.5 in it (and parentheses)
+    """.trimIndent()
+    doTest(content, "this-header-has-35-in-it-and-parentheses")
+  }
+
+  fun `test floating point number and square brackets`() {
+    val content = """
+    # This header has 3.5 in it [and brackets]
+    """.trimIndent()
+    doTest(content, "this-header-has-35-in-it-and-brackets")
   }
 
   protected open fun doTest(content: String, expected: String) {

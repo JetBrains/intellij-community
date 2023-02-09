@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
  * @author gregsh
  * @noinspection SpellCheckingInspection, HardCodedStringLiteral
  */
-final class Pluralizer {
+public final class Pluralizer {
   static final Pluralizer PLURALIZER;
 
   private final Map<String, String> irregularSingles = CollectionFactory.createCaseInsensitiveStringMap();
@@ -59,8 +59,8 @@ final class Pluralizer {
    * Pass in a word token to produce a function that can replicate the case on
    * another word.
    */
-  static String restoreCase(String word, String result) {
-    if (word == null || result == null || word == result) return result;
+  public static String restoreCase(String word, String result) {
+    if (word == null || result == null || Strings.areSameInstance(word, result)) return result;
     int len = Math.min(result.length(), word.length());
     if (len == 0) return result;
     char[] chars = result.toCharArray();

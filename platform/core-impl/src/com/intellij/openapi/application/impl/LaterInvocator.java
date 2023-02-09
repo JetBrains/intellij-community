@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -6,14 +6,12 @@ import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 @ApiStatus.Internal
 public final class LaterInvocator {
@@ -87,12 +86,17 @@ public final class LaterInvocator {
   static void invokeAndWait(@NotNull ModalityState modalityState, @NotNull final Runnable runnable) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
 
+    final AtomicReference<Runnable> runnableRef = new AtomicReference<>(runnable);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final Ref<Throwable> exception = Ref.create();
     Runnable runnable1 = new Runnable() {
       @Override
       public void run() {
+        Runnable runnable = runnableRef.getAndSet(null);
+        if (runnable == null) {
+          return;
+        }
         try {
           runnable.run();
         }
@@ -107,11 +111,20 @@ public final class LaterInvocator {
       @Override
       @NonNls
       public String toString() {
-        return "InvokeAndWait[" + runnable + "]";
+        Runnable runnable = runnableRef.get();
+        return "InvokeAndWait[" + (runnable == null ? "(cancelled)" : runnable.toString()) + "]";
       }
     };
     invokeLater(modalityState, Conditions.alwaysFalse(), runnable1);
-    semaphore.waitFor();
+    try {
+      while (!semaphore.waitFor(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)) {
+        ProgressManager.checkCanceled();
+      }
+    }
+    catch (Throwable e) {
+      runnableRef.set(null);
+      throw e;
+    }
     if (!exception.isNull()) {
       Throwable cause = exception.get();
       if (SystemProperties.getBooleanProperty("invoke.later.wrap.error", true)) {
@@ -332,7 +345,7 @@ public final class LaterInvocator {
   }
   public static void pollWriteThreadEventsOnce() {
     LOG.assertTrue(!SwingUtilities.isEventDispatchThread());
-    LOG.assertTrue(ApplicationManager.getApplication().isWriteThread());
+    LOG.assertTrue(ApplicationManager.getApplication().isWriteIntentLockAcquired());
   }
 
   @TestOnly

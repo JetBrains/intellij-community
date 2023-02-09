@@ -2,11 +2,10 @@
 package com.intellij.openapi.externalSystem.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.util.ui.EmptyIcon
-import java.util.concurrent.ConcurrentSkipListSet
 import javax.swing.Icon
 
 /**
@@ -30,21 +29,13 @@ interface ExternalSystemIconProvider {
   companion object {
 
     private val EP_COLLECTOR = KeyedExtensionCollector<ExternalSystemIconProvider, ProjectSystemId>("com.intellij.externalIconProvider")
-    private val LOG = Logger.getInstance(ExternalSystemIconProvider::class.java)
 
     @JvmStatic
     fun getExtension(systemId: ProjectSystemId): ExternalSystemIconProvider {
       val iconProvider = EP_COLLECTOR.findSingle(systemId)
       if (iconProvider != null) return iconProvider
-      warnOnce("Cannot find ExternalSystemIconProvider for $systemId. Fallback to default provider")
+      logger<ExternalSystemIconProvider>().debug("Cannot find ExternalSystemIconProvider for $systemId. Fallback to default provider")
       return object : ExternalSystemIconProvider {}
-    }
-
-    private val messages = ConcurrentSkipListSet<String>()
-    private fun warnOnce(message: String) {
-      if (messages.add(message)) {
-        LOG.warn(message, Throwable())
-      }
     }
   }
 }

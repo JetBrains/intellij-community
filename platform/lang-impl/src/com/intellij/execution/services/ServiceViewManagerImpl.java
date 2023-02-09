@@ -48,10 +48,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SmartHashSet;
 import kotlin.Unit;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
@@ -471,9 +468,9 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       }
 
       ServiceViewItem fileItem = myModel.findItem(
-        fileCondition,
         item -> !(item instanceof ServiceModel.ServiceNode) ||
-                item.getViewDescriptor() instanceof ServiceViewLocatableDescriptor
+                item.getViewDescriptor() instanceof ServiceViewLocatableDescriptor,
+        fileCondition
       );
       if (fileItem != null) {
         Promise<Void> promise = select(fileItem.getValue(), fileItem.getRootContributor().getClass(), false, false);
@@ -635,13 +632,10 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   }
 
   private @NotNull Pair<ServiceViewState, List<ServiceViewState>> getServiceViewStates(@NotNull String groupId) {
-    List<ServiceViewState> states = ContainerUtil.filter(myState.viewStates, state -> groupId.equals(state.groupId));
-    ServiceViewState mainState = ContainerUtil.find(states, state -> StringUtil.isEmpty(state.viewType));
+    List<ServiceViewState> states = ContainerUtil.filter(myState.viewStates, state -> groupId.equals(state.groupId) && !StringUtil.isEmpty(state.viewType));
+    ServiceViewState mainState = ContainerUtil.find(myState.viewStates, state -> groupId.equals(state.groupId) && StringUtil.isEmpty(state.viewType));
     if (mainState == null) {
       mainState = new ServiceViewState();
-    }
-    else {
-      states.remove(mainState);
     }
     return Pair.create(mainState, states);
   }
@@ -705,8 +699,8 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   }
 
   static final class State {
-    public List<ServiceViewState> viewStates = new ArrayList<>();
-    public boolean showServicesTree = true;
+    final List<ServiceViewState> viewStates = new ArrayList<>();
+    boolean showServicesTree = true;
   }
 
   static String getToolWindowContextHelpId() {
@@ -1057,12 +1051,14 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
                                           ContentManager contentManager,
                                           Collection<ServiceViewContributor<?>> rootContributors,
                                           String toolWindowId) {
+    @Unmodifiable
+    @NotNull
     List<ServiceView> getServiceViews() {
       List<ServiceView> views = ContainerUtil.mapNotNull(contentManager.getContents(), ServiceViewManagerImpl::getServiceView);
       if (views.isEmpty()) return new SmartList<>(mainView);
 
       if (!views.contains(mainView)) {
-        views.add(0, mainView);
+        views = ContainerUtil.prepend(views, mainView);
       }
       return views;
     }

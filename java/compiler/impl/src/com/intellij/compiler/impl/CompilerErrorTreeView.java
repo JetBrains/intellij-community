@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
@@ -114,14 +114,12 @@ public final class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       ErrorTreeElement errorTreeElement = e.getUpdateSession()
         .compute(this, "getSelectedErrorTreeElement", ActionUpdateThread.EDT, CompilerErrorTreeView.this::getSelectedErrorTreeElement);
 
-      if (errorTreeElement instanceof NavigatableMessageElement) {
-        final NavigatableMessageElement messageElement = (NavigatableMessageElement)errorTreeElement;
+      if (errorTreeElement instanceof NavigatableMessageElement messageElement) {
         final String[] text = messageElement.getText();
         if (text.length > 0) {
           if (text[0].startsWith("[") && text[0].contains("]")) {
             final Navigatable navigatable = messageElement.getNavigatable();
-            if (navigatable instanceof OpenFileDescriptor) {
-              final OpenFileDescriptor fileDescriptor = (OpenFileDescriptor)navigatable;
+            if (navigatable instanceof OpenFileDescriptor fileDescriptor) {
               final VirtualFile virtualFile = fileDescriptor.getFile();
               final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
               if (module == null) {

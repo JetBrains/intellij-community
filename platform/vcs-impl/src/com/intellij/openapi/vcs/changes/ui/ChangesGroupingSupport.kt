@@ -9,6 +9,8 @@ import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.DIRECTORY_GROUPING
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.MODULE_GROUPING
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
@@ -18,7 +20,7 @@ private val PREDEFINED_PRIORITIES = mapOf(DIRECTORY_GROUPING to 10, MODULE_GROUP
 
 open class ChangesGroupingSupport(val project: Project, source: Any, val showConflictsNode: Boolean) {
   private val changeSupport = PropertyChangeSupport(source)
-  private val _groupingKeys = mutableSetOf<String>()
+  private val _groupingKeys = ContainerUtil.newConcurrentSet<String>() // updated on EDT
   val groupingKeys get() = _groupingKeys.toSet()
 
   operator fun get(groupingKey: @NonNls String): Boolean {
@@ -27,6 +29,7 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
     return _groupingKeys.contains(groupingKey)
   }
 
+  @RequiresEdt
   operator fun set(groupingKey: String, state: Boolean) {
     if (!isAvailable(groupingKey)) throw IllegalArgumentException("Unknown grouping $groupingKey") // NON-NLS
 
@@ -47,7 +50,8 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
   val isNone: Boolean get() = _groupingKeys.isEmpty()
   val isDirectory: Boolean get() = this[DIRECTORY_GROUPING]
 
-  fun setGroupingKeysOrSkip(newGroupingKeys: Set<String>) {
+  @RequiresEdt
+  fun setGroupingKeysOrSkip(newGroupingKeys: Collection<String>) {
     _groupingKeys.clear()
     _groupingKeys += newGroupingKeys.filter { groupingKey -> isAvailable(groupingKey) }
   }
@@ -71,6 +75,10 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
       }
       return result
     }
+  }
+
+  class Disabled(project: Project, source: Any) : ChangesGroupingSupport(project, source, false) {
+    override fun isAvailable(groupingKey: String): Boolean = false
   }
 
   companion object {

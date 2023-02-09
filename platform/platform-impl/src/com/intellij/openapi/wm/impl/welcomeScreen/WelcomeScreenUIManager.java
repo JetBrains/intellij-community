@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.plugins.newui.ListPluginComponent;
@@ -16,7 +16,7 @@ import java.awt.*;
 import java.io.InputStream;
 import java.net.URL;
 
-public class WelcomeScreenUIManager {
+public final class WelcomeScreenUIManager {
 
   @NotNull
   static Font getProductFont(int size) {
@@ -69,7 +69,6 @@ public class WelcomeScreenUIManager {
   }
 
   public static Color getMainAssociatedComponentBackground() {
-    //noinspection UseJBColor
     return JBColor.namedColor("WelcomeScreen.Details.background", new JBColor(Color.white, new Color(0x313335)));
   }
 
@@ -89,5 +88,9 @@ public class WelcomeScreenUIManager {
     return isSelected
            ? JBColor.namedColor("WelcomeScreen.Projects.actions.selectionBackground", new JBColor(0x3587E5, 0X326FC1))
            : JBColor.namedColor("WelcomeScreen.Projects.actions.background", new JBColor(0xDCEDFE, 0x3C5C86));
+  }
+
+  public static JBColor getActionsButtonSelectionBorder() {
+    return JBColor.namedColor("WelcomeScreen.Projects.actions.selectionBorderColor", new JBColor(0x3574F0, 0x3574F0));
   }
 }

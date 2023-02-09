@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.Consumer;
+import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.storage.AbstractStorage;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -81,6 +82,9 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
   }
 
   private void handleError(Throwable e, @Nullable @NonNls String message) {
+    if (e instanceof ClosedStorageException) {
+      return;
+    }
     long storageTimestamp = -1;
 
     long vfsTimestamp = getVFSTimestamp();
@@ -229,7 +233,7 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
       int eachBlockId = firstObsoleteId;
 
       while (eachBlockId != 0) {
-        processor.consume(doReadBlock(eachBlockId).changeSet);
+        processor.consume(doReadBlock(eachBlockId).changeSet());
         eachBlockId = doReadPrevSafely(eachBlockId, recursionGuard);
       }
       myStorage.deleteRecordsUpTo(firstObsoleteId);

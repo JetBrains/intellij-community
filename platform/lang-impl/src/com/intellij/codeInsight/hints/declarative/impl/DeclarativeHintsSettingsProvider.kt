@@ -11,9 +11,9 @@ import com.intellij.openapi.project.Project
 class DeclarativeHintsSettingsProvider : InlaySettingsProvider {
   override fun createModels(project: Project, language: Language): List<InlayProviderSettingsModel> {
     val providerDescriptions = InlayHintsProviderExtensionBean.EP.extensionList
-    val settings = DeclarativeInlayHintsSettings.getInstance(project)
+    val settings = DeclarativeInlayHintsSettings.getInstance()
     return providerDescriptions
-      .filter { Language.findLanguageByID(it.language)?.isKindOf(language) ?: false }
+      .filter { Language.findLanguageByID(it.language) == language }
       .map {
       val isEnabled = settings.isProviderEnabled(it.requiredProviderId()) ?: it.isEnabledByDefault
       DeclarativeHintsProviderSettingsModel(it, isEnabled, language, project)

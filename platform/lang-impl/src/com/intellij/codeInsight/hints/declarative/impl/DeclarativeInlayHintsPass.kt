@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
@@ -6,7 +6,6 @@ import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
@@ -69,14 +68,14 @@ class DeclarativeInlayHintsPass(
       val inlaysAtOffset = offsetToExistingEolElements.computeIfAbsent(eolElement.offset, IntFunction { SmartList() })
       inlaysAtOffset.add(eolElement)
     }
-    val storage = InlayHintsUtils.getTextMetricStorage(editor as EditorImpl)
+    val storage = InlayHintsUtils.getTextMetricStorage(editor)
     for (inlayData in inlayDatas) {
       when (val position = inlayData.position) {
         is EndOfLinePosition -> {
           val lineEndOffset = editor.document.getLineEndOffset(position.line)
           val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingEolElements, inlayData, lineEndOffset)
           if (!updated) {
-            val presentationList = InlayPresentationList(inlayData.tree, inlayData.hasBackground, inlayData.disabled)
+            val presentationList = InlayPresentationList(inlayData.tree, inlayData.hasBackground, inlayData.disabled, createPayloads(inlayData))
             val renderer = DeclarativeInlayRenderer(presentationList, storage, inlayData.providerId)
             val inlay = inlayModel.addAfterLineEndElement(lineEndOffset, true, renderer)
             if (inlay != null) {
@@ -87,7 +86,7 @@ class DeclarativeInlayHintsPass(
         is InlineInlayPosition -> {
           val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingInlineElements, inlayData, position.offset)
           if (!updated) {
-            val presentationList = InlayPresentationList(inlayData.tree, inlayData.hasBackground, inlayData.disabled)
+            val presentationList = InlayPresentationList(inlayData.tree, inlayData.hasBackground, inlayData.disabled, createPayloads(inlayData))
             val renderer = DeclarativeInlayRenderer(presentationList, storage, inlayData.providerId)
             val inlay = inlayModel.addInlineElement(position.offset, position.relatedToPrevious, position.priority, renderer)
             if (inlay != null) {
@@ -103,6 +102,9 @@ class DeclarativeInlayHintsPass(
 
     DeclarativeInlayHintsPassFactory.updateModificationStamp(editor, myFile)
   }
+
+  private fun createPayloads(inlayData: InlayData) =
+    inlayData.payloads?.associate { it.payloadName to it.payload }
 
   private fun deleteNotPreservedInlays(offsetToExistingInlays: Int2ObjectOpenHashMap<SmartList<Inlay<out DeclarativeInlayRenderer>>>) {
     for (inlays in offsetToExistingInlays.values) {
@@ -132,10 +134,6 @@ class DeclarativeInlayHintsPass(
   }
 
   private fun createCollector(provider: InlayHintsProvider): InlayHintsCollector? {
-    return if (isPreview) {
-      provider.createCollectorForPreview(myFile, editor)
-    } else {
-      provider.createCollector(myFile, editor)
-    }
+    return provider.createCollector(myFile, editor)
   }
 }

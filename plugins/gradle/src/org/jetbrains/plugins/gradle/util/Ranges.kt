@@ -31,10 +31,10 @@ private class Range<T : Comparable<T>> private constructor(
 ) {
 
   operator fun contains(value: T): Boolean {
-    if (leftBound != Bound.Inf && leftBound.value == value) {
+    if (leftBound != Bound.Inf && leftBound.value.compareTo(value) == 0) {
       return leftBound.isInclusive
     }
-    if (rightBound != Bound.Inf && rightBound.value == value) {
+    if (rightBound != Bound.Inf && rightBound.value.compareTo(value) == 0) {
       return rightBound.isInclusive
     }
     return (leftBound == Bound.Inf || leftBound.value < value) &&

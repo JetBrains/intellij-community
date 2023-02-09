@@ -428,8 +428,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   protected int skipPrecedingCommentsWithIndent(int indent, int index) {
     // insert the DEDENT before previous comments that have the same indent as the current token indent
     boolean foundComment = false;
-    while(index > 0 && myTokenQueue.get(index-1) instanceof PendingCommentToken) {
-      final PendingCommentToken commentToken = (PendingCommentToken)myTokenQueue.get(index - 1);
+    while(index > 0 && myTokenQueue.get(index - 1) instanceof PendingCommentToken commentToken) {
       if (commentToken.getIndent() != indent) {
         break;
       }

@@ -78,8 +78,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     this(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), null, aStep, null);
   }
 
-  public ListPopupImpl(@Nullable Project project,
-                       @NotNull ListPopupStep aStep) {
+  public ListPopupImpl(@Nullable Project project, @NotNull ListPopupStep aStep) {
     this(project, null, aStep, null);
   }
 
@@ -431,6 +430,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     Object[] selectedValues = myList.getSelectedValues();
+    if (selectedValues.length == 0) return false;
     ListPopupStep<Object> listStep = getListStep();
     Object selectedValue = selectedValues[0];
     if (!listStep.isSelectable(selectedValue)) return false;
@@ -518,8 +518,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     Point point = myList.indexToLocation(myList.getSelectedIndex());
     SwingUtilities.convertPointToScreen(point, myList);
     myChild = createPopup(this, nextStep, parentValue);
-    if (myChild instanceof ListPopup) {
-      ListPopup child = (ListPopup)myChild;
+    if (myChild instanceof ListPopup child) {
       for (ListSelectionListener listener : myList.getListSelectionListeners()) {
         child.addListSelectionListener(listener);
       }

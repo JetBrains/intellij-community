@@ -199,6 +199,13 @@ public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public abstract Collection<Change> getChangesIn(@NotNull FilePath path);
 
+  /**
+   * Check if a directory has modified children in {@link #getAllChanges().
+   *
+   * @return {@code ThreeState.YES} if directory has an immediate modified child,
+   * {@code ThreeState.UNSURE} if directory has non-immediate modified child (depth > 1),
+   * {@code ThreeState.NO} if directory has no modified children.
+   */
   @NotNull
   public abstract ThreeState haveChangesUnder(@NotNull VirtualFile vf);
 

@@ -5,13 +5,19 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -130,6 +136,8 @@ public final class ListPluginComponent extends JPanel {
       showProgress(false);
     }
     updateColors(EventHandler.SelectionType.NONE);
+
+    UiInspectorUtil.registerProvider(this, new PluginIdUiInspectorContextProvider());
   }
 
   @NotNull PluginsGroup getGroup() { return myGroup; }
@@ -279,7 +287,7 @@ public final class ListPluginComponent extends JPanel {
       }
       else {
         InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
-        if (pluginsState.wasInstalled(pluginId) || pluginsState.wasUpdated(pluginId)) {
+        if (pluginsState.wasInstalled(pluginId) || pluginsState.wasUpdatedWithRestart(pluginId)) {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
         }
         else {
@@ -1131,6 +1139,18 @@ public final class ListPluginComponent extends JPanel {
       for (JButton button : myButtons) {
         button.doClick();
       }
+    }
+  }
+
+  private class PluginIdUiInspectorContextProvider implements UiInspectorContextProvider {
+    @Override
+    public @NotNull List<PropertyBean> getUiInspectorContext() {
+      ArrayList<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Plugin ID", myPlugin.getPluginId(), true));
+      result.add(new PropertyBean("Plugin Dependencies",
+                                  StringUtil.join(myPlugin.getDependencies(),
+                                                  it -> it.getPluginId() + (it.isOptional() ? " (optional)" : ""), ", ")));
+      return result;
     }
   }
 

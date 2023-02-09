@@ -1,4 +1,4 @@
-// "Import extension function 'ClosedRange.iterator'" "true"
+// "Import operator 'ClosedRange.iterator'" "true"
 // ERROR: For-loop range must have an 'iterator()' method
 // WITH_STDLIB
 

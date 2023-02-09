@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -234,7 +234,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   public List<PsiElement> getElements() {
-    return ContainerUtil.immutableList(myElementsToMove);
+    return List.of(myElementsToMove);
   }
 
   public PackageWrapper getTargetPackage() {
@@ -304,11 +304,10 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     for (UsageInfo usage : usages) {
       PsiElement element = usage.getElement();
       if (element == null) continue;
-      if (usage instanceof MoveRenameUsageInfo && !(usage instanceof NonCodeUsageInfo) &&
-          ((MoveRenameUsageInfo)usage).getReferencedElement() instanceof PsiClass) {
-        PsiClass aClass = (PsiClass)((MoveRenameUsageInfo)usage).getReferencedElement();
+      if (usage instanceof MoveRenameUsageInfo moveRenameUsageInfo && !(usage instanceof NonCodeUsageInfo) &&
+          moveRenameUsageInfo.getReferencedElement() instanceof PsiClass aClass) {
         movedClasses.add(aClass);
-        if (aClass != null && aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+        if (aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
           if (PsiTreeUtil.getParentOfType(element, PsiImportStatement.class) != null) continue;
           PsiElement container = ConflictsUtil.getContainer(element);
           Set<PsiElement> reported = reportedClassToContainers.computeIfAbsent(aClass, __ -> new HashSet<>());
@@ -363,15 +362,12 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof ClassMemberWrapper)) return false;
+      if (!(o instanceof ClassMemberWrapper wrapper)) return false;
 
-      ClassMemberWrapper wrapper = (ClassMemberWrapper)o;
-
-      if (myElement instanceof PsiMethod) {
-        return wrapper.myElement instanceof PsiMethod &&
-            MethodSignatureUtil.areSignaturesEqual((PsiMethod) myElement, (PsiMethod) wrapper.myElement);
+      if (myElement instanceof PsiMethod method) {
+        return wrapper.myElement instanceof PsiMethod wrapperMethod &&
+               MethodSignatureUtil.areSignaturesEqual(method, wrapperMethod);
       }
-
 
       return Objects.equals(myElement.getName(), wrapper.myElement.getName());
     }
@@ -400,8 +396,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     for (final ClassMemberWrapper memberWrapper : members) {
       ReferencesSearch.search(memberWrapper.getMember(), packageScope, false).forEach(reference -> {
         final PsiElement element = reference.getElement();
-        if (element instanceof PsiReferenceExpression) {
-          final PsiReferenceExpression expression = (PsiReferenceExpression)element;
+        if (element instanceof PsiReferenceExpression expression) {
           final PsiExpression qualifierExpression = expression.getQualifierExpression();
           if (qualifierExpression != null) {
             final PsiType type = qualifierExpression.getType();
@@ -512,7 +507,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     PsiElement[] elementsToMove = myElementsToMove.clone();
     List<RefactoringElementListener> listeners =
       ContainerUtil.map(elementsToMove, psiElement -> getTransaction().getElementListener(psiElement));
-    List<@Nullable SmartPsiElementPointer<?>> movedElements = ContainerUtil.map(listeners, __ -> null);
+    List<@Nullable SmartPsiElementPointer<?>> movedElements = new ArrayList<>(Collections.nCopies(listeners.size(), null));
 
     if (branch != null) {
       for (int i = 0; i < elementsToMove.length; i++) {
@@ -545,8 +540,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     try {
       Map<PsiClass, Boolean> allClasses = new HashMap<>();
       for (PsiElement element : elementsToMove) {
-        if (element instanceof PsiClass) {
-          final PsiClass psiClass = (PsiClass)element;
+        if (element instanceof PsiClass psiClass) {
           if (allClasses.containsKey(psiClass)) {
             continue;
           }
@@ -592,8 +586,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           }
           element = newElement;
         }
-        else if (element instanceof PsiClass) {
-          final PsiClass psiClass = (PsiClass)element;
+        else if (element instanceof PsiClass psiClass) {
           final PsiClass newElement = MoveClassesOrPackagesUtil.doMoveClass(psiClass, myMoveDestination.getTargetDirectory(element.getContainingFile()), allClasses.get(psiClass));
           oldToNewElementsMapping.put(element, newElement);
           element = newElement;
@@ -860,8 +853,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
                                PsiElement referencedInstance) {
       PsiElement resolved = qualified.resolve();
 
-      if (resolved instanceof PsiMember) {
-        final PsiMember member = (PsiMember)resolved;
+      if (resolved instanceof PsiMember member) {
         final PsiClass containingClass = member.getContainingClass();
         RefactoringUtil.IsDescendantOf isDescendantOf = myIsDescendantOfCache.get(containingClass);
         if (isDescendantOf == null) {

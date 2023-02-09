@@ -63,6 +63,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.modules
 import icons.PythonIcons
 import org.apache.tuweni.toml.Toml
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemDependent
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -406,7 +407,7 @@ class PoetryInstallQuickFix : LocalQuickFix {
 class PyProjectTomlWatcher : EditorFactoryListener {
   private val changeListenerKey = Key.create<DocumentListener>("PyProjectToml.change.listener")
   private val notificationActive = Key.create<Boolean>("PyProjectToml.notification.active")
-  private val content: String = if (poetryVersion?.let { it < "1.1.1" } == true) {
+  private val content: @Nls String = if (poetryVersion?.let { it < "1.1.1" } == true) {
     PyBundle.message("python.sdk.poetry.pip.file.notification.content")
   }
   else {

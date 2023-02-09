@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.impl;
 
 import com.google.gson.Gson;
@@ -52,8 +52,10 @@ public final class TaskUtil {
   }
 
   public static String formatTask(@NotNull Task task, String format) {
-
     Map<String, String> map = formatFromExtensions(task instanceof LocalTask ? (LocalTask)task : new LocalTaskImpl(task));
+    if (!task.isIssue()) {
+      map.put("id", ""); // clear fake id
+    }
     format = updateToVelocity(format);
     return FileTemplateUtil.mergeTemplate(map, format, false);
   }
@@ -76,8 +78,7 @@ public final class TaskUtil {
     return getChangeListComment(task, false);
   }
 
-    @Nullable
-  public static String getChangeListComment(Task task, boolean forCommit) {
+  public static @Nullable String getChangeListComment(Task task, boolean forCommit) {
     final TaskRepository repository = task.getRepository();
     if (repository == null || !repository.isShouldFormatCommitMessage()) {
       return null;
@@ -96,8 +97,7 @@ public final class TaskUtil {
     return StringUtil.first(text, 60, true);
   }
 
-  @Nullable
-  public static Date parseDate(@NotNull String s) {
+  public static @Nullable Date parseDate(@NotNull String s) {
     // SimpleDateFormat prior JDK7 doesn't support 'X' specifier for ISO 8601 timezone format.
     // Because some bug trackers and task servers e.g. send dates ending with 'Z' (that stands for UTC),
     // dates should be preprocessed before parsing.
@@ -246,8 +246,7 @@ public final class TaskUtil {
    *
    * @return urlencoded string
    */
-  @NotNull
-  public static String encodeUrl(@NotNull String s) {
+  public static @NotNull String encodeUrl(@NotNull String s) {
     return URLEncoder.encode(s, StandardCharsets.UTF_8);
   }
 

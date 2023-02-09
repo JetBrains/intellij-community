@@ -37,9 +37,6 @@ import java.util.List;
 
 import static com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersHelper.isMovableModuleMember;
 
-/**
- * @author vlan
- */
 public class PyMoveTest extends PyTestCase {
   public void testFunction() {
     doMoveSymbolTest("f", "b.py");

@@ -5,8 +5,8 @@ UFile (package = ) [public final class LocalDeclarationsKt {...]
                 UDeclarationsExpression [public static final class Local {...}] = Undetermined
                     UClass (name = Local) [public static final class Local {...}]
                         UMethod (name = Local) [public fun Local() = UastEmptyExpression]
-                UDeclarationsExpression [var bar: kotlin.jvm.functions.Function0<? extends Local> = fun () {...}] = Undetermined
-                    UVariable (name = bar) [var bar: kotlin.jvm.functions.Function0<? extends Local> = fun () {...}]
+                UDeclarationsExpression [var bar: kotlin.jvm.functions.Function0<? extends java.lang.Object> = fun () {...}] = Undetermined
+                    UVariable (name = bar) [var bar: kotlin.jvm.functions.Function0<? extends java.lang.Object> = fun () {...}]
                         ULambdaExpression [fun () {...}] = Undetermined
                             UBlockExpression [{...}] = Nothing
                                 UReturnExpression [return <init>()] = Nothing

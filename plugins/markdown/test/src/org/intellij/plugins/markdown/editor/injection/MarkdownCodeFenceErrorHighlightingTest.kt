@@ -34,6 +34,9 @@ class MarkdownCodeFenceErrorHighlightingTest : BasePlatformTestCase() {
     try {
       settings.showProblemsInCodeBlocks = oldShowErrorsSetting
     }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
     finally {
       super.tearDown()
     }

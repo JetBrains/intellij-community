@@ -8,9 +8,6 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public final class ReplacerUtil {
   private ReplacerUtil() {
   }

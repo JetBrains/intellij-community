@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
 import com.intellij.ProjectTopics
@@ -36,8 +36,6 @@ import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.EntityIndexingService
-import com.intellij.util.indexing.IndexableFilesIndex
-import com.intellij.util.indexing.roots.IndexableFilesIndexImpl
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
@@ -186,7 +184,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
       return
     }
 
-    ApplicationManager.getApplication().assertIsWriteThread()
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     val oldDisposable = rootPointersDisposable
     val newDisposable = Disposer.newDisposable()
     if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -219,9 +217,6 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     isFiringEvent = true
     try {
       (DirectoryIndex.getInstance(myProject) as? DirectoryIndexImpl)?.reset()
-      if (IndexableFilesIndex.shouldBeUsed()) {
-        IndexableFilesIndexImpl.getInstanceImpl(myProject).beforeRootsChanged()
-      }
       (WorkspaceFileIndex.getInstance(myProject) as WorkspaceFileIndexEx).resetCustomContributors()
       myProject.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(ModuleRootEventImpl(myProject, fileTypes))
     }
@@ -237,9 +232,6 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
       (WorkspaceFileIndex.getInstance(myProject) as WorkspaceFileIndexEx).resetCustomContributors()
 
       val isFromWorkspaceOnly = EntityIndexingService.getInstance().isFromWorkspaceOnly(indexingInfos)
-      if (IndexableFilesIndex.shouldBeUsed()) {
-        IndexableFilesIndexImpl.getInstanceImpl(myProject).afterRootsChanged(fileTypes, indexingInfos, isFromWorkspaceOnly)
-      }
       myProject.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS)
         .rootsChanged(ModuleRootEventImpl(myProject, fileTypes, indexingInfos, isFromWorkspaceOnly))
     }

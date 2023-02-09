@@ -30,6 +30,5 @@ fun g(z1: Z1, z2: Z2) {
     val (x2, y2) = z2.get()
 }
 
-// FIR_COMPARISON
+
 // IGNORE_FIR_LOG
-// FIR_COMPARISON_WITH_DISABLED_COMPONENTS

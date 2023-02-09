@@ -28,7 +28,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Na
 
   protected static int ourHC;
 
-  protected CompositePsiElement(IElementType type) {
+  protected CompositePsiElement(@NotNull IElementType type) {
     super(type);
     setPsi(this);
   }
@@ -158,7 +158,8 @@ public abstract class CompositePsiElement extends CompositeElement implements Na
   }
 
   @Override
-  public final PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor) throws IncorrectOperationException {
+  public final PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor)
+    throws IncorrectOperationException {
     return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
   }
 

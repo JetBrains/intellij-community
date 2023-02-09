@@ -59,7 +59,14 @@ public class EditorFactoryImpl extends EditorFactory {
           Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
           boolean isLastProjectClosed = openProjects.length == 0;
           // EditorTextField.releaseEditorLater defer releasing its editor; invokeLater to avoid false positives about such editors.
-          ApplicationManager.getApplication().invokeLater(() -> validateEditorsAreReleased(project, isLastProjectClosed), ModalityState.any());
+          ApplicationManager.getApplication().invokeLater(() -> {
+            try {
+              validateEditorsAreReleased(project, isLastProjectClosed);
+            }
+            catch (Throwable e) {
+              LOG.error(e);
+            }
+          }, ModalityState.any());
         });
       }
     });

@@ -16,6 +16,7 @@
 
 package com.intellij.ide.impl.dataRules;
 
+import com.intellij.model.Pointer;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -46,6 +47,9 @@ public class PsiElementFromSelectionRule implements GetDataRule {
       Project project = CommonDataKeys.PROJECT.getData(dataProvider);
       element = project == null || !((VirtualFile)item).isValid() ? null :
                 PsiManager.getInstance(project).findFile((VirtualFile)item);
+    }
+    else if (item instanceof Pointer<?>) {
+      element = (PsiElement)((Pointer<?>)item).dereference();
     }
     return element != null && element.isValid() ? element : null;
   }

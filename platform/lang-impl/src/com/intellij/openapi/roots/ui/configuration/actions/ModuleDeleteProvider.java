@@ -163,7 +163,7 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler  {
                                                        : ProjectBundle.message("action.text.remove.module");
   }
 
-  protected void doRemoveModule(@NotNull final Module moduleToRemove,
+  private static void doRemoveModule(@NotNull final Module moduleToRemove,
                                 @NotNull Collection<? extends ModifiableRootModel> otherModuleRootModels,
                                 @NotNull final ModifiableModuleModel moduleModel) {
     removeDependenciesOnModules(Collections.singleton(moduleToRemove.getName()), otherModuleRootModels);
@@ -173,7 +173,7 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler  {
   public static void removeModule(@NotNull final Module moduleToRemove,
                                   @NotNull Collection<? extends ModifiableRootModel> otherModuleRootModels,
                                   @NotNull final ModifiableModuleModel moduleModel) {
-    getInstance().doRemoveModule(moduleToRemove, otherModuleRootModels, moduleModel);
+    doRemoveModule(moduleToRemove, otherModuleRootModels, moduleModel);
   }
 
   private static void removeDependenciesOnModules(@NotNull Set<String> moduleNamesToRemove,

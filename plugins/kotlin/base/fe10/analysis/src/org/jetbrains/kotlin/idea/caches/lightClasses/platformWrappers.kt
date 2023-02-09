@@ -129,7 +129,7 @@ class KtLightMutabilityPlatformWrapper(
             return emptyList()
         }
 
-        if (methodName == "remove" && method.parameterList.parameters.singleOrNull()?.type == PsiType.INT) {
+        if (methodName == "remove" && method.parameterList.parameters.singleOrNull()?.type == PsiTypes.intType()) {
             // remove(int) -> abstract removeAt(int), final bridge remove(int)
             return listOf(method.finalBridge(), createRemoveAt(method))
         }
@@ -146,8 +146,8 @@ class KtLightMutabilityPlatformWrapper(
         return baseMethod.wrap(
             name = "removeAt",
             signature = MethodSignature(
-                parameterTypes = listOf(PsiType.INT),
-                returnType = singleTypeParameterAsType()
+              parameterTypes = listOf(PsiTypes.intType()),
+              returnType = singleTypeParameterAsType()
             )
         )
     }
@@ -185,11 +185,11 @@ class KtLightMutabilityPlatformWrapper(
             )
             "containsKey" -> MethodSignature(
                 parameterTypes = listOf(k),
-                returnType = PsiType.BOOLEAN
+                returnType = PsiTypes.booleanType()
             )
             "containsValue" -> MethodSignature(
                 parameterTypes = listOf(v),
-                returnType = PsiType.BOOLEAN
+                returnType = PsiTypes.booleanType()
             )
             "remove" ->
                 // only `remove(Object)` pair (i.e. `remove(K)`) is needed

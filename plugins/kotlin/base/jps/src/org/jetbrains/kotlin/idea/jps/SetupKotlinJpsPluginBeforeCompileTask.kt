@@ -29,10 +29,10 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
         )
     }
 
-    private fun CompileContext.addError(@Nls(capitalization = Nls.Capitalization.Sentence) msg: String) =
+    private fun CompileContext.addError(msg: @Nls(capitalization = Nls.Capitalization.Sentence) String) =
         addMessage(CompilerMessageCategory.ERROR, msg, null, -1, -1)
 
-    private fun CompileContext.addErrorWithReferenceToKotlincXml(@Nls(capitalization = Nls.Capitalization.Sentence) msg: String) {
+    private fun CompileContext.addErrorWithReferenceToKotlincXml(msg: @Nls(capitalization = Nls.Capitalization.Sentence) String) {
         val virtualFile = project.stateStore
             .directoryStorePath
             ?.resolve(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE)

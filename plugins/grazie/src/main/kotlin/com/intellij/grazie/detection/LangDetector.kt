@@ -4,7 +4,7 @@ package com.intellij.grazie.detection
 import ai.grazie.detector.ChainLanguageDetector
 import ai.grazie.detector.DefaultLanguageDetectors
 import ai.grazie.nlp.langs.Language
-import ai.grazie.nlp.tokenizer.word.WhitespaceWordTokenizer.words
+import ai.grazie.nlp.tokenizer.word.StandardWordTokenizer.words
 import ai.grazie.utils.mpp.FromResourcesDataLoader
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.config.DetectionContext

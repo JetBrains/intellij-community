@@ -21,7 +21,7 @@ class x {
 }
 
 // -------------------------------------------------------------
-<error descr="Class 'c2' must either be declared abstract or implement abstract method 'f()' in 'c2'">class c2</error> {
+class c2 {
   <error descr="Abstract method in non-abstract class">abstract</error> void f();
 }
 

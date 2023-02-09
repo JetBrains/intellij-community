@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
@@ -20,6 +21,10 @@ import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceLis
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -75,7 +80,7 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
       // Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
 
-      index(this, "orderOfSourceRoots", this.orderOfSourceRoots.toHashSet())
+      index(this, "orderOfSourceRoots", this.orderOfSourceRoots)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -117,12 +122,7 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
       dataSource as SourceRootOrderEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.orderOfSourceRoots != dataSource.orderOfSourceRoots) this.orderOfSourceRoots = dataSource.orderOfSourceRoots.toMutableList()
-      if (parents != null) {
-        val contentRootEntityNew = parents.filterIsInstance<ContentRootEntity>().single()
-        if ((this.contentRootEntity as WorkspaceEntityBase).id != (contentRootEntityNew as WorkspaceEntityBase).id) {
-          this.contentRootEntity = contentRootEntityNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -172,7 +172,7 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
 
     private val orderOfSourceRootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
-      if (_diff != null) index(this, "orderOfSourceRoots", value.toHashSet())
+      if (_diff != null) index(this, "orderOfSourceRoots", value)
       changedProperty.add("orderOfSourceRoots")
     }
     override var orderOfSourceRoots: MutableList<VirtualFileUrl>
@@ -238,7 +238,7 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return SourceRootOrderEntity(orderOfSourceRoots, entitySource) {
-      this.contentRootEntity = parents.filterIsInstance<ContentRootEntity>().single()
+      parents.filterIsInstance<ContentRootEntity>().singleOrNull()?.let { this.contentRootEntity = it }
     }
   }
 

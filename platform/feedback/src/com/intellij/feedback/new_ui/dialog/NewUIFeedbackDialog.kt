@@ -2,6 +2,7 @@
 package com.intellij.feedback.new_ui.dialog
 
 import com.intellij.feedback.common.*
+import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
 import com.intellij.feedback.common.dialog.adjustBehaviourForFeedbackForm
@@ -210,7 +211,7 @@ class NewUIFeedbackDialog(
       }
 
       row {
-        feedbackAgreement(project) {
+        feedbackAgreement(project, CommonFeedbackBundle.message("dialog.feedback.consent.withEmail")) {
           showNewUIFeedbackSystemInfoDialog(project, newUISystemInfoData.value)
         }
       }.bottomGap(BottomGap.SMALL)

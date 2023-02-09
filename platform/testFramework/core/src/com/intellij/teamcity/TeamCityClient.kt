@@ -1,66 +1,34 @@
 package com.intellij.teamcity
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.TestCaseLoader
+import com.intellij.nastradamus.model.ChangeEntity
+import com.intellij.tool.Cache
 import com.intellij.tool.HttpClient
+import com.intellij.tool.withErrorThreshold
 import com.intellij.tool.withRetry
 import org.apache.http.HttpRequest
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.auth.BasicScheme
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.io.InputStreamReader
 import java.net.URI
-import java.nio.file.Paths
+import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.bufferedReader
 
 
-object TeamCityClient {
-  private val downloadedDataCache: MutableMap<String, String> = mutableMapOf()
-  private val cacheDir = Paths.get("TeamCityClientCache").apply {
-    createDirectories()
-    if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED)
-      println("Init TeamCityClient cache dir ${this.toRealPath()}")
-  }.toRealPath()
-
-  private fun putDataToCache(uri: URI, value: String) {
-    val hash = uri.toString().hashCode().toString()
-    putDataToCache(key = hash, value = value)
-  }
-
-  private fun putDataToCache(key: String, value: String) {
-    downloadedDataCache[key] = value
-    cacheDir.resolve(key).apply {
-      createFile()
-      writeText(value)
-    }
-  }
-
-  // try to initialize cache from cache directory
-  private fun initCache() {
-    if (downloadedDataCache.isEmpty()) {
-      cacheDir.listDirectoryEntries().forEach { filePath ->
-        downloadedDataCache[filePath.nameWithoutExtension] = filePath.readText()
-      }
-    }
-  }
-
-  private fun getDataFromCache(uri: URI): String? {
-    return getDataFromCache(uri.toString().hashCode().toString())
-  }
-
-  private fun getDataFromCache(key: String): String? {
-    initCache()
-
-    return downloadedDataCache[key]
-  }
-
-  private fun loadProperties(file: String?) =
+class TeamCityClient(
+  val baseUri: URI = URI("https://buildserver.labs.intellij.net").normalize(),
+  private val systemPropertiesFilePath: Path = Path(System.getenv("TEAMCITY_BUILD_PROPERTIES_FILE"))
+) {
+  private fun loadProperties(propertiesPath: Path) =
     try {
-      File(file ?: throw Error("No file!")).bufferedReader().use {
+      propertiesPath.bufferedReader().use {
         val map = mutableMapOf<String, String>()
         val ps = Properties()
         ps.load(it)
@@ -78,22 +46,25 @@ object TeamCityClient {
     }
 
   private val systemProperties by lazy {
-    loadProperties(System.getenv("TEAMCITY_BUILD_PROPERTIES_FILE"))
+    loadProperties(systemPropertiesFilePath)
       .plus(System.getProperties().map { it.key.toString() to it.value.toString() })
   }
 
-  private val baseUri = URI("https://buildserver.labs.intellij.net").normalize()
-
   private val restUri = baseUri.resolve("/app/rest/")
-  private val guestAuthUri = baseUri.resolve("/guestAuth/app/rest/")
+  val guestAuthUri = baseUri.resolve("/guestAuth/app/rest/")
 
   val buildNumber by lazy { System.getenv("BUILD_NUMBER") ?: "" }
 
   val configurationName by lazy { systemProperties["teamcity.buildConfName"] }
 
-  val buildParams by lazy { loadProperties(systemProperties["teamcity.configuration.properties.file"]) }
+  val buildParams by lazy {
+    val configurationPropertiesFile = systemProperties["teamcity.configuration.properties.file"]
 
-  fun getExistingParameter(name: String, impreciseNameMatch: Boolean = false): String {
+    if (configurationPropertiesFile.isNullOrBlank()) return@lazy emptyMap()
+    loadProperties(Path(configurationPropertiesFile))
+  }
+
+  private fun getExistingParameter(name: String, impreciseNameMatch: Boolean = false): String {
     val totalParams = systemProperties.plus(buildParams)
 
     val paramValue = if (impreciseNameMatch) {
@@ -108,6 +79,7 @@ object TeamCityClient {
 
   val buildId: String by lazy { getExistingParameter("teamcity.build.id") }
   val buildTypeId: String by lazy { getExistingParameter("teamcity.buildType.id") }
+  val os: String by lazy { getExistingParameter("teamcity.agent.jvm.os.name") }
 
   private val userName: String by lazy { getExistingParameter("teamcity.auth.userId") }
   private val password: String by lazy { getExistingParameter("teamcity.auth.password") }
@@ -115,6 +87,8 @@ object TeamCityClient {
   private fun <T : HttpRequest> T.withAuth(): T = this.apply {
     addHeader(BasicScheme().authenticate(UsernamePasswordCredentials(userName, password), this, null))
   }
+
+  private val jacksonMapper: ObjectMapper = jacksonObjectMapper()
 
   fun get(fullUrl: URI): JsonNode {
     val request = HttpGet(fullUrl).apply {
@@ -127,63 +101,91 @@ object TeamCityClient {
       println("Request to TeamCity: $fullUrl")
     }
 
-    val result = withRetry {
-      HttpClient.sendRequest(request = request) {
-        if (it.statusLine.statusCode != 200) {
-          System.err.println(InputStreamReader(it.entity.content).readText())
-          throw RuntimeException("TeamCity returned not successful status code ${it.statusLine.statusCode}")
-        }
+    val result =
+      withErrorThreshold(
+        objName = "TeamCityClient-get",
+        action = {
+          withRetry {
+            HttpClient.sendRequest(request = request) {
+              if (it.statusLine.statusCode != 200) {
+                throw RuntimeException(
+                  """
+                TeamCity returned not successful status code ${it.statusLine.statusCode}.
+                ${InputStreamReader(it.entity.content).readText()}
+                """.trimIndent())
+              }
 
-        jacksonObjectMapper().readTree(it.entity.content)
-      }
-    }
+              jacksonMapper.readTree(it.entity.content)
+            }
+          }
+        },
+        fallbackOnThresholdReached = { throw RuntimeException("Couldn't get data from TeamCity $fullUrl") }
+      )
 
     return requireNotNull(result) { "Request ${request.uri} failed" }
   }
 
-  fun downloadChangesPatch(buildTypeId: String, modificationId: String, useCachedResult: Boolean = true, isPersonal: Boolean): String {
+  private fun downloadChangesPatch(buildTypeId: String, modificationId: String, isPersonal: Boolean): String {
     val uri = baseUri.resolve("/downloadPatch.html?buildTypeId=${buildTypeId}&modId=${modificationId}&personal=$isPersonal")
 
-    if (useCachedResult) {
-      val changesPatch = getDataFromCache(uri)
-      if (changesPatch != null) {
-        if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
-          println("Returning cached result for $uri")
-        }
-        return changesPatch
+    return Cache.get(uri) {
+      val outputStream = ByteArrayOutputStream()
+
+      if (!HttpClient.download(request = HttpGet(uri).withAuth(), outStream = outputStream, retries = 3)) {
+        throw RuntimeException("Couldn't download patch $uri in 3 attempts")
       }
+
+      outputStream.toString("UTF-8")
     }
-
-    val outputStream = ByteArrayOutputStream()
-
-    if (!HttpClient.download(request = HttpGet(uri).withAuth(), outStream = outputStream, retries = 3)) {
-      throw RuntimeException("Couldn't download patch $uri in 3 attempts")
-    }
-
-    val changesPatch = outputStream.toString("UTF-8")
-    cacheDir.createDirectories()
-
-    putDataToCache(uri, changesPatch)
-    return changesPatch
   }
 
-  fun downloadChangesPatch(modificationId: String, useCachedResult: Boolean = true, isPersonal: Boolean): String =
+  fun downloadChangesPatch(modificationId: String, isPersonal: Boolean): String =
     downloadChangesPatch(buildTypeId = buildTypeId,
                          modificationId = modificationId,
-                         useCachedResult = useCachedResult,
                          isPersonal = isPersonal)
 
   fun getChanges(buildId: String): List<JsonNode> {
     val fullUrl = restUri.resolve("changes?locator=build:(id:$buildId)")
-    val changes = get(fullUrl).fields().asSequence()
+
+    val rawData = Cache.get(fullUrl) { get(fullUrl).toString() }
+
+    return jacksonMapper.readTree(rawData).fields().asSequence()
       .filter { it.key == "change" }
       .flatMap { it.value }
       .toList()
-
-    return changes
   }
 
   fun getChanges() = getChanges(buildId)
+
+  fun getChangeDetails(changeId: String): List<ChangeEntity> {
+    val fullUrl = restUri.resolve("changes/id:$changeId")
+
+    fun processData(jsonRoot: JsonNode): List<ChangeEntity> {
+      val comment = jsonRoot.findValue("comment").asText()
+      val userName = jsonRoot.findValue("username").asText()
+      val date = jsonRoot.findValue("date").asText()
+
+      val filesFields = jsonRoot.findValue("files")
+        .findValue("file")
+        .toList()
+
+      return filesFields.map { fileField ->
+        ChangeEntity(
+          filePath = fileField.findValue("file").asText(),
+          relativeFile = fileField.findValue("relative-file").asText(),
+          beforeRevision = fileField.findValue("before-revision")?.asText("") ?: "",
+          afterRevision = fileField.findValue("after-revision")?.asText("") ?: "",
+          changeType = fileField.findValue("changeType").asText(),
+          comment = comment,
+          userName = userName,
+          date = date
+        )
+      }
+    }
+
+    val rawChange = Cache.get(fullUrl) { get(fullUrl).toString() }
+    return processData(jacksonMapper.readTree(rawChange))
+  }
 
   fun getTestRunInfo(buildId: String): List<JsonNode> {
     val countOfTestsOnPage = 200
@@ -197,9 +199,11 @@ object TeamCityClient {
     do {
       val fullUrl = restUri
         .resolve("testOccurrences?locator=build:(id:$buildId),count:$countOfTestsOnPage,start:$startPosition" +
-                 "&includePersonal=true&fields=testOccurrence(id,name,status,duration,runOrder)")
+                 "&includePersonal=true&fields=testOccurrence(id,name,status,duration,runOrder,currentlyMuted)")
 
-      currentTests = get(fullUrl).fields().asSequence()
+      val rawData = Cache.get(fullUrl) { get(fullUrl).toString() }
+
+      currentTests = jacksonMapper.readTree(rawData).fields().asSequence()
         .filter { it.key == "testOccurrence" }
         .flatMap { it.value }
         .toList()
@@ -215,6 +219,19 @@ object TeamCityClient {
     return accumulatedTests
   }
 
-  fun getTestRunInfo() = getTestRunInfo(buildId)
+  fun getTestRunInfo(): List<JsonNode> = getTestRunInfo(buildId)
+
+  private fun getBuildInfo(buildId: String): JsonNode {
+    val fullUrl = restUri.resolve("builds/$buildId")
+
+    val rawData = Cache.get(fullUrl) { get(fullUrl).toString() }
+    return jacksonMapper.readTree(rawData)
+  }
+
+  fun getBuildInfo(): JsonNode = getBuildInfo(buildId)
+
+  private fun getTriggeredByInfo(buildId: String): JsonNode = getBuildInfo(buildId).findValue("triggered")
+
+  fun getTriggeredByInfo(): JsonNode = getTriggeredByInfo(buildId)
 }
 

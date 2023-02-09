@@ -39,9 +39,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.IntConsumer;
 
-/**
- & @author ven
- */
 public final class UnusedDefInspection extends GroovyLocalInspectionBase {
   private static final Logger LOG = Logger.getInstance(UnusedDefInspection.class);
 
@@ -73,8 +70,7 @@ public final class UnusedDefInspection extends GroovyLocalInspectionBase {
 
     for (int i = 0; i < dfaResult.size(); i++) {
       final Instruction instruction = flow[i];
-      if (instruction instanceof ReadWriteVariableInstruction) {
-        final ReadWriteVariableInstruction varInst = (ReadWriteVariableInstruction) instruction;
+      if (instruction instanceof ReadWriteVariableInstruction varInst) {
         if (!varInst.isWrite()) {
           final int descriptor = varInst.getDescriptor();
           DefinitionMap e = dfaResult.get(i);
@@ -107,8 +103,7 @@ public final class UnusedDefInspection extends GroovyLocalInspectionBase {
         if (element instanceof GrControlFlowOwner) {
           // don't go deeper
         }
-        else if (element instanceof GrVariable && !(element instanceof GrField)) {
-          GrVariable variable = (GrVariable)element;
+        else if (element instanceof GrVariable variable && !(element instanceof GrField)) {
           if (checked.contains(variable) || variable.getInitializerGroovy() != null) return;
           if (ReferencesSearch.search(variable, variable.getUseScope()).findFirst() == null) {
             process(variable, checked, problemsHolder, GroovyBundle.message("unused.variable"));

@@ -9,7 +9,7 @@ import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.DigestUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
-import com.intellij.util.io.storage.AbstractStorage;
+import com.intellij.util.io.storage.IStorageDataOutput;
 import com.intellij.util.io.storage.RefCountingContentStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,12 +55,7 @@ public final class PersistentFSContentAccessor {
   DataInputStream readContentDirectly(int contentId) throws IOException {
     myLock.readLock().lock();
     try {
-      DataInputStream stream = myFSConnection.getContents().readStream(contentId);
-      if (FSRecords.useCompressionUtil) {
-        byte[] bytes = CompressionUtil.readCompressed(stream);
-        stream = new DataInputStream(new UnsyncByteArrayInputStream(bytes));
-      }
-      return stream;
+      return myFSConnection.getContents().readStream(contentId);
     }
     finally {
       myLock.readLock().unlock();
@@ -123,19 +118,7 @@ public final class PersistentFSContentAccessor {
         }
       }
 
-      ByteArraySequence newBytes;
-      if (FSRecords.useCompressionUtil) {
-        BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
-        try (DataOutputStream outputStream = new DataOutputStream(out)) {
-          CompressionUtil.writeCompressed(outputStream, bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
-        }
-        newBytes = out.toByteArraySequence();
-      }
-      else {
-        newBytes = bytes;
-      }
-
-      contentStorage.writeBytes(contentRecordId, newBytes, fixedSize);
+      contentStorage.writeBytes(contentRecordId, bytes, fixedSize);
       return true;
     }
     finally {
@@ -155,7 +138,7 @@ public final class PersistentFSContentAccessor {
       else {
         recordId = myFSConnection.getContents().acquireNewRecord();
       }
-      try (AbstractStorage.StorageDataOutput output = myFSConnection.getContents().writeStream(recordId, true)) {
+      try (IStorageDataOutput output = myFSConnection.getContents().writeStream(recordId, true)) {
         output.write(bytes);
       }
       return recordId;

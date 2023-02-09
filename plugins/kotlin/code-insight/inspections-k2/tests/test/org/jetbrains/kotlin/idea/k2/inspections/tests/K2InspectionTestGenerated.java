@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.inspections.tests;
 
@@ -19,10 +19,10 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class K2InspectionTestGenerated extends AbstractK2InspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/inspections/enumValuesSoftDeprecateMigration")
-    public abstract static class EnumValuesSoftDeprecateMigration extends AbstractK2InspectionTest {
+    @TestMetadata("../../../idea/tests/testData/inspections/enumValuesSoftDeprecateInJava")
+    public abstract static class EnumValuesSoftDeprecateInJava extends AbstractK2InspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../idea/tests/testData/inspections/enumValuesSoftDeprecateMigration/inspectionData")
+        @TestMetadata("../../../idea/tests/testData/inspections/enumValuesSoftDeprecateInJava/inspectionData")
         public static class InspectionData extends AbstractK2InspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -30,7 +30,24 @@ public abstract class K2InspectionTestGenerated extends AbstractK2InspectionTest
 
             @TestMetadata("inspections.test")
             public void testInspections_test() throws Exception {
-                runTest("../../../idea/tests/testData/inspections/enumValuesSoftDeprecateMigration/inspectionData/inspections.test");
+                runTest("../../../idea/tests/testData/inspections/enumValuesSoftDeprecateInJava/inspectionData/inspections.test");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspections/enumValuesSoftDeprecateInKotlin")
+    public abstract static class EnumValuesSoftDeprecateInKotlin extends AbstractK2InspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/enumValuesSoftDeprecateInKotlin/inspectionData")
+        public static class InspectionData extends AbstractK2InspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inspections.test")
+            public void testInspections_test() throws Exception {
+                runTest("../../../idea/tests/testData/inspections/enumValuesSoftDeprecateInKotlin/inspectionData/inspections.test");
             }
         }
     }

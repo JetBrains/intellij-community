@@ -118,7 +118,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
   }
 
   @Override
-  protected String getDimensionServiceKey(){
+  protected String getDimensionServiceKey() {
     return "#com.intellij.debugger.ui.breakpoints.BreakpointsConfigurationDialogFactory.BreakpointsConfigurationDialog.AddFieldBreakpointDialog";
   }
 
@@ -130,7 +130,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    if(validateData()) {
+    if (validateData()) {
       super.doOKAction();
     }
   }

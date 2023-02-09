@@ -230,8 +230,7 @@ public class InspectopediaExtractor implements ApplicationStarter {
         result.children.add(new OptionsPanelInfo("ListItem", element.getClass().getName()));
       }
     }
-    else if (ofWhat instanceof JTable) {
-      final JTable table = (JTable)ofWhat;
+    else if (ofWhat instanceof JTable table) {
       result.children = new ArrayList<>();
       for (int i = 0; i < table.getModel().getRowCount(); i++) {
         final StringBuilder sb = new StringBuilder();

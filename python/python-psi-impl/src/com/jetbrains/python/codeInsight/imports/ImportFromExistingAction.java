@@ -23,8 +23,6 @@ import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Turns an unqualified unresolved identifier into qualified and resolvable.
- *
- * @author dcheryasov
  */
 public class ImportFromExistingAction implements QuestionAction {
   private final PsiElement myTarget;

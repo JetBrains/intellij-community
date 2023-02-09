@@ -24,12 +24,10 @@ public class PyIfUnwrapper extends PyUnwrapper {
 
   @Override
   public boolean isApplicableTo(@NotNull PsiElement e) {
-    if (e instanceof PyIfPartIfImpl) {
-      final PyStatementList statementList = ((PyIfPartIfImpl)e).getStatementList();
-      if (statementList != null) {
-        final PyStatement[] statements = statementList.getStatements();
-        return statements.length == 1 && !(statements[0] instanceof PyPassStatement) || statements.length > 1;
-      }
+    if (e instanceof PyIfPartIfImpl ifPartIf) {
+      final PyStatementList statementList = ifPartIf.getStatementList();
+      final PyStatement[] statements = statementList.getStatements();
+      return statements.length == 1 && !(statements[0] instanceof PyPassStatement) || statements.length > 1;
     }
     return false;
   }

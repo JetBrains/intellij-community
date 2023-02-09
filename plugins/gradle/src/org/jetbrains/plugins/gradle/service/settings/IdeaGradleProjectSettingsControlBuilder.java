@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.settings.LocationSettingType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.options.ConfigurationException;
@@ -31,7 +30,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.GridBag;
@@ -64,6 +62,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil.INSETS;
 import static com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil.createUniqueSdkName;
@@ -82,58 +81,50 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   private static final long BALLOON_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(1);
   private static final String HIDDEN_KEY = "hidden";
-  @NotNull
-  private final GradleProjectSettings myInitialSettings;
-  @NotNull
-  private final Alarm myAlarm = new Alarm();
+
+  private final @NotNull GradleProjectSettings myInitialSettings;
+
+  private final @NotNull Alarm myAlarm = new Alarm();
+
   /**
    * The target {@link Project} reference of the UI control.
    * It can be the current project of the settings UI configurable (see {@link GradleConfigurable}),
    * or the target project from the wizard context.
    */
-  @NotNull
-  private final Ref<Project> myProjectRef = Ref.create();
-  @NotNull
-  private final Disposable myProjectRefDisposable = () -> myProjectRef.set(null);
-  @Nullable JComboBox<DistributionTypeItem> myGradleDistributionComboBox;
-  @Nullable JBLabel myGradleDistributionHint;
-  @NotNull
-  private LocationSettingType myGradleHomeSettingType = LocationSettingType.UNKNOWN;
+  private final @NotNull Ref<Project> myProjectRef = Ref.create();
+  private final @NotNull Disposable myProjectRefDisposable = () -> myProjectRef.set(null);
+
   private boolean myShowBalloonIfNecessary;
-  @Nullable
-  private TargetPathFieldWithBrowseButton myGradleHomePathField;
-  @SuppressWarnings({"unused", "RedundantSuppression"}) // used by ExternalSystemUiUtil.showUi to show/hide the component via reflection
-  private JPanel myGradlePanel;
-  @Nullable
-  private JLabel myGradleJdkLabel;
-  @Nullable
-  private SdkComboBox myGradleJdkComboBox;
-  private JPanel myGradleJdkComboBoxWrapper;
   private boolean dropGradleJdkComponents;
   private boolean dropUseWrapperButton;
   private boolean dropCustomizableWrapperButton;
   private boolean dropUseLocalDistributionButton;
   private boolean dropUseBundledDistributionButton;
-  @SuppressWarnings({"unused", "RedundantSuppression"}) // used by ExternalSystemUiUtil.showUi to show/hide the component via reflection
-  private JPanel myImportPanel;
-  private JPanel myModulePerSourceSetPanel;
-  @Nullable
-  private JBCheckBox myResolveModulePerSourceSetCheckBox;
   private boolean dropResolveModulePerSourceSetCheckBox;
-  @Nullable
-  private JBCheckBox myResolveExternalAnnotationsCheckBox;
-  private boolean dropResolveExternalAnnotationsCheckBox = false;
-  @Nullable
-  private JLabel myDelegateBuildLabel;
-  @Nullable
-  private ComboBox<BuildRunItem> myDelegateBuildCombobox;
+  private boolean dropResolveExternalAnnotationsCheckBox;
   private boolean dropDelegateBuildCombobox;
-  @Nullable
-  private JLabel myTestRunnerLabel;
-  @Nullable
-  private ComboBox<TestRunnerItem> myTestRunnerCombobox;
   private boolean dropTestRunnerCombobox;
-  private JPanel myDelegatePanel;
+
+  private @Nullable JComboBox<DistributionTypeItem> myGradleDistributionComboBox;
+  private @Nullable JBLabel myGradleDistributionHint;
+  private @NotNull LocationSettingType myGradleHomeSettingType = LocationSettingType.UNKNOWN;
+  private @Nullable TargetPathFieldWithBrowseButton myGradleHomePathField;
+  @SuppressWarnings({"unused", "RedundantSuppression"}) // used by ExternalSystemUiUtil.showUi to show/hide the component via reflection
+  private @Nullable JPanel myGradlePanel;
+  private @Nullable JLabel myGradleJdkLabel;
+  private @Nullable SdkComboBox myGradleJdkComboBox;
+  private @Nullable JPanel myGradleJdkComboBoxWrapper;
+  @SuppressWarnings({"unused", "RedundantSuppression"}) // used by ExternalSystemUiUtil.showUi to show/hide the component via reflection
+  private @Nullable JPanel myImportPanel;
+  private @Nullable JPanel myModulePerSourceSetPanel;
+  private @Nullable JBCheckBox myResolveModulePerSourceSetCheckBox;
+  private @Nullable JBCheckBox myResolveExternalAnnotationsCheckBox;
+  private @Nullable JLabel myDelegateBuildLabel;
+
+  private @Nullable ComboBox<BuildRunItem> myDelegateBuildCombobox;
+  private @Nullable JLabel myTestRunnerLabel;
+  private @Nullable ComboBox<TestRunnerItem> myTestRunnerCombobox;
+  private @Nullable JPanel myDelegatePanel;
 
   public IdeaGradleProjectSettingsControlBuilder(@NotNull GradleProjectSettings initialSettings) {
     myInitialSettings = initialSettings;
@@ -165,7 +156,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   }
 
   /**
-   * @deprecated see {@link ExternalProjectSettings#setUseAutoImport} for details
+   * @deprecated Auto-import cannot be disabled
+   * @see com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
    */
   @Deprecated(forRemoval = true)
   public IdeaGradleProjectSettingsControlBuilder dropUseAutoImportBox() {
@@ -355,7 +347,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     myGradleDistributionComboBox.setModel(new CollectionComboBoxModel<>(availableDistributions));
     if (!availableDistributions.isEmpty()) {
-      content.add(new JBLabel(GradleBundle.message("gradle.settings.text.distribution")), ExternalSystemUiUtil.getLabelConstraints(indentLevel));
+      content.add(new JBLabel(GradleBundle.message("gradle.project.settings.distribution")),
+                  ExternalSystemUiUtil.getLabelConstraints(indentLevel));
       content.add(myGradleDistributionComboBox, ExternalSystemUiUtil.getLabelConstraints(0));
 
       JPanel additionalControlsPanel = new JPanel(new GridBagLayout());
@@ -587,7 +580,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     String gradleHome = settings.getGradleHome();
     if (myGradleHomePathField != null) {
-      GradleRuntimeTargetUI.installActionListener(myGradleHomePathField, myProjectRef.get(), GradleBundle.message("gradle.settings.text.home.path"));
+      GradleRuntimeTargetUI.installActionListener(myGradleHomePathField, myProjectRef.get(),
+                                                  GradleBundle.message("gradle.settings.text.home.path"));
       myGradleHomePathField.setText(gradleHome == null ? "" : gradleHome);
       myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
     }
@@ -671,11 +665,13 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   }
 
   private void recreateGradleJdkComboBox(@NotNull Project project, @NotNull ProjectSdksModel sdksModel) {
-    if (myGradleJdkComboBox != null) {
-      myGradleJdkComboBoxWrapper.remove(myGradleJdkComboBox);
+    if (myGradleJdkComboBoxWrapper != null) {
+      if (myGradleJdkComboBox != null) {
+        myGradleJdkComboBoxWrapper.remove(myGradleJdkComboBox);
+      }
+      myGradleJdkComboBox = new SdkComboBox(createJdkComboBoxModel(project, sdksModel));
+      myGradleJdkComboBoxWrapper.add(myGradleJdkComboBox, BorderLayout.CENTER);
     }
-    myGradleJdkComboBox = new SdkComboBox(createJdkComboBoxModel(project, sdksModel));
-    myGradleJdkComboBoxWrapper.add(myGradleJdkComboBox, BorderLayout.CENTER);
   }
 
   private void resetWrapperControls(String linkedProjectPath, @NotNull GradleProjectSettings settings, boolean isDefaultModuleCreation) {
@@ -816,7 +812,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     }
     int count = result.getComponentCount();
 
-    configuration.consume(result);
+    configuration.accept(result);
 
     if (result.getComponentCount() > count) {
       content.add(result, ExternalSystemUiUtil.getFillLineConstraints(0).insets(0, 0, 0, 0));
@@ -1052,10 +1048,10 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     private static String getText(@Nullable DistributionType value) {
       if (value != null) {
         return switch (value) {
-          case BUNDLED -> GradleBundle.message("gradle.settings.text.distribution.bundled", GradleVersion.current().getVersion());
-          case DEFAULT_WRAPPED -> GradleBundle.message("gradle.settings.text.distribution.wrapper");
-          case WRAPPED -> GradleBundle.message("gradle.settings.text.distribution.wrapper.task");
-          case LOCAL -> GradleBundle.message("gradle.settings.text.distribution.location");
+          case BUNDLED -> GradleBundle.message("gradle.project.settings.distribution.bundled");
+          case DEFAULT_WRAPPED -> GradleBundle.message("gradle.project.settings.distribution.wrapper");
+          case WRAPPED -> GradleBundle.message("gradle.project.settings.distribution.wrapper.task");
+          case LOCAL -> GradleBundle.message("gradle.project.settings.distribution.local");
         };
       }
       LOG.error("Unexpected: " + value);

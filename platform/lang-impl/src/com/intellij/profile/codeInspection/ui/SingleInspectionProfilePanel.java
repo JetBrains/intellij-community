@@ -242,16 +242,19 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private void setConfigPanel(final JPanel configPanelAnchor, final ScopeToolState state) {
     configPanelAnchor.removeAll();
-    final JComponent additionalConfigPanel = state.getAdditionalConfigPanel();
+    final JComponent additionalConfigPanel = state.getAdditionalConfigPanel(myDisposable, getProject());
     if (additionalConfigPanel != null) {
       additionalConfigPanel.setBorder(InspectionUiUtilKt.getBordersForOptions(additionalConfigPanel));
-      configPanelAnchor.add(InspectionUiUtilKt.addScrollPaneIfNecessary(additionalConfigPanel));
+      configPanelAnchor.add(
+        InspectionUiUtilKt.addScrollPaneIfNecessary(additionalConfigPanel),
+        new GridBag().next().weightx(1.0).weighty(1.0).fillCell().anchor(GridBagConstraints.NORTHWEST)
+      );
     }
 
     if (myOptionsLabel != null)
       myOptionsLabel.setText(
         AnalysisBundle.message("inspections.settings.options.title.specific.scope",
-                               state.getScopeName() == CustomScopesProviderEx.getAllScope().getScopeId()
+                               state.getScopeName().equals(CustomScopesProviderEx.getAllScope().getScopeId())
                                  ? LangBundle.message("scopes.table.everywhere.else")
                                  : state.getScopeName()));
   }
@@ -658,7 +661,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       });
     }
     group.add(Separator.getInstance());
-    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu("InspectionProfilePanel", group);
     return menu.getComponent();
   }
 
@@ -766,7 +769,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
       myOptionsPanel.removeAll();
       JPanel severityPanel = new JPanel(new GridBagLayout());
-      final JPanel configPanelAnchor = new JPanel(new GridLayout());
+      final JPanel configPanelAnchor = new JPanel(new GridBagLayout());
 
       final boolean showOptionPanel;
       final double severityPanelWeightY;
@@ -1159,7 +1162,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       AnalysisBundle.message("inspections.settings.disable.new.inspections.by.default.checkbox"),
       getProfile().isProfileLocked());
 
-    JPanel panel = new JPanel(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.LARGE_VGAP));
+    JPanel panel = new JPanel(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     panel.add(inspectionTreePanel, BorderLayout.CENTER);
     panel.add(disableNewInspectionsCheckBox, BorderLayout.SOUTH);
     disableNewInspectionsCheckBox.addItemListener(__ -> {

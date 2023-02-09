@@ -122,8 +122,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
   private static final TransferHandler DEFAULT_TRANSFER_HANDLER = new TransferHandler() {
     @Override
     protected Transferable createTransferable(JComponent component) {
-      if (component instanceof JTree) {
-        JTree tree = (JTree)component;
+      if (component instanceof JTree tree) {
         TreePath[] selection = tree.getSelectionPaths();
         if (selection != null && selection.length > 1) {
           return new TransferableList<>(selection) {

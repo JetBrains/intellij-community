@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.InspectionFixtureTestCase;
 import org.editorconfig.EditorConfigRegistry;
+import org.editorconfig.Utils;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
@@ -18,11 +19,13 @@ public class EditorConfigEncodingInspectionTest extends InspectionFixtureTestCas
   protected void setUp() throws Exception {
     super.setUp();
     EditorConfigRegistry.setSkipProjectRootInTest(true);
+    Utils.setEnabledInTests(true);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
+      Utils.setEnabledInTests(false);
       EditorConfigRegistry.setSkipProjectRootInTest(false);
     }
     catch (Throwable e) {
@@ -54,7 +57,7 @@ public class EditorConfigEncodingInspectionTest extends InspectionFixtureTestCas
     IntentionAction quickFix = myFixture.findSingleIntention(EditorConfigBundle.message("inspection.file.encoding.ignore"));
     assertNotNull(quickFix);
     myFixture.launchAction(quickFix);
-    assertTrue(EditorConfigEncodingCache.getInstance().isIgnored(getFile().getVirtualFile()));
+    assertTrue(EditorConfigEncodingCache.Companion.getInstance().isIgnored(getFile().getVirtualFile()));
     myFixture.checkHighlighting();
   }
 

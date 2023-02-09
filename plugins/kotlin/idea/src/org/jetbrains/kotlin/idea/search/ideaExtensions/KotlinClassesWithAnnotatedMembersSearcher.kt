@@ -9,6 +9,7 @@ import com.intellij.psi.search.searches.ScopedQueryExecutor
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.searching.KotlinAnnotatedElementsSearcher
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType

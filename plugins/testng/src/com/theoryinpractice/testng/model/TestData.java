@@ -111,10 +111,9 @@ public class TestData implements Cloneable
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof TestData)) {
+    if (!(obj instanceof TestData data)) {
       return false;
     } else {
-      TestData data = (TestData) obj;
       return Objects.equals(TEST_OBJECT, data.TEST_OBJECT)
              && Objects.equals(getMainClassName(), data.getMainClassName())
              && Objects.equals(getPackageName(), data.getPackageName())

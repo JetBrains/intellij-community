@@ -12,9 +12,6 @@ import com.intellij.psi.xml.*;
 import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class XmlFindUsagesProvider implements FindUsagesProvider {
   @Override
   public boolean canFindUsagesFor(@NotNull PsiElement element) {
@@ -82,8 +79,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
   @Override
   @NotNull
   public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
-    if (element instanceof XmlTag) {
-      final XmlTag xmlTag = (XmlTag)element;
+    if (element instanceof XmlTag xmlTag) {
       final PsiMetaData metaData = xmlTag.getMetaData();
       final String name = metaData != null ? DescriptiveNameUtil.getMetaDataName(metaData) : xmlTag.getName();
 

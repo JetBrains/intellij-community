@@ -29,9 +29,6 @@ import org.codehaus.plexus.component.annotations.Requirement;
 
 import static com.intellij.openapi.util.text.StringUtilRt.notNullize;
 
-/**
- * @author ibessonov
- */
 @Component(role = CustomModelValidator385.class, hint = "ide")
 public class CustomModelValidator385 implements ModelValidator {
 

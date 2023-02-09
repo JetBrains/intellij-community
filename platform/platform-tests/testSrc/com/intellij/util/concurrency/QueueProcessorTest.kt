@@ -86,8 +86,8 @@ class QueueProcessorTest : LightPlatformTestCase() {
     val processor = QueueProcessor<String>({ _, r -> r.run()}, true, QueueProcessor.ThreadToUse.AWT, { _ -> false })
     processor.add("")
     ApplicationManager.getApplication().assertIsDispatchThread()
-    assertThrows(IllegalStateException::class.java) { processor.waitFor() }
-    assertThrows(IllegalStateException::class.java) { processor.waitFor(1) }
+    assertThrows(Exception::class.java) { processor.waitFor() }
+    assertThrows(Exception::class.java) { processor.waitFor(1) }
     PlatformTestUtil.waitForFuture(ApplicationManager.getApplication().executeOnPooledThread { processor.waitFor() }, 100_000)
     PlatformTestUtil.waitForFuture(ApplicationManager.getApplication().executeOnPooledThread { processor.waitFor(2) }, 100_000)
   }

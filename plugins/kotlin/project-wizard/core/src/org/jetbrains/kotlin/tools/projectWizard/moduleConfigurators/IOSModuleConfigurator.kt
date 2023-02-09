@@ -14,13 +14,6 @@ import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplateDescriptor
 import java.nio.file.Path
 
 object IOSSinglePlatformModuleConfigurator : IOSSinglePlatformModuleConfiguratorBase() {
-    override fun Writer.runArbitraryTask(
-        configurationData: ModulesToIrConversionData,
-        module: Module,
-        modulePath: Path
-    ): TaskResult<Unit> =
-        GradlePlugin.gradleProperties.addValues("xcodeproj" to "./${module.name}")
-
     override val moduleTemplatePath: String get() = "singleplatformProject"
 
     override fun ListBuilder<FileTemplate>.additionalTemplates(fileTemplate: (Path) -> FileTemplate) {
@@ -36,14 +29,19 @@ object IOSSinglePlatformModuleConfigurator : IOSSinglePlatformModuleConfigurator
 
 object IOSSinglePlatformCocoaPodsModuleConfigurator : IOSSinglePlatformModuleConfiguratorBase() {
     override val moduleTemplatePath: String get() = "singleplatformCocoaPodsProject"
+    override val canContainSubModules: Boolean
+        get() = false
 
-    override fun Writer.runArbitraryTask(
+    override fun doRunArbitraryTask(
+        writer: Writer,
         configurationData: ModulesToIrConversionData,
         module: Module,
         modulePath: Path
     ): TaskResult<Unit> = compute {
-        GradlePlugin.gradleProperties.addValues("xcodeproj" to "./${module.name}")
-        GradlePlugin.gradleProperties.addValues("kotlin.native.cocoapods.generate.wrapper" to true)
+        super.doRunArbitraryTask(writer, configurationData, module, modulePath)
+        with(writer) {
+            GradlePlugin.gradleProperties.addValues("kotlin.native.cocoapods.generate.wrapper" to true)
+        }
     }
 
     override fun Reader.createTemplates(
@@ -67,7 +65,7 @@ object IOSSinglePlatformCocoaPodsModuleConfigurator : IOSSinglePlatformModuleCon
             +fileTemplate("$DEFAULT_APP_NAME.xcodeproj" / "project.pbxproj")
             +fileTemplate(DEFAULT_APP_NAME / "Info.plist")
 
-            +fileTemplate("Podfile".asPath())
+            +fileTemplate("Podfile.vm".asPath())
         }
     }
 }
@@ -129,6 +127,23 @@ abstract class IOSSinglePlatformModuleConfiguratorBase : SinglePlatformModuleCon
             "moduleName" to module.name,
             "sharedModuleName" to dependentModule?.name
         )
+    }
+
+    final override fun Writer.runArbitraryTask(
+        configurationData: ModulesToIrConversionData,
+        module: Module,
+        modulePath: Path
+    ): TaskResult<Unit> = doRunArbitraryTask(this, configurationData, module, modulePath)
+
+    protected open fun doRunArbitraryTask(
+        writer: Writer, configurationData: ModulesToIrConversionData,
+        module: Module,
+        modulePath: Path
+    ): TaskResult<Unit> = compute {
+        with(writer) {
+            GradlePlugin.gradleProperties.addValues("org.gradle.jvmargs" to "-Xmx2048M -Dfile.encoding=UTF-8 -Dkotlin.daemon.jvm.options\\=\"-Xmx2048M\"")
+            GradlePlugin.gradleProperties.addValues("kotlin.mpp.enableCInteropCommonization" to true)
+        }
     }
 
     protected open fun descriptor(path: Path, moduleName: String) =

@@ -16,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
-* @author irengrig
-*/
 public class SetTodoFilterAction extends ActionGroup implements DumbAware {
   private final Project myProject;
   private final TodoPanelSettings myToDoSettings;

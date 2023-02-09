@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 class MyClassA
 @Deprecated class MyClassB
 class MyClassC

@@ -16,10 +16,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ArrayListSet;
-import com.intellij.util.containers.DisposableWrapperList;
-import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.containers.*;
 import com.intellij.util.io.PathKt;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
@@ -40,6 +38,8 @@ import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -263,17 +263,27 @@ public final class MavenProjectsTree {
   }
 
   public void setIgnoredState(List<MavenProject> projects, boolean ignored, boolean fromImport) {
-    doSetIgnoredState(projects, ignored, fromImport);
+    final List<String> pomPaths = ContainerUtil.map(projects, project -> project.getPath());
+    setIgnoredStateForPoms(pomPaths, ignored, fromImport);
   }
 
-  private void doSetIgnoredState(List<MavenProject> projects, final boolean ignored, boolean fromImport) {
-    final List<String> paths = MavenUtil.collectPaths(MavenUtil.collectFiles(projects));
+  @ApiStatus.Internal
+  public void setIgnoredStateForPoms(List<String> pomPaths, boolean ignored) {
+    doSetIgnoredState(pomPaths, ignored, false);
+  }
+
+  @ApiStatus.Internal
+  public void setIgnoredStateForPoms(List<String> pomPaths, boolean ignored, boolean fromImport) {
+    doSetIgnoredState(pomPaths, ignored, fromImport);
+  }
+
+  private void doSetIgnoredState(List<String> pomPaths, final boolean ignored, boolean fromImport) {
     doChangeIgnoreStatus(() -> {
       if (ignored) {
-        myIgnoredFilesPaths.addAll(paths);
+        myIgnoredFilesPaths.addAll(pomPaths);
       }
       else {
-        myIgnoredFilesPaths.removeAll(paths);
+        myIgnoredFilesPaths.removeAll(pomPaths);
       }
     }, fromImport);
   }
@@ -427,8 +437,7 @@ public final class MavenProjectsTree {
     MavenProjectReader projectReader = new MavenProjectReader(myProject);
     update(managedFiles, true, force, explicitProfiles, projectReader, generalSettings, process);
 
-    List<VirtualFile> obsoleteFiles = getRootProjectsFiles();
-    obsoleteFiles.removeAll(managedFiles);
+    Collection<VirtualFile> obsoleteFiles = ContainerUtil.subtract(getRootProjectsFiles(), managedFiles);
     delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, process);
   }
 
@@ -719,7 +728,7 @@ public final class MavenProjectsTree {
   }
 
   private void delete(MavenProjectReader projectReader,
-                      List<VirtualFile> files,
+                      Collection<VirtualFile> files,
                       MavenExplicitProfiles explicitProfiles,
                       MavenGeneralSettings generalSettings,
                       MavenProgressIndicator process) {

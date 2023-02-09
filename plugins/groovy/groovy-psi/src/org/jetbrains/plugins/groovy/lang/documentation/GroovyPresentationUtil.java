@@ -31,9 +31,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author ven
- */
 public final class GroovyPresentationUtil {
   private static final int CONSTRAINTS_NUMBER = 2;
 

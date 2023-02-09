@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
@@ -1044,5 +1045,26 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     final VirtualFile[] movedGrandChildren = ContainerUtil.find(movedChildren, it -> "xxx".equals(it.getName())).getChildren();
     assertEquals(List.of(xxxFooBarId), ContainerUtil.map(movedGrandChildren, it -> ((NewVirtualFile)it).getId()));
     assertEquals(List.of("foo.bar"), ContainerUtil.map(movedGrandChildren, VirtualFile::getName));
+  }
+
+  @Test
+  public void testContentReadingWhileModification() throws IOException {
+    byte[] initialContent = StringUtil.repeat("one_two", 500_000).getBytes(StandardCharsets.UTF_8);
+    File file = tempDirectory.newFile("test.txt", initialContent);
+    VirtualFile vFile = refreshAndFind(file);
+    int id = ((VirtualFileWithId)vFile).getId();
+    vFile.contentsToByteArray();
+
+    DataInputStream stream = FSRecords.readContent(id);
+    assertNotNull(stream);
+    byte[] bytes = stream.readNBytes(initialContent.length);
+    assertArrayEquals(initialContent, bytes);
+    DataInputStream stream2 = FSRecords.readContent(id);
+    byte[] portion1 = stream2.readNBytes(40);
+    FSRecords.writeContent(id, ByteArraySequence.EMPTY, true);
+    DataInputStream stream3 = FSRecords.readContent(id);
+    assertEquals(-1, stream3.read());
+    byte[] portion2 = stream2.readNBytes(initialContent.length - 40);
+    assertArrayEquals(initialContent, ArrayUtil.mergeArrays(portion1, portion2));
   }
 }

@@ -7,6 +7,7 @@
   </content>
   <projectListeners>
     <listener class="com.jetbrains.python.PyModuleListener" topic="com.intellij.openapi.project.ModuleListener"/>
+    <listener class="com.jetbrains.python.PySdkFromEnvironmentVariableConfigurator" topic="com.intellij.workspaceModel.ide.JpsProjectLoadedListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -33,7 +34,7 @@
 
     <statusBarWidgetFactory id="pythonInterpreterWidget"
                             implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetFactory"
-                            order="after CodeStyleStatusBarWidget, before gitWidget, before hgWidget, before Notifications"/>
+                            order="after CodeStyleStatusBarWidget, before git, before hg, before Notifications"/>
 
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSdkConfigurator" id="sdk"
                                   order="after PlatformProjectConfigurator"/>
@@ -45,8 +46,6 @@
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
                         serviceImplementation="com.jetbrains.python.PythonModuleTypeManager"
                         overrides="true"/>
-
-    <backgroundPostStartupActivity implementation="com.jetbrains.python.PySdkFromEnvironmentVariableConfigurator"/>
 
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.FileGroupingRuleProvider" order="first"/>
     <fileStructureGroupRuleProvider implementation="com.jetbrains.python.PyClassGroupingRuleProvider"

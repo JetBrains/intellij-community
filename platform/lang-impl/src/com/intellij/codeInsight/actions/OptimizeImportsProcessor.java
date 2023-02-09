@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,7 +113,12 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document == null) return List.of();
     Editor editor = new ImaginaryEditor(file.getProject(), document);
-    List<ReferenceImporter> referenceImporters = ReferenceImporter.EP_NAME.getExtensionList();
+    List<ReferenceImporter> referenceImporters = ContainerUtil.filter(
+      ReferenceImporter.EP_NAME.getExtensionList(),
+      importer -> importer.isAddUnambiguousImportsOnTheFlyEnabled(file));
+    if (referenceImporters.isEmpty()) {
+      return Collections.emptyList();
+    }
     List<BooleanSupplier> result = new ArrayList<>();
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
@@ -120,11 +126,9 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
         for (PsiReference reference : element.getReferences()) {
           if (reference.resolve() == null) {
             for (ReferenceImporter importer : referenceImporters) {
-              if (importer.isAddUnambiguousImportsOnTheFlyEnabled(file)) {
-                BooleanSupplier action = importer.computeAutoImportAtOffset(editor, file, element.getTextRange().getStartOffset(), true);
-                if (action != null) {
-                  result.add(action);
-                }
+              BooleanSupplier action = importer.computeAutoImportAtOffset(editor, file, element.getTextRange().getStartOffset(), true);
+              if (action != null) {
+                result.add(action);
               }
             }
           }

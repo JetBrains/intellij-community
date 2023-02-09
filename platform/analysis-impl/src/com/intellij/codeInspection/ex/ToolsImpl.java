@@ -499,9 +499,13 @@ public final class ToolsImpl implements Tools {
   }
 
   @Override
+  public int hashCode() {
+    return Objects.hash(myEnabled, getTools().size());
+  }
+
+  @Override
   public boolean equals(Object o) {
-    if (!(o instanceof ToolsImpl)) return false;
-    ToolsImpl tools = (ToolsImpl)o;
+    if (!(o instanceof ToolsImpl tools)) return false;
     if (myEnabled != tools.myEnabled) return false;
     if (getTools().size() != tools.getTools().size()) return false;
     for (int i = 0; i < getTools().size(); i++) {

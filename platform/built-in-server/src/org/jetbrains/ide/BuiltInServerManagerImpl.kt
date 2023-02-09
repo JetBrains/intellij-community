@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
-import com.intellij.idea.getServerFutureAsync
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
@@ -13,6 +12,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
+import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.ServerBootstrap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
@@ -35,7 +35,7 @@ private const val PROPERTY_DISABLED = "idea.builtin.server.disabled"
 
 private val LOG = logger<BuiltInServerManager>()
 
-class BuiltInServerManagerImpl : BuiltInServerManager() {
+class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : BuiltInServerManager() {
   private var serverStartFuture: Job? = null
   private var server: BuiltInServer? = null
   private var portOverride: Int? = null
@@ -50,11 +50,11 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
     val app = ApplicationManager.getApplication()
     serverStartFuture = when {
       app.isUnitTestMode -> null
-      else -> app.coroutineScope.async(Dispatchers.IO) { startServerInPooledThread() }
+      else -> coroutineScope.launch(Dispatchers.IO) { startServerInPooledThread() }
     }
   }
 
-  override fun createClientBootstrap() = NettyUtil.nioClientBootstrap(server!!.childEventLoopGroup)
+  override fun createClientBootstrap(): Bootstrap = NettyUtil.nioClientBootstrap(server!!.childEventLoopGroup)
 
   companion object {
     internal const val NOTIFICATION_GROUP = "Built-in Server"
@@ -103,7 +103,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
     synchronized(this) {
       future = serverStartFuture
       if (future == null) {
-        future = app.coroutineScope.async(Dispatchers.IO) { startServerInPooledThread() }
+        future = coroutineScope.async(Dispatchers.IO) { startServerInPooledThread() }
         serverStartFuture = future
       }
     }
@@ -112,26 +112,13 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
     return this
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
   private suspend fun startServerInPooledThread() {
     if (SystemProperties.getBooleanProperty(PROPERTY_DISABLED, false)) {
       throw RuntimeException("Built-in server is disabled by `$PROPERTY_DISABLED` VM option")
     }
 
-    val mainServer = getServerFutureAsync().await()
     try {
-      server = if (mainServer == null) {
-        BuiltInServer.start(firstPort = defaultPort, portsCount = PORTS_COUNT, tryAnyPort = true)
-      }
-      else {
-        BuiltInServer.start(parentEventLoopGroup = mainServer.eventLoopGroup,
-                            childEventLoopGroup = mainServer.childEventLoopGroup,
-                            isEventLoopGroupOwner = false,
-                            firstPort = defaultPort,
-                            portsCount = PORTS_COUNT,
-                            tryAnyPort = true)
-      }
-
+      server = BuiltInServer.start(firstPort = defaultPort, portsCount = PORTS_COUNT, tryAnyPort = true)
       bindCustomPorts(server!!)
     }
     catch (e: Throwable) {
@@ -152,7 +139,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
 
   override fun addAuthToken(url: Url): Url {
     return when {
-      // built-in server url contains query only if token specified
+      // the built-in server URL contains a query only if a token is specified
       url.parameters != null -> url
       else -> Urls.newUrl(url.scheme!!, url.authority!!, url.path, Collections.singletonMap(TOKEN_PARAM_NAME, acquireToken()))
     }
@@ -169,7 +156,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   }
 }
 
-// Default port will be occupied by main idea instance - define the custom default to avoid searching of free port
+// the default port will be occupied by the main IDE instance - define the custom default to avoid searching for a free port
 private val defaultPort: Int
   get() = SystemProperties.getIntProperty(PROPERTY_RPC_PORT, if (ApplicationManager.getApplication().isUnitTestMode) 64463 else BuiltInServerOptions.DEFAULT_PORT)
 

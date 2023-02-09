@@ -2,8 +2,6 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.RegistryKeyRule
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -11,9 +9,6 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 @Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
-  @get:Rule
-  val rule = RegistryKeyRule("markdown.tables.editing.support.enable", true)
-
   @Test
   fun `test single tab forward`() {
     // language=Markdown
@@ -120,16 +115,31 @@ class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, count = 5, forward = false)
   }
 
+  @Test
+  fun `test multiple tabs forward in empty cells`() {
+    // language=Markdown
+    val before = """
+    ||||
+    |-|-|-|
+    |<caret>|||
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    ||||
+    |-|-|-|
+    |||<caret>|
+    """.trimIndent()
+    doTest(before, after, count = 2)
+  }
+
   private fun doTest(content: String, expected: String, count: Int = 1, forward: Boolean = true) {
-    TableTestUtils.runWithChangedSettings(project) {
-      configureFromFileText("some.md", content)
-      repeat(count) {
-        when {
-          forward -> executeAction("EditorTab")
-          else -> executeAction("EditorUnindentSelection")
-        }
+    configureFromFileText("some.md", content)
+    repeat(count) {
+      when {
+        forward -> executeAction("EditorTab")
+        else -> executeAction("EditorUnindentSelection")
       }
-      checkResultByText(expected)
     }
+    checkResultByText(expected)
   }
 }

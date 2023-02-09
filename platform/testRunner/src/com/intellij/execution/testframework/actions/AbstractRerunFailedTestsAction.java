@@ -296,9 +296,8 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
       return myConfiguration.getPredefinedLogFiles();
     }
 
-    @NotNull
     @Override
-    public ArrayList<LogFileOptions> getAllLogFiles() {
+    public @NotNull ArrayList<LogFileOptions> getAllLogFiles() {
       return myConfiguration.getAllLogFiles();
     }
 

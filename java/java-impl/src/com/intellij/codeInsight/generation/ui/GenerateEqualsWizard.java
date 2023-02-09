@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.ui;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,7 +31,6 @@ import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 import org.jetbrains.java.generate.template.TemplateResource;
@@ -42,9 +43,6 @@ import java.util.List;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author dsl
- */
 public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass, PsiMember, MemberInfo> {
   private static final Logger LOG = Logger.getInstance(GenerateEqualsWizard.class);
 
@@ -98,7 +96,9 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       myNonNullPanel = new MemberSelectionPanel(JavaBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"), Collections.emptyList(), null);
       myFieldsToNonNull = createFieldToMemberInfoMap(false);
       for (final Map.Entry<PsiMember, MemberInfo> entry : myFieldsToNonNull.entrySet()) {
-        entry.getValue().setChecked(NullableNotNullManager.isNotNull(entry.getKey()));
+        entry.getValue().setChecked(NullableNotNullManager.isNotNull(entry.getKey()) ||
+                                    entry.getKey() instanceof PsiField field &&
+                                    NullabilityUtil.getNullabilityFromFieldInitializers(field).second == Nullability.NOT_NULL);
       }
     }
 
@@ -270,8 +270,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         @Override
         public String getTooltip(MemberInfo memberInfo) {
           if (checkForProblems(memberInfo) == OK) return null;
-          if (!(memberInfo.getMember() instanceof PsiField)) return JavaBundle.message("generate.equals.hashcode.internal.error");
-          final PsiField field = (PsiField)memberInfo.getMember();
+          if (!(memberInfo.getMember() instanceof PsiField field)) return JavaBundle.message("generate.equals.hashcode.internal.error");
           if (!JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) {
             final PsiType type = field.getType();
             if (PsiAdapter.isNestedArray(type)) {
@@ -287,16 +286,14 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
     @Override
     public boolean isMemberEnabled(MemberInfo member) {
-      if (!(member.getMember() instanceof PsiField)) return false;
-      final PsiField field = (PsiField)member.getMember();
+      if (!(member.getMember() instanceof PsiField field)) return false;
       final PsiType type = field.getType();
       return JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5) || !PsiAdapter.isNestedArray(type);
     }
 
     @Override
     public int checkForProblems(@NotNull MemberInfo member) {
-      if (!(member.getMember() instanceof PsiField)) return ERROR;
-      final PsiField field = (PsiField)member.getMember();
+      if (!(member.getMember() instanceof PsiField field)) return ERROR;
       final PsiType type = field.getType();
       if (!JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) {
         if (PsiAdapter.isNestedArray(type)) return ERROR;
@@ -318,8 +315,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         @Override
         public String getTooltip(MemberInfo memberInfo) {
           if (isMemberEnabled(memberInfo)) return null;
-          if (!(memberInfo.getMember() instanceof PsiField)) return JavaBundle.message("generate.equals.hashcode.internal.error");
-          final PsiField field = (PsiField)memberInfo.getMember();
+          if (!(memberInfo.getMember() instanceof PsiField field)) return JavaBundle.message("generate.equals.hashcode.internal.error");
           final PsiType type = field.getType();
           if (!(type instanceof PsiArrayType) || JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) return null;
           return JavaBundle.message("generate.equals.hashcode.warning.hashcode.for.arrays.is.not.supported");

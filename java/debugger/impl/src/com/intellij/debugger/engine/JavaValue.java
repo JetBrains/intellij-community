@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -67,10 +67,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   private final boolean myContextSet;
 
   protected JavaValue(JavaValue parent,
-                    @NotNull ValueDescriptorImpl valueDescriptor,
-                    @NotNull EvaluationContextImpl evaluationContext,
-                    NodeManagerImpl nodeManager,
-                    boolean contextSet) {
+                      @NotNull ValueDescriptorImpl valueDescriptor,
+                      @NotNull EvaluationContextImpl evaluationContext,
+                      NodeManagerImpl nodeManager,
+                      boolean contextSet) {
     this(parent, valueDescriptor.calcValueName(), valueDescriptor, evaluationContext, nodeManager, contextSet);
   }
 
@@ -100,18 +100,19 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   public boolean canBePinned() {
     return myCanBePinned;
   }
+
   private boolean doComputeCanBePinned() {
-    if(myValueDescriptor instanceof ArrayElementDescriptor) {
+    if (myValueDescriptor instanceof ArrayElementDescriptor) {
       return false;
     }
     return myParent != null;
   }
 
   public static JavaValue create(JavaValue parent,
-                          @NotNull ValueDescriptorImpl valueDescriptor,
-                          @NotNull EvaluationContextImpl evaluationContext,
-                          NodeManagerImpl nodeManager,
-                          boolean contextSet) {
+                                 @NotNull ValueDescriptorImpl valueDescriptor,
+                                 @NotNull EvaluationContextImpl evaluationContext,
+                                 NodeManagerImpl nodeManager,
+                                 boolean contextSet) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return new JavaValue(parent, valueDescriptor, evaluationContext, nodeManager, contextSet);
   }
@@ -394,8 +395,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   protected static boolean scheduleCommand(EvaluationContextImpl evaluationContext,
-                                        @NotNull final XCompositeNode node,
-                                        final SuspendContextCommandImpl command) {
+                                           @NotNull final XCompositeNode node,
+                                           final SuspendContextCommandImpl command) {
     if (node.isObsolete()) {
       return false;
     }
@@ -722,11 +723,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       }
 
       try {
-        if (type instanceof ArrayType) {
-          type = ((ArrayType)type).componentType();
+        if (type instanceof ArrayType arrayType) {
+          type = arrayType.componentType();
         }
-        if (type instanceof ClassType) {
-          ClassType clsType = (ClassType)type;
+        if (type instanceof ClassType clsType) {
 
           Method lambdaMethod =
             MethodBytecodeUtil.getLambdaMethod(clsType, debugProcess.getVirtualMachineProxy().getClassesByNameProvider());

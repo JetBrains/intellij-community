@@ -320,8 +320,7 @@ public final class LanguageResolvingUtil {
                                   () -> DevKitBundle.message("plugin.xml.convert.language.id.any.language.display.name"));
   }
 
-  private static final Set<String> EP_WITH_ANY_LANGUAGE_ID = Collections
-    .unmodifiableSet(ContainerUtil.set(CompletionContributorEP.class.getName(), CompletionConfidenceEP.class.getName()));
+  private static final Set<String> EP_WITH_ANY_LANGUAGE_ID = Set.of(CompletionContributorEP.class.getName(), CompletionConfidenceEP.class.getName());
 
   private static @NlsSafe String calculateAnyLanguageId(@NotNull ConvertContext context) {
     final Extension extension = context.getInvocationElement().getParentOfType(Extension.class, true);
@@ -342,7 +341,8 @@ public final class LanguageResolvingUtil {
   @NotNull
   public static String getAnyLanguageValue(ExtensionPoint extensionPoint) {
     final GenericAttributeValue<PsiClass> epBeanClass = extensionPoint.getBeanClass();
-    if (EP_WITH_ANY_LANGUAGE_ID.contains(epBeanClass.getStringValue())) {
+    String value = epBeanClass.getStringValue();
+    if (value != null && EP_WITH_ANY_LANGUAGE_ID.contains(value)) {
       return "any";
     }
 

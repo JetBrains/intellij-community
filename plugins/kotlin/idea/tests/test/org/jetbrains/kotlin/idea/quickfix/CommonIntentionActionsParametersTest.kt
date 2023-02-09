@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.uast.UMethod
@@ -39,8 +40,8 @@ class CommonIntentionActionsParametersTest : LightPlatformCodeInsightFixtureTest
                 myFixture.atCaret<UMethod>().javaPsi,
                 setMethodParametersRequest(
                     linkedMapOf<String, JvmType>(
-                        "i" to PsiType.INT,
-                        "file" to PsiType.getTypeByName("java.io.File", project, myFixture.file.resolveScope)
+                      "i" to PsiTypes.intType(),
+                      "file" to PsiType.getTypeByName("java.io.File", project, myFixture.file.resolveScope)
                     ).entries
                 )
             ).findWithText("Change method parameters to '(i: Int, file: File)'")
@@ -70,13 +71,13 @@ class CommonIntentionActionsParametersTest : LightPlatformCodeInsightFixtureTest
         myFixture.atCaret<UMethod>().javaPsi,
         setMethodParametersRequest(
             linkedMapOf<String, JvmType>(
-                "i" to PsiType.INT,
-                "file" to PsiType.getTypeByName("java.io.File", project, myFixture.file.resolveScope)
+              "i" to PsiTypes.intType(),
+              "file" to PsiType.getTypeByName("java.io.File", project, myFixture.file.resolveScope)
             ).entries
         )
     ).find { it.text.contains("Change signature of Foo") }
-    if (action == null) fail("Change signature intention not found")
-    myFixture.launchAction(action!!)
+    if (action == null) kotlin.test.fail("Change signature intention not found")
+    myFixture.launchAction(action)
     myFixture.checkResult(
         """
         import java.io.File
@@ -189,7 +190,7 @@ class CommonIntentionActionsParametersTest : LightPlatformCodeInsightFixtureTest
 
         runParametersTransformation("Change method parameters to '(a: Long)'") { currentParameters ->
             ArrayList<ExpectedParameter>(currentParameters).apply {
-                this[0] = expectedParameter(PsiType.LONG, this[0].semanticNames.first(), this[0].expectedAnnotations)
+                this[0] = expectedParameter(PsiTypes.longType(), this[0].semanticNames.first(), this[0].expectedAnnotations)
             }
         }
 

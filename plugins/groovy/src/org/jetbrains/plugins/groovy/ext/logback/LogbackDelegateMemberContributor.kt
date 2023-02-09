@@ -88,7 +88,7 @@ class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
       val parameter = method.parameterList.parameters.singleOrNull() ?: return true
       val classType = createJavaLangClassType(parameter.type, place) ?: return true
       val wrappedBase = GrLightMethodBuilder(place.manager, propertyName).apply {
-        returnType = PsiType.VOID
+        returnType = PsiTypes.voidType()
         navigationElement = method
         containingClass = method.containingClass
       }

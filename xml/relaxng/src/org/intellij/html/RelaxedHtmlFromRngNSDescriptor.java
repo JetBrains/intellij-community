@@ -34,9 +34,6 @@ import static com.intellij.xml.util.HtmlUtil.MATH_ML_NAMESPACE;
 import static com.intellij.xml.util.HtmlUtil.SVG_NAMESPACE;
 import static com.intellij.xml.util.XmlUtil.HTML_URI;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class RelaxedHtmlFromRngNSDescriptor extends RngNsDescriptor implements RelaxedHtmlNSDescriptor {
   private static final Logger LOG = Logger.getInstance(RelaxedHtmlFromRngNSDescriptor.class);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public class WordPrefixMatcher implements Matcher {
+public final class WordPrefixMatcher implements Matcher {
   private final String[] myPatternWords;
   private final String[] myFallbackPatternWords;
 
@@ -23,8 +23,7 @@ public class WordPrefixMatcher implements Matcher {
     return matches(myPatternWords, nameWords) || myFallbackPatternWords != null && matches(myFallbackPatternWords, nameWords);
   }
 
-  @NotNull
-  private static String[] splitToWords(@NotNull String string) {
+  private static @NotNull String[] splitToWords(@NotNull String string) {
     return string.split("[\\s-/]");
   }
 

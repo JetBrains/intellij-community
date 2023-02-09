@@ -24,20 +24,19 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scrollbarWidth
-import kotlinx.coroutines.Deferred
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import javax.swing.JLabel
 
 @Suppress("MagicNumber") // Swing dimension constants
 internal class HeaderPanel(
-    onUpdateAllLinkClicked: (List<PackageSearchOperation<*>>) -> Unit
+    onUpdateAllLinkClicked: (PackageManagementOperationExecutor.() -> Unit) -> Unit
 ) : BorderLayoutPanel() {
 
     private val titleLabel = JLabel().apply {
@@ -63,7 +62,7 @@ internal class HeaderPanel(
         insets.top = 3.scaled()
     }
 
-    private var updateAllOperations:List<PackageSearchOperation<*>>? = null
+    private var updateAllOperations: PackageManagementOperationExecutor.() -> Unit = {  }
 
     init {
         PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.smallHeaderHeight.get())
@@ -90,7 +89,7 @@ internal class HeaderPanel(
         )
 
         updateAllLink.addHyperlinkListener {
-            updateAllOperations?.let { onUpdateAllLinkClicked(it) }
+            onUpdateAllLinkClicked(updateAllOperations)
             PackageSearchEventsLogger.logUpgradeAll()
         }
     }
@@ -111,7 +110,7 @@ internal class HeaderPanel(
         countLabel.isVisible = true
         countLabel.text = viewModel.count.toString()
 
-        updateAllOperations = viewModel.updateOperations
+        updateAllOperations = viewModel.upgradeOperations
         if (viewModel.availableUpdatesCount > 0) {
             updateAllLink.setHyperlinkText(
                 PackageSearchBundle.message(

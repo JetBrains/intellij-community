@@ -154,8 +154,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
 
   @Nullable
   private static PsiReference createSchemaPrefixReference(final PsiElement element) {
-    if (element instanceof XmlAttributeValue) {
-      final XmlAttributeValue attributeValue = (XmlAttributeValue)element;
+    if (element instanceof XmlAttributeValue attributeValue) {
       final String prefix = XmlUtil.findPrefixByQualifiedName(attributeValue.getValue());
       if (!prefix.isEmpty()) {
         return new SchemaPrefixReference(attributeValue, TextRange.from(1, prefix.length()), prefix, null);

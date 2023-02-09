@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +9,7 @@ import java.util.function.Supplier;
  * Lazy value with ability to reset (and recompute) the (not-null) value.
  * Thread-safe version: {@link AtomicClearableLazyValue}.
  */
-public abstract class ClearableLazyValue<T> {
+public abstract class ClearableLazyValue<T> implements Supplier<T> {
   public static @NotNull <T> ClearableLazyValue<T> create(@NotNull Supplier<? extends @NotNull T> computable) {
     return new ClearableLazyValue<T>() {
       @Override
@@ -29,6 +29,11 @@ public abstract class ClearableLazyValue<T> {
   }
 
   private T myValue;
+
+  @Override
+  public final T get() {
+    return getValue();
+  }
 
   protected abstract @NotNull T compute();
 

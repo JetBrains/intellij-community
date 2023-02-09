@@ -38,9 +38,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author vlan
- */
 public final class PyiUtil {
   private PyiUtil() {}
 
@@ -236,14 +233,12 @@ public final class PyiUtil {
       return true;
     };
 
-    if (owner instanceof PyClass) {
-      final PyClass cls = (PyClass)owner;
+    if (owner instanceof PyClass cls) {
       if (name != null) {
         cls.visitMethods(overloadsProcessor, false, context);
       }
     }
-    else if (owner instanceof PyFile) {
-      final PyFile file = (PyFile)owner;
+    else if (owner instanceof PyFile file) {
       for (PyFunction f : file.getTopLevelFunctions()) {
         if (!overloadsProcessor.process(f)) {
           break;

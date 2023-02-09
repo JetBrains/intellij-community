@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
-import com.intellij.codeInsight.hints.declarative.CollapseState
-import com.intellij.codeInsight.hints.declarative.InlayActionData
-import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
-import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.testFramework.UsefulTestCase
 
 class PresentationEntryBuildingTest : UsefulTestCase() {
@@ -52,11 +49,11 @@ class PresentationEntryBuildingTest : UsefulTestCase() {
   }
 
   fun testCollapsibleWithButtonExpanded() {
-    testBuildEntries(txt("List"), txt("<"), txt("String"), txt(">"), b = stringListGenerics(CollapseState.Expanded))
+    testBuildEntries(txt("List"), txt("<"), txt("String"), txt(">"), b = { stringListGenerics(CollapseState.Expanded) })
   }
 
   fun testCollapsibleWithButtonCollapsed() {
-    testBuildEntries(txt("List"), txt("<...>"), b = stringListGenerics(CollapseState.Collapsed))
+    testBuildEntries(txt("List"), txt("<...>"), b = { stringListGenerics(CollapseState.Collapsed) })
   }
 
   fun testTextNoClick() {
@@ -90,6 +87,21 @@ class PresentationEntryBuildingTest : UsefulTestCase() {
     }
   }
 
+
+  fun testListCollapsesWhenTooDeep() {
+    testBuildText("List<List<...>>") {
+      genericList(CollapseState.NoPreference) {
+        genericList(CollapseState.NoPreference) {
+          genericList(CollapseState.NoPreference) {
+            genericList(CollapseState.NoPreference) {
+              text("Hello")
+            }
+          }
+        }
+      }
+    }
+  }
+
   fun testTooLongList() {
     val expected = ArrayList<TextInlayPresentationEntry>(PresentationTreeBuilderImpl.MAX_NODE_COUNT - 1) // + root
     repeat(PresentationTreeBuilderImpl.MAX_NODE_COUNT - 2) {
@@ -103,7 +115,13 @@ class PresentationEntryBuildingTest : UsefulTestCase() {
     }
   }
 
-  private fun stringListGenerics(state: CollapseState): PresentationTreeBuilder.() -> Unit = {
+  private fun PresentationTreeBuilder.stringListGenerics(state: CollapseState) {
+    genericList(state) {
+      text("String")
+    }
+  }
+
+  private fun PresentationTreeBuilder.genericList(state: CollapseState, content: CollapsiblePresentationTreeBuilder.() -> Unit) {
     text("List")
     collapsibleList(
       state,
@@ -111,7 +129,7 @@ class PresentationEntryBuildingTest : UsefulTestCase() {
         toggleButton {
           text("<")
         }
-        text("String")
+        content()
         toggleButton {
           text(">")
         }
@@ -123,8 +141,16 @@ class PresentationEntryBuildingTest : UsefulTestCase() {
       })
   }
 
-  private fun txt(str: String) : TextInlayPresentationEntry {
+  private fun txt(str: String): TextInlayPresentationEntry {
     return TextInlayPresentationEntry(str, clickArea = null)
+  }
+
+  private fun testBuildText(expected: String, b: PresentationTreeBuilder.() -> Unit) {
+    val treeBuilder = PresentationTreeBuilderImpl.createRoot()
+    b(treeBuilder)
+    val entryBuilder = PresentationEntryBuilder(treeBuilder.complete())
+    val entries = entryBuilder.buildPresentationEntries().toList()
+    assertEquals(expected, entries.joinToString(separator = "") { (it as TextInlayPresentationEntry).text })
   }
 
   private fun testBuildEntries(vararg expected: InlayPresentationEntry, b: PresentationTreeBuilder.() -> Unit) {
@@ -155,7 +181,8 @@ class PresentationEntryBuildingTest : UsefulTestCase() {
         }
         segmentText.append(entry.text)
         previousActionData = actionData
-      } else {
+      }
+      else {
         segmentText.append(entry.text)
       }
     }

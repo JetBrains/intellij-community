@@ -68,36 +68,34 @@ final class PersistentFSRecordAccessor {
 
   // todo: Address  / capacity store in records table, size store with payload
   public int createRecord() throws IOException {
-    PersistentFSConnection connection = myFSConnection;
-    connection.markDirty();
+    myFSConnection.markDirty();
 
-    final int reusedRecordId = connection.reserveFreeRecord();
+    final int reusedRecordId = myFSConnection.reserveFreeRecord();
     if (reusedRecordId < 0) {
       return myFSConnection.getRecords().allocateRecord();
     }
     else {//there is a record for re-use, but let's clean it up first:
       deleteContentAndAttributes(reusedRecordId);
-      connection.getRecords().cleanRecord(reusedRecordId);
+      myFSConnection.getRecords().cleanRecord(reusedRecordId);
       return reusedRecordId;
     }
   }
 
   public void checkSanity() throws IOException {
-    PersistentFSConnection connection = myFSConnection;
     final long startedAtNs = System.nanoTime();
 
     final int fileLength = recordsFileLength();
-    assert fileLength % PersistentFSRecordsStorage.recordsLength() == 0;
-    final int recordCount = fileLength / PersistentFSRecordsStorage.recordsLength();
+    assert fileLength % PersistentFSRecordsStorageFactory.recordsLength() == 0;
+    final int recordCount = fileLength / PersistentFSRecordsStorageFactory.recordsLength();
 
     final IntList usedAttributeRecordIds = new IntArrayList();
     final IntList validAttributeIds = new IntArrayList();
-    final IntList freeRecords = connection.getFreeRecords();
+    final IntList freeRecords = myFSConnection.getFreeRecords();
     //FIXME RC: here we start from record #2 because 0-th record is used for header, and 1st record is used for root, which is also
     //          somehow special, hence we skip its validation here. I think, this is kind of sacred knowledge that should be either
     //          made explicit, or encapsulated
     for (int id = 2; id < recordCount; id++) {
-      final int flags = connection.getRecords().getFlags(id);
+      final int flags = myFSConnection.getRecords().getFlags(id);
       LOG.assertTrue((flags & ~ALL_VALID_FLAGS) == 0, "Invalid flags: 0x" + Integer.toHexString(flags) + ", id: " + id);
 
       final boolean recordInFreeList = freeRecords.contains(id);

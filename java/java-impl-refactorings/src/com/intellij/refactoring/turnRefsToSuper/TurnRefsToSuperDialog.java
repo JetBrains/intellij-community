@@ -18,9 +18,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class TurnRefsToSuperDialog extends RefactoringDialog {
   private final PsiClass mySubClass;
   private final List<? extends PsiClass> mySuperClasses;

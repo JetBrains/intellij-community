@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Danila Ponomarenko
- */
 public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "ParameterCanBeLocal";
 
@@ -155,8 +152,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
       final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
       if (references.isEmpty()) return Collections.emptyList();
       final PsiElement scope = variable.getDeclarationScope();
-      if (!(scope instanceof PsiMethod)) return Collections.emptyList();
-      final PsiMethod method = (PsiMethod)scope;
+      if (!(scope instanceof PsiMethod method)) return Collections.emptyList();
       if (!IntentionPreviewUtils.prepareElementForWrite(method)) return Collections.emptyList();
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final List<ParameterInfoImpl> info = new ArrayList<>();

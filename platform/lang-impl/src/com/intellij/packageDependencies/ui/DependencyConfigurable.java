@@ -3,11 +3,15 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.scopeChooser.PackageSetChooserCombo;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -276,5 +280,20 @@ public class DependencyConfigurable implements Configurable, Configurable.NoScro
       newList.set(index2, r1);
       setItems(newList);
     }
+  }
+
+  /**
+   * @return a JButton to open a dialog to edit this configurable
+   */
+  public static JButton getConfigureButton() {
+    var button = new JButton(CodeInsightBundle.message("jvm.inspections.dependency.configure.button.text"));
+    button.addActionListener(e -> {
+      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
+      if (project == null) {
+        project = ProjectManager.getInstance().getDefaultProject();
+      }
+      ShowSettingsUtil.getInstance().editConfigurable(button, new DependencyConfigurable(project));
+    });
+    return button;
   }
 }

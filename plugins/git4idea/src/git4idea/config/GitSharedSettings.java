@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
-import git4idea.log.GitRefManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +14,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
+
+import static git4idea.log.GitRefManager.MAIN;
+import static git4idea.log.GitRefManager.MASTER;
 
 @State(name = "GitSharedSettings", storages = @Storage("vcs.xml"))
 public class GitSharedSettings implements PersistentStateComponent<GitSharedSettings.State> {
@@ -27,7 +28,7 @@ public class GitSharedSettings implements PersistentStateComponent<GitSharedSett
   }
 
   public static class State {
-    public List<@NonNls String> FORCE_PUSH_PROHIBITED_PATTERNS = ContainerUtil.newArrayList(GitRefManager.MASTER);
+    public List<@NonNls String> FORCE_PUSH_PROHIBITED_PATTERNS = List.of(MASTER, MAIN);
     public boolean synchronizeBranchProtectionRules = true;
   }
 

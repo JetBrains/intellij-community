@@ -9,9 +9,10 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsConfiguration
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.NlsSafe
 
-private class AndroidPluginIncompatibilityCheckerStartupActivity : ProjectPostStartupActivity {
+private class AndroidPluginIncompatibilityCheckerStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
         NotificationsConfiguration.getNotificationsConfiguration()
             .register(
@@ -29,13 +30,19 @@ private class AndroidPluginIncompatibilityCheckerStartupActivity : ProjectPostSt
     }
 }
 
+
 private class AndroidPluginWarningNotification : Notification(
     ID,
     ID,
-    "Android Plugin is incompatible with FIR IDE. Please, consider disabling Android plugin. Otherwise, Kotlin resolve may not work.",
+    message,
     NotificationType.ERROR,
 ) {
     companion object {
-        const val ID = "Android Plugin is incompatible with FIR IDE"
+        @NlsSafe
+        val ID = "Android Plugin is incompatible with FIR IDE"
+
+        @NlsSafe
+        private const val message =
+            "Android Plugin is incompatible with FIR IDE. Please, consider disabling Android plugin. Otherwise, Kotlin resolve may not work."
     }
 }

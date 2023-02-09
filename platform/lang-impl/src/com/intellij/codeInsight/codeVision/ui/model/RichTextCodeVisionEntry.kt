@@ -6,14 +6,16 @@ import com.intellij.codeInsight.codeVision.CodeVisionEntryExtraActionModel
 import com.intellij.codeInsight.codeVision.codeVisionEntryMouseEventKey
 import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.Nls
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 
 open class RichTextCodeVisionEntry(providerId: String,
                                    val text: RichText,
                                    icon: Icon? = null,
-                                   longPresentation: String = "",
-                                   tooltip: String = "",
+                                   @Nls longPresentation: String = "",
+                                   @NlsContexts.Tooltip tooltip: String = "",
                                    extraActions: List<CodeVisionEntryExtraActionModel> = emptyList())
   : CodeVisionEntry(providerId, icon, longPresentation, tooltip, extraActions)
 
@@ -21,8 +23,8 @@ class ClickableRichTextCodeVisionEntry(providerId: String,
                                        text: RichText,
                                        val onClick: (MouseEvent?, Editor) -> Unit,
                                        icon: Icon? = null,
-                                       longPresentation: String = "",
-                                       tooltip: String = "",
+                                       @Nls longPresentation: String = "",
+                                       @NlsContexts.Tooltip tooltip: String = "",
                                        extraActions: List<CodeVisionEntryExtraActionModel> = emptyList()) : RichTextCodeVisionEntry(
   providerId, text, icon, longPresentation, tooltip, extraActions), CodeVisionPredefinedActionEntry {
   override fun onClick(editor: Editor) {

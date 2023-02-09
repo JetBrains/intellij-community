@@ -64,8 +64,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
 
   @Override
   protected boolean acceptItem(final NavigationItem item) {
-    if (item instanceof PsiFile) {
-      final PsiFile file = (PsiFile)item;
+    if (item instanceof PsiFile file) {
       final Collection<FileTypeRef> types = getFilterItems();
       // if language substitutors are used, PsiFile.getFileType() can be different from
       // PsiFile.getVirtualFile().getFileType()
@@ -204,8 +203,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
                                                                                   @NotNull PsiFileSystemItem value,
                                                                                   @NotNull GotoFileModel model) {
     String shortName = model.getElementName(value);
-    String fullName = model.getFullName(value);
-    if (shortName != null && fullName != null && defaultMatchers.nameMatcher instanceof MinusculeMatcher) {
+    if (shortName != null && defaultMatchers.nameMatcher instanceof MinusculeMatcher) {
       String sanitized = GotoFileItemProvider
         .getSanitizedPattern(((MinusculeMatcher)defaultMatchers.nameMatcher).getPattern(), model);
       for (int i = sanitized.lastIndexOf('/') + 1; i < sanitized.length() - 1; i++) {

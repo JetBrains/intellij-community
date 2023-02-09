@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author spleaner
  * @author Konstantin Bulenkov
  */
 class FileColorConfiguration implements Cloneable {

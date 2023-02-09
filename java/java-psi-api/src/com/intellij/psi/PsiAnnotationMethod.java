@@ -20,8 +20,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a method which is declared on an annotation interface and
  * possibly specifies the default value of the annotation element.
- *
- * @author ven
  */
 public interface PsiAnnotationMethod extends PsiMethod {
   /**

@@ -750,4 +750,11 @@ void foo(MyRunnable runnable) {}
 foo<warning>({ println 2 })</warning>
 """, GroovyAssignabilityCheckInspection
   }
+
+  void 'test no constant value warning'() {
+    myFixture.addFileToProject("A.groovy", "class A { public static final String CONST = \"1\" }")
+    myFixture.addClass("@Deprecated(since = A.CONST) public class Main {}")
+    myFixture.configureByText("Main.java", "@Deprecated(since = A.CONST) public class Main {}")
+    myFixture.checkHighlighting()
+  }
 }

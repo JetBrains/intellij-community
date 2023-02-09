@@ -351,10 +351,6 @@ public class JpsOutputLoaderManager {
       long startTime = System.currentTimeMillis();
       BuildFSState fsState = new BuildFSState(false);
       final File dataStorageRoot = Utils.getDataStorageRoot(myProjectPath);
-      if (dataStorageRoot == null) {
-        LOG.warn("Cannot determine build data storage root for project");
-        return null;
-      }
       if (!dataStorageRoot.exists() || !new File(dataStorageRoot, FS_STATE_FILE).exists()) {
         // invoked the very first time for this project
         buildRunner.setForceCleanCaches(true);

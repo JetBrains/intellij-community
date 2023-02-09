@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -23,15 +24,17 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class WriteOnlyObjectInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher OBJECT_CLONE =
     CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_OBJECT, "clone").parameterCount(0);
   public boolean ignoreImpureConstructors = true;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("write.only.object.option.ignore.impure.constructors"),
-                                          this, "ignoreImpureConstructors");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreImpureConstructors", InspectionGadgetsBundle.message("write.only.object.option.ignore.impure.constructors")));
   }
 
   @Override

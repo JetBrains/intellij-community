@@ -6,13 +6,12 @@ import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.intentions.ConvertToStringTemplateIntention
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class JoinToStringTemplateHandler : JoinRawLinesHandlerDelegate {
     override fun tryJoinRawLines(document: Document, file: PsiFile, start: Int, end: Int): Int {
@@ -23,8 +22,9 @@ class JoinToStringTemplateHandler : JoinRawLinesHandlerDelegate {
         val index = if (c == '\n') start - 1 else start
 
         val plus = file.findElementAt(index)?.takeIf { it.node?.elementType == KtTokens.PLUS } ?: return -1
-        var binaryExpr = (plus.parent.parent as? KtBinaryExpression) ?: return -1
-        if (!binaryExpr.joinable()) return -1
+        var binaryExpr = plus.parents.match(KtOperationReferenceExpression::class, last = KtBinaryExpression::class)
+            ?.takeIf(KtBinaryExpression::joinable)
+            ?: return -1
 
         val lineCount = binaryExpr.getLineCount()
 

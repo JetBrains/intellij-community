@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.treeStructure.filtered;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
@@ -221,16 +222,16 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     }
 
     @Override
-    protected void doUpdate() {
-      clearColoredText();
+    protected void doUpdate(@NotNull PresentationData presentation) {
+      presentation.clearText();
       if (myDelegate instanceof PresentableNodeDescriptor<?> node) {
         node.update();
-        apply(node.getPresentation());
+        presentation.applyFrom(node.getPresentation());
       } else if (myDelegate != null) {
         NodeDescriptor<?> descriptor = myBaseStructure.createDescriptor(myDelegate, getParentDescriptor());
         descriptor.update();
-        setUniformIcon(descriptor.getIcon());
-        setPlainText(myDelegate.toString());
+        presentation.setIcon(descriptor.getIcon());
+        presentation.setPresentableText(myDelegate.toString());
       }
     }
 

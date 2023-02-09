@@ -11,7 +11,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -443,27 +442,35 @@ public final class PyPsiUtils {
   }
 
   @NotNull
-  static <T, U extends PsiElement> List<T> collectStubChildren(@NotNull U e,
-                                                               @Nullable StubElement<U> stub,
-                                                               @NotNull IElementType elementType) {
+  static <T extends PyElement> List<T> collectStubChildren(@NotNull PyFile pyFile,
+                                                           @Nullable StubElement<?> stub,
+                                                           @NotNull Class<T> elementType) {
     final List<T> result = new ArrayList<>();
     if (stub != null) {
-      final List<StubElement> children = stub.getChildrenStubs();
-      for (StubElement child : children) {
-        if (child.getStubType() == elementType) {
-          //noinspection unchecked
-          result.add((T)child.getPsi());
+      @SuppressWarnings("rawtypes") final List<StubElement> children = stub.getChildrenStubs();
+      for (StubElement<?> child : children) {
+        PsiElement childPsi = child.getPsi();
+        if (elementType.isInstance(childPsi)) {
+          result.add(elementType.cast(childPsi));
         }
       }
     }
     else {
-      e.acceptChildren(new TopLevelVisitor() {
+      pyFile.acceptChildren(new TopLevelVisitor() {
         @Override
         protected void checkAddElement(PsiElement node) {
-          if (node.getNode().getElementType() == elementType) {
-            //noinspection unchecked
-            result.add((T)node);
+          if (elementType.isInstance(node)) {
+            result.add(elementType.cast(node));
           }
+        }
+
+        @Override
+        public void visitPyStatement(@NotNull PyStatement node) {
+          if (PyStatement.class.isAssignableFrom(elementType) && !(node instanceof PyCompoundStatement)) {
+            checkAddElement(node);
+            return;
+          }
+          super.visitPyStatement(node);
         }
       });
     }
@@ -520,7 +527,7 @@ public final class PyPsiUtils {
     return attr;
   }
 
-  public static List<PyExpression> getAttributeValuesFromFile(@NotNull PyFile file, @NotNull String name) {
+  public static @NotNull List<PyExpression> getAttributeValuesFromFile(@NotNull PyFile file, @NotNull String name) {
     List<PyExpression> result = new ArrayList<>();
     final PyTargetExpression attr = file.findTopLevelAttribute(name);
     if (attr != null) {
@@ -532,7 +539,7 @@ public final class PyPsiUtils {
   public static void sequenceToList(List<? super PyExpression> result, PyExpression value) {
     value = flattenParens(value);
     if (value instanceof PySequenceExpression) {
-      result.addAll(ContainerUtil.newArrayList(((PySequenceExpression)value).getElements()));
+      ContainerUtil.addAll(result, ((PySequenceExpression)value).getElements());
     }
     else {
       result.add(value);

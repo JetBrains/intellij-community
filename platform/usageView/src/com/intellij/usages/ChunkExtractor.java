@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -174,7 +174,7 @@ public final class ChunkExtractor {
   /**
    * @deprecated use {@link #appendTextChunks(UsageInfo2UsageAdapter, CharSequence, int, int, boolean, List)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public TextChunk @NotNull [] createTextChunks(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,
                                                 @NotNull CharSequence chars,
                                                 int start,
@@ -266,10 +266,14 @@ public final class ChunkExtractor {
 
   @Nullable UsageType deriveUsageTypeFromHighlighting(@NotNull CharSequence chars, int usageStartOffset, int usageEndOffset) {
     Ref<UsageType> result = new Ref<>();
-    processTokens(chars, usageStartOffset, usageEndOffset, (__1, __2, tokenAttributeKeys) -> {
+    processTokens(chars, usageStartOffset, usageEndOffset, (tokenStart, tokenEnd, tokenAttributeKeys) -> {
       UsageType usageType = deriveUsageTypeFromHighlighting(tokenAttributeKeys);
-      if (usageType != null) {
+      if (tokenStart <= usageStartOffset) {
         result.set(usageType);
+        return usageType != null;
+      }
+      else if (result.get() != usageType) {
+        result.set(null);
         return false;
       }
       return true;
@@ -278,11 +282,13 @@ public final class ChunkExtractor {
   }
 
   private static @Nullable UsageType deriveUsageTypeFromHighlighting(@NotNull TextAttributesKey @NotNull [] tokenAttributeKeys) {
-    return isHighlightedAsString(tokenAttributeKeys)
-           ? UsageType.LITERAL_USAGE
-           : isHighlightedAsComment(tokenAttributeKeys)
-             ? UsageType.COMMENT_USAGE
-             : null;
+    if (isHighlightedAsString(tokenAttributeKeys)) {
+      return UsageType.LITERAL_USAGE;
+    }
+    if (isHighlightedAsComment(tokenAttributeKeys)) {
+      return UsageType.COMMENT_USAGE;
+    }
+    return null;
   }
 
   public static boolean isHighlightedAsComment(TextAttributesKey @NotNull ... keys) {
@@ -305,7 +311,9 @@ public final class ChunkExtractor {
 
   public static boolean isHighlightedAsString(TextAttributesKey @NotNull ... keys) {
     for (TextAttributesKey key : keys) {
-      if (key == DefaultLanguageHighlighterColors.STRING) {
+      if (key == DefaultLanguageHighlighterColors.STRING || 
+          key == DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE ||
+          key == DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE) {
         return true;
       }
       if (key == null) {

@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.ui.UISettings.Companion.getInstance
@@ -13,7 +15,7 @@ import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -36,7 +38,11 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     connection.subscribe(UISettingsListener.TOPIC, UISettingsListener { trimToSize() })
     connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, object : FileEditorManagerListener.Before {
       override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) {
-        updateHistoryEntry(file, false)
+        updateHistoryEntry(fileEditorManager = source as FileEditorManagerEx,
+                           file = file,
+                           fileEditor = null,
+                           fileEditorProvider = null,
+                           changeEntryOrderOnly = false)
       }
     })
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, MyEditorManagerListener())
@@ -56,7 +62,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     fun getInstance(project: Project): EditorHistoryManager = project.service()
   }
 
-  internal class EditorHistoryManagerStartUpActivity : ProjectPostStartupActivity {
+  internal class EditorHistoryManagerStartUpActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
       getInstance(project)
     }
@@ -89,7 +95,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       return
     }
 
-    val editorManager = FileEditorManagerEx.getInstanceEx(project)
+    val editorManager = FileEditorManagerEx.getInstanceExIfCreated(project) ?: return
     val editorComposite = editorManager.getComposite(file)
     var editors = editorComposite?.allEditors ?: emptyList()
     var oldProviders = editorComposite?.allProviders ?: emptyList()
@@ -132,19 +138,23 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
   }
 
   fun updateHistoryEntry(file: VirtualFile, changeEntryOrderOnly: Boolean) {
-    updateHistoryEntry(file, null, null, changeEntryOrderOnly)
+    updateHistoryEntry(fileEditorManager = FileEditorManagerEx.getInstanceEx(project),
+                       file = file,
+                       fileEditor = null,
+                       fileEditorProvider = null,
+                       changeEntryOrderOnly = changeEntryOrderOnly)
   }
 
-  private fun updateHistoryEntry(file: VirtualFile,
+  private fun updateHistoryEntry(fileEditorManager: FileEditorManagerEx,
+                                 file: VirtualFile,
                                  fileEditor: FileEditor?,
                                  fileEditorProvider: FileEditorProvider?,
                                  changeEntryOrderOnly: Boolean) {
-    val editorManager = FileEditorManagerEx.getInstanceEx(project)
     val editors: List<FileEditor>
     val providers: List<FileEditorProvider>
     var preview = false
     if (fileEditor == null || fileEditorProvider == null) {
-      val composite = editorManager.getComposite(file)
+      val composite = fileEditorManager.getComposite(file)
       editors = composite?.allEditors ?: emptyList()
       providers = composite?.allProviders ?: emptyList()
       preview = composite != null && composite.isPreview
@@ -154,13 +164,12 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       providers = listOf(fileEditorProvider)
     }
     if (editors.isEmpty()) {
-      // obviously not opened in any editor at the moment,
-      // makes no sense to put the file in the history
+      // obviously, not opened in any editor at the moment makes no sense to put the file in the history
       return
     }
     val entry = getEntry(file)
     if (entry == null) {
-      // Size of entry list can be less than number of opened editors (some entries can be removed)
+      // The size of an entry list can be less than the number of opened editors (some entries can be removed)
       if (file.isValid) {
         // the file could have been deleted, so the isValid() check is essential
         fileOpenedImpl(file, fileEditor, fileEditorProvider)
@@ -174,8 +183,8 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
         val provider = providers[i]
         // can happen if fileEditorProvider is null
         if (!editor.isValid) {
-          // this can happen for example if file extension was changed
-          // and this method was called during corresponding myEditor close up
+          // this can happen, for example, if a file extension was changed
+          // and this method was called during the corresponding myEditor close up
           continue
         }
         val oldState = entry.getState(provider)
@@ -185,7 +194,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
         }
       }
     }
-    val selectedEditorWithProvider = editorManager.getSelectedEditorWithProvider(file)
+    val selectedEditorWithProvider = fileEditorManager.getSelectedEditorWithProvider(file)
     if (selectedEditorWithProvider != null) {
       //LOG.assertTrue(selectedEditorWithProvider != null);
       entry.selectedProvider = selectedEditorWithProvider.provider
@@ -277,16 +286,16 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
 
   @Synchronized
   override fun loadState(state: Element) {
-    // each HistoryEntry contains myDisposable that must be disposed to dispose corresponding virtual file pointer
+    // each HistoryEntry contains myDisposable that must be disposed to dispose a corresponding virtual file pointer
     removeAllFiles()
 
-    // backward compatibility - previously entry maybe duplicated
-    val fileToElement: MutableMap<String, Element> = LinkedHashMap()
+    // backward compatibility - previous entry maybe duplicated
+    val fileToElement = LinkedHashMap<String, Element>()
     for (e in state.getChildren(HistoryEntry.TAG)) {
       val file = e.getAttributeValue(HistoryEntry.FILE_ATTR)
       fileToElement.remove(file)
-      // last is the winner
-      fileToElement[file] = e
+      // the last is the winner
+      fileToElement.put(file, e)
     }
     for (e in fileToElement.values) {
       try {
@@ -304,12 +313,17 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
   override fun getState(): Element {
     val element = Element("state")
     // update history before saving
-    val openFiles = FileEditorManager.getInstance(project).openFiles
+    val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+    val openFiles = fileEditorManager.openFiles
     for (i in openFiles.indices.reversed()) {
       val file = openFiles[i]
       // we have to update only files that are in history
       if (getEntry(file) != null) {
-        updateHistoryEntry(file, false)
+        updateHistoryEntry(fileEditorManager = fileEditorManager,
+                           file = file,
+                           fileEditor = null,
+                           fileEditorProvider = null,
+                           changeEntryOrderOnly = false)
       }
     }
     for (entry in entries) {
@@ -333,7 +347,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
 
     override fun selectionChanged(event: FileEditorManagerEvent) {
       // updateHistoryEntry does commitDocument which is 1) very expensive and 2) cannot be performed from within PSI change listener
-      // so defer updating history entry until documents committed to improve responsiveness
+      // so defer updating history entry until documents are committed to improve responsiveness
       PsiDocumentManager.getInstance(project).performWhenAllCommitted {
         val newEditor = event.newEditor
         if (newEditor != null && !newEditor.isValid) {
@@ -342,14 +356,20 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
 
         val oldFile = event.oldFile
         if (oldFile != null) {
-          updateHistoryEntry(file = oldFile,
+          updateHistoryEntry(fileEditorManager = event.manager as FileEditorManagerEx,
+                             file = oldFile,
                              fileEditor = event.oldEditor,
                              fileEditorProvider = event.oldProvider,
                              changeEntryOrderOnly = false)
         }
+
         val newFile = event.newFile
         if (newFile != null) {
-          updateHistoryEntry(file = newFile, changeEntryOrderOnly = true)
+          updateHistoryEntry(fileEditorManager = event.manager as FileEditorManagerEx,
+                             file = newFile,
+                             fileEditor = event.newEditor,
+                             fileEditorProvider = event.newProvider,
+                             changeEntryOrderOnly = true)
         }
       }
     }

@@ -28,14 +28,14 @@ internal class KotlinCodeStyleMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_
     }
 
     override fun process(
-        modifiableModelsProvider: IdeModifiableModelsProvider?,
-        module: Module,
-        rootModel: MavenRootModelAdapter?,
-        mavenModel: MavenProjectsTree,
-        mavenProject: MavenProject,
-        changes: MavenProjectChanges?,
-        mavenProjectToModuleName: MutableMap<MavenProject, String>?,
-        postTasks: MutableList<MavenProjectsProcessorTask>
+      modifiableModelsProvider: IdeModifiableModelsProvider,
+      module: Module,
+      rootModel: MavenRootModelAdapter,
+      mavenModel: MavenProjectsTree,
+      mavenProject: MavenProject,
+      changes: MavenProjectChanges,
+      mavenProjectToModuleName: MutableMap<MavenProject, String>,
+      postTasks: MutableList<MavenProjectsProcessorTask>
     ) {
         if (mavenProject !in mavenModel.rootProjects) return
 

@@ -18,7 +18,7 @@ class ToggleDiffAligningModeAction : DumbAwareToggleAction() {
                     && viewer is SimpleDiffViewer
                     && !DiffUtil.isUserDataFlagSet(ALIGNED_TWO_SIDED_DIFF, viewer.request)
     if (!available) {
-      e.presentation.isEnabledAndVisible = available
+      e.presentation.isEnabledAndVisible = false
       return
     }
 

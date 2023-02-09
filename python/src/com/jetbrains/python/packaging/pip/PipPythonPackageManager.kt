@@ -14,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 class PipPythonPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(project, sdk) {
+  @Volatile
   override var installedPackages: List<PythonPackage> = emptyList()
     private set
 
@@ -29,15 +30,15 @@ class PipPythonPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManag
           .map {
             val line = it.split("\t")
             PythonPackage(line[0], line[1])
-          }.toList()
+          }
+          .sortedWith(compareBy(PythonPackage::name))
+          .toList()
         Result.success(packages)
       }
 
       if (result.isFailure) return@withContext result
 
-      withContext(Dispatchers.Main) {
-        installedPackages = result.getOrThrow()
-      }
+      installedPackages = result.getOrThrow()
 
       ApplicationManager.getApplication()
         .messageBus

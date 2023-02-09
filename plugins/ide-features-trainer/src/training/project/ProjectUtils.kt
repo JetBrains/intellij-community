@@ -12,7 +12,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.NOTIFICATIONS_SILENT_MODE
@@ -23,7 +22,6 @@ import com.intellij.openapi.vfs.*
 import com.intellij.util.Consumer
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
 import training.lang.LangManager
 import training.lang.LangSupport
@@ -37,6 +35,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
+import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.name
 
@@ -268,12 +267,6 @@ object ProjectUtils {
     contentEntry.addSourceFolder(sourcesRoot, false)
     runWriteAction(rootsModel::commit)
     project.save()
-  }
-
-  fun closeAllEditorsInProject(project: Project) {
-    FileEditorManagerEx.getInstanceEx(project).windows.forEach {
-      it.files.forEach { file -> it.closeFile(file) }
-    }
   }
 
   fun restoreProject(languageSupport: LangSupport, project: Project) {

@@ -30,8 +30,7 @@ public class JqlCompletionContributor extends CompletionContributor {
   private static final FilterPattern BEGINNING_OF_LINE = new FilterPattern(new ElementFilter() {
     @Override
     public boolean isAcceptable(Object element, @Nullable PsiElement context) {
-      if (!(element instanceof PsiElement)) return false;
-      PsiElement p = (PsiElement)element;
+      if (!(element instanceof PsiElement p)) return false;
       PsiFile file = p.getContainingFile().getOriginalFile();
       char[] chars = file.textToCharArray();
       for (int offset = p.getTextOffset() - 1; offset >= 0; offset--) {

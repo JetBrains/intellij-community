@@ -27,19 +27,13 @@ import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
-import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
-import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.toBuilder
@@ -197,7 +191,7 @@ class ModuleBridgesTest {
   @Test
   fun `test rename module and all dependencies in other modules`() = runBlocking {
     val checkModuleDependency = { moduleName: String, dependencyModuleName: String ->
-      assertNotNull(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java)
+      assertNotNull(WorkspaceModel.getInstance(project).currentSnapshot.entities(ModuleEntity::class.java)
                       .first { it.symbolicId.name == moduleName }.dependencies
                       .find { it is ModuleDependencyItem.Exportable.ModuleDependency && it.module.name == dependencyModuleName })
     }
@@ -319,14 +313,14 @@ class ModuleBridgesTest {
 
     assertEquals(
       "xxx-lib",
-      projectModel.entityStorage.current.entities(LibraryEntity::class.java).toList().single().name)
+      projectModel.currentSnapshot.entities(LibraryEntity::class.java).toList().single().name)
 
     ModuleRootModificationUtil.updateModel(module) { model ->
       val orderEntry = model.orderEntries.filterIsInstance<LibraryOrderEntry>().single()
       model.removeOrderEntry(orderEntry)
     }
 
-    assertEmpty(projectModel.entityStorage.current.entities(LibraryEntity::class.java).toList())
+    assertEmpty(projectModel.currentSnapshot.entities(LibraryEntity::class.java).toList())
   }
 
   @Test
@@ -339,13 +333,13 @@ class ModuleBridgesTest {
 
     assertEquals(
       "xxx-lib",
-      projectModel.entityStorage.current.entities(LibraryEntity::class.java).toList().single().name)
+      projectModel.currentSnapshot.entities(LibraryEntity::class.java).toList().single().name)
 
     ModuleRootModificationUtil.updateModel(module) { model ->
       model.clear()
     }
 
-    assertEmpty(projectModel.entityStorage.current.entities(LibraryEntity::class.java).toList())
+    assertEmpty(projectModel.currentSnapshot.entities(LibraryEntity::class.java).toList())
   }
 
   @Test
@@ -355,13 +349,13 @@ class ModuleBridgesTest {
     val excludedRoot = temporaryDirectoryRule.newVirtualDirectory("root/excluded")
     PsiTestUtil.addExcludedRoot(module, excludedRoot)
     val workspaceModel = WorkspaceModel.getInstance(project)
-    assertEquals(excludedRoot, workspaceModel.entityStorage.current.entities(ExcludeUrlEntity::class.java).single().url.virtualFile)
+    assertEquals(excludedRoot, workspaceModel.currentSnapshot.entities(ExcludeUrlEntity::class.java).single().url.virtualFile)
     ModuleRootModificationUtil.modifyModel(module) { model ->
       val contentEntry = model.contentEntries.single()
       contentEntry.removeExcludeFolder(contentEntry.excludeFolders.single())
       true
     }
-    assertEmpty(workspaceModel.entityStorage.current.entities(ExcludeUrlEntity::class.java).toList())
+    assertEmpty(workspaceModel.currentSnapshot.entities(ExcludeUrlEntity::class.java).toList())
   }
 
   @Test
@@ -567,7 +561,7 @@ class ModuleBridgesTest {
       assertTrue(contentEntry.sourceFolders[1].rootType is TestCustomSourceRootType)
       assertEquals("default properties", (contentEntry.sourceFolders[1].jpsElement.properties as TestCustomSourceRootProperties).testString)
 
-      val customRoots = WorkspaceModel.getInstance(project).entityStorage.current.entities(CustomSourceRootPropertiesEntity::class.java)
+      val customRoots = WorkspaceModel.getInstance(project).currentSnapshot.entities(CustomSourceRootPropertiesEntity::class.java)
         .toList()
         .sortedBy { it.sourceRoot.url.url }
       assertEquals(1, customRoots.size)
@@ -602,7 +596,7 @@ class ModuleBridgesTest {
       assertSame(UnknownSourceRootType.getInstance("unsupported-custom-source-root-type"), sourceFolder.rootType)
       assertTrue(sourceFolder.jpsElement.properties is UnknownSourceRootTypeProperties<*>)
 
-      val customRoot = WorkspaceModel.getInstance(project).entityStorage.current.entities(CustomSourceRootPropertiesEntity::class.java)
+      val customRoot = WorkspaceModel.getInstance(project).currentSnapshot.entities(CustomSourceRootPropertiesEntity::class.java)
         .toList().single()
 
       assertEquals("<sourceFolder param1=\"x y z\" />", customRoot.propertiesXmlTag)
@@ -739,7 +733,7 @@ class ModuleBridgesTest {
       projectModel.createModule("xxx")
       val moduleManager = ModuleManager.getInstance(project) as ModuleManagerBridgeImpl
 
-      moduleManager.getModifiableModel(WorkspaceModel.getInstance(project).entityStorage.current.toBuilder()).let { modifiableModel ->
+      moduleManager.getModifiableModel(WorkspaceModel.getInstance(project).currentSnapshot.toBuilder()).let { modifiableModel ->
         val existingModule = modifiableModel.modules.single { it.name == "xxx" }
         modifiableModel.disposeModule(existingModule)
         val module = projectModel.createModule("xxx", modifiableModel)
@@ -769,7 +763,7 @@ class ModuleBridgesTest {
     modifiableModel.commit()
     componentModifiableModel.commit()
 
-    val currentStore = WorkspaceModel.getInstance(project).entityStorage.current
+    val currentStore = WorkspaceModel.getInstance(project).currentSnapshot
     UsefulTestCase.assertOneElement(currentStore.entities(ModuleEntity::class.java).toList())
     UsefulTestCase.assertOneElement(currentStore.entities(LibraryEntity::class.java).toList())
 
@@ -778,7 +772,7 @@ class ModuleBridgesTest {
       it.removeEntity(moduleEntity)
     }
 
-    val updatedStore = WorkspaceModel.getInstance(project).entityStorage.current
+    val updatedStore = WorkspaceModel.getInstance(project).currentSnapshot
     assertEmpty(updatedStore.entities(ModuleEntity::class.java).toList())
     assertEmpty(updatedStore.entities(LibraryEntity::class.java).toList())
   }

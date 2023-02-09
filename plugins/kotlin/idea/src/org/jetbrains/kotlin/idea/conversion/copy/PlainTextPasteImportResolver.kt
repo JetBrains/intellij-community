@@ -45,7 +45,7 @@ class PlainTextPasteImportResolver(private val dataForConversion: DataForConvers
     private val resolutionFacade = targetFile.getResolutionFacade()
 
     private val shortNameCache = PsiShortNamesCache.getInstance(project)
-    private val scope = file.resolveScope
+    private val scope = targetFile.resolveScope
 
     private val failedToResolveReferenceNames = HashSet<String>()
     private var ambiguityInResolution = false

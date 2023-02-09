@@ -17,9 +17,6 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
-/**
- * @author ven
- */
 public class MoveInitializerToConstructorActionTest extends LightIntentionActionTestCase {
   @Override
   protected String getBasePath() {

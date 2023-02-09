@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -304,7 +304,12 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
     private final String mySessionName;
     private final boolean myAutoAddress;
 
-    DebuggerLocalAttachInfo(boolean socket, @NotNull String address, String aClass, String pid, @Nullable String sessionName, boolean autoAddress) {
+    DebuggerLocalAttachInfo(boolean socket,
+                            @NotNull String address,
+                            String aClass,
+                            String pid,
+                            @Nullable String sessionName,
+                            boolean autoAddress) {
       super(aClass, pid);
       myUseSocket = socket;
       myAddress = address;
@@ -398,7 +403,8 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
     @Nullable
     static LocalAttachInfo create(Properties systemProperties, String aClass, String pid) {
       try {
-        List<String> commands = SaJdwp.getServerProcessCommand(systemProperties, pid, "0", false, PathUtil.getJarPathForClass(SaJdwp.class));
+        List<String> commands =
+          SaJdwp.getServerProcessCommand(systemProperties, pid, "0", false, PathUtil.getJarPathForClass(SaJdwp.class));
         return new SAJDWPLocalAttachInfo(aClass, pid, commands);
       }
       catch (Exception ignored) {
@@ -543,9 +549,8 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
   }
 
   static void attach(JavaAttachDebuggerProvider.LocalAttachInfo info, Project project) {
-    RunnerAndConfigurationSettings runSettings =
-      RunManager
-        .getInstance(project).createConfiguration(info.getSessionName(), JavaAttachDebuggerProvider.ProcessAttachRunConfigurationType.FACTORY);
+    RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project)
+      .createConfiguration(info.getSessionName(), JavaAttachDebuggerProvider.ProcessAttachRunConfigurationType.FACTORY);
     ((JavaAttachDebuggerProvider.ProcessAttachRunConfiguration)runSettings.getConfiguration()).myAttachInfo = info;
     ProgramRunnerUtil.executeConfiguration(runSettings, JavaAttachDebuggerProvider.ProcessAttachDebugExecutor.INSTANCE);
   }

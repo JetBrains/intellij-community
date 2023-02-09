@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.newProjectWizard;
 
@@ -55,7 +55,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private JPanel myFrameworksPanel;
   private JLabel myLabel;
 
-  private List<FrameworkSupportInModuleProvider> myProviders;
+  private List<? extends FrameworkSupportInModuleProvider> myProviders;
   private List<FrameworkSupportNodeBase> myRoots;
 
   private final LibrariesContainer myLibrariesContainer;
@@ -82,9 +82,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
     myFrameworksTree = new FrameworksTree(model) {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
-        if (!(node instanceof FrameworkSupportNode)) return;
+        if (!(node instanceof FrameworkSupportNode frameworkSupportNode)) return;
 
-        final FrameworkSupportNode frameworkSupportNode = (FrameworkSupportNode)node;
         if (frameworkSupportNode == getSelectedNode()) {
           updateOptionsPanel();
         }
@@ -124,11 +123,11 @@ public class AddSupportForFrameworksPanel implements Disposable {
     setProviders(providers);
   }
 
-  public void setProviders(List<FrameworkSupportInModuleProvider> providers) {
+  public void setProviders(List<? extends FrameworkSupportInModuleProvider> providers) {
     setProviders(providers, Collections.emptySet(), Collections.emptySet());
   }
 
-  public void setProviders(List<FrameworkSupportInModuleProvider> providers, Set<String> associated, Set<String> preselected) {
+  public void setProviders(List<? extends FrameworkSupportInModuleProvider> providers, Set<String> associated, Set<String> preselected) {
     myProviders = providers;
 
     myAssociatedFrameworks = createNodes(myProviders, associated, preselected);
@@ -200,8 +199,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private void updateOptionsPanel() {
     final FrameworkSupportNodeBase node = getSelectedNode();
-    if (node instanceof FrameworkSupportNode) {
-      FrameworkSupportNode frameworkSupportNode = (FrameworkSupportNode)node;
+    if (node instanceof FrameworkSupportNode frameworkSupportNode) {
       initializeOptionsPanel(frameworkSupportNode, true);
       showCard(frameworkSupportNode.getId());
       UIUtil.setEnabled(myOptionsPanel, frameworkSupportNode.isChecked(), true);

@@ -13,11 +13,12 @@ public interface InjectedFormattingOptionsProvider {
   ExtensionPointName<InjectedFormattingOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.formatting.injectedOptions");
 
   /**
+   * File formatting should be delegated to a containing file only if this file knows about the structure of injection.
+   * If it's not the case, don't delegate formatting to the containing file.
    * For a given PSI file, returns
    * - `true` if code formatting should be delegated to a file which contains this injected file (top-level file)
    * - `false` if code formatting shouldn't be delegated to a top-level file
    * - `null` if default behavior should be chosen, or it should be delegated to another provider
-   * @see InjectedFormattingOptionsService
    */
   @Nullable Boolean shouldDelegateToTopLevel(@NotNull PsiFile file);
 }

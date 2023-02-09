@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options;
 
 import com.intellij.execution.*;
@@ -34,9 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author spleaner
- */
 public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBeforeRun.MakeBeforeRunTask> implements DumbAware {
   private static final Logger LOG = Logger.getInstance(CompileStepBeforeRun.class);
   public static final Key<MakeBeforeRunTask> ID = Key.create("Make");
@@ -108,11 +105,10 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   }
 
   static boolean doMake(final Project myProject, final RunConfiguration configuration, final ExecutionEnvironment env, final boolean ignoreErrors, final boolean forceMakeProject) {
-    if (!(configuration instanceof RunProfileWithCompileBeforeLaunchOption)) {
+    if (!(configuration instanceof RunProfileWithCompileBeforeLaunchOption runConfiguration)) {
       return true;
     }
-    
-    final RunProfileWithCompileBeforeLaunchOption runConfiguration = (RunProfileWithCompileBeforeLaunchOption)configuration;
+
     //noinspection deprecation
     if (runConfiguration.isExcludeCompileBeforeLaunchOption() ||
         (configuration instanceof RunConfigurationBase && ((RunConfigurationBase<?>)configuration).excludeCompileBeforeLaunchOption())) {

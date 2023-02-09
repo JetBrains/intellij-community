@@ -27,7 +27,7 @@ import javax.swing.JPanel
 internal class GHPRTimelineFileEditor(private val project: Project,
                                       private val dataContext: GHPRDataContext,
                                       private val dataProvider: GHPRDataProvider,
-                                      private val file: GHRepoVirtualFile)
+                                      private val file: GHPRTimelineVirtualFile)
   : FileEditorBase() {
 
   val securityService = dataContext.securityService

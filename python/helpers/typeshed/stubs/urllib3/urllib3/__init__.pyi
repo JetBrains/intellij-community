@@ -1,10 +1,11 @@
 import logging
-from typing import Any
+from typing import TextIO
 
 from . import connectionpool, filepost, poolmanager, response
 from .util import request as _request, retry, timeout, url
 
-__license__: Any
+__author__: str
+__license__: str
 __version__: str
 
 HTTPConnectionPool = connectionpool.HTTPConnectionPool
@@ -23,5 +24,5 @@ Retry = retry.Retry
 class NullHandler(logging.Handler):
     def emit(self, record): ...
 
-def add_stderr_logger(level=...): ...
-def disable_warnings(category=...): ...
+def add_stderr_logger(level: int = ...) -> logging.StreamHandler[TextIO]: ...
+def disable_warnings(category: type[Warning] = ...) -> None: ...

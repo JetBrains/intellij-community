@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Factory for position manager to debug classes reloaded by com.springsource.springloaded
- *
- * @author Sergey Evdokimov
  */
 public class SpringLoadedPositionManagerFactory extends PositionManagerFactory {
 

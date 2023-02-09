@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.CommonBundle;
@@ -193,20 +193,19 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         ApplicationManager.getApplication().runWriteAction(() -> {
           for (Object selectedElement : selectedElements) {
             LibraryEditor libraryEditor = getLibraryEditor();
-            if (selectedElement instanceof ItemElement) {
-              final ItemElement itemElement = (ItemElement)selectedElement;
+            if (selectedElement instanceof ItemElement itemElement) {
               libraryEditor.removeRoot(itemElement.getUrl(), itemElement.getRootType());
               myRootRemovalHandler.onRootRemoved(itemElement.getUrl(), itemElement.getRootType(), libraryEditor);
             }
-            else if (selectedElement instanceof OrderRootTypeElement) {
-              final OrderRootType rootType = ((OrderRootTypeElement)selectedElement).getOrderRootType();
+            else if (selectedElement instanceof OrderRootTypeElement orderRootTypeElement) {
+              final OrderRootType rootType = orderRootTypeElement.getOrderRootType();
               final String[] urls = libraryEditor.getUrls(rootType);
               for (String url : urls) {
                 libraryEditor.removeRoot(url, rootType);
               }
             }
-            else if (selectedElement instanceof ExcludedRootElement) {
-              libraryEditor.removeExcludedRoot(((ExcludedRootElement)selectedElement).getUrl());
+            else if (selectedElement instanceof ExcludedRootElement excludedRootElement) {
+              libraryEditor.removeExcludedRoot(excludedRootElement.getUrl());
             }
           }
         });
@@ -238,7 +237,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
-        if (button.getPreferredPopupPoint() == null) return;
         AttachFilesAction attachFilesAction = new AttachFilesAction(myDescriptor.getAttachFilesActionName());
         if (popupItems.isEmpty()) {
           attachFilesAction.perform();

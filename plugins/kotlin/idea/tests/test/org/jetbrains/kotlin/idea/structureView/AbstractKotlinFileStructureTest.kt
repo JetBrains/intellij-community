@@ -13,7 +13,9 @@ import java.io.File
 abstract class AbstractKotlinFileStructureTest : KotlinFileStructureTestBase() {
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
-    override val fileExtension = "kt"
+    override val fileExtension: String
+        get() = fileName().substringAfter(".")
+
     override val treeFileName: String get() = getFileName("after")
 
     fun doTest(path: String) {
@@ -25,7 +27,7 @@ abstract class AbstractKotlinFileStructureTest : KotlinFileStructureTestBase() {
     }
 
     protected fun FileStructurePopup.setup() {
-        val fileText = FileUtil.loadFile(File(testDataPath, fileName()), true)
+        val fileText = FileUtil.loadFile(File(testDataDirectory, fileName()), true)
 
         val withInherited = InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_INHERITED")
         setTreeActionState(nodeProviderClass(), withInherited)

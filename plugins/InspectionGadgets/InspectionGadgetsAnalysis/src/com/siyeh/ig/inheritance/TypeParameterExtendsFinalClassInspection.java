@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -72,13 +73,11 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (parent instanceof PsiTypeParameter) {
-        final PsiTypeParameter typeParameter = (PsiTypeParameter)parent;
+      if (parent instanceof PsiTypeParameter typeParameter) {
         replaceTypeParameterUsagesWithType(typeParameter);
         new CommentTracker().deleteAndRestoreComments(typeParameter);
       }
-      else if (parent instanceof PsiTypeElement) {
-        final PsiTypeElement typeElement = (PsiTypeElement)parent;
+      else if (parent instanceof PsiTypeElement typeElement) {
         final PsiElement lastChild = typeElement.getLastChild();
         if (lastChild == null) {
           return;
@@ -138,15 +137,13 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
     public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
       super.visitTypeElement(typeElement);
       final PsiType type = typeElement.getType();
-      if (!(type instanceof PsiWildcardType)) {
+      if (!(type instanceof PsiWildcardType wildcardType)) {
         return;
       }
-      final PsiWildcardType wildcardType = (PsiWildcardType)type;
       final PsiType extendsBound = wildcardType.getExtendsBound();
-      if (!(extendsBound instanceof PsiClassType)) {
+      if (!(extendsBound instanceof PsiClassType classType)) {
         return;
       }
-      final PsiClassType classType = (PsiClassType)extendsBound;
       for (PsiType typeParameter : classType.getParameters()) {
         if (typeParameter instanceof PsiWildcardType) {
           // if nested type has wildcard type parameter too, leave it
@@ -180,29 +177,58 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
     private static boolean isWildcardRequired(PsiTypeElement typeElement) {
       final PsiElement ancestor = PsiTreeUtil.skipParentsOfType(
         typeElement, PsiTypeElement.class, PsiJavaCodeReferenceElement.class, PsiReferenceParameterList.class);
-      if (ancestor instanceof PsiParameter) {
-        final PsiParameter parameter = (PsiParameter)ancestor;
+      if (ancestor instanceof PsiDeconstructionPattern deconstructionPattern) {
+        PsiForeachStatementBase parentForEach = PsiTreeUtil.getParentOfType(deconstructionPattern, PsiForeachStatementBase.class, false, PsiStatement.class);
+        if (parentForEach == null) {
+          return false;
+        }
+        if (ancestor.getParent() instanceof PsiForeachStatementBase foreachStatement) {
+          PsiExpression iteratedValue = foreachStatement.getIteratedValue();
+          if (iteratedValue == null) {
+            return false;
+          }
+          return isWildcardRequired(typeElement, deconstructionPattern.getTypeElement(),
+                                    JavaGenericsUtil.getCollectionItemType(iteratedValue));
+        }
+        else if (deconstructionPattern.getParent() instanceof PsiDeconstructionList) {
+          PsiType type = JavaPsiPatternUtil.getDeconstructedImplicitPatternType(deconstructionPattern);
+          if (type == null) {
+            return false;
+          }
+          return isWildcardRequired(typeElement, deconstructionPattern.getTypeElement(), type);
+        }
+      }
+      else if (ancestor instanceof PsiParameter parameter) {
         final PsiElement scope = parameter.getDeclarationScope();
-        if (scope instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)scope;
+        if (scope instanceof PsiMethod method) {
           if (MethodUtils.hasSuper(method)) {
             return true;
           }
         }
-        else if (scope instanceof PsiForeachStatement) {
-          final PsiForeachStatement foreachStatement = (PsiForeachStatement)scope;
+        else if (scope instanceof PsiLambdaExpression) {
+          return true;
+        }
+        else if (scope instanceof PsiForeachStatementBase foreachStatement) {
           final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
           if (iteratedValue == null) {
             return true; // incomplete code
           }
-          final PsiParameter iterationParameter = foreachStatement.getIterationParameter();
-          final PsiTypeElement foreachTypeElement = iterationParameter.getTypeElement();
-          assert foreachTypeElement != null;
-          return isWildcardRequired(typeElement, foreachTypeElement, JavaGenericsUtil.getCollectionItemType(iteratedValue));
+
+          if (scope instanceof PsiForeachStatement normalForeach) {
+            PsiParameter iterationParameter = normalForeach.getIterationParameter();
+            final PsiTypeElement foreachTypeElement = iterationParameter.getTypeElement();
+            assert foreachTypeElement != null;
+            return isWildcardRequired(typeElement, foreachTypeElement, JavaGenericsUtil.getCollectionItemType(iteratedValue));
+          } else if (ancestor instanceof PsiPatternVariable patternVariable) {
+            PsiType type = JavaPsiPatternUtil.getDeconstructedImplicitPatternVariableType(patternVariable);
+            if (type == null) {
+              return true;
+            }
+            return isWildcardRequired(typeElement, patternVariable.getTypeElement(), type);
+          }
         }
       }
-      else if (ancestor instanceof PsiLocalVariable) {
-        final PsiLocalVariable localVariable = (PsiLocalVariable)ancestor;
+      else if (ancestor instanceof PsiLocalVariable localVariable) {
         final PsiExpression initializer = localVariable.getInitializer();
         return initializer != null && isWildcardRequired(typeElement, localVariable.getTypeElement(), initializer.getType());
       }

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 
-public class ScriptGeneratorUtil {
+public final class ScriptGeneratorUtil {
   @NotNull
   private static File createBatchScript(@NotNull @NonNls String fileName, @NotNull @NonNls String commandLine) throws IOException {
     @NonNls StringBuilder sb = new StringBuilder();

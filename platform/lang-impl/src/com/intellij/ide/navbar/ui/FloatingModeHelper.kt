@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ui
 
 import com.intellij.codeInsight.hint.HintManager.HIDE_BY_ESCAPE
@@ -15,7 +15,7 @@ import com.intellij.ui.HintHint
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.AbstractPopup
-import com.intellij.util.awaitCancellation
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -31,7 +31,7 @@ internal fun CoroutineScope.showHint(dataContext: DataContext, project: Project,
   val hint = createHint(wrappedPanel)
   panel.onSizeChange = Runnable { hint.size = wrappedPanel.preferredSize }
 
-  awaitCancellation {
+  awaitCancellationAndInvoke {
     hint.hide()
   }
 
@@ -88,8 +88,7 @@ private fun CoroutineScope.createHint(contents: JPanel): LightweightHint =
       setForceShowAsPopup(true)
       setFocusRequestor(contents)
     }
-    override fun hide() {
-      super.hide()
+    override fun onPopupCancel() {
       cancel(null)
     }
   }

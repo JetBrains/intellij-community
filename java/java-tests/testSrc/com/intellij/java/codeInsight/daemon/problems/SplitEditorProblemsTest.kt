@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.problems
 
 import com.intellij.codeInsight.codeVision.CodeVisionHost
@@ -18,6 +18,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.ArrayUtilRt
+import com.intellij.util.childScope
 import javax.swing.SwingConstants
 
 internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
@@ -26,7 +27,8 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
   override fun setUp() {
     super.setUp()
     project.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
-    manager = FileEditorManagerImpl(project).also { it.initDockableContentFactory() }
+    @Suppress("DEPRECATION")
+    manager = FileEditorManagerImpl(project, project.coroutineScope.childScope()).also { it.initDockableContentFactory() }
     project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
   }
@@ -104,7 +106,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
     val currentWindow = editorManager.currentWindow!!
     editorManager.createSplitter(SwingConstants.HORIZONTAL, currentWindow)
     val nextWindow = editorManager.getNextWindow(currentWindow)!!
-    val childEditor = editorManager.openFileWithProviders(childClass.containingFile.virtualFile, false, nextWindow).first[0]
+    val childEditor = editorManager.openFile(file = childClass.containingFile.virtualFile, nextWindow).allEditors.first()
 
     // rename parent, check for errors
     WriteCommandAction.runWriteCommandAction(project) {
@@ -114,7 +116,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
     rehighlight(parentEditor)
     assertSize(2, getProblems(parentEditor))
 
-    // select child editor, remove parent from child extends list, check that number of problems changed
+    // select child editor, remove parent from a child extends list, check that the number of problems changed
     IdeFocusManager.getInstance(project).requestFocus(childEditor.component, true)
     WriteCommandAction.runWriteCommandAction(project) {
       val factory = JavaPsiFacade.getInstance(project).elementFactory

@@ -1,33 +1,32 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.notification.ActionCenter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.IdeGlassPane
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl.FrameHelper
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
@@ -38,7 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Rectangle
 import java.awt.Window
 import java.awt.event.ComponentAdapter
@@ -46,7 +45,6 @@ import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.accessibility.AccessibleContext
 import javax.swing.*
@@ -63,13 +61,14 @@ open class ProjectFrameHelper internal constructor(
   private var currentFile: Path? = null
   private var project: Project? = null
 
-  @get:ApiStatus.Internal
+  @JvmField
+  @Internal
   val rootPane: IdeRootPane
 
   private var balloonLayout: BalloonLayout? = null
   private val frameDecorator: IdeFrameDecorator?
 
-  // frame can be activated before project is assigned to it,
+  // frame can be activated before a project is assigned to it,
   // so we remember the activation time and report it against the assigned project later
   private var activationTimestamp: Long? = null
 
@@ -169,14 +168,15 @@ open class ProjectFrameHelper internal constructor(
 
   private val isInitialized = AtomicBoolean()
 
-  // purpose of delayed init - to show project frame as early as possible (and start loading of project too) and use it as project loading "splash"
+  // purpose of delayed init -
+  // to show project frame as early as possible (and start loading of a project too) and use it as project loading "splash"
   // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
   fun init(): JFrame {
     if (!isInitialized.compareAndSet(false, true)) {
       return frame
     }
 
-    rootPane.createAndConfigureStatusBar(frame = this, parentDisposable = this)
+    rootPane.createAndConfigureStatusBar(frameHelper = this)
     val frame = frame
     MnemonicHelper.init(frame)
     frame.focusTraversalPolicy = IdeFocusTraversalPolicy()
@@ -308,12 +308,17 @@ open class ProjectFrameHelper internal constructor(
         if (project == null || !project.isInitialized) {
           return null
         }
+
         val manager = project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerImpl ?: return null
         manager.getLastActiveToolWindows().toList().toTypedArray()
       }
       PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.`is`(dataId) -> {
-        if (project == null || !project.isInitialized) return null
-        FileEditorManagerEx.getInstanceEx(project).currentWindow?.getSelectedComposite(true)?.selectedEditor
+        if (project == null || !project.isInitialized) {
+          null
+        }
+        else {
+          (project.serviceIfCreated<FileEditorManager>() as? FileEditorManagerEx)?.selectedEditor
+        }
       }
       else -> null
     }
@@ -336,22 +341,11 @@ open class ProjectFrameHelper internal constructor(
   }
 
   open suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
-    project.service<StatusBarWidgetsManager>().init { rootPane.statusBar!! }
+    rootPane.statusBar!!.init(project)
 
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val statusBar = rootPane.statusBar!!
-      PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
-
       val navBar = rootPane.navBarStatusWidgetComponent ?: return@withContext
-      statusBar.setCentralWidget(object : StatusBarWidget {
-        override fun dispose() {
-        }
-
-        override fun ID(): String = IdeStatusBarImpl.NAVBAR_WIDGET_KEY
-
-        override fun install(statusBar: StatusBar) {
-        }
-      }, navBar)
+      statusBar!!.setCentralWidget(IdeStatusBarImpl.NAVBAR_WIDGET_KEY, navBar)
     }
   }
 
@@ -427,4 +421,7 @@ open class ProjectFrameHelper internal constructor(
       RecentProjectsManager.getInstance().setActivationTimestamp(project = it, timestamp = currentTimeMillis)
     }
   }
+
+  internal val isTabbedWindow: Boolean
+    get() = frameDecorator?.isTabbedWindow ?: false
 }

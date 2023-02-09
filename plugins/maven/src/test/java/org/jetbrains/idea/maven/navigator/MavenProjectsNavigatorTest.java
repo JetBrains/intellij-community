@@ -68,17 +68,20 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
   @Test
   public void testActivation() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
-
-    createModulePom("m", "<groupId>test</groupId>" +
-                         "<artifactId>m</artifactId>" +
-                         "<version>1</version>");
+    createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      """);
 
     readFiles(myProjectPom);
 
@@ -93,22 +96,25 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
   public void testReconnectingModulesWhenModuleRead() throws Exception {
     myProjectsManager.fireActivatedInTests();
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
     readFiles(myProjectPom);
 
     assertEquals(1, getRootNodes().size());
     assertEquals(myProjectPom, getRootNodes().get(0).getVirtualFile());
     assertEquals(0, getRootNodes().get(0).getProjectNodesInTests().size());
 
-    VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
-                                         "<artifactId>m</artifactId>" +
-                                         "<version>1</version>");
+    VirtualFile m = createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      """);
     readFiles(m);
 
     assertEquals(1, getRootNodes().size());
@@ -121,21 +127,24 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
   public void testReconnectingModulesWhenParentRead() throws Exception {
     myProjectsManager.fireActivatedInTests();
 
-    VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
-                                         "<artifactId>m</artifactId>" +
-                                         "<version>1</version>");
+    VirtualFile m = createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      """);
     readFiles(m);
 
     assertEquals(1, getRootNodes().size());
     assertEquals(m, getRootNodes().get(0).getVirtualFile());
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
     readFiles(myProjectPom);
 
     assertEquals(1, getRootNodes().size());
@@ -148,24 +157,29 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
   public void testReconnectingModulesWhenProjectBecomesParent() throws Exception {
     myProjectsManager.fireActivatedInTests();
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """);
 
-    VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
-                                         "<artifactId>m</artifactId>" +
-                                         "<version>1</version>");
+    VirtualFile m = createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      """);
     readFiles(myProjectPom, m);
 
     assertEquals(2, getRootNodes().size());
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
     readFiles(myProjectPom);
 
     assertEquals(1, getRootNodes().size());
@@ -178,9 +192,11 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
   public void testUpdatingWhenManagedFilesChange() throws Exception {
     myProjectsManager.fireActivatedInTests();
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """);
     readFiles(myProjectPom);
     resolveDependenciesAndImport();
     assertEquals(1, getRootNodes().size());
@@ -200,24 +216,29 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
     myNavigator.setGroupModules(true);
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    VirtualFile m = createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      <modules>
+        <module>mm</module>
+      </modules>
+      """);
 
-    VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
-                                         "<artifactId>m</artifactId>" +
-                                         "<version>1</version>" +
-                                         "<modules>" +
-                                         "  <module>mm</module>" +
-                                         "</modules>");
-
-    VirtualFile mm = createModulePom("m/mm", "<groupId>test</groupId>" +
-                                             "<artifactId>mm</artifactId>" +
-                                             "<version>1</version>");
+    VirtualFile mm = createModulePom("m/mm", """
+      <groupId>test</groupId>
+      <artifactId>mm</artifactId>
+      <version>1</version>
+      """);
     readFiles(myProjectPom, m, mm);
 
     assertEquals(1, getRootNodes().size());
@@ -239,17 +260,20 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
   public void testIgnoringProjects() throws Exception {
     myProjectsManager.fireActivatedInTests();
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
-
-    VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
-                                         "<artifactId>m</artifactId>" +
-                                         "<version>1</version>");
+    VirtualFile m = createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      """);
     readFiles(myProjectPom, m);
 
     myProjectsManager.getProjectsTree().setIgnoredFilesPaths(Arrays.asList(m.getPath()));
@@ -269,17 +293,20 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
   public void testIgnoringParentProjectWhenNeedNoReconnectModule() throws Exception {
     myProjectsManager.fireActivatedInTests();
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
-
-    VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
-                                         "<artifactId>m</artifactId>" +
-                                         "<version>1</version>");
+    VirtualFile m = createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      """);
     readFiles(myProjectPom, m);
 
     getProjectsTree().setIgnoredFilesPaths(Arrays.asList(myProjectPom.getPath()));
@@ -304,22 +331,28 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
   public void testReorderingProjectsWhenNameChanges() throws Exception {
     myProjectsManager.fireActivatedInTests();
 
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      """);
 
-    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
-                                           "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile m2 = createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
     readFiles(m1, m2);
 
     assertEquals(2, getRootNodes().size());
     assertEquals(m1, getRootNodes().get(0).getVirtualFile());
     assertEquals(m2, getRootNodes().get(1).getVirtualFile());
 
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>am2</artifactId>" +
-                          "<version>1</version>");
+    createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>am2</artifactId>
+      <version>1</version>
+      """);
     readFiles(m2);
 
     assertEquals(2, getRootNodes().size());
@@ -331,17 +364,20 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
   public void testReloadingState() throws Exception {
     myProjectsManager.fireActivatedInTests();
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
-
-    VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
-                                         "<artifactId>m</artifactId>" +
-                                         "<version>1</version>");
+    VirtualFile m = createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      """);
     readFiles(myProjectPom, m);
 
     assertEquals(1, getRootNodes().size());
@@ -359,9 +395,11 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
   public void testNavigatableForProjectNode() throws Exception {
     myProjectsManager.fireActivatedInTests();
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """);
 
     readFiles(myProjectPom);
     assertTrue(getRootNodes().get(0).getNavigatable().canNavigateToSource());
@@ -371,9 +409,11 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
   public void testCanIterateOverRootNodeChildren() throws Exception {
     myProjectsManager.fireActivatedInTests();
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """);
 
     readFiles(myProjectPom);
 
@@ -393,9 +433,11 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
   public void testCanIterateOverProjectNodeChildren() throws Exception {
     myProjectsManager.fireActivatedInTests();
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """);
 
     readFiles(myProjectPom);
 

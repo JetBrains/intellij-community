@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.*;
 import com.intellij.execution.ui.layout.actions.CloseViewAction;
 import com.intellij.execution.ui.layout.actions.MinimizeViewAction;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -180,8 +179,7 @@ public final class GridCellImpl implements GridCell {
     return tabInfo;
   }
 
-  @Nullable
-  private static TabInfo updatePresentation(TabInfo info, Content content) {
+  private static @Nullable TabInfo updatePresentation(TabInfo info, Content content) {
     if (info == null) {
       return null;
     }
@@ -241,8 +239,7 @@ public final class GridCellImpl implements GridCell {
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls final String dataId) {
+    public @Nullable Object getData(final @NotNull @NonNls String dataId) {
       if (ViewContext.CONTENT_KEY.is(dataId)) {
         return new Content[]{myContent};
       }
@@ -258,8 +255,7 @@ public final class GridCellImpl implements GridCell {
     return myContents.getValue(content);
   }
 
-  @NotNull
-  private Content getContentFor(TabInfo tab) {
+  private @NotNull Content getContentFor(TabInfo tab) {
     return myContents.getKey(tab);
   }
 
@@ -401,13 +397,11 @@ public final class GridCellImpl implements GridCell {
     }
   }
 
-  @Nullable
-  public Point getLocation() {
+  public @Nullable Point getLocation() {
     return DimensionService.getInstance().getLocation(getDimensionKey(), myContext.getProject());
   }
 
-  @Nullable
-  public Dimension getSize() {
+  public @Nullable Dimension getSize() {
     return DimensionService.getInstance().getSize(getDimensionKey(), myContext.getProject());
   }
 
@@ -441,7 +435,7 @@ public final class GridCellImpl implements GridCell {
     myMinimizedContents.remove(content);
   }
 
-  private final class GridCellTabs extends SingleHeightTabs {
+  private static final class GridCellTabs extends SingleHeightTabs {
     private final ViewContextEx myContext;
 
     @Override
@@ -479,11 +473,6 @@ public final class GridCellImpl implements GridCell {
     }
 
     @Override
-    public int tabMSize() {
-      return 12;
-    }
-
-    @Override
     public void processDropOver(TabInfo over, RelativePoint point) {
       ((RunnerContentUi)myContext).myTabs.processDropOver(over, point);
     }
@@ -498,17 +487,14 @@ public final class GridCellImpl implements GridCell {
       ((RunnerContentUi)myContext).myTabs.resetDropOver(tabInfo);
     }
 
-    @NotNull
     @Override
-    protected TabLabel createTabLabel(@NotNull TabInfo info) {
-      SingleHeightLabel label = new SingleHeightLabel(this, info) {
+    protected @NotNull TabLabel createTabLabel(@NotNull TabInfo info) {
+      return new SingleHeightLabel(this, info) {
         @Override
         public void setAlignmentToCenter(boolean toCenter) {
           super.setAlignmentToCenter(false);
         }
       };
-      DataManager.registerDataProvider(label, dataId -> ViewContext.CONTENT_KEY.is(dataId) ? new Content[]{getContentFor(info)} : null);
-      return label;
     }
   }
 }

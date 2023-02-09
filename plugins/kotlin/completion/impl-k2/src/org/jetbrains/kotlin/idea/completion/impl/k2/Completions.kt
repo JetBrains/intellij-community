@@ -40,6 +40,8 @@ internal object Completions {
                 // For `val` and `fun` completion. For example, with `val i<caret>`, the fake file contains `val iX.f`. Hence a
                 // FirTypeNameReferencePositionContext is created because `iX` is parsed as a type reference.
                 complete(factory.declarationFromUnresolvedNameContributor(1), positionContext)
+                complete(factory.declarationFromOverridableMembersContributor(1), positionContext)
+                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext)
             }
 
             is FirAnnotationTypeNameReferencePositionContext -> {
@@ -96,9 +98,18 @@ internal object Completions {
             is FirIncorrectPositionContext -> {
                 // do nothing, completion is not supposed to be called here
             }
-            is FirValueParameterPositionContext -> {
+
+            is FirSimpleParameterPositionContext -> {
                 complete(factory.declarationFromUnresolvedNameContributor(0), positionContext) // for parameter declaration
                 complete(factory.keywordContributor(0), positionContext)
+                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext)
+            }
+
+            is FirPrimaryConstructorParameterPositionContext -> {
+                complete(factory.declarationFromUnresolvedNameContributor(0), positionContext) // for parameter declaration
+                complete(factory.declarationFromOverridableMembersContributor(0), positionContext)
+                complete(factory.keywordContributor(0), positionContext)
+                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext)
             }
         }
     }

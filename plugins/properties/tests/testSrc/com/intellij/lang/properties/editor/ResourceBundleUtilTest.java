@@ -11,9 +11,6 @@ import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * @author Denis Zhdanov
- */
 public class ResourceBundleUtilTest {
 
   /**

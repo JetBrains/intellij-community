@@ -330,7 +330,7 @@ interface FragmentsDslBuilderExtender<Settings : FragmentedSettings> {
 
 @ApiStatus.Experimental
 inline fun <reified Settings : FragmentedSettings> fragments(
-  @Nls title: String? = null,
+  title: @Nls String? = null,
   id: String,
   extenders: List<FragmentsDslBuilderExtender<Settings>> = FragmentsDslBuilderExtender.getExtenders(id),
   setup: FragmentsBuilder<Settings>.() -> Unit

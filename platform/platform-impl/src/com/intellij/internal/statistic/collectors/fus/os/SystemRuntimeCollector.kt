@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.os
 
 import com.intellij.diagnostic.VMOptions
@@ -13,8 +13,8 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.String
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.events.EventId3
-import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.AllowedDuringStartupCollector
+import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
@@ -58,9 +58,12 @@ class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartu
 
     result += CORES.metric(getCpuCoreCount())
 
-    val (physicalMemory, swapSize) = getPhysicalMemoryAndSwapSize()
-    result += MEMORY_SIZE.metric(physicalMemory)
-    result += SWAP_SIZE.metric(swapSize)
+    val physicalMemoryData = getPhysicalMemoryAndSwapSize()
+    if (physicalMemoryData != null) {
+      val (physicalMemory, swapSize) = physicalMemoryData
+      result += MEMORY_SIZE.metric(physicalMemory)
+      result += SWAP_SIZE.metric(swapSize)
+    }
 
     val indexVolumeData = getIndexVolumeSizeAndFreeSpace()
     if (indexVolumeData != null) {
@@ -94,15 +97,19 @@ class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartu
   private fun getCpuCoreCount(): Int =
     StatisticsUtil.roundToUpperBound(Runtime.getRuntime().availableProcessors(), intArrayOf(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64))
 
-  private fun getPhysicalMemoryAndSwapSize(): Pair<Int, Int> {
-    @Suppress("FunctionName") fun GiB(bytes: Long) = (bytes.toDouble() / (1 shl 30)).roundToInt()
-    val bean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
-    val physicalMemory = StatisticsUtil.roundToUpperBound(GiB(bean.totalMemorySize), intArrayOf(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256))
-    val swapSize = StatisticsUtil.roundToPowerOfTwo(min(GiB(bean.totalSwapSpaceSize), physicalMemory))
-    return physicalMemory to swapSize
+  private fun getPhysicalMemoryAndSwapSize(): Pair<Int, Int>? {
+    try {
+      @Suppress("FunctionName") fun GiB(bytes: Long) = (bytes.toDouble() / (1 shl 30)).roundToInt()
+      val bean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
+      val physicalMemory = StatisticsUtil.roundToUpperBound(GiB(bean.totalMemorySize), intArrayOf(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256))
+      val swapSize = StatisticsUtil.roundToPowerOfTwo(min(GiB(bean.totalSwapSpaceSize), physicalMemory))
+      return physicalMemory to swapSize
+    }
+    catch (_: Exception) { }  // ignoring internal errors in JRE code
+    return null
   }
 
-  @Suppress("LocalVariableName")
+  //@Suppress("LocalVariableName")
   private fun getIndexVolumeSizeAndFreeSpace(): Pair<Int, Int>? {
     try {
       val fileStore = Files.getFileStore(PathManager.getIndexRoot())

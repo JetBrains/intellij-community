@@ -27,6 +27,8 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
         return ktProjectDescriptor
     }
 
+    private lateinit var currentInspection: BlockingMethodInNonBlockingContextInspection
+
     override fun setUp() {
         super.setUp()
         myFixture.addFileToProject(
@@ -53,10 +55,13 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
                 @Blocking fun block(): Int { return 42 }
             """.trimIndent()
         )
-        myFixture.enableInspections(BlockingMethodInNonBlockingContextInspection())
+        currentInspection = BlockingMethodInNonBlockingContextInspection()
+        myFixture.enableInspections(currentInspection)
     }
 
     fun `test wrap in withContext`() {
+        currentInspection.myConsiderUnknownContextBlocking = false
+
         myFixture.configureByText(
             "wrapInWithContext.kt",
             """                            
@@ -260,6 +265,8 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test wrap dot qualified expression`() {
+        currentInspection.myConsiderUnknownContextBlocking = false
+
         myFixture.configureByText(
             "dotQualified.kt",
             """
@@ -341,7 +348,7 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
                 }
                 
                 <info descr="null">suspend</info> fun <info descr="null">unknownContext</info>() {
-                    <info descr="null">withContext</info>(<info descr="null">CustomContext</info>()) {
+                    <info descr="null"><info descr="Consider unknown contexts non-blocking">withContext</info></info>(<info descr="null"><info descr="Consider unknown contexts non-blocking">CustomContext</info></info>()) {
                         <info descr="null"><info descr="Consider unknown contexts non-blocking">blo<caret>ck</info></info>()
                     }
                 }

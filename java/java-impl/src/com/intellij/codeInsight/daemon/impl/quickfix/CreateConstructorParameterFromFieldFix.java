@@ -13,6 +13,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.FieldFromParameterUtils;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
@@ -89,32 +90,67 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   }
 
   @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile copyFile) {
+    PsiClass copyMyClass = PsiTreeUtil.findSameElementInCopy(myClass, copyFile);
+    PsiField myFieldElement = myField.getElement();
+    if (myFieldElement == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    PsiField copyMyField = PsiTreeUtil.findSameElementInCopy(myFieldElement, copyFile);
+    PsiMethod[] constructors = getPhysicalConstructors(copyMyClass);
+    if (constructors.length == 0) {
+      final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(copyMyClass);
+      defaultConstructorFix.invoke(project, editor, copyFile);
+      constructors = copyMyClass.getConstructors();
+    }
+    List<PsiMethod> filteredConstructors = getFilteredConstructors(constructors, copyMyField);
+    if (filteredConstructors.isEmpty()) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    PsiMethod currentConstructor = filteredConstructors.get(0);
+    PsiParameterList parameterList = currentConstructor.getParameterList();
+    final String uniqueParameterName = getUniqueParameterName(parameterList.getParameters(), copyMyField, Map.of());
+    ParameterInfoImpl info = ParameterInfoImpl.createNew()
+      .withName(uniqueParameterName)
+      .withType(AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(copyMyField.getModifierList(), copyMyField.getType()))
+      .withDefaultValue(uniqueParameterName);
+    int parametersCount = parameterList.getParametersCount();
+    PsiParameter newParameter =
+      JavaPsiFacade.getElementFactory(project).createParameterFromText(info.getTypeText() + " " + info.getName(), currentConstructor);
+    PsiParameter afterInsert;
+    if (parametersCount == 0) {
+      afterInsert = (PsiParameter)parameterList.add(newParameter);
+    }
+    else {
+      PsiParameter lastParameter = parameterList.getParameter(parametersCount - 1);
+      if (lastParameter == null) {
+        return IntentionPreviewInfo.EMPTY;
+      }
+      if (lastParameter.isVarArgs()) {
+        afterInsert = (PsiParameter)parameterList.addBefore(newParameter, lastParameter);
+      }
+      else {
+        afterInsert = (PsiParameter)parameterList.addAfter(newParameter, lastParameter);
+      }
+    }
+    if (JavaHighlightUtil.getChainedConstructors(currentConstructor).isEmpty()) {
+      AssignFieldFromParameterAction.addFieldAssignmentStatement(project, copyMyField, afterInsert, editor);
+    }
+    return IntentionPreviewInfo.DIFF;
+  }
+
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
-    PsiMethod[] constructors = myClass.getConstructors();
+    PsiMethod[] constructors = getPhysicalConstructors(myClass);
     if (constructors.length == 0) {
       final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(myClass);
       ApplicationManager.getApplication().runWriteAction(() -> defaultConstructorFix.invoke(project, editor, file));
       constructors = myClass.getConstructors();
     }
-    Arrays.sort(constructors, new Comparator<>() {
-      @Override
-      public int compare(PsiMethod c1, PsiMethod c2) {
-        final PsiMethod cc1 = CommonJavaRefactoringUtil.getChainedConstructor(c1);
-        final PsiMethod cc2 = CommonJavaRefactoringUtil.getChainedConstructor(c2);
-        if (cc1 == c2) return 1;
-        if (cc2 == c1) return -1;
-        if (cc1 == null) {
-          return cc2 == null ? 0 : compare(c1, cc2);
-        }
-        else {
-          return cc2 == null ? compare(cc1, c2) : compare(cc1, cc2);
-        }
-      }
-    });
+    final List<PsiMethod> filtered = getFilteredConstructors(constructors, getField());
     final List<SmartPsiElementPointer<PsiElement>> cleanupElements = new ArrayList<>();
-    final List<PsiMethod> filtered = filterConstructorsIfFieldAlreadyAssigned(constructors, getField());
     if (filtered.size() > 1) {
       final PsiMethodMember[] members = new PsiMethodMember[filtered.size()];
       int i = 0;
@@ -177,6 +213,30 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       }
     }
     GlobalInspectionContextBase.cleanupElements(project, null, cleanupElements);
+  }
+
+  private static PsiMethod[] getPhysicalConstructors(@NotNull PsiClass psiClass) {
+    return ContainerUtil.filter(psiClass.getConstructors(), c -> c.isPhysical()).toArray(PsiMethod[]::new);
+  }
+
+  @NotNull
+  private static List<PsiMethod> getFilteredConstructors(PsiMethod[] constructors, PsiField field) {
+    Arrays.sort(constructors, new Comparator<>() {
+      @Override
+      public int compare(PsiMethod c1, PsiMethod c2) {
+        final PsiMethod cc1 = CommonJavaRefactoringUtil.getChainedConstructor(c1);
+        final PsiMethod cc2 = CommonJavaRefactoringUtil.getChainedConstructor(c2);
+        if (cc1 == c2) return 1;
+        if (cc2 == c1) return -1;
+        if (cc1 == null) {
+          return cc2 == null ? 0 : compare(c1, cc2);
+        }
+        else {
+          return cc2 == null ? compare(cc1, c2) : compare(cc1, cc2);
+        }
+      }
+    });
+    return filterConstructorsIfFieldAlreadyAssigned(constructors, field);
   }
 
   @NotNull

@@ -4,9 +4,9 @@ package com.intellij.vcs.commit.message;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.formatting.LineWrappingUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.util.EditorFacade;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.openapi.util.Predicates.nonNull;
 import static com.intellij.openapi.util.TextRange.EMPTY_RANGE;
@@ -101,8 +100,8 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
                            int rightMargin,
                            @NotNull TextRange range) {
       List<TextRange> enabledRanges = singletonList(TextRange.create(0, document.getTextLength()));
-      EditorFacade.getInstance().doWrapLongLinesIfNecessary(editor, project, document, range.getStartOffset(), range.getEndOffset(),
-                                                            enabledRanges, rightMargin);
+      LineWrappingUtil.doWrapLongLinesIfNecessary(editor, project, document, range.getStartOffset(), range.getEndOffset(),
+                                                  enabledRanges, rightMargin);
     }
   }
 }

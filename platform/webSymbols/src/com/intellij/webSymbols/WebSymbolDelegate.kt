@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols
 
-import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.navigation.NavigatableSymbol
 import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.project.Project
+import com.intellij.platform.documentation.DocumentationTarget
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.symbol.RenameableSymbol
@@ -27,17 +27,9 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
     get() = delegate.namespace
   override val kind: SymbolKind
     get() = delegate.kind
-  override val matchedName: String
-    get() = delegate.matchedName
-
   override fun getModificationCount(): Long =
     delegate.modificationCount
-
-  override val completeMatch: Boolean
-    get() = delegate.completeMatch
-  override val nameSegments: List<WebSymbolNameSegment>
-    get() = delegate.nameSegments
-  override val queryScope: Sequence<WebSymbolsScope>
+  override val queryScope: List<WebSymbolsScope>
     get() = delegate.queryScope
   override val name: String
     get() = delegate.name
@@ -84,21 +76,21 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     (delegate as? NavigatableSymbol)?.getNavigationTargets(project) ?: emptyList()
 
-  override fun getSymbols(namespace: SymbolNamespace?,
+  override fun getSymbols(namespace: SymbolNamespace,
                           kind: SymbolKind,
                           name: String?,
                           params: WebSymbolsNameMatchQueryParams,
                           scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
     delegate.getSymbols(namespace, kind, name, params, scope)
 
-  override fun getCodeCompletions(namespace: SymbolNamespace?,
+  override fun getCodeCompletions(namespace: SymbolNamespace,
                                   kind: SymbolKind,
                                   name: String?,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     delegate.getCodeCompletions(namespace, kind, name, params, scope)
 
-  override fun isExclusiveFor(namespace: SymbolNamespace?, kind: SymbolKind): Boolean =
+  override fun isExclusiveFor(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
     delegate.isExclusiveFor(namespace, kind)
 
   protected fun renameTargetFromDelegate(): RenameTarget =

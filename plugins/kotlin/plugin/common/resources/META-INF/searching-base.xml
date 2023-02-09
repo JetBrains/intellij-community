@@ -10,5 +10,6 @@
     <elementDescriptionProvider
             implementation="org.jetbrains.kotlin.idea.base.searching.usages.KotlinNonCodeSearchElementDescriptionProvider"/>
 
+    <annotatedElementsSearch implementation="org.jetbrains.kotlin.idea.base.searching.KotlinAnnotatedElementsSearcher" />
   </extensions>
 </idea-plugin>

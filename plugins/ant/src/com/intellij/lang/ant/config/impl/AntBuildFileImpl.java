@@ -243,10 +243,9 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   @Nullable
   public XmlFile getAntFile() {
     final PsiFile psiFile = myVFile.isValid() ? PsiManager.getInstance(getProject()).findFile(myVFile) : null;
-    if (!(psiFile instanceof XmlFile)) {
+    if (!(psiFile instanceof XmlFile xmlFile)) {
       return null;
     }
-    final XmlFile xmlFile = (XmlFile)psiFile;
     return AntDomFileDescription.isAntFile(xmlFile) ? xmlFile : null;
   }
 

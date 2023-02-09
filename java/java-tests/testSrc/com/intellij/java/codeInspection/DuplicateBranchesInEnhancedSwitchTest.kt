@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
@@ -8,9 +8,6 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class DuplicateBranchesInEnhancedSwitchTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/duplicateBranchesInEnhancedSwitch"
 
@@ -36,6 +33,10 @@ class DuplicateBranchesInEnhancedSwitchTest : LightJavaCodeInsightFixtureTestCas
   fun testTwoPatterns() = doTest()
   fun testWhenClause1() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_19_PREVIEW) { doTest() }
   fun testWhenClause2() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_19_PREVIEW) { doTest() }
+  fun testExpressionsWithComments() = doTest()
+  fun testNullDuplicatesPattern() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_20_PREVIEW) { doTest() }
+  fun testPatternDuplicatesNull() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_20_PREVIEW) { doTest() }
+  fun testNullDuplicatesDefault() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_19_PREVIEW) { doTest() }
 
   private fun doTest() {
     myFixture.enableInspections(DuplicateBranchesInSwitchInspection())

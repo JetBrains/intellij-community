@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class LiveTemplateBuilder {
   @NonNls private static final String END_PREFIX = "____END";
   private static final Logger LOGGER = Logger.getInstance(LiveTemplateBuilder.class);

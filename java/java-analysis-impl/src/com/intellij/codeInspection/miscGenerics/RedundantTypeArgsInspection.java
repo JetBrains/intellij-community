@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.*;
@@ -17,9 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   private static final Logger LOG = Logger.getInstance(RedundantTypeArgsInspection.class);
 
@@ -90,8 +87,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     final JavaResolveResult resolveResult = reference.advancedResolve(false);
 
     final PsiElement element = resolveResult.getElement();
-    if (element instanceof PsiMethod && resolveResult.isValidResult()) {
-      PsiMethod method = (PsiMethod)element;
+    if (element instanceof PsiMethod method && resolveResult.isValidResult()) {
       final PsiTypeParameter[] typeParameters = method.getTypeParameters();
       if (typeParameters.length > 0 &&
           JavacQuirksInspectionVisitor.isSuspicious(expression.getArgumentList().getExpressions(), method)) {
@@ -175,8 +171,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiReferenceParameterList)) return;
-      final PsiReferenceParameterList typeArgumentList = (PsiReferenceParameterList)element;
+      if (!(element instanceof PsiReferenceParameterList typeArgumentList)) return;
       try {
         PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
         PsiMethodReferenceExpression ref = PsiTreeUtil.getParentOfType(typeArgumentList, PsiMethodReferenceExpression.class);

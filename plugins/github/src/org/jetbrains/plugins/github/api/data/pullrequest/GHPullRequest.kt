@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data.pullrequest
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
@@ -23,6 +24,8 @@ class GHPullRequest(id: String,
                     @JsonProperty("labels") labels: GraphQLNodesDTO<GHLabel>,
                     @JsonProperty("reviewRequests") reviewRequests: GraphQLNodesDTO<GHPullRequestReviewRequest>,
                     @JsonProperty("reviewThreads") reviewThreads: GraphQLNodesDTO<ReviewThreadDetails>,
+                    @JsonProperty("reviews") reviews: GraphQLNodesDTO<GHPullRequestReview>,
+                    val reviewDecision: GHPullRequestReviewDecision?,
                     mergeable: GHPullRequestMergeableState,
                     viewerCanUpdate: Boolean,
                     viewerDidAuthor: Boolean,
@@ -36,9 +39,12 @@ class GHPullRequest(id: String,
   : GHPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, assignees, labels, reviewRequests, reviewThreads,
                        mergeable, viewerCanUpdate, viewerDidAuthor) {
 
+  @JsonIgnore
+  val reviews: List<GHPullRequestReview> = reviews.nodes
+
   open class Repository(val owner: Owner, val isFork: Boolean)
 
-  class HeadRepository(owner: Owner, isFork: Boolean, val url: String, val sshUrl: String) : Repository(owner, isFork)
+  class HeadRepository(owner: Owner, isFork: Boolean, val url: @NlsSafe String, val sshUrl: @NlsSafe String) : Repository(owner, isFork)
 
   class Owner(val login: String)
 }

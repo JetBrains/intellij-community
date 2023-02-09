@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesPr
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
-/**
- * @author ven
- */
 public class CreateLocalVariableFromUsageFix extends Intention {
   private final GrVariableDeclarationOwner myOwner;
   private final GrReferenceExpression myRefExpression;
@@ -75,7 +72,7 @@ public class CreateLocalVariableFromUsageFix extends Intention {
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     TypeConstraint[] constraints = GroovyExpectedTypesProvider.calculateTypeConstraints(myRefExpression);
-    PsiType type = constraints.length == 0 || constraints[0].getType().equals(PsiPrimitiveType.VOID) ? JavaPsiFacade.getInstance(project).getElementFactory().createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(project)) : constraints[0].getType();
+    PsiType type = constraints.length == 0 || constraints[0].getType().equals(PsiTypes.voidType()) ? JavaPsiFacade.getInstance(project).getElementFactory().createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(project)) : constraints[0].getType();
     GrVariableDeclaration declaration = GroovyPsiElementFactory.getInstance(project)
       .createVariableDeclaration(ArrayUtilRt.EMPTY_STRING_ARRAY, "", type, myRefExpression.getReferenceName());
     return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, "", declaration.getText());

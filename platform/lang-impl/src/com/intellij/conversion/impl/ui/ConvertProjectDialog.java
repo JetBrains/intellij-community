@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion.impl.ui;
 
 import com.intellij.CommonBundle;
@@ -12,7 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ConvertProjectDialog extends DialogWrapper {
+public final class ConvertProjectDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(ConvertProjectDialog.class);
   private JPanel myMainPanel;
   private JTextPane myTextPane;
@@ -120,7 +120,7 @@ public class ConvertProjectDialog extends DialogWrapper {
   private static String getFilesString(List<? extends Path> files) {
     StringBuilder buffer = new StringBuilder();
     for (Path file : files) {
-      buffer.append(file.toAbsolutePath().toString()).append("<br>");
+      buffer.append(file.toAbsolutePath()).append("<br>");
     }
     return buffer.toString();
   }
@@ -152,7 +152,12 @@ public class ConvertProjectDialog extends DialogWrapper {
 
   private static void unlockFiles(@NotNull List<? extends Path> files) {
     for (Path file : files) {
-      FileUtil.setReadOnlyAttribute(file.toAbsolutePath().toString(), false);
+      try {
+        NioFiles.setReadOnly(file, false);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
   }
 

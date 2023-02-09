@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import org.jetbrains.settingsRepository.LOG
@@ -34,7 +34,7 @@ internal sealed class SyncAction(private val syncType: SyncType) : DumbAwareActi
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project
     @Suppress("DialogTitleCapitalization")
-    runBlockingModal(if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project), icsMessage("task.sync.title")) {
+    runBlockingModalWithRawProgressReporter(if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project), icsMessage("task.sync.title")) {
       syncAndNotify(syncType, project)
     }
   }

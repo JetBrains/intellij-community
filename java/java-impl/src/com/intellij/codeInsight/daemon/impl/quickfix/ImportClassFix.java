@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -50,6 +51,11 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.findSameElementInCopy(getReference(), file);
     bindReference(ref, firstClassToImport);
     return IntentionPreviewInfo.DIFF;
+  }
+
+  @Override
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return currentFile;
   }
 
   @Override

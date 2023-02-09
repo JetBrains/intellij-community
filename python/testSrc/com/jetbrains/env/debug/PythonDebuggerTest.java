@@ -2,12 +2,12 @@
 package com.jetbrains.env.debug;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -154,7 +155,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-jython"); //can't run on jython
+        return Collections.singleton("-jython"); //can't run on jython
       }
     });
   }
@@ -190,7 +191,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_exceptbreak.py") {
       @Override
       public void before() {
-        createExceptionBreakZeroDivisionError(myFixture, true, false, false);
+        createExceptionBreakZeroDivisionError(myFixture);
       }
 
       @Override
@@ -209,27 +210,24 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron");
+        return Collections.singleton("-iron");
       }
     });
   }
 
-  private static void createExceptionBreakZeroDivisionError(IdeaProjectTestFixture fixture,
-                                                            boolean notifyOnTerminate,
-                                                            boolean notifyOnFirst,
-                                                            boolean ignoreLibraries) {
+  private static void createExceptionBreakZeroDivisionError(IdeaProjectTestFixture fixture) {
     XDebuggerTestUtil.removeAllBreakpoints(fixture.getProject());
     XDebuggerTestUtil.setDefaultBreakpointEnabled(fixture.getProject(), PyExceptionBreakpointType.class, false);
 
     PyExceptionBreakpointProperties properties = new PyExceptionBreakpointProperties("exceptions.ZeroDivisionError");
-    properties.setNotifyOnTerminate(notifyOnTerminate);
-    properties.setNotifyOnlyOnFirst(notifyOnFirst);
-    properties.setIgnoreLibraries(ignoreLibraries);
+    properties.setNotifyOnTerminate(true);
+    properties.setNotifyOnlyOnFirst(false);
+    properties.setIgnoreLibraries(false);
     PyBaseDebuggerTask.addExceptionBreakpoint(fixture, properties);
     properties = new PyExceptionBreakpointProperties("builtins.ZeroDivisionError"); //for python 3
-    properties.setNotifyOnTerminate(notifyOnTerminate);
-    properties.setNotifyOnlyOnFirst(notifyOnFirst);
-    properties.setIgnoreLibraries(ignoreLibraries);
+    properties.setNotifyOnTerminate(true);
+    properties.setNotifyOnlyOnFirst(false);
+    properties.setIgnoreLibraries(false);
     PyBaseDebuggerTask.addExceptionBreakpoint(fixture, properties);
   }
 
@@ -257,7 +255,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron");
+        return Collections.singleton("-iron");
       }
     });
   }
@@ -283,7 +281,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-jython");
+        return Collections.singleton("-jython");
       }
     });
   }
@@ -308,7 +306,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-jython");
+        return Collections.singleton("-jython");
       }
     });
   }
@@ -334,7 +332,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron");
+        return Collections.singleton("-iron");
       }
     });
   }
@@ -415,7 +413,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-pypy"); //TODO: fix that for PyPy
+        return Collections.singleton("-pypy"); //TODO: fix that for PyPy
       }
     });
   }
@@ -427,9 +425,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void before() {
         String egg = getFilePath("Adder-0.1.egg");
         toggleBreakpointInEgg(egg, "adder/adder.py", 2);
-        PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdkHome());
+        PythonSdkFlavor<?> flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdk());
         if (flavor != null) {
-          flavor.initPythonPath(Lists.newArrayList(egg), true, getRunConfiguration().getEnvs());
+          flavor.initPythonPath(Arrays.asList(egg), true, getRunConfiguration().getEnvs());
         }
         else {
           getRunConfiguration().getEnvs().put("PYTHONPATH", egg);
@@ -446,7 +444,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-jython"); //TODO: fix that for Jython if anybody needs it
+        return Collections.singleton("-jython"); //TODO: fix that for Jython if anybody needs it
       }
     });
   }
@@ -462,9 +460,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         toggleBreakpointInEgg(egg, "eggxample/lower_case.py", 2);
         toggleBreakpointInEgg(egg, "eggxample/MIXED_case.py", 2);
 
-        PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdkHome());
+        PythonSdkFlavor<?> flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdk());
         if (flavor != null) {
-          flavor.initPythonPath(Lists.newArrayList(egg), true, getRunConfiguration().getEnvs());
+          flavor.initPythonPath(Arrays.asList(egg), true, getRunConfiguration().getEnvs());
         }
         else {
           getRunConfiguration().getEnvs().put("PYTHONPATH", egg);
@@ -485,7 +483,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-jython"); //TODO: fix that for Jython if anybody needs it
+        return Collections.singleton("-jython"); //TODO: fix that for Jython if anybody needs it
       }
     });
   }
@@ -512,7 +510,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-jython"); //TODO: fix that for Jython if anybody needs it
+        return Collections.singleton("-jython"); //TODO: fix that for Jython if anybody needs it
       }
     });
   }
@@ -581,7 +579,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron");
+        return Collections.singleton("-iron");
       }
     });
   }
@@ -609,7 +607,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron");
+        return Collections.singleton("-iron");
       }
     });
   }
@@ -642,8 +640,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         toggleBreakpoint(getFilePath(getScriptName()), 3);
       }
 
-      private String getRefWithWordInName(List<String> referrersNames, String word) {
-        return referrersNames.stream().filter(x -> x.contains(word)).findFirst().get();
+      private static @Nullable String getRefWithWordInName(List<String> referrersNames, String word) {
+        return ContainerUtil.find(referrersNames, x -> x.contains(word));
       }
 
       @Override
@@ -657,7 +655,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron");
+        return Collections.singleton("-iron");
       }
     });
   }
@@ -929,7 +927,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("python3.7");
+        return Collections.singleton("python3.7");
       }
     });
   }
@@ -954,7 +952,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         eval("s7").hasValue("'^\\\\w+$'");
         eval("s8").hasValue("\"'459'\"");
         eval("s9").hasValue("'459'");
-        eval("s10").hasValue("'\u2764'");
+        eval("s10").hasValue("'❤'");
       }
     });
   }
@@ -971,7 +969,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         List<PyDebugValue> frameVariables = loadFrame();
 
         // The effective maximum number of the debugger returns is MAX_ITEMS_TO_HANDLE
-        // plus the __len__ attribute.
+        // plus the "Protected Attributes" group.
         final int effectiveMaxItemsNumber = MAX_ITEMS_TO_HANDLE + 1;
 
         // Large list.
@@ -989,7 +987,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         L.setOffset(600);
         children = loadVariable(L);
         assertEquals(effectiveMaxItemsNumber, children.size());
-        for (int i = 600; i < MAX_ITEMS_TO_HANDLE; i++) {
+        for (int i = 600; i < 600 + MAX_ITEMS_TO_HANDLE; i++) {
           assertTrue(hasChildWithName(children, formatStr(i, collectionLength)));
           assertTrue(hasChildWithValue(children, i));
         }
@@ -1006,7 +1004,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         PyDebugValue D = findDebugValueByName(frameVariables, "D");
 
         children = loadVariable(D);
-        collectionLength = 1000;
 
         assertEquals(effectiveMaxItemsNumber, children.size());
         for (int i = 0; i < MAX_ITEMS_TO_HANDLE; i++) {
@@ -1017,7 +1014,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         D.setOffset(600);
         children = loadVariable(D);
         assertEquals(effectiveMaxItemsNumber, children.size());
-        for (int i = 600; i < MAX_ITEMS_TO_HANDLE; i++) {
+        for (int i = 600; i < 600 + MAX_ITEMS_TO_HANDLE; i++) {
           assertTrue(hasChildWithName(children, i));
           assertTrue(hasChildWithValue(children, i));
         }
@@ -1034,7 +1031,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         PyDebugValue S = findDebugValueByName(frameVariables, "S");
 
         children = loadVariable(S);
-        collectionLength = 1000;
 
         assertEquals(effectiveMaxItemsNumber, children.size());
         for (int i = 0; i < MAX_ITEMS_TO_HANDLE; i++) {
@@ -1044,7 +1040,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         S.setOffset(600);
         children = loadVariable(S);
         assertEquals(effectiveMaxItemsNumber, children.size());
-        for (int i = 600; i < MAX_ITEMS_TO_HANDLE; i++) {
+        for (int i = 600; i < 600 + MAX_ITEMS_TO_HANDLE; i++) {
           assertTrue(hasChildWithValue(children, i));
         }
 
@@ -1059,7 +1055,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         PyDebugValue dq = findDebugValueByName(frameVariables, "dq");
 
         children = loadVariable(dq);
-        collectionLength = 1000;
 
         assertEquals(effectiveMaxItemsNumber + 1, children.size()); // one extra child for maxlen
         for (int i = 1; i < MAX_ITEMS_TO_HANDLE; i++) {
@@ -1070,7 +1065,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         dq.setOffset(600);
         children = loadVariable(dq);
         assertEquals(effectiveMaxItemsNumber, children.size());
-        for (int i = 600; i < MAX_ITEMS_TO_HANDLE; i++) {
+        for (int i = 600; i < 600 + MAX_ITEMS_TO_HANDLE; i++) {
           assertTrue(hasChildWithName(children, formatStr(i, collectionLength)));
           assertTrue(hasChildWithValue(children, i));
         }
@@ -1092,7 +1087,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("pandas");
+        return Collections.singleton("pandas");
       }
 
       @Override
@@ -1210,7 +1205,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron"); // PY-37793
+        return Collections.singleton("-iron"); // PY-37793
       }
     });
   }
@@ -1289,7 +1284,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron"); // PY-37791
+        return Collections.singleton("-iron"); // PY-37791
       }
     });
   }
@@ -1302,7 +1297,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
     public boolean hasTag(String tag) throws NullPointerException {
       String env = Paths.get(myRunConfiguration.getSdkHome()).getParent().getParent().toString();
-      return envTags.get(env).stream().anyMatch((t) -> t.startsWith(tag));
+      return ContainerUtil.exists(envTags.get(env), (t) -> t.startsWith(tag));
     }
   }
 
@@ -1391,7 +1386,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public Set<String> getTags() {
         // Remove this after PY-36229 is fixed.
-        return ImmutableSet.of("python3");
+        return Collections.singleton("python3");
       }
     });
   }
@@ -1415,7 +1410,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron"); // PY-37796
+        return Collections.singleton("-iron"); // PY-37796
       }
     });
   }
@@ -1443,7 +1438,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron"); // PY-36367
+        return Collections.singleton("-iron"); // PY-36367
       }
     });
   }
@@ -1455,7 +1450,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       private final static String PYTHON2_TAG = "python2";
 
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 8);
       }
 
@@ -1510,7 +1505,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   public void testCodeEvaluationWithPandas() {
     runPythonTest(new PyDebuggerTask("/debug", "test_dataframe.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 30);
       }
 
@@ -1526,7 +1521,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("pandas");
+        return Collections.singleton("pandas");
       }
     });
   }
@@ -1590,7 +1585,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("pandas");
+        return Collections.singleton("pandas");
       }
     });
   }
@@ -1675,7 +1670,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForTerminate();
       }
 
-      private void containsValue(List<PyDebugValue> variablesGroup, List<String> names, List<String> values) {
+      private static void containsValue(List<PyDebugValue> variablesGroup, List<String> names, List<String> values) {
         for (PyDebugValue elem : variablesGroup) {
           assertTrue(names.contains(elem.getName()));
           assertTrue(values.contains(elem.getValue()));

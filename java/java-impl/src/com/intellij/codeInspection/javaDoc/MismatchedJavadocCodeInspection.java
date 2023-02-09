@@ -60,14 +60,7 @@ public class MismatchedJavadocCodeInspection extends AbstractBaseJavaLocalInspec
     MAYBE_TYPE_SINGULAR
   }
 
-  static class ReturnItem {
-    final @NotNull Kind kind;
-    final @NotNull TextRange range;
-
-    ReturnItem(@NotNull Kind kind, @NotNull TextRange range) {
-      this.kind = kind;
-      this.range = range;
-    }
+  record ReturnItem(@NotNull Kind kind, @NotNull TextRange range) {
   }
 
   @Override
@@ -92,7 +85,7 @@ public class MismatchedJavadocCodeInspection extends AbstractBaseJavaLocalInspec
 
       private @Nls @Nullable String getIncompatibleMessage(@NotNull String text, @NotNull Kind kind, @NotNull PsiMethod method) {
         PsiType returnType = method.getReturnType();
-        if (returnType == null || PsiType.VOID.equals(returnType)) return null;
+        if (returnType == null || PsiTypes.voidType().equals(returnType)) return null;
         PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(returnType);
         if (kind == Kind.MAYBE_TYPE || kind == Kind.MAYBE_TYPE_SINGULAR) {
           String typeName = text.toLowerCase(Locale.ROOT);

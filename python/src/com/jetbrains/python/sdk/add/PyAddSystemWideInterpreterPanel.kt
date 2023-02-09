@@ -36,9 +36,6 @@ import com.jetbrains.python.sdk.add.target.createDetectedSdk
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import java.awt.BorderLayout
 
-/**
- * @author vlan
- */
 open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
                                            private val module: Module?,
                                            private val existingSdks: List<Sdk>,

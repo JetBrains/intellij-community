@@ -167,8 +167,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
   @Override
   @RequiresEdt
   protected void onDispose() {
-    myModel.clear();
-    myFoldingModel.destroy();
     super.onDispose();
     EditorFactory.getInstance().releaseEditor(myEditor);
   }

@@ -30,9 +30,6 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementCheckBoxUiComponent extends AbstractArrangementUiComponent {
 
   @NotNull private final JPanel myComponent = new JPanel(new GridBagLayout());

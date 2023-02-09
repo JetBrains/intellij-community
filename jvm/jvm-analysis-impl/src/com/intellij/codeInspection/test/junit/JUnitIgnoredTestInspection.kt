@@ -3,7 +3,8 @@ package com.intellij.codeInspection.test.junit
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.*
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -14,15 +15,12 @@ import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
-import javax.swing.JComponent
 
 class JUnitIgnoredTestInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
   var onlyReportWithoutReason = true
 
-  override fun createOptionsPanel(): JComponent = SingleCheckboxOptionsPanel(
-    JvmAnalysisBundle.message("jvm.inspections.junit.ignored.test.ignore.reason.option"), this, "onlyReportWithoutReason"
-  )
+  override fun getOptionsPane() = pane(checkbox("onlyReportWithoutReason", JvmAnalysisBundle.message("jvm.inspections.junit.ignored.test.ignore.reason.option")))
 
   private fun shouldInspect(file: PsiFile) = isJUnit4InScope(file) || isJUnit5InScope(file)
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -45,7 +45,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   public boolean ADD_APPLET_TO_ENTRIES = true;
   public boolean ADD_SERVLET_TO_ENTRIES = true;
   public boolean ADD_NONJAVA_TO_ENTRIES = true;
-  private boolean TEST_ENTRY_POINTS = true;
+  protected boolean TEST_ENTRY_POINTS = true;
 
   public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
   public static final String ALTERNATIVE_ID = "UnusedDeclaration";
@@ -261,8 +261,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull final RefEntity refEntity) {
-        if (refEntity instanceof RefElementImpl) {
-          final RefElementImpl refElement = (RefElementImpl)refEntity;
+        if (refEntity instanceof RefElementImpl refElement) {
           if (!refElement.isSuspicious()) return;
 
           PsiFile file = refElement.getContainingFile();
@@ -324,8 +323,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     if (element instanceof PsiMethod && isAddMainsEnabled() && PsiClassImplUtil.isMainOrPremainMethod((PsiMethod)element)) {
       return true;
     }
-    if (element instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)element;
+    if (element instanceof PsiClass aClass) {
       final PsiClass applet = psiFacade.findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
       if (isAddAppletEnabled() && applet != null && aClass.isInheritor(applet, true)) {
         return true;
@@ -406,9 +404,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity refEntity) {
-        if (!(refEntity instanceof RefJavaElement)) return;
-        if (refEntity instanceof RefClass && ((RefClass)refEntity).isAnonymous()) return;
-        RefJavaElement refElement = (RefJavaElement)refEntity;
+        if (!(refEntity instanceof RefJavaElement refElement)) return;
+        if (refEntity instanceof RefClass refClass && refClass.isAnonymous()) return;
         if (filter.accepts(refElement) && !processedSuspicious.contains(refElement)) {
           refEntity.accept(new RefJavaVisitor() {
             @Override
@@ -430,11 +427,9 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             @Override
             public void visitMethod(@NotNull final RefMethod refMethod) {
               processedSuspicious.add(refMethod);
-              if (refMethod instanceof RefImplicitConstructor) {
-                RefClass ownerClass = refMethod.getOwnerClass();
-                if (ownerClass != null) {
-                  visitClass(ownerClass);
-                }
+              if (refMethod instanceof RefImplicitConstructor ctor) {
+                RefClass ownerClass = ctor.getOwnerClass();
+                visitClass(ownerClass);
                 return;
               }
               if (refMethod.isConstructor()) {
@@ -562,8 +557,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     refManager.iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefJavaElementImpl) {
-          final RefJavaElementImpl refElement = (RefJavaElementImpl)refEntity;
+        if (refEntity instanceof RefJavaElementImpl refElement) {
           if (!((GlobalInspectionContextBase)context).isToCheckMember(refElement, UnusedDeclarationInspectionBase.this)) return;
           refElement.setReachable(false);
         }
@@ -596,6 +590,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     private final Map<RefClass, Set<RefMethod>> myClassIDtoMethods = new HashMap<>();
     private final Set<RefClass> myInstantiatedClasses = new HashSet<>();
     private int myInstantiatedClassesCount;
+    private final Set<RefClass> myProcessedClasses = new HashSet<>();
     private final Set<RefMethod> myProcessedMethods = new HashSet<>();
     private final Set<RefFunctionalExpression> myProcessedFunctionalExpressions = new HashSet<>();
     private final Stack<RefElement> myNextRound = new Stack<>();
@@ -648,15 +643,13 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
 
     @Override public void visitClass(@NotNull RefClass refClass) {
-      boolean alreadyActive = refClass.isReachable();
-      ((RefClassImpl)refClass).setReachable(true);
-
-      if (!alreadyActive) {
+      if (myProcessedClasses.add(refClass)) {
+        ((RefClassImpl)refClass).setReachable(true);
         // Process class's static initializers.
         makeReachable(refClass);
-      }
 
-      addInstantiatedClass(refClass);
+        addInstantiatedClass(refClass);
+      }
     }
 
     @Override public void visitField(@NotNull RefField field) {

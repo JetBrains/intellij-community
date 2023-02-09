@@ -24,9 +24,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 
-/**
- * @author Irina.Chernushina on 11/12/2014.
- */
 public class SliderSelectorAction extends DumbAwareAction {
   @NotNull private final Configuration myConfiguration;
 
@@ -128,9 +125,8 @@ public class SliderSelectorAction extends DumbAwareAction {
   }
 
   protected void show(AnActionEvent e, JPanel result, JBPopup popup, InputEvent inputEvent) {
-    if (inputEvent instanceof MouseEvent) {
+    if (inputEvent instanceof MouseEvent inputEvent1) {
       int width = result.getPreferredSize().width;
-      MouseEvent inputEvent1 = (MouseEvent)inputEvent;
       Point point1 = new Point(inputEvent1.getX() - width / 2, inputEvent1.getY());
       RelativePoint point = new RelativePoint(inputEvent1.getComponent(), point1);
       popup.show(point);

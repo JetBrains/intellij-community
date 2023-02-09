@@ -48,6 +48,7 @@ class PythonNewProjectWizard : LanguageNewProjectWizard {
  * Data for sharing among the steps of the new Python project wizard.
  */
 interface NewProjectWizardPythonData : NewProjectWizardBaseData {
+
   /**
    * A property for tracking changes in [pythonSdk].
    */
@@ -68,13 +69,12 @@ interface NewProjectWizardPythonData : NewProjectWizardBaseData {
   val module: Module?
 
   companion object {
+
     val KEY = Key.create<NewProjectWizardPythonData>(NewProjectWizardPythonData::class.java.name)
 
-    private val NewProjectWizardStep.pythonData get() = data.getUserData(KEY)!!
-
-    val NewProjectWizardStep.pythonSdkProperty get() = pythonData.pythonSdkProperty
-    val NewProjectWizardStep.pythonSdk get() = pythonData.pythonSdk
-    val NewProjectWizardStep.module get() = pythonData.module
+    @JvmStatic
+    val NewProjectWizardStep.pythonData: NewProjectWizardPythonData?
+      get() = data.getUserData(KEY)
   }
 }
 
@@ -116,7 +116,7 @@ class NewPythonProjectStep<P>(parent: P)
       contentEntryPath = projectPath.toString()
       moduleFilePath = projectPath.resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION).toString()
     }
-    intellijModule = moduleBuilder.commit(project)?.firstOrNull()
+    intellijModule = setupProjectFromBuilder(project, moduleBuilder)
   }
 
   private fun setupSdk(project: Project) {

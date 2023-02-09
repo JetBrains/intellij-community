@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.comment
 
+import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchLine
 import com.intellij.openapi.diff.impl.patch.PatchReader
-import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 
 data class GHSuggestedChange(
   val commentBody: String,
@@ -41,7 +41,7 @@ data class GHSuggestedChange(
     fun containsSuggestedChange(markdownText: String): Boolean = markdownText.lines().any { it.startsWith("```suggestion") }
 
     private fun parseDiffHunk(diffHunk: String, filePath: String): PatchHunk {
-      val patchReader = PatchReader(GHPatchHunkUtil.createPatchFromHunk(filePath, diffHunk))
+      val patchReader = PatchReader(PatchHunkUtil.createPatchFromHunk(filePath, diffHunk))
       patchReader.readTextPatches()
       return patchReader.textPatches[0].hunks.lastOrNull() ?: PatchHunk(0, 0, 0, 0)
     }

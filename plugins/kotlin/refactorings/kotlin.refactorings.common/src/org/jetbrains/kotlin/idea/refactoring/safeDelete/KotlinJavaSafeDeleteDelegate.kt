@@ -21,11 +21,11 @@ import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 
 class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
     override fun createUsageInfoForParameter(
-        reference: PsiReference,
-        usages: MutableList<UsageInfo>,
-        parameter: PsiNamedElement,
-        paramIdx: Int,
-        isVararg: Boolean
+      reference: PsiReference,
+      usages: MutableList<in UsageInfo>,
+      parameter: PsiNamedElement,
+      paramIdx: Int,
+      isVararg: Boolean
     ) {
         if (reference !is KtReference) return
 
@@ -88,9 +88,9 @@ class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
     }
 
     override fun createCleanupOverriding(
-        overriddenFunction: PsiElement,
-        elements2Delete: Array<PsiElement>,
-        result: MutableList<UsageInfo>
+      overriddenFunction: PsiElement,
+      elements2Delete: Array<PsiElement>,
+      result: MutableList<in UsageInfo>
     ) {
         result.add(object : SafeDeleteReferenceSimpleDeleteUsageInfo(overriddenFunction, overriddenFunction, true), SafeDeleteCustomUsageInfo {
             override fun performRefactoring() {

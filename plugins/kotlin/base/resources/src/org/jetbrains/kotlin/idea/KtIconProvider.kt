@@ -53,7 +53,7 @@ object KtIconProvider {
         return result
     }
 
-    private fun KtAnalysisSession.getBaseIcon(symbol: KtSymbol): Icon? {
+    fun KtAnalysisSession.getBaseIcon(symbol: KtSymbol): Icon? {
         val isAbstract = (symbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT
         return when (symbol) {
             is KtPackageSymbol -> AllIcons.Nodes.Package

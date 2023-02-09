@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.getPluginInfo
+import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import kotlin.reflect.KProperty
 
@@ -12,7 +13,7 @@ sealed class EventField<T> {
   abstract val name: String
   abstract fun addData(fuData: FeatureUsageData, value: T)
 
-  infix fun with(data: T): EventPair<T> = EventPair(this, data)
+  @Contract(pure = true) infix fun with(data: T): EventPair<T> = EventPair(this, data)
 }
 
 abstract class PrimitiveEventField<T> : EventField<T>() {

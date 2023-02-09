@@ -415,8 +415,7 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
   }
 
   private static void dumpType(GenericDeclaration owner, Type type, StringBuilder sb, Map<Class<?>, Collection<Class<?>>> classes) {
-    if (type instanceof Class) {
-      final Class<?> aClass = (Class<?>)type;
+    if (type instanceof Class<?> aClass) {
       final Class<?> enclosingClass = aClass.getEnclosingClass();
       if (enclosingClass != null) {
         sb.append(enclosingClass.getSimpleName()).append("_");
@@ -429,21 +428,18 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
         dumpTypeParametersArray(owner, aClass.getTypeParameters(), sb, "<", ">", classes);
       }
     }
-    else if (type instanceof TypeVariable) {
-      TypeVariable<?> typeVariable = (TypeVariable<?>)type;
+    else if (type instanceof TypeVariable<?> typeVariable) {
       sb.append(typeVariable.getName());
       if (typeVariable.getGenericDeclaration() == owner) {
         dumpTypeParametersArray(null, typeVariable.getBounds(), sb, " extends ", "", classes);
       }
     }
-    else if (type instanceof WildcardType) {
-      final WildcardType wildcardType = (WildcardType)type;
+    else if (type instanceof WildcardType wildcardType) {
       sb.append("?");
       dumpTypeParametersArray(owner, wildcardType.getUpperBounds(), sb, " extends ", "", classes);
       dumpTypeParametersArray(owner, wildcardType.getLowerBounds(), sb, " super ", "", classes);
     }
-    else if (type instanceof ParameterizedType) {
-      final ParameterizedType parameterizedType = (ParameterizedType)type;
+    else if (type instanceof ParameterizedType parameterizedType) {
       final Type raw = parameterizedType.getRawType();
       dumpType(null, raw, sb, classes);
       dumpTypeParametersArray(owner, parameterizedType.getActualTypeArguments(), sb, "<", ">", classes);

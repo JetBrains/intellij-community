@@ -31,17 +31,13 @@ import java.util.Map;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author vlan
- */
 public class PyiTypeProvider extends PyTypeProviderBase {
   @Override
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     final String name = param.getName();
     if (name != null) {
       final PsiElement pythonStub = PyiUtil.getPythonStub(func);
-      if (pythonStub instanceof PyFunction) {
-        final PyFunction functionStub = (PyFunction)pythonStub;
+      if (pythonStub instanceof PyFunction functionStub) {
         final PyNamedParameter paramSkeleton = functionStub.getParameterList().findParameterByName(name);
         if (paramSkeleton != null) {
           final PyType type = context.getType(paramSkeleton);

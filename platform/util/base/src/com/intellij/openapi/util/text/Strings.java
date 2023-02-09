@@ -663,21 +663,24 @@ public final class Strings {
   }
 
   @Contract(pure = true)
-  public static @NotNull String join(final int @NotNull [] strings, final @NotNull String separator) {
+  public static @NotNull String join(int @NotNull [] values, @NotNull String separator) {
+    if (values.length == 0) return "";
+
     final StringBuilder result = new StringBuilder();
-    for (int i = 0; i < strings.length; i++) {
+    for (int i = 0; i < values.length; i++) {
       if (i > 0) result.append(separator);
-      result.append(strings[i]);
+      result.append(values[i]);
     }
     return result.toString();
   }
 
   @Contract(pure = true)
-  public static @NotNull String join(final String @NotNull ... strings) {
+  public static @NotNull String join(String @NotNull ... strings) {
     if (strings.length == 0) return "";
+    if (strings.length == 1) return strings[0];
 
     final StringBuilder builder = new StringBuilder();
-    for (final String string : strings) {
+    for (String string : strings) {
       builder.append(string);
     }
     return builder.toString();
@@ -799,5 +802,18 @@ public final class Strings {
 
   public static @NotNull String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, int @Nullable [] offsetsToKeep) {
     return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep);
+  }
+
+  /**
+   * Returns {@code true} if {@code s1} and {@code s2} refer to the same instance of {@link String}.
+   * There are only few cases when you really need to use this method instead of {@link String#equals} or {@link Objects#equals}:
+   * <ul>
+   * <li>for small performance improvement if you're sure that there will be no different instances of the same string;</li>
+   * <li>to implement "Sentinel" pattern; in that case use {@link String#String(String)} constructor to create the sentinel instance.</li>
+   * </ul>
+   */
+  @SuppressWarnings({"StringEquality", "StringEqualitySSR"})
+  public static boolean areSameInstance(@Nullable String s1, @Nullable String s2) {
+    return s1 == s2;
   }
 }

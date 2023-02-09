@@ -143,7 +143,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   }
 
   @Override
-  protected DiffHyperlink createHyperlink(String expected,
+  public DiffHyperlink createHyperlink(String expected,
                                           String actual,
                                           String filePath,
                                           final String actualFilePath, final boolean printOneLine) {
@@ -165,5 +165,17 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   @Nullable
   public String getErrorMessage() {
     return null;
+  }
+
+  @Nullable
+  public static TestProxyRoot getTestRoot(@NotNull AbstractTestProxy proxy) {
+    if (proxy instanceof TestProxyRoot) {
+      return (TestProxyRoot)proxy;
+    }
+    AbstractTestProxy parent = proxy.getParent();
+    while (parent != null && !(parent instanceof TestProxyRoot)) {
+      parent = parent.getParent();
+    }
+    return parent != null ? (TestProxyRoot)parent : null;
   }
 }

@@ -150,12 +150,12 @@ internal class FixTrackedBranchDialog(private val project: Project) : DialogWrap
   }
 
   private fun createPanel() = JPanel().apply {
-    layout = MigLayout(LC().insets("0").hideMode(3).gridGap("0", "${JBUI.scale(5)}px").noVisualPadding(), AC().grow())
+    layout = MigLayout(LC().insets("0").hideMode(3).gridGap("0", "5").noVisualPadding(), AC().grow())
 
-    add(repositoryField, CC().minWidth("${JBUI.scale(125)}px").growX().alignY("top"))
-    add(remoteField, CC().minWidth("${JBUI.scale(125)}px").growX().alignY("top"))
-    add(branchField, CC().minWidth("${JBUI.scale(250)}px").growX().alignY("top"))
-    add(setAsTrackedBranchField, CC().newline().spanX(3).gapTop("${JBUI.scale(7)}px"))
+    add(repositoryField, CC().minWidth("125").growX().alignY("top"))
+    add(remoteField, CC().minWidth("125").growX().alignY("top"))
+    add(branchField, CC().minWidth("250").growX().alignY("top"))
+    add(setAsTrackedBranchField, CC().newline().spanX(3).gapTop("7"))
     add(updateMethodButtonGroup, CC().newline().spanX(3))
   }
 

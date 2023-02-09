@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.project.DumbService;
@@ -167,33 +167,27 @@ class ConstructorReferencesSearchHelper {
     }
     for (PsiMethod method : constructors) {
       PsiCodeBlock body = method.getBody();
-      if (body == null || method == constructor && isStrictSignatureSearch) {
+      if (body == null || method == constructor && isStrictSignatureSearch || !method.isPhysical()) {
         continue;
       }
       PsiStatement[] statements = body.getStatements();
-      if (statements.length != 0) {
-        PsiStatement statement = statements[0];
-        if (statement instanceof PsiExpressionStatement) {
-          PsiExpression expr = ((PsiExpressionStatement)statement).getExpression();
-          if (expr instanceof PsiMethodCallExpression) {
-            PsiReferenceExpression refExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
-            if (PsiSearchScopeUtil.isInScope(searchScope, refExpr)) {
-              if (refExpr.textMatches(superOrThisKeyword)) {
-                PsiElement referencedElement = refExpr.resolve();
-                if (referencedElement instanceof PsiMethod) {
-                  PsiMethod constructor1 = (PsiMethod)referencedElement;
-                  boolean match = isStrictSignatureSearch
-                                  ? myManager.areElementsEquivalent(constructor1, constructor)
-                                  : myManager.areElementsEquivalent(constructor.getContainingClass(), constructor1.getContainingClass());
-                  if (match && !processor.process(refExpr)) return false;
-                }
-                //as long as we've encountered super/this keyword, no implicit ctr calls are possible here
-                continue;
-              }
-              else if (refExpr.textMatches(thisOrSuperKeyword)) {
-                continue;
-              }
+      if (statements.length != 0 && statements[0] instanceof PsiExpressionStatement exprStatement &&
+          exprStatement.getExpression() instanceof PsiMethodCallExpression call) {
+        PsiReferenceExpression refExpr = call.getMethodExpression();
+        if (PsiSearchScopeUtil.isInScope(searchScope, refExpr)) {
+          if (refExpr.textMatches(superOrThisKeyword)) {
+            PsiElement referencedElement = refExpr.resolve();
+            if (referencedElement instanceof PsiMethod constructor1) {
+              boolean match = isStrictSignatureSearch
+                              ? myManager.areElementsEquivalent(constructor1, constructor)
+                              : myManager.areElementsEquivalent(constructor.getContainingClass(), constructor1.getContainingClass());
+              if (match && !processor.process(refExpr)) return false;
             }
+            //as long as we've encountered super/this keyword, no implicit ctr calls are possible here
+            continue;
+          }
+          else if (refExpr.textMatches(thisOrSuperKeyword)) {
+            continue;
           }
         }
       }

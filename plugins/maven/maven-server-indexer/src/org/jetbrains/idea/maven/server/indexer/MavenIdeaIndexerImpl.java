@@ -344,7 +344,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
       return getInternalArchetypes();
     }
     catch (ComponentLookupException e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -378,7 +378,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
       }
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 

@@ -114,10 +114,6 @@ public final class EditorCoreUtil {
       }
 
       @Override
-      public void setAttributes(TextAttributes attributes) {
-      }
-
-      @Override
       public void setColorScheme(@NotNull EditorColorsScheme scheme) {
       }
     };

@@ -3,9 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,9 +16,7 @@ final class ShowAutoImportPassFactory implements TextEditorHighlightingPassFacto
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     HighlightingSessionImpl session = (HighlightingSessionImpl)HighlightingSessionImpl.getFromCurrentIndicator(file);
-    VirtualFile virtualFile = file.getVirtualFile();
-    boolean isInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(file.getProject(), virtualFile, false);
-    boolean canChangeFileSilently = session.canChangeFileSilently(isInContent);
+    boolean canChangeFileSilently = session.canChangeFileSilently();
     return canChangeFileSilently ? new ShowAutoImportPass(file, editor, session.getVisibleRange()) : null;
   }
 }

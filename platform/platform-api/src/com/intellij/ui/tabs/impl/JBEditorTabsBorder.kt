@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.ui.tabs.impl
 
 import com.intellij.openapi.rd.paint2DLine
@@ -16,7 +18,6 @@ import com.intellij.util.ui.JBUI
 import java.awt.*
 
 class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
-
   private val animator = JBAnimator()
   private var start: Int = -1
   private var end: Int = -1
@@ -25,40 +26,38 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
   init {
     tabs.addListener(object : TabsListener {
       override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
-        val from = bounds(oldSelection)
-        val to = bounds(newSelection)
-        if (from != null && to != null) {
-          val dur = 100
-          val del = 50
-          val s1 = from.x
-          val s2 = to.x
-          val d1 = if (s1 > s2) 0 else del
-          val e1 = from.x + from.width
-          val e2 = to.x + to.width
-          val d2 = if (e1 > e2) del else 0
-          animationId = animator.animate(
-            animation(s1, s2) {
-              start = it
-              tabs.component.repaint()
-            }.apply {
-              duration = dur - d1
-              delay = d1
-              easing = if (d1 != 0) Easing.EASE_OUT else Easing.LINEAR
-            },
-            animation(e1, e2) {
-              end = it
-              tabs.component.repaint()
-            }.apply {
-              duration = dur - d2
-              delay = d2
-              easing = if (d2 != 0) Easing.EASE_OUT else Easing.LINEAR
-            }
-          )
-        }
+        val from = bounds(oldSelection) ?: return
+        val to = bounds(newSelection) ?: return
+        val dur = 100
+        val del = 50
+        val s1 = from.x
+        val s2 = to.x
+        val d1 = if (s1 > s2) 0 else del
+        val e1 = from.x + from.width
+        val e2 = to.x + to.width
+        val d2 = if (e1 > e2) del else 0
+        animationId = animator.animate(
+          animation(s1, s2) {
+            start = it
+            tabs.component.repaint()
+          }.apply {
+            duration = dur - d1
+            delay = d1
+            easing = if (d1 != 0) Easing.EASE_OUT else Easing.LINEAR
+          },
+          animation(e1, e2) {
+            end = it
+            tabs.component.repaint()
+          }.apply {
+            duration = dur - d2
+            delay = d2
+            easing = if (d2 != 0) Easing.EASE_OUT else Easing.LINEAR
+          }
+        )
       }
 
       private fun bounds(tabInfo: TabInfo?): Rectangle? {
-        return tabs.myInfo2Label[tabInfo ?: return null]?.bounds
+        return tabs.myInfo2Label.get(tabInfo ?: return null)?.bounds
       }
     })
   }
@@ -73,9 +72,13 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
       g.paint2DLine(Point(x, y), Point(x + width, y), LinePainter2D.StrokeType.INSIDE,
                     thickness.toDouble(), JBUI.CurrentTheme.EditorTabs.borderColor())
     }
-    else tabs.tabPainter.paintBorderLine(g, thickness, Point(x, y), Point(x + width, y))
+    else {
+      tabs.tabPainter.paintBorderLine(g, thickness, Point(x, y), Point(x + width, y))
+    }
 
-    if (tabs.isEmptyVisible || tabs.isHideTabs) return
+    if (tabs.isEmptyVisible || tabs.isHideTabs) {
+      return
+    }
 
     val myInfo2Label = tabs.myInfo2Label
     val firstLabel = myInfo2Label[tabs.visibleInfos[0]] ?: return
@@ -111,7 +114,8 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
 
     if (hasAnimation()) {
       tabs.tabPainter.paintUnderline(tabs.position, calcRectangle() ?: return, thickness, g, tabs.isActiveTabs(tabs.selectedInfo))
-    } else {
+    }
+    else {
       val selectedLabel = tabs.selectedLabel ?: return
       tabs.tabPainter.paintUnderline(tabs.position, selectedLabel.bounds, thickness, g, tabs.isActiveTabs(tabs.selectedInfo))
     }
@@ -127,6 +131,6 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
   }
 
   companion object {
-    fun hasAnimation() = Registry.`is`("ide.editor.tab.selection.animation", false)
+    internal fun hasAnimation(): Boolean = Registry.`is`("ide.editor.tab.selection.animation", false)
   }
 }

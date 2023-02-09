@@ -10,9 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author vlan
- */
 public final class PyPackage extends InstalledPackage {
   private final @Nullable String myLocation;
   private final @NotNull List<PyRequirement> myRequirements;

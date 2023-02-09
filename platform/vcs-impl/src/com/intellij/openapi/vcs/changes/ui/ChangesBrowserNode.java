@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.DirtyUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
@@ -240,7 +241,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   }
 
   public @NotNull JBIterable<VirtualFile> iterateFilesUnder() {
-    return traverse().filter(VirtualFile.class).filter(VirtualFile::isValid);
+    return traverseObjectsUnder().filter(VirtualFile.class).filter(VirtualFile::isValid);
   }
 
   public @NotNull JBIterable<FilePath> iterateFilePathsUnder() {
@@ -348,6 +349,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return getBackgroundColorFor(project, getUserObject());
   }
 
+  @DirtyUI
   @Nullable
   protected static Color getBackgroundColorFor(@NotNull Project project, @Nullable Object object) {
     VirtualFile file;

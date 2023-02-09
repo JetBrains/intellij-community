@@ -239,13 +239,14 @@ fun getMainMethodClass(uMainMethod: UMethod): PsiClass? {
 private fun isKotlinParameterlessMain(mainMethod: PsiMethod) =
   mainMethod.language.id == "kotlin"
   && mainMethod.parameterList.parameters.isEmpty()
-  && PsiType.VOID == mainMethod.returnType
+  && PsiTypes.voidType() == mainMethod.returnType
   && mainMethod.hasModifierProperty(PsiModifier.STATIC)
 
 private fun isKotlinSuspendMain(uMainMethod: UMethod): Boolean {
   val sourcePsi = uMainMethod.sourcePsi ?: return false
   if (sourcePsi.language.id != "kotlin") return false
-  if (!SyntaxTraverser.psiTraverser(sourcePsi.children.first()).any { it is LeafPsiElement && it.textMatches("suspend") }) return false
+  val child = sourcePsi.children.firstOrNull() ?: return false
+  if (!SyntaxTraverser.psiTraverser(child).any { it is LeafPsiElement && it.textMatches("suspend") }) return false
   val method = uMainMethod.javaPsi
   val parameters: Array<PsiParameter> = method.parameterList.parameters
   if (parameters.size > 2) return false

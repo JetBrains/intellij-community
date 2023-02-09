@@ -7,14 +7,6 @@ import org.jetbrains.annotations.NonNls;
 public final class FacetTypeId<F extends Facet> {
   private final String myDebugName;
 
-  /**
-   * @deprecated use {@link FacetTypeId#FacetTypeId(String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public FacetTypeId() {
-    this("unknown");
-  }
-
   public FacetTypeId(@NonNls String debugName) {
     myDebugName = debugName;
   }

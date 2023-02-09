@@ -3,9 +3,11 @@ package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.uast.*
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
@@ -27,12 +29,12 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         val uFile = myFixture.file.toUElement()!!
 
         TestCase.assertEquals(
-            "PsiType:List<?>",
-            uFile.findElementByTextFromPsi<UExpression>("arr[0]").getExpressionType().toString()
+            "java.util.List<?>",
+            uFile.findElementByTextFromPsi<UExpression>("arr[0]").getExpressionType()?.canonicalText
         )
         TestCase.assertEquals(
-            "PsiType:List<?>",
-            uFile.findElementByTextFromPsi<UExpression>("lst[0]").getExpressionType().toString()
+            "java.util.List<?>",
+            uFile.findElementByTextFromPsi<UExpression>("lst[0]").getExpressionType()?.canonicalText
         )
     }
 
@@ -52,11 +54,12 @@ interface UastApiFixtureTestBase : UastPluginSelection {
 
     fun checkDetailsOfDeprecatedHidden(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
+            // Example from KTIJ-18039
             "MyClass.kt", """
             @Deprecated(level = DeprecationLevel.WARNING, message="subject to change")
             fun test1() { }
             @Deprecated(level = DeprecationLevel.HIDDEN, message="no longer supported")
-            fun test2() { }
+            fun test2() = Test(22)
             
             class Test(private val parameter: Int)  {
                 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -69,22 +72,86 @@ interface UastApiFixtureTestBase : UastPluginSelection {
 
         val test1 = uFile.findElementByTextFromPsi<UMethod>("test1", strict = false)
         TestCase.assertNotNull("can't convert function test1", test1)
+        // KTIJ-18716
         TestCase.assertTrue("Warning level, hasAnnotation", test1.javaPsi.hasAnnotation("kotlin.Deprecated"))
+        // KTIJ-18039
         TestCase.assertTrue("Warning level, isDeprecated", test1.javaPsi.isDeprecated)
+        // KTIJ-18720
         TestCase.assertTrue("Warning level, public", test1.javaPsi.hasModifierProperty(PsiModifier.PUBLIC))
+        // KTIJ-23807
+        TestCase.assertTrue("Warning level, nullability", test1.javaPsi.annotations.none { it.isNullnessAnnotation })
 
         val test2 = uFile.findElementByTextFromPsi<UMethod>("test2", strict = false)
         TestCase.assertNotNull("can't convert function test2", test2)
+        // KTIJ-18716
         TestCase.assertTrue("Hidden level, hasAnnotation", test2.javaPsi.hasAnnotation("kotlin.Deprecated"))
+        // KTIJ-18039
         TestCase.assertTrue("Hidden level, isDeprecated", test2.javaPsi.isDeprecated)
+        // KTIJ-18720
         TestCase.assertTrue("Hidden level, public", test2.javaPsi.hasModifierProperty(PsiModifier.PUBLIC))
+        // KTIJ-23807
+        TestCase.assertNotNull("Hidden level, nullability", test2.javaPsi.annotations.singleOrNull { it.isNullnessAnnotation })
 
         val testClass = uFile.findElementByTextFromPsi<UClass>("Test", strict = false)
         TestCase.assertNotNull("can't convert class Test", testClass)
         testClass.methods.forEach { mtd ->
             if (mtd.sourcePsi is KtConstructor<*>) {
+                // KTIJ-20200
                 TestCase.assertTrue("$mtd should be marked as a constructor", mtd.isConstructor)
             }
+        }
+    }
+
+    fun checkTypesOfDeprecatedHidden(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                interface State<out T> {
+                    val value: T
+                }
+
+                @Deprecated(level = DeprecationLevel.HIDDEN, message="no longer supported")
+                fun before(
+                    i : Int?,
+                    s : String?,
+                    vararg vs : Any,
+                ): State<String> {
+                    return object : State<String> {
+                        override val value: String = i?.toString() ?: s ?: "42"
+                    }
+                }
+                
+                fun after(
+                    i : Int?,
+                    s : String?,
+                    vararg vs : Any,
+                ): State<String> {
+                    return object : State<String> {
+                        override val value: String = i?.toString() ?: s ?: "42"
+                    }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        val before = uFile.findElementByTextFromPsi<UMethod>("before", strict = false)
+            .orFail("cant convert to UMethod: before")
+        val after = uFile.findElementByTextFromPsi<UMethod>("after", strict = false)
+            .orFail("cant convert to UMethod: after")
+
+        TestCase.assertEquals("return type", after.returnType, before.returnType)
+
+        TestCase.assertEquals(after.uastParameters.size, before.uastParameters.size)
+        after.uastParameters.zip(before.uastParameters).forEach { (afterParam, beforeParam) ->
+            val paramName = afterParam.name
+            TestCase.assertEquals(paramName, beforeParam.name)
+            TestCase.assertEquals(paramName, afterParam.isVarArgs, beforeParam.isVarArgs)
+            TestCase.assertEquals(paramName, afterParam.type, beforeParam.type)
+            TestCase.assertEquals(
+                paramName,
+                (afterParam.javaPsi as PsiModifierListOwner).hasAnnotation(Nullable::class.java.name),
+                (beforeParam.javaPsi as PsiModifierListOwner).hasAnnotation(Nullable::class.java.name)
+            )
         }
     }
 
@@ -109,7 +176,7 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
             .orFail("cant convert to UCallExpression")
         TestCase.assertEquals("putString", uCallExpression.methodName)
-        TestCase.assertEquals("PsiType:MyBundle", uCallExpression.receiverType?.toString())
+        TestCase.assertEquals("MyBundle", uCallExpression.receiverType?.canonicalText)
     }
 
     fun checkSubstitutedReceiverType(myFixture: JavaCodeInsightTestFixture) {
@@ -129,7 +196,7 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
             .orFail("cant convert to UCallExpression")
         TestCase.assertEquals("use", uCallExpression.methodName)
-        TestCase.assertEquals("PsiType:String", uCallExpression.receiverType?.toString())
+        TestCase.assertEquals("java.lang.String", uCallExpression.receiverType?.canonicalText)
     }
 
     fun checkCallKindOfSamConstructor(myFixture: JavaCodeInsightTestFixture) {
@@ -164,19 +231,59 @@ interface UastApiFixtureTestBase : UastPluginSelection {
             """.trimIndent()
         )
 
-        val errorType = "PsiType:<ErrorType>"
-        val expectedPsiTypes = setOf("PsiType:Inner", errorType)
+        val errorType = "<ErrorType>"
+        val expectedPsiTypes = setOf("Outer.Inner", errorType)
         myFixture.file.accept(object : PsiRecursiveElementVisitor() {
             override fun visitElement(element: PsiElement) {
                 // Mimic what [IconLineMarkerProvider#collectSlowLineMarkers] does.
                 element.toUElementOfType<UCallExpression>()?.let {
-                    val expressionType = it.getExpressionType()?.toString() ?: errorType
-                    TestCase.assertTrue(expressionType in expectedPsiTypes)
+                    val expressionType = it.getExpressionType()?.canonicalText ?: errorType
+                    TestCase.assertTrue(
+                        expressionType,
+                        expressionType in expectedPsiTypes ||
+                                // FE1.0 outputs Outer.no_name_in_PSI_hashcode.Inner
+                                (expressionType.startsWith("Outer.") && expressionType.endsWith(".Inner"))
+                    )
                 }
 
                 super.visitElement(element)
             }
         })
+    }
+
+    fun checkFlexibleFunctionalInterfaceType(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+                package test.pkg;
+                public interface ThrowingRunnable {
+                    void run() throws Throwable;
+                }
+            """.trimIndent()
+        )
+        myFixture.addClass(
+            """
+                package test.pkg;
+                public class Assert {
+                    public static <T extends Throwable> T assertThrows(Class<T> expectedThrowable, ThrowingRunnable runnable) {}
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import test.pkg.Assert
+
+                fun dummy() = Any()
+                
+                fun test() {
+                    Assert.assertThrows(Throwable::class.java) { dummy() }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val uLambdaExpression = uFile.findElementByTextFromPsi<ULambdaExpression>("{ dummy() }")
+            .orFail("cant convert to ULambdaExpression")
+        TestCase.assertEquals("test.pkg.ThrowingRunnable", uLambdaExpression.functionalInterfaceType?.canonicalText)
     }
 
 }

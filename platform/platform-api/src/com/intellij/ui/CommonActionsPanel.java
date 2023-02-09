@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
@@ -10,7 +11,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -30,19 +30,19 @@ public final class CommonActionsPanel extends JPanel {
   private final ActionToolbar myToolbar;
 
   public enum Buttons {
-    ADD(IconUtil.getAddIcon(), UIBundle.messagePointer("button.text.add")) {
+    ADD(AllIcons.General.Add, UIBundle.messagePointer("button.text.add")) {
       @Override
       @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
         return new AddButton(listener, name == null ? getText() : name, icon);
       }
     },
-    REMOVE(IconUtil.getRemoveIcon(), UIBundle.messagePointer("button.text.remove")) {
+    REMOVE(AllIcons.General.Remove, UIBundle.messagePointer("button.text.remove")) {
       @Override
       @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
         return new RemoveButton(listener, name == null ? getText() : name, icon);
       }
     },
-    EDIT(IconUtil.getEditIcon(), UIBundle.messagePointer("button.text.edit")) {
+    EDIT(AllIcons.Actions.Edit, UIBundle.messagePointer("button.text.edit")) {
       @Override
       @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
         return new EditButton(listener, name == null ? getText() : name, icon);
@@ -140,16 +140,16 @@ public final class CommonActionsPanel extends JPanel {
     if (buttonComparator != null) {
       Arrays.sort(myActions, buttonComparator);
     }
-    ArrayList<AnAction> toolbarActions = ContainerUtil.newArrayList(myActions);
-    for (int i = 0; i < toolbarActions.size(); i++) {
-        if (toolbarActions.get(i) instanceof AnActionButton.CheckedAnActionButton) {
-          toolbarActions.set(i, ((AnActionButton.CheckedAnActionButton)toolbarActions.get(i)).getDelegate());
-        }
+    AnAction[] toolbarActions = actions.clone();
+    for (int i = 0; i < toolbarActions.length; i++) {
+      if (toolbarActions[i] instanceof AnActionButton.CheckedAnActionButton) {
+        toolbarActions[i] = ((AnActionButton.CheckedAnActionButton)toolbarActions[i]).getDelegate();
+      }
     }
 
     ActionManager actionManager = ActionManager.getInstance();
     myToolbar = actionManager.createActionToolbar(ActionPlaces.TOOLBAR_DECORATOR_TOOLBAR,
-                                                  new DefaultActionGroup(toolbarActions.toArray(AnAction.EMPTY_ARRAY)),
+                                                  new DefaultActionGroup(toolbarActions),
                                                   position == ActionToolbarPosition.BOTTOM || position == ActionToolbarPosition.TOP);
     myToolbar.setTargetComponent(contextComponent);
     myToolbar.getComponent().setBorder(null);

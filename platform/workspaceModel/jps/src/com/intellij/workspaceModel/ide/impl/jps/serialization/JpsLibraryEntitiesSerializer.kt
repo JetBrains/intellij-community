@@ -3,11 +3,11 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ConcurrentFactoryMap
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
@@ -15,8 +15,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryPropertiesEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -67,6 +65,21 @@ internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl:
 
 private const val LIBRARY_TABLE_COMPONENT_NAME = "libraryTable"
 
+internal class JpsGlobalLibrariesFileSerializer(entitySource: JpsGlobalFileEntitySource)
+  : JpsLibraryEntitiesSerializer(entitySource.file, entitySource,
+                                 LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL)),
+    JpsFileEntityTypeSerializer<LibraryEntity> {
+  override val isExternalStorage: Boolean
+    get() = false
+  override val entityFilter: (LibraryEntity) -> Boolean
+    get() = { it.tableId is LibraryTableId.GlobalLibraryTableId}
+
+  override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
+    writer.saveComponent(fileUrl, LIBRARY_TABLE_COMPONENT_NAME, null)
+  }
+}
+
+
 internal class JpsLibrariesFileSerializer(entitySource: JpsFileEntitySource.ExactFile, libraryTableId: LibraryTableId)
   : JpsLibraryEntitiesSerializer(entitySource.file, entitySource, libraryTableId), JpsFileEntityTypeSerializer<LibraryEntity> {
   override val isExternalStorage: Boolean
@@ -101,11 +114,6 @@ internal class JpsLibrariesExternalFileSerializer(private val externalFile: JpsF
     return JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
   }
 
-  override fun getExternalSystemId(libraryEntity: LibraryEntity): String? {
-    val source = libraryEntity.entitySource
-    return (source as? JpsImportedEntitySource)?.externalSystemId
-  }
-
   override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
     writer.saveComponent(fileUrl, LIBRARY_TABLE_COMPONENT_NAME, null)
   }
@@ -119,30 +127,52 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
   override val mainEntityClass: Class<LibraryEntity>
     get() = LibraryEntity::class.java
 
-  override fun loadEntities(builder: MutableEntityStorage,
-                            reader: JpsFileContentReader, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager) {
-    val libraryTableTag = reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) ?: return
-    for (libraryTag in libraryTableTag.getChildren(LIBRARY_TAG)) {
-      val source = createEntitySource(libraryTag) ?: continue
-      val name = libraryTag.getAttributeValueStrict(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
-
-      val libraryId = LibraryId(name, libraryTableId)
-      val existingLibraryEntity = builder.resolve(libraryId)
-      if (existingLibraryEntity != null) {
-        logger<JpsLibraryEntitiesSerializer>().error("""Error during entities loading
-          |Entity with this library id already exists.
-          |Library id: $libraryId
-          |fileUrl: ${fileUrl.presentableUrl}
-          |library table id: $libraryTableId
-          |internal entity source: $internalEntitySource
-        """.trimMargin())
+  override fun loadEntities(reader: JpsFileContentReader,
+                            errorReporter: ErrorReporter,
+                            virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> {
+    val libraryTableTag = runCatchingXmlIssues { reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) }
+      .onFailure { return LoadingResult(emptyMap(), null) }
+      .getOrThrow() ?: return LoadingResult(emptyMap(), null)
+    val libs = runCatchingXmlIssues { libraryTableTag.getChildren(LIBRARY_TAG) }
+      .onFailure { return LoadingResult(emptyMap(), null) }
+      .getOrThrow()
+      .mapNotNull { libraryTag ->
+        runCatchingXmlIssues {
+          val source = createEntitySource(libraryTag) ?: return@mapNotNull null
+          val name = libraryTag.getAttributeValueStrict(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
+          loadLibrary(name, libraryTag, libraryTableId, source, virtualFileManager)
+        }
       }
-
-      loadLibrary(name, libraryTag, libraryTableId, builder, source, virtualFileManager, isExternalStorage)
-    }
+    return LoadingResult(
+      mapOf(LibraryEntity::class.java to libs.mapNotNull { it.getOrNull() }),
+      libs.firstOrNull { it.isFailure }?.exceptionOrNull(),
+    )
   }
 
-  protected open fun createEntitySource(libraryTag: Element): EntitySource? = internalEntitySource
+  @Suppress("UNCHECKED_CAST")
+  override fun checkAndAddToBuilder(builder: MutableEntityStorage,
+                                    orphanage: MutableEntityStorage,
+                                    newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
+    val libraries = (newEntities[LibraryEntity::class.java] as? List<LibraryEntity>) ?: emptyList()
+    libraries.forEach {
+      if (it.symbolicId in builder) {
+        thisLogger().error("""Error during entities loading
+            |Entity with this library id already exists.
+            |Library id: ${it.symbolicId}
+            |fileUrl: ${fileUrl.presentableUrl}
+            |library table id: ${it.tableId}
+            |internal entity source: ${internalEntitySource}
+          """.trimMargin())
+      }
+    }
+
+    newEntities.values.forEach { lists -> lists.forEach { builder addEntity it } }
+  }
+
+  protected open fun createEntitySource(libraryTag: Element): EntitySource? {
+    val externalSystemId = libraryTag.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE)
+    return if (externalSystemId == null) internalEntitySource else JpsImportedEntitySource(internalEntitySource, externalSystemId, false)
+  }
 
   override fun saveEntities(mainEntities: Collection<LibraryEntity>,
                             entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
@@ -152,13 +182,10 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
 
     val componentTag = JDomSerializationUtil.createComponentElement(LIBRARY_TABLE_COMPONENT_NAME)
     mainEntities.sortedBy { it.name }.forEach {
-      componentTag.addContent(saveLibrary(it, getExternalSystemId(it), isExternalStorage))
+      val externalSystemId = (it.entitySource as? JpsImportedEntitySource)?.externalSystemId
+      componentTag.addContent(saveLibrary(it, externalSystemId, isExternalStorage))
     }
     writer.saveComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME, componentTag)
-  }
-
-  protected open fun getExternalSystemId(libraryEntity: LibraryEntity): String? {
-    return libraryEntity.externalSystemId?.externalSystemId
   }
 
   override fun toString(): String = "${javaClass.simpleName.substringAfterLast('.')}($fileUrl)"
@@ -166,8 +193,11 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
 
 private const val DEFAULT_JAR_DIRECTORY_TYPE = "CLASSES"
 
-internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: LibraryTableId, builder: MutableEntityStorage,
-                         source: EntitySource, virtualFileManager: VirtualFileUrlManager, isExternalStorage: Boolean): LibraryEntity {
+internal fun loadLibrary(name: String,
+                         libraryElement: Element,
+                         libraryTableId: LibraryTableId,
+                         source: EntitySource,
+                         virtualFileManager: VirtualFileUrlManager): LibraryEntity {
   val roots = ArrayList<LibraryRoot>()
   val excludedRoots = ArrayList<VirtualFileUrl>()
   val jarDirectories = libraryElement.getChildren(JAR_DIRECTORY_TAG).associateBy(
@@ -205,15 +235,15 @@ internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: 
       }
     }
   }
-  val libraryEntity = builder.addLibraryEntity(name, libraryTableId, roots, excludedRoots, source)
-  if (type != null) {
-    builder.addLibraryPropertiesEntity(libraryEntity, type, properties)
+  val libProperties = type?.let {
+    LibraryPropertiesEntity(type, source) {
+      this.propertiesXmlTag = properties
+    }
   }
-  val externalSystemId = libraryElement.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE)
-  if (externalSystemId != null && !isExternalStorage) {
-    builder.addEntity(LibraryExternalSystemIdEntity(externalSystemId, source) {
-      this.library = libraryEntity
-    })
+  val excludes = excludedRoots.map { ExcludeUrlEntity(it, source) }
+  val libraryEntity = LibraryEntity(name, libraryTableId, roots, source) {
+    this.excludedRoots = excludes
+    this.libraryProperties = libProperties
   }
 
   return libraryEntity

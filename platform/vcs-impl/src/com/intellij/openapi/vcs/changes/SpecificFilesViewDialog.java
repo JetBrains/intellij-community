@@ -14,10 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
-import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
+import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
@@ -32,9 +29,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
-import java.util.Set;
 
-import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 
 abstract class SpecificFilesViewDialog extends DialogWrapper {
@@ -55,9 +50,15 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
       @Override
       public Object getData(@NotNull String dataId) {
         if (shownDataKey.is(dataId)) {
-          return getSelectedFilePaths(null);
+          return VcsTreeModelData.selected(this)
+            .iterateUserObjects(FilePath.class);
         }
         return super.getData(dataId);
+      }
+
+      @Override
+      public void onGroupingChanged() {
+        refreshView();
       }
     };
     EditSourceOnEnterKeyHandler.install(myView, closer);
@@ -68,7 +69,6 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     init();
     initData(initDataFiles);
     myView.setMinimumSize(new JBDimension(100, 100));
-    myView.addGroupingChangeListener(e -> refreshView());
 
     ChangeListAdapter changeListListener = new ChangeListAdapter() {
       @Override
@@ -78,7 +78,6 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     };
     ChangeListManager.getInstance(myProject).addChangeListListener(changeListListener, myDisposable);
   }
-
 
   @Override
   protected Action @NotNull [] createActions() {
@@ -116,7 +115,6 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
 
     myPanel.add(toolbarPanel, BorderLayout.NORTH);
     myPanel.add(ScrollPaneFactory.createScrollPane(myView), BorderLayout.CENTER);
-    myView.getGroupingSupport().setGroupingKeysOrSkip(Set.copyOf(DEFAULT_GROUPING_KEYS));
   }
 
   protected void addCustomActions(@NotNull DefaultActionGroup group) {

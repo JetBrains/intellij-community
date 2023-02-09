@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.documentation.ide.impl
 
@@ -9,13 +9,7 @@ import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.ide.util.propComponentProperty
-import com.intellij.lang.documentation.DocumentationTarget
-import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
-import com.intellij.lang.documentation.impl.DocumentationRequest
-import com.intellij.lang.documentation.impl.InternalResolveLinkResult
-import com.intellij.lang.documentation.impl.documentationRequest
-import com.intellij.lang.documentation.impl.resolveLink
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -27,6 +21,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.documentation.impl.DocumentationRequest
+import com.intellij.platform.documentation.impl.InternalResolveLinkResult
+import com.intellij.platform.documentation.impl.documentationRequest
+import com.intellij.platform.documentation.impl.resolveLink
+import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
@@ -56,7 +56,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
 
   private val toolWindowManager: DocumentationToolWindowManager get() = DocumentationToolWindowManager.instance(project)
 
-  fun actionPerformed(dataContext: DataContext) {
+  fun actionPerformed(dataContext: DataContext, popupDependencies: Disposable? = null) {
     EDT.assertIsEdt()
 
     val editor = dataContext.getData(CommonDataKeys.EDITOR)
@@ -64,7 +64,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     if (currentPopup != null) {
       // focused popup would eat the shortcut itself
       // => at this point there is an unfocused documentation popup near lookup or search component
-      currentPopup.focusPreferredComponent()
+      DocumentationPopupFocusService.instance(project).focusExistingPopup(currentPopup)
       return
     }
 
@@ -93,7 +93,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     // so we create pointer and presentation right in the UI thread.
     val request = target.documentationRequest()
     val popupContext = secondaryPopupContext ?: DefaultPopupContext(project, editor)
-    showDocumentation(request, popupContext)
+    showDocumentation(request, popupContext, popupDependencies)
   }
 
   private var popup: WeakReference<AbstractPopup>? = null
@@ -120,16 +120,17 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     return popup
   }
 
-  private fun setPopup(popup: AbstractPopup) {
+  private fun setPopup(popup: AbstractPopup, popupDependencies: Disposable?) {
     EDT.assertIsEdt()
     this.popup = WeakReference(popup)
     Disposer.register(popup) {
       EDT.assertIsEdt()
       this.popup = null
     }
+    popupDependencies?.let { Disposer.register(popup, it) }
   }
 
-  private fun showDocumentation(request: DocumentationRequest, popupContext: PopupContext) {
+  private fun showDocumentation(request: DocumentationRequest, popupContext: PopupContext, popupDependencies: Disposable? = null) {
     if (skipPopup) {
       toolWindowManager.showInToolWindow(request)
       return
@@ -144,7 +145,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     popupScope.coroutineContext.job.cancelChildren()
     popupScope.launch(context = Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
       val popup = showDocumentationPopup(project, request, popupContext)
-      setPopup(popup)
+      setPopup(popup, popupDependencies)
     }
   }
 
@@ -262,3 +263,5 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     }
   }
 }
+
+fun isDocumentationPopupVisible(project: Project) = DocumentationManager.instance(project).isPopupVisible

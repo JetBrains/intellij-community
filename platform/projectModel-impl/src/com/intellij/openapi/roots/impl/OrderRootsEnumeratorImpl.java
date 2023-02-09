@@ -76,8 +76,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         collectModuleRoots(type, ((ModuleSourceOrderEntry)orderEntry).getRootModel(), result, true, !myOrderEnumerator.isProductionOnly(),
                            customHandlers);
       }
-      else if (orderEntry instanceof ModuleOrderEntry) {
-        ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
+      else if (orderEntry instanceof ModuleOrderEntry moduleOrderEntry) {
         final Module module = moduleOrderEntry.getModule();
         if (module != null) {
           ModuleRootModel rootModel = myOrderEnumerator.getRootModel(module);
@@ -116,8 +115,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         boolean includeTests = !myOrderEnumerator.isProductionOnly();
         collectModuleRootsUrls(type, ((ModuleSourceOrderEntry)orderEntry).getRootModel(), result, true, includeTests, customHandlers);
       }
-      else if (orderEntry instanceof ModuleOrderEntry) {
-        ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
+      else if (orderEntry instanceof ModuleOrderEntry moduleOrderEntry) {
         final Module module = moduleOrderEntry.getModule();
         if (module != null) {
           ModuleRootModel rootModel = myOrderEnumerator.getRootModel(module);

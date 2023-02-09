@@ -1,0 +1,5 @@
+REGEXP_FILE
+  RegExpPatternImpl: <\ud800>
+    RegExpBranchImpl: <\ud800>
+      RegExpCharImpl: <\ud800>
+        PsiElement(UNICODE_CHAR)('\ud800')

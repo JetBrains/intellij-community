@@ -19,9 +19,6 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.maven.testFramework.MavenDomTestCase
 import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenIdeaPluginTest extends MavenDomTestCase {
   @Test
   void testConfigureJdk() {

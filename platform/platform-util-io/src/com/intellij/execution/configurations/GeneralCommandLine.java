@@ -2,10 +2,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.execution.CommandLineUtil;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.IllegalEnvVarException;
-import com.intellij.execution.Platform;
+import com.intellij.execution.*;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
@@ -39,7 +36,7 @@ import java.util.*;
  * <h3>Working directory</h3>
  * By default, a current directory of the IDE process is used (usually a "bin/" directory of IDE installation).
  * If child processes may create files in it, this choice is unwelcome. On the other hand, informational commands (e.g. "git --version")
- * are safe. When unsure, set it to something neutral - like user's home or a temp directory.
+ * are safe. When unsure, set it to something neutral - like a user's home or a temp directory.
  *
  * <h3>Parent Environment</h3>
  * {@link ParentEnvironmentType Three options here}.
@@ -351,7 +348,7 @@ public class GeneralCommandLine implements UserDataHolder {
     catch (IOException e) {
       if (SystemInfo.isWindows) {
         String mode = System.getProperty("jdk.lang.Process.allowAmbiguousCommands");
-        SecurityManager sm = System.getSecurityManager();
+        @SuppressWarnings("removal") SecurityManager sm = System.getSecurityManager();
         if ("false".equalsIgnoreCase(mode) || sm != null) {
           e.addSuppressed(new IllegalStateException("Suspicious state: allowAmbiguousCommands=" + mode + " SM=" + (sm != null ? sm.getClass() : null)));
         }
@@ -369,7 +366,7 @@ public class GeneralCommandLine implements UserDataHolder {
     try {
       if (myWorkDirectory != null) {
         if (!myWorkDirectory.exists()) {
-          throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory));
+          throw new WorkingDirectoryNotFoundException(myWorkDirectory.toPath());
         }
         if (!myWorkDirectory.isDirectory()) {
           throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.working.directory.not.directory", myWorkDirectory));

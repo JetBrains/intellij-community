@@ -32,10 +32,9 @@ public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
     @NotNull AnalysisScope analysisScope,
     @NotNull InspectionManager manager,
     @NotNull GlobalInspectionContext globalInspectionContext) {
-    if (!(refEntity instanceof RefClass)) {
+    if (!(refEntity instanceof RefClass refClass)) {
       return null;
     }
-    final RefClass refClass = (RefClass)refEntity;
     final RefEntity owner = refClass.getOwner();
     if (!(owner instanceof RefPackage)) {
       return null;

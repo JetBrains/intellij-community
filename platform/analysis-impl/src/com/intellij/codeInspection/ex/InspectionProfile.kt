@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.profile.ProfileEx
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProfileManager
+import com.intellij.profile.codeInspection.ProjectBasedInspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.util.xmlb.annotations.Transient
 import org.jdom.Element
@@ -57,7 +58,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
   protected val pathMacroManager: PathMacroManager
     get() {
       val profileManager = profileManager
-      return PathMacroManager.getInstance((profileManager as? ProjectInspectionProfileManager)?.project ?: ApplicationManager.getApplication())
+      return PathMacroManager.getInstance((profileManager as? ProjectBasedInspectionProfileManager)?.project ?: ApplicationManager.getApplication())
     }
 
   override fun toString(): String = name
@@ -75,7 +76,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
    */
   @JvmOverloads
   fun setToolEnabled(toolShortName: String, enabled: Boolean, project: Project? = null, fireEvents: Boolean = true) {
-    val tools = getTools(toolShortName, project ?: (profileManager as? ProjectInspectionProfileManager)?.project)
+    val tools = getTools(toolShortName, project ?: (profileManager as? ProjectBasedInspectionProfileManager)?.project)
     if (enabled) {
       if (tools.isEnabled && tools.defaultState.isEnabled) {
         return
@@ -103,7 +104,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
   abstract fun getToolsOrNull(name: String, project: Project?): ToolsImpl?
 
   @JvmOverloads
-  fun initInspectionTools(project: Project? = (profileManager as? ProjectInspectionProfileManager)?.project) {
+  fun initInspectionTools(project: Project? = (profileManager as? ProjectBasedInspectionProfileManager)?.project) {
     if (initialized || !forceInitInspectionTools()) {
       return
     }

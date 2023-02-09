@@ -68,9 +68,8 @@ public final class DuplicateComponentsAction extends AbstractGuiEditorAction {
 
   private static void fillDuplicateMap(Map<RadComponent, RadComponent> duplicates, final RadComponent c, final RadComponent copy) {
     duplicates.put(c, copy);
-    if (c instanceof RadContainer) {
+    if (c instanceof RadContainer container) {
       LOG.assertTrue(copy instanceof RadContainer);
-      final RadContainer container = (RadContainer)c;
       final RadContainer containerCopy = (RadContainer)copy;
       for(int i=0; i<container.getComponentCount(); i++) {
         fillDuplicateMap(duplicates, container.getComponent(i), containerCopy.getComponent(i));
@@ -87,8 +86,7 @@ public final class DuplicateComponentsAction extends AbstractGuiEditorAction {
         copy.setDefaultBinding(true);
       }
       for(IProperty prop: copy.getModifiedProperties()) {
-        if (prop instanceof IntroComponentProperty) {
-          final IntroComponentProperty componentProperty = (IntroComponentProperty)prop;
+        if (prop instanceof IntroComponentProperty componentProperty) {
           String copyValue = componentProperty.getValue(copy);
           for(RadComponent original: duplicates.keySet()) {
             if (original.getId().equals(copyValue)) {

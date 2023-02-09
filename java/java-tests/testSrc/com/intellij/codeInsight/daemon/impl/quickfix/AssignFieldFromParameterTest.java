@@ -5,9 +5,6 @@ import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 
-/**
- * @author ven
- */
 public class AssignFieldFromParameterTest extends LightIntentionActionTestCase {
   @Override
   protected void setUp() throws Exception {

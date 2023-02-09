@@ -26,9 +26,6 @@ import com.jetbrains.python.psi.PyExpressionStatement;
 import com.jetbrains.python.psi.PyTupleExpression;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Author: Alexey.Ivanov
- */
 public class ReplaceListComprehensionsQuickFix implements LocalQuickFix {
   @NotNull
   @Override

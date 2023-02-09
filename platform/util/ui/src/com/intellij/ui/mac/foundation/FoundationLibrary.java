@@ -3,9 +3,6 @@ package com.intellij.ui.mac.foundation;
 
 import com.sun.jna.*;
 
-/**
- * @author spleaner
- */
 public interface FoundationLibrary extends Library {
   void NSLog(Pointer pString, Object thing);
 

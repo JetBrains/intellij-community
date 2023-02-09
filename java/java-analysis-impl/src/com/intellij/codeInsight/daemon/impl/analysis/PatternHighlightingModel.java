@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -10,18 +10,19 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AddMissingDeconstructionCom
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.psi.util.JavaPsiPatternUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Objects;
 
-class PatternHighlightingModel {
+final class PatternHighlightingModel {
 
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
@@ -32,12 +33,20 @@ class PatternHighlightingModel {
     var resolveResult = recordType instanceof PsiClassType classType ? classType.resolveGenerics() : ClassResolveResult.EMPTY;
     PsiClass recordClass = resolveResult.getElement();
     if (recordClass == null || !recordClass.isRecord()) {
-      String message = JavaErrorBundle.message("switch.record.required", typeElement.getText());
+      String message = JavaErrorBundle.message("deconstruction.pattern.requires.record", JavaHighlightUtil.formatType(recordType));
       var info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message).create();
       holder.add(info);
       return;
     }
-    if (recordClass.hasTypeParameters() && recordType instanceof PsiClassType classType && !classType.hasParameters()) {
+    if (resolveResult.getInferenceError() != null) {
+      String message = JavaErrorBundle.message("error.cannot.infer.pattern.type", resolveResult.getInferenceError());
+      var info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message).create();
+      holder.add(info);
+      return;
+    }
+    PsiJavaCodeReferenceElement ref = typeElement.getInnermostComponentReferenceElement();
+    if (recordClass.hasTypeParameters() && ref != null && ref.getTypeParameterCount() == 0 &&
+        PsiUtil.getLanguageLevel(deconstructionPattern).isLessThan(LanguageLevel.JDK_20_PREVIEW)) {
       String message = JavaErrorBundle.message("error.raw.deconstruction", typeElement.getText());
       var info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message).create();
       holder.add(info);
@@ -60,15 +69,11 @@ class PatternHighlightingModel {
           holder.add(builder.create());
         }
       }
-      else if (JavaGenericsUtil.isUncheckedCast(Objects.requireNonNull(deconstructionComponentType),
-                                                GenericsUtil.getVariableTypeByExpressionType(substitutedRecordComponentType))) {
-        hasMismatchedPattern = true;
-        if (recordComponents.length == deconstructionComponents.length) {
-          PsiType recordComponentTypeErasure = TypeConversionUtil.erasure(recordComponentType);
-          String message = JavaErrorBundle.message("unsafe.cast.in.instanceof",
-                                                   JavaHighlightUtil.formatType(recordComponentTypeErasure),
-                                                   JavaHighlightUtil.formatType(deconstructionComponentType));
-          holder.add(SwitchBlockHighlightingModel.createError(deconstructionComponent, message).create());
+      else {
+        HighlightInfo.Builder info = getUncheckedPatternConversionError(deconstructionComponent);
+        if (info != null) {
+          hasMismatchedPattern = true;
+          holder.add(info.create());
         }
       }
       if (recordComponents.length != deconstructionComponents.length && hasMismatchedPattern) {
@@ -83,6 +88,26 @@ class PatternHighlightingModel {
                                                                       !hasMismatchedPattern);
       holder.add(info);
     }
+  }
+
+  static @Nullable HighlightInfo.Builder getUncheckedPatternConversionError(@NotNull PsiPattern pattern) {
+    PsiType patternType = JavaPsiPatternUtil.getPatternType(pattern);
+    if (patternType == null) return null;
+    if (pattern instanceof PsiDeconstructionPattern subPattern) {
+      PsiJavaCodeReferenceElement element = subPattern.getTypeElement().getInnermostComponentReferenceElement();
+      if (element != null && element.getTypeParameterCount() == 0 && patternType instanceof PsiClassType classType) {
+        patternType = classType.rawType();
+      }
+    }
+    PsiType contextType = JavaPsiPatternUtil.getContextType(pattern);
+    if (contextType == null) return null;
+    if (contextType instanceof PsiWildcardType wildcardType) {
+      contextType = wildcardType.getExtendsBound();
+    }
+    if (!JavaGenericsUtil.isUncheckedCast(patternType, contextType)) return null;
+    String message = JavaErrorBundle.message("unsafe.cast.in.instanceof", contextType.getPresentableText(),
+                                             patternType.getPresentableText());
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern).descriptionAndTooltip(message);
   }
 
   private static boolean isApplicable(@NotNull PsiType recordType, @Nullable PsiType patternType) {

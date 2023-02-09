@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -146,7 +146,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     myFileEditor = fileEditor;
     myTreeModel = treeModel;
 
-    //Stop code analyzer to speedup EDT
+    //Stop code analyzer to speed up the EDT
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
 
     myTreeActionsOwner = new TreeStructureActionsOwner(myTreeModel);
@@ -188,7 +188,6 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     myStructureTreeModel = new StructureTreeModel<>(myFilteringStructure, this);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, this);
-    myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
     StructureViewComponent.registerAutoExpandListener(myTree, myTreeModel);
     PopupUtil.applyNewUIBackground(myTree);
@@ -250,7 +249,11 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     TreeUtil.installActions(myTree);
   }
 
-  public void show() {
+  public void show(){
+    showWithResult();
+  }
+
+  public Promise<TreePath> showWithResult() {
     JComponent panel = createCenterPanel();
     myTree.addTreeSelectionListener(__ -> {
       if (myPopup.isVisible()) {
@@ -286,7 +289,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
 
-    rebuildAndSelect(false, myInitialElement).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
+    return rebuildAndSelect(false, myInitialElement).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
       TreeUtil.ensureSelection(myTree);
       installUpdater();
     }));
@@ -458,8 +461,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     List<FileStructureNodeProvider> fileStructureNodeProviders = new ArrayList<>();
     if (myTreeActionsOwner != null) {
       for (Filter filter : myTreeModel.getFilters()) {
-        if (filter instanceof FileStructureFilter) {
-          FileStructureFilter fsFilter = (FileStructureFilter)filter;
+        if (filter instanceof FileStructureFilter fsFilter) {
           myTreeActionsOwner.setActionIncluded(fsFilter, true);
           fileStructureFilters.add(fsFilter);
         }
@@ -1005,8 +1007,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       List<SpeedSearchObjectWithWeight> elements = SpeedSearchObjectWithWeight.findElement(s, this);
       SpeedSearchObjectWithWeight best = ContainerUtil.getFirstItem(elements);
       if (best == null) return null;
-      if (myInitialElement instanceof PsiElement) {
-        PsiElement initial = (PsiElement)myInitialElement;
+      if (myInitialElement instanceof PsiElement initial) {
         // find children of the initial element
         SpeedSearchObjectWithWeight bestForParent = find(initial, elements, FileStructurePopup::isParent);
         if (bestForParent != null) return bestForParent.node;

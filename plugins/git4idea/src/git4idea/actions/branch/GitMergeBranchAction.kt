@@ -1,12 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions.branch
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import git4idea.GitBranch
 import git4idea.branch.GitBrancher
+import git4idea.config.GitSharedSettings
 import git4idea.i18n.GitBundle
-import git4idea.log.GitRefManager
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions.*
 
@@ -29,12 +29,11 @@ internal class GitMergeBranchAction : GitSingleBranchAction(GitBundle.messagePoi
   }
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
-    GitBrancher.getInstance(project).merge(branch.name, deleteOnMerge(branch), repositories)
+    GitBrancher.getInstance(project).merge(branch.name, deleteOnMerge(branch, project), repositories)
   }
 
-  //TODO: remove hardcoded branch name
-  private fun deleteOnMerge(branch: GitBranch): GitBrancher.DeleteOnMergeOption {
-    return if (!branch.isRemote && branch.name != GitRefManager.MASTER) { // NON-NLS
+  private fun deleteOnMerge(branch: GitBranch, project: Project): GitBrancher.DeleteOnMergeOption {
+    return if (!branch.isRemote && !GitSharedSettings.getInstance(project).isBranchProtected(branch.name)) {
       GitBrancher.DeleteOnMergeOption.PROPOSE
     }
     else GitBrancher.DeleteOnMergeOption.NOTHING

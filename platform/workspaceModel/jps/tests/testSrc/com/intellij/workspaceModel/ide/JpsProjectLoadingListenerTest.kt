@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.Disposable
@@ -12,6 +12,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
 import com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer
@@ -25,6 +26,7 @@ import org.apache.commons.lang.RandomStringUtils
 import org.junit.*
 import org.junit.Assert.assertTrue
 import java.io.File
+import java.nio.file.Files
 
 class JpsProjectLoadingListenerTest {
   @Rule
@@ -42,7 +44,7 @@ class JpsProjectLoadingListenerTest {
   fun setUp() {
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
-    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager)
+    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver, virtualFileManager)
   }
 
   @After
@@ -93,13 +95,11 @@ class JpsProjectLoadingListenerTest {
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
     val storage = projectData.storage
 
-    val cacheFile = projectData.projectDir.resolve(cacheFileName())
-    cacheFile.createNewFile()
+    val cacheFile = projectData.projectDir.resolve(cacheFileName()).toPath()
+    Files.createFile(cacheFile)
     WorkspaceModelCacheImpl.testCacheFile = cacheFile
 
-    cacheFile.outputStream().use {
-      serializer.serializeCache(it, storage)
-    }
+    serializer.serializeCache(cacheFile, storage)
     return projectData
   }
 

@@ -85,23 +85,21 @@ public class RunClassInPlugin extends AbstractCommand {
     URLClassLoader classLoader = new URLClassLoader(cp, loader);
     ClassLoaderUtil.runWithClassLoader(classLoader, () -> {
       Class<?> aClass = classLoader.loadClass(myClazzName);
-      Object newInstance = aClass.newInstance();
+      Object newInstance = aClass.getDeclaredConstructor().newInstance();
 
       try {
         Method method = aClass.getMethod(myMethodName, Project.class);
         method.invoke(newInstance, project);
         return;
-      } catch (NoSuchMethodException e) {
-        //NOP
       }
+      catch (NoSuchMethodException ignored) { }
 
       try {
         Method method = aClass.getMethod(myMethodName);
         method.invoke(newInstance);
         return;
-      } catch (NoSuchMethodException e) {
-        //NOP
       }
+      catch (NoSuchMethodException ignored) { }
 
       throw new RuntimeException("Class " + myClazzName + " does not have " + myMethodName + " with with no or Project parameter");
     });

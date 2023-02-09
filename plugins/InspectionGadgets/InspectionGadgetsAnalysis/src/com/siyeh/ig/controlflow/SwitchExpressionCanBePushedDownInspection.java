@@ -65,7 +65,7 @@ public class SwitchExpressionCanBePushedDownInspection extends AbstractBaseJavaL
           diffs[0] != null && diffs[0] != first) {
         return PsiExpression.EMPTY_ARRAY;
       }
-      if (PsiType.VOID.equals(first.getType()) || PsiType.VOID.equals(cur.getType())) return PsiExpression.EMPTY_ARRAY;
+      if (PsiTypes.voidType().equals(first.getType()) || PsiTypes.voidType().equals(cur.getType())) return PsiExpression.EMPTY_ARRAY;
       if (diffs[0] == null) {
         for (int j = 0; j < i; j++) {
           if (diffs[j] == null) diffs[j] = first;

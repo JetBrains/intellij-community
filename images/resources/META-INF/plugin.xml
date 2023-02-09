@@ -121,10 +121,10 @@
         <action class="org.intellij.images.thumbnail.actions.FilterByThemeComboBoxAction"
                 internal="true"
                 id="Images.Thumbnails.FilterByTheme"/>
-        <action class="org.intellij.images.thumbnail.actions.FilterByTagActionGroup"
-                internal="true"
-                popup="true"
-                id="Images.Thumbnails.FilterByTag"/>
+        <group class="org.intellij.images.thumbnail.actions.FilterByTagActionGroup"
+               internal="true"
+               popup="true"
+               id="Images.Thumbnails.FilterByTag"/>
         <action class="org.intellij.images.thumbnail.actions.ToggleTagsPanelAction"
                 id="Images.Thumbnails.ToggleTagsPanelName"
                 icon="AllIcons.Actions.Preview">

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -67,8 +67,7 @@ public class ComposeFunctionChainAction extends PsiElementBaseIntentionAction {
     if(call == null) return;
 
     PsiElement outer = call.getParent().getParent();
-    if(!(outer instanceof PsiMethodCallExpression)) return;
-    PsiMethodCallExpression outerCall = (PsiMethodCallExpression)outer;
+    if(!(outer instanceof PsiMethodCallExpression outerCall)) return;
     PsiMethod outerMethod = outerCall.resolveMethod();
     if(outerMethod == null) return;
     PsiClass outerClass = outerMethod.getContainingClass();

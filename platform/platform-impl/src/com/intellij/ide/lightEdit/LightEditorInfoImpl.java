@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.editor.Editor;
@@ -8,14 +8,12 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
-public class LightEditorInfoImpl implements LightEditorInfo {
-
+public final class LightEditorInfoImpl implements LightEditorInfo {
   private final FileEditorProvider myProvider;
   private final FileEditor myFileEditor;
   private final VirtualFile myFile;
@@ -34,8 +32,7 @@ public class LightEditorInfoImpl implements LightEditorInfo {
   }
 
   @Override
-  @NotNull
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
@@ -58,19 +55,16 @@ public class LightEditorInfoImpl implements LightEditorInfo {
     myProvider.disposeEditor(myFileEditor);
   }
 
-  @Nullable
-  public static Editor getEditor(@Nullable LightEditorInfo editorInfo) {
+  public static @Nullable Editor getEditor(@Nullable LightEditorInfo editorInfo) {
     return getEditor(editorInfo != null ? editorInfo.getFileEditor() : null);
   }
 
-  @Nullable
-  public static Editor getEditor(@Nullable FileEditor fileEditor) {
-    TextEditor textEditor = ObjectUtils.tryCast(fileEditor, TextEditor.class);
-    return textEditor != null ? textEditor.getEditor() : null;
+  public static @Nullable Editor getEditor(@Nullable FileEditor fileEditor) {
+    TextEditor textEditor = fileEditor instanceof TextEditor ? (TextEditor)fileEditor : null;
+    return textEditor == null ? null : textEditor.getEditor();
   }
 
-  @NotNull
-  public FileEditorProvider getProvider() {
+  public @NotNull FileEditorProvider getProvider() {
     return myProvider;
   }
 
@@ -80,9 +74,8 @@ public class LightEditorInfoImpl implements LightEditorInfo {
            (!isNew() || myFileEditor instanceof TextEditor && ((TextEditor)myFileEditor).getEditor().getDocument().getTextLength() > 0);
   }
 
-  @Nullable
   @Override
-  public Path getPreferredSavePath() {
+  public @Nullable Path getPreferredSavePath() {
     return myPreferredSavePath;
   }
 

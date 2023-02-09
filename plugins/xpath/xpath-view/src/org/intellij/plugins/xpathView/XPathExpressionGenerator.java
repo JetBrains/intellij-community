@@ -120,8 +120,7 @@ public final class XPathExpressionGenerator {
             String uri = attribute.getNamespace();
             String prefix = MyPsiUtil.getAttributePrefix(attribute);
 
-            if ((uri.length() == 0) || (prefix == null)
-                    || (prefix.length() == 0)) {
+            if (uri.length() == 0 || prefix.length() == 0) {
                 result.append(attribute.getLocalName());
             } else {
                 result.append(attribute.getName());
@@ -145,8 +144,7 @@ public final class XPathExpressionGenerator {
             String uri = attribute.getNamespace();
             String prefix = MyPsiUtil.getAttributePrefix(attribute);
 
-            if ((uri.length() == 0) || (prefix == null)
-                    || (prefix.length() == 0)) {
+            if (uri.length() == 0 || prefix.length() == 0) {
                 result.append(attribute.getLocalName());
             } else {
                 result.append(attribute.getName());
@@ -253,7 +251,7 @@ public final class XPathExpressionGenerator {
             XmlTag parent = processingInstruction.getParentTag();
 
             final String target = PsiDocumentNavigator.getProcessingInstructionTarget(processingInstruction);
-            final String s = target != null ? "'" + target + "'" : "";
+            final String s = "'" + target + "'";
             return makeUnique(((parent != null) && (parent != context)) ? (getUniquePath(parent) + "/processing-instruction(" + s + ")")
                     : "processing-instruction(" + s + ")", processingInstruction);
         }
@@ -272,13 +270,11 @@ public final class XPathExpressionGenerator {
             try {
                 final XPath xPath = xpathSupport.createXPath(file, uniquePath, Namespace.fromMap(usedPrefixes));
                 final Object o = xPath.evaluate(file.getDocument());
-                if (o instanceof List) {
+                if (o instanceof List list) {
                     //noinspection RawUseOfParameterizedType
-                    final List list = (List)o;
-                    if (list.size() > 1) {
-                        if (what instanceof XmlTag) {
-                            final XmlTag tag = (XmlTag)what;
-                            final XmlAttribute[] attributes = tag.getAttributes();
+                  if (list.size() > 1) {
+                        if (what instanceof XmlTag tag) {
+                          final XmlAttribute[] attributes = tag.getAttributes();
                             for (XmlAttribute attribute : attributes) {
                                 final String name = attribute.getName();
                                 final XmlAttributeDescriptor descriptor = attribute.getDescriptor();

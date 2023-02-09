@@ -5,6 +5,8 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * External annotations of IntelliJ SDK, which are to be included to the project.
@@ -15,7 +17,7 @@ private const val BUILD_TXT_FILE_NAME = "build.txt"
 
 private val ANNOTATIONS_BUILD_NUMBER_KEY = Key.create<BuildNumber>("devkit.intellij.api.annotations.build.number")
 
-fun getAnnotationsBuildNumber(annotationsRoot: VirtualFile): BuildNumber? {
+suspend fun getAnnotationsBuildNumber(annotationsRoot: VirtualFile): BuildNumber? {
   val cachedValue = annotationsRoot.getUserData(ANNOTATIONS_BUILD_NUMBER_KEY)
   if (cachedValue != null) {
     return cachedValue
@@ -25,12 +27,10 @@ fun getAnnotationsBuildNumber(annotationsRoot: VirtualFile): BuildNumber? {
   return loadedValue
 }
 
-private fun loadBuildNumber(annotationsRoot: VirtualFile): BuildNumber? {
+private suspend fun loadBuildNumber(annotationsRoot: VirtualFile): BuildNumber? = withContext (Dispatchers.IO) {
   val buildTxtFile = annotationsRoot.findFileByRelativePath(BUILD_TXT_FILE_NAME)
   if (buildTxtFile != null) {
-    return BuildNumber.fromStringOrNull(VfsUtil.loadText(buildTxtFile))
+    BuildNumber.fromStringOrNull(VfsUtil.loadText(buildTxtFile))
   }
-  return null
+  else null
 }
-
-fun isAnnotationsRoot(virtualFile: VirtualFile) = getAnnotationsBuildNumber(virtualFile) != null

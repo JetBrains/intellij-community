@@ -7,8 +7,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -56,7 +56,7 @@ public class SdkDetector {
                                         @NotNull Disposable lifetime,
                                         @NotNull ModalityState callbackModality,
                                         @NotNull DetectedSdkListener listener) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     if (!isDetectorEnabled()) {
       return;
     }
@@ -80,7 +80,17 @@ public class SdkDetector {
       //it there is no other listeners, let's refresh
       if (myListeners.size() <= 1 && myIsRunning.compareAndSet(false, true)) {
         myDetectedResults.clear();
-        startSdkDetection(project, myMulticaster);
+        /*
+         * We haven't status bar when project isn't opened (Welcome screen settings, structure for new projects, new project wizard, etc.)
+         * In these cases any execution with indicator shows progress in modal dialog.
+         * What closes sdk combobox popup (Now getDetectedSdksWithUpdate is used only from sdk combo-box model.)
+         * But also, sdk combo-box have build-in sdk detection progress indicator.
+         * So we don't need explicit background task with progress indication in this case.
+         */
+        BackgroundTaskUtil.executeOnPooledThread(lifetime, () -> {
+          var progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+          detectAllSdks(progressIndicator, myMulticaster);
+        });
       }
 
       //deliver everything we have
@@ -129,15 +139,39 @@ public class SdkDetector {
   /**
    * Run Sdk detection assuming called in a background thread
    */
-  public void detectSdks(@NotNull SdkType type,
-                         @NotNull ProgressIndicator indicator,
-                         @NotNull DetectedSdkListener callback) {
-    callback.onSearchStarted();
+  public void detectSdks(
+    @NotNull SdkType type,
+    @NotNull ProgressIndicator indicator,
+    @NotNull DetectedSdkListener callback
+  ) {
     try {
+      callback.onSearchStarted();
       if (isDetectorEnabled()) {
         detect(type, indicator, callback);
       }
-    } finally {
+    }
+    finally {
+      callback.onSearchCompleted();
+    }
+  }
+
+  private static void detectAllSdks(
+    @NotNull ProgressIndicator indicator,
+    @NotNull DetectedSdkListener callback
+  ) {
+    try {
+      callback.onSearchStarted();
+      indicator.setIndeterminate(false);
+      var types = SdkType.getAllTypes();
+      for (int i = 0; i < types.length; i++) {
+        indicator.setFraction((float)i / types.length);
+        indicator.checkCanceled();
+        if (isDetectorEnabled()) {
+          detect(types[i], indicator, callback);
+        }
+      }
+    }
+    finally {
       callback.onSearchCompleted();
     }
   }
@@ -184,36 +218,6 @@ public class SdkDetector {
     catch (Exception e) {
       LOG.warn("Failed to detect SDK: " + e.getMessage(), e);
     }
-  }
-
-  private static void startSdkDetection(@Nullable Project project,
-                                        @NotNull DetectedSdkListener callback) {
-    Task.Backgroundable task = new Task.Backgroundable(
-      project,
-      ProjectBundle.message("progress.title.detecting.sdks"),
-      true,
-      PerformInBackgroundOption.ALWAYS_BACKGROUND) {
-
-
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          callback.onSearchStarted();
-          indicator.setIndeterminate(false);
-          int item = 0;
-          SdkType[] types = SdkType.getAllTypes();
-          for (SdkType type : types) {
-            indicator.setFraction((float)item++ / types.length);
-            indicator.checkCanceled();
-            detect(type, indicator, callback);
-          }
-        } finally {
-          callback.onSearchCompleted();
-        }
-      }
-    };
-
-    ProgressManager.getInstance().run(task);
   }
 
   private static class EdtDetectedSdkListener implements DetectedSdkListener {

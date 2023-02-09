@@ -43,14 +43,20 @@ public class DumbServiceMergingTaskQueue extends MergingTaskQueue<DumbModeTask> 
       super(task, progress);
     }
 
+    @Override
     void registerStageStarted(@NotNull StructuredIdeActivity activity) {
-      activity.stageStarted(IndexingStatisticsCollector.INDEXING_STAGE,
-                            () -> Collections.singletonList(IndexingStatisticsCollector.STAGE_CLASS.with(getTask().getClass())));
+      activity.stageStarted(DumbModeStatisticsCollector.DUMB_MODE_STAGE,
+                            () -> Collections.singletonList(DumbModeStatisticsCollector.STAGE_CLASS.with(getTask().getClass())));
     }
 
     @Override
     public void beforeTask() {
       waitRequiredTasksToStartIndexing();
+    }
+
+    @Override
+    String getInfoString() {
+      return "(dumb mode task) " + super.getInfoString();
     }
   }
 }

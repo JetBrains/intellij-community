@@ -25,9 +25,6 @@ import org.intellij.lang.annotations.Language;
 
 import java.util.Collections;
 
-/**
- * @author Irina.Chernushina on 2/9/2017.
- */
 public class JsonSchemaSelfHighlightingTest extends JsonSchemaHeavyAbstractTest {
   public static final String BASE_PATH = "/tests/testData/jsonSchema/selfHighlighting";
 

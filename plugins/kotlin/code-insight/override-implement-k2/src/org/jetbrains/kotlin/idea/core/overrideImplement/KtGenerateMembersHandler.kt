@@ -77,17 +77,19 @@ abstract class KtGenerateMembersHandler(
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun KtAnalysisSession.generateMembers(
         editor: Editor,
         currentClass: KtClassOrObject,
         selectedElements: Collection<KtClassMember>,
         copyDoc: Boolean
     ): List<MemberEntry> {
-        if (selectedElements.isEmpty()) return emptyList()
-        val selectedMemberSymbolsAndGeneratedPsi: Map<KtCallableSymbol, KtCallableDeclaration> = selectedElements.associate {
-            it.symbol to generateMember(currentClass.project, it, currentClass, copyDoc)
+        val selectedMemberSymbolsAndGeneratedPsi = selectedElements.mapNotNull { member ->
+            member.memberInfo.symbolPointer.restoreSymbol()?.let { it to member }
+        }.associate { (symbol, member) ->
+            symbol to generateMember(currentClass.project, member, symbol, currentClass, copyDoc)
         }
+
+        if (selectedMemberSymbolsAndGeneratedPsi.isEmpty()) return emptyList()
 
         val classBody = currentClass.body
         val offset = editor.caretModel.offset
@@ -182,8 +184,8 @@ abstract class KtGenerateMembersHandler(
         // `KtMemberScope` because the latter does not guarantee members are traversed in the original order. For example the
         // FIR implementation groups overloaded functions together.
         outer@ for ((selectedSymbol, generatedPsi) in newMemberSymbolsAndGeneratedPsi) {
-            val superSymbol = selectedSymbol.originalOverriddenSymbol
-            val superPsi = superSymbol?.psi
+            val superSymbol = selectedSymbol.unwrapFakeOverrides
+            val superPsi = superSymbol.psi
             if (superPsi == null) {
                 // This normally should not happen, but we just try to play safe here.
                 sentinelTailNode.prepend(DoublyLinkedNode(MemberEntry.NewEntry(generatedPsi)))

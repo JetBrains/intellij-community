@@ -2,8 +2,9 @@
   "name": "Dark",
   "dark": true,
   "author": "JetBrains",
-  "editorScheme": "/themes/expUI/expUI_darkScheme.xml",
+  "editorScheme": "/themes/expUI/expUI_darkScheme_RC.xml",
   "additionalEditorSchemes": [
+    "/themes/expUI/expUI_darkScheme.xml",
     "/themes/expUI/expUI_darkSchemeNew.xml"
   ],
 
@@ -81,7 +82,31 @@
     "Orange8": "#F0AC81",
     "Orange9": "#F5BD98",
     "Orange10": "#FACEAF",
-    "Orange11": "#FFDFC7"
+    "Orange11": "#FFDFC7",
+
+    "Purple1": "#2F2936",
+    "Purple2": "#433358",
+    "Purple3": "#583D7A",
+    "Purple4": "#6C469C",
+    "Purple5": "#8150BE",
+    "Purple6": "#955AE0",
+    "Purple7": "#A571E6",
+    "Purple8": "#B589EC",
+    "Purple9": "#C4A0F3",
+    "Purple10": "#D4B8F9",
+    "Purple11": "#E4CEFF",
+
+    "Teal1": "#1D3838",
+    "Teal2": "#1E4D4A",
+    "Teal3": "#20635D",
+    "Teal4": "#21786F",
+    "Teal5": "#238E82",
+    "Teal6": "#24A394",
+    "Teal7": "#42B1A4",
+    "Teal8": "#60C0B5",
+    "Teal9": "#7DCEC5",
+    "Teal10": "#9BDDD6",
+    "Teal11": "#B9EBE6"
   },
 
   "ui": {
@@ -249,7 +274,8 @@
       "hoverForeground": "Blue9",
       "pressedForeground": "Blue9",
       "visitedForeground": "Blue9",
-      "secondaryForeground": "Blue9"
+      "secondaryForeground": "Blue9",
+      "focusedBorderColor": "Blue7"
     },
 
     "List": {
@@ -289,6 +315,7 @@
     "Notification": {
       "background": "Grey3",
       "borderColor": "Grey4",
+      "foreground": "Grey13",
       "linkForeground": "Blue9",
       "borderInsets": "4,4,4,0",
       "Button": {
@@ -369,10 +396,15 @@
       "progressColor": "Blue7",
       "indeterminateStartColor": "Blue9",
       "indeterminateEndColor": "Blue5",
+      "passedColor": "Green5",
+      "passedEndColor": "Green8",
+      "failedColor": "Red5",
+      "failedEndColor": "Red8",
       "trackColor": "Grey4"
     },
     "ToolBar.verticalToolbarInsets": "7,4,7,4",
     "ToolBar.horizontalToolbarInsets": "4,7,4,7",
+    "ToolBar.separatorColor": "Grey4",
 
     "SearchField": {
       "errorForeground": "Red6",
@@ -463,13 +495,20 @@
 
     "GotItTooltip": {
       "background": "Grey3",
-      "borderColor": "Grey4",
-      "startBackground": "Grey3",
-      "endBackground": "Grey3",
-      "startBorderColor": "Grey7",
-      "endBorderColor": "Grey7",
-      "shortcutForeground": "Grey9",
-      "linkForeground": "Blue9"
+      "borderColor": "Grey3",
+      "foreground": "Grey10",
+      "stepForeground": "Grey8",
+      "Header.foreground": "Grey14",
+      "shortcutForeground": "Grey14",
+      "shortcutBackground": "Grey5",
+      "linkForeground": "Blue9",
+      "Button": {
+        "foreground": "Grey14",
+        "startBackground": "Grey6",
+        "endBackground": "Grey6",
+        "startBorderColor": "Grey6",
+        "endBorderColor": "Grey6"
+      }
     },
 
     "ValidationTooltip": {
@@ -491,8 +530,18 @@
       "Button": {
         "DragAndDrop" : {
           "stripeBackground" : "Grey2",
-          "buttonDropBackground": "#35538F99"
+          "buttonDropBackground": "#35538F99",
+          "buttonDropBorderColor": "Blue8"
         }
+      },
+      "Stripe": {
+        "separatorColor": "Grey4",
+        "DragAndDrop": {
+          "separatorColor": "Blue8"
+        }
+      },
+      "DragAndDrop": {
+        "areaBackground": "#366ACF4D"
       }
     },
 
@@ -504,7 +553,8 @@
       },
       "Dropdown": {
         "borderInsets": "3,12,3,6",
-        "pressedBackground": "Grey3"
+        "pressedBackground": "Grey3",
+        "maxWidth": 350
       },
       "Button": {
         "buttonInsets": "0,0,0,0"
@@ -534,12 +584,20 @@
       "Log.Commit": {
         "currentBranchBackground": "#1c2433",
         "unmatchedForeground": "Grey7",
-        "hoveredBackground": "#FFFFFFED"
+        "hoveredBackground": "#FFFFFFED",
+        "Reference.foreground": "Grey7"
       },
       "FileHistory.Commit.selectedBranchBackground": "#1c2433",
       "MarkerPopup": {
         "borderInsets": "6,8,6,10",
         "borderColor": "Grey4"
+      },
+      "GitLog": {
+        "headIconColor": "Yellow7",
+        "localBranchIconColor": "Green6",
+        "otherIconColor": "Grey7",
+        "remoteBranchIconColor": "Purple7",
+        "tagIconColor": "Grey7"
       }
     },
 
@@ -611,12 +669,25 @@
       "PackageTagSelected.foreground": "Grey10"
     },
     "RunWidget" : {
-      "foreground": "Grey14",
+      "foreground": "Grey12",
+      "disabledForeground": "#FFFFFF66",
       "background": "Blue5",
       "runningBackground": "Green5",
       "hoverBackground": "#00000019",
       "pressedBackground": "#00000028",
       "separatorColor": "#FFFFFF40"
+    },
+
+    "MainWindow.Tab" : {
+      "selectedForeground": "Grey11",
+      "selectedBackground": "Grey2",
+      "selectedInactiveBackground": "Grey3",
+      "foreground": "Grey10",
+      "background": "#131314",
+      "hoverForeground": "Grey11",
+      "hoverBackground": "#1A1A1B",
+      "separatorColor": "Grey2",
+      "borderColor": "Grey1"
     }
   },
 

@@ -10,14 +10,13 @@ import com.intellij.execution.processTools.mapFlat
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.createProcessWithResult
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.util.io.exists
 import com.jetbrains.python.psi.LanguageLevel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.exists
 
 /**
  * @see [com.jetbrains.env.conda.PyCondaTest]
@@ -38,16 +37,18 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
         .mapFlat { it.getResultStdoutStr() }
         .getOrElse { return@withContext Result.failure(it) }
 
-      val info = Gson().fromJson(json, CondaInfoJson::class.java)
-      val fileSeparator = request.targetPlatform.platform.fileSeparator
-      val result = info.envs.distinctBy { it.trim().lowercase(Locale.getDefault()) }.map { envPath ->
-        // Env name is the basename for envs inside of default location
-        val envName = if (info.envs_dirs.any { envPath.startsWith(it) }) envPath.split(fileSeparator).last() else null
-        val base = envPath.equals(info.conda_prefix, ignoreCase = true)
-        PyCondaEnv(envName?.let { PyCondaEnvIdentity.NamedEnv(it) } ?: PyCondaEnvIdentity.UnnamedEnv(envPath, base),
-                   command.fullCondaPathOnTarget)
+     return@withContext kotlin.runCatching { // External command may return junk
+        val info = Gson().fromJson(json, CondaInfoJson::class.java)
+        val fileSeparator = request.targetPlatform.platform.fileSeparator
+        info.envs.distinctBy { it.trim().lowercase(Locale.getDefault()) }.map { envPath ->
+          // Env name is the basename for envs inside of default location
+          val envName = if (info.envs_dirs.any { envPath.startsWith(it) }) envPath.split(fileSeparator).last() else null
+          val base = envPath.equals(info.conda_prefix, ignoreCase = true)
+          PyCondaEnv(envName?.let { PyCondaEnvIdentity.NamedEnv(it) } ?: PyCondaEnvIdentity.UnnamedEnv(envPath, base),
+                     command.fullCondaPathOnTarget)
+
+        }
       }
-      return@withContext Result.success(result)
     }
 
     suspend fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequest): Result<Process> {

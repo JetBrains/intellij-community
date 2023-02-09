@@ -5,15 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.net.loopbackSocketAddress
-import io.netty.channel.Channel
-import io.netty.channel.ChannelHandler
-import io.netty.channel.ChannelHandlerContext
-import io.netty.channel.ChannelInitializer
-import io.netty.handler.codec.http.FullHttpRequest
-import io.netty.handler.codec.http.HttpMethod
-import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.ide.CustomPortServerManager
-import org.jetbrains.ide.XmlRpcServerImpl
 import java.net.InetSocketAddress
 
 internal class SubServer(private val user: CustomPortServerManager,
@@ -38,20 +30,7 @@ internal class SubServer(private val user: CustomPortServerManager,
     }
 
     val bootstrap = server.createServerBootstrap()
-    val xmlRpcHandlers = user.createXmlRpcHandlers()
-    if (xmlRpcHandlers == null) {
-      BuiltInServer.configureChildHandler(bootstrap, channelRegistrar!!, null)
-    }
-    else {
-      val handler = XmlRpcDelegatingHttpRequestHandler(xmlRpcHandlers)
-      bootstrap.childHandler(object : ChannelInitializer<Channel>() {
-        override fun initChannel(channel: Channel) {
-          channel.pipeline().addLast(channelRegistrar!!)
-          NettyUtil.addHttpServerCodec(channel.pipeline())
-          channel.pipeline().addLast(handler)
-        }
-      })
-    }
+    BuiltInServer.configureChildHandler(bootstrap, channelRegistrar!!, null)
 
     try {
       bootstrap.localAddress(if (user.isAvailableExternally) InetSocketAddress(port) else loopbackSocketAddress(port))
@@ -81,17 +60,5 @@ internal class SubServer(private val user: CustomPortServerManager,
   override fun dispose() {
     stop()
     user.setManager(null)
-  }
-}
-
-@ChannelHandler.Sharable
-private class XmlRpcDelegatingHttpRequestHandler(private val handlers: Map<String, Any>) : DelegatingHttpRequestHandlerBase() {
-  override fun process(context: ChannelHandlerContext, request: FullHttpRequest, urlDecoder: QueryStringDecoder): Boolean {
-    if (handlers.isEmpty()) {
-      // not yet initialized, for example, P2PTransport could add handlers after we bound.
-      return false
-    }
-
-    return request.method() == HttpMethod.POST && XmlRpcServerImpl.getInstance().process(urlDecoder.path(), request, context, handlers)
   }
 }

@@ -133,10 +133,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
         public void applyDefaults(@NotNull List<? extends Editor> editors) {
           if (!myTextSettings.isUseSoftWraps()) {
             for (Editor editor : editors) {
-              if (editor instanceof EditorImpl editorImpl &&
-                  editorImpl.getSoftWrapModel().shouldSoftWrapsBeForced()) {
-                myForcedSoftWrap = true;
-              }
+              myForcedSoftWrap = myForcedSoftWrap || ((EditorImpl)editor).getSoftWrapModel().shouldSoftWrapsBeForced();
             }
           }
           super.applyDefaults(editors);
@@ -177,7 +174,8 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     }
 
     ActionGroup gutterGroup = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP);
-    List<AnAction> result = ContainerUtil.newArrayList(gutterGroup.getChildren(e));
+    List<AnAction> result = new ArrayList<>();
+    ContainerUtil.addAll(result, gutterGroup.getChildren(e));
     result.add(Separator.getInstance());
     replaceOrAppend(result, editorSettingsGroup, new DefaultActionGroup(actions));
     return result.toArray(AnAction.EMPTY_ARRAY);
@@ -248,8 +246,8 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
     private void apply(@NotNull HighlightingLevel layer) {
       for (Editor editor : myEditors.get()) {
-        if (editor instanceof EditorImpl editorImpl) {
-          editorImpl.setHighlightingPredicate(layer.getCondition());
+        if (editor instanceof EditorImpl) {
+          ((EditorImpl)editor).setHighlightingPredicate(layer.getCondition());
         }
       }
     }

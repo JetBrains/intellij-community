@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 fun foo(p: (String) -> Unit){}
 
 fun bar() {

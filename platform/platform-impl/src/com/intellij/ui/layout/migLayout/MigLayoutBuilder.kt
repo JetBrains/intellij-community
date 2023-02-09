@@ -12,10 +12,13 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.SmartList
 import com.intellij.util.containers.CollectionFactory
 import net.miginfocom.layout.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Container
 import javax.swing.*
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuilderImpl {
   companion object {
     private var hRelatedGap = -1
@@ -63,7 +66,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   override var resetCallbacks: MutableMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
   override var isModifiedCallbacks: MutableMap<JComponent?, MutableList<() -> Boolean>> = linkedMapOf()
 
-  val topButtonGroup: ButtonGroup?
+  internal val topButtonGroup: ButtonGroup?
     get() = buttonGroupStack.lastOrNull()
 
   internal var hideableRowNestingLevel = 0
@@ -99,17 +102,17 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   }
 
 
-  val defaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
+  internal val defaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
 
   // keep in mind - MigLayout always creates one more than need column constraints (i.e. for 2 will be 3)
   // it doesn't lead to any issue.
-  val columnConstraints = AC()
+  internal val columnConstraints = AC()
 
   // MigLayout in any case always creates CC, so, create instance even if it is not required
   private val Component.constraints: CC
     get() = componentConstraints.getOrPut(this) { CC() }
 
-  fun updateComponentConstraints(component: Component, callback: CC.() -> Unit) {
+  internal fun updateComponentConstraints(component: Component, callback: CC.() -> Unit) {
     component.constraints.callback()
   }
 

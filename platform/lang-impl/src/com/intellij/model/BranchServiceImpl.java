@@ -25,8 +25,7 @@ class BranchServiceImpl extends BranchService implements Disposable {
       public void documentChanged(@NotNull DocumentEvent event) {
         Document document = event.getDocument();
         VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-        if (file instanceof BranchedVirtualFileImpl) {
-          BranchedVirtualFileImpl branchedFile = (BranchedVirtualFileImpl)file;
+        if (file instanceof BranchedVirtualFileImpl branchedFile) {
           branchedFile.getBranch().registerDocumentChange(document, event, branchedFile);
         }
       }

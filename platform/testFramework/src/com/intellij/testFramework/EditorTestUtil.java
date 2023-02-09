@@ -780,10 +780,8 @@ public final class EditorTestUtil {
                                              @Nullable Set<String> acceptableKeyNames) {
     Editor editor = fixture.getEditor();
     CaretModel caretModel = editor.getCaretModel();
-    List<Integer> caretsOffsets = ContainerUtil.map(caretModel.getAllCarets(), Caret::getOffset);
-    if (caretsOffsets.isEmpty()) {
-      caretsOffsets.add(-1);
-    }
+    List<Integer> offs = ContainerUtil.map(caretModel.getAllCarets(), Caret::getOffset);
+    List<Integer> caretsOffsets = offs.isEmpty() ? List.of(-1) : offs;
     caretModel.removeSecondaryCarets();
     CharSequence documentSequence = editor.getDocument().getCharsSequence();
 
@@ -836,14 +834,7 @@ public final class EditorTestUtil {
   }
 
 
-  public static class CaretAndSelectionState {
-    public final List<CaretInfo> carets;
-    public final TextRange blockSelection;
-
-    public CaretAndSelectionState(List<CaretInfo> carets, @Nullable TextRange blockSelection) {
-      this.carets = carets;
-      this.blockSelection = blockSelection;
-    }
+  public record CaretAndSelectionState(List<CaretInfo> carets, @Nullable TextRange blockSelection) {
 
     /**
      * Returns true if current CaretAndSelectionState contains at least one caret or selection explicitly specified

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.dfaassist
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint
@@ -127,7 +127,8 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
                 var psi = when (anchor) {
                     is KotlinAnchor.KotlinExpressionAnchor -> {
                         if (shouldTrackExpressionValue(anchor.expression) &&
-                            !KotlinConstantConditionsInspection.shouldSuppress(dfType, anchor.expression)
+                            !KotlinConstantConditionsInspection.shouldSuppress(dfType, anchor.expression) &&
+                            dfType.tryNegate()?.let { negated -> KotlinConstantConditionsInspection.shouldSuppress(negated, anchor.expression) } == false
                         ) anchor.expression
                         else return
                     }

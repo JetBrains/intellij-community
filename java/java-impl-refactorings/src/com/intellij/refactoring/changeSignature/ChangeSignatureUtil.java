@@ -18,9 +18,6 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public final class ChangeSignatureUtil {
   private ChangeSignatureUtil() { }
 
@@ -107,7 +104,7 @@ public final class ChangeSignatureUtil {
   /**
    * @deprecated use CommonJavaRefactoringUtil.deepTypeEqual instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean deepTypeEqual(PsiType type1, PsiType type2) {
     return CommonJavaRefactoringUtil.deepTypeEqual(type1, type2);
   }

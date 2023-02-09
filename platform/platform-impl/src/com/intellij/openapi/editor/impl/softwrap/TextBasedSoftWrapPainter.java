@@ -31,8 +31,6 @@ import java.util.Map;
  * {@link SoftWrapPainter} implementation that uses target unicode symbols as soft wrap drawings.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class TextBasedSoftWrapPainter implements SoftWrapPainter {
 

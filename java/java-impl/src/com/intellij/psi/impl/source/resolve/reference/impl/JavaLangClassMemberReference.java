@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -16,7 +16,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
@@ -40,8 +42,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   @Override
   public PsiElement resolve() {
     final Object value = myElement.getValue();
-    if (value instanceof String) {
-      final String name = (String)value;
+    if (value instanceof String name) {
       final String type = getMemberType(myElement);
 
       if (type != null) {
@@ -157,8 +158,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   @Override
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     final Object object = item.getObject();
-    if (object instanceof ReflectiveSignature) {
-      final ReflectiveSignature signature = (ReflectiveSignature)object;
+    if (object instanceof ReflectiveSignature signature) {
       final String text = signature.getText(false, false, type -> type + ".class");
       replaceText(context, text.isEmpty() ? "" : ", " + text);
     }

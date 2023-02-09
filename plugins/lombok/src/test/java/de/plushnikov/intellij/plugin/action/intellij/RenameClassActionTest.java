@@ -25,4 +25,8 @@ public class RenameClassActionTest extends AbstractLombokLightCodeInsightTestCas
   public void testLogClassRenamed() throws Exception {
     doTest("CakeCooked");
   }
+
+  public void testConstructors() throws Exception {
+    doTest("MyBaseClass1");
+  }
 }

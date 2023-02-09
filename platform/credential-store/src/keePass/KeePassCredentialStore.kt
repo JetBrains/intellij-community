@@ -9,13 +9,13 @@ import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.io.safeOutputStream
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.exists
 
 const val DB_FILE_NAME = "c.kdbx"
 

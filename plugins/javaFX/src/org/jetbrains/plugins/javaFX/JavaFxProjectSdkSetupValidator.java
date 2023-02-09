@@ -25,9 +25,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 import javax.swing.event.HyperlinkEvent;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxProjectSdkSetupValidator implements ProjectSdkSetupValidator {
 
   @Override

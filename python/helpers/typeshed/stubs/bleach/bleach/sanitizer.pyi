@@ -1,5 +1,6 @@
 from collections.abc import Callable, Container, Iterable
-from typing import Any, Pattern
+from re import Pattern
+from typing import Any
 from typing_extensions import TypeAlias
 
 from .css_sanitizer import CSSSanitizer

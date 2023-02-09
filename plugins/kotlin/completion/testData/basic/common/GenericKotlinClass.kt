@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 class Generic1<T>
 
 class Generic2<T1, T2>

@@ -2,14 +2,13 @@
 package com.intellij.idea
 
 import com.intellij.util.PlatformUtils
-import kotlinx.coroutines.Deferred
 
 internal class MainImpl : AppStarter {
   init {
     PlatformUtils.setDefaultPrefixForCE()
   }
 
-  override suspend fun start(args: List<String>, appDeferred: Deferred<Any>) {
-    initApplication(args, appDeferred)
+  override suspend fun start(context: InitAppContext) {
+    initApplication(context)
   }
 }

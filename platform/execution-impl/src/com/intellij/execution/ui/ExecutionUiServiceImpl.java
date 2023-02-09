@@ -31,6 +31,6 @@ public class ExecutionUiServiceImpl extends ExecutionUiService {
 
   @Override
   public void assertTimeConsuming() {
-    ApplicationManagerEx.getApplicationEx().assertTimeConsuming();
+    ApplicationManagerEx.getApplicationEx().assertIsNonDispatchThread();
   }
 }

@@ -5,7 +5,7 @@ import com.intellij.openapi.Forceable;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.io.PagedFileStorage;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.ResizeableMappedFile;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import io.opentelemetry.api.metrics.BatchCallback;
@@ -437,9 +437,9 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
 
     final ResizeableMappedFile mappedFile = new ResizeableMappedFile(
       namesFile.toPath(),
-      10 * PagedFileStorage.MB,
+      10 * IOUtil.MiB,
       null,
-      PagedFileStorage.MB,
+      IOUtil.MiB,
       false
     );
     final OffsetBasedNonStrictStringsEnumerator enumerator = new OffsetBasedNonStrictStringsEnumerator(mappedFile);

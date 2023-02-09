@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractAnnotationHolderHighlightingVisitor
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.kdoc.parser.KDocKnownTag
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class BeforeResolveHighlightingVisitor(holder: AnnotationHolder) : AbstractAnnotationHolderHighlightingVisitor(holder) {
     override fun visitElement(element: PsiElement) {
@@ -68,7 +70,7 @@ class BeforeResolveHighlightingVisitor(holder: AnnotationHolder) : AbstractAnnot
         val eq = argument.equalsToken ?: return
         createInfoAnnotation(
             TextRange(argumentName.startOffset, eq.endOffset),
-            textAttributes = if (argument.parent.parent is KtAnnotationEntry)
+            textAttributes = if (argument.parents.match(KtValueArgumentList::class, last = KtAnnotationEntry::class) != null)
                 KotlinHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES
             else
                 KotlinHighlightingColors.NAMED_ARGUMENT

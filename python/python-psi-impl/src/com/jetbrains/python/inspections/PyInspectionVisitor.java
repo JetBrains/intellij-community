@@ -32,9 +32,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author dcheryasov
- */
 public abstract class PyInspectionVisitor extends PyElementVisitor {
   @Nullable private final ProblemsHolder myHolder;
   protected final TypeEvalContext myTypeEvalContext;

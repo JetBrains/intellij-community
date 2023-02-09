@@ -16,7 +16,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
@@ -65,7 +65,7 @@ internal object GoogleAccountsUtils {
     for (account in accountsListModel.accounts) {
       newTokensMap.putIfAbsent(account, null)
     }
-    runBlockingModal(ModalTaskOwner.project(project), CollaborationToolsBundle.message("accounts.saving.credentials")) {
+    runBlockingModalWithRawProgressReporter(ModalTaskOwner.project(project), CollaborationToolsBundle.message("accounts.saving.credentials")) {
       accountManager.updateAccounts(newTokensMap)
     }
     accountsListModel.clearNewCredentials()

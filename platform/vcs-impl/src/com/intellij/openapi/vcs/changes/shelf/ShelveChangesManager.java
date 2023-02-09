@@ -121,7 +121,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     @Attribute("show_recycled")
     public boolean myShowRecycled;
     @XCollection
-    public Set<String> groupingKeys = new HashSet<>();
+    public TreeSet<String> groupingKeys = new TreeSet<>();
   }
 
   @Override
@@ -446,7 +446,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
         List<Change> textChanges = new ArrayList<>();
         final List<ShelvedBinaryFile> binaryFiles = new ArrayList<>();
         for (Change change : changes) {
-          if (ChangesUtil.getFilePath(change).isDirectory()) {
+          if (ChangesUtil.getFilePath(change).getIOFile().isDirectory()) {
             continue;
           }
           if (IdeaTextPatchBuilder.isBinaryRevision(change.getBeforeRevision()) ||
@@ -1440,12 +1440,13 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   @NotNull
-  public Set<String> getGrouping() {
+  public Collection<String> getGrouping() {
     return myState.groupingKeys;
   }
 
-  public void setGrouping(@NotNull Set<String> grouping) {
-    myState.groupingKeys = grouping;
+  public void setGrouping(@NotNull Collection<String> grouping) {
+    myState.groupingKeys.clear();
+    myState.groupingKeys.addAll(grouping);
   }
 
   public static class PostStartupActivity implements StartupActivity.DumbAware {

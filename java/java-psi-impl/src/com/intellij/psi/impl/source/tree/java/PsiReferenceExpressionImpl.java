@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -187,7 +187,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
       JavaResolveUtil.substituteResults(expression, result);
 
-      ObjectUtils.reachabilityFence(qualifiers);
+      ObjectUtilsRt.reachabilityFence(qualifiers);
 
       return result;
     }
@@ -367,7 +367,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
           if (qualifier != null && ElementType.EXPRESSION_BIT_SET.contains(qualifier.getElementType())) {
             PsiType type = SourceTreeToPsiMap.<PsiExpression>treeToPsiNotNull(qualifier).getType();
             if (type instanceof PsiArrayType) {
-              return PsiType.INT;
+              return PsiTypes.intType();
             }
           }
         }

@@ -5,6 +5,6 @@ public abstract class UseDPIAwareEmptyBorderInspectionTestBase extends AbstractU
 
   @Override
   protected void doTest() {
-    myFixture.testHighlighting(getTestName(false) + '.' + getFileExtension());
+    super.doTest();
   }
 }

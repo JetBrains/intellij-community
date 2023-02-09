@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -68,7 +68,7 @@ class MemoryAgentImpl implements MemoryAgent {
     if (myState == MemoryAgentActionState.RUNNING) {
       throw new EvaluateException("Some action is already running");
     }
-    
+
     if (myCancellationFile != null) {
       FileUtil.delete(myCancellationFile);
       myCancellationFile = null;
@@ -76,7 +76,8 @@ class MemoryAgentImpl implements MemoryAgent {
 
     if (myProgressIndicator != null) {
       myProgressTracker = new MemoryAgentProgressTrackerImpl(this, myProgressIndicator);
-    } else {
+    }
+    else {
       myProgressTracker = MemoryAgentProgressTracker.DISABLED;
     }
 
@@ -239,9 +240,9 @@ class MemoryAgentImpl implements MemoryAgent {
 
     @Override
     public void startMonitoringProgress() {
-        myProgressIndicator.start();
-        myProgressCheckingFuture = AppExecutorUtil.getAppScheduledExecutorService()
-          .scheduleWithFixedDelay(this::updateProgress, 0, PROGRESS_CHECKING_DELAY_MS, TimeUnit.MILLISECONDS);
+      myProgressIndicator.start();
+      myProgressCheckingFuture = AppExecutorUtil.getAppScheduledExecutorService()
+        .scheduleWithFixedDelay(this::updateProgress, 0, PROGRESS_CHECKING_DELAY_MS, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -264,7 +265,8 @@ class MemoryAgentImpl implements MemoryAgent {
         if (myProgressIndicator.isRunning()) {
           if (cancel) {
             myProgressIndicator.cancel();
-          } else {
+          }
+          else {
             myProgressIndicator.stop();
           }
         }

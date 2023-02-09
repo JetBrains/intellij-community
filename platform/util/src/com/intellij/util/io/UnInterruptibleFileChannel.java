@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -10,6 +10,9 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.*;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A class intended to overcome interruptibility of {@link FileChannel}
@@ -23,6 +26,18 @@ public final class UnInterruptibleFileChannel extends FileChannel {
   private final UnInterruptibleFileChannelHandle myFileChannelHandle;
 
   public UnInterruptibleFileChannel(@NotNull Path path, OpenOption @NotNull ... openOptions) throws IOException {
+    Set<OpenOption> openOptionsSet;
+    if (openOptions.length == 0) {
+      openOptionsSet = Collections.emptySet();
+    }
+    else {
+      openOptionsSet = new HashSet<>();
+      Collections.addAll(openOptionsSet, openOptions);
+    }
+    myFileChannelHandle = new UnInterruptibleFileChannelHandle(path, openOptionsSet);
+  }
+
+  public UnInterruptibleFileChannel(@NotNull Path path, Set<? extends @NotNull OpenOption> openOptions) throws IOException {
     myFileChannelHandle = new UnInterruptibleFileChannelHandle(path, openOptions);
   }
 
@@ -97,7 +112,7 @@ public final class UnInterruptibleFileChannel extends FileChannel {
 
   @Override
   public MappedByteBuffer map(MapMode mode, long position, long size) throws IOException {
-    throw new UnsupportedOperationException();
+    return myFileChannelHandle.executeOperation(ch -> ch.map(mode, position, size));
   }
 
   @Override

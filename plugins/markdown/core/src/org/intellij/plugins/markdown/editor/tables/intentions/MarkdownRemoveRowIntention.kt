@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
-import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 internal class MarkdownRemoveRowIntention: PsiElementBaseIntentionAction() {
   override fun getFamilyName() = text
@@ -18,9 +17,6 @@ internal class MarkdownRemoveRowIntention: PsiElementBaseIntentionAction() {
   }
 
   override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
-    if (!MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
-      return false
-    }
     return findContentNonHeaderRow(element) != null
   }
 

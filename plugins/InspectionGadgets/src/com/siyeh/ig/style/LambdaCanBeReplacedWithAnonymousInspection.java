@@ -159,7 +159,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
     if (body instanceof PsiExpression) {
       final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression);
       blockText = "{\n";
-      blockText += PsiType.VOID.equals(returnType) ? "" : "return ";
+      blockText += PsiTypes.voidType().equals(returnType) ? "" : "return ";
       blockText +=  body.getText() + ";\n}";
     } else if (body != null) {
       blockText = body.getText();
@@ -192,8 +192,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
   }
 
   public static boolean isConvertibleLambdaExpression(PsiElement parent) {
-    if (parent instanceof PsiLambdaExpression) {
-      final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)parent;
+    if (parent instanceof PsiLambdaExpression lambdaExpression) {
       final PsiClass thisClass = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class, true);
       if (thisClass == null || thisClass instanceof PsiAnonymousClass) {
         final PsiElement body = lambdaExpression.getBody();

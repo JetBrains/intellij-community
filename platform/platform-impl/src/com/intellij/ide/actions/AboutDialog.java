@@ -95,7 +95,7 @@ public class AboutDialog extends DialogWrapper {
     super.createDefaultActions();
     myOKAction = new OkAction() {
       {
-        putValue(Action.NAME, IdeBundle.message("button.copy.no.mnemonic"));
+        putValue(Action.NAME, IdeBundle.message("button.copy.and.close"));
         putValue(Action.SHORT_DESCRIPTION, IdeBundle.message("description.copy.text.to.clipboard"));
       }
 

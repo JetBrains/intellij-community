@@ -33,9 +33,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author dsl
- */
 public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implements PsiEnumConstant {
   private static final Logger LOG = Logger.getInstance(PsiEnumConstantImpl.class);
   private final MyReference myReference = new MyReference();

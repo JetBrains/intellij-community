@@ -4,6 +4,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -19,6 +20,8 @@ import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * @author Bas Leijdekkers
@@ -38,11 +41,10 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "unnecessarily.qualified.inner.class.access.option"),
-      this, "ignoreReferencesNeedingImport");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreReferencesNeedingImport", InspectionGadgetsBundle.message(
+        "unnecessarily.qualified.inner.class.access.option")));
   }
 
   @Override
@@ -63,15 +65,13 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiJavaCodeReferenceElement)) {
+      if (!(parent instanceof PsiJavaCodeReferenceElement referenceElement)) {
         return;
       }
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)parent;
       final PsiElement target = referenceElement.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)target;
       ImportUtils.addImportIfNeeded(aClass, element);
       final String shortName = aClass.getName();
       if (isReferenceToTarget(shortName, aClass, parent)) {
@@ -105,13 +105,12 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
     public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       final PsiElement qualifier = reference.getQualifier();
-      if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
+      if (!(qualifier instanceof PsiJavaCodeReferenceElement referenceElement)) {
         return;
       }
       if (PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class, PsiPackageStatement.class) != null) {
         return;
       }
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)qualifier;
       final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
       if (parameterList != null &&
           parameterList.getTypeParameterElements().length > 0) {
@@ -135,10 +134,9 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
         }
       }
       final PsiElement target = reference.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)target;
       if (!PsiUtil.isAccessible(aClass, referenceClass, null)) {
         return;
       }

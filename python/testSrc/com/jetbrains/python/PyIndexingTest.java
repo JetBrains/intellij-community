@@ -22,9 +22,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author vlan
- */
 public class PyIndexingTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "indexing/";
 

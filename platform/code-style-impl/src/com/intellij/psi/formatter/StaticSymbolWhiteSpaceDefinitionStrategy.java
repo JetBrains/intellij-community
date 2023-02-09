@@ -13,8 +13,6 @@ import org.jetbrains.annotations.NotNull;
  * {@link StaticTextWhiteSpaceDefinitionStrategy} with strings consisting from single symbol all the time).
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class StaticSymbolWhiteSpaceDefinitionStrategy extends AbstractWhiteSpaceFormattingStrategy {
   private final IntSet myWhiteSpaceSymbols = new IntOpenHashSet();

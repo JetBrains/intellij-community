@@ -3,14 +3,30 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import org.jetbrains.annotations.NonNls
 
 /**
  * Provides access to the storage which holds workspace model entities.
  */
 interface WorkspaceModel {
+  /**
+   * Returns snapshot of the workspace model storage. 
+   * The returned value won't be affected by future changes in [WorkspaceModel], so it can be safely used without any locks from any thread.
+   */
+  val currentSnapshot: EntityStorageSnapshot
+  
   val entityStorage: VersionedEntityStorage
+
+  /**
+   * Returns a snapshot of the storage containing unloaded entities. 
+   * Unloaded entities must be ignored by almost all code in the IDE, so this property isn't supposed for general use.
+   * 
+   * Currently, unloaded entities correspond to modules which are unloaded using 'Load/Unload Modules' action. 
+   */
+  val currentSnapshotOfUnloadedEntities: EntityStorageSnapshot
 
   /**
    * Modifies the current model by calling [updater] and applying it to the storage. Requires write action.
@@ -18,21 +34,13 @@ interface WorkspaceModel {
    * Use [description] to briefly describe what do you update. This message will be logged and can be used for debugging purposes.
    *   For testing there is an extension method that doesn't require a description [com.intellij.testFramework.workspaceModel.updateProjectModel].
    */
-  fun <R> updateProjectModel(description: String, updater: (MutableEntityStorage) -> R): R
-
-  @Deprecated("Zhenja please use the update method with the debug message")
-  fun <R> updateProjectModel(updater: (MutableEntityStorage) -> R): R {
-    return updateProjectModel("Project model update (default description)", updater)
-  }
+  fun updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
 
   /**
-   * Update project model without the notification to message bus and without resetting accumulated changes.
-   *
-   * This method doesn't require write action.
+   * Modifies the current model of unloaded entities by calling [updater] and applying it to the storage.
+   * @param description describes the reason for the change, used for logging purposes only.
    */
-  @Deprecated("Method will be removed from interface. Use WorkspaceModelImpl#updateProjectModelSilent only " +
-              "if you are absolutely sure you need it")
-  fun <R> updateProjectModelSilent(description: String, updater: (MutableEntityStorage) -> R): R
+  fun updateUnloadedEntities(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
 
   /**
    * Get builder that can be updated in background and applied later and a project model.
@@ -78,3 +86,9 @@ interface WorkspaceModel {
     fun getInstance(project: Project): WorkspaceModel = project.service()
   }
 }
+
+/**
+ * Extension property for syntax sugar
+ */
+val Project.workspaceModel: WorkspaceModel
+  get() = WorkspaceModel.getInstance(this)

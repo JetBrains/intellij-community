@@ -39,34 +39,35 @@ public final class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
   private @Nullable ConfigFileContainerImpl myContainer;
   private final ConfigFileMetaDataProvider myMetaDataProvider;
 
-  public ConfigFileInfoSetImpl(final ConfigFileMetaDataProvider metaDataProvider) {
+  public ConfigFileInfoSetImpl(@NotNull final ConfigFileMetaDataProvider metaDataProvider) {
     myMetaDataProvider = metaDataProvider;
   }
 
   @Override
-  public void addConfigFile(ConfigFileInfo descriptor) {
+  public void addConfigFile(@NotNull ConfigFileInfo descriptor) {
     configFiles.putValue(descriptor.getMetaData(), descriptor);
     onChange();
   }
 
   @Override
-  public void addConfigFile(final ConfigFileMetaData metaData, final String url) {
+  public void addConfigFile(@NotNull final ConfigFileMetaData metaData, @NotNull final String url) {
     addConfigFile(new ConfigFileInfo(metaData, url));
   }
 
   @Override
-  public void removeConfigFile(ConfigFileInfo descriptor) {
+  public void removeConfigFile(@NotNull ConfigFileInfo descriptor) {
     configFiles.remove(descriptor.getMetaData(), descriptor);
     onChange();
   }
 
   @Override
-  public void replaceConfigFile(ConfigFileMetaData metaData, String newUrl) {
+  public void replaceConfigFile(@NotNull ConfigFileMetaData metaData, @NotNull String newUrl) {
     configFiles.remove(metaData);
     addConfigFile(new ConfigFileInfo(metaData, newUrl));
   }
 
-  public void updateConfigFile(ConfigFile configFile) {
+  @Override
+  public void updateConfigFile(@NotNull ConfigFile configFile) {
     configFiles.remove(configFile.getMetaData(), configFile.getInfo());
     ConfigFileInfo info = new ConfigFileInfo(configFile.getMetaData(), configFile.getUrl());
     configFiles.putValue(info.getMetaData(), info);
@@ -82,7 +83,7 @@ public final class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
   }
 
   @Override
-  public @Nullable ConfigFileInfo getConfigFileInfo(ConfigFileMetaData metaData) {
+  public @Nullable ConfigFileInfo getConfigFileInfo(@NotNull ConfigFileMetaData metaData) {
     Collection<ConfigFileInfo> descriptors = configFiles.get(metaData);
     return descriptors.isEmpty() ? null : descriptors.iterator().next();
   }
@@ -146,9 +147,10 @@ public final class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
     }
   }
 
-  public void setContainer(@NotNull ConfigFileContainerImpl container) {
+  @Override
+  public void setContainer(@NotNull ConfigFileContainer container) {
     LOG.assertTrue(myContainer == null);
-    myContainer = container;
+    myContainer = (ConfigFileContainerImpl)container;
     myContainer.updateDescriptors(configFiles);
   }
 }

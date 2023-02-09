@@ -28,8 +28,8 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchPopupActions
 import training.dsl.*
+import training.git.GitFeaturesTrainerIcons
 import training.git.GitLessonsBundle
-import training.git.GitLessonsUtil
 import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import training.git.GitLessonsUtil.openPushDialogText
@@ -64,9 +64,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
 
   private lateinit var repository: GitRepository
 
-  private val illustration1 by lazy { GitLessonsUtil.loadIllustration("gitFeatureBranchIllustration01.svg") }
-  private val illustration2 by lazy { GitLessonsUtil.loadIllustration("gitFeatureBranchIllustration02.svg") }
-  private val illustration3 by lazy { GitLessonsUtil.loadIllustration("gitFeatureBranchIllustration03.svg") }
+  private val illustration1 by lazy { GitFeaturesTrainerIcons.GitFeatureBranchIllustration01 }
+  private val illustration2 by lazy { GitFeaturesTrainerIcons.GitFeatureBranchIllustration02 }
+  private val illustration3 by lazy { GitFeaturesTrainerIcons.GitFeatureBranchIllustration03 }
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 60)
 

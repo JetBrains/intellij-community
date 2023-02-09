@@ -106,7 +106,7 @@
    {
     name-part: "enter",
     display-name: "modifier",
-    problem: UNKNOWN_ITEM,
+    problem: UNKNOWN_SYMBOL,
    },
    {
     name-part: ".",
@@ -114,7 +114,7 @@
    {
     name-part: "left",
     display-name: "modifier",
-    problem: UNKNOWN_ITEM,
+    problem: UNKNOWN_SYMBOL,
    },
    {
     name-part: ".",

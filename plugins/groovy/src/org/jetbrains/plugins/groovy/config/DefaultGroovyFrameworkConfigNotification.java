@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-/**
- * @author sergey.evdokimov
- */
 final class DefaultGroovyFrameworkConfigNotification extends GroovyFrameworkConfigNotification {
 
   @Override

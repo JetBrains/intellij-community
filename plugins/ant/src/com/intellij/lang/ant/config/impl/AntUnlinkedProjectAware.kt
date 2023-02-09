@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl
 
-import com.intellij.lang.ant.AntBundle
 import com.intellij.lang.ant.config.AntBuildFile
 import com.intellij.lang.ant.config.AntConfigurationBase
 import com.intellij.lang.ant.config.AntConfigurationListener
@@ -45,7 +44,7 @@ class AntUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
     antBuildFiles.forEach { antConfiguration.addBuildFile(it) }
     if (antBuildFiles.isNotEmpty()) {
       val window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.ANT_BUILD)
-                   ?: ActivateAntToolWindowAction.createToolWindow(project)
+                   ?: ActivateAntToolWindowAction.Manager.createToolWindow(project)
       window.activate(null)
     }
   }
@@ -65,6 +64,4 @@ class AntUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
       }
     })
   }
-
-  override fun getNotificationText(): String = AntBundle.message("add.ant.build.file")
 }

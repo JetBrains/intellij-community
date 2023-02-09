@@ -41,7 +41,6 @@ import java.util.Arrays;
 /**
  * Warns about shadowing names defined in outer scopes.
  *
- * @author vlan
  */
 public class PyShadowingNamesInspection extends PyInspection {
 

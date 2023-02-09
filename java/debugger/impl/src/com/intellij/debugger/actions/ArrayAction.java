@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -32,7 +32,7 @@ public abstract class ArrayAction extends DebuggerAction {
     DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
 
     DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-    if(debugProcess == null) {
+    if (debugProcess == null) {
       return;
     }
 
@@ -118,8 +118,7 @@ public abstract class ArrayAction extends DebuggerAction {
             ((JavaValue)container).setRenderer(newRenderer, node);
             node.invokeNodeUpdate(() -> node.getTree().expandPath(node.getPath()));
           }
-          else if (lastRenderer instanceof CompoundReferenceRenderer) {
-            final CompoundReferenceRenderer compoundRenderer = (CompoundReferenceRenderer)lastRenderer;
+          else if (lastRenderer instanceof CompoundReferenceRenderer compoundRenderer) {
             final ChildrenRenderer childrenRenderer = compoundRenderer.getChildrenRenderer();
             if (childrenRenderer instanceof ExpressionChildrenRenderer) {
               ExpressionChildrenRenderer.setPreferableChildrenRenderer(descriptor, newRenderer);
@@ -139,8 +138,8 @@ public abstract class ArrayAction extends DebuggerAction {
         int index = parent.getIndex(node);
         return createNodeTitle(prefix, parent) + "[" + index + "]";
       }
-      String name = (node.getDescriptor() != null)? node.getDescriptor().getName() : null;
-      return (name != null)? prefix + " " + name : prefix;
+      String name = (node.getDescriptor() != null) ? node.getDescriptor().getName() : null;
+      return (name != null) ? prefix + " " + name : prefix;
     }
     return prefix;
   }

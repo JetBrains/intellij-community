@@ -25,9 +25,6 @@ import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.ext.spock.DataVariablesKt.createVariableMap;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class SpockUtils {
 
   public static final String SPEC_CLASS_NAME = "spock.lang.Specification";
@@ -53,20 +50,18 @@ public final class SpockUtils {
 
   @Nullable
   public static String getNameByReference(@Nullable PsiElement expression) {
-    if (!(expression instanceof GrReferenceExpression)) return null;
+    if (!(expression instanceof GrReferenceExpression ref)) return null;
 
     PsiElement firstChild = expression.getFirstChild();
     if (firstChild != expression.getLastChild() || !PsiImplUtil.isLeafElementOfType(firstChild, GroovyTokenTypes.mIDENT)) return null;
 
-    GrReferenceExpression ref = (GrReferenceExpression)expression;
     if (ref.isQualified()) return null;
 
     return ref.getReferenceName();
   }
 
   public static boolean isTestMethod(PsiElement element) {
-    if (!(element instanceof GrMethod)) return false;
-    GrMethod method = ((GrMethod)element);
+    if (!(element instanceof GrMethod method)) return false;
     PsiClass clazz = method.getContainingClass();
     if (!isSpecification(clazz)) return false;
     if (isFixtureMethod(method)) return false;

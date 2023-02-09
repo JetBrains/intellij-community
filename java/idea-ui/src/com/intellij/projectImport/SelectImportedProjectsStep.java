@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardStep {
   private final JPanel panel;
   protected final ElementsChooser<T> fileChooser;

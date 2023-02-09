@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -135,8 +134,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       PluginInfo info = PluginInfoDetectorKt.getPluginInfo(runConfiguration.getClass());
       if (!info.isSafeToReport()) return;
       Object state = ((RunConfigurationBase<?>)runConfiguration).getState();
-      if (state instanceof RunConfigurationOptions) {
-        RunConfigurationOptions runConfigurationOptions = (RunConfigurationOptions)state;
+      if (state instanceof RunConfigurationOptions runConfigurationOptions) {
         List<StoredProperty<Object>> properties = runConfigurationOptions.__getProperties();
         for (StoredProperty<Object> property : properties) {
           String name = property.getName();
@@ -181,13 +179,13 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     return pairs;
   }
 
-  private static @NotNull ArrayList<EventPair<Boolean>> getSettings(@NotNull RunnerAndConfigurationSettings settings,
+  private static @NotNull List<EventPair<Boolean>> getSettings(@NotNull RunnerAndConfigurationSettings settings,
                                                                     @NotNull RunConfiguration runConfiguration) {
-    return ContainerUtil.newArrayList(SHARED_FIELD.with(settings.isShared()),
-                                      EDIT_BEFORE_RUN_FIELD.with(settings.isEditBeforeRun()),
-                                      ACTIVATE_BEFORE_RUN_FIELD.with(settings.isActivateToolWindowBeforeRun()),
-                                      PARALLEL_FIELD.with(runConfiguration.isAllowRunningInParallel()),
-                                      TEMPORARY_FIELD.with(settings.isTemporary()));
+    return List.of(SHARED_FIELD.with(settings.isShared()),
+                   EDIT_BEFORE_RUN_FIELD.with(settings.isEditBeforeRun()),
+                   ACTIVATE_BEFORE_RUN_FIELD.with(settings.isActivateToolWindowBeforeRun()),
+                   PARALLEL_FIELD.with(runConfiguration.isAllowRunningInParallel()),
+                   TEMPORARY_FIELD.with(settings.isTemporary()));
   }
 
   private static final class Template {

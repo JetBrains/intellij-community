@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.debugger.ui.DebuggerContentInfo
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.PreferredPlace
-import com.intellij.execution.runners.RunTab
+import com.intellij.execution.runners.RunContentBuilder.addActionsWithConstraints
+import com.intellij.execution.runners.RunContentBuilder.removeDuplicatesExceptSeparators
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.execution.ui.layout.actions.CustomContentLayoutSettings
@@ -63,7 +63,7 @@ class XDebugSessionTab3(
   override fun getFramesContentId() = debuggerContentId
 
   private fun getWatchesViewImpl(session: XDebugSessionImpl, watchesIsVariables: Boolean): XWatchesViewImpl {
-    val useSplitterView = (session.debugProcess as? XDebugSessionTabCustomizer)?.bottomLocalsComponentProvider != null
+    val useSplitterView = session.debugProcess.getBottomLocalsComponentProvider() != null
     return if (useSplitterView)
       XSplitterWatchesViewImpl(session, watchesIsVariables, true, withToolbar = false)
     else
@@ -99,7 +99,7 @@ class XDebugSessionTab3(
       isCloseable = false
     }
 
-    val customLayoutOptions = if (Registry.`is`("debugger.new.debug.tool.window.view")) {
+    val customLayoutOptions = if (session.debugProcess.allowFramesViewCustomization()) {
       val optionsCollection = XDebugTabLayoutSettings(session, content, this)
       content.putUserData(CustomContentLayoutSettings.KEY, optionsCollection)
       optionsCollection.threadsAndFramesOptions
@@ -114,9 +114,7 @@ class XDebugSessionTab3(
 
     myUi.addContent(content, 0, PlaceInGrid.center, false)
 
-    ui.defaults
-      .initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION, LayoutAttractionPolicy.FocusOnce())
-      .initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION, LayoutAttractionPolicy.FocusOnce())
+    ui.defaults.initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION, LayoutAttractionPolicy.FocusOnce())
 
     addDebugToolwindowActions(session.project)
 
@@ -131,7 +129,7 @@ class XDebugSessionTab3(
     val isVerticalToolbar = Registry.get("debugger.new.tool.window.layout.toolbar").isOptionEnabled("Vertical")
     (myUi as? RunnerLayoutUiImpl)?.setLeftToolbarVisible(isVerticalToolbar)
 
-    val toolbar = DefaultActionGroup()
+    val toolbar = DefaultActionGroupWithDelegate(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP))
 
     mySingleContentSupplier = object: RunTabSupplier(toolbar) {
       override fun getToolbarActions(): ActionGroup? {
@@ -156,45 +154,21 @@ class XDebugSessionTab3(
     val session = mySession
     toolbar.removeAll()
 
-    fun Array<AnAction>.removeDuplicatesExceptSeparators(collection: Collection<AnAction>): List<AnAction> {
-      val actions = toMutableList()
-      val visited = collection.toMutableSet()
-      val iterator = actions.iterator()
-      while (iterator.hasNext()) {
-        val action = iterator.next()
-        if (action !is Separator && !visited.add(action)) {
-          iterator.remove()
-        }
-      }
-      return actions
-    }
-
     val headerGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP)
-    val headerActionsWithoutDuplicates = headerGroup.getChildren(null).removeDuplicatesExceptSeparators(emptyList())
-    toolbar.addAll(headerActionsWithoutDuplicates)
+    val headerActions = headerGroup.getChildren(null).toList()
+    toolbar.addAll(headerActions)
 
     val more = MoreActionGroup()
     val moreGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP)
-    val moreActionsWithoutDuplicates = moreGroup.getChildren(null).removeDuplicatesExceptSeparators(headerActionsWithoutDuplicates)
+    val moreActionsWithoutDuplicates = removeDuplicatesExceptSeparators(moreGroup.getChildren(null), headerActions)
     more.addAll(moreActionsWithoutDuplicates)
     more.addSeparator()
 
-    fun addWithConstraints(actions: List<AnAction>, constraints: Constraints) {
-      actions.asSequence()
-        .forEach {
-          if (it.templatePresentation.getClientProperty(RunTab.PREFERRED_PLACE) == PreferredPlace.MORE_GROUP) {
-            more.add(it)
-          } else {
-            toolbar.add(it, constraints)
-          }
-        }
-    }
-
     // reversed because it was like this in the original tab
     if (session != null) {
-      addWithConstraints(session.restartActions.asReversed(), Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN))
-      addWithConstraints(session.extraActions.asReversed(), Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
-      addWithConstraints(session.extraStopActions, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
+      addActionsWithConstraints(session.restartActions, Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN), toolbar, more)
+      addActionsWithConstraints(session.extraActions, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM), toolbar, more)
+      addActionsWithConstraints(session.extraStopActions.asReversed(), Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM), toolbar, more)
     }
 
     more.addSeparator()

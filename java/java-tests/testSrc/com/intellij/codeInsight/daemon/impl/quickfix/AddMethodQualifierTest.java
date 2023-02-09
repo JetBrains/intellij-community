@@ -58,7 +58,7 @@ public class AddMethodQualifierTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureByFile(getTestName(false) + "Before.java");
     final AddMethodQualifierFix quickFix = getQuickFix();
     assertNotNull(quickFix);
-    myFixture.launchAction(quickFix);
+    myFixture.checkPreviewAndLaunchAction(quickFix);
     myFixture.checkResultByFile(getTestName(false) + "After.java");
   }
 

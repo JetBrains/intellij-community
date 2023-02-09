@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 final class MarkVfsCorruptedAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    FSRecords.handleError(new Exception("vfs marked as corrupted"));
+    throw FSRecords.handleError(new Exception("vfs marked as corrupted"));
   }
 
   @Override

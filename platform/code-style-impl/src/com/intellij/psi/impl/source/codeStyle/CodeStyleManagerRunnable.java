@@ -43,8 +43,7 @@ abstract class CodeStyleManagerRunnable<T> {
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myCodeStyleManager.getProject());
     Document document = documentManager.getDocument(file);
-    if (document instanceof DocumentWindow) {
-      final DocumentWindow documentWindow = (DocumentWindow)document;
+    if (document instanceof DocumentWindow documentWindow) {
       final PsiFile topLevelFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
       if (!file.equals(topLevelFile)) {
         if (range != null) {
@@ -81,7 +80,7 @@ abstract class CodeStyleManagerRunnable<T> {
       mySettings = CodeStyle.getSettings(file);
 
       mySignificantRange = offset != -1 ? getSignificantRange(file, offset) : null;
-      myIndentOptions = mySettings.getIndentOptionsByFile(file, mySignificantRange);
+      myIndentOptions = CodeFormatterFacade.getIndentOptions(mySettings, myCodeStyleManager.getProject(), file, document, mySignificantRange);
 
       FormattingMode currentMode = myCodeStyleManager.getCurrentFormattingMode();
       myCodeStyleManager.setCurrentFormattingMode(myMode);

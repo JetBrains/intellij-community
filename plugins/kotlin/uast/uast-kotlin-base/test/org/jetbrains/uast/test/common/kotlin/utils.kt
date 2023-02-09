@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.test.common.kotlin
 
+import com.intellij.psi.PsiAnnotation
 import com.intellij.util.PairProcessor
 import com.intellij.util.ref.DebugReflectionUtil
 import junit.framework.TestCase
@@ -37,3 +38,8 @@ fun <T> T?.orFail(msg: String): T {
     return this
         ?: throw AssertionError(msg)
 }
+
+internal val PsiAnnotation.isNullnessAnnotation: Boolean
+    get() {
+        return qualifiedName?.endsWith("NotNull") == true || qualifiedName?.endsWith("Nullable") == true
+    }

@@ -40,6 +40,7 @@ import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,14 +49,10 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
 
-/**
- * @author ven
- */
 public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMarkerRendererWithErrorStripe {
   private static final int THICKNESS = 8;
   private final TextAttributesKey myKey;
@@ -98,8 +95,8 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     }
     if (bgColor != null) {
       g.setColor(bgColor);
+      g.fillRect(r.x, r.y, r.width, r.height);
     }
-    g.fillRect(r.x, r.y, r.width, r.height);
     final LineData lineData = getLineData(getCurrentLineNumber(editor, new Point(0, r.y)));
     if (lineData != null && lineData.isCoveredByOneTest()) {
       AllIcons.Gutter.Unique.paintIcon(editor.getComponent(), g, r.x, r.y);
@@ -135,8 +132,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
   @Override
   public boolean canDoAction(@NotNull final MouseEvent e) {
     Component component = e.getComponent();
-    if (component instanceof EditorGutterComponentEx) {
-      EditorGutterComponentEx gutter = (EditorGutterComponentEx)component;
+    if (component instanceof EditorGutterComponentEx gutter) {
       return e.getX() > gutter.getLineMarkerAreaOffset() && e.getX() < gutter.getIconAreaOffset();
     }
     return false;
@@ -346,8 +342,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
     @Nullable
     private Integer getLineEntry() {
-      final ArrayList<Integer> list = new ArrayList<>(myLines.keySet());
-      Collections.sort(list);
+      List<Integer> list = ContainerUtil.sorted(myLines.keySet());
       int size = list.size();
       final LineData data = getLineData(myLineNumber);
       final int currentStatus = data != null ? data.getStatus() : LineCoverage.NONE;

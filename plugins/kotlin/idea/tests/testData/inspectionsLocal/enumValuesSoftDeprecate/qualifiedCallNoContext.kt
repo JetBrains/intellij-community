@@ -3,6 +3,5 @@
 enum class EnumClass
 
 fun foo() {
-    // No special handling for this case
     EnumClass.values<caret>()
 }

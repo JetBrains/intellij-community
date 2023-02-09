@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections.jdk2k
 
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -186,6 +187,7 @@ class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspecti
     }
 }
 
+@FileModifier.SafeTypeForPreview
 data class Replacement(
     val javaMethodFqName: String,
     val kotlinFunctionFqName: String,

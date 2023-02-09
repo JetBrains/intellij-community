@@ -18,8 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Key;
@@ -30,6 +28,7 @@ import com.intellij.psi.FilePropertyKeyImpl;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.TreeNodeProcessingResult;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.jetbrains.python.PythonCodeStyleService;
@@ -82,7 +81,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   }
 
   @Override
-  public @NotNull FilePropertyKey<LanguageLevel> getFileDataKey() {
+  public @NotNull FilePropertyKey<LanguageLevel> getFilePropertyKey() {
     return KEY;
   }
 
@@ -340,8 +339,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
       if (myIterateAsContent) {
         ModuleFileIndex index = ReadAction.compute(() -> {
           if (myProject.isDisposed() || !myRoot.isValid()) return null;
-          DirectoryInfo info = DirectoryIndex.getInstance(myProject).getInfoForFile(myRoot);
-          Module module = info.getModule();
+          Module module = ProjectFileIndex.getInstance(myProject).getModuleForFile(myRoot, false);
           if (module == null) return null;
           return ModuleRootManager.getInstance(module).getFileIndex();
         });
@@ -350,9 +348,9 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
         final PushedFilePropertiesUpdater propertiesUpdater = PushedFilePropertiesUpdater.getInstance(myProject);
         index.iterateContentUnderDirectory(myRoot, (ContentIteratorEx)file -> {
           if (visitFileToPush(file, propertiesUpdater)) {
-            return ContentIteratorEx.Status.CONTINUE;
+            return TreeNodeProcessingResult.CONTINUE;
           }
-          return ContentIteratorEx.Status.SKIP_CHILDREN;
+          return TreeNodeProcessingResult.SKIP_CHILDREN;
         });
         return;
       }

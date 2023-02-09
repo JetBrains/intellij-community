@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -35,9 +35,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author ven
- */
 public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   private static final Logger LOG = Logger.getInstance(MoveInstanceMethodProcessor.class);
 
@@ -109,8 +106,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       }
     }
 
-    if (myTargetVariable instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)myTargetVariable;
+    if (myTargetVariable instanceof PsiParameter parameter) {
       final int index = myMethod.getParameterList().getParameterIndex(parameter);
       for (final UsageInfo usageInfo : usages) {
         if (usageInfo instanceof MethodCallUsageInfo) {
@@ -252,8 +248,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
         if (expression instanceof PsiMethodCallExpression) {
           correctMethodCall((PsiMethodCallExpression)expression, false);
         }
-        else if (expression instanceof PsiMethodReferenceExpression) {
-          PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)expression;
+        else if (expression instanceof PsiMethodReferenceExpression methodReferenceExpression) {
           PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
 
           if (myTargetVariable instanceof PsiParameter && shouldBeExpandedToLambda(methodReferenceExpression, myMethod.getParameterList().getParameterIndex((PsiParameter)myTargetVariable))) {

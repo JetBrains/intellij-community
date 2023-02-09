@@ -7,11 +7,11 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobLauncher;
+import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -20,15 +20,15 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.*;
 
+import java.util.List;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -43,21 +43,41 @@ import java.util.concurrent.atomic.AtomicInteger;
 @ApiStatus.Internal
 @ApiStatus.Experimental
 public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferenceQuickFixUpdater {
-  private static final Key<Job<?>> JOB = Key.create("JOB");
+  private static final Key<Future<?>> JOB = Key.create("JOB");
   private final Project myProject;
   private volatile boolean enabled = true;
   public UnresolvedReferenceQuickFixUpdaterImpl(Project project) {
     myProject = project;
   }
 
-  public void waitQuickFixesSynchronously(@NotNull HighlightInfo info, @NotNull PsiFile file, @NotNull Editor editor) {
+  public void waitQuickFixesSynchronously(@NotNull PsiFile file, @NotNull Editor editor, @NotNull List<? extends HighlightInfo> infos) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    Job<?> job = startUnresolvedRefsJob(info, editor, file);
-    if (job != null) {
-      try {
-        job.waitForCompletion(100_000);
+    ApplicationManager.getApplication().assertReadAccessNotAllowed(); // have to be able to wait over the write action to finish, must not hold RA for that
+    for (HighlightInfo info : infos) {
+      PsiReference reference = info.unresolvedReference;
+      if (reference == null) continue;
+      if (info.isUnresolvedReferenceQuickFixesComputed()) continue;
+      PsiElement refElement = ReadAction.compute(() -> reference.getElement());
+      Future<?> job = refElement.getUserData(JOB);
+      if (job == null) {
+        CompletableFuture<Object> newFuture = new CompletableFuture<>();
+        job = ((UserDataHolderEx)refElement).putUserDataIfAbsent(JOB, newFuture);
+        if (job == newFuture) {
+          try {
+            ReadAction.run(() -> registerReferenceFixes(info, editor, file, reference));
+            newFuture.complete(null);
+          }
+          catch (Throwable t) {
+            newFuture.completeExceptionally(t);
+          }
+        }
       }
-      catch (InterruptedException ignored) {
+      try {
+        // wait outside RA
+        job.get(100, TimeUnit.SECONDS);
+      }
+      catch (InterruptedException | ExecutionException | TimeoutException e) {
+        throw new RuntimeException(e);
       }
     }
   }
@@ -67,7 +87,14 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
   }
 
   @Override
+  public void registerQuickFixesLater(@NotNull PsiReference ref, @NotNull AnnotationBuilder builder) {
+    ((B)builder).unresolvedReference(ref);
+  }
+
+  @Override
   public void startComputingNextQuickFixes(@NotNull PsiFile file, @NotNull Editor editor, @NotNull ProperTextRange visibleRange) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     int offset = editor.getCaretModel().getOffset();
     Project project = file.getProject();
     Document document = editor.getDocument();
@@ -95,74 +122,83 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
     }
   }
 
-  private Job<?> startUnresolvedRefsJob(@NotNull HighlightInfo info, @NotNull Editor editor, @NotNull PsiFile file) {
+  private void startUnresolvedRefsJob(@NotNull HighlightInfo info, @NotNull Editor editor, @NotNull PsiFile file) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!enabled) {
-      return null;
+      return;
     }
     PsiReference reference = info.unresolvedReference;
-    if (reference == null) return null;
-    Job<?> job = reference.getElement().getUserData(JOB);
+    if (reference == null) return;
+    PsiElement refElement = reference.getElement();
+    Future<?> job = refElement.getUserData(JOB);
     if (job != null) {
-      return job;
+      return;
     }
-    if (info.isUnresolvedReferenceQuickFixesComputed()) return null;
-    DaemonProgressIndicator indicator = new DaemonProgressIndicator();
-    job = JobLauncher.getInstance().submitToJobThread(() ->
-      ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() ->
-        ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
-          if (DumbService.getInstance(myProject).isDumb() || !reference.getElement().isValid()) {
-            // this will be restarted anyway on smart mode switch
-            return;
+    if (info.isUnresolvedReferenceQuickFixesComputed()) return;
+    job = ForkJoinPool.commonPool().submit(() ->
+      ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(
+        () -> ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
+          () -> registerReferenceFixes(info, editor, file, reference), new DaemonProgressIndicator())), null);
+    refElement.putUserData(JOB, job);
+  }
+
+  private void registerReferenceFixes(@NotNull HighlightInfo info, @NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiReference reference) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    PsiElement referenceElement = reference.getElement();
+    if (myProject.isDisposed() || !file.isValid() || editor.isDisposed()
+        || DumbService.getInstance(myProject).isDumb() || !referenceElement.isValid()) {
+      // this will be restarted anyway on smart mode switch
+      return;
+    }
+    AtomicBoolean changed = new AtomicBoolean();
+    try {
+      UnresolvedReferenceQuickFixProvider.registerReferenceFixes(
+        reference, new QuickFixActionRegistrarImpl(info) {
+          @Override
+          void doRegister(@NotNull IntentionAction action,
+                          @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable String displayName,
+                          @Nullable TextRange fixRange,
+                          @Nullable HighlightDisplayKey key) {
+            super.doRegister(action, displayName, fixRange, key);
+            changed.set(true);
           }
-          AtomicBoolean changed = new AtomicBoolean();
-          try {
-            UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info) {
-              @Override
-              void doRegister(@NotNull IntentionAction action,
-                              @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable String displayName,
-                              @Nullable TextRange fixRange,
-                              @Nullable HighlightDisplayKey key) {
-                super.doRegister(action, displayName, fixRange, key);
-                changed.set(true);
-              }
-            });
-            info.setUnresolvedReferenceQuickFixesComputed();
-          }
-          finally {
-            reference.getElement().putUserData(JOB, null);
-          }
-          if (changed.get()) {
-            VirtualFile virtualFile = file.getVirtualFile();
-            boolean isInContent = ModuleUtilCore.projectContainsFile(myProject, virtualFile, false);
-            // have to restart ShowAutoImportPass manually because the highlighting session might very well be over by now
-            ApplicationManager.getApplication().invokeLater(() -> {
-              DaemonProgressIndicator sessionIndicator = new DaemonProgressIndicator();
-              boolean canChangeFileSilently = CanISilentlyChange.thisFile(file).canIReally(isInContent);
-              ProgressManager.getInstance().executeProcessUnderProgress(() ->
-                HighlightingSessionImpl.runInsideHighlightingSession(file, null, ProperTextRange.create(file.getTextRange()), canChangeFileSilently,
-                                                                     () -> DefaultHighlightInfoProcessor.showAutoImportHints(editor, file, sessionIndicator))
-              , sessionIndicator);
-            }, __->editor.isDisposed() || file.getProject().isDisposed());
-          }
-        }, indicator)), null);
-    reference.getElement().putUserData(JOB, job);
-    return job;
+        });
+      info.setUnresolvedReferenceQuickFixesComputed();
+    }
+    finally {
+      referenceElement.putUserData(JOB, null);
+    }
+    if (changed.get()) {
+      VirtualFile virtualFile = file.getVirtualFile();
+      boolean isInContent = ModuleUtilCore.projectContainsFile(myProject, virtualFile, false);
+      // have to restart ShowAutoImportPass manually because the highlighting session might very well be over by now
+      ApplicationManager.getApplication().invokeLater(() -> {
+        DaemonProgressIndicator sessionIndicator = new DaemonProgressIndicator();
+        boolean canChangeFileSilently = CanISilentlyChange.thisFile(file).canIReally(isInContent);
+        ProgressManager.getInstance().executeProcessUnderProgress(() ->
+           HighlightingSessionImpl.runInsideHighlightingSession(file, null,
+                                                                ProperTextRange.create(file.getTextRange()), canChangeFileSilently,
+                                                                () -> DefaultHighlightInfoProcessor.showAutoImportHints(editor, file, sessionIndicator))
+          , sessionIndicator);
+      }, __ -> editor.isDisposed() || file.getProject().isDisposed());
+    }
   }
 
   @TestOnly
-  public void stopUntil(@NotNull Disposable disposable) {
+  void stopUntil(@NotNull Disposable disposable) {
     enabled = false;
     Disposer.register(disposable, ()->enabled=true);
   }
 
   @TestOnly
-  public void waitForBackgroundJobIfStartedInTests(@NotNull HighlightInfo info) throws InterruptedException {
+  void waitForBackgroundJobIfStartedInTests(@NotNull HighlightInfo info) throws InterruptedException, ExecutionException, TimeoutException {
     PsiReference reference = info.unresolvedReference;
     if (reference == null) return;
-    Job<?> job = reference.getElement().getUserData(JOB);
-    if (job == null) {
-      return;
+    Future<?> job = reference.getElement().getUserData(JOB);
+    if (job != null) {
+      job.get(60, TimeUnit.SECONDS);
     }
-    job.waitForCompletion(60_000);
   }
 }

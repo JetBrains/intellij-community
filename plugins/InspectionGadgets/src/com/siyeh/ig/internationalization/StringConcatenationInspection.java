@@ -17,6 +17,7 @@ package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -36,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class StringConcatenationInspection extends BaseInspection {
 
@@ -71,33 +74,26 @@ public class StringConcatenationInspection extends BaseInspection {
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)infos[0];
     final Collection<InspectionGadgetsFix> result = new ArrayList<>();
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(polyadicExpression);
-    if (parent instanceof PsiVariable) {
-      final PsiVariable variable = (PsiVariable)parent;
+    if (parent instanceof PsiVariable variable) {
       ContainerUtil.addIfNotNull(result, (InspectionGadgetsFix)createAddAnnotationFix(variable));
     }
-    else if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+    else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
       final PsiExpression lhs = assignmentExpression.getLExpression();
-      if (lhs instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
+      if (lhs instanceof PsiReferenceExpression referenceExpression) {
         final PsiElement target = referenceExpression.resolve();
-        if (target instanceof PsiModifierListOwner) {
-          final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
+        if (target instanceof PsiModifierListOwner modifierListOwner) {
           ContainerUtil.addIfNotNull(result, (InspectionGadgetsFix)createAddAnnotationFix(modifierListOwner));
         }
       }
     }
     else if (parent instanceof PsiExpressionList) {
       final PsiElement grandParent = parent.getParent();
-      if (grandParent instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      if (grandParent instanceof PsiMethodCallExpression methodCallExpression) {
         final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
         final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-        if (qualifierExpression instanceof PsiReferenceExpression) {
-          final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifierExpression;
+        if (qualifierExpression instanceof PsiReferenceExpression referenceExpression) {
           final PsiElement target = referenceExpression.resolve();
-          if (target instanceof PsiModifierListOwner) {
-            final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
+          if (target instanceof PsiModifierListOwner modifierListOwner) {
             ContainerUtil.addIfNotNull(result, (InspectionGadgetsFix)createAddAnnotationFix(modifierListOwner));
           }
         }
@@ -138,10 +134,9 @@ public class StringConcatenationInspection extends BaseInspection {
 
   @Nullable
   public static PsiModifierListOwner getAnnotatableElement(PsiExpression expression) {
-    if (!(expression instanceof PsiReferenceExpression)) {
+    if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
       return null;
     }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
     if (!TypeUtils.isJavaLangString(referenceExpression.getType())) return null;
     final PsiElement element = referenceExpression.resolve();
     if (!(element instanceof PsiModifierListOwner) || !element.isPhysical()) {
@@ -151,16 +146,14 @@ public class StringConcatenationInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.assert"), "ignoreAsserts");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.system.out"), "ignoreSystemOuts");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.system.err"), "ignoreSystemErrs");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.exceptions"), "ignoreThrowableArguments");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.constant.initializers"), "ignoreConstantInitializers");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.in.tostring"), "ignoreInToString");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreAsserts", InspectionGadgetsBundle.message("inspection.option.ignore.assert")),
+      checkbox("ignoreSystemOuts", InspectionGadgetsBundle.message("inspection.option.ignore.system.out")),
+      checkbox("ignoreSystemErrs", InspectionGadgetsBundle.message("inspection.option.ignore.system.err")),
+      checkbox("ignoreThrowableArguments", InspectionGadgetsBundle.message("inspection.option.ignore.exceptions")),
+      checkbox("ignoreConstantInitializers", InspectionGadgetsBundle.message("inspection.option.ignore.constant.initializers")),
+      checkbox("ignoreInToString", InspectionGadgetsBundle.message("inspection.option.ignore.in.tostring")));
   }
 
   @Override
@@ -220,8 +213,7 @@ public class StringConcatenationInspection extends BaseInspection {
         while (parent instanceof PsiBinaryExpression) {
           parent = parent.getParent();
         }
-        if (parent instanceof PsiField) {
-          final PsiField field = (PsiField)parent;
+        if (parent instanceof PsiField field) {
           if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL)) {
             return;
           }

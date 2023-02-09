@@ -107,7 +107,7 @@ open class FileBasedStorage(file: Path,
       when {
         dataWriter == null -> {
           if (isUseVfs && virtualFile == null) {
-            LOG.warn("Cannot find virtual file $virtualFile")
+            LOG.warn("Cannot find virtual file")
           }
 
           deleteFile(storage.file, this, virtualFile)

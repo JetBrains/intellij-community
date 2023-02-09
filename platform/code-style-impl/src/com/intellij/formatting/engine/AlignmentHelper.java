@@ -59,10 +59,10 @@ public class AlignmentHelper {
   }
 
   private static void reportAlignmentProcessingError(BlockAlignmentProcessor.Context context) {
-    ASTNode node = context.targetBlock.getNode();
+    ASTNode node = context.targetBlock().getNode();
     Language language = node != null ? node.getPsi().getLanguage() : null;
-    String message = (language != null ? language.getDisplayName() + ": " : "") + "Can't align block " + context.targetBlock;
-    LOG.error(message, new Throwable(), AttachmentFactory.createAttachment(context.document));
+    String message = (language != null ? language.getDisplayName() + ": " : "") + "Can't align block " + context.targetBlock();
+    LOG.error(message, new Throwable(), AttachmentFactory.createAttachment(context.document()));
   }
 
   LeafBlockWrapper applyAlignment(final AlignmentImpl alignment, final LeafBlockWrapper currentBlock) {

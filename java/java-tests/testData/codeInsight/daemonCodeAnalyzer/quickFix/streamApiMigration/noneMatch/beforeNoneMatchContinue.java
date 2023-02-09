@@ -1,4 +1,4 @@
-// "Replace with noneMatch()" "true-preview"
+// "Collapse loop with stream 'noneMatch()'" "true-preview"
 
 public class Main {
   boolean find(String[][] data) {

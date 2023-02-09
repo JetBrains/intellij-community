@@ -28,14 +28,14 @@ internal object SettingsSyncPanelFactory {
       }
 
       SettingsCategoryDescriptor.listAll().forEach { descriptor ->
+        descriptor.reset()
         indent {
           row {
             if (descriptor.secondaryGroup == null) {
               checkBox(
                 descriptor.name
               )
-                .bindSelected({ descriptor.isSynchronized },
-                              { descriptor.isSynchronized = it })
+                .bindSelected(descriptor::isSynchronized)
                 .onReset { descriptor.reset() }
                 .onApply { descriptor.apply() }
                 .onIsModified { descriptor.isModified() }

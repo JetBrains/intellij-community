@@ -10,15 +10,16 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import java.util.List;
 
 public class XDebuggerActionsCollector extends CounterUsagesCollector {
-  private static final EventLogGroup group = new EventLogGroup("xdebugger.actions", 1);
+  private static final EventLogGroup group = new EventLogGroup("xdebugger.actions", 2);
 
   public static final String PLACE_THREADS_VIEW = "threadsView";
   public static final String PLACE_FRAMES_VIEW = "framesView";
+  private static final String LOCATION = "location";
 
   public static final EventId1<String> threadSelected =
-    group.registerEvent("thread.selected", EventFields.String("place", List.of(PLACE_FRAMES_VIEW, PLACE_THREADS_VIEW)));
+    group.registerEvent("thread.selected", EventFields.String(LOCATION, List.of(PLACE_FRAMES_VIEW, PLACE_THREADS_VIEW)));
   public static final EventId1<String> frameSelected =
-    group.registerEvent("frame.selected", EventFields.String("place", List.of(PLACE_FRAMES_VIEW, PLACE_THREADS_VIEW)));
+    group.registerEvent("frame.selected", EventFields.String(LOCATION, List.of(PLACE_FRAMES_VIEW, PLACE_THREADS_VIEW)));
   public static final EventId sessionChanged = group.registerEvent("session.selected");
 
   @Override

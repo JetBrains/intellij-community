@@ -65,8 +65,8 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
     private boolean myApplied;
 
     PerformBatchFixesTask(@NotNull Project project,
-                                 CommonProblemDescriptor @NotNull [] descriptors,
-                                 @NotNull Class<?> quickfixClass) {
+                          CommonProblemDescriptor @NotNull [] descriptors,
+                          @NotNull Class<?> quickfixClass) {
       super(project, descriptors, quickfixClass);
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -29,9 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<PsiClass> {
   private static final Logger LOG = Logger.getInstance(MakeClassStaticProcessor.class);
   private final List<PsiField> myFieldsToSplit = new ArrayList<>();
@@ -226,8 +223,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
         myFieldsToSplit.add(field);
       }
     }
-    else if (element instanceof PsiNewExpression && mySettings.isMakeClassParameter()) {
-      final PsiNewExpression newExpression = ((PsiNewExpression)element);
+    else if (element instanceof PsiNewExpression newExpression && mySettings.isMakeClassParameter()) {
       LOG.assertTrue(newExpression.getQualifier() == null);
       final String newText = convertToFieldName(mySettings.getClassParameterName()) + "." + newExpression.getText();
       final PsiExpression expr = factory.createExpressionFromText(newText, null);
@@ -238,9 +234,8 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
   @Override
   protected void changeExternalUsage(final UsageInfo usage, final PsiElementFactory factory) throws IncorrectOperationException {
     final PsiElement element = usage.getElement();
-    if (!(element instanceof PsiJavaCodeReferenceElement)) return;
+    if (!(element instanceof PsiJavaCodeReferenceElement methodRef)) return;
 
-    PsiJavaCodeReferenceElement methodRef = (PsiJavaCodeReferenceElement)element;
     PsiElement parent = methodRef.getParent();
     if (parent instanceof PsiAnonymousClass) {
       parent = parent.getParent();
@@ -406,8 +401,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
   private void findDefaultConstructorReferences(final ArrayList<UsageInfo> result) {
     for (PsiReference ref : ReferencesSearch.search(myMember)) {
       PsiElement element = ref.getElement();
-      if (element.getParent() instanceof PsiNewExpression) {
-        PsiNewExpression newExpression = (PsiNewExpression)element.getParent();
+      if (element.getParent() instanceof PsiNewExpression newExpression) {
         PsiElement qualifier = newExpression.getQualifier();
         if (qualifier instanceof PsiThisExpression) qualifier = null;
         if (!PsiTreeUtil.isAncestor(myMember, element, true) || qualifier != null) {

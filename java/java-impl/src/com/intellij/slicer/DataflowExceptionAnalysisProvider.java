@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
@@ -143,10 +143,9 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
   }
 
   private static AnalysisStartingPoint fromArithmeticException(PsiElement anchor) {
-    if (anchor instanceof PsiExpression) {
-      PsiExpression divisor = (PsiExpression)anchor;
+    if (anchor instanceof PsiExpression divisor) {
       PsiType type = divisor.getType();
-      if (PsiType.LONG.equals(type)) {
+      if (PsiTypes.longType().equals(type)) {
         return AnalysisStartingPoint.create(DfTypes.longValue(0), divisor);
       }
       else if (TypeConversionUtil.isIntegralNumberType(type)) {
@@ -162,8 +161,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
       PsiElement statement = throwStatement.getPrevSibling();
       while (statement != null) {
         statement = statement.getPrevSibling();
-        if (statement instanceof PsiIfStatement) {
-          PsiIfStatement ifStatement = (PsiIfStatement)statement;
+        if (statement instanceof PsiIfStatement ifStatement) {
           boolean thenExits = ifStatement.getThenBranch() != null && !ControlFlowUtils.statementMayCompleteNormally(ifStatement.getThenBranch());
           boolean elseExits =
             ifStatement.getElseBranch() != null && !ControlFlowUtils.statementMayCompleteNormally(ifStatement.getElseBranch());
@@ -224,8 +222,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     if (hasDefault) {
       List<PsiExpression> allLabels = new ArrayList<>();
       for (PsiStatement statement : Objects.requireNonNull(block.getBody()).getStatements()) {
-        if (statement instanceof PsiSwitchLabelStatementBase) {
-          PsiSwitchLabelStatementBase labelStatement = (PsiSwitchLabelStatementBase)statement;
+        if (statement instanceof PsiSwitchLabelStatementBase labelStatement) {
           if (labelStatement.isDefaultCase()) continue;
           PsiExpressionList caseValues = labelStatement.getCaseValues();
           if (caseValues == null) return null;

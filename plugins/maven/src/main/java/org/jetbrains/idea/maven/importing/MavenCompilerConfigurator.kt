@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.build.events.MessageEvent
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
@@ -11,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.ContainerUtil.addIfNotNull
 import com.intellij.util.text.nullize
@@ -121,13 +123,13 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
   }
 
   override fun process(modifiableModelsProvider: IdeModifiableModelsProvider,
-                       module: Module,
-                       rootModel: MavenRootModelAdapter?,
-                       mavenModel: MavenProjectsTree,
-                       mavenProject: MavenProject,
-                       changes: MavenProjectChanges,
-                       mavenProjectToModuleName: Map<MavenProject, String>,
-                       postTasks: List<MavenProjectsProcessorTask>) {
+              module: Module,
+              rootModel: MavenRootModelAdapter,
+              mavenModel: MavenProjectsTree,
+              mavenProject: MavenProject,
+              changes: MavenProjectChanges,
+              mavenProjectToModuleName: Map<MavenProject, String>,
+              postTasks: List<MavenProjectsProcessorTask>) {
     val project = module.project
 
     // select (and cache) default compiler extension
@@ -237,9 +239,11 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
       if (level == null) {
         level = MavenImportUtil.getDefaultLevel(mavenProject)
       }
+      level = MavenImportUtil.adjustLevelAndNotify(module.project, level)
       // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin!
       targetLevel = level.toJavaVersion().toString()
     }
+
     ideCompilerConfiguration.setBytecodeTargetLevel(module, targetLevel)
   }
 

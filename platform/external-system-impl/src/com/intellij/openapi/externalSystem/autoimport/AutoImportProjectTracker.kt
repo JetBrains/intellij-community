@@ -19,7 +19,7 @@ import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.whenOperationFinished
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.observable.properties.*
-import com.intellij.openapi.observable.properties.set
+import com.intellij.openapi.observable.util.set
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
@@ -323,7 +323,8 @@ class AutoImportProjectTracker(
   ) : ExternalSystemProjectReloadContext
 
   companion object {
-    val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport")
+
+    private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport")
 
     @JvmStatic
     fun getInstance(project: Project): AutoImportProjectTracker {

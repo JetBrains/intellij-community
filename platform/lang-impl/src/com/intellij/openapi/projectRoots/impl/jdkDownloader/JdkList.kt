@@ -69,7 +69,7 @@ data class JdkItem(
   val jdkMajorVersion: Int,
   @NlsSafe
   val jdkVersion: String,
-  private val jdkVendorVersion: String?,
+  val jdkVendorVersion: String?,
   val suggestedSdkName: String,
 
   val os: String,
@@ -178,11 +178,14 @@ data class JdkItem(
 
   val fullPresentationText: @NlsSafe String
     get() = product.packagePresentationText + " " + jdkVersion + (presentableArchIfNeeded?.let {" ($it)" } ?: "")
+
+  val fullPresentationWithVendorText: @NlsSafe String
+    get() = product.packagePresentationText + " " + (jdkVendorVersion ?: jdkVersion) + (presentableArchIfNeeded?.let {" ($it)" } ?: "")
 }
 
 enum class JdkPackageType(@NonNls val type: String) {
   ZIP("zip") {
-    override fun openDecompressor(archiveFile: Path): Decompressor = Decompressor.Zip(archiveFile).withZipExtensionsIfUnix()
+    override fun openDecompressor(archiveFile: Path): Decompressor = Decompressor.Zip(archiveFile).withZipExtensions()
   },
 
   @Suppress("SpellCheckingInspection")

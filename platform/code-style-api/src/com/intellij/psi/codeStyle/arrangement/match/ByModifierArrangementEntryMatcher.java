@@ -11,9 +11,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Denis Zhdanov
- */
 public class ByModifierArrangementEntryMatcher implements ArrangementEntryMatcher {
 
   @NotNull private final Set<ArrangementAtomMatchCondition> myModifiers = new HashSet<>();
@@ -29,7 +26,7 @@ public class ByModifierArrangementEntryMatcher implements ArrangementEntryMatche
   @Override
   public boolean isMatched(@NotNull ArrangementEntry entry) {
     if (entry instanceof ModifierAwareArrangementEntry) {
-      final Set<ArrangementSettingsToken> modifiers = ((ModifierAwareArrangementEntry)entry).getModifiers();
+      final Set<? extends ArrangementSettingsToken> modifiers = ((ModifierAwareArrangementEntry)entry).getModifiers();
       for (ArrangementAtomMatchCondition condition : myModifiers) {
         final Object value = condition.getValue();
         boolean isInverted = value instanceof Boolean && !((Boolean)value);

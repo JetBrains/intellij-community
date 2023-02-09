@@ -15,6 +15,7 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
@@ -75,8 +76,7 @@ class FacetModelBridgeTest {
     assertNotNull(facetByType)
     assertEquals(facetData, facetByType!!.configuration.data)
 
-    val entityStorage = WorkspaceModel.getInstance(projectModel.project).entityStorage
-    val facetEntity = entityStorage.current.entities(FacetEntity::class.java).first()
+    val facetEntity = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.entities(FacetEntity::class.java).first()
     assertEquals(facetConfigXml, facetEntity.configurationXmlTag)
 
     facetManager.createModifiableModel().let { modifiableModel ->
@@ -173,7 +173,7 @@ class FacetModelBridgeTest {
     val module = projectModel.createModule()
     val facet = projectModel.addFacet(module, MockFacetType.getInstance(), MockFacetConfiguration("foo"))
 
-    val diff = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.toBuilder()
+    val diff = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.toBuilder()
     val modifiableModuleModel = (ModuleManager.getInstance(projectModel.project) as ModuleManagerBridgeImpl).getModifiableModel(diff)
     val modifiableFacetModel = (FacetManager.getInstance(module) as FacetManagerBridge).createModifiableModel(diff)
 
@@ -190,9 +190,9 @@ class FacetModelBridgeTest {
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel { builder ->
         val moduleEntity = builder.entities(ModuleEntity::class.java).first()
-        builder addEntity FacetEntity("myName", "MockFacetId", moduleEntity.symbolicId, moduleEntity.entitySource) {
+        builder addEntity FacetEntity("myName", moduleEntity.symbolicId, "MockFacetId", moduleEntity.entitySource) {
           this.module = moduleEntity
-          underlyingFacet = FacetEntity("anotherName", "MockFacetId", moduleEntity.symbolicId, moduleEntity.entitySource) {
+          underlyingFacet = FacetEntity("anotherName", moduleEntity.symbolicId, "MockFacetId", moduleEntity.entitySource) {
             this.module = moduleEntity
           }
         }

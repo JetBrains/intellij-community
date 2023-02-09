@@ -6,12 +6,13 @@ import com.intellij.ide.lightEdit.menuBar.LightEditMainMenuHelper
 import com.intellij.ide.lightEdit.statusBar.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.project.impl.applyBoundsOrDefault
 import com.intellij.openapi.project.impl.createNewProjectFrame
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.*
@@ -19,12 +20,12 @@ import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
 import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
+import com.intellij.openapi.wm.impl.status.adaptV2Widget
 import com.intellij.toolWindow.ToolWindowPane
-import com.intellij.ui.PopupHandler
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Component
@@ -43,7 +44,7 @@ internal class LightEditFrameWrapper(
   companion object {
     @RequiresEdt
     fun allocate(project: Project, frameInfo: FrameInfo?, closeHandler: BooleanSupplier): LightEditFrameWrapper {
-      return runBlockingModal(project, "") {
+      return runBlockingModalWithRawProgressReporter(project, "") {
         withContext(Dispatchers.EDT) {
           allocateLightEditFrame(project) { frame ->
             LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrame(frameInfo).create(), closeHandler = closeHandler)
@@ -85,7 +86,7 @@ internal class LightEditFrameWrapper(
           windowManager.defaultFrameInfoHelper.copyFrom(frameInfo)
         }
         frameInfo.bounds?.let {
-          frame.frame.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it).first
+          applyBoundsOrDefault(frame.frame, FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it)?.first)
         }
       }
 
@@ -114,23 +115,42 @@ internal class LightEditFrameWrapper(
   val lightEditPanel: LightEditPanel
     get() = editPanel!!
 
-  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
-    return LightEditRootPane(frame = frame, parentDisposable = this)
-  }
+  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane = LightEditRootPane(frame = frame, parentDisposable = this)
 
   override suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
     val editorManager = LightEditService.getInstance().editorManager
     val statusBar = statusBar!!
-    statusBar.addWidgetToLeft(LightEditModeNotificationWidget(), this)
-    statusBar.addWidget(LightEditPositionWidget(project, editorManager), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR), this)
-    statusBar.addWidget(LightEditAutosaveWidget(editorManager), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR), this)
-    statusBar.addWidget(LightEditEncodingWidgetWrapper(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL), this)
-    statusBar.addWidget(LightEditLineSeparatorWidgetWrapper(project), StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID),
-                        this)
-    PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
-    val statusBarWidgetManager = project.service<StatusBarWidgetsManager>()
-    statusBarWidgetManager.init { statusBar }
-    Disposer.register(statusBar) { statusBarWidgetManager.disableAllWidgets() }
+
+    @Suppress("DEPRECATION")
+    val coroutineScope = project.coroutineScope
+    statusBar.addWidgetToLeft(LightEditModeNotificationWidget())
+
+    val dataContext = object : WidgetPresentationDataContext {
+      override val project: Project
+        get() = project
+
+      override val currentFileEditor: StateFlow<FileEditor?> by lazy {
+        val flow = MutableStateFlow<FileEditor?>(null)
+        editorManager.addListener(object : LightEditorListener {
+          override fun afterSelect(editorInfo: LightEditorInfo?) {
+            flow.value = editorInfo?.fileEditor
+          }
+        })
+        flow
+      }
+    }
+
+    statusBar.init(
+      project,
+      extraItems = listOf(
+        LightEditAutosaveWidget(editorManager) to LoadingOrder.before(IdeMessagePanel.FATAL_ERROR),
+        LightEditEncodingWidgetWrapper(project, coroutineScope) to LoadingOrder.after(StatusBar.StandardWidgets.POSITION_PANEL),
+        LightEditLineSeparatorWidgetWrapper(project, coroutineScope) to LoadingOrder.before(LightEditEncodingWidgetWrapper.WIDGET_ID),
+        adaptV2Widget(StatusBar.StandardWidgets.POSITION_PANEL, dataContext) { scope ->
+          LightEditPositionWidget(dataContext = dataContext, scope = scope, editorManager = editorManager)
+        } to LoadingOrder.before(IdeMessagePanel.FATAL_ERROR),
+      ),
+    )
   }
 
   override fun getTitleInfoProviders(): List<TitleInfoProvider> = emptyList()
@@ -178,8 +198,8 @@ internal class LightEditFrameWrapper(
     override val mainMenuActionGroup: ActionGroup
       get() = LightEditMainMenuHelper().mainMenuActionGroup
 
-    override fun createStatusBar(frame: IdeFrame): IdeStatusBarImpl {
-      return object : IdeStatusBarImpl(frame, false) {
+    override fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
+      return object : IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false) {
         override fun updateUI() {
           setUI(LightEditStatusBarUI())
         }

@@ -16,6 +16,7 @@
 package com.intellij.patterns;
 
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -175,9 +176,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
             PsiJavaCodeReferenceElement reference = ((PsiNewExpression)element).getClassOrAnonymousClassReference();
             if (reference != null) {
               String qualifiedName = reference.getQualifiedName();
-              for (String fqn : fqns) {
-                if( fqn.equals(qualifiedName)) return true;
-              }
+              return ArrayUtil.contains(qualifiedName, fqns);
             }
           }
         }

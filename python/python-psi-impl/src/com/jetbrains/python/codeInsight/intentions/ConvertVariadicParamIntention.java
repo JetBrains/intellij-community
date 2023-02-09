@@ -226,8 +226,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
   private static boolean isKeywordContainerCall(@Nullable PsiElement element, @NotNull PyParameter keywordContainer) {
     if (element instanceof PyCallExpression) {
       final PyExpression callee = ((PyCallExpression)element).getCallee();
-      if (callee instanceof PyQualifiedExpression) {
-        final PyQualifiedExpression qualifiedCallee = (PyQualifiedExpression)callee;
+      if (callee instanceof PyQualifiedExpression qualifiedCallee) {
         final PyExpression qualifier = qualifiedCallee.getQualifier();
 
         if (qualifier instanceof PyReferenceExpression) {

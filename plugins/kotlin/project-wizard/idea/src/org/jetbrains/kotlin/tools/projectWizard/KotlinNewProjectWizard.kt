@@ -102,8 +102,8 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
     }
 }
 
-fun Panel.kmpWizardLink(context: WizardContext) {
-    this.row {
+fun NewProjectWizardStep.setupKmpWizardLinkUI(builder: Panel) {
+    builder.row {
         text(KotlinNewProjectWizardUIBundle.message("project.wizard.new.project.kotlin.comment"),
              action = HyperlinkEventAction {
                  context.requestSwitchTo(NewProjectWizardModuleBuilder.MODULE_BUILDER_ID) { }

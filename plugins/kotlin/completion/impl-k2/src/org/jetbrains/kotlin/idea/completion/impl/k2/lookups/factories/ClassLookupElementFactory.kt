@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.completion.lookups.factories
 
-import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -42,10 +41,12 @@ private data class ClassifierLookupObject(
 /**
  * The simplest implementation of the insertion handler for a classifiers.
  */
-private object ClassifierInsertionHandler : InsertHandler<LookupElement> {
+private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val targetFile = context.file as? KtFile ?: return
         val lookupObject = item.`object` as ClassifierLookupObject
+
+        super.handleInsert(context, item)
 
         if (lookupObject.importingStrategy is ImportStrategy.InsertFqNameAndShorten) {
             val fqName = lookupObject.importingStrategy.fqName

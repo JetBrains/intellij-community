@@ -77,6 +77,7 @@
   <technology name="spring-cloud" root="org.springframework.cloud"/>
   <technology name="spring-webflux" root="org.springframework.web.reactive"/>
   <technology name="reactor" root="reactor"/>
+  <technology name="reactor-kotlin-ext" root="reactor.kotlin"/>
   <technology name="rxjava" root="io.reactivex"/>
   <technology name="guice" root="com.google.inject"/>
   <technology name="drools" root="org.drools"/>
@@ -354,4 +355,6 @@
   <technology name="axonframework" root="org.axonframework"/>
   <technology name="java-swing" root="javax.swing"/>
   <technology name="awspring" root="io.awspring"/>
+  <technology name="jetbrains-compose" root="org.jetbrains.compose"/>
+  <technology name="androidx-compose" root="androidx.compose"/>
 </technologies>

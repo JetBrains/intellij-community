@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.isBoolean
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
@@ -59,14 +61,10 @@ class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetInde
                 }
                 appendExpressions(negatedOperands, separator = operatorText)
             }
-            val grandParentPrefix = expr.parent.parent as? KtPrefixExpression
-            val negated = expr.parent is KtParenthesizedExpression &&
-                    grandParentPrefix?.operationReference?.getReferencedNameElementType() == KtTokens.EXCL
-            if (negated) {
-                grandParentPrefix?.replace(newExpression)
-            } else {
-                expr.replace(newExpression.negate())
-            }
+            expr.parents.match(KtParenthesizedExpression::class, last = KtPrefixExpression::class)
+                ?.takeIf { it.operationReference.getReferencedNameElementType() == KtTokens.EXCL }
+                ?.replace(newExpression)
+                ?: expr.replace(newExpression.negate())
         }
 
         private fun splitBooleanSequence(expression: KtBinaryExpression, contextProvider: (() -> BindingContext)? = null): List<KtExpression>? {

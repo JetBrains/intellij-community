@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class MakeClassStaticRefactoringImpl extends RefactoringImpl<MakeClassStaticProcessor>
   implements MakeStaticRefactoring<PsiClass> {
   MakeClassStaticRefactoringImpl(Project project,

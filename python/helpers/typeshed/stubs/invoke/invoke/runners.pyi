@@ -1,5 +1,10 @@
-from typing import Any
-from typing_extensions import Literal
+from collections.abc import Iterable, Mapping
+from typing import Any, TextIO, overload
+from typing_extensions import Literal, TypeAlias
+
+from .watchers import StreamWatcher
+
+_Hide: TypeAlias = Literal[None, True, False, "out", "stdout", "err", "stderr", "both"]
 
 class Runner:
     read_chunk_size: int
@@ -9,7 +14,110 @@ class Runner:
     warned_about_pty_fallback: bool
     watchers: Any
     def __init__(self, context) -> None: ...
-    def run(self, command, **kwargs): ...
+    # If disown is True (default=False), returns None
+    @overload
+    def run(
+        self,
+        command: str,
+        *,
+        asynchronous: bool = ...,
+        disown: Literal[True],
+        dry: bool = ...,
+        echo: bool = ...,
+        echo_format: str = ...,
+        echo_stdin: bool | None = ...,
+        encoding: str = ...,
+        err_stream: TextIO | None = ...,
+        env: Mapping[str, str] = ...,
+        fallback: bool = ...,
+        hide: _Hide = ...,
+        in_stream: TextIO | None | bool = ...,
+        out_stream: TextIO | None = ...,
+        pty: bool = ...,
+        replace_env: bool = ...,
+        shell: str = ...,
+        timeout: float | None = ...,
+        warn: bool = ...,
+        watchers: Iterable[StreamWatcher] = ...,
+    ) -> None: ...
+    # If disown is False (the default), and asynchronous is True (default=False) returns Promise
+    @overload
+    def run(
+        self,
+        command: str,
+        *,
+        asynchronous: Literal[True],
+        disown: Literal[False] = ...,
+        dry: bool = ...,
+        echo: bool = ...,
+        echo_format: str = ...,
+        echo_stdin: bool | None = ...,
+        encoding: str = ...,
+        err_stream: TextIO | None = ...,
+        env: Mapping[str, str] = ...,
+        fallback: bool = ...,
+        hide: _Hide = ...,
+        in_stream: TextIO | None | bool = ...,
+        out_stream: TextIO | None = ...,
+        pty: bool = ...,
+        replace_env: bool = ...,
+        shell: str = ...,
+        timeout: float | None = ...,
+        warn: bool = ...,
+        watchers: Iterable[StreamWatcher] = ...,
+    ) -> Promise: ...
+    # If disown and asynchronous are both False (the defaults), returns Result
+    @overload
+    def run(
+        self,
+        command: str,
+        *,
+        asynchronous: Literal[False] = ...,
+        disown: Literal[False] = ...,
+        dry: bool = ...,
+        echo: bool = ...,
+        echo_format: str = ...,
+        echo_stdin: bool | None = ...,
+        encoding: str = ...,
+        err_stream: TextIO | None = ...,
+        env: Mapping[str, str] = ...,
+        fallback: bool = ...,
+        hide: _Hide = ...,
+        in_stream: TextIO | None | bool = ...,
+        out_stream: TextIO | None = ...,
+        pty: bool = ...,
+        replace_env: bool = ...,
+        shell: str = ...,
+        timeout: float | None = ...,
+        warn: bool = ...,
+        watchers: Iterable[StreamWatcher] = ...,
+    ) -> Result: ...
+    # Fallback overload: return Any
+    @overload
+    def run(
+        self,
+        command: str,
+        *,
+        asynchronous: bool,
+        disown: bool,
+        dry: bool = ...,
+        echo: bool = ...,
+        echo_format: str = ...,
+        echo_stdin: bool | None = ...,
+        encoding: str = ...,
+        err_stream: TextIO | None = ...,
+        env: Mapping[str, str] = ...,
+        fallback: bool = ...,
+        hide: _Hide = ...,
+        in_stream: TextIO | None | bool = ...,
+        out_stream: TextIO | None = ...,
+        pty: bool = ...,
+        replace_env: bool = ...,
+        shell: str = ...,
+        timeout: float | None = ...,
+        warn: bool = ...,
+        watchers: Iterable[StreamWatcher] = ...,
+    ) -> Any: ...
     def echo(self, command) -> None: ...
     def make_promise(self): ...
     def create_io_threads(self): ...

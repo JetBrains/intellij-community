@@ -17,9 +17,6 @@ import static com.intellij.patterns.StandardPatterns.*
 import static org.jetbrains.plugins.groovy.lang.psi.patterns.GrAnnotationPattern.annotation
 import static org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns.groovyScript
 import static org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns.methodCall
-/**
- * @author ilyas
- */
 @CompileStatic
 abstract class Scope {
   abstract List<ContextFilter> createFilters(Map args)

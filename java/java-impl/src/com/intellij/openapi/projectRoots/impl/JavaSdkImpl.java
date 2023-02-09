@@ -26,7 +26,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -167,7 +166,7 @@ public final class JavaSdkImpl extends JavaSdk {
   @Override
   public String getVMExecutablePath(@NotNull Sdk sdk) {
     String binPath = getBinPath(sdk);
-    if (binPath.startsWith(WslConstants.UNC_PREFIX)) {
+    if (WslPath.isWslUncPath(binPath)) {
       return binPath + "/java";
     }
     return binPath + File.separator + VM_EXE_NAME;
@@ -282,16 +281,13 @@ public final class JavaSdkImpl extends JavaSdk {
       root = null;
     }
     if (root == null) {
-      StringBuilder msg = new StringBuilder("Paths checked:\n");
-      for (String path : pathsChecked) {
+      String msg = "Paths checked:\n"+
+      StringUtil.join(pathsChecked, path -> {
         File file = new File(path);
-        msg.append(path).append("; exists: ").append(file.exists());
         File parentFile = file.getParentFile();
-        if (parentFile != null) {
-          msg.append("; siblings: ").append(Arrays.toString(parentFile.list())).append('\n');
-        }
-      }
-      LOG.error("JDK annotations not found", msg.toString());
+        return " "+path+"; exists: "+file.exists()+(parentFile == null ? "" : "; siblings: "+Arrays.toString(parentFile.list()));
+      }, "\n");
+      LOG.error("JDK annotations not found", msg);
       return false;
     }
 
@@ -304,7 +300,7 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   // does this file look like the genuine root for all correct annotations.xml
-  private static boolean isInternalJdkAnnotationRootCorrect(VirtualFile root) {
+  private static boolean isInternalJdkAnnotationRootCorrect(@NotNull VirtualFile root) {
     String relPath = "java/awt/event/annotations.xml";
     VirtualFile xml = root.findFileByRelativePath(relPath);
     if (xml == null) {
@@ -314,8 +310,7 @@ public final class JavaSdkImpl extends JavaSdk {
     MostlySingularMultiMap<String, BaseExternalAnnotationsManager.AnnotationData> loaded =
       BaseExternalAnnotationsManager.loadData(xml, LoadTextUtil.loadText(xml), null);
     Iterable<BaseExternalAnnotationsManager.AnnotationData> data = loaded.get("java.awt.event.InputEvent int getModifiers()");
-    BaseExternalAnnotationsManager.AnnotationData magicAnno =
-      ContainerUtil.find(data, ann -> ann.toString().equals(MagicConstant.class.getName() + "(flagsFromClass=java.awt.event.InputEvent.class)"));
+    BaseExternalAnnotationsManager.AnnotationData magicAnno = ContainerUtil.find(data, ann -> ann.toString().startsWith(MagicConstant.class.getName() + "("));
     if (magicAnno != null) return true;
     reportCorruptedJdkAnnotations(root, "java.awt.event.InputEvent.getModifiers() not annotated with MagicConstant: "+data);
     return false;
@@ -376,7 +371,7 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  public String getVersionString(String sdkHome) {
+  public String getVersionString(@NotNull String sdkHome) {
     var info = getInfo(sdkHome);
     if (info == null) return null;
     return info.displayVersionString();
@@ -437,7 +432,7 @@ public final class JavaSdkImpl extends JavaSdk {
    * Tries to load the list of modules in the JDK from the 'release' file. Returns null if the 'release' file is not there
    * or doesn't contain the expected information.
    */
-  private static @Nullable List<String> readModulesFromReleaseFile(Path jrtBaseDir) {
+  private static @Nullable List<String> readModulesFromReleaseFile(@NotNull Path jrtBaseDir) {
     try (InputStream stream = Files.newInputStream(jrtBaseDir.resolve("release"))) {
       Properties p = new Properties();
       p.load(stream);
@@ -452,7 +447,7 @@ public final class JavaSdkImpl extends JavaSdk {
     return null;
   }
 
-  private static @NotNull List<String> findClasses(Path jdkHome, boolean isJre) {
+  private static @NotNull List<String> findClasses(@NotNull Path jdkHome, boolean isJre) {
     List<String> result = new ArrayList<>();
 
     if (JdkUtil.isExplodedModularRuntime(jdkHome)) {
@@ -528,7 +523,7 @@ public final class JavaSdkImpl extends JavaSdk {
     return Files.isDirectory(srcDir) ? LocalFileSystem.getInstance().findFileByNioFile(srcDir) : null;
   }
 
-  private void addDocs(Path jdkHome, SdkModificator sdkModificator, @Nullable Sdk sdk) {
+  private void addDocs(@NotNull Path jdkHome, @NotNull SdkModificator sdkModificator, @Nullable Sdk sdk) {
     OrderRootType docRootType = JavadocOrderRootType.getInstance();
 
     VirtualFile apiDocs = findDocs(jdkHome, "docs/api");
@@ -569,18 +564,19 @@ public final class JavaSdkImpl extends JavaSdk {
     }
   }
 
-  private static @Nullable VirtualFile findDocs(Path jdkHome, String relativePath) {
+  private static @Nullable VirtualFile findDocs(@NotNull Path jdkHome, @NotNull String relativePath) {
     Path docDir = jdkHome.resolve(relativePath);
     return Files.isDirectory(docDir) ? LocalFileSystem.getInstance().findFileByNioFile(docDir) : null;
   }
 
-  private static @Nullable VirtualFile findInJar(Path jarFile, String relativePath) {
+  private static @Nullable VirtualFile findInJar(@NotNull Path jarFile, @NotNull String relativePath) {
     if (!Files.exists(jarFile)) return null;
     String url = JarFileSystem.PROTOCOL_PREFIX + vfsPath(jarFile) + JarFileSystem.JAR_SEPARATOR + relativePath;
     return VirtualFileManager.getInstance().findFileByUrl(url);
   }
 
-  private static String vfsPath(Path path) {
+  @NotNull
+  private static String vfsPath(@NotNull Path path) {
     return FileUtil.toSystemIndependentName(path.toAbsolutePath().toString());
   }
 

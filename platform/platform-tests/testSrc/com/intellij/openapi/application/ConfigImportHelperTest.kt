@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
@@ -150,6 +150,29 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
     assertThat(newConfigDir.resolve(jdkFile.fileName)).doesNotExist()
     assertThat(newConfigDir.resolve(otherFile.fileName)).hasSameBinaryContentAs(otherFile)
+  }
+
+  @Test fun `nested files should be passed to the settings filter`() {
+    val oldConfigDir = createConfigDir("2022.3")
+    val newConfigDir = createConfigDir("2023.1")
+
+    val subdir = oldConfigDir.resolve("subdir").let(Files::createDirectories)
+    listOf(
+      subdir.resolve("file1.txt"),
+      subdir.resolve("file2.txt")
+    ).forEach { Files.write(it, listOf("...")) }
+
+    val options = ConfigImportHelper.ConfigImportOptions(LOG)
+    options.headless = true
+    options.importSettings = object : ConfigImportSettings {
+      override fun importFinished(newConfigPath: Path, pathSelectorOfOtherIde: String?) {}
+      override fun shouldSkipPath(path: Path) = path.endsWith("file1.txt")
+    }
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
+
+    assertThat(newConfigDir.resolve("subdir")).isDirectory()
+    assertThat(newConfigDir.resolve("subdir/file1.txt")).doesNotExist()
+    assertThat(newConfigDir.resolve("subdir/file2.txt")).isRegularFile()
   }
 
   @Test fun `migrate plugins to empty directory`() {

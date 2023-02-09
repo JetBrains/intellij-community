@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,21 +12,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 @ApiStatus.NonExtendable
 public abstract class ProjectLocator {
   // called very often by StubUpdatingIndex
-  private static ProjectLocator ourInstance = CachedSingletonsRegistry.markCachedField(ProjectLocator.class);
+  private static final Supplier<ProjectLocator> ourInstance = CachedSingletonsRegistry.lazy(() -> {
+    return ApplicationManager.getApplication().getService(ProjectLocator.class);
+  });
 
   private static final ThreadLocal<Map<VirtualFile, Project>> ourPreferredProjects = ThreadLocal.withInitial(() -> new HashMap<>());
 
   public static ProjectLocator getInstance() {
-    ProjectLocator result = ourInstance;
-    if (result == null) {
-      result = ApplicationManager.getApplication().getService(ProjectLocator.class);
-      ourInstance = result;
-    }
-    return result;
+    return ourInstance.get();
   }
 
   /**

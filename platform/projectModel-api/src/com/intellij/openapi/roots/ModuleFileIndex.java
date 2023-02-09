@@ -27,8 +27,6 @@ import java.util.List;
  * Provides information about files contained in a module. Should be used from a read action.
  *
  * @see ModuleRootManager#getFileIndex()
- *
- * @author dsl
  */
 @ApiStatus.NonExtendable
 public interface ModuleFileIndex extends FileIndex {

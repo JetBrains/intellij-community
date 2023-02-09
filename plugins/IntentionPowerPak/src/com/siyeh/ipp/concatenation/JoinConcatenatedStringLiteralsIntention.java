@@ -50,11 +50,10 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
     if (element instanceof PsiWhiteSpace) {
       element = element.getPrevSibling();
     }
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken token)) {
       return;
     }
     CommentTracker tracker = new CommentTracker();
-    final PsiJavaToken token = (PsiJavaToken)element;
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element.getParent();
     final StringBuilder newExpression = new StringBuilder();
     PsiExpression[] operands = polyadicExpression.getOperands();
@@ -96,7 +95,7 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
 
   private static String getLiteralExpressionText(PsiLiteralExpression expression) {
     final PsiType type = expression.getType();
-    if (PsiType.CHAR.equals(type)) {
+    if (PsiTypes.charType().equals(type)) {
       final String result = StringUtil.unquoteString(expression.getText());
       if (result.equals("\"")) return "\\\"";
       if (result.equals("\\'")) return "'";

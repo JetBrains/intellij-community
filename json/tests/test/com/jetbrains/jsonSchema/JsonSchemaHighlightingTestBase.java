@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -61,6 +61,7 @@ public abstract class JsonSchemaHighlightingTestBase extends BasePlatformTestCas
   public static EditorBasedStatusBarPopup createJsonSchemaStatusWidget(@NotNull Project project) {
     StatusBarWidgetFactory widgetFactory = StatusBarWidgetFactory.EP_NAME.findExtension(JsonSchemaStatusWidgetFactory.class);
     assertNotNull(widgetFactory);
-    return (EditorBasedStatusBarPopup)widgetFactory.createWidget(project);
+    //noinspection deprecation
+    return (EditorBasedStatusBarPopup)widgetFactory.createWidget(project, project.getCoroutineScope());
   }
 }

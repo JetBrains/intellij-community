@@ -173,9 +173,8 @@ public class VarExprent extends Exprent {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (!(o instanceof VarExprent)) return false;
+    if (!(o instanceof VarExprent ve)) return false;
 
-    VarExprent ve = (VarExprent)o;
     return index == ve.getIndex() &&
            version == ve.getVersion() &&
            Objects.equals(getVarType(), ve.getVarType()); // FIXME: varType comparison redundant?

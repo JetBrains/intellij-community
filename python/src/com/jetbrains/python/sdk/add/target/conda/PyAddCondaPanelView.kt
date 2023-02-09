@@ -5,16 +5,14 @@ import com.intellij.execution.target.TargetBrowserHints
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.progress.progressSink
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.emptyText
-import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle
@@ -55,12 +53,12 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
         .trimmedTextValidation(model.condaPathValidator)
 
       button(PyBundle.message("python.add.sdk.panel.load.envs")) {
-        runBlockingModal(model.project, PyBundle.message("python.sdk.conda.getting.list.envs")) {
+        runBlockingModalWithRawProgressReporter(model.project, PyBundle.message("python.sdk.conda.getting.list.envs")) {
           model.onLoadEnvsClicked(Dispatchers.EDT, this.progressSink)
         }.onFailure {
-          showError(it.localizedMessage)
+          showError(PyBundle.message("python.sdk.conda.getting.list.envs"), it.localizedMessage)
         }
-      }.enableIf(model.showCondaPathSetOkButtonRoProp)
+      }.enabledIf(model.showCondaPathSetOkButtonRoProp)
 
     }
 
@@ -90,8 +88,8 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
 
   }.also { it.registerValidators(disposable) }
 
-  private fun showError(@Nls error: String) {
-    JOptionPane.showMessageDialog(panel, error, PyBundle.message("python.add.sdk.error"), ERROR_MESSAGE)
+  private fun showError(@Nls title: String, @Nls error: String) {
+    JOptionPane.showMessageDialog(panel, error, title, ERROR_MESSAGE)
   }
 
   override val component: Component
@@ -103,9 +101,9 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
   override fun addStateListener(stateListener: PyAddSdkStateListener) = Unit
 
   override fun onSelected() {
-      runBlockingModal(model.project, PyBundle.message("python.add.sdk.conda.detecting")) {
-        model.detectConda(Dispatchers.EDT, progressSink)
-      }
+      runBlockingModalWithRawProgressReporter(model.project, PyBundle.message("python.add.sdk.conda.detecting")) {
+      model.detectConda(Dispatchers.EDT, progressSink)
+    }
   }
 
   override val actions: Map<PyAddSdkDialogFlowAction, Boolean> = emptyMap()
@@ -117,10 +115,12 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
   override fun validateAll(): List<ValidationInfo> =
     panel.validateAll() + (model.getValidationError()?.let { listOf(ValidationInfo(it)) } ?: emptyList())
 
-  override fun getOrCreateSdk(): Sdk? = runBlockingModal(model.project, PyBundle.message("python.add.sdk.panel.wait")) {
+  override fun getOrCreateSdk(): Sdk? = runBlockingModalWithRawProgressReporter(model.project, PyBundle.message("python.add.sdk.panel.wait")) {
     model.onCondaCreateSdkClicked((Dispatchers.EDT + ModalityState.any().asContextElement()), progressSink).onFailure {
       logger<PyAddCondaPanelModel>().warn(it)
-      showError(it.localizedMessage)
+      showError(
+        PyBundle.message("python.sdk.conda.cant.create.title"),
+        PyBundle.message("python.sdk.conda.cant.create.body", it.localizedMessage))
     }.getOrNull()
   }
 }

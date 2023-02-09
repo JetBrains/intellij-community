@@ -93,10 +93,10 @@
 
     <completion.contributor language="Python"
                             order="first"
-                            implementationClass="com.jetbrains.python.console.completion.ConsolePandasColumnNameCompletionContributor"/>
+                            implementationClass="com.jetbrains.python.console.completion.PythonPandasColumnNameCompletionContributor"/>
 
-    <projectService serviceInterface="com.jetbrains.python.console.completion.ConsolePandasColumnNameRetrievalService"
-                    serviceImplementation="com.jetbrains.python.console.completion.ConsolePandasColumnNameRetrievalServiceImpl"
+    <projectService serviceInterface="com.jetbrains.python.console.completion.PandasColumnNameRetrievalService"
+                    serviceImplementation="com.jetbrains.python.console.completion.PyPandasColumnNameRetrievalService"
                     testServiceImplementation="com.jetbrains.python.console.completion.DummyConsolePandasColumnNameRetrievalService"/>
 
     <projectService serviceImplementation="com.jetbrains.python.configuration.PyConfigurableInterpreterList"/>
@@ -155,6 +155,7 @@
     <runConfigurationProducer implementation="com.jetbrains.python.testing.PyTestsConfigurationProducer"/>
     <advancedSetting id="python.pytest.swapdiff" default="false" groupKey="group.advanced.settings.python"/>
     <advancedSetting id="python.pytest.show_summary" default="false" groupKey="group.advanced.settings.python"/>
+    <advancedSetting id="python.code.vision.usages.limit" default="500" groupKey="group.advanced.settings.python"/>
     <runLineMarkerContributor language="Python"
                               implementationClass="com.jetbrains.python.testing.PyTestLineMarkerContributor"/>
 
@@ -422,6 +423,7 @@
     <statistics.validation.customValidationRule implementation="com.jetbrains.python.statistics.PyPackageUsagesValidationRule"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.PySdkToInstallCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.namespacePackages.PyNamespacePackagesStatisticsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.codeInsight.codeVision.PyCodeVisionUsageCollector"/>
 
     <!-- Code-insight IDE bridge -->
     <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService"
@@ -495,6 +497,7 @@
 
     <!--  Code vision -->
     <vcs.codeVisionLanguageContext language="Python" implementationClass="com.jetbrains.python.vcs.PyVcsContextProvider"/>
+    <codeInsight.daemonBoundCodeVisionProvider implementation="com.jetbrains.python.codeInsight.codeVision.PyReferencesCodeVisionProvider"/>
 
     <backgroundPostStartupActivity implementation="com.jetbrains.python.packaging.management.PythonPackagesUpdater"/>
 
@@ -739,7 +742,7 @@
     </action>
 
     <action id="NewPythonFile" class="com.jetbrains.python.actions.CreatePythonFileAction">
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewXml"/>
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewWebDevelopment"/>
     </action>
 
     <action id="NewPythonPackage" class="com.jetbrains.python.actions.CreatePackageAction"
@@ -776,9 +779,9 @@
       <add-to-group group-id="XDebugger.ValueGroup" anchor="first"/>
     </action>
 
-    <action id="PyDebugger.ViewAsGroup" class="com.jetbrains.python.debugger.actions.ViewAsGroup">
+    <group id="PyDebugger.ViewAsGroup" class="com.jetbrains.python.debugger.actions.ViewAsGroup">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-    </action>
+    </group>
 
     <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.convertModulePackage.PyConvertModuleToPackageAction"
     >
@@ -793,6 +796,7 @@
     <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction" icon="PythonIcons.Python.Debug.StepIntoMyCode">
       <add-to-group group-id="DebuggingActionsGroup" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3" relative-to-action="StepInto" anchor="after"/>
 
       <keyboard-shortcut keymap="$default" first-keystroke="alt shift F7" replace-all="true"/>
       <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt shift F7" replace-all="true"/>

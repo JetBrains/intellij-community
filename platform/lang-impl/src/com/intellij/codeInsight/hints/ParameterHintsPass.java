@@ -57,7 +57,7 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
   /**
    * @deprecated May block UI thread, use {@link ParameterHintsPass#asyncUpdate(PsiElement, Editor)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void syncUpdate(@NotNull PsiElement element, @NotNull Editor editor) {
     MethodInfoExcludeListFilter filter = MethodInfoExcludeListFilter.forLanguage(element.getLanguage());
     ParameterHintsPass pass = new ParameterHintsPass(element, editor, filter, true);

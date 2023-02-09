@@ -15,15 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class GroovyOverlyLongMethodInspection extends GroovyOverlyLongMethodInspectionBase {
 
   @Override
-  public JComponent createGroovyOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(GroovyBundle.message("overly.long.method.statements.limit.option"), this, "m_limit");
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(
+      number("m_limit", GroovyBundle.message("overly.long.method.statements.limit.option"), 2, 1000));
   }
 }

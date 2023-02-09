@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
@@ -242,11 +243,11 @@ private class PySdkToInstallOnWindows(name: String,
   private fun handleIOException(e: IOException) {
     LOGGER.info(e)
 
-    e.message?.let {
+    e.message?.let { message: @NlsSafe String ->
       PackagesNotificationPanel.showError(
         PyBundle.message("python.sdk.failed.to.install.title", name),
         PackageManagementService.ErrorDescription(
-          it,
+          message,
           null,
           e.cause?.message,
           PyBundle.message("python.sdk.try.to.install.python.manually")
@@ -310,11 +311,11 @@ private class PySdkToInstallOnWindows(name: String,
   private fun handleExecutionException(e: PyInstallationExecutionException) {
     LOGGER.info(e)
 
-    e.cause.message?.let {
+    e.cause.message?.let { message: @NlsSafe String ->
       PackagesNotificationPanel.showError(
         PyBundle.message("python.sdk.failed.to.install.title", name),
         PackageManagementService.ErrorDescription(
-          it,
+          message,
           e.commandLine.commandLineString,
           null,
           PyBundle.message("python.sdk.try.to.install.python.manually")

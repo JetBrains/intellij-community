@@ -32,7 +32,7 @@ internal abstract class PropertyRenderer(
   private val javaUsage = request as? CreateMethodFromJavaUsageRequest
   private val isStatic = JvmModifier.STATIC in request.modifiers
   private val propertyName = nameKind.first
-  protected val propertyKind = nameKind.second
+  internal val propertyKind: PropertyKind = nameKind.second
 
   private val suggestedFieldName = run {
     val kind = if (isStatic) VariableKind.STATIC_FIELD else VariableKind.FIELD
@@ -40,21 +40,21 @@ internal abstract class PropertyRenderer(
   }
 
   fun generatePrototypeField(): PsiField {
-    val prototypeType = if (propertyKind == PropertyKind.BOOLEAN_GETTER || isBooleanSetter()) PsiType.BOOLEAN else  PsiType.VOID
+    val prototypeType = if (propertyKind == PropertyKind.BOOLEAN_GETTER || isBooleanSetter()) PsiTypes.booleanType() else PsiTypes.voidType()
     return factory.createField(suggestedFieldName, prototypeType).setStatic(isStatic)
   }
   
   private fun isBooleanSetter(): Boolean {
     if (propertyKind == PropertyKind.SETTER) {
       val expectedType = request.expectedParameters.single().expectedTypes.singleOrNull()
-      return expectedType != null && PsiType.BOOLEAN == JvmPsiConversionHelper.getInstance(project).convertType(expectedType.theType)
+      return expectedType != null && PsiTypes.booleanType() == JvmPsiConversionHelper.getInstance(project).convertType(expectedType.theType)
     }
     return false
   }
   
   private val expectedTypes: List<ExpectedTypeInfo> = when (propertyKind) {
     PropertyKind.GETTER -> extractExpectedTypes(project, request.returnType).orObject(target)
-    PropertyKind.BOOLEAN_GETTER -> listOf(PsiType.BOOLEAN.toExpectedType())
+    PropertyKind.BOOLEAN_GETTER -> listOf(PsiTypes.booleanType().toExpectedType())
     PropertyKind.SETTER -> extractExpectedTypes(project, request.expectedParameters.single().expectedTypes).orObject(target)
   }
 

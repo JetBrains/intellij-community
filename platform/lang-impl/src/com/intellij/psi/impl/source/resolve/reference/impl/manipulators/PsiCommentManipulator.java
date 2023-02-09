@@ -45,7 +45,8 @@ public class PsiCommentManipulator extends AbstractElementManipulator<PsiComment
     if (text.startsWith("//")) return new TextRange(2, element.getTextLength());
     final int length = text.length();
     if (length > 4 && text.startsWith("/**") && text.endsWith("*/")) return new TextRange(3, element.getTextLength()-2);
-    if (length > 3 && text.startsWith("/*") && text.endsWith("*/")) return new TextRange(2, element.getTextLength()-2);
+    if (length > 3 && (text.startsWith("/*") && text.endsWith("*/") ||
+                       text.startsWith("(*") && text.endsWith("*)"))) return new TextRange(2, element.getTextLength()-2);
     if (length > 6 && text.startsWith("<!--") && text.endsWith("-->")) return new TextRange(4, element.getTextLength()-3);
     if (text.startsWith("--")) return new TextRange(2, element.getTextLength());
     if (text.startsWith("#")) return new TextRange(1, element.getTextLength());

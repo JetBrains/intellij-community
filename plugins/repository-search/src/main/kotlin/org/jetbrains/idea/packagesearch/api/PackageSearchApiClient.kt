@@ -21,18 +21,17 @@ import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.DefaultRequest
-import io.ktor.client.plugins.HttpRequestRetry
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.UserAgent
+import io.ktor.client.plugins.*
 import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.accept
-import io.ktor.http.ContentType
-import io.ktor.http.appendEncodedPathSegments
-import io.ktor.http.path
+import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.request
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.jetbrains.idea.packagesearch.DefaultPackageServiceConfig
 import org.jetbrains.idea.packagesearch.HashingAlgorithm
@@ -51,13 +50,24 @@ class PackageSearchApiClient(
   engine: HttpClientEngine? = null,
 ) : Closeable {
 
+  data class ApiException(val serverMessage: String, val endpoint: String, val statusCode: HttpStatusCode) : Throwable() {
+    override val message: String
+      get() = "Error response for endpoint $endpoint: $statusCode | $serverMessage"
+  }
+
+  @Serializable
+  private data class Error(val error: Message) {
+    @Serializable
+    data class Message(val message: String)
+  }
+
   private val clientConfig: HttpClientConfig<*>.() -> Unit
     get() = {
+      val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = false
+      }
       install(ContentNegotiation) {
-        val json = Json {
-          ignoreUnknownKeys = true
-          encodeDefaults = false
-        }
         packageSearch(json)
         json(json)
       }
@@ -81,6 +91,13 @@ class PackageSearchApiClient(
       install(HttpRequestRetry) {
         retryOnServerErrors(5)
         constantDelay()
+      }
+      install(HttpCallValidator) {
+        validateResponse { response ->
+          if (!response.status.isSuccess())
+            response.bodyAsText().runCatching { json.decodeFromString<Error>(this) }
+              .onSuccess { throw ApiException(it.error.message, response.request.url.fullPath, response.status) }
+        }
       }
       if (config.useCache) install(HttpCache)
     }

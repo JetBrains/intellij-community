@@ -38,8 +38,7 @@ public final class EqualityCheck {
   @Contract("null -> null")
   public static EqualityCheck from(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression call) {
       if (MethodCallUtils.isEqualsCall(call)) {
         PsiExpression left = call.getMethodExpression().getQualifierExpression();
         PsiExpression right = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
@@ -50,8 +49,7 @@ public final class EqualityCheck {
         PsiExpression[] args = call.getArgumentList().getExpressions();
         return new EqualityCheck(args[0], args[1], false);
       }
-    } else if (expression instanceof PsiConditionalExpression) {
-      PsiConditionalExpression ternary = (PsiConditionalExpression)expression;
+    } else if (expression instanceof PsiConditionalExpression ternary) {
       EqualityCheck nestedCheck = from(ternary.getThenExpression());
       PsiExpression other = ternary.getElseExpression();
       boolean equalsToNull = false;

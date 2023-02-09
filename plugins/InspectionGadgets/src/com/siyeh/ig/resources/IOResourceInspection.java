@@ -15,30 +15,24 @@
  */
 package com.siyeh.ig.resources;
 
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.stringList;
+
 public class IOResourceInspection extends ResourceInspection {
-  protected static final String[] IO_TYPES =
-    {
-      "java.io.InputStream", "java.io.OutputStream", "java.io.Reader", "java.io.Writer",
-      "java.io.RandomAccessFile", "java.util.zip.ZipFile", "java.io.Closeable"
-    };
   final List<String> ignoredTypes = new ArrayList<>();
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public String ignoredTypesString = "java.io.ByteArrayOutputStream" +
                                      ',' + "java.io.ByteArrayInputStream" +
                                      ',' + "java.io.StringBufferInputStream" +
@@ -52,20 +46,11 @@ public class IOResourceInspection extends ResourceInspection {
   }
 
   @Override
-  public @NotNull JComponent createOptionsPanel() {
-    final InspectionOptionsPanel panel = new InspectionOptionsPanel();
-    final ListTable table =
-      new ListTable(new ListWrappingTableModel(ignoredTypes, InspectionGadgetsBundle.message("ignored.io.resource.types")));
-    final JPanel tablePanel =
-      UiUtils.createAddRemoveTreeClassChooserPanel(
-        InspectionGadgetsBundle.message("choose.io.resource.type.to.ignore"),
-        InspectionGadgetsBundle.message("ignored.io.resource.types.label"),
-        table,
-        true,
-        IO_TYPES);
-    panel.addGrowing(tablePanel);
-    panel.add(super.createOptionsPanel());
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return super.getOptionsPane()
+      .prepend(stringList("ignoredTypes", InspectionGadgetsBundle.message("ignored.io.resource.types.label"),
+                          new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.io.resource.type.to.ignore"))
+                          .withSuperClass("java.io.Closeable")));
   }
 
   @Override
@@ -89,10 +74,9 @@ public class IOResourceInspection extends ResourceInspection {
   @Override
   public boolean isResourceCreation(PsiExpression expression) {
     if (expression instanceof PsiNewExpression) {
-      return TypeUtils.expressionHasTypeOrSubtype(expression, IO_TYPES) != null && !isIgnoredType(expression);
+      return TypeUtils.expressionHasTypeOrSubtype(expression, "java.io.Closeable") && !isIgnoredType(expression);
     }
-    else if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+    else if (expression instanceof PsiMethodCallExpression methodCallExpression) {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
       if (!"getResourceAsStream".equals(methodName)) {

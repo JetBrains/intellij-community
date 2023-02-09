@@ -19,7 +19,6 @@ import com.intellij.sh.run.ShConfigurationType;
 import com.intellij.sh.run.ShRunner;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner;
 import org.jetbrains.annotations.NotNull;
@@ -80,20 +79,9 @@ public class ShMarkdownRunner implements MarkdownRunner {
   @NotNull
   private static ProcessHandler createProcessHandler(GeneralCommandLine commandLine) throws ExecutionException {
     return new KillableProcessHandler(commandLine) {
-      @NotNull
       @Override
-      protected BaseOutputReader.Options readerOptions() {
-        return new BaseOutputReader.Options() {
-          @Override
-          public BaseDataReader.SleepingPolicy policy() {
-            return BaseDataReader.SleepingPolicy.BLOCKING;
-          }
-
-          @Override
-          public boolean splitToLines() {
-            return false;
-          }
-        };
+      protected @NotNull BaseOutputReader.Options readerOptions() {
+        return BaseOutputReader.Options.forTerminalPtyProcess();
       }
     };
   }

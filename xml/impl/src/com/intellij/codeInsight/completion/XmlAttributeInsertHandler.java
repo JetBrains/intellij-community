@@ -117,8 +117,7 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
   private static void qualifyWithPrefix(@NotNull String namespacePrefix, @NotNull PsiElement context) {
     final PsiElement parent = context.getParent();
 
-    if (parent instanceof XmlAttribute) {
-      final XmlAttribute attribute = (XmlAttribute)parent;
+    if (parent instanceof XmlAttribute attribute) {
       final String prefix = attribute.getNamespacePrefix();
 
       if (!prefix.equals(namespacePrefix) && StringUtil.isNotEmpty(namespacePrefix)) {

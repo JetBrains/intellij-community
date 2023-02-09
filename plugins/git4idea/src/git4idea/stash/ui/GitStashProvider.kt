@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesTree
 import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.allUnder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
@@ -139,7 +140,7 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
 
   private class StashRepositoryChangesBrowserNode(repository: GitRepository) : RepositoryChangesBrowserNode(repository) {
     private val stashCount = ClearableLazyValue.create {
-      VcsTreeModelData.children(this).userObjects(StashObject::class.java).size
+      allUnder(this).userObjects(StashObject::class.java).size
     }
 
     override fun getCountText() = FontUtil.spaceAndThinSpace() + stashCount.value

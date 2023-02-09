@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil
@@ -43,10 +43,14 @@ internal class WorkspaceFolderImporter(
     addCachedFolders(moduleType, cachedFolders, allFolders)
 
     for (root in ContentRootCollector.collect(allFolders)) {
-      val excludedUrls = root.excludeFolders.map { exclude -> virtualFileUrlManager.fromPath(exclude.path) }
-      val contentRootEntity = builder.addContentRootEntity(virtualFileUrlManager.fromPath(root.path),
-                                                           excludedUrls,
-                                                           emptyList(), module)
+      val excludes = root.excludeFolders
+        .map { exclude -> virtualFileUrlManager.fromPath(exclude.path) }
+        .map { builder addEntity ExcludeUrlEntity(it, module.entitySource) }
+      val contentRootEntity = builder addEntity ContentRootEntity(virtualFileUrlManager.fromPath(root.path),
+                                                                  emptyList(), module.entitySource) {
+        this.excludedUrls = excludes
+        this.module = module
+      }
       root.sourceFolders.forEach { folder ->
         registerSourceRootFolder(contentRootEntity, folder)
       }
@@ -97,19 +101,23 @@ internal class WorkspaceFolderImporter(
       else -> error("${folder.type} doesn't  match to maven root item")
     }
 
-    val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity,
-                                                       virtualFileUrlManager.fromPath(folder.path),
-                                                       rootType,
-                                                       contentRootEntity.entitySource)
+    val sourceRootEntity = builder addEntity SourceRootEntity(virtualFileUrlManager.fromPath(folder.path), rootType,
+                                                              contentRootEntity.entitySource) {
+      this.contentRoot = contentRootEntity
+    }
 
     val isResource = JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID == rootType
                      || JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID == rootType
 
     if (isResource) {
-      builder.addJavaResourceRootEntity(sourceRootEntity, folder.isGenerated, "")
+      builder addEntity JavaResourceRootPropertiesEntity(folder.isGenerated, "", sourceRootEntity.entitySource) {
+        this.sourceRoot = sourceRootEntity
+      }
     }
     else {
-      builder.addJavaSourceRootEntity(sourceRootEntity, folder.isGenerated, "")
+      builder addEntity JavaSourceRootPropertiesEntity(folder.isGenerated, "", sourceRootEntity.entitySource) {
+        this.sourceRoot = sourceRootEntity
+      }
     }
   }
 
@@ -258,7 +266,7 @@ internal class WorkspaceFolderImporter(
                                           val type: JpsModuleSourceRootType<*>) {
     fun addAnnotationFolder(dir: File) {
       when (setting) {
-        SUBFOLDER, AUTODETECT -> addIfDirectoryExists(dir)
+        SUBFOLDER, AUTODETECT -> addIfDirectoryExists(dir, true)
         else -> {}
       }
     }
@@ -289,9 +297,9 @@ internal class WorkspaceFolderImporter(
       }
     }
 
-    private fun addIfDirectoryExists(dir: File) {
+    private fun addIfDirectoryExists(dir: File, isAnnotationFolder: Boolean = false) {
       if (dir.isDirectory) {
-        result.add(ContentRootCollector.GeneratedSourceFolder(dir.path, type))
+        result.add(ContentRootCollector.GeneratedSourceFolder(dir.path, type, isAnnotationFolder))
       }
     }
   }

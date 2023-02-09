@@ -9,9 +9,6 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.ui.IconManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public class PyFieldsFilter implements Filter {
   private static final String ID = "SHOW_FIELDS";
 
@@ -22,8 +19,7 @@ public class PyFieldsFilter implements Filter {
 
   @Override
   public boolean isVisible(TreeElement treeNode) {
-    if (treeNode instanceof PyStructureViewElement) {
-      final PyStructureViewElement sve = (PyStructureViewElement)treeNode;
+    if (treeNode instanceof PyStructureViewElement sve) {
       return !sve.isField();
     }
     return true;

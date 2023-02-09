@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
@@ -27,10 +27,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -38,11 +39,10 @@ public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspecti
 
   @SuppressWarnings("PublicField") public boolean dontWarnInCaseOfMultilineLambda = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("checkbox.don.t.warn.in.case.of.multiline.lambda"), this,
-                                          "dontWarnInCaseOfMultilineLambda");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("dontWarnInCaseOfMultilineLambda", JavaBundle.message("checkbox.don.t.warn.in.case.of.multiline.lambda")));
   }
 
   @NotNull
@@ -118,8 +118,7 @@ public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspecti
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement parent = descriptor.getStartElement().getParent();
-      if (!(parent instanceof PsiForStatement)) return;
-      PsiForStatement statement = (PsiForStatement)parent;
+      if (!(parent instanceof PsiForStatement statement)) return;
       PsiStatement body = statement.getBody();
       if (body == null) return;
       PsiStatement[] statements = ControlFlowUtils.unwrapBlock(body);

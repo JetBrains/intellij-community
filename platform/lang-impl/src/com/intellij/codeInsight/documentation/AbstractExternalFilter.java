@@ -101,10 +101,8 @@ public abstract class AbstractExternalFilter {
   @Nullable
   public String getExternalDocInfo(String url) throws Exception {
     Application app = ApplicationManager.getApplication();
-    if (!app.isUnitTestMode() && app.isDispatchThread() || app.isWriteAccessAllowed()) {
-      LOG.error("May block indefinitely: shouldn't be called from EDT or under write lock");
-      return null;
-    }
+    // May block indefinitely: shouldn't be called from EDT or under write lock
+    app.assertIsNonDispatchThread();
 
     if (url == null || !MyJavadocFetcher.ourFree) {
       return null;

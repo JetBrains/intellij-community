@@ -84,8 +84,16 @@ fun logDebug(contextName: String? = null, throwable: Throwable? = null, messageP
     logDebug(traceInfo = null, contextName = contextName, throwable = throwable, messageProvider = messageProvider)
 }
 
+fun logDebug(contextName: String? = null, throwable: Throwable? = null, message: String? = null) {
+    logDebug(traceInfo = null, contextName = contextName, throwable = throwable)
+}
+
 fun logDebug(traceInfo: TraceInfo? = null, contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
     logDebug(buildMessageFrom(traceInfo, contextName, messageProvider), throwable)
+}
+
+fun logDebug(traceInfo: TraceInfo? = null, contextName: String? = null, throwable: Throwable? = null, message: String? = null) {
+    logDebug(buildMessageFrom(traceInfo, contextName, message = message), throwable)
 }
 
 fun logDebug(message: String, throwable: Throwable? = null) {
@@ -139,7 +147,8 @@ private fun warnNotLoggable() {
 private fun buildMessageFrom(
     traceInfo: TraceInfo?,
     contextName: String?,
-    messageProvider: () -> String
+    messageProvider: (() -> String)? = null,
+    message: String? = null
 ) = buildString {
     if (traceInfo != null) {
         append(traceInfo)
@@ -153,7 +162,8 @@ private fun buildMessageFrom(
 
     if (isNotEmpty()) append("- ")
 
-    append(messageProvider())
+    messageProvider?.let { append(it()) }
+    message?.let { append(it) }
 }
 
 private fun isLoggable(ex: Throwable?) = when (ex) {

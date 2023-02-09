@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.MoreExecutors;
@@ -39,18 +39,18 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   public static final ExtensionPointName<VcsLogHighlighterFactory> LOG_HIGHLIGHTER_FACTORY_EP =
     ExtensionPointName.create("com.intellij.logHighlighterFactory");
 
-  @NotNull private final String myId;
-  @NotNull protected final Project myProject;
-  @NotNull protected final VcsLogData myLogData;
-  @NotNull protected final VcsLogColorManager myColorManager;
-  @NotNull protected final VcsLogImpl myLog;
-  @NotNull protected final VisiblePackRefresher myRefresher;
-  @NotNull protected final CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
+  private final @NotNull String myId;
+  protected final @NotNull Project myProject;
+  protected final @NotNull VcsLogData myLogData;
+  protected final @NotNull VcsLogColorManager myColorManager;
+  protected final @NotNull VcsLogImpl myLog;
+  protected final @NotNull VisiblePackRefresher myRefresher;
+  protected final @NotNull CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 
-  @NotNull protected final Collection<VcsLogListener> myLogListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  @NotNull protected final VisiblePackChangeListener myVisiblePackChangeListener;
+  protected final @NotNull Collection<VcsLogListener> myLogListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  protected final @NotNull VisiblePackChangeListener myVisiblePackChangeListener;
 
-  @NotNull protected volatile VisiblePack myVisiblePack = VisiblePack.EMPTY;
+  protected volatile @NotNull VisiblePack myVisiblePack = VisiblePack.EMPTY;
 
   public AbstractVcsLogUi(@NotNull String id,
                           @NotNull VcsLogData logData,
@@ -74,9 +74,8 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
     myRefresher.addVisiblePackChangeListener(myVisiblePackChangeListener);
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return myId;
   }
 
@@ -96,26 +95,22 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   protected abstract void onVisiblePackUpdated(boolean permGraphChanged);
 
   @Override
-  @NotNull
-  public VisiblePackRefresher getRefresher() {
+  public @NotNull VisiblePackRefresher getRefresher() {
     return myRefresher;
   }
 
   @Override
-  @NotNull
-  public VcsLogColorManager getColorManager() {
+  public @NotNull VcsLogColorManager getColorManager() {
     return myColorManager;
   }
 
   @Override
-  @NotNull
-  public VcsLog getVcsLog() {
+  public @NotNull VcsLog getVcsLog() {
     return myLog;
   }
 
   @Override
-  @NotNull
-  public VcsLogData getLogData() {
+  public @NotNull VcsLogData getLogData() {
     return myLogData;
   }
 
@@ -125,8 +120,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   }
 
   @Override
-  @NotNull
-  public VisiblePack getDataPack() {
+  public @NotNull VisiblePack getDataPack() {
     return myVisiblePack;
   }
 
@@ -190,21 +184,17 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
     VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.WARNING);
   }
 
-  @NotNull
-  @Nls
-  protected static <T> String getCommitNotFoundMessage(@NotNull T commitId, boolean exists) {
+  protected static @NotNull @Nls <T> String getCommitNotFoundMessage(@NotNull T commitId, boolean exists) {
     String commitPresentation = getCommitPresentation(commitId);
     return exists ? VcsLogBundle.message("vcs.log.commit.does.not.match", commitPresentation) :
            VcsLogBundle.message("vcs.log.commit.not.found", commitPresentation);
   }
 
-  @NotNull
-  protected static <T> String getCommitPresentation(@NotNull T commitId) {
+  protected static @NotNull <T> String getCommitPresentation(@NotNull T commitId) {
     if (commitId instanceof Hash) {
       return VcsLogBundle.message("vcs.log.commit.prefix", ((Hash)commitId).toShortString());
     }
-    if (commitId instanceof String) {
-      String commitString = (String)commitId;
+    if (commitId instanceof String commitString) {
       if (VcsLogUtil.HASH_PREFIX_REGEX.matcher(commitString).matches()) {
         return VcsLogBundle.message("vcs.log.commit.or.reference.prefix", VcsLogUtil.getShortHash(commitString));
       }

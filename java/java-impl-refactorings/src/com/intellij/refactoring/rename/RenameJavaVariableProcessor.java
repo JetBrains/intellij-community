@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -119,19 +119,17 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
 
   @Override
   public void prepareRenaming(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final Map<PsiElement, String> allRenames) {
-    if (element instanceof PsiRecordComponent) {
-      PsiClass containingClass = ((PsiRecordComponent)element).getContainingClass();
+    if (element instanceof PsiRecordComponent component) {
+      PsiClass containingClass = component.getContainingClass();
       if (containingClass != null) {
-        String name = ((PsiRecordComponent)element).getName();
-        if (name != null) {
-          addGetter(element, newName, allRenames, containingClass, name);
+        String name = component.getName();
+        addGetter(element, newName, allRenames, containingClass, name);
 
-          PsiMethod canonicalConstructor = ContainerUtil.find(containingClass.getConstructors(), c -> JavaPsiRecordUtil.isExplicitCanonicalConstructor(c));
-          if (canonicalConstructor != null) {
-            PsiParameter parameter = ContainerUtil.find(canonicalConstructor.getParameterList().getParameters(), p -> name.equals(p.getName()));
-            if (parameter != null) {
-              allRenames.put(parameter, newName);
-            }
+        PsiMethod canonicalConstructor = ContainerUtil.find(containingClass.getConstructors(), c -> JavaPsiRecordUtil.isExplicitCanonicalConstructor(c));
+        if (canonicalConstructor != null) {
+          PsiParameter parameter = ContainerUtil.find(canonicalConstructor.getParameterList().getParameters(), p -> name.equals(p.getName()));
+          if (parameter != null) {
+            allRenames.put(parameter, newName);
           }
         }
       }
@@ -169,8 +167,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   @Override
   public void findCollisions(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final Map<? extends PsiElement, String> allRenames,
                              @NotNull final List<UsageInfo> result) {
-    if (element instanceof PsiField) {
-      PsiField field = (PsiField) element;
+    if (element instanceof PsiField field) {
       findMemberHidesOuterMemberCollisions(field, newName, result);
       findSubmemberHidesFieldCollisions(field, newName, result);
       findCollisionsAgainstNewName(field, newName, result);
@@ -194,8 +191,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   @Override
   public void findExistingNameConflicts(@NotNull PsiElement element, @NotNull String newName, @NotNull MultiMap<PsiElement, String> conflicts) {
     if (element instanceof PsiCompiledElement) return;
-    if (element instanceof PsiField) {
-      PsiField refactoredField = (PsiField)element;
+    if (element instanceof PsiField refactoredField) {
       if (newName.equals(refactoredField.getName())) return;
       ConflictsUtil.checkFieldConflicts(
         refactoredField.getContainingClass(),
@@ -302,8 +298,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
         super.visitReferenceExpression(expression);
         if (!expression.isQualified()) {
           PsiElement resolved = expression.resolve();
-          if (resolved instanceof PsiField) {
-            final PsiField field = (PsiField)resolved;
+          if (resolved instanceof PsiField field) {
             String fieldNewName = allRenames.containsKey(field) ? allRenames.get(field) : field.getName();
             if (newName.equals(fieldNewName)) {
               result.add(new LocalHidesFieldUsageInfo(expression, element));
@@ -316,8 +311,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   
   @Override
   public String getQualifiedNameAfterRename(@NotNull final PsiElement element, @NotNull final String newName, final boolean nonJava) {
-    if (nonJava && element instanceof PsiField) {
-      final PsiField field = (PsiField)element;
+    if (nonJava && element instanceof PsiField field) {
       PsiClass containingClass = field.getContainingClass();
       if (containingClass != null) {
         String qualifiedName = containingClass.getQualifiedName();

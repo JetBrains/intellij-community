@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class TextNode extends ZenCodingNode {
   private final String myText;
 

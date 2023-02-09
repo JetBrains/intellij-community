@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -169,8 +169,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         generator.appendExpressionValue(buffer, constantInitializer);
       }
     }
-    else if (variable instanceof PsiEnumConstant) {
-      PsiEnumConstant enumConstant = (PsiEnumConstant)variable;
+    else if (variable instanceof PsiEnumConstant enumConstant) {
       PsiExpressionList list = enumConstant.getArgumentList();
       if (JavaDocInfoGenerator.canComputeArguments(list)) {
         JavaDocInfoGenerator generator = JavaDocInfoGeneratorFactory.create(variable.getProject(), null);
@@ -515,8 +514,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
   private static Map<String, Object> collectContextAttributes(PsiJavaDocumentedElement commentOwner){
     HashMap<String, Object> attributes = new HashMap<>();
-    if (commentOwner instanceof PsiMember){
-      PsiMember member = (PsiMember)commentOwner;
+    if (commentOwner instanceof PsiMember member){
       String name = member.getName();
       if (name != null) {
         attributes.put("ELEMENT_NAME", name);
@@ -527,8 +525,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         attributes.put("CONTAINING_CLASS", className);
       }
     }
-    if (commentOwner instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod) commentOwner;
+    if (commentOwner instanceof PsiMethod method) {
       PsiParameter[] parameters = method.getParameterList().getParameters();
       attributes.put("PARAMS", ContainerUtil.map(parameters, param -> param.getName()));
       attributes.put("TYPE_PARAMS", ContainerUtil.map(method.getTypeParameters(), param -> param.getName()));
@@ -555,8 +552,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         }
       }
     }
-    if (commentOwner instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass)commentOwner;
+    if (commentOwner instanceof PsiClass psiClass) {
       attributes.put("TYPE_PARAMS", ContainerUtil.map(psiClass.getTypeParameters(), param -> param.getName()));
       if (psiClass.isInterface()){
         attributes.put("INTERFACE", String.valueOf(true));
@@ -607,8 +603,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   private static @Nullable @NonNls String findTemplateNameByElement(PsiJavaDocumentedElement commentOwner){
-    if (commentOwner instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)commentOwner;
+    if (commentOwner instanceof PsiMethod method) {
       if (method.isConstructor()) {
         return JavaTemplateUtil.TEMPLATE_JAVADOC_CONSTRUCTOR;
       }
@@ -639,15 +634,14 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     final StringBuilder builder = new StringBuilder();
     final CodeDocumentationAwareCommenter commenter =
       (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE.forLanguage(_comment.getLanguage());
-    if (commentOwner instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod)commentOwner;
+    if (commentOwner instanceof PsiMethod psiMethod) {
       generateParametersTakingDocFromSuperMethods(builder, commenter, psiMethod);
 
       final PsiTypeParameterList typeParameterList = psiMethod.getTypeParameterList();
       if (typeParameterList != null) {
         createTypeParamsListComment(builder, commenter, typeParameterList);
       }
-      if (psiMethod.getReturnType() != null && !PsiType.VOID.equals(psiMethod.getReturnType())) {
+      if (psiMethod.getReturnType() != null && !PsiTypes.voidType().equals(psiMethod.getReturnType())) {
         builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, _comment.getContainingFile(), commenter));
         builder.append(LINE_SEPARATOR);
       }
@@ -951,8 +945,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     if (element instanceof PsiClass) {
       urls = findUrlForClass((PsiClass)element);
     }
-    else if (element instanceof PsiField) {
-      PsiField field = (PsiField)element;
+    else if (element instanceof PsiField field) {
       PsiClass aClass = field.getContainingClass();
       if (aClass != null) {
         urls = findUrlForClass(aClass);
@@ -961,8 +954,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         }
       }
     }
-    else if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
+    else if (element instanceof PsiMethod method) {
       PsiClass aClass = method.getContainingClass();
       if (aClass != null) {
         List<String> classUrls = findUrlForClass(aClass);

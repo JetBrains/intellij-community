@@ -349,7 +349,10 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return true;
   }
 
-  private static boolean processClasses(PsiScopeProcessor processor, ResolveState state, PsiClass[] classes, Condition<String> nameCondition) {
+  private static boolean processClasses(@NotNull PsiScopeProcessor processor,
+                                        @NotNull ResolveState state,
+                                        PsiClass @NotNull [] classes,
+                                        @NotNull Condition<? super String> nameCondition) {
     for (PsiClass aClass : classes) {
       String name = aClass.getName();
       if (name != null && nameCondition.value(name)) {

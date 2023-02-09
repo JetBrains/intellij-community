@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix;
 
@@ -8628,6 +8628,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/expressions/removeUselessIsCheck.kt");
         }
 
+        @TestMetadata("removeUselessIsCheckForNull.kt")
+        public void testRemoveUselessIsCheckForNull() throws Exception {
+            runTest("testData/quickfix/expressions/removeUselessIsCheckForNull.kt");
+        }
+
         @TestMetadata("removeUselessIsCheckInWhen.kt")
         public void testRemoveUselessIsCheckInWhen() throws Exception {
             runTest("testData/quickfix/expressions/removeUselessIsCheckInWhen.kt");
@@ -8638,9 +8643,19 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/expressions/removeUselessIsCheckInWhenExpressionless.kt");
         }
 
+        @TestMetadata("removeUselessIsCheckInWhenExpressionlessForNull.kt")
+        public void testRemoveUselessIsCheckInWhenExpressionlessForNull() throws Exception {
+            runTest("testData/quickfix/expressions/removeUselessIsCheckInWhenExpressionlessForNull.kt");
+        }
+
         @TestMetadata("removeUselessIsCheckInWhenExpressionlessNegate.kt")
         public void testRemoveUselessIsCheckInWhenExpressionlessNegate() throws Exception {
             runTest("testData/quickfix/expressions/removeUselessIsCheckInWhenExpressionlessNegate.kt");
+        }
+
+        @TestMetadata("removeUselessIsCheckInWhenExpressionlessNegateForNull.kt")
+        public void testRemoveUselessIsCheckInWhenExpressionlessNegateForNull() throws Exception {
+            runTest("testData/quickfix/expressions/removeUselessIsCheckInWhenExpressionlessNegateForNull.kt");
         }
 
         @TestMetadata("removeUselessIsCheckInWhenNegate.kt")
@@ -8651,6 +8666,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("removeUselessIsCheckNegate.kt")
         public void testRemoveUselessIsCheckNegate() throws Exception {
             runTest("testData/quickfix/expressions/removeUselessIsCheckNegate.kt");
+        }
+
+        @TestMetadata("removeUselessIsCheckNegateForNull.kt")
+        public void testRemoveUselessIsCheckNegateForNull() throws Exception {
+            runTest("testData/quickfix/expressions/removeUselessIsCheckNegateForNull.kt");
         }
 
         @TestMetadata("unnecessaryNonNullAssertion1.kt")
@@ -10136,6 +10156,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("annotationSuperType.kt")
+            public void testAnnotationSuperType() throws Exception {
+                runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/annotationSuperType.kt");
+            }
+
             @TestMetadata("dataSuperType.kt")
             public void testDataSuperType() throws Exception {
                 runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/dataSuperType.kt");
@@ -10186,6 +10211,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/implementInterfaceFinalSupertype.kt");
             }
 
+            @TestMetadata("inlineSuperType.kt")
+            public void testInlineSuperType() throws Exception {
+                runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/inlineSuperType.kt");
+            }
+
             @TestMetadata("nestedFinalClass.kt")
             public void testNestedFinalClass() throws Exception {
                 runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/nestedFinalClass.kt");
@@ -10204,6 +10234,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("secondaryCtrDelegationInSecondary.kt")
             public void testSecondaryCtrDelegationInSecondary() throws Exception {
                 runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/secondaryCtrDelegationInSecondary.kt");
+            }
+
+            @TestMetadata("valueSuperType.kt")
+            public void testValueSuperType() throws Exception {
+                runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/valueSuperType.kt");
             }
 
             @TestMetadata("withConstructor.kt")
@@ -11390,6 +11425,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/override/nothingToOverride/removeTypeParameter.kt");
             }
 
+            @TestMetadata("suspendFunction.kt")
+            public void testSuspendFunction() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/suspendFunction.kt");
+            }
+
+            @TestMetadata("suspendFunction2.kt")
+            public void testSuspendFunction2() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/suspendFunction2.kt");
+            }
+
             @TestMetadata("swapParametersGenericClass.kt")
             public void testSwapParametersGenericClass() throws Exception {
                 runTest("testData/quickfix/override/nothingToOverride/swapParametersGenericClass.kt");
@@ -11833,6 +11878,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/redundantIf/assignmentFake.kt");
         }
 
+        @TestMetadata("comment.kt")
+        public void testComment() throws Exception {
+            runTest("testData/quickfix/redundantIf/comment.kt");
+        }
+
         @TestMetadata("expression.kt")
         public void testExpression() throws Exception {
             runTest("testData/quickfix/redundantIf/expression.kt");
@@ -11871,6 +11921,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("returnWithoutElse2.kt")
         public void testReturnWithoutElse2() throws Exception {
             runTest("testData/quickfix/redundantIf/returnWithoutElse2.kt");
+        }
+
+        @TestMetadata("returnWithoutElse3.kt")
+        public void testReturnWithoutElse3() throws Exception {
+            runTest("testData/quickfix/redundantIf/returnWithoutElse3.kt");
         }
 
         @TestMetadata("simple.kt")
@@ -13704,6 +13759,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/supertypeInitialization/addParenthesisForSealedClass2.kt");
         }
 
+        @TestMetadata("annotation.kt")
+        public void testAnnotation() throws Exception {
+            runTest("testData/quickfix/supertypeInitialization/annotation.kt");
+        }
+
         @TestMetadata("baseConstructorError.kt")
         public void testBaseConstructorError() throws Exception {
             runTest("testData/quickfix/supertypeInitialization/baseConstructorError.kt");
@@ -13712,6 +13772,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("createConstructor.kt")
         public void testCreateConstructor() throws Exception {
             runTest("testData/quickfix/supertypeInitialization/createConstructor.kt");
+        }
+
+        @TestMetadata("data.kt")
+        public void testData() throws Exception {
+            runTest("testData/quickfix/supertypeInitialization/data.kt");
         }
 
         @TestMetadata("displayLongSignatures1.kt")
@@ -13724,6 +13789,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/supertypeInitialization/displayLongSignatures2.kt");
         }
 
+        @TestMetadata("enum.kt")
+        public void testEnum() throws Exception {
+            runTest("testData/quickfix/supertypeInitialization/enum.kt");
+        }
+
         @TestMetadata("genericClass.kt")
         public void testGenericClass() throws Exception {
             runTest("testData/quickfix/supertypeInitialization/genericClass.kt");
@@ -13732,6 +13802,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("incompleteConstructor.kt")
         public void testIncompleteConstructor() throws Exception {
             runTest("testData/quickfix/supertypeInitialization/incompleteConstructor.kt");
+        }
+
+        @TestMetadata("inline.kt")
+        public void testInline() throws Exception {
+            runTest("testData/quickfix/supertypeInitialization/inline.kt");
         }
 
         @TestMetadata("keywordName.kt")
@@ -13762,6 +13837,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("someParametersAlreadyExist.kt")
         public void testSomeParametersAlreadyExist() throws Exception {
             runTest("testData/quickfix/supertypeInitialization/someParametersAlreadyExist.kt");
+        }
+
+        @TestMetadata("value.kt")
+        public void testValue() throws Exception {
+            runTest("testData/quickfix/supertypeInitialization/value.kt");
         }
 
         @TestMetadata("vararg1.kt")
@@ -13926,6 +14006,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("memberSuppressForMember.kt")
             public void testMemberSuppressForMember() throws Exception {
                 runTest("testData/quickfix/suppress/availability/memberSuppressForMember.kt");
+            }
+
+            @TestMetadata("parameterSuppressForDestructuredLambdaParameter.kt")
+            public void testParameterSuppressForDestructuredLambdaParameter() throws Exception {
+                runTest("testData/quickfix/suppress/availability/parameterSuppressForDestructuredLambdaParameter.kt");
+            }
+
+            @TestMetadata("parameterSuppressForLambdaParameter.kt")
+            public void testParameterSuppressForLambdaParameter() throws Exception {
+                runTest("testData/quickfix/suppress/availability/parameterSuppressForLambdaParameter.kt");
             }
 
             @TestMetadata("topLevelFunctionAlreadySuppressed.kt")

@@ -24,8 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Action that toggles {@code 'show soft wraps at editor'} option and is expected to be used at various menus.
- *
- * @author Denis Zhdanov
  */
 public class ToggleUseSoftWrapsMenuAction extends AbstractToggleUseSoftWrapsAction {
 

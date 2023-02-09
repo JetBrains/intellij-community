@@ -10,6 +10,9 @@ import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.traceRun
 import com.intellij.openapi.observable.operation.core.withCompletedOperation
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.vfs.VirtualFile
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -51,12 +54,20 @@ class MockProjectAware(
     unsubscribeCounter.set(0)
   }
 
-  fun registerSettingsFile(path: String) {
-    _settingsFiles.add(path)
+  fun registerSettingsFile(file: VirtualFile) {
+    registerSettingsFile(file.toNioPath())
   }
 
-  fun ignoreSettingsFileWhen(path: String, condition: (ExternalSystemSettingsFilesModificationContext) -> Boolean) {
-    ignoredSettingsFiles[path] = condition
+  fun registerSettingsFile(path: Path) {
+    _settingsFiles.add(path.toCanonicalPath())
+  }
+
+  fun ignoreSettingsFileWhen(file: VirtualFile, condition: (ExternalSystemSettingsFilesModificationContext) -> Boolean) {
+    ignoreSettingsFileWhen(file.toNioPath(), condition)
+  }
+
+  fun ignoreSettingsFileWhen(path: Path, condition: (ExternalSystemSettingsFilesModificationContext) -> Boolean) {
+    ignoredSettingsFiles[path.toCanonicalPath()] = condition
   }
 
   override fun isIgnoredSettingsFileEvent(path: String, context: ExternalSystemSettingsFilesModificationContext): Boolean {

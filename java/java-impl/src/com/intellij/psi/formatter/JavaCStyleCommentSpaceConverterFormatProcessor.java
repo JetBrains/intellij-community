@@ -2,11 +2,13 @@
 package com.intellij.psi.formatter;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,11 +28,7 @@ public class JavaCStyleCommentSpaceConverterFormatProcessor implements PostForma
       return source;
     }
 
-    CStyleCommentSpaceConvertingVisitor visitor = new CStyleCommentSpaceConvertingVisitor(indentOptions, source.getTextRange(), indentOptions.TAB_SIZE);
-    source.accept(visitor);
-    for (ReplacementPair pair : visitor.myReplacementPairs) {
-      pair.toReplace.replace(pair.replacement);
-    }
+    CStyleCommentSpaceConvertingVisitor visitor = traverseAndReplaceTabs(indentOptions, source.getTextRange(), source);
 
     for (ReplacementPair myReplacementPair : visitor.myReplacementPairs) {
       if (myReplacementPair.toReplace == source) {
@@ -42,16 +40,25 @@ public class JavaCStyleCommentSpaceConverterFormatProcessor implements PostForma
     return source;
   }
 
-  /**
-   * @return true if replaced something
-   */
-  private static boolean traverseAndReplaceTabsWithSpaces(CommonCodeStyleSettings.IndentOptions indentOptions, TextRange range, @NotNull PsiElement source) {
+  @NotNull
+  private static CStyleCommentSpaceConvertingVisitor traverseAndReplaceTabs(CommonCodeStyleSettings.IndentOptions indentOptions,
+                                                                            TextRange range,
+                                                                            @NotNull PsiElement source) {
     CStyleCommentSpaceConvertingVisitor visitor = new CStyleCommentSpaceConvertingVisitor(indentOptions, range, indentOptions.TAB_SIZE);
+    Document document = source.getContainingFile().getViewProvider().getDocument();
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(source.getProject());
     source.accept(visitor);
-    for (ReplacementPair pair : visitor.myReplacementPairs) {
-      pair.toReplace.replace(pair.replacement);
+    if (visitor.myReplacementPairs.isEmpty()) {
+      return visitor;
     }
-    return !visitor.myReplacementPairs.isEmpty();
+    DocumentUtil.executeInBulk(document, () -> {
+      for (ReplacementPair pair : visitor.myReplacementPairs) {
+        pair.toReplace.replace(pair.replacement);
+      }
+      psiDocumentManager.commitDocument(document);
+      psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
+    });
+    return visitor;
   }
 
   @Override
@@ -65,7 +72,8 @@ public class JavaCStyleCommentSpaceConverterFormatProcessor implements PostForma
     if (indentOptions == null || indentOptions.USE_TAB_CHARACTER) {
       return rangeToReformat;
     }
-    if (traverseAndReplaceTabsWithSpaces(indentOptions, rangeToReformat, source)) {
+    boolean replacedSomething = !traverseAndReplaceTabs(indentOptions, rangeToReformat, source).myReplacementPairs.isEmpty();
+    if (replacedSomething) {
       return source.getTextRange();
     }
     return rangeToReformat;

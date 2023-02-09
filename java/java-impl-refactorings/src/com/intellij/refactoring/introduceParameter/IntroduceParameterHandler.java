@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -170,7 +170,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       return false;
     }
 
-    if (!invokedOnDeclaration && PsiType.VOID.equals(typeByExpression)) {
+    if (!invokedOnDeclaration && PsiTypes.voidType().equals(typeByExpression)) {
       String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("selected.expression.has.void.type"));
       showErrorMessage(project, message, editor);
       return false;
@@ -185,8 +185,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
     final Introducer introducer = new Introducer(project, expr, localVar, editor);
     final AbstractInplaceIntroducer inplaceIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
-    if (inplaceIntroducer instanceof InplaceIntroduceParameterPopup) {
-      final InplaceIntroduceParameterPopup introduceParameterPopup = (InplaceIntroduceParameterPopup)inplaceIntroducer;
+    if (inplaceIntroducer instanceof InplaceIntroduceParameterPopup introduceParameterPopup) {
       introducer.introduceParameter(introduceParameterPopup.getMethodToIntroduceParameter(),
                                     introduceParameterPopup.getMethodToSearchFor());
       return true;

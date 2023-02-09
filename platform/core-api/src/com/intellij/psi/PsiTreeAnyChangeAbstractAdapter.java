@@ -18,9 +18,6 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Irina.Chernushina on 3/27/2017.
- */
 public abstract class PsiTreeAnyChangeAbstractAdapter extends PsiTreeChangeAdapter {
   @Override
   public void childAdded(@NotNull PsiTreeChangeEvent event) {

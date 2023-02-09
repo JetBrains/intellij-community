@@ -8,27 +8,19 @@ import com.intellij.openapi.util.Key
 interface GradleJavaNewProjectWizardData : GradleNewProjectWizardData {
 
   val addSampleCodeProperty: GraphProperty<Boolean>
+
   var addSampleCode: Boolean
 
+  val generateOnboardingTipsProperty: GraphProperty<Boolean>
+
+  var generateOnboardingTips: Boolean
+
   companion object {
-    @JvmStatic val KEY = Key.create<GradleJavaNewProjectWizardData>(GradleJavaNewProjectWizardData::class.java.name)
 
-    @JvmStatic val NewProjectWizardStep.gradleData get() = data.getUserData(KEY)!!
+    val KEY = Key.create<GradleJavaNewProjectWizardData>(GradleJavaNewProjectWizardData::class.java.name)
 
-    @JvmStatic val NewProjectWizardStep.sdkProperty get() = gradleData.sdkProperty
-    @JvmStatic val NewProjectWizardStep.gradleDslProperty get() = gradleData.gradleDslProperty
-    @JvmStatic val NewProjectWizardStep.parentProperty get() = gradleData.parentProperty
-    @JvmStatic val NewProjectWizardStep.groupIdProperty get() = gradleData.groupIdProperty
-    @JvmStatic val NewProjectWizardStep.artifactIdProperty get() = gradleData.artifactIdProperty
-    @JvmStatic val NewProjectWizardStep.versionProperty get() = gradleData.versionProperty
-    @JvmStatic val NewProjectWizardStep.addSampleCodeProperty get() = gradleData.addSampleCodeProperty
-    @JvmStatic var NewProjectWizardStep.sdk get() = gradleData.sdk; set(it) { gradleData.sdk = it }
-    @JvmStatic var NewProjectWizardStep.gradleDsl get() = gradleData.gradleDsl; set(it) { gradleData.gradleDsl = it }
-    @JvmStatic var NewProjectWizardStep.parent get() = gradleData.parent; set(it) { gradleData.parent = it }
-    @JvmStatic var NewProjectWizardStep.parentData get() = gradleData.parentData; set(it) { gradleData.parentData = it }
-    @JvmStatic var NewProjectWizardStep.groupId get() = gradleData.groupId; set(it) { gradleData.groupId = it }
-    @JvmStatic var NewProjectWizardStep.artifactId get() = gradleData.artifactId; set(it) { gradleData.artifactId = it }
-    @JvmStatic var NewProjectWizardStep.version get() = gradleData.version; set(it) { gradleData.version = it }
-    @JvmStatic var NewProjectWizardStep.addSampleCode get() = gradleData.addSampleCode; set(it) { gradleData.addSampleCode = it }
+    @JvmStatic
+    val NewProjectWizardStep.javaGradleData: GradleJavaNewProjectWizardData?
+      get() = data.getUserData(KEY)
   }
 }

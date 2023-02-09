@@ -49,9 +49,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isNullLiteral;
 
-/**
- * @author ven
- */
 public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private static final Logger LOG = Logger.getInstance(ControlFlowBuilder.class);
 
@@ -873,8 +870,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (clause instanceof GrTraditionalForClause) {
       acceptNullable(((GrTraditionalForClause)clause).getInitialization());
     }
-    else if (clause instanceof GrForInClause) {
-      GrForInClause forInClause = (GrForInClause)clause;
+    else if (clause instanceof GrForInClause forInClause) {
       acceptNullable(forInClause.getIteratedExpression());
       addNodeAndCheckPending(new ReadWriteVariableInstruction(
         getDescriptorId(new LoopIteratorVariableDescriptor(forInClause)),
@@ -1103,8 +1099,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (type == null) return false;
 
     if (type instanceof PsiPrimitiveType) {
-      if (PsiType.BOOLEAN.equals(type)) return sections.length == 2;
-      if (PsiType.BYTE.equals(type) || PsiType.CHAR.equals(type)) return sections.length == 128;
+      if (PsiTypes.booleanType().equals(type)) return sections.length == 2;
+      if (PsiTypes.byteType().equals(type) || PsiTypes.charType().equals(type)) return sections.length == 128;
       return false;
     }
 

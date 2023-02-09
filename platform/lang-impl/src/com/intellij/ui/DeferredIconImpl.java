@@ -336,8 +336,7 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
         checkDoesntReferenceThis(layer);
       }
     }
-    else if (icon instanceof com.intellij.ui.icons.RowIcon) {
-      final com.intellij.ui.icons.RowIcon rowIcon = (RowIcon)icon;
+    else if (icon instanceof RowIcon rowIcon) {
       final int count = rowIcon.getIconCount();
       for (int i = 0; i < count; i++) {
         checkDoesntReferenceThis(rowIcon.getIcon(i));

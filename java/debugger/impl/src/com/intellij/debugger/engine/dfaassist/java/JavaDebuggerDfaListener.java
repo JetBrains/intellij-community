@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist.java;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -76,8 +76,7 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
     else if (problem instanceof ClassCastProblem) {
       addHint(((ClassCastProblem)problem).getAnchor(), failed == ThreeState.YES ? DfaHint.CCE : DfaHint.NONE);
     }
-    else if (problem instanceof NullabilityProblemKind.NullabilityProblem<?>) {
-      var npeProblem = (NullabilityProblemKind.NullabilityProblem<?>) problem;
+    else if (problem instanceof NullabilityProblemKind.NullabilityProblem<?> npeProblem) {
       PsiExpression expression = npeProblem.getDereferencedExpression();
       if (expression != null && npeProblem.thrownException() != null) {
         DfaHint hint;
@@ -85,7 +84,8 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
           hint = npeProblem.thrownException().equals(CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION)
                  ? DfaHint.NPE
                  : DfaHint.NULL_AS_NOT_NULL;
-        } else {
+        }
+        else {
           hint = DfaHint.NONE;
         }
         addHint(expression, hint);
@@ -106,7 +106,7 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
       IElementType tokenType = ((PsiPolyadicExpression)expr).getOperationTokenType();
       if (BOOLEAN_TOKENS.contains(tokenType)) {
         PsiExpression firstOperand = ((PsiPolyadicExpression)expr).getOperands()[0];
-        if (firstOperand != null && PsiType.BOOLEAN.equals(firstOperand.getType())) {
+        if (firstOperand != null && PsiTypes.booleanType().equals(firstOperand.getType())) {
           // For polyadic boolean expression let's report components only, otherwise the report gets cluttered
           return false;
         }
@@ -120,8 +120,7 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
       PsiElement anchor = e.getKey();
       DfaHint hint = e.getValue();
       if (hint.getTitle() == null) return true;
-      if (!(anchor instanceof PsiExpression)) return false;
-      PsiExpression expr = (PsiExpression)anchor;
+      if (!(anchor instanceof PsiExpression expr)) return false;
       CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expr);
       return result != null && result.getExpressionValues(expr).size() == 1;
     });
@@ -146,17 +145,16 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
                                                  @NotNull PsiElement unreachable,
                                                  @NotNull Set<PsiElement> allUnreachable) {
     PsiElement parent = unreachable.getParent();
-    if (unreachable instanceof PsiExpression) {
-      PsiExpression expression = (PsiExpression)unreachable;
+    if (unreachable instanceof PsiExpression expression) {
       if (parent instanceof PsiConditionalExpression && !allUnreachable.contains(parent)) {
         return expression.getTextRange();
       }
-      if (parent instanceof PsiPolyadicExpression) {
-        IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+      if (parent instanceof PsiPolyadicExpression polyadicExpression) {
+        IElementType tokenType = polyadicExpression.getOperationTokenType();
         if (tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.OROR) {
           PsiExpression prev = PsiTreeUtil.getPrevSiblingOfType(expression, PsiExpression.class);
           if (prev != null && !allUnreachable.contains(prev)) {
-            PsiJavaToken token = ((PsiPolyadicExpression)parent).getTokenBeforeOperand(expression);
+            PsiJavaToken token = polyadicExpression.getTokenBeforeOperand(expression);
             if (token != null) {
               return TextRange.create(token.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset());
             }
@@ -170,9 +168,8 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
         return unreachable.getTextRange();
       }
     }
-    if (unreachable instanceof PsiStatement) {
+    if (unreachable instanceof PsiStatement statement) {
       if (ControlFlowUtils.isEmpty(unreachable, false, true)) return null;
-      PsiStatement statement = (PsiStatement)unreachable;
       PsiElement statementParent = statement.getParent();
       if (unreachable instanceof PsiSwitchLabelStatement) return null;
       if (allUnreachable.contains(statementParent)) return null;

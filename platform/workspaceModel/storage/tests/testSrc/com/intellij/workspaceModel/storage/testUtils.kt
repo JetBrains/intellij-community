@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage
 
 import com.google.common.collect.HashBiMap
@@ -7,8 +7,7 @@ import com.intellij.workspaceModel.storage.impl.containers.BidirectionalLongMult
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase.*
 import org.junit.Assert
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
+import java.nio.file.Files
 import java.util.function.BiPredicate
 import kotlin.reflect.full.memberProperties
 
@@ -30,18 +29,22 @@ object SerializationRoundTripChecker {
 
     val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
 
-    val stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, storage)
+    val file = Files.createTempFile("", "")
+    try {
+      serializer.serializeCache(file, storage)
 
-    val byteArray = stream.toByteArray()
-    val deserialized = (serializer.deserializeCache(ByteArrayInputStream(byteArray)).getOrThrow() as MutableEntityStorageImpl).toSnapshot() as EntityStorageSnapshotImpl
-    deserialized.assertConsistency()
+      val deserialized = (serializer.deserializeCache(file).getOrThrow() as MutableEntityStorageImpl)
+        .toSnapshot() as EntityStorageSnapshotImpl
+      deserialized.assertConsistency()
 
-    assertStorageEquals(storage, deserialized)
+      assertStorageEquals(storage, deserialized)
 
-    storage.assertConsistency()
-
-    return byteArray
+      storage.assertConsistency()
+      return Files.readAllBytes(file)
+    }
+    finally {
+      Files.deleteIfExists(file)
+    }
   }
 
   private fun assertStorageEquals(expected: EntityStorageSnapshotImpl, actual: EntityStorageSnapshotImpl) {
@@ -153,4 +156,11 @@ object SerializationRoundTripChecker {
       Assert.fail("No mappings found for the following keys: " + local.keys)
     }
   }
+}
+
+/**
+ * Return same entity, but in different entity storage. Fail if no entity
+ */
+internal fun <T : WorkspaceEntity> T.from(storage: EntityStorage): T {
+  return this.createReference<T>().resolve(storage)!!
 }

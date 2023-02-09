@@ -6,9 +6,6 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.*;
 
-/**
- * @author db
- */
 public abstract class Difference {
 
   public static boolean weakerAccess(final int me, final int than) {

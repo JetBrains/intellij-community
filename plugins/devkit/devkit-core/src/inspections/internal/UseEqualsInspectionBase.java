@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -21,7 +22,7 @@ import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
-abstract class UseEqualsInspectionBase extends DevKitUastInspectionBase {
+abstract class UseEqualsInspectionBase extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("unchecked")
   public static final Class<? extends UElement>[] HINTS = new Class[]{UBinaryExpression.class};
@@ -112,8 +113,7 @@ abstract class UseEqualsInspectionBase extends DevKitUastInspectionBase {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiBinaryExpression)) return;
-      PsiBinaryExpression binaryExpression = (PsiBinaryExpression)element;
+      if (!(element instanceof PsiBinaryExpression binaryExpression)) return;
       PsiExpression lOperand = binaryExpression.getLOperand();
       PsiExpression rOperand = binaryExpression.getROperand();
       if (rOperand == null) return;

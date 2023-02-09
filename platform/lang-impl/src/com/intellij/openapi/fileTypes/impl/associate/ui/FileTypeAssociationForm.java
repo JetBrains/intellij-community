@@ -141,7 +141,7 @@ public class FileTypeAssociationForm {
       }
     }
     Collections.sort(items);
-    return new ArrayList<>(items);
+    return items;
   }
 
   private void presetItems() {

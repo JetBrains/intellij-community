@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-/**
- * @author Fedor.Korotkov
- */
 public final class MicrodataUtil {
   public static final Key<List<String>> ITEM_PROP_KEYS = Key.create("microdata.prop");
   public static final String ITEM_REF = "itemref";

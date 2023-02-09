@@ -16,8 +16,9 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.awt.RelativePoint
 import javax.swing.JComponent
 
-class AttachZoomIndicator : EditorFactoryListener {
+private class AttachZoomIndicator : EditorFactoryListener {
   private fun service(project: Project) = project.service<ZoomIndicatorManager>()
+
   private fun shouldSuppressZoomIndicator(editor: Editor): Boolean {
     if (editor.isDisposed) return true
     if (editor.getUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR) == true) return true
@@ -27,6 +28,7 @@ class AttachZoomIndicator : EditorFactoryListener {
     }
     return false
   }
+
   override fun editorCreated(event: EditorFactoryEvent) {
     val editorEx = event.editor as? EditorImpl ?: return
     val project = editorEx.project ?: return
@@ -54,11 +56,11 @@ class AttachZoomIndicator : EditorFactoryListener {
   }
 
   private fun getComponentToUse(project: Project, editorEx: EditorEx): JComponent {
-    return if (!EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent) {
-      editorEx.component
+    return if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent) {
+      (FileEditorManager.getInstance(project) as? FileEditorManagerImpl)?.component ?: editorEx.component
     }
     else {
-      (FileEditorManager.getInstance(project) as? FileEditorManagerImpl)?.mainSplitters ?: editorEx.component
+      editorEx.component
     }
   }
 

@@ -164,7 +164,7 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
 
     DefaultLogger.disableStderrDumping(testRootDisposable)
     assertThrows(Throwable, "Non-idempotent") {
-      IdempotenceChecker.checkEquivalence((PsiType)immediate, PsiType.VOID, getClass(), null)
+      IdempotenceChecker.checkEquivalence((PsiType)immediate, PsiTypes.voidType(), getClass(), null)
     }
   }
 
@@ -339,5 +339,17 @@ class B {}""")
     def expression = (PsiInstanceOfExpression)PsiElementFactory.getInstance(project).createExpressionFromText("o instanceof Record(int a, boolean b)", null)
     def recordPattern = (PsiDeconstructionPattern)expression.pattern
     assert recordPattern.typeElement.text == "Record"
+  }
+
+  void "test foreach pattern"() {
+    def stmt = (PsiForeachPatternStatement)PsiElementFactory.getInstance(project).createStatementFromText("for (Rec(int i) : recs);", null)
+    def declaration = (PsiDeconstructionPattern)stmt.iterationPattern
+    assert declaration.typeElement.text == "Rec"
+  }
+
+  void "test foreach parameter"() {
+    def stmt = (PsiForeachStatement)PsiElementFactory.getInstance(project).createStatementFromText("for (int i : recs);", null)
+    def parameter = (PsiParameter)stmt.iterationParameter
+    assert parameter.typeElement.text == "int"
   }
 }

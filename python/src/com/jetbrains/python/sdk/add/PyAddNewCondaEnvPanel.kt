@@ -33,9 +33,6 @@ import javax.swing.Icon
 import javax.swing.JComboBox
 import javax.swing.event.DocumentEvent
 
-/**
- * @author vlan
- */
 open class PyAddNewCondaEnvPanel(
   private val project: Project?,
   private val module: Module?,
@@ -46,8 +43,8 @@ open class PyAddNewCondaEnvPanel(
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.new.environment")
   override val icon: Icon = PythonIcons.Python.Anaconda
 
-  protected val languageLevelsField: JComboBox<String>
-  protected val condaPathField = TextFieldWithBrowseButton().apply {
+  private val languageLevelsField: JComboBox<String>
+  private val condaPathField = TextFieldWithBrowseButton().apply {
     val path = PyCondaPackageService.getCondaExecutable(null)
     path?.let {
       text = it

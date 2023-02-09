@@ -2,7 +2,7 @@ package com.intellij.grazie.jlanguage.hunspell
 
 import ai.grazie.spell.lists.hunspell.HunspellWordList
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.util.io.readText
+import com.intellij.util.io.inputStream
 import org.languagetool.rules.spelling.hunspell.HunspellDictionary
 import java.nio.file.Path
 
@@ -10,11 +10,15 @@ class LuceneHunspellDictionary(dictionary: Path, affix: Path) : HunspellDictiona
   private val dict: HunspellWordList
 
   init {
-    this.dict = HunspellWordList(
-      affix.readText(),
-      dictionary.readText(),
-      checkCanceled = { ProgressManager.checkCanceled() }
-    )
+    this.dict = affix.inputStream().use { affix ->
+      dictionary.inputStream().use { dictionary ->
+        HunspellWordList(
+          affix,
+          dictionary,
+          checkCanceled = { ProgressManager.checkCanceled() }
+        )
+      }
+    }
   }
 
   override fun spell(word: String) = dict.contains(word, false)

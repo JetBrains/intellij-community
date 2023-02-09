@@ -46,7 +46,7 @@ public final class BuildOperations {
     }
     else {
       boolean isTargetDirty = false;
-      if (context.getScope().isBuildForced(target) || (isTargetDirty = configuration.isTargetDirty(context.getProjectDescriptor())) || configuration.outputRootWasDeleted(context)) {
+      if (context.getScope().isBuildForced(target) || (isTargetDirty = configuration.isTargetDirty(context.getProjectDescriptor())) || (!pd.getBuildRootIndex().getTargetRoots(target, context).isEmpty() && configuration.outputRootWasDeleted(context))) {
         if (isTargetDirty) {
           configuration.logDiagnostics(context);
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -40,9 +40,6 @@ import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class JavaReflectionReferenceUtil {
   // MethodHandle (Java 7) and VarHandle (Java 9) infrastructure
   public static final String JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP = "java.lang.invoke.MethodHandles.Lookup";
@@ -135,8 +132,7 @@ public final class JavaReflectionReferenceUtil {
       return ReflectiveType.create(operand.getType(), true);
     }
 
-    if (context instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)context;
+    if (context instanceof PsiMethodCallExpression methodCall) {
       final String methodReferenceName = methodCall.getMethodExpression().getReferenceName();
       if (FOR_NAME.equals(methodReferenceName)) {
         final PsiMethod method = methodCall.resolveMethod();
@@ -170,41 +166,31 @@ public final class JavaReflectionReferenceUtil {
       }
     }
 
-    if (context instanceof PsiReferenceExpression) {
-      PsiReferenceExpression reference = (PsiReferenceExpression)context;
-      final PsiElement resolved = reference.resolve();
-      if (resolved instanceof PsiVariable) {
-        PsiVariable variable = (PsiVariable)resolved;
-        if (isJavaLangClass(PsiTypesUtil.getPsiClass(variable.getType()))) {
-          final PsiExpression definition = findVariableDefinition(reference, variable);
-          if (definition != null) {
-            ReflectiveType result = ourGuard.doPreventingRecursion(variable, false, () -> getReflectiveType(definition));
-            if (result != null) {
-              return result;
-            }
-          }
+    if (context instanceof PsiReferenceExpression reference &&
+        reference.resolve() instanceof PsiVariable variable &&
+        isJavaLangClass(PsiTypesUtil.getPsiClass(variable.getType()))) {
+      final PsiExpression definition = findVariableDefinition(reference, variable);
+      if (definition != null) {
+        ReflectiveType result = ourGuard.doPreventingRecursion(variable, false, () -> getReflectiveType(definition));
+        if (result != null) {
+          return result;
         }
       }
     }
 
-    final PsiType type = context.getType();
-    if (type instanceof PsiClassType) {
-      final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
+    if (context.getType() instanceof PsiClassType type) {
+      final PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
       final PsiClass resolvedElement = resolveResult.getElement();
       if (!isJavaLangClass(resolvedElement)) return null;
 
-      if (context instanceof PsiReferenceExpression && TYPE.equals(((PsiReferenceExpression)context).getReferenceName())) {
-        final PsiElement resolved = ((PsiReferenceExpression)context).resolve();
-        if (resolved instanceof PsiField) {
-          final PsiField field = (PsiField)resolved;
-          if (field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.STATIC)) {
-            final PsiType[] classTypeArguments = ((PsiClassType)type).getParameters();
-            final PsiPrimitiveType unboxedType = classTypeArguments.length == 1
-                                                 ? PsiPrimitiveType.getUnboxedType(classTypeArguments[0]) : null;
-            if (unboxedType != null && field.getContainingClass() == PsiUtil.resolveClassInClassTypeOnly(classTypeArguments[0])) {
-              return ReflectiveType.create(unboxedType, true);
-            }
-          }
+      if (context instanceof PsiReferenceExpression ref && TYPE.equals(ref.getReferenceName()) && 
+          ref.resolve() instanceof PsiField field &&
+          field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.STATIC)) {
+        final PsiType[] classTypeArguments = type.getParameters();
+        final PsiPrimitiveType unboxedType = classTypeArguments.length == 1
+                                             ? PsiPrimitiveType.getUnboxedType(classTypeArguments[0]) : null;
+        if (unboxedType != null && field.getContainingClass() == PsiUtil.resolveClassInClassTypeOnly(classTypeArguments[0])) {
+          return ReflectiveType.create(unboxedType, true);
         }
       }
       final PsiTypeParameter[] parameters = resolvedElement.getTypeParameters();
@@ -226,8 +212,7 @@ public final class JavaReflectionReferenceUtil {
     if (expression == null) {
       return null;
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression methodCall) {
       final String methodReferenceName = methodCall.getMethodExpression().getReferenceName();
 
       if (NEW_INSTANCE.equals(methodReferenceName)) {
@@ -369,7 +354,7 @@ public final class JavaReflectionReferenceUtil {
       return false;
     }
     final PsiType type = field.getType();
-    return !(type instanceof PsiPrimitiveType) || PsiType.INT.equals(type) || PsiType.LONG.equals(type);
+    return !(type instanceof PsiPrimitiveType) || PsiTypes.intType().equals(type) || PsiTypes.longType().equals(type);
   }
 
   @Nullable
@@ -450,7 +435,7 @@ public final class JavaReflectionReferenceUtil {
     if (method != null) {
       final List<String> types = new ArrayList<>();
       final PsiType returnType = method.getReturnType();
-      types.add(getTypeText(returnType != null ? returnType : PsiType.VOID)); // null return type means it's a constructor
+      types.add(getTypeText(returnType != null ? returnType : PsiTypes.voidType())); // null return type means it's a constructor
 
       for (PsiParameter parameter : method.getParameterList().getParameters()) {
         types.add(getTypeText(parameter.getType()));
@@ -507,8 +492,7 @@ public final class JavaReflectionReferenceUtil {
   @Nullable
   public static List<PsiExpression> getListComponents(@Nullable PsiExpression maybeList) {
     maybeList = PsiUtil.skipParenthesizedExprDown(maybeList);
-    if (LIST_FACTORY.matches(maybeList) && maybeList instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)maybeList;
+    if (LIST_FACTORY.matches(maybeList) && maybeList instanceof PsiMethodCallExpression callExpression) {
       final PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
       if (expressions.length == 0) {
         return Collections.emptyList();
@@ -605,10 +589,9 @@ public final class JavaReflectionReferenceUtil {
         return null;
       }
       methodType = PsiUtil.skipParenthesizedExprDown(methodType);
-      if (!(methodType instanceof PsiMethodCallExpression)) {
+      if (!(methodType instanceof PsiMethodCallExpression call)) {
         return null;
       }
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)methodType;
       final PsiExpression[] expressions = call.getArgumentList().getExpressions();
       if (expressions.length != 2) {
         return null;
@@ -892,9 +875,8 @@ public final class JavaReflectionReferenceUtil {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof ReflectiveSignature)) return false;
-      final ReflectiveSignature other = (ReflectiveSignature)o;
-      return Objects.equals(myReturnType, other.myReturnType) &&
+      return o instanceof ReflectiveSignature other && 
+             Objects.equals(myReturnType, other.myReturnType) &&
              Arrays.equals(myArgumentTypes, other.myArgumentTypes);
     }
 

@@ -20,10 +20,12 @@ import java.util.HashSet;
 import java.util.List;
 
 public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
+  @NotNull
   private final Project myProject;
+  @NotNull
   private final Editor myEditor;
 
-  DaemonTooltipRendererProvider(Project project, Editor editor) {
+  DaemonTooltipRendererProvider(@NotNull Project project, @NotNull Editor editor) {
     myProject = project;
     myEditor = editor;
   }
@@ -36,8 +38,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     for (RangeHighlighter marker : highlighters) {
       Object tooltipObject = marker.getErrorStripeTooltip();
       if (tooltipObject == null) continue;
-      if (tooltipObject instanceof HighlightInfo) {
-        HighlightInfo info = (HighlightInfo)tooltipObject;
+      if (tooltipObject instanceof HighlightInfo info) {
         if (info.getToolTip() != null && tooltips.add(info.getToolTip())) {
           infos.add(info);
         }
@@ -64,7 +65,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       });
       HighlightInfoComposite composite = HighlightInfoComposite.create(infos);
       String toolTip = composite.getToolTip();
-      TooltipAction action = TooltipActionProvider.calcTooltipAction(composite, myEditor);
+      TooltipAction action = TooltipActionProvider.calcTooltipAction(composite, myProject, myEditor);
       DaemonTooltipRenderer myRenderer = new DaemonTooltipWithActionRenderer(
         toolTip, action, 0,
         action == null ? new Object[]{toolTip} : new Object[]{toolTip, action});

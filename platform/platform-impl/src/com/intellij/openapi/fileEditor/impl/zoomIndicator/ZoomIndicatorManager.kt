@@ -11,10 +11,13 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
 import com.intellij.ui.BalloonImpl
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.JBColor
 import com.intellij.util.Alarm
 
 private const val POPUP_TIMEOUT_MS = 5000
@@ -54,10 +57,12 @@ class ZoomIndicatorManager(project: Project) {
       return null
     }
     cancelCurrentPopup()
+    val newUI = ExperimentalUI.isNewUI()
     val b2 = JBPopupFactory.getInstance().createBalloonBuilder(view)
       .setRequestFocus(false)
       .setShadow(true)
-      .setFillColor(view.background)
+      .setFillColor(if (newUI) JBColor.namedColor("Toolbar.Floating.background", JBColor(0xEDEDED, 0x454A4D)) else view.background)
+      .setBorderColor(if (newUI) JBColor.namedColor("Toolbar.Floating.borderColor", JBColor(0xEBECF0, 0x43454A)) else JBColor.border())
       .setShowCallout(false)
       .setFadeoutTime(0)
       .createBalloon().apply { setAnimationEnabled(false) }

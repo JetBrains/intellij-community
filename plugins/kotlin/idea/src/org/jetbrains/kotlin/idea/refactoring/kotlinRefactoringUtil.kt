@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.Pass
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -63,7 +62,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.CHECK_SUPER_METHODS_YES_NO_DIALOG
 import org.jetbrains.kotlin.idea.base.util.collapseSpaces
+import org.jetbrains.kotlin.idea.base.util.showYesNoCancelDialog
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -97,8 +98,6 @@ import org.jetbrains.kotlin.idea.base.psi.getLineCount as newGetLineCount
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber as _getLineNumber
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
-import org.jetbrains.kotlin.idea.base.util.CHECK_SUPER_METHODS_YES_NO_DIALOG
-import org.jetbrains.kotlin.idea.base.util.showYesNoCancelDialog
 
 @JvmOverloads
 fun getOrCreateKotlinFile(
@@ -237,7 +236,7 @@ fun <T : PsiElement> getPsiElementPopup(
     editor: Editor,
     elements: List<T>,
     renderer: PsiElementListCellRenderer<T>,
-    title: String?,
+    @NlsContexts.PopupTitle title: String?,
     highlightSelection: Boolean,
     processor: (T) -> Boolean
 ): JBPopup = with(JBPopupFactory.getInstance().createPopupChooserBuilder(elements)) {
@@ -250,7 +249,9 @@ fun <T : PsiElement> getPsiElementPopup(
         }
     }
 
-    title?.let { setTitle(it) }
+    if (title != null) {
+        setTitle(title)
+    }
     renderer.installSpeedSearch(this, true)
     setItemChosenCallback { it?.let(processor) }
 
@@ -327,7 +328,7 @@ fun PsiFile.getLineEndOffset(line: Int): Int? {
     return document?.getLineEndOffset(line)
 }
 
-@Deprecated("Use org.jetbrains.kotlin.idea.base.psi.PsiLinesUtilsKt.getLineNumber instead",)
+@Deprecated("Use org.jetbrains.kotlin.idea.base.psi.PsiLinesUtilsKt.getLineNumber instead")
 fun PsiElement.getLineNumber(start: Boolean = true): Int {
    return _getLineNumber(start)
 }
@@ -339,7 +340,7 @@ class SeparateFileWrapper(manager: PsiManager) : LightElement(manager, KotlinLan
 fun <T> chooseContainerElement(
     containers: List<T>,
     editor: Editor,
-    title: String,
+    @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
     toPsi: (T) -> PsiElement,
     onSelect: (T) -> Unit
@@ -358,7 +359,7 @@ fun <T> chooseContainerElement(
 fun <T : PsiElement> chooseContainerElement(
     elements: List<T>,
     editor: Editor,
-    title: String,
+    @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
     onSelect: (T) -> Unit
 ): Unit = choosePsiContainerElement(
@@ -428,7 +429,7 @@ private fun psiElementRenderer() = object : PsiElementListCellRenderer<PsiElemen
 private fun <T, E : PsiElement> choosePsiContainerElement(
     elements: List<E>,
     editor: Editor,
-    title: String,
+    @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
     psi2Container: (E) -> T,
     onSelect: (T) -> Unit,
@@ -453,7 +454,7 @@ private fun <T, E : PsiElement> choosePsiContainerElement(
 fun <T> chooseContainerElementIfNecessary(
     containers: List<T>,
     editor: Editor,
-    title: String,
+    @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
     toPsi: (T) -> PsiElement,
     onSelect: (T) -> Unit
@@ -462,7 +463,7 @@ fun <T> chooseContainerElementIfNecessary(
 fun <T : PsiElement> chooseContainerElementIfNecessary(
     containers: List<T>,
     editor: Editor,
-    title: String,
+    @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
     onSelect: (T) -> Unit
 ): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, null, onSelect)
@@ -470,7 +471,7 @@ fun <T : PsiElement> chooseContainerElementIfNecessary(
 private fun <T> chooseContainerElementIfNecessaryImpl(
     containers: List<T>,
     editor: Editor,
-    title: String,
+    @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
     toPsi: ((T) -> PsiElement)?,
     onSelect: (T) -> Unit
@@ -834,10 +835,6 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
     return originalList
 }
 
-fun <T> Pass(body: (T) -> Unit) = object : Pass<T>() {
-    override fun pass(t: T) = body(t)
-}
-
 fun KtExpression.removeTemplateEntryBracesIfPossible(): KtExpression {
     val parent = parent as? KtBlockStringTemplateEntry ?: return this
     return parent.dropCurlyBracketsIfPossible().expression!!
@@ -1008,65 +1005,6 @@ fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?)
     if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return listOf(declaration)
     val (_, overriddenElementsToDescriptor) = getSuperDescriptors(declaration, ignore)
     return if (overriddenElementsToDescriptor.isEmpty()) listOf(declaration) else overriddenElementsToDescriptor.keys.toList()
-}
-
-fun checkSuperMethodsWithPopup(
-    declaration: KtNamedDeclaration,
-    deepestSuperMethods: List<PsiElement>,
-    editor: Editor,
-    action: (List<PsiElement>) -> Unit
-) {
-    if (deepestSuperMethods.isEmpty()) return action(listOf(declaration))
-
-    val superMethod = deepestSuperMethods.first()
-
-    val (superClass, isAbstract) = when (superMethod) {
-        is PsiMember -> superMethod.containingClass to superMethod.hasModifierProperty(PsiModifier.ABSTRACT)
-        is KtNamedDeclaration -> superMethod.containingClassOrObject to superMethod.isAbstract()
-        else -> null
-    } ?: return action(listOf(declaration))
-    if (superClass == null) return action(listOf(declaration))
-
-    if (isUnitTestMode()) return action(deepestSuperMethods)
-
-    val kindIndex = when (declaration) {
-        is KtNamedFunction -> 1 // "function"
-        is KtProperty, is KtParameter -> 2 // "property"
-        else -> return
-    }
-
-    val unwrappedSupers = deepestSuperMethods.mapNotNull { it.namedUnwrappedElement }
-    val hasJavaMethods = unwrappedSupers.any { it is PsiMethod }
-    val hasKtMembers = unwrappedSupers.any { it is KtNamedDeclaration }
-    val superKindIndex = when {
-        hasJavaMethods && hasKtMembers -> 3 // "member"
-        hasJavaMethods -> 4 // "method"
-        else -> kindIndex
-    }
-
-    val renameBase = KotlinBundle.message("rename.base.0", superKindIndex + (if (deepestSuperMethods.size > 1) 10 else 0))
-    val renameCurrent = KotlinBundle.message("rename.only.current.0", kindIndex)
-    val title = KotlinBundle.message(
-        "rename.declaration.title.0.implements.1.2.of.3",
-        declaration.name ?: "",
-        if (isAbstract) 1 else 2,
-        ElementDescriptionUtil.getElementDescription(superMethod, UsageViewTypeLocation.INSTANCE),
-        SymbolPresentationUtil.getSymbolPresentableText(superClass)
-    )
-
-    JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(listOf(renameBase, renameCurrent))
-        .setTitle(title)
-        .setMovable(false)
-        .setResizable(false)
-        .setRequestFocus(true)
-        .setItemChosenCallback { value: String? ->
-            if (value == null) return@setItemChosenCallback
-            val chosenElements = if (value == renameBase) deepestSuperMethods + declaration else listOf(declaration)
-            action(chosenElements)
-        }
-        .createPopup()
-        .showInBestPositionFor(editor)
 }
 
 fun KtNamedDeclaration.isCompanionMemberOf(klass: KtClassOrObject): Boolean {

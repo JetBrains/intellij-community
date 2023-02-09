@@ -2,12 +2,11 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
-import com.intellij.diff.FrameDiffTool
-import com.intellij.diff.FrameDiffTool.DiffViewer
+import com.intellij.diff.DiffTool
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.openapi.diff.DiffBundle
 
-interface CombinedDiffTool: FrameDiffTool
+interface CombinedDiffTool : DiffTool
 
 /**
  * This tool intended only for persistence purpose.
@@ -15,8 +14,6 @@ interface CombinedDiffTool: FrameDiffTool
  */
 internal class CombinedSideBySideDiffTool : CombinedDiffTool {
   override fun canShow(context: DiffContext, request: DiffRequest): Boolean = false
-
-  override fun createComponent(context: DiffContext, request: DiffRequest): DiffViewer = throw UnsupportedOperationException()
 
   override fun getName(): String = DiffBundle.message("combined.side.by.side.viewer")
 }
@@ -27,8 +24,6 @@ internal class CombinedSideBySideDiffTool : CombinedDiffTool {
  */
 internal class CombinedUnifiedDiffTool : CombinedDiffTool {
   override fun canShow(context: DiffContext, request: DiffRequest): Boolean = false
-
-  override fun createComponent(context: DiffContext, request: DiffRequest): DiffViewer = throw UnsupportedOperationException()
 
   override fun getName(): String = DiffBundle.message("combined.unified.viewer")
 }

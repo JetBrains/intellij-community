@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-final class InterruptThreadAction extends DebuggerAction{
+final class InterruptThreadAction extends DebuggerAction {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final DebuggerTreeNodeImpl[] nodes = getSelectedNodes(e.getDataContext());
@@ -70,7 +70,7 @@ final class InterruptThreadAction extends DebuggerAction{
     boolean visible = false;
     boolean enabled = false;
 
-    if(selectedNodes != null && selectedNodes.length > 0){
+    if (selectedNodes != null && selectedNodes.length > 0) {
       visible = true;
       enabled = true;
       for (DebuggerTreeNodeImpl selectedNode : selectedNodes) {

@@ -7,9 +7,6 @@ import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListen
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class TestExternalSystemSettings
   extends AbstractExternalSystemSettings<TestExternalSystemSettings, TestExternalProjectSettings, TestExternalSystemSettingsListener> {
   public TestExternalSystemSettings(Project project) {

@@ -1,16 +1,16 @@
 class A {
     var mutable = 0
         set(value) {
-            mutable<lineMarker text="Recursive call">++</lineMarker>
-            mutable<lineMarker text="Recursive call">+=</lineMarker>1
-            mutable <lineMarker text="Recursive call">=</lineMarker> value
+            <lineMarker descr="Recursive call">mutable</lineMarker><lineMarker text="Recursive call">++</lineMarker>
+            <lineMarker descr="Recursive call">mutable</lineMarker><lineMarker text="Recursive call">+=</lineMarker>1
+            <lineMarker descr="Recursive call">mutable</lineMarker> <lineMarker text="Recursive call">=</lineMarker> value
         }
 
     var immutable = 0
         get() {
             println("$<lineMarker text="Recursive call">immutable</lineMarker>")
-            immutable<lineMarker text="Recursive call">++</lineMarker>
-            immutable <lineMarker text="Recursive call">+=</lineMarker> 1
+            <lineMarker descr="Recursive call">immutable</lineMarker><lineMarker text="Recursive call">++</lineMarker>
+            <lineMarker descr="Recursive call">immutable</lineMarker> <lineMarker text="Recursive call">+=</lineMarker> 1
             return <lineMarker text="Recursive call">immutable</lineMarker>
         }
 

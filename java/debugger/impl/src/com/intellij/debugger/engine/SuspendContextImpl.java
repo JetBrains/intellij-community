@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -30,9 +30,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-/**
- * @author lex
- */
 public abstract class SuspendContextImpl extends XSuspendContext implements SuspendContext {
   private static final Logger LOG = Logger.getInstance(SuspendContextImpl.class);
 
@@ -117,14 +114,14 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-        // delay enable collection to speedup the resume
+        // delay enable collection to speed up the resume
         for (ObjectReference r : myKeptReferences) {
           myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.LOWEST, () -> DebuggerUtilsEx.enableCollection(r));
         }
         myKeptReferences.clear();
       }
 
-      for(SuspendContextCommandImpl cmd = pollPostponedCommand(); cmd != null; cmd = pollPostponedCommand()) {
+      for (SuspendContextCommandImpl cmd = pollPostponedCommand(); cmd != null; cmd = pollPostponedCommand()) {
         cmd.notifyCancelled();
       }
       if (callResume) {
@@ -201,7 +198,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   public boolean suspends(ThreadReferenceProxyImpl thread) {
     assertNotResumed();
-    if(isEvaluating()) {
+    if (isEvaluating()) {
       return false;
     }
     return switch (getSuspendPolicy()) {
@@ -294,8 +291,8 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
         CompletableFuture.completedFuture(pausedThreads)
           .thenCompose(tds -> addThreads(tds, THREAD_NAME_COMPARATOR, false))
           .thenCompose(res -> res
-                 ? getDebugProcess().getVirtualMachineProxy().allThreadsAsync()
-                 : CompletableFuture.completedFuture(Collections.emptyList()))
+                              ? getDebugProcess().getVirtualMachineProxy().allThreadsAsync()
+                              : CompletableFuture.completedFuture(Collections.emptyList()))
           .thenAccept(tds -> addThreads(tds, THREADS_SUSPEND_AND_NAME_COMPARATOR, true))
           .exceptionally(throwable -> DebuggerUtilsAsync.logError(throwable));
       }

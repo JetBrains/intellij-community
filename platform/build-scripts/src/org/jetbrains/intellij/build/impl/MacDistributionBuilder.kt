@@ -3,26 +3,24 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.use
 import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.SystemProperties
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.*
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
 import org.jetbrains.intellij.build.impl.productInfo.generateMultiPlatformProductJson
-import org.jetbrains.intellij.build.io.copyDir
-import org.jetbrains.intellij.build.io.copyFile
-import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
-import org.jetbrains.intellij.build.io.writeNewFile
+import org.jetbrains.intellij.build.io.*
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -30,13 +28,10 @@ import java.nio.file.attribute.PosixFilePermission
 import java.time.LocalDate
 import java.util.function.BiConsumer
 import java.util.zip.Deflater
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
-
-internal val MAC_CODE_SIGN_OPTIONS: PersistentMap<String, String> = persistentMapOf(
-  "mac_codesign_options" to "runtime",
-  "mac_codesign_force" to "true",
-  "mac_codesign_deep" to "true",
-)
 
 class MacDistributionBuilder(override val context: BuildContext,
                              private val customizer: MacDistributionCustomizer,
@@ -116,13 +111,8 @@ class MacDistributionBuilder(override val context: BuildContext,
       copyDistFiles(context = context, newDir = macDistDir, os = OsFamily.MACOS, arch = arch)
     }
 
-    customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir.toString())
+    customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir)
     customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir, arch = arch)
-
-    generateUnixScripts(distBinDir = macDistDir.resolve("bin"),
-                        os = OsFamily.MACOS,
-                        arch = arch,
-                        context = context)
   }
 
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
@@ -131,25 +121,21 @@ class MacDistributionBuilder(override val context: BuildContext,
     }
 
     context.executeStep(spanBuilder("build macOS artifacts").setAttribute("arch", arch.name), BuildOptions.MAC_ARTIFACTS_STEP) {
-      val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
-      val publishSit = context.publishSitArchive
-      val publishZipOnly = !publishSit && context.options.buildStepsToSkip.contains(BuildOptions.MAC_DMG_STEP)
-      val binariesToSign = customizer.getBinariesToSign(context, arch)
-      if (!binariesToSign.isEmpty()) {
-        context.executeStep(spanBuilder("sign binaries for macOS distribution")
-                              .setAttribute("arch", arch.name), BuildOptions.MAC_SIGN_STEP) {
-          context.signFiles(binariesToSign.map(osAndArchSpecificDistPath::resolve), MAC_CODE_SIGN_OPTIONS)
-        }
-      }
-      val macZip = (if (publishZipOnly) context.paths.artifactDir else context.paths.tempDir).resolve("$baseName.mac.${arch.name}.zip")
-      val macZipWithoutRuntime = macZip.resolveSibling(macZip.nameWithoutExtension + "-no-jdk.zip")
-      val zipRoot = getMacZipRoot(customizer, context)
+      setLastModifiedTime(osAndArchSpecificDistPath, context)
       val runtimeDist = context.bundledRuntime.extract(BundledRuntimeImpl.getProductPrefix(context), OsFamily.MACOS, arch)
       val directories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDist)
       val extraFiles = context.getDistFiles(os = OsFamily.MACOS, arch = arch)
+      signMacBinaries(osAndArchSpecificDistPath, arch, directories, extraFiles)
+      val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
+      val publishSit = context.publishSitArchive
+      val publishZipOnly = !publishSit && context.isStepSkipped(BuildOptions.MAC_DMG_STEP)
+      val macZip = (if (publishZipOnly) context.paths.artifactDir else context.paths.tempDir).resolve("$baseName.mac.${arch.name}.zip")
+      val macZipWithoutRuntime = macZip.resolveSibling(macZip.nameWithoutExtension + "-no-jdk.zip")
+      val zipRoot = getMacZipRoot(customizer, context)
       val compressionLevel = if (publishSit || publishZipOnly) Deflater.DEFAULT_COMPRESSION else Deflater.BEST_SPEED
       if (context.options.buildMacArtifactsWithRuntime) {
         buildMacZip(
+          arch = arch,
           targetFile = macZip,
           zipRoot = zipRoot,
           productJson = generateMacProductJson(builtinModule = context.builtinModule,
@@ -158,12 +144,13 @@ class MacDistributionBuilder(override val context: BuildContext,
                                                context = context),
           directories = directories,
           extraFiles = extraFiles,
-          executableFilePatterns = generateExecutableFilesPatterns(true),
+          includeRuntime = true,
           compressionLevel = compressionLevel
         )
       }
       if (context.options.buildMacArtifactsWithoutRuntime) {
         buildMacZip(
+          arch = arch,
           targetFile = macZipWithoutRuntime,
           zipRoot = zipRoot,
           productJson = generateMacProductJson(builtinModule = context.builtinModule,
@@ -172,12 +159,12 @@ class MacDistributionBuilder(override val context: BuildContext,
                                                context = context),
           directories = directories.filterNot { it == runtimeDist },
           extraFiles = extraFiles,
-          executableFilePatterns = generateExecutableFilesPatterns(false),
+          includeRuntime = false,
           compressionLevel = compressionLevel
         )
       }
       if (publishZipOnly) {
-        Span.current().addEvent("skip DMG and SIT artifacts producing")
+        Span.current().addEvent("skip .dmg and .sit artifacts producing")
         if (context.options.buildMacArtifactsWithRuntime) {
           context.notifyArtifactBuilt(macZip)
         }
@@ -186,13 +173,35 @@ class MacDistributionBuilder(override val context: BuildContext,
         }
       }
       else {
-        buildForArch(builtinModule = context.builtinModule,
-                     arch = arch,
+        buildForArch(arch = arch,
                      macZip = macZip,
                      macZipWithoutRuntime = macZipWithoutRuntime,
                      customizer = customizer,
                      context = context)
       }
+    }
+  }
+
+  private suspend fun signMacBinaries(osAndArchSpecificDistPath: Path,
+                                      arch: JvmArchitecture,
+                                      directories: List<Path>,
+                                      extraFiles: Collection<DistFile>) {
+    withContext(Dispatchers.IO) {
+      val binariesToSign = customizer.getBinariesToSign(context, arch).map(osAndArchSpecificDistPath::resolve)
+      signMacBinaries(context, binariesToSign)
+      directories.asSequence()
+        .plus(extraFiles.asSequence().map { it.file })
+        /**
+         * [BuildPaths.distAllDir] content is expected to be already signed in [buildOsSpecificDistributions]
+         * preventing concurrent modifications by different [OsSpecificDistributionBuilder]s,
+         * otherwise zip/tar build may fail due to FS change (changed attributes) while reading a file.
+         */
+        .filterNot { it.startsWith(context.paths.distAllDir) }
+        .forEach {
+          launch {
+            recursivelySignMacBinaries(it, context, generateExecutableFilesMatchers(false, arch).keys)
+          }
+        }
     }
   }
 
@@ -342,43 +351,29 @@ class MacDistributionBuilder(override val context: BuildContext,
     }
   }
 
-  override fun generateExecutableFilesPatterns(includeRuntime: Boolean): List<String> {
-    var executableFilePatterns = persistentListOf(
-      "bin/*.sh",
-      "plugins/**/*.sh",
-      "bin/*.py",
-      "bin/fsnotifier",
-      "bin/printenv",
-      "bin/restarter",
-      "bin/repair",
-      "MacOS/*"
-    )
-    if (includeRuntime) {
-      executableFilePatterns = executableFilePatterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS))
-    }
-    return executableFilePatterns
-      .addAll(customizer.extraExecutables)
-      .addAll(context.getExtraExecutablePattern(OsFamily.MACOS))
+  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
+    return customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
   }
 
-  private suspend fun buildForArch(builtinModule: BuiltinModulesFileData?,
-                                   arch: JvmArchitecture,
-                                   macZip: Path, macZipWithoutRuntime: Path?,
-                                   customizer: MacDistributionCustomizer,
+  private suspend fun buildForArch(arch: JvmArchitecture,
+                                   macZip: Path,
+                                   macZipWithoutRuntime: Path?, customizer: MacDistributionCustomizer,
                                    context: BuildContext) {
     spanBuilder("build macOS artifacts for specific arch").setAttribute("arch", arch.name).useWithScope2 {
-      val notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true)
+      val notarize = SystemProperties.getBooleanProperty(
+        "intellij.build.mac.notarize",
+        !context.isStepSkipped(BuildOptions.MAC_NOTARIZE_STEP)
+      )
       withContext(Dispatchers.IO) {
-        buildForArch(builtinModule, arch, macZip, macZipWithoutRuntime, notarize, customizer, context)
+        buildForArch(arch, macZip, macZipWithoutRuntime, notarize, customizer, context)
         Files.deleteIfExists(macZip)
       }
     }
   }
 
-  private suspend fun buildForArch(builtinModule: BuiltinModulesFileData?,
-                                   arch: JvmArchitecture,
-                                   macZip: Path, macZipWithoutRuntime: Path?,
-                                   notarize: Boolean,
+  private suspend fun buildForArch(arch: JvmArchitecture,
+                                   macZip: Path,
+                                   macZipWithoutRuntime: Path?, notarize: Boolean,
                                    customizer: MacDistributionCustomizer,
                                    context: BuildContext) {
     val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
@@ -390,7 +385,6 @@ class MacDistributionBuilder(override val context: BuildContext,
           context
         ) {
           signAndBuildDmg(builder = this@MacDistributionBuilder,
-                          builtinModule = builtinModule,
                           context = context,
                           customizer = customizer,
                           macHostProperties = context.proprietaryBuildTools.macHostProperties,
@@ -409,7 +403,6 @@ class MacDistributionBuilder(override val context: BuildContext,
           context
         ) {
           signAndBuildDmg(builder = this@MacDistributionBuilder,
-                          builtinModule = builtinModule,
                           context = context,
                           customizer = customizer,
                           macHostProperties = context.proprietaryBuildTools.macHostProperties,
@@ -469,51 +462,71 @@ internal fun generateMacProductJson(builtinModule: BuiltinModulesFileData?,
     context = context)
 }
 
-private fun MacDistributionBuilder.buildMacZip(targetFile: Path,
-                                               zipRoot: String,
-                                               productJson: String,
-                                               directories: List<Path>,
-                                               extraFiles: Collection<DistFile>,
-                                               executableFilePatterns: List<String>,
-                                               compressionLevel: Int) {
-  spanBuilder("build zip archive for macOS")
-    .setAttribute("file", targetFile.toString())
-    .setAttribute("zipRoot", zipRoot)
-    .setAttribute(AttributeKey.stringArrayKey("executableFilePatterns"), executableFilePatterns)
-    .use {
-      for (dir in directories) {
-        updateExecutablePermissions(dir, executableFilePatterns)
-      }
-      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, _ ->
-        if (SystemInfoRt.isUnix && PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions(file)) {
-          entry.unixMode = executableFileUnixMode
-        }
-      }
-
-      writeNewFile(targetFile) { targetFileChannel ->
-        NoDuplicateZipArchiveOutputStream(targetFileChannel, compress = context.options.compressZipFiles).use { zipOutStream ->
-          zipOutStream.setLevel(compressionLevel)
-
-          zipOutStream.entry("$zipRoot/Resources/product-info.json", productJson.encodeToByteArray())
-
-          val fileFilter: (Path, String) -> Boolean = { sourceFile, relativePath ->
-            if (relativePath.endsWith(".txt") && !relativePath.contains('/')) {
-              zipOutStream.entry("$zipRoot/Resources/${relativePath}", sourceFile)
-              false
-            }
-            else {
-              true
-            }
-          }
-          for (dir in directories) {
-            zipOutStream.dir(dir, "$zipRoot/", fileFilter = fileFilter, entryCustomizer = entryCustomizer)
-          }
-
-          for (item in extraFiles) {
-            zipOutStream.entry(name = "$zipRoot/${item.relativePath}", file = item.file)
+private suspend fun MacDistributionBuilder.buildMacZip(targetFile: Path,
+                                                       zipRoot: String,
+                                                       arch: JvmArchitecture,
+                                                       productJson: String,
+                                                       directories: List<Path>,
+                                                       extraFiles: Collection<DistFile>,
+                                                       includeRuntime: Boolean,
+                                                       compressionLevel: Int) {
+  val executableFileMatchers = generateExecutableFilesMatchers(includeRuntime, arch)
+  withContext(Dispatchers.IO) {
+    spanBuilder("build zip archive for macOS")
+      .setAttribute("file", targetFile.toString())
+      .setAttribute("zipRoot", zipRoot)
+      .setAttribute(AttributeKey.stringArrayKey("executableFilePatterns"), executableFileMatchers.values.toList())
+      .useWithScope2 {
+        val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, relativePathString ->
+          val relativePath = Path.of(relativePathString)
+          if (executableFileMatchers.any { it.key.matches(relativePath) } ||
+              SystemInfoRt.isUnix && PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions(file)) {
+            entry.unixMode = executableFileUnixMode
           }
         }
+
+        writeNewFile(targetFile) { targetFileChannel ->
+          NoDuplicateZipArchiveOutputStream(targetFileChannel, compress = context.options.compressZipFiles).use { zipOutStream ->
+            zipOutStream.setLevel(compressionLevel)
+            if (compressionLevel == Deflater.BEST_SPEED) {
+              // file is used only for transfer to mac builder
+              zipOutStream.setUseZip64(Zip64Mode.Never)
+            }
+
+            zipOutStream.entry("$zipRoot/Resources/product-info.json", productJson.encodeToByteArray())
+
+            val fileFilter: (Path, String) -> Boolean = { sourceFile, relativePath ->
+              val contentsDir = !relativePath.contains('/')
+              when {
+                contentsDir && relativePath.endsWith(".txt") -> {
+                  zipOutStream.entry("$zipRoot/Resources/$relativePath", sourceFile)
+                  false
+                }
+                contentsDir && sourceFile.name != "Info.plist" -> {
+                  error("Only Info.plist file is allowed in $zipRoot directory but found $zipRoot/$relativePath")
+                }
+                !contentsDir && relativePath.startsWith("bin/") && sourceFile.extension == "jnilib" -> {
+                  val dylib = sourceFile.nameWithoutExtension + ".dylib"
+                  check(sourceFile.resolveSibling(dylib).exists()) {
+                    "$dylib->${sourceFile.name} symlink is expected in $zipRoot/bin"
+                  }
+                  true
+                }
+                else -> {
+                  true
+                }
+              }
+            }
+            for (dir in directories) {
+              zipOutStream.dir(dir, "$zipRoot/", fileFilter = fileFilter, entryCustomizer = entryCustomizer)
+            }
+
+            for (item in extraFiles) {
+              zipOutStream.entry(name = "$zipRoot/${item.relativePath}", file = item.file)
+            }
+          }
+        }
+        checkInArchive(archiveFile = targetFile, pathInArchive = "$zipRoot/Resources", context = context)
       }
-      checkInArchive(archiveFile = targetFile, pathInArchive = "$zipRoot/Resources", context = context)
-    }
+  }
 }

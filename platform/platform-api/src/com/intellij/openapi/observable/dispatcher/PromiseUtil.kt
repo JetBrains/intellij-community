@@ -2,15 +2,13 @@
 package com.intellij.openapi.observable.dispatcher
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.observable.util.getPromise1
-import com.intellij.openapi.observable.util.getPromise2
+import com.intellij.openapi.observable.util.getPromise
 
+fun SingleEventDispatcher0.getPromise(parentDisposable: Disposable?) =
+  getDelegateDispatcher().getPromise(parentDisposable)
 
-fun SingleEventDispatcher.Observable.getPromise(parentDisposable: Disposable?) =
-  com.intellij.openapi.observable.util.getPromise(parentDisposable, ::onceWhenEventHappened)
+fun <T> SingleEventDispatcher<T>.getPromise(parentDisposable: Disposable?) =
+  getPromise(parentDisposable, ::onceWhenEventHappened)
 
-fun <A1> SingleEventDispatcher.Observable1<A1>.getPromise(parentDisposable: Disposable?) =
-  getPromise1(parentDisposable, ::onceWhenEventHappened)
-
-fun <A1, A2> SingleEventDispatcher.Observable2<A1, A2>.getPromise(parentDisposable: Disposable?) =
-  getPromise2(parentDisposable, ::onceWhenEventHappened)
+fun <T1, T2> SingleEventDispatcher2<T1, T2>.getPromise(parentDisposable: Disposable?) =
+  getDelegateDispatcher().getPromise(parentDisposable)

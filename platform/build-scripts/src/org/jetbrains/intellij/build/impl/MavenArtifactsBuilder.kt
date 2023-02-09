@@ -361,7 +361,7 @@ private fun layoutMavenArtifacts(modulesToPublish: Map<MavenArtifactData, List<J
       targetFile = artifactDir.resolve(artifactData.coordinates.getFileName("", "jar")),
       sources = modulesWithSources.map {
         DirSource(dir = context.getModuleOutputDir(it), excludes = commonModuleExcludes)
-      }
+      },
     )
 
     val publishSourcesForModules = modules.filter { publishSourceFilter(it, context) }

@@ -34,13 +34,9 @@ internal class EnableSettingsSyncDialog
   }
 
   override fun createCenterPanel(): JComponent {
-    configPanel = SettingsSyncPanelFactory.createPanel(getHeader())
+    configPanel = SettingsSyncPanelFactory.createPanel(message("enable.dialog.select.what.to.sync"))
     configPanel.reset()
     return configPanel
-  }
-
-  private fun getHeader(): @Nls String {
-    return (if (remoteSettingsFound) message("enable.dialog.settings.found") + " " else "") + message("enable.dialog.select.what.to.sync")
   }
 
   override fun createActions(): Array<Action> =

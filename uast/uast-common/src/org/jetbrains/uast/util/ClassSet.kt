@@ -38,27 +38,70 @@ private class ClassSetImpl<out T>(val initialClasses: List<Class<out T>>) : Clas
   override fun toList(): List<Class<out @UnsafeVariance T>> = initialClasses
 }
 
-private class SimpleClassSetImpl<out T>(val initialClasses: List<Class<out T>>) : ClassSet<T> {
-  override fun isEmpty(): Boolean = initialClasses.isEmpty()
+private class ClassSetImpl1<out T>(val clazz: Class<out T>) : ClassSet<T> {
+  private val list: List<Class<out T>> = listOf(clazz)
+
+  override fun isEmpty(): Boolean = false
 
   override operator fun contains(element: Class<out @UnsafeVariance T>): Boolean {
-    return initialClasses.any { it.isAssignableFrom(element) }
+    return clazz.isAssignableFrom(element)
   }
 
   override fun toString(): String {
-    return "SimpleClassSetImpl($initialClasses)"
+    return "ClassSetImpl1($clazz)"
   }
 
-  override fun toList(): List<Class<out @UnsafeVariance T>> = initialClasses
+  override fun toList(): List<Class<out @UnsafeVariance T>> = list
+}
+
+private class ClassSetImpl2<out T>(val aClazz: Class<out T>,
+                                   val bClazz: Class<out T>) : ClassSet<T> {
+  private val list: List<Class<out T>> = listOf(aClazz, bClazz)
+
+  override fun isEmpty(): Boolean = false
+
+  override operator fun contains(element: Class<out @UnsafeVariance T>): Boolean {
+    return aClazz.isAssignableFrom(element)
+           || bClazz.isAssignableFrom(element)
+  }
+
+  override fun toString(): String {
+    return "ClassSetImpl2($aClazz, $bClazz)"
+  }
+
+  override fun toList(): List<Class<out @UnsafeVariance T>> = list
+}
+
+private class ClassSetImpl3<out T>(val aClazz: Class<out T>,
+                                   val bClazz: Class<out T>,
+                                   val cClazz: Class<out T>) : ClassSet<T> {
+  private val list: List<Class<out T>> = listOf(aClazz, bClazz, cClazz)
+
+  override fun isEmpty(): Boolean = false
+
+  override operator fun contains(element: Class<out @UnsafeVariance T>): Boolean {
+    return aClazz.isAssignableFrom(element)
+           || bClazz.isAssignableFrom(element)
+           || cClazz.isAssignableFrom(element)
+  }
+
+  override fun toString(): String {
+    return "ClassSetImpl3($aClazz, $bClazz, $cClazz)"
+  }
+
+  override fun toList(): List<Class<out @UnsafeVariance T>> = list
 }
 
 fun <T> classSetOf(vararg classes: Class<out T>): ClassSet<T> {
   if (classes.isEmpty()) return emptyClassSet
 
-  return if (classes.size <= SIMPLE_CLASS_SET_LIMIT)
-    SimpleClassSetImpl(classes.toList())
-  else
-    ClassSetImpl(classes.toList())
+  return when (classes.size) {
+    0 -> emptyClassSet
+    1 -> ClassSetImpl1(classes[0])
+    2 -> ClassSetImpl2(classes[0], classes[1])
+    3 -> ClassSetImpl3(classes[0], classes[1], classes[2])
+    else -> ClassSetImpl(classes.toList())
+  }
 }
 
 private val emptyClassSet: ClassSet<Nothing> = object : ClassSet<Nothing> {
@@ -74,5 +117,3 @@ class ClassSetsWrapper<out T>(val sets: Array<ClassSet<@UnsafeVariance T>>) : Cl
   override operator fun contains(element: Class<out @UnsafeVariance T>): Boolean = sets.any { it.contains(element) }
   override fun toList(): List<Class<out T>> = ContainerUtil.concat(*sets.map2Array { it.toList() })
 }
-
-private const val SIMPLE_CLASS_SET_LIMIT = 5

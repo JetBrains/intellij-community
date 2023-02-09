@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -8,10 +8,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author lex
- */
-public class AssignmentEvaluator implements Evaluator{
+public class AssignmentEvaluator implements Evaluator {
   private final Evaluator myLeftEvaluator;
   private final Evaluator myRightEvaluator;
 
@@ -26,7 +23,7 @@ public class AssignmentEvaluator implements Evaluator{
     final Modifier modifier = myLeftEvaluator.getModifier();
 
     final Object right = myRightEvaluator.evaluate(context);
-    if(right != null && !(right instanceof Value)) {
+    if (right != null && !(right instanceof Value)) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.not.rvalue"));
     }
 
@@ -36,7 +33,7 @@ public class AssignmentEvaluator implements Evaluator{
   }
 
   static void assign(Modifier modifier, Object right, EvaluationContextImpl context) throws EvaluateException {
-    if(modifier == null) {
+    if (modifier == null) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.not.lvalue"));
     }
     try {

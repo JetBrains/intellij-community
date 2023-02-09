@@ -12,9 +12,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiMetaOwner;
 
-/**
- * @author spleaner
- */
 public class XmlRename2Test extends XmlRenameTestCase {
   public void testRenameAndUndo_IDEADEV_11439() throws Exception {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());

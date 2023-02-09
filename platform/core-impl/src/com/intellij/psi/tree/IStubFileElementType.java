@@ -47,8 +47,14 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
   /**
    * Stub structure version. Should be incremented each time when stub tree changes (e.g. elements added/removed,
    * element serialization/deserialization changes).
+   * <p>
    * Make sure to invoke super method for {@link TemplateLanguage} to prevent stub serialization problems due to
-   * data language stub changes
+   * data language stub changes.
+   * <p>
+   * Important: Negative values are not allowed! The platform relies on the fact that template languages have stub versions bigger than
+   * {@link IStubFileElementType#TEMPLATE_STUB_BASE_VERSION}, see {@link StubBuilderType#getVersion()}. At the same time
+   * {@link IStubFileElementType#TEMPLATE_STUB_BASE_VERSION} is computed as a sum of stub versions of all non-template languages.
+   *
    * @return stub version
    */
   public int getStubVersion() {

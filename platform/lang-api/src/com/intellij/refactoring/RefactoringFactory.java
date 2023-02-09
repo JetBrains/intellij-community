@@ -6,9 +6,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public abstract class RefactoringFactory {
   public static RefactoringFactory getInstance(Project project) {
     return project.getService(RefactoringFactory.class);

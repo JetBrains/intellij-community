@@ -36,8 +36,6 @@ for the IntelliJ Platform.
 Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory. 
 * If IntelliJ IDEA displays an error about a missing or out of date required plugin (e.g. Kotlin),
   [enable, upgrade, or install that plugin](https://www.jetbrains.com/help/idea/managing-plugins.html) and restart IntelliJ IDEA.
-* If IntelliJ IDEA displays an error about a Gradle configuration not found,
-  [refresh the Gradle projects](https://www.jetbrains.com/help/idea/jetgradle-tool-window.html). 
 
 ### IntelliJ Build Configuration
 1. It's recommended to use JetBrains Runtime 17 to compile the project. 
@@ -62,6 +60,10 @@ Examples (`./` should be added only for Linux/macOS):
 
 `installers.cmd` is used just to run [OpenSourceCommunityInstallersBuildTarget](build/scripts/OpenSourceCommunityInstallersBuildTarget.kt) from the command line.
 You may call it directly from IDEA, see run configuration `Build IDEA Community Installers (current OS)` for an example.
+
+#### Dockerized Build Environment
+To build installation packages inside a Docker container with preinstalled dependencies and tools, run the following command in `<IDEA_HOME>` directory (on Windows, use PowerShell):  
+`docker run --rm -it -v ${PWD}:/community $(docker build -q . --target build_env)`
 
 ## Running IntelliJ IDEA
 To run the IntelliJ IDEA built from source, choose **Run | Run** from the main menu. This will use the preconfigured run configuration "**IDEA**".

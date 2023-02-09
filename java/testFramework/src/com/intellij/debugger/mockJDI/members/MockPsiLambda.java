@@ -44,7 +44,10 @@ public class MockPsiLambda extends MockMirror implements Method {
 
   @Override
   public List<Type> argumentTypes() {
-    return ContainerUtil.map(myPsiLambdaExpression.getParameterList().getParameters(), parameter -> MockType.createType(myVirtualMachine, parameter.getType()));
+    return ContainerUtil.map(
+      myPsiLambdaExpression.getParameterList().getParameters(),
+      parameter -> MockType.createType(myVirtualMachine, parameter.getType())
+    );
   }
 
   @Override
@@ -139,7 +142,7 @@ public class MockPsiLambda extends MockMirror implements Method {
 
   @Override
   public String name() {
-    return "lambda$"+myDeclaringMethod.getName()+"$mock";
+    return "lambda$" + myDeclaringMethod.getName() + "$mock";
   }
 
   @Override
@@ -199,7 +202,7 @@ public class MockPsiLambda extends MockMirror implements Method {
 
   @Override
   public MockVirtualMachine virtualMachine() {
-    return myVirtualMachine;
+    return super.virtualMachine();
   }
 
   @Override

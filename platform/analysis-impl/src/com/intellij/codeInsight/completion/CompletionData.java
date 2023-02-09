@@ -119,11 +119,7 @@ public class CompletionData {
     }
   };
 
-  /**
-   * @deprecated Use {@link CompletionUtil} methods instead
-   */
-  @Deprecated(forRemoval = true)
-  public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile, ElementPattern<Character> prefixStartTrim) {
+  private static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile, ElementPattern<Character> prefixStartTrim) {
     if(insertedElement == null) return "";
 
     final Document document = insertedElement.getContainingFile().getViewProvider().getDocument();
@@ -148,11 +144,7 @@ public class CompletionData {
     return findPrefixStatic(insertedElement, offsetInFile, NOT_JAVA_ID);
   }
 
-  /**
-   * @deprecated Use {@link CompletionUtil} methods instead
-   */
-  @Deprecated(forRemoval = true)
-  public static String findPrefixDefault(final PsiElement insertedElement, final int offset, @NotNull final ElementPattern trimStart) {
+  private static String findPrefixDefault(final PsiElement insertedElement, final int offset, @NotNull final ElementPattern trimStart) {
     String substr = insertedElement.getText().substring(0, offset - insertedElement.getTextRange().getStartOffset());
     if (substr.length() == 0 || Character.isWhitespace(substr.charAt(substr.length() - 1))) return "";
 
@@ -195,12 +187,10 @@ public class CompletionData {
   protected void addLookupItem(Set<? super LookupElement> set, TailType tailType, @NotNull Object completion, final CompletionVariant variant) {
     LookupElement ret = objectToLookupItem(completion);
 
-    if (!(ret instanceof LookupItem)) {
+    if (!(ret instanceof LookupItem item)) {
       set.add(ret);
       return;
     }
-
-    LookupItem item = (LookupItem)ret;
 
     InsertHandler<?> insertHandler = variant.getInsertHandler();
     if(insertHandler != null && item.getInsertHandler() == null) {
@@ -236,8 +226,7 @@ public class CompletionData {
           LOG.error("Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(completions));
           continue;
         }
-        if (completion instanceof PsiElement) {
-          final PsiElement psiElement = (PsiElement)completion;
+        if (completion instanceof PsiElement psiElement) {
           if (filter.isClassAcceptable(psiElement.getClass()) && filter.isAcceptable(psiElement, position)) {
             addLookupItem(set, tailType, completion, variant);
           }

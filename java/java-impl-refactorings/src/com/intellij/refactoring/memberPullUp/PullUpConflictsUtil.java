@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -27,7 +26,10 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class PullUpConflictsUtil {
   private PullUpConflictsUtil() {}
@@ -99,9 +101,8 @@ public final class PullUpConflictsUtil {
             if (!sClass.isInheritor(subclass, true) && !sClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
               for (PsiMethod aMethod : newAbstractMethods) {
                 if (MethodSignatureUtil.findMethodBySignature(sClass, aMethod, true) == null) {
-                  conflicts.putValue(sClass, JavaBundle
-                    .message("pull.up.concrete.inherit.abstract.method.conflict", RefactoringUIUtil.getDescription(sClass, true)));
-                  return false;
+                  String description = RefactoringUIUtil.getDescription(sClass, true);
+                  conflicts.putValue(sClass, JavaBundle.message("pull.up.concrete.inherit.abstract.method.conflict", description));
                 }
               }
             }
@@ -256,8 +257,7 @@ public final class PullUpConflictsUtil {
         conflictsList.putValue(superClass, message);
       }
 
-      if (member instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)member;
+      if (member instanceof PsiMethod method) {
         final PsiModifierList modifierList = method.getModifierList();
         if (!modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
           for (PsiClass subClass : ClassInheritorsSearch.search(superClass)) {
@@ -398,8 +398,7 @@ public final class PullUpConflictsUtil {
 
 
     private boolean existsInSuperClass(PsiElement classMember) {
-      if (!(classMember instanceof PsiMethod)) return false;
-      final PsiMethod method = ((PsiMethod)classMember);
+      if (!(classMember instanceof PsiMethod method)) return false;
       if (myInterfaceContainmentVerifier.checkedInterfacesContain(method)) return true;
       if (mySuperClass == null) return false;
       final PsiMethod methodBySignature = mySuperClass.findMethodBySignature(method, true);

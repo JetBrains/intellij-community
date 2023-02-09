@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 
 import static com.jetbrains.python.facet.LibraryContributingFacet.PYTHON_FACET_LIBRARY_NAME_SUFFIX;
 
-public class PythonFacetUtil {
+public final class PythonFacetUtil {
   public static String getFacetLibraryName(final String sdkName) {
     return sdkName + PYTHON_FACET_LIBRARY_NAME_SUFFIX;
   }

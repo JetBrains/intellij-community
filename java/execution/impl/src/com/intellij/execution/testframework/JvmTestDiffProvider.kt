@@ -1,89 +1,49 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework
 
+import com.intellij.execution.filters.ExceptionInfoCache
+import com.intellij.execution.filters.ExceptionLineParserFactory
 import com.intellij.execution.testframework.actions.TestDiffProvider
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.asSafely
+import org.jetbrains.uast.*
 
-abstract class JvmTestDiffProvider<E : PsiElement> : TestDiffProvider {
+abstract class JvmTestDiffProvider : TestDiffProvider {
   final override fun findExpected(project: Project, stackTrace: String): PsiElement? {
-    var expectedParamIndex: Int? = null
-    parseStackTrace(stackTrace).forEach { stackFrame ->
-      val location = stackFrame.location
-      if (location !is JavaStackFrame.FileLocation) return@forEach
-      val file = JavaPsiFacade.getInstance(project)
-        .findClass(stackFrame.fqClassName, GlobalSearchScope.projectScope(project))
-        ?.containingFile?.navigationElement?.asSafely<PsiFile>() ?: return@forEach
-      val virtualFile = file.virtualFile ?: return@forEach
-      val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return@forEach
-      val lineNumber = location.lineNumber ?: return@forEach
+    var expectedParam: UParameter? = null
+    var enclosingMethod: UMethod? = null
+    val lineParser = ExceptionLineParserFactory.getInstance().create(ExceptionInfoCache(project, GlobalSearchScope.allScope(project)))
+    stackTrace.lineSequence().forEach { line ->
+      lineParser.execute(line, line.length) ?: return@forEach
+      val file = lineParser.file ?: return@findExpected null
+      val diffProvider = TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(file.language).asSafely<JvmTestDiffProvider>()
+      if (diffProvider == null) return@findExpected null
+      if (diffProvider.isCompiled(file)) {
+        if (expectedParam == null) return@forEach // keep looking, test class wasn't found yet
+        else return@findExpected null // return null when tracking expected param
+      }
+      val virtualFile = file.virtualFile ?: return@findExpected null
+      val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return@findExpected null
+      val lineNumber = lineParser.info.lineNumber
+      if (lineNumber < 1 || lineNumber > document.lineCount) return@findExpected null
       val startOffset = document.getLineStartOffset(lineNumber - 1)
       val endOffset = document.getLineEndOffset(lineNumber - 1)
-      val failedCall = getFailedCall(file, startOffset, endOffset) ?: return@forEach
-      val expected = getExpected(failedCall, expectedParamIndex) ?: return@forEach
-      expectedParamIndex = getParamIndex(expected)
-      return InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, expected.textOffset + 1)
+      val failedCall = diffProvider.failedCall(file, startOffset, endOffset, enclosingMethod) ?: return@findExpected null
+      val expected = diffProvider.getExpected(failedCall, expectedParam) ?: return@findExpected null
+      enclosingMethod = failedCall.toUElement()?.getParentOfType<UMethod>(true)
+      expectedParam = expected.toUElementOfType<UParameter>()
+      if (expectedParam == null) return expected
     }
     return null
   }
 
-  abstract fun getParamIndex(param: PsiElement): Int?
+  abstract fun isCompiled(file: PsiFile): Boolean
 
-  abstract fun getFailedCall(file: PsiFile, startOffset: Int, endOffset: Int): E?
+  abstract fun failedCall(file: PsiFile, startOffset: Int, endOffset: Int, method: UMethod?): PsiElement?
 
-  abstract fun getExpected(call: E, argIndex: Int?): PsiElement?
-
-  private fun parseStackTrace(stackStrace: String): Sequence<JavaStackFrame> {
-    return stackStrace.lineSequence().mapNotNull { stackFrame ->
-      if (stackFrame.isEmpty()) null else JavaStackFrame.parse(stackFrame)
-    }
-  }
-
-  private data class JavaStackFrame(
-    val fqModuleName: String?,
-    val fqClassName: String,
-    val methodName: String,
-    val location: Location
-  ) {
-    sealed interface Location {
-      companion object {
-        fun parse(location: String): Location {
-          if (location == "Native Method") {
-            return NativeLocation
-          } else {
-            val fileName = location.substringBefore(':')
-            val lineNumber = location.substringAfter(':').toIntOrNull()
-            return FileLocation(fileName, lineNumber)
-          }
-        }
-      }
-    }
-
-    object NativeLocation : Location
-
-    data class FileLocation(val fileName: String, val lineNumber: Int?) : Location
-
-    companion object {
-      fun parse(line: String): JavaStackFrame {
-        val strippedFrame = line.substringAfter("at ")
-        val signature = strippedFrame.substringBefore('(')
-        val location = Location.parse(strippedFrame.substringAfter('(').removeSuffix(")"))
-        val pathToClass = signature.substringBeforeLast('.')
-        val (fqModuleName, fqClassName) = if (pathToClass.contains('/')) {
-          val splits = pathToClass.split('/')
-          splits.first() to splits.last()
-        } else {
-          null to pathToClass
-        }
-        val methodName = signature.substringAfterLast('.')
-        return JavaStackFrame(fqModuleName, fqClassName, methodName, location)
-      }
-    }
-  }
+  abstract fun getExpected(call: PsiElement, param: UParameter?): PsiElement?
 }

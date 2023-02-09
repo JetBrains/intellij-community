@@ -28,6 +28,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ObjectUtils;
@@ -38,12 +41,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.basic.BasicTextUI;
+import javax.swing.text.View;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -88,7 +94,8 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     mySubSystemLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
     myContentPanel.add(mySubSystemLabel);
 
-    myTextPane = new StyledTextPane();
+    myTextPane = new MyTextPane();
+    myTextPane.putClientProperty("caretWidth", 0);
     myTextPane.setBackground(TipUiSettings.getPanelBackground());
     myTextPane.setMargin(JBInsets.emptyInsets());
     myTextPane.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -148,7 +155,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
                                                           ActionButtonLook look,
                                                           @NotNull String place,
                                                           @NotNull Presentation presentation,
-                                                          @NotNull Dimension minimumSize) {
+                                                          Supplier<? extends @NotNull Dimension> minimumSize) {
         ActionButton button = new ActionButton(action, presentation, place, getFeedbackButtonSize()) {
           @Override
           protected void paintButtonLook(Graphics g) {
@@ -255,8 +262,16 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   private void setTip(@NotNull TipAndTrickBean tip) {
+    IdeFrame projectFrame = myProject != null ? WindowManager.getInstance().getIdeFrame(myProject) : null;
+    IdeFrame welcomeFrame = WelcomeFrame.getInstance();
+    Component contextComponent = this.isShowing() ? this :
+                                 projectFrame != null ? projectFrame.getComponent() :
+                                 welcomeFrame != null ? welcomeFrame.getComponent() : null;
+    if (contextComponent == null) {
+      LOG.warn("Not found context component");
+    }
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      List<TextParagraph> tipContent = TipUtils.loadAndParseTip(tip);
+      List<TextParagraph> tipContent = TipUtils.loadAndParseTip(tip, contextComponent);
       ApplicationManager.getApplication().invokeLater(() -> doSetTip(tip, tipContent), ModalityState.stateForComponent(this));
     });
   }
@@ -399,6 +414,32 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   @Override
   public String getDoNotShowMessage() {
     return IdeBundle.message("checkbox.show.tips.on.startup");
+  }
+
+  private static class MyTextPane extends StyledTextPane {
+    @Override
+    public void redraw() {
+      super.redraw();
+      View root = getRootView();
+      // request layout the text with the width according to scroll bar is shown
+      // it will be extended if scroll bar is not required in a result
+      int width = TipUiSettings.getImageMaxWidth() - JBUI.scale(14);
+      root.setSize(width, root.getPreferredSpan(View.Y_AXIS));
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      // take size from the root view directly, because base implementation is resetting the root view size
+      // if current bounds is empty (component is not added to screen)
+      View root = getRootView();
+      Dimension dim = new Dimension((int)root.getPreferredSpan(View.X_AXIS), (int)root.getPreferredSpan(View.Y_AXIS));
+      JBInsets.addTo(dim, getInsets());
+      return dim;
+    }
+
+    private View getRootView() {
+      return ((BasicTextUI)ui).getRootView(this);
+    }
   }
 
   private class PreviousTipAction extends AbstractAction {

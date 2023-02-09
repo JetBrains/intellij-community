@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -140,7 +140,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     mySplitter.setDividerWidth(ExperimentalUI.isNewUI() ? 1 : 2);
     mySplitter.getDivider().setBackground(JBColor.lazy(() -> EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.PREVIEW_BORDER_COLOR)));
 
-    myToolbarWrapper = createMarkdownToolbarWrapper(mySplitter);
+    myToolbarWrapper = createSplitEditorToolbar(mySplitter);
 
     if (myLayout == null) {
       String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
@@ -157,8 +157,8 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     myToolbarWrapper.setVisible(false);
     MyEditorLayeredComponentWrapper layeredPane = new MyEditorLayeredComponentWrapper(panel);
     myComponent = layeredPane;
-    LayoutActionsFloatingToolbar toolbar = new LayoutActionsFloatingToolbar(myComponent, myToolbarWrapper.getRightToolbar().getActionGroup());
-    Disposer.register(this, toolbar);
+    ActionGroup toolbarGroup = myToolbarWrapper.getRightToolbar().getActionGroup();
+    LayoutActionsFloatingToolbar toolbar = new LayoutActionsFloatingToolbar(myComponent, toolbarGroup, this);
     layeredPane.add(panel, JLayeredPane.DEFAULT_LAYER);
     myComponent.add(toolbar, JLayeredPane.POPUP_LAYER);
     registerToolbarListeners(panel, toolbar);
@@ -199,7 +199,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     mySplitter.setOrientation(verticalSplit);
   }
 
-  private @NotNull SplitEditorToolbar createMarkdownToolbarWrapper(@NotNull JComponent targetComponentForActions) {
+  private @NotNull SplitEditorToolbar createSplitEditorToolbar(@NotNull JComponent targetComponentForActions) {
     final ActionToolbar leftToolbar = createToolbar();
     if (leftToolbar != null) {
       leftToolbar.setTargetComponent(targetComponentForActions);
@@ -215,8 +215,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
   @Override
   public void setState(@NotNull FileEditorState state) {
-    if (state instanceof MyFileEditorState) {
-      final MyFileEditorState compositeState = (MyFileEditorState)state;
+    if (state instanceof MyFileEditorState compositeState) {
       if (compositeState.getFirstState() != null) {
         myEditor.setState(compositeState.getFirstState());
       }
@@ -257,6 +256,11 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
+  /**
+   * To persist the proportion of the splitter for an individual editor,
+   * override this method to generate a unique key.
+   * From all the text editors that don't override this method, only a single proportion is stored.
+   */
   protected @NotNull String getSplitterProportionKey() {
     return "TextEditorWithPreview.SplitterProportionKey";
   }
@@ -442,9 +446,13 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
   protected AnAction @NotNull [] createTabActions() {
     return new AnAction[]{
-      getSingleChangeViewModeAction(),
+      //getSingleChangeViewModeAction(),
+      Separator.create(), //todo[konstantin.hudyakov] this separator will be hidden since toolbars can start with separator, but we need it according to mockups
+      getShowEditorAction(),
+      getShowEditorAndPreviewAction(),
+      getShowPreviewAction(),
       Separator.create(),
-      createTabViewModesPopupActionGroup()
+      //createTabViewModesPopupActionGroup()
     };
   }
 

@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import com.siyeh.InspectionGadgetsBundle;
@@ -27,7 +27,8 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class OverlyComplexArithmeticExpressionInspection extends BaseInspection {
 
@@ -41,10 +42,10 @@ public class OverlyComplexArithmeticExpressionInspection extends BaseInspection 
   public int m_limit = TERM_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message("overly.complex.arithmetic.expression.max.number.option"),
-      this, "m_limit");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("m_limit", InspectionGadgetsBundle.message("overly.complex.arithmetic.expression.max.number.option"), 2,
+             100));
   }
 
   @Override
@@ -110,21 +111,18 @@ public class OverlyComplexArithmeticExpressionInspection extends BaseInspection 
       if (!isArithmetic(expression)) {
         return 1;
       }
-      if (expression instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression poly = (PsiPolyadicExpression)expression;
+      if (expression instanceof PsiPolyadicExpression poly) {
         int count = 0;
         for (PsiExpression operand : poly.getOperands()) {
           count += countTerms(operand);
         }
         return count;
       }
-      else if (expression instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+      else if (expression instanceof PsiPrefixExpression prefixExpression) {
         final PsiExpression operand = prefixExpression.getOperand();
         return countTerms(operand);
       }
-      else if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
         final PsiExpression contents = parenthesizedExpression.getExpression();
         return countTerms(contents);
       }
@@ -132,20 +130,17 @@ public class OverlyComplexArithmeticExpressionInspection extends BaseInspection 
     }
 
     private boolean isArithmetic(PsiExpression expression) {
-      if (expression instanceof PsiPolyadicExpression) {
+      if (expression instanceof PsiPolyadicExpression binaryExpression) {
         final PsiType type = expression.getType();
         if (TypeUtils.isJavaLangString(type)) {
           return false; //ignore string concatenations
         }
-        final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
         return arithmeticTokens.contains(binaryExpression.getOperationTokenType());
       }
-      else if (expression instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+      else if (expression instanceof PsiPrefixExpression prefixExpression) {
         return arithmeticTokens.contains(prefixExpression.getOperationTokenType());
       }
-      else if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
         final PsiExpression contents = parenthesizedExpression.getExpression();
         return isArithmetic(contents);
       }

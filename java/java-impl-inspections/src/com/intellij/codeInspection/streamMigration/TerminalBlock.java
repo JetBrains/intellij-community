@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -115,8 +115,7 @@ final class TerminalBlock {
     if(myStatements.length >= 1) {
       PsiStatement first = myStatements[0];
       // extract filter with negation
-      if(first instanceof PsiIfStatement) {
-        PsiIfStatement ifStatement = (PsiIfStatement)first;
+      if(first instanceof PsiIfStatement ifStatement) {
         PsiExpression condition = ifStatement.getCondition();
         if(condition == null) return null;
         PsiStatement branch = ifStatement.getThenBranch();
@@ -170,8 +169,7 @@ final class TerminalBlock {
     TerminalBlock withFilter = extractFilter();
     if(withFilter != null) return withFilter;
     // extract flatMap
-    if(getSingleStatement() instanceof PsiLoopStatement) {
-      PsiLoopStatement loopStatement = (PsiLoopStatement)getSingleStatement();
+    if(getSingleStatement() instanceof PsiLoopStatement loopStatement) {
       StreamSource source = StreamSource.tryCreate(loopStatement);
       final PsiStatement body = loopStatement.getBody();
       if(source == null || body == null) return null;
@@ -204,8 +202,7 @@ final class TerminalBlock {
     }
     if(myStatements.length >= 1) {
       PsiStatement first = myStatements[0];
-      if(PsiUtil.isLanguageLevel9OrHigher(myVariable.getContainingFile()) && first instanceof PsiIfStatement) {
-        PsiIfStatement ifStatement = (PsiIfStatement)first;
+      if(PsiUtil.isLanguageLevel9OrHigher(myVariable.getContainingFile()) && first instanceof PsiIfStatement ifStatement) {
         PsiExpression condition = ifStatement.getCondition();
         if(ifStatement.getElseBranch() == null && condition != null) {
           PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
@@ -219,8 +216,7 @@ final class TerminalBlock {
         }
       }
       // extract map
-      if(first instanceof PsiDeclarationStatement) {
-        PsiDeclarationStatement decl = (PsiDeclarationStatement)first;
+      if(first instanceof PsiDeclarationStatement decl) {
         PsiElement[] elements = decl.getDeclaredElements();
         if(elements.length == 1) {
           PsiLocalVariable declaredVar = tryCast(elements[0], PsiLocalVariable.class);
@@ -307,7 +303,7 @@ final class TerminalBlock {
     PsiExpression limit = flipped ? binOp.getLOperand() : binOp.getROperand();
     if(!ExpressionUtils.isSafelyRecomputableExpression(limit) || VariableAccessUtils.variableIsUsed(myVariable, limit)) return this;
     PsiType type = limit.getType();
-    if(!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) return this;
+    if(!PsiTypes.intType().equals(type) && !PsiTypes.longType().equals(type)) return this;
     if(countExpression instanceof PsiPostfixExpression) {
       delta++;
     }
@@ -365,16 +361,14 @@ final class TerminalBlock {
     if(collectionVariable == null) return this;
     for(int idx = myOperations.length-1; idx > 0; idx--) {
       Operation op = myOperations[idx];
-      if (op instanceof FilterOp) {
-        FilterOp filter = (FilterOp)op;
+      if (op instanceof FilterOp filter) {
         PsiExpression condition = filter.getExpression();
         if (BoolUtils.isNegation(condition)) {
           if (filter.isNegated()) continue;
           condition = BoolUtils.getNegated(condition);
         }
         else if (!filter.isNegated()) continue;
-        if (!(condition instanceof PsiMethodCallExpression)) continue;
-        PsiMethodCallExpression conditionCall = (PsiMethodCallExpression)condition;
+        if (!(condition instanceof PsiMethodCallExpression conditionCall)) continue;
         if (!ExpressionUtils.isReferenceTo(conditionCall.getMethodExpression().getQualifierExpression(), collectionVariable) ||
             !isCallOf(conditionCall, CommonClassNames.JAVA_UTIL_COLLECTION, "contains")) {
           continue;

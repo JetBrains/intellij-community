@@ -61,7 +61,7 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("grazie.state", 6)
+    private val GROUP = EventLogGroup("grazie.state", 7)
     private val ENABLE_LANGUAGE = GROUP.registerEvent("enabled.language",
                                                       EventFields.Enum("value", LanguageISO::class.java) { it.name.lowercase() })
     private val RULE = GROUP.registerEvent("rule",

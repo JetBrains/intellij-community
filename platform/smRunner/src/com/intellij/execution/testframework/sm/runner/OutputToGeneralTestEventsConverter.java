@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.ServiceMessageUtil;
 import com.intellij.execution.testframework.sm.runner.events.*;
+import com.intellij.execution.testframework.sm.runner.events.TestSetNodePropertyEvent.NodePropertyKey;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.ParseException;
 import java.util.Map;
 
+import static com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor.logProblem;
 import static com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsConvertor.getTFrameworkPrefix;
 
 /**
@@ -216,11 +218,17 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-
   private void fireRootPresentationAdded(String rootName, @Nullable String comment, String rootLocation) {
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
       processor.onRootPresentationAdded(rootName, comment, rootLocation);
+    }
+  }
+
+  private void fireSetNodeProperty(final @NotNull TestSetNodePropertyEvent event) {
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onSetNodeProperty(event);
     }
   }
 
@@ -358,6 +366,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String SUITE_TREE_NODE = "suiteTreeNode";
     @NonNls private static final String BUILD_TREE_ENDED_NODE = "treeEnded";
     @NonNls private static final String ROOT_PRESENTATION = "rootName";
+    @NonNls private static final String SET_NODE_PROPERTY = "setNodeProperty";
 
     @NonNls private static final String ATTR_KEY_STATUS = "status";
     @NonNls private static final String ATTR_VALUE_STATUS_ERROR = "ERROR";
@@ -613,8 +622,18 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         final Map<String, String> attributes = msg.getAttributes();
         fireRootPresentationAdded(attributes.get("name"), attributes.get("comment"), attributes.get("location"));
       }
+      else if (SET_NODE_PROPERTY.equals(name)) {
+        final NodePropertyKey propertyKey = TestSetNodePropertyEvent.getPropertyKey(msg);
+        final String propertyValue = TestSetNodePropertyEvent.getPropertyValue(msg);
+        if (propertyKey == null) {
+          logProblem(LOG, "Missing/Unknown property key: " + msg.asString(), myTestFrameworkName);
+        }
+        else {
+          fireSetNodeProperty(new TestSetNodePropertyEvent(TreeNodeEvent.getNodeId(msg), propertyKey, propertyValue));
+        }
+      }
       else {
-        GeneralTestEventsProcessor.logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);
+        logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);
         fireOnUncapturedOutput(msg.asString() + "\n", ProcessOutputTypes.STDOUT);
       }
     }

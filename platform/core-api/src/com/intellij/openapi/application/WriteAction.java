@@ -43,7 +43,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     final RunResult<T> result = new RunResult<>(this);
 
     Application application = ApplicationManager.getApplication();
-    if (application.isWriteThread()) {
+    if (application.isWriteIntentLockAcquired()) {
       try(AccessToken ignored = ApplicationManager.getApplication().acquireWriteActionLock(getClass())) {
         result.run();
       }
@@ -131,7 +131,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
   public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action, ModalityState modalityState) throws E {
     Application application = ApplicationManager.getApplication();
-    if (application.isWriteThread()) {
+    if (application.isWriteIntentLockAcquired()) {
       return ApplicationManager.getApplication().runWriteAction(action);
     }
 

@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.workspaceModel.ide.JpsFileEntitySource;
-import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
+import com.intellij.workspaceModel.ide.VirtualFileUrls;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeUtils;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
@@ -36,9 +36,6 @@ import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 import java.io.IOException;
 import java.util.function.Function;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public final class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
   @NotNull
   @Override
@@ -58,8 +55,7 @@ public final class EclipseClasspathStorageProvider implements ClasspathStoragePr
   public void assertCompatible(@NotNull final ModuleRootModel model) throws ConfigurationException {
     final String moduleName = model.getModule().getName();
     for (OrderEntry entry : model.getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry) {
-        final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
+      if (entry instanceof LibraryOrderEntry libraryEntry) {
         if (libraryEntry.isModuleLevel()) {
           final Library library = libraryEntry.getLibrary();
           if (library == null ||
@@ -103,7 +99,7 @@ public final class EclipseClasspathStorageProvider implements ClasspathStoragePr
   @Override
   public void attach(@NotNull ModuleRootModel model) {
     updateEntitySource(model.getModule(), source -> {
-      VirtualFileUrlManager virtualFileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, model.getModule().getProject());
+      VirtualFileUrlManager virtualFileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(model.getModule().getProject());
       String contentRoot = getContentRoot(model);
       String classpathFileUrl = VfsUtilCore.pathToUrl(contentRoot) + "/" + EclipseXml.CLASSPATH_FILE;
       return new EclipseProjectFile(virtualFileUrlManager.fromUrl(classpathFileUrl), (JpsFileEntitySource)source);

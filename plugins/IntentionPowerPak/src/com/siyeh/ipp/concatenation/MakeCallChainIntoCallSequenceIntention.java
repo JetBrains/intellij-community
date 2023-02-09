@@ -93,15 +93,12 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
       firstStatement = null;
       introduceVariable = false;
     }
-    else if (parent instanceof PsiAssignmentExpression && parent.getParent() instanceof PsiExpressionStatement &&
+    else if (parent instanceof PsiAssignmentExpression assignment && parent.getParent() instanceof PsiExpressionStatement &&
              ((PsiAssignmentExpression)parent).getOperationTokenType().equals(JavaTokenType.EQ)) {
-      final PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
-      if (lhs instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression expression = (PsiReferenceExpression)lhs;
+      if (lhs instanceof PsiReferenceExpression expression) {
         final PsiElement target = expression.resolve();
-        if (target instanceof PsiVariable) {
-          final PsiVariable variable = (PsiVariable)target;
+        if (target instanceof PsiVariable variable) {
           final PsiType variableType = variable.getType();
           if (variableType.equals(rootType)) {
             targetText = tracker.text(lhs);
@@ -181,8 +178,7 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
 
   @Contract("null -> false")
   private static boolean isSimpleReference(PsiExpression expression) {
-    if (!(expression instanceof PsiReferenceExpression)) return false;
-    PsiReferenceExpression ref = (PsiReferenceExpression)expression;
+    if (!(expression instanceof PsiReferenceExpression ref)) return false;
     PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier != null) {
       if (!(qualifier instanceof PsiQualifiedExpression) || ((PsiQualifiedExpression)qualifier).getQualifier() != null) return false; 

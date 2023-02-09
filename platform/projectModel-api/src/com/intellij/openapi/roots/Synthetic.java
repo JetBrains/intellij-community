@@ -17,7 +17,6 @@ package com.intellij.openapi.roots;
 
 /**
  *  todo: document
- *  @author dsl
  */
 public interface Synthetic {
   boolean isSynthetic();

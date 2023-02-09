@@ -64,7 +64,6 @@ public class LombokReferenceSearcher extends QueryExecutorBase<PsiReference, Ref
     Arrays.stream(containingClass.getFields())
       .filter(LombokLightFieldBuilder.class::isInstance)
       .filter(psiField -> psiField.getNavigationElement() == refPsiField)
-      .filter(psiField -> Objects.nonNull(psiField.getName()))
       .forEach(psiField -> {
         collector.searchWord(psiField.getName(), psiField.getUseScope(), UsageSearchContext.IN_CODE, true, psiField);
       });

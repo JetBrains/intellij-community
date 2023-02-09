@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class XmlTestUtil {
+public final class XmlTestUtil {
 
   public static XmlTag tag(@NonNls String tagName, Project project) {
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(project).createFileFromText("tag.xml", "<" + tagName + "/>");

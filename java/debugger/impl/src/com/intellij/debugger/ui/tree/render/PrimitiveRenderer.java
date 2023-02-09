@@ -60,7 +60,8 @@ public class PrimitiveRenderer extends NodeRendererImpl {
         appendCharValue((CharValue)value, buf);
         if (SHOW_HEX_VALUE) {
           appendHexValue((CharValue)value, buf);
-        } else {
+        }
+        else {
           buf.append(' ').append(((PrimitiveValue)value).longValue());
         }
         return buf.toString();

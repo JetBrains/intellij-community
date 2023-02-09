@@ -523,7 +523,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
 
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
+        return super.getActionUpdateThread();
       }
     };
     myToggleRegularExpression = new LargeFileToggleAction(this, EditorBundle.message("large.file.editor.regex.action.mnemonic.text")) {
@@ -536,7 +536,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
       }
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
+        return super.getActionUpdateThread();
       }
     };
     myStatusTextAction = new LargeFileStatusTextAction(this);

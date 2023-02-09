@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.details.commit;
 
 import com.intellij.openapi.vcs.ui.FontUtil;
@@ -28,8 +28,8 @@ public class ReferencesPanel extends JPanel {
   protected static final int V_GAP = 0;
 
   private final int myRefsLimit;
-  @NotNull private List<VcsRef> myReferences;
-  @NotNull protected MultiMap<VcsRefType, VcsRef> myGroupedVisibleReferences;
+  private @NotNull List<VcsRef> myReferences;
+  protected @NotNull MultiMap<VcsRefType, VcsRef> myGroupedVisibleReferences;
 
   public ReferencesPanel(int limit) {
     this(new WrappedFlowLayout(JBUIScale.scale(H_GAP), JBUIScale.scale(V_GAP)), limit);
@@ -95,19 +95,17 @@ public class ReferencesPanel extends JPanel {
     return getFontMetrics(getLabelsFont()).getHeight();
   }
 
-  @NotNull
-  protected JBLabel createRestLabel(int restSize) {
+  protected @NotNull JBLabel createRestLabel(int restSize) {
     return createLabel(VcsLogBundle.message("vcs.log.details.references.more.label", restSize), null);
   }
 
-  @Nullable
-  protected Icon createIcon(@NotNull VcsRefType type,
-                            @NotNull Collection<VcsRef> refs,
-                            int refIndex, int height) {
+  protected @Nullable Icon createIcon(@NotNull VcsRefType type,
+                                      @NotNull Collection<VcsRef> refs,
+                                      int refIndex, int height) {
     if (refIndex == 0) {
       Color color = type.getBackgroundColor();
       return new LabelIcon(this, height, getBackground(),
-                           refs.size() > 1 ? ContainerUtil.newArrayList(color, color) : Collections.singletonList(color));
+                           refs.size() > 1 ? List.of(color, color) : Collections.singletonList(color));
     }
     return null;
   }
@@ -118,8 +116,7 @@ public class ReferencesPanel extends JPanel {
     add(wrapper);
   }
 
-  @NotNull
-  protected JBLabel createLabel(@Nls @NotNull String text, @Nullable Icon icon) {
+  protected @NotNull JBLabel createLabel(@Nls @NotNull String text, @Nullable Icon icon) {
     JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);
     label.setFont(getLabelsFont());
     label.setIconTextGap(0);
@@ -129,8 +126,7 @@ public class ReferencesPanel extends JPanel {
     return label;
   }
 
-  @NotNull
-  protected Font getLabelsFont() {
+  protected @NotNull Font getLabelsFont() {
     return FontUtil.getCommitMetadataFont();
   }
 

@@ -18,7 +18,6 @@ package com.jetbrains.python.inspections;
 import com.google.common.collect.Sets;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,7 +31,10 @@ import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyStructuralType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +44,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-class PyTypeCheckerInspectionProblemRegistrar {
+final class PyTypeCheckerInspectionProblemRegistrar {
 
   static void registerProblem(@NotNull PyInspectionVisitor visitor,
                               @NotNull PyCallSiteExpression callSite,
@@ -179,8 +181,7 @@ class PyTypeCheckerInspectionProblemRegistrar {
 
   @NotNull
   private static PsiElement getMultiCalleeElementToHighlight(@NotNull PyCallSiteExpression callSite) {
-    if (callSite instanceof PyCallExpression) {
-      final PyCallExpression call = (PyCallExpression)callSite;
+    if (callSite instanceof PyCallExpression call) {
       final PyArgumentList argumentList = call.getArgumentList();
 
       final PsiElement result = Optional

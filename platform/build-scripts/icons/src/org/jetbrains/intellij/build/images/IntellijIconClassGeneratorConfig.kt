@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.images
 
 import org.jetbrains.jps.model.module.JpsModule
 
-class IntellijIconClassGeneratorConfig : IconsClasses() {
+class IntellijIconClassGeneratorConfig : IconClasses() {
   override val modules: List<JpsModule>
     get() = super.modules.filterNot {
       // TODO: use icon-robots.txt

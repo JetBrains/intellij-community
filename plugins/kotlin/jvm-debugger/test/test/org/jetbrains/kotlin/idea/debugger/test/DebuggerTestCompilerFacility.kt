@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.codegen.GenerationUtils
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
@@ -41,7 +42,8 @@ import java.io.File
 open class DebuggerTestCompilerFacility(
     files: List<TestFileWithModule>,
     private val jvmTarget: JvmTarget,
-    private val useIrBackend: Boolean
+    private val useIrBackend: Boolean,
+    private val lambdasGenerationScheme: JvmClosureGenerationScheme,
 ) {
     private val kotlinStdlibPath = TestKotlinArtifacts.kotlinStdlib.absolutePath
 
@@ -97,7 +99,8 @@ open class DebuggerTestCompilerFacility(
         if (kotlinStdlibInMavenArtifacts() == null)
             mavenArtifacts.add(kotlinStdlibPath)
 
-        val options = mutableListOf("-jvm-target", jvmTarget.description)
+        val options = mutableListOf("-jvm-target", jvmTarget.description,
+                                    "-Xlambdas=${lambdasGenerationScheme.description}")
 
         if (!useIrBackend) {
             options.add("-Xuse-old-backend")
@@ -201,7 +204,8 @@ open class DebuggerTestCompilerFacility(
             options = listOf(
                 "-Xuse-ir=$useIrBackend",
                 "-Xcommon-sources=${commonSrcDir.absolutePath}",
-                "-Xmulti-platform"
+                "-Xmulti-platform",
+                "-Xlambdas=${lambdasGenerationScheme.description}"
             ),
             classpath = mavenArtifacts.map(::File)
         ).compile()
@@ -243,6 +247,7 @@ open class DebuggerTestCompilerFacility(
         configuration.put(JVMConfigurationKeys.JVM_TARGET, jvmTarget)
         configuration.put(JVMConfigurationKeys.IR, useIrBackend)
         configuration.put(JVMConfigurationKeys.DO_NOT_CLEAR_BINDING_CONTEXT, true)
+        configuration.put(JVMConfigurationKeys.LAMBDAS, lambdasGenerationScheme)
 
         val state = GenerationUtils.generateFiles(project, files, configuration, classBuilderFactory, analysisResult) {
             generateDeclaredClassFilter(GenerationState.GenerateClassFilter.GENERATE_ALL)

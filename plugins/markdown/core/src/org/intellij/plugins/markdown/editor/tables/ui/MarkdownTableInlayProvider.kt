@@ -9,27 +9,22 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
-import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.calculateActualTextRange
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.VerticalBarPresentation
-import org.intellij.plugins.markdown.lang.MarkdownFileType
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
-import org.intellij.plugins.markdown.settings.MarkdownSettings
 import javax.swing.JPanel
 
 internal class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
-    if (!TableUtils.isTableSupportEnabled() || !MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled) {
-      return null
+    return when {
+      file.fileType.isMarkdownType() -> Collector(editor)
+      else -> null
     }
-    if (file.fileType != MarkdownFileType.INSTANCE) {
-      return null
-    }
-    return Collector(editor)
   }
 
   private class Collector(editor: Editor): FactoryInlayHintsCollector(editor) {

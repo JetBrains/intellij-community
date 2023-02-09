@@ -238,7 +238,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       private final Set<PsiParameter> parameters;
 
       private ParameterAccessVisitor(PsiParameter @NotNull [] parameters) {
-        this.parameters = ContainerUtil.set(parameters);
+        this.parameters = ContainerUtil.newHashSet(parameters);
       }
 
       @Override
@@ -250,10 +250,9 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
           return;
         }
         final PsiElement target = expression.resolve();
-        if (!(target instanceof PsiParameter)) {
+        if (!(target instanceof PsiParameter parameter)) {
           return;
         }
-        final PsiParameter parameter = (PsiParameter)target;
         parameters.remove(parameter);
         if (parameters.isEmpty()) {
           stopWalking();

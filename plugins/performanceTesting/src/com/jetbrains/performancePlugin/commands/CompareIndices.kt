@@ -491,7 +491,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     val propertyName = "index_root_path"
     val oldValue = System.setProperty(propertyName, storedIndexDir.toAbsolutePath().toString())
     try {
-      return VfsAwareMapReduceIndex<K, V, IndexerIdHolder>(extension, DefaultIndexStorageLayout.getLayout(extension, true), null)
+      return VfsAwareMapReduceIndex<K, V, IndexerIdHolder>(extension, DefaultIndexStorageLayout.getLayout(extension, true))
     }
     finally {
       SystemProperties.setProperty(propertyName, oldValue)

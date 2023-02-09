@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeWithMe.ClientId
@@ -6,11 +6,13 @@ import com.intellij.lang.documentation.ide.impl.DocumentationBrowser.Companion.w
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
-import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Disposer
+import com.intellij.platform.documentation.impl.DocumentationRequest
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
 
 internal suspend fun showDocumentationPopup(
@@ -19,13 +21,26 @@ internal suspend fun showDocumentationPopup(
   popupContext: PopupContext,
 ): AbstractPopup {
   val browser = DocumentationBrowser.createBrowser(project, request)
-  // to avoid flickering: show popup after there is anything to show
-  // OR show popup after the timeout
-  withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
-    browser.waitForContent()
+  try {
+    // to avoid flickering: show popup after there is anything to show
+    // OR show popup after the timeout
+    withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
+      browser.waitForContent()
+    }
+  }
+  catch (ce: CancellationException) {
+    Disposer.dispose(browser)
+    throw ce
   }
   val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser))
   val popup = createDocumentationPopup(project, popupUI, popupContext)
+  try {
+    popupContext.setUpPopup(popup, popupUI)
+  }
+  catch (ce: CancellationException) {
+    Disposer.dispose(popup)
+    throw ce
+  }
   val boundsHandler = popupContext.boundsHandler()
   val resized = popupUI.useStoredSize()
   popupUI.updatePopup {
@@ -53,7 +68,6 @@ private fun createDocumentationPopup(
   popupContext.preparePopup(builder)
   val popup = builder.createPopup() as AbstractPopup
   popupUI.setPopup(popup)
-  popupContext.setUpPopup(popup, popupUI)
   return popup
 }
 

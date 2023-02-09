@@ -1,7 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -15,12 +15,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -28,14 +28,13 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
   public boolean allowConditionFusion = false;
   public boolean suggestConversionWhenIfIsASingleStmtInLoop = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(JavaBundle.message("inspection.conditional.break.in.infinite.loop.no.conversion.with.do.while"), "noConversionToDoWhile");
-    panel.addCheckbox(JavaBundle.message("inspection.conditional.break.in.infinite.loop.allow.condition.fusion"), "allowConditionFusion");
-    panel.addCheckbox(JavaBundle.message("inspection.conditional.break.in.infinite.loop.suggest.conversion.when.if.is.single.stmt.in.loop"), "suggestConversionWhenIfIsASingleStmtInLoop");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("noConversionToDoWhile", JavaBundle.message("inspection.conditional.break.in.infinite.loop.no.conversion.with.do.while")),
+      checkbox("allowConditionFusion", JavaBundle.message("inspection.conditional.break.in.infinite.loop.allow.condition.fusion")),
+      checkbox("suggestConversionWhenIfIsASingleStmtInLoop",
+               JavaBundle.message("inspection.conditional.break.in.infinite.loop.suggest.conversion.when.if.is.single.stmt.in.loop")));
   }
 
   @NotNull
@@ -109,8 +108,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
                                 boolean suggestConversionWhenIfIsASingleStmtInLoop) {
       boolean isEndlessLoop = ControlFlowUtils.isEndlessLoop(loopStatement);
       if (!isEndlessLoop) {
-        if (loopStatement instanceof PsiForStatement) {
-          PsiForStatement forStatement = (PsiForStatement)loopStatement;
+        if (loopStatement instanceof PsiForStatement forStatement) {
           if ((forStatement.getInitialization() != null && !(forStatement.getInitialization() instanceof PsiEmptyStatement))
               || (forStatement.getUpdate() != null && !(forStatement.getUpdate() instanceof PsiEmptyStatement))) {
             return null;

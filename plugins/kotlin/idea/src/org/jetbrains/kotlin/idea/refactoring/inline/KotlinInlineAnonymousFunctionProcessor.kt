@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInliner.CodeInliner
 import org.jetbrains.kotlin.idea.codeInliner.unwrapSpecialUsageOrNull
 import org.jetbrains.kotlin.idea.intentions.LambdaToAnonymousFunctionIntention
-import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.psi.*
@@ -53,7 +53,7 @@ class KotlinInlineAnonymousFunctionProcessor(
             val project = usage.project
             val invokeCallExpression = when (usage) {
                 is KtQualifiedExpression -> usage.selectorExpression
-                is KtCallExpression -> OperatorToFunctionIntention.convert(usage).second.parent
+                is KtCallExpression -> OperatorToFunctionConverter.convert(usage).second.parent
                 else -> return
             } as KtCallExpression
 

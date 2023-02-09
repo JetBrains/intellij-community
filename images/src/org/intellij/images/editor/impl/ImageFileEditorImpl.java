@@ -15,7 +15,6 @@
  */
 package org.intellij.images.editor.impl;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
@@ -89,11 +88,10 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
 
   @Override
   public void setState(@NotNull FileEditorState state) {
-    if (state instanceof ImageFileEditorState) {
+    if (state instanceof ImageFileEditorState editorState) {
       Options options = OptionsManager.getInstance().getOptions();
       ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
 
-      ImageFileEditorState editorState = (ImageFileEditorState)state;
       ImageZoomModel zoomModel = imageEditor.getZoomModel();
       imageEditor.setTransparencyChessboardVisible(editorState.isBackgroundVisible());
       imageEditor.setGridVisible(editorState.isGridVisible());
@@ -128,11 +126,6 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
   public void propertyChange(@NotNull PropertyChangeEvent event) {
     PropertyChangeEvent editorEvent = new PropertyChangeEvent(this, event.getPropertyName(), event.getOldValue(), event.getNewValue());
     myDispatcher.getMulticaster().propertyChange(editorEvent);
-  }
-
-  @Override
-  public StructureViewBuilder getStructureViewBuilder() {
-    return null;
   }
 
   @Override

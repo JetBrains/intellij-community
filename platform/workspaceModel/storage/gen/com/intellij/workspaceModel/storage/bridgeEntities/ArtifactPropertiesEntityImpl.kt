@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
@@ -18,6 +19,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
@@ -112,12 +114,7 @@ open class ArtifactPropertiesEntityImpl(val dataSource: ArtifactPropertiesEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.providerType != dataSource.providerType) this.providerType = dataSource.providerType
       if (this.propertiesXmlTag != dataSource?.propertiesXmlTag) this.propertiesXmlTag = dataSource.propertiesXmlTag
-      if (parents != null) {
-        val artifactNew = parents.filterIsInstance<ArtifactEntity>().single()
-        if ((this.artifact as WorkspaceEntityBase).id != (artifactNew as WorkspaceEntityBase).id) {
-          this.artifact = artifactNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -225,7 +222,7 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ArtifactPropertiesEntity(providerType, entitySource) {
       this.propertiesXmlTag = this@ArtifactPropertiesEntityData.propertiesXmlTag
-      this.artifact = parents.filterIsInstance<ArtifactEntity>().single()
+      parents.filterIsInstance<ArtifactEntity>().singleOrNull()?.let { this.artifact = it }
     }
   }
 

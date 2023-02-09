@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -201,7 +202,7 @@ internal object OpenLessonActivities {
     }
 
     if (lesson.lessonType != LessonType.SCRATCH) {
-      ProjectUtils.closeAllEditorsInProject(project)
+      FileEditorManagerEx.getInstanceEx(project).closeOpenedEditors()
     }
 
     if (lesson.lessonType != LessonType.SCRATCH || LearningUiManager.learnProject == project) {

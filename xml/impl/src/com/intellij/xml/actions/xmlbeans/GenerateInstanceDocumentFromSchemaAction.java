@@ -127,7 +127,7 @@ public final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     String xml;
     try {
       xml = Xsd2InstanceUtils.generate(ArrayUtilRt.toStringArray(parameters));
-    } catch (IllegalArgumentException e) {
+    } catch (Throwable e) {
       Messages.showErrorDialog(project, StringUtil.getMessage(e), XmlBundle.message("error"));
       return;
     }

@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.tooling.util;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class ReflectionUtil {
+public final class ReflectionUtil {
   public static <T> T reflectiveGetProperty(Object target, String propertyName, Class<T> aClass)
     throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
     Method getProperty = target.getClass().getMethod(propertyName);

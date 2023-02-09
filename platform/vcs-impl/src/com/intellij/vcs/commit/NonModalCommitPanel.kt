@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.project.Project
@@ -32,6 +31,7 @@ import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil.uiTraverser
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Point
 import javax.swing.JComponent
@@ -98,7 +98,6 @@ abstract class NonModalCommitPanel(
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
 
-  override val modalityState: ModalityState = ModalityState.NON_MODAL
   override fun getComponent(): JComponent = this
   override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
 
@@ -138,23 +137,25 @@ abstract class NonModalCommitPanel(
     return commitMessage.editorField.getEditor(true)?.backgroundColor
   }
 
-  override fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext) {
-    val commitOptionsPanel = CommitOptionsPanel(project, actionNameSupplier = { actionName }, nonFocusable = false).apply {
+  override fun showCommitOptions(options: CommitOptions, actionName: @Nls String, isFromToolbar: Boolean, dataContext: DataContext) {
+    val commitOptionsPanel = CommitOptionsPanel(project, actionNameSupplier = { actionName }, nonFocusable = false)
+    commitOptionsPanel.setOptions(options)
+
+    val commitOptionsComponent = commitOptionsPanel.component.apply {
       focusTraversalPolicy = LayoutFocusTraversalPolicy()
       isFocusCycleRoot = true
 
-      setOptions(options)
-      border = empty(0, 10)
-
-      // to reflect LaF changes as commit options components are created once per commit
-      if (needUpdateCommitOptionsUi) {
-        needUpdateCommitOptionsUi = false
-        updateComponentTreeUI(this)
-      }
+      border = empty(0, 10, 10, 10)
     }
-    val focusComponent = IdeFocusManager.getInstance(project).getFocusTargetFor(commitOptionsPanel)
+    // to reflect LaF changes as commit options components are created once per commit
+    if (needUpdateCommitOptionsUi) {
+      needUpdateCommitOptionsUi = false
+      updateComponentTreeUI(commitOptionsComponent)
+    }
+
+    val focusComponent = IdeFocusManager.getInstance(project).getFocusTargetFor(commitOptionsComponent)
     val commitOptionsPopup = JBPopupFactory.getInstance()
-      .createComponentPopupBuilder(commitOptionsPanel, focusComponent)
+      .createComponentPopupBuilder(commitOptionsComponent, focusComponent)
       .setRequestFocus(true)
       .addListener(object : JBPopupListener {
         override fun beforeShown(event: LightweightWindowEvent) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.configurationStore.deserializeAndLoadState
@@ -67,21 +67,24 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
 
   override fun dispose() {
     val alreadyDisposed = isDisposed.getAndSet(true)
-    if (alreadyDisposed) {
-      val trace = disposedStackTrace
-      if (trace != null) {
-        throw IllegalStateException("${javaClass.name} was already disposed", trace)
-      }
-      else throw IllegalStateException("${javaClass.name} was already disposed")
-    }
+    if (alreadyDisposed) throwDisposed()
     else if (Disposer.isDebugMode()) {
       disposedStackTrace = Throwable()
     }
   }
 
+  private fun throwDisposed() {
+    val trace = disposedStackTrace
+    if (trace != null) {
+      throw IllegalStateException("${javaClass.name} was already disposed", trace)
+    }
+    else throw IllegalStateException("${javaClass.name} was already disposed")
+  }
+
   override fun getModule(): ModuleBridge = module
 
   override fun <T : Any?> getModuleExtension(klass: Class<T>): T? {
+    if (isDisposed.get()) throwDisposed()
     return extensions.filterIsInstance(klass).firstOrNull()
   }
 

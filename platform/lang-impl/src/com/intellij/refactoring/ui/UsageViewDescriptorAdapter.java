@@ -7,9 +7,6 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public abstract class UsageViewDescriptorAdapter implements UsageViewDescriptor {
 
   @NotNull

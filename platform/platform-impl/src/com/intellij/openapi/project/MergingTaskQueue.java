@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -55,7 +56,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
   }
 
-  public void cancelTask(@NotNull DumbModeTask task) {
+  public void cancelTask(@NotNull T task) {
     ProgressIndicatorEx indicator;
     synchronized (myLock) {
       indicator = myProgresses.get(task);
@@ -68,6 +69,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
   public void addTask(@NotNull T task) {
     List<T> disposeQueue = new ArrayList<>(1);
+    T newTask = task;
 
     synchronized (myLock) {
       for (int i = myTasksQueue.size() - 1; i >= 0; i--) {
@@ -79,10 +81,27 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
           disposeQueue.add(oldTask);
           continue;
         }
+
+        // note that parent may know nothing about children, so the following may happen (just like in case with `equals` with inheritance):
+        //     class Parent; class Child extends Parent
+        //     parent.tryMergeWith(child) != child.tryMergeWith(parent)
+        // At the moment we prevent accidental errors by forcing tasks' class equality.
+        // More permissive strategy (that we don't apply) would be to check "isAssignableFrom" and always use `child.tryMergeWith`
+        if (task.getClass() != oldTask.getClass()) {
+          continue;
+        }
+
         T mergedTask = task.tryMergeWith(oldTask);
+        if (mergedTask == oldTask) {
+          // new task completely absorbed by the old task which means that we don't need to modify the queue
+          newTask = null;
+          disposeQueue.add(task);
+          break;
+        }
+
         if (mergedTask != null) {
           LOG.debug("Merged " + task + " with " + oldTask);
-          task = mergedTask;
+          newTask = mergedTask;
           myTasksQueue.remove(i);
           disposeQueue.add(oldTask);
           break;
@@ -90,17 +109,19 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       }
 
       //register the new task last, preserving FIFO order
-      T taskToAdd = task;
-      myTasksQueue.add(taskToAdd);
-      ProgressIndicatorBase progress = new ProgressIndicatorBase();
-      myProgresses.put(taskToAdd, progress);
-      Disposer.register(taskToAdd, () -> {
-        //a removed progress means the task would be ignored on queue processing
-        synchronized (myLock) {
-          myProgresses.remove(taskToAdd);
-        }
-        progress.cancel();
-      });
+      T taskToAdd = newTask;
+      if (taskToAdd != null) {
+        myTasksQueue.add(taskToAdd);
+        ProgressIndicatorBase progress = new ProgressIndicatorBase();
+        myProgresses.put(taskToAdd, progress);
+        Disposer.register(taskToAdd, () -> {
+          //a removed progress means the task would be ignored on queue processing
+          synchronized (myLock) {
+            myProgresses.remove(taskToAdd);
+          }
+          progress.cancel();
+        });
+      }
     }
 
     disposeSafe(disposeQueue);
@@ -157,7 +178,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
     catch (Throwable t) {
       if (!(t instanceof ControlFlowException)) {
-        LOG.warn("Failed to dispose DumbModeTask: " + t.getMessage(), t);
+        LOG.warn("Failed to dispose task: " + t.getMessage(), t);
       }
     }
   }
@@ -174,7 +195,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
     catch (Throwable t) {
       if (!(t instanceof ControlFlowException)) {
-        LOG.warn("Failed to cancel DumbModeTask indicator: " + t.getMessage(), t);
+        LOG.warn("Failed to cancel task indicator: " + t.getMessage(), t);
       }
     }
   }
@@ -224,6 +245,16 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
     protected T getTask() {
       return myTask;
+    }
+
+    /**
+     * Override in children classes to report this task to FUS.
+     * <p>
+     * Override {@link MergingQueueGuiExecutor#runSingleTask(QueuedTask, StructuredIdeActivity)} or
+     * {@link MergingQueueGuiExecutor#processTasksWithProgress(ProgressSuspender, ProgressIndicator, StructuredIdeActivity)} to start
+     * FUS activity.
+     */
+    void registerStageStarted(@NotNull StructuredIdeActivity activity) {
     }
 
     public void beforeTask() {

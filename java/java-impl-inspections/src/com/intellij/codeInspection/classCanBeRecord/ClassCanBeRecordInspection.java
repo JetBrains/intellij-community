@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -97,7 +97,7 @@ public class ClassCanBeRecordInspection extends BaseInspection {
 
   @Override
   public @Nullable JComponent createOptionsPanel() {
-    JPanel panel = new InspectionOptionsPanel();
+    InspectionOptionsPanel panel = new InspectionOptionsPanel();
     panel.add(new CheckBox(JavaBundle.message("class.can.be.record.suggest.renaming.accessors"), this,
                            "suggestAccessorsRenaming"));
 
@@ -113,7 +113,7 @@ public class ClassCanBeRecordInspection extends BaseInspection {
 
     JPanel annotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       myIgnoredAnnotations, JavaBundle.message("class.can.be.record.suppress.conversion.if.annotated"), true);
-    panel.add(annotationsPanel, "growx, wrap");
+    panel.addGrowing(annotationsPanel);
 
     return panel;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -6,11 +6,13 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ui.InspectionOptionContainer;
+import com.intellij.codeInspection.options.OptCheckbox;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -19,7 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Function;
 
-public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityAction, Iconable {
+public class SetInspectionOptionFix extends IntentionAndQuickFixAction implements LowPriorityAction, Iconable {
   private final String myShortName;
   private final String myProperty;
   private final @IntentionName String myMessage;
@@ -74,12 +76,13 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    applyFix(project, descriptor.getPsiElement().getContainingFile());
+  public boolean availableInBatchMode() {
+    return false;
   }
 
-  public void applyFix(@NotNull Project project, @NotNull PsiFile psiFile) {
-    VirtualFile vFile = psiFile.getVirtualFile();
+  @Override
+  public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
+    VirtualFile vFile = file.getVirtualFile();
     setOption(project, vFile, myValue);
     UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
       @Override
@@ -95,14 +98,15 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
-                                                       @NotNull ProblemDescriptor previewDescriptor) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     InspectionToolWrapper<?, ?> tool =
-      InspectionProfileManager.getInstance(project).getCurrentProfile().getInspectionTool(myShortName, previewDescriptor.getPsiElement());
+      InspectionProfileManager.getInstance(project).getCurrentProfile().getInspectionTool(myShortName, file);
     if (tool == null) return IntentionPreviewInfo.EMPTY;
-    JComponent panel = tool.getTool().createOptionsPanel();
-    if (!(panel instanceof InspectionOptionContainer)) return IntentionPreviewInfo.EMPTY;
-    HtmlChunk label = ((InspectionOptionContainer)panel).getLabelForCheckbox(myProperty);
+    InspectionProfileEntry inspection = myExtractor == null ? tool.getTool() : myExtractor.apply(tool.getTool());
+    OptPane pane = inspection.getOptionsPane();
+    OptCheckbox control = ObjectUtils.tryCast(pane.findControl(myProperty), OptCheckbox.class);
+    if (control == null) return IntentionPreviewInfo.EMPTY;
+    HtmlChunk label = HtmlChunk.text(control.label().label());
     HtmlChunk.Element checkbox = HtmlChunk.tag("input").attr("type", "checkbox").attr("readonly", "true");
     if (myValue) {
       checkbox = checkbox.attr("checked", "true");
@@ -128,7 +132,7 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
       if (myExtractor != null) {
         inspection = myExtractor.apply(inspection);
       }
-      ReflectionUtil.setField(inspection.getClass(), inspection, boolean.class, myProperty, value);
+      inspection.getOptionController().setOption(myProperty, value);
     });
   }
 

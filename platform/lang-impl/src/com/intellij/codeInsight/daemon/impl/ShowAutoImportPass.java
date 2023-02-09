@@ -197,8 +197,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   public static @NlsContexts.HintText String getMessage(boolean multiple, @NotNull String name) {
     String messageKey = multiple ? "import.popup.multiple" : "import.popup.text";
     String hintText = DaemonBundle.message(messageKey, name);
-    hintText +=
-      " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+    hintText += " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
     return hintText;
   }
 }

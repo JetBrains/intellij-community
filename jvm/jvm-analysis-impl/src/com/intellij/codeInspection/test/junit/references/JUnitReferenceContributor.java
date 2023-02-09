@@ -116,16 +116,14 @@ final class JUnitReferenceContributor extends PsiReferenceContributor {
             element instanceof UBlockExpression) {
           return false;
         }
-        if (element instanceof UNamedExpression) {
-          UNamedExpression uPair = (UNamedExpression)element;
+        if (element instanceof UNamedExpression uPair) {
           String name = ObjectUtils.notNull(uPair.getName(), PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
           if (!myParameterName.equals(name)) {
             return false;
           }
           parameterFound = true;
         }
-        if (element instanceof UAnnotation) {
-          UAnnotation annotation = (UAnnotation)element;
+        if (element instanceof UAnnotation annotation) {
           return parameterFound && myAnnotation.equals(annotation.getQualifiedName());
         }
         element = element.getUastParent();

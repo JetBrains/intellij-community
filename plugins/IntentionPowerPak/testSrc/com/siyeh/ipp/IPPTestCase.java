@@ -53,13 +53,23 @@ public abstract class IPPTestCase extends LightJavaCodeInsightFixtureTestCase {
   }
 
   protected void doTest(@NotNull @Language("JAVA") String before, @NotNull @Language("JAVA") String after) {
+    String intentionName = getIntentionName(before);
+    myFixture.launchAction(myFixture.findSingleIntention(intentionName));
+    myFixture.checkResult(after);
+  }
+
+  protected void doTestWithPreview(@NotNull @Language("JAVA") String before, @NotNull @Language("JAVA") String after) {
+    String intentionName = getIntentionName(before);
+    myFixture.checkPreviewAndLaunchAction(myFixture.findSingleIntention(intentionName));
+    myFixture.checkResult(after);
+  }
+
+  private String getIntentionName(@NotNull @Language("JAVA") String before) {
     final Matcher matcher = PATTERN.matcher(before);
     assertTrue("No caret and intention name specified", matcher.find());
     myFixture.configureByText("a.java", matcher.replaceFirst("<caret>"));
     final String group = matcher.group(1);
-    final String intentionName = group.isEmpty() ? getIntentionName() : group;
-    myFixture.launchAction(myFixture.findSingleIntention(intentionName));
-    myFixture.checkResult(after);
+    return group.isEmpty() ? getIntentionName() : group;
   }
 
   protected void doTestIntentionNotAvailable(@NotNull @Language("JAVA") String source) {

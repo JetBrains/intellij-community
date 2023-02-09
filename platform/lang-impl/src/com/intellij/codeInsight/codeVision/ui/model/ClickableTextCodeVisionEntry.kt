@@ -4,6 +4,8 @@ package com.intellij.codeInsight.codeVision.ui.model
 import com.intellij.codeInsight.codeVision.CodeVisionEntryExtraActionModel
 import com.intellij.codeInsight.codeVision.codeVisionEntryMouseEventKey
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.Nls
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 
@@ -13,12 +15,12 @@ import javax.swing.Icon
  *
  * WARNING: do not store PSI inside handler. Use classes to avoid accidental psi capture.
  */
-class ClickableTextCodeVisionEntry(text: String,
+class ClickableTextCodeVisionEntry(@Nls text: String,
                                    providerId: String,
                                    val onClick: (MouseEvent?, Editor) -> Unit,
                                    icon: Icon? = null,
-                                   longPresentation: String = text,
-                                   tooltip: String = "",
+                                   @Nls longPresentation: String = text,
+                                   @NlsContexts.Tooltip tooltip: String = "",
                                    extraActions: List<CodeVisionEntryExtraActionModel> = listOf())
   : TextCodeVisionEntry(text, providerId, icon,
                         longPresentation, tooltip,

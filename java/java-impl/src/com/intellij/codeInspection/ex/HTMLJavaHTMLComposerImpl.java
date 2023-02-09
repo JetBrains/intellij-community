@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -143,7 +143,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   public void appendShortName(final RefEntity refElement, @NotNull StringBuilder buf) {
     if (refElement instanceof RefJavaElement) {
       String modifier = ((RefJavaElement)refElement).getAccessModifier();
-      if (modifier != PsiModifier.PACKAGE_LOCAL) {
+      if (!modifier.equals(PsiModifier.PACKAGE_LOCAL)) {
         buf.append(modifier);
         buf.append(HTMLComposerImpl.NBSP);
       }
@@ -280,14 +280,12 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
     buf.append(HTMLComposerImpl.CODE_OPENING);
 
-    if (refElement instanceof RefField) {
-      RefField field = (RefField)refElement;
+    if (refElement instanceof RefField field) {
       UField psiField = field.getUastElement();
       buf.append(XmlStringUtil.escapeString(psiField.getType().getPresentableText()));
       buf.append(HTMLComposerImpl.NBSP);
     }
-    else if (refElement instanceof RefMethod) {
-      RefMethod method = (RefMethod)refElement;
+    else if (refElement instanceof RefMethod method) {
       UMethod psiMethod = (UMethod)method.getUastElement();
       PsiType returnType = psiMethod.getReturnType();
 

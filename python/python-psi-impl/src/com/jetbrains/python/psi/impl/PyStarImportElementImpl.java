@@ -39,9 +39,6 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author dcheryasov
- */
 public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportElementStub> implements PyStarImportElement {
   public PyStarImportElementImpl(ASTNode astNode) {
     super(astNode);
@@ -54,14 +51,12 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
   @Override
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    if (getParent() instanceof PyFromImportStatement) {
-      PyFromImportStatement fromImportStatement = (PyFromImportStatement)getParent();
+    if (getParent() instanceof PyFromImportStatement fromImportStatement) {
       final List<PsiElement> importedFiles = fromImportStatement.resolveImportSourceCandidates();
       ChainIterable<PyElement> chain = new ChainIterable<>();
       for (PsiElement importedFile : new HashSet<>(importedFiles)) { // resolver gives lots of duplicates
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
-        if (source instanceof PyFile) {
-          final PyFile sourceFile = (PyFile)source;
+        if (source instanceof PyFile sourceFile) {
           chain.add(filterStarImportableNames(sourceFile.iterateNames(), sourceFile));
         }
       }
@@ -87,8 +82,7 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
   @NotNull
   private List<RatedResolveResult> calculateMultiResolveName(@NotNull String name) {
     final PsiElement parent = getParentByStub();
-    if (parent instanceof PyFromImportStatement) {
-      final PyFromImportStatement fromImportStatement = (PyFromImportStatement)parent;
+    if (parent instanceof PyFromImportStatement fromImportStatement) {
       final List<PsiElement> importedFiles = fromImportStatement.resolveImportSourceCandidates();
       for (PsiElement importedFile : new HashSet<>(importedFiles)) { // resolver gives lots of duplicates
         final PyFile sourceFile = as(PyUtil.turnDirIntoInit(importedFile), PyFile.class);

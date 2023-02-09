@@ -10,9 +10,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ilyas
- */
 
 @State(name = "GroovyApplicationSettings", storages = @Storage("groovy_config.xml"), category = SettingsCategory.CODE)
 public class GroovyApplicationSettings implements PersistentStateComponent<GroovyApplicationSettings> {

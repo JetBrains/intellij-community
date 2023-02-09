@@ -6,7 +6,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigProperty;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigPsiUtil;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigTypes;
@@ -15,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
 public class LombokConfigCompletionContributor extends CompletionContributor {
 
@@ -23,7 +23,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
   private static final String LOMBOK_ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION = ConfigKey.ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION.getConfigKey();
 
   public LombokConfigCompletionContributor() {
-    final Collection<String> booleanOptions = ContainerUtil.set(
+    final Collection<String> booleanOptions = Set.of(
       ConfigKey.CONFIG_STOP_BUBBLING.getConfigKey(),
       ConfigKey.ACCESSORS_CHAIN.getConfigKey(), ConfigKey.ACCESSORS_FLUENT.getConfigKey(),
       ConfigKey.ACCESSORS_MAKE_FINAL.getConfigKey(),
@@ -38,7 +38,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
       ConfigKey.FIELDDEFAULTS_FINAL.getConfigKey(), ConfigKey.FIELDDEFAULTS_PRIVATE.getConfigKey(),
       ConfigKey.NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE.getConfigKey());
 
-    final Collection<String> flagUsageOptions = ContainerUtil.set(
+    final Collection<String> flagUsageOptions = Set.of(
       "lombok.accessors.flagUsage", "lombok.allArgsConstructor.flagUsage", "lombok.anyConstructor.flagUsage",
       "lombok.builder.flagUsage", "lombok.cleanup.flagUsage", "lombok.data.flagUsage", "lombok.delegate.flagUsage",
       "lombok.equalsAndHashCode.flagUsage", "lombok.experimental.flagUsage", "lombok.extensionMethod.flagUsage",
@@ -51,9 +51,9 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
       "lombok.synchronized.flagUsage", "lombok.toString.flagUsage", "lombok.val.flagUsage", "lombok.value.flagUsage",
       "lombok.wither.flagUsage");
 
-    final Collection<String> flagUsageAllowable = ContainerUtil.set("lombok.var.flagUsage");
+    final Collection<String> flagUsageAllowable = Set.of("lombok.var.flagUsage");
 
-    final Collection<String> otherOptions = ContainerUtil.set(
+    final Collection<String> otherOptions = Set.of(
       ConfigKey.ACCESSORS_PREFIX.getConfigKey(), LOMBOK_ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION,
       ConfigKey.COPYABLE_ANNOTATIONS.getConfigKey(),
       ConfigKey.LOG_FIELDNAME.getConfigKey(), ConfigKey.LOG_CUSTOM_DECLARATION.getConfigKey(),

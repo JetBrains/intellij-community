@@ -212,12 +212,8 @@ public final class SdkConfigurationUtil {
   public static Sdk findOrCreateSdk(@Nullable Comparator<? super Sdk> comparator, SdkType @NotNull ... sdkTypes) {
     final Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     final Sdk sdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
-    if (sdk != null) {
-      for (SdkType type : sdkTypes) {
-        if (sdk.getSdkType() == type) {
-          return sdk;
-        }
-      }
+    if (sdk != null && ArrayUtil.contains(sdk.getSdkType(), sdkTypes)) {
+      return sdk;
     }
     for (SdkType type : sdkTypes) {
       List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(type);

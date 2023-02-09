@@ -8,7 +8,10 @@ import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.LightResolveTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class ResolveRecordMethodsTest extends LightResolveTestCase {
   
@@ -27,7 +30,8 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     PsiElement target = resolve();
     assertTrue(target instanceof PsiMethod);
     PsiMethod targetMethod = (PsiMethod)target;
-    assertEquals(PsiType.INT, targetMethod.getReturnType());
+    PsiType returnType = targetMethod.getReturnType();
+    assertEquals(PsiTypes.intType().createArrayType(), returnType);
 
     PsiJavaFile file = (PsiJavaFile)getFile();
 
@@ -36,8 +40,22 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     PsiRecordComponent[] components = record.getRecordComponents();
     assertSize(1, components);
     assertEquals(target.getTextOffset(), components[0].getTextOffset());
+    assertEquals(List.of("F", "M", "T"),
+                 ContainerUtil.map(components[0].getAnnotations(), PsiAnnotation::getQualifiedName));
+    assertEquals(List.of("M", "T"), 
+                 ContainerUtil.map(targetMethod.getAnnotations(), PsiAnnotation::getQualifiedName));
+    assertEquals(List.of("M", "T"), 
+                 ContainerUtil.map(targetMethod.getModifierList().getAnnotations(), PsiAnnotation::getQualifiedName));
+    assertEquals(List.of("T1"), 
+                 ContainerUtil.map(returnType.getAnnotations(), PsiAnnotation::getQualifiedName));
     assertFalse(targetMethod.hasAnnotation("F"));
+    assertFalse(targetMethod.getModifierList().hasAnnotation("F"));
+    assertTrue(targetMethod.hasAnnotation("T"));
+    assertTrue(targetMethod.getModifierList().hasAnnotation("T"));
+    assertNull(targetMethod.getAnnotation("F"));
     assertTrue(targetMethod.hasAnnotation("M"));
+    assertNotNull(targetMethod.getAnnotation("M"));
+    assertNotNull(targetMethod.getModifierList().findAnnotation("M"));
   }
 
   public void testRecordField() {
@@ -45,21 +63,29 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     assertTrue(target instanceof PsiField);
     PsiField targetField = (PsiField)target;
     PsiType type = targetField.getType();
-    assertEquals(PsiType.INT, type);
+    assertEquals(PsiTypes.intType(), type);
 
     PsiJavaFile file = (PsiJavaFile)getFile();
 
     PsiClass record = file.getClasses()[0];
     assertNavigatesToFirstRecordComponent(record, target);
+    assertEquals(List.of("F", "T"),
+                 ContainerUtil.map(targetField.getAnnotations(), PsiAnnotation::getQualifiedName));
+    assertEquals(List.of("T"),
+                 ContainerUtil.map(type.getAnnotations(), PsiAnnotation::getQualifiedName));
     assertTrue(targetField.hasAnnotation("F"));
+    assertNotNull(targetField.getAnnotation("F"));
+    assertTrue(targetField.getModifierList().hasAnnotation("F"));
+    assertTrue(targetField.hasAnnotation("T"));
     assertFalse(targetField.hasAnnotation("M"));
+    assertNull(targetField.getAnnotation("M"));
   }
 
   public void testCompactConstructor() {
     PsiElement target = resolve();
     assertTrue(target instanceof PsiParameter);
     PsiParameter parameter = (PsiParameter)target;
-    assertEquals(PsiType.INT, parameter.getType());
+    assertEquals(PsiTypes.intType(), parameter.getType());
 
     PsiJavaFile file = (PsiJavaFile)getFile();
 
@@ -70,6 +96,10 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     JvmParameter[] parameters = constructors[0].getParameters();
     assertEquals(1, parameters.length);
     assertEquals(parameters[0], parameter);
+    assertEquals(List.of("P", "T"),
+                 ContainerUtil.map(parameter.getAnnotations(), PsiAnnotation::getQualifiedName));
+    assertEquals(List.of("T"),
+                 ContainerUtil.map(parameter.getType().getAnnotations(), PsiAnnotation::getQualifiedName));
   }
 
   public void testCanonicalConstructor() {

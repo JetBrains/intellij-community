@@ -4,6 +4,7 @@ package com.intellij.execution.testframework.actions;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,5 +20,6 @@ public interface TestDiffProvider {
    * @param stackTrace The stacktrace which can be used to find the expected literal
    */
   @Nullable
+  @RequiresReadLock
   PsiElement findExpected(@NotNull Project project, @NotNull String stackTrace);
 }

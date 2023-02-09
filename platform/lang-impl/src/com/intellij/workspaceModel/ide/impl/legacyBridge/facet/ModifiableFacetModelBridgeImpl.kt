@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.CustomModuleEntitySource
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
@@ -20,7 +19,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
-import com.intellij.workspaceModel.ide.legacyBridge.FacetBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
@@ -73,7 +71,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   override fun removeFacet(facet: Facet<*>?) {
     if (facet == null) return
     if (facet is FacetBridge<*>) {
-      facet.removeFromStorage(diff, moduleEntity)
+      facet.removeFromStorage(diff)
     } else {
       val facetEntity = diff.facetMapping().getEntities(facet).singleOrNull() as? FacetEntity ?: return
       removeFacetEntityWithSubFacets(facetEntity)
@@ -98,7 +96,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
 
   override fun rename(facet: Facet<*>, newName: String) {
     if (facet is FacetBridge<*>) {
-      facet.rename(diff, moduleEntity, newName)
+      facet.rename(diff, newName)
     } else {
       val entity = diff.facetMapping().getEntities(facet).single() as FacetEntity
       val newEntity = diff.modifyEntity(entity) {
@@ -111,9 +109,8 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   }
 
   override fun getNewName(facet: Facet<*>): String {
-    val entityTypeToFacetContributor = WorkspaceFacetContributor.EP_NAME.extensions.associateBy { it.rootEntityType }
-    val entity = diff.facetMapping().getEntities(facet).single()
-    return entityTypeToFacetContributor[entity.getEntityInterface()]!!.getFacetName(entity)
+    val entity = diff.facetMapping().getEntities(facet).single() as ModuleSettingsBase
+    return entity.name
   }
 
   override fun commit() {
@@ -147,6 +144,11 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
       diff.mutableFacetMapping().removeMapping(facetEntity)
       diff.mutableFacetMapping().addMapping(newEntity, facet)
     }
+    allFacets.filter { it is FacetBridge<*> }
+      .forEach { facet ->
+        facet as FacetBridge<*>
+        facet.updateInStorage(diff)
+      }
   }
 
   override fun getAllFacets(): Array<Facet<*>> {
@@ -155,7 +157,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
     facetEntities.addAll(moduleEntity.facets)
     WorkspaceFacetContributor.EP_NAME.extensions.forEach {
       if (it.rootEntityType != FacetEntity::class.java) {
-        facetEntities.addIfNotNull(it.getRootEntityByModuleEntity(moduleEntity))
+        facetEntities.addAll(it.getRootEntitiesByModuleEntity(moduleEntity))
       }
     }
     return facetEntities.mapNotNull { facetMapping.getDataByEntity(it) }.toList().toTypedArray()

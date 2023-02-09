@@ -5,6 +5,8 @@ import com.intellij.openapi.observable.operation.OperationExecutionId
 import com.intellij.openapi.observable.operation.OperationExecutionStatus
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.openapi.observable.operation.core.ObservableOperationStatus.*
+import com.intellij.openapi.util.text.NaturalComparator
+import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.plus
 import kotlin.collections.minus
@@ -20,9 +22,13 @@ class AtomicOperationTrace(
   constructor(name: String) : this(name, false)
   constructor(isMerging: Boolean) : this("UNKNOWN", isMerging)
 
-  private val state = AtomicReference(State(COMPLETED, mapOf(), mapOf()))
+  private val atomicState = AtomicReference(State(COMPLETED, mapOf(), mapOf()))
 
-  override val status get() = state.get().status
+  override val state: ObservableOperationState
+    get() = atomicState.get()
+
+  override val status: ObservableOperationStatus
+    get() = state.status
 
   override fun traceSchedule(id: OperationExecutionId) {
     val (old, new) = updateState {
@@ -114,7 +120,7 @@ class AtomicOperationTrace(
 
   private fun updateState(nextState: (State) -> State): Pair<State, State> {
     lateinit var oldState: State
-    val state = state.updateAndGet {
+    val state = atomicState.updateAndGet {
       oldState = it
       nextState(it)
     }
@@ -140,30 +146,24 @@ class AtomicOperationTrace(
   }
 
   override fun toString(): String {
-    val (status, scheduled, started) = state.get()
-    return "$name: " +
-           "$status " +
-           "scheduled=${scheduled.asString()} " +
-           "started=${started.asString()}"
-  }
-
-  private fun Map<OperationExecutionId, Int>.asString(): String {
-    return entries.groupBy({ it.key.toString() }, { it.value })
-      .mapValues { it.value.sum() }
-      .toString()
-  }
-
-  @ApiStatus.Internal
-  fun getExecutions(): Set<OperationExecutionId> {
-    val (_, scheduled, started) = state.get()
-    return scheduled.keys + started.keys
+    val (status, scheduled, started) = state
+    val joiner = StringJoiner("\n")
+    joiner.add("$name: $status")
+    joiner.add(
+      (scheduled.mapKeys { "S" + it.key } + started.mapKeys { "P" + it.key })
+        .entries.groupBy({ it.key }, { it.value })
+        .map { "  " + it.value.sum() + it.key }
+        .sortedWith(NaturalComparator.INSTANCE)
+        .joinToString("\n")
+    )
+    return joiner.toString()
   }
 
   private data class State(
-    val status: ObservableOperationStatus,
-    val scheduled: Map<OperationExecutionId, Int>,
-    val started: Map<OperationExecutionId, Int>
-  )
+    override val status: ObservableOperationStatus,
+    override val scheduled: Map<OperationExecutionId, Int>,
+    override val started: Map<OperationExecutionId, Int>
+  ) : ObservableOperationState
 
   companion object {
 

@@ -73,7 +73,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   private final ActionsTree myActionsTree = new ActionsTree();
   private FilterComponent myFilterComponent;
   private TreeExpansionMonitor myTreeExpansionMonitor;
-  private final ShortcutFilteringPanel myFilteringPanel = new ShortcutFilteringPanel();
+  private final @NotNull ShortcutFilteringPanel myFilteringPanel = new ShortcutFilteringPanel();
 
   private boolean myQuickListsModified = false;
   private QuickList[] myQuickLists = QuickListsManager.getInstance().getAllQuickLists();
@@ -81,7 +81,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   private ShowFNKeysSettingWrapper myShowFN;
 
   private boolean myShowOnlyConflicts;
-  private JPanel mySystemShortcutConflictsPanel;
+  private final JPanel mySystemShortcutConflictsPanel;
   private ToggleActionButton myShowOnlyConflictsButton;
 
   public KeymapPanel() { this(false); }
@@ -232,6 +232,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   @Override
   public void updateUI() {
     super.updateUI();
+    //noinspection ConstantValue -- can be called during superclass initialization
     if (myFilteringPanel != null) {
       SwingUtilities.updateComponentTreeUI(myFilteringPanel);
     }
@@ -776,8 +777,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     Keymap keymap() {
       if (mutable == null) {
-        if (parent instanceof KeymapPanel) {
-          KeymapPanel panel = (KeymapPanel)parent;
+        if (parent instanceof KeymapPanel panel) {
           mutable = panel.myManager.getMutableKeymap(selected);
         }
         else {
@@ -813,9 +813,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     Shortcut[] actionShortcuts = keymap.getShortcuts(actionId);
 
     for (Shortcut sc: actionShortcuts) {
-      if (!(sc instanceof KeyboardShortcut))
+      if (!(sc instanceof KeyboardShortcut ksc))
         continue;
-      final KeyboardShortcut ksc = (KeyboardShortcut)sc;
       if (ks.equals(ksc.getFirstKeyStroke()) || ks.equals(ksc.getSecondKeyStroke())) {
         return ksc;
       }

@@ -7,6 +7,7 @@ import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.StarterModuleImporter
 import com.intellij.ide.starters.StarterModuleProcessListener
 import com.intellij.ide.starters.local.generator.AssetsProcessor
+import com.intellij.ide.starters.local.generator.*
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.local.wizard.StarterLibrariesStep
 import com.intellij.ide.starters.shared.*
@@ -344,13 +345,17 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       dependencyConfig,
       getGeneratorContextProperties(sdk, dependencyConfig),
       getAssets(starter),
-      moduleContentRoot
+      convertOutputLocationForTests(moduleContentRoot)
     )
 
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       WriteAction.runAndWait<Throwable> {
         try {
-          AssetsProcessor().generateSources(generatorContext, getTemplateProperties())
+          AssetsProcessor.getInstance().generateSources(
+            generatorContext.outputDirectory,
+            generatorContext.assets,
+            getTemplateProperties() + ("context" to generatorContext)
+          )
         }
         catch (e: IOException) {
           logger<StarterModuleBuilder>().error("Unable to create module by template", e)
@@ -388,7 +393,12 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     }
     else {
       // test mode, open files immediately, do not import module
-      AssetsProcessor().generateSources(generatorContext, getTemplateProperties())
+      AssetsProcessor.getInstance().generateSources(
+        generatorContext.outputDirectory,
+        generatorContext.assets,
+        getTemplateProperties() + ("context" to generatorContext)
+      )
+
       ReformatCodeProcessor(module.project, module, false).run()
       openSampleFiles(module, getFilePathsToOpen())
     }

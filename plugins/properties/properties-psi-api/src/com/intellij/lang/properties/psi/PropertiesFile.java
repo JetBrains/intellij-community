@@ -28,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Locale;
@@ -47,6 +48,7 @@ public interface PropertiesFile {
    * @return All properties found in this file.
    */
   @NotNull
+  @Unmodifiable
   List<IProperty> getProperties();
 
   /**

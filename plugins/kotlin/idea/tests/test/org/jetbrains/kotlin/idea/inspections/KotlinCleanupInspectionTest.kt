@@ -29,7 +29,7 @@ class KotlinCleanupInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
 
         val project = myFixture.project
         val managerEx = InspectionManager.getInstance(project)
-        val globalContext = managerEx.createNewGlobalContext(false) as GlobalInspectionContextBase
+        val globalContext = managerEx.createNewGlobalContext() as GlobalInspectionContextBase
         val analysisScope = AnalysisScope(myFixture.file)
         val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
         globalContext.codeCleanup(analysisScope, profile, "Cleanup", null, true)
@@ -39,6 +39,14 @@ class KotlinCleanupInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testBasic() {
         doTest("basic", "basic.kt.after", "basic.kt", "JavaAnn.java", "deprecatedSymbols.kt")
+    }
+
+    fun testExpressionWithMultipleDeprecatedCalls() {
+        doTest(
+            "expressionWithMultipleDeprecatedCalls",
+            "expressionWithMultipleDeprecatedCalls.kt.after",
+            "expressionWithMultipleDeprecatedCalls.kt"
+        )
     }
 
     fun testFileWithAnnotationToSuppressDeprecation() {

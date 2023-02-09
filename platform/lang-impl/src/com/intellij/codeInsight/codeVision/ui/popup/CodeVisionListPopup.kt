@@ -19,7 +19,7 @@ import javax.swing.Icon
 class CodeVisionListPopup private constructor(project: Project, aStep: ListPopupStep<CodeVisionEntry>) : ListPopupImpl(project, aStep) {
   companion object {
 
-    private val settingButton = AdditionalCodeVisionEntry(CodeVisionHost.settingsLensProviderId, "&Settings",
+    private val settingButton = AdditionalCodeVisionEntry(CodeVisionHost.settingsLensProviderId, CodeVisionBundle.message("LensListPopup.tooltip.settings.settings"),
                                                           CodeVisionBundle.message("LensListPopup.tooltip.settings"))
 
     fun createLensList(model: RangeCodeVisionModel, project: Project): CodeVisionListPopup {

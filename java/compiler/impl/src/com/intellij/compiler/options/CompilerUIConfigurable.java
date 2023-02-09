@@ -132,17 +132,17 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       }
     }
 
-    Map<Setting, Collection<JComponent>> controls = new HashMap<>();
-    controls.put(Setting.RESOURCE_PATTERNS, ContainerUtil.newArrayList(myResourcePatternsLabel, myResourcePatternsField, myPatternLegendLabel));
-    controls.put(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD, Collections.singleton(myCbClearOutputDirectory));
-    controls.put(Setting.ADD_NOT_NULL_ASSERTIONS, Collections.singleton(myAssertNotNullPanel));
-    controls.put(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR, Collections.singleton(myCbAutoShowFirstError));
-    controls.put(Setting.DISPLAY_NOTIFICATION_POPUP, Collections.singleton(myCbDisplayNotificationPopup));
-    controls.put(Setting.AUTO_MAKE, ContainerUtil.newArrayList(myCbEnableAutomake, myEnableAutomakeLegendLabel));
-    controls.put(Setting.PARALLEL_COMPILATION, ContainerUtil.newArrayList(myCbParallelCompilation, myParallelCompilationLegendLabel));
-    controls.put(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE, ContainerUtil.newArrayList(myCbRebuildOnDependencyChange));
-    controls.put(Setting.HEAP_SIZE, ContainerUtil.newArrayList(myHeapSizeLabel, myHeapSizeField, mySharedHeapSizeLabel, mySharedHeapSizeField));
-    controls.put(Setting.COMPILER_VM_OPTIONS, ContainerUtil.newArrayList(myVMOptionsLabel, myVMOptionsField, mySharedVMOptionsLabel, mySharedVMOptionsField));
+    Map<Setting, Collection<JComponent>> controls = Map.ofEntries(
+    Map.entry(Setting.RESOURCE_PATTERNS, List.of(myResourcePatternsLabel, myResourcePatternsField, myPatternLegendLabel)),
+    Map.entry(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD, Collections.singleton(myCbClearOutputDirectory)),
+    Map.entry(Setting.ADD_NOT_NULL_ASSERTIONS, Collections.singleton(myAssertNotNullPanel)),
+    Map.entry(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR, Collections.singleton(myCbAutoShowFirstError)),
+    Map.entry(Setting.DISPLAY_NOTIFICATION_POPUP, Collections.singleton(myCbDisplayNotificationPopup)),
+    Map.entry(Setting.AUTO_MAKE, List.of(myCbEnableAutomake, myEnableAutomakeLegendLabel)),
+    Map.entry(Setting.PARALLEL_COMPILATION, List.of(myCbParallelCompilation, myParallelCompilationLegendLabel)),
+    Map.entry(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE, List.of(myCbRebuildOnDependencyChange)),
+    Map.entry(Setting.HEAP_SIZE, List.of(myHeapSizeLabel, myHeapSizeField, mySharedHeapSizeLabel, mySharedHeapSizeField)),
+    Map.entry(Setting.COMPILER_VM_OPTIONS, List.of(myVMOptionsLabel, myVMOptionsField, mySharedVMOptionsLabel, mySharedVMOptionsField)));
 
     for (Setting setting : myDisabledSettings) {
       Collection<JComponent> components = controls.get(setting);

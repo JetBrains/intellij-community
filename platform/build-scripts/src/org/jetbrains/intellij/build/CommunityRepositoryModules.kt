@@ -93,6 +93,21 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.maven.server.m36.impl", "maven36-server.jar")
       spec.withModule("intellij.maven.errorProne.compiler")
       spec.withModule("intellij.maven.server.indexer", "maven-server-indexer.jar")
+      /*
+
+       */
+      spec.withModuleLibrary(libraryName = "lucene-core:ind-deps", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+      spec.withModuleLibrary(libraryName = "lucene-query-parser:ind-deps", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+      spec.withModuleLibrary(libraryName = "lucene-backward-codecs:ind-deps", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+      spec.withModuleLibrary(libraryName = "lucene-highlighter:ind-deps", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+      spec.withModuleLibrary(libraryName = "lucene-analyzer:ind-deps", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+      spec.withModuleLibrary(libraryName = "maven-resolver-util:ind-deps", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
       spec.withModuleLibrary(libraryName = "apache.maven.indexer.core:6.2.2", moduleName = "intellij.maven.server.indexer",
                              relativeOutputPath = "intellij.maven.server.indexer/lib")
       spec.withModuleLibrary(libraryName = "apache.maven.core:3.8.3", moduleName = "intellij.maven.server.indexer",
@@ -178,6 +193,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.platform.workspaceModel.codegen")
       spec.withModule("intellij.java.devkit")
       spec.withModule("intellij.groovy.devkit")
+      spec.withModule("intellij.kotlin.devkit")
       spec.withModule("intellij.devkit.jps")
     },
     plugin("intellij.eclipse") { spec ->
@@ -196,9 +212,10 @@ object CommunityRepositoryModules {
     },
     javaFXPlugin("intellij.javaFX.community"),
     plugin("intellij.terminal") { spec ->
-      spec.withResource("resources/.zshenv", "")
+      spec.withResource("resources/zsh/.zshenv", "")
+      spec.withResource("resources/zsh/hooks.zsh", "")
       spec.withResource("resources/jediterm-bash.in", "")
-      spec.withResource("resources/fish/config.fish", "fish")
+      spec.withResource("resources/fish/init.fish", "fish")
     },
     plugin("intellij.emojipicker") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX)
@@ -214,16 +231,6 @@ object CommunityRepositoryModules {
     },
     plugin("intellij.statsCollector") { spec ->
       spec.bundlingRestrictions.includeInEapOnly = true
-    },
-    plugin("intellij.fullLine") { spec ->
-      spec.bundlingRestrictions.includeInEapOnly = true
-      spec.withModules(listOf(
-        "intellij.fullLine.core",
-        "intellij.fullLine.local",
-        "intellij.fullLine.python",
-        "intellij.fullLine.java",
-        "intellij.fullLine.kotlin"
-      ))
     },
     plugin(listOf("intellij.lombok", "intellij.lombok.generated")),
     plugin(listOf(
@@ -242,6 +249,8 @@ object CommunityRepositoryModules {
       "intellij.markdown.core",
       "intellij.markdown.fenceInjection",
       "intellij.markdown.frontmatter",
+      "intellij.markdown.frontmatter.yaml",
+      "intellij.markdown.frontmatter.toml",
     )),
     plugin(listOf("intellij.settingsSync", "intellij.settingsSync.git")),
     plugin(listOf(
@@ -262,12 +271,17 @@ object CommunityRepositoryModules {
       "intellij.searchEverywhereMl",
       "intellij.searchEverywhereMl.yaml",
       "intellij.searchEverywhereMl.vcs",
+      "intellij.searchEverywhereMl.java",
+      "intellij.searchEverywhereMl.kotlin",
     )),
     plugin("intellij.platform.testFramework.ui") { spec ->
       spec.withModuleLibrary("intellij.remoterobot.remote.fixtures", spec.mainModule, "")
       spec.withModuleLibrary("intellij.remoterobot.robot.server.core", spec.mainModule, "")
       spec.withProjectLibrary("okhttp")
     },
+    plugin("intellij.editorconfig") { spec ->
+      spec.withProjectLibrary("ec4j-core")
+    }
   )
 
   @Suppress("SpellCheckingInspection")

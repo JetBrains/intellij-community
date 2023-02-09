@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
@@ -265,10 +266,7 @@ public class GeneratedParserUtilBase {
 
   public static boolean nextTokenIsFast(PsiBuilder builder, IElementType... tokens) {
     IElementType tokenType = builder.getTokenType();
-    for (IElementType token : tokens) {
-      if (token == tokenType) return true;
-    }
-    return false;
+    return ArrayUtil.indexOfIdentity(tokens, tokenType) != -1;
   }
 
   public static boolean nextTokenIsFast(PsiBuilder builder, TokenSet tokens) {
@@ -302,10 +300,7 @@ public class GeneratedParserUtilBase {
       }
     }
     if (tokenType == null) return false;
-    for (IElementType token : tokens) {
-      if (tokenType == token) return true;
-    }
-    return false;
+    return ArrayUtil.indexOfIdentity(tokens, tokenType) != -1;
   }
 
   public static boolean nextTokenIs(PsiBuilder builder, IElementType token) {

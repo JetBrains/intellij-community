@@ -22,9 +22,6 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 
-/**
- * @author Sergey Evdokimov
- */
 class XmlMarkupBuilderTest extends LightGroovyTestCase {
 
   void testHighlighting() {

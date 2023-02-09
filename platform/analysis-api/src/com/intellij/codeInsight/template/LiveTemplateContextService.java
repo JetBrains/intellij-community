@@ -8,27 +8,24 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service(Service.Level.APP)
 @ApiStatus.Internal
 public final class LiveTemplateContextService implements Disposable {
-  private final ReadWriteLock myRwLock = new ReentrantReadWriteLock();
-
-  private Map<String, LiveTemplateContext> myLiveTemplateIds = Map.of();
-  private final Map<Class<?>, LiveTemplateContext> myLiveTemplateClasses = new ConcurrentHashMap<>();
-  private Map<String, String> myInternalIds = new HashMap<>();
+  private volatile LiveTemplateContextsState myState;
 
   public LiveTemplateContextService() {
-    loadLiveTemplateContexts();
+    myState = loadLiveTemplateContextsNoLock();
 
-    LiveTemplateContextBean.EP_NAME.addChangeListener(this::loadLiveTemplateContexts, this);
-    LiveTemplateContextProvider.EP_NAME.addChangeListener(this::loadLiveTemplateContexts, this);
+    LiveTemplateContextBean.EP_NAME.addChangeListener(this::reloadLiveTemplateContexts, this);
+    LiveTemplateContextProvider.EP_NAME.addChangeListener(this::reloadLiveTemplateContexts, this);
   }
 
   public static LiveTemplateContextService getInstance() {
@@ -36,58 +33,36 @@ public final class LiveTemplateContextService implements Disposable {
   }
 
   public @NotNull Collection<@NotNull LiveTemplateContext> getLiveTemplateContexts() {
-    myRwLock.readLock().lock();
-    try {
-      return myLiveTemplateIds.values();
-    }
-    finally {
-      myRwLock.readLock().unlock();
-    }
+    return myState.myLiveTemplateIds.values();
   }
 
   public @Nullable LiveTemplateContext getLiveTemplateContext(@Nullable String id) {
     if (id == null) return null;
 
-    myRwLock.readLock().lock();
-    try {
-      return myLiveTemplateIds.get(id);
-    }
-    finally {
-      myRwLock.readLock().unlock();
-    }
+    return myState.myLiveTemplateIds.get(id);
   }
 
   public @NotNull Map<@NotNull String, @NotNull String> getInternalIds() {
-    myRwLock.readLock().lock();
-    try {
-      return myInternalIds;
-    }
-    finally {
-      myRwLock.readLock().unlock();
-    }
+    return myState.myInternalIds;
   }
 
   public @Nullable LiveTemplateContext getLiveTemplateContext(@NotNull Class<?> clazz) {
-    myRwLock.readLock().lock();
-    try {
-      LiveTemplateContext existingBean = myLiveTemplateClasses.get(clazz);
-      if (existingBean != null) {
-        return existingBean;
-      }
+    LiveTemplateContextsState currentState = myState;
 
-      for (LiveTemplateContext bean : myLiveTemplateIds.values()) {
-        TemplateContextType instance = bean.getTemplateContextType();
-        if (clazz.isInstance(instance)) {
-          myLiveTemplateClasses.put(clazz, bean);
-          return bean;
-        }
-      }
+    LiveTemplateContext existingBean = currentState.myLiveTemplateClasses.get(clazz);
+    if (existingBean != null) {
+      return existingBean;
+    }
 
-      return null;
+    for (LiveTemplateContext bean : currentState.myLiveTemplateIds.values()) {
+      TemplateContextType instance = bean.getTemplateContextType();
+      if (clazz.isInstance(instance)) {
+        currentState.myLiveTemplateClasses.put(clazz, bean);
+        return bean;
+      }
     }
-    finally {
-      myRwLock.readLock().unlock();
-    }
+
+    return null;
   }
 
   public @NotNull TemplateContextType getTemplateContextType(@NotNull String id) {
@@ -104,51 +79,57 @@ public final class LiveTemplateContextService implements Disposable {
     return context.getTemplateContextType();
   }
 
-  private void loadLiveTemplateContexts() {
-    myRwLock.writeLock().lock();
-    try {
-      // reset previously calculated base contexts
-      for (LiveTemplateContext liveTemplateContext : myLiveTemplateIds.values()) {
-        liveTemplateContext.getTemplateContextType().clearCachedBaseContextType();
-      }
+  private void reloadLiveTemplateContexts() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-      List<LiveTemplateContextBean> allBeans = LiveTemplateContextBean.EP_NAME.getExtensionList();
-      Map<String, LiveTemplateContext> allIdsMap = new LinkedHashMap<>();
-      for (LiveTemplateContextBean bean : allBeans) {
-        allIdsMap.put(bean.getContextId(), bean);
-      }
-
-      for (LiveTemplateContextProvider provider : LiveTemplateContextProvider.EP_NAME.getExtensionList()) {
-        for (LiveTemplateContext contextType : provider.createContexts()) {
-          allIdsMap.put(contextType.getContextId(), contextType);
-        }
-      }
-
-      this.myLiveTemplateIds = allIdsMap;
-      this.myLiveTemplateClasses.clear();
-
-      this.myInternalIds = allIdsMap.values().stream()
-        .map(LiveTemplateContext::getContextId)
-        .distinct()
-        .collect(Collectors.toMap(Function.identity(), Function.identity()));
+    // reset previously calculated base contexts
+    for (LiveTemplateContext liveTemplateContext : myState.myLiveTemplateIds.values()) {
+      liveTemplateContext.getTemplateContextType().clearCachedBaseContextType();
     }
-    finally {
-      myRwLock.writeLock().unlock();
+
+    myState = loadLiveTemplateContextsNoLock();
+  }
+
+  private static LiveTemplateContextsState loadLiveTemplateContextsNoLock() {
+    List<LiveTemplateContextBean> allBeans = LiveTemplateContextBean.EP_NAME.getExtensionList();
+    Map<String, LiveTemplateContext> allIdsMap = new LinkedHashMap<>();
+    for (LiveTemplateContextBean bean : allBeans) {
+      allIdsMap.put(bean.getContextId(), bean);
     }
+
+    for (LiveTemplateContextProvider provider : LiveTemplateContextProvider.EP_NAME.getExtensionList()) {
+      for (LiveTemplateContext contextType : provider.createContexts()) {
+        allIdsMap.put(contextType.getContextId(), contextType);
+      }
+    }
+
+    var internalIds = allIdsMap.values().stream()
+      .map(LiveTemplateContext::getContextId)
+      .distinct()
+      .collect(Collectors.toMap(Function.identity(), Function.identity()));
+
+    return new LiveTemplateContextsState(allIdsMap, internalIds);
   }
 
   public @NotNull LiveTemplateContextsSnapshot getSnapshot() {
-    myRwLock.readLock().lock();
-    try {
-      return new LiveTemplateContextsSnapshot(myLiveTemplateIds); // myLiveTemplateIds is immutable
-    }
-    finally {
-      myRwLock.readLock().unlock();
-    }
+    return new LiveTemplateContextsSnapshot(myState.myLiveTemplateIds); // myLiveTemplateIds is immutable
   }
 
   @Override
   public void dispose() {
+  }
+}
+
+final class LiveTemplateContextsState {
+  public final Map<String, LiveTemplateContext> myLiveTemplateIds;
+  public final Map<String, String> myInternalIds;
+
+  // used as lookup cache
+  public final Map<Class<?>, LiveTemplateContext> myLiveTemplateClasses = new ConcurrentHashMap<>();
+
+  LiveTemplateContextsState(Map<String, LiveTemplateContext> liveTemplateIds, Map<String, String> internalIds) {
+    myLiveTemplateIds = liveTemplateIds;
+    myInternalIds = internalIds;
   }
 }
 

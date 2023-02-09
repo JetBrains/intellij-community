@@ -50,7 +50,7 @@ open class DefaultTabTheme : TabTheme {
     get() = underlinedTabBackground
   override val underlinedTabInactiveForeground: Color
     get() = underlinedTabForeground
-  override val inactiveColoredTabBackground: Color
+  override val inactiveColoredTabBackground: Color?
     get() = JBUI.CurrentTheme.DefaultTabs.inactiveColoredTabBackground()
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.override;
 
 import com.google.common.collect.Lists;
@@ -37,10 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
-/**
- * @author Alexey.Ivanov
- */
-public class PyOverrideImplementUtil {
+public final class PyOverrideImplementUtil {
 
   @Nullable
   public static PyClass getContextClass(@NotNull final Editor editor, @NotNull final PsiFile file) {

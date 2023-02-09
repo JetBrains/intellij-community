@@ -4,10 +4,12 @@ package org.jetbrains.kotlin.idea.references
 
 import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaOrKotlinMemberDescriptor
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.references.fe10.base.KtFe10Reference
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.util.slicedMap.ReadOnlySlice
 import org.jetbrains.kotlin.util.slicedMap.Slices
 
@@ -18,7 +20,14 @@ fun KtReference.resolveToDescriptors(bindingContext: BindingContext): Collection
         is KtFe10Reference -> resolveToDescriptors(bindingContext)
         is KtDefaultAnnotationArgumentReference -> {
             when (val declaration = resolve()) {
-                is KtDeclaration -> listOfNotNull(bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, declaration])
+                is KtDeclaration -> {
+                    val descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, declaration]
+                        // passed bindingContext may not contain information about declarations from other modules
+                        ?: declaration.resolveToDescriptorIfAny(BodyResolveMode.PARTIAL)
+
+                    listOfNotNull(descriptor)
+                }
+
                 is PsiMember -> listOfNotNull(declaration.getJavaOrKotlinMemberDescriptor())
                 else -> emptyList()
             }

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.light.LightParameterListBuilder;
@@ -21,9 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
-/**
- * @author ven
- */
 public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccessorMethod {
   @NotNull private final GrField myProperty;
 
@@ -57,7 +55,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
       addParameter(myProperty.getName(), type);
     }
 
-    setMethodReturnType(myIsSetter ? PsiType.VOID : myProperty.getType());
+    setMethodReturnType(myIsSetter ? PsiTypes.voidType() : myProperty.getType());
 
     if (modifierMask == null) {
       addModifier(PsiModifier.PUBLIC);
@@ -94,7 +92,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
   @Override
   @Nullable
   public PsiType getInferredReturnType() {
-    if (myIsSetter) return PsiType.VOID;
+    if (myIsSetter) return PsiTypes.voidType();
     return myProperty.getTypeGroovy();
   }
 

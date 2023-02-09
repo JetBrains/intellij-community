@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.spellchecker.grazie.dictionary
 
 import ai.grazie.spell.lists.WordList
 import java.util.concurrent.ConcurrentHashMap
 
-class EditableAggregatedWordList : WordList {
-  private val aggregated: ConcurrentHashMap<String, WordList> = ConcurrentHashMap()
+internal class EditableAggregatedWordList : WordList {
+  private val aggregated = ConcurrentHashMap<String, WordList>()
 
   val keys: Set<String>
     get() = aggregated.keys
@@ -17,10 +19,14 @@ class EditableAggregatedWordList : WordList {
   fun containsList(name: String): Boolean = name in keys
 
   fun addList(name: String, list: WordList) {
-    aggregated[name] = list
+    aggregated.put(name, list)
   }
 
-  fun removeList(name: String) = aggregated.remove(name)
+  fun removeList(name: String) {
+    aggregated.remove(name)
+  }
 
-  fun clear() = aggregated.clear()
+  fun clear() {
+    aggregated.clear()
+  }
 }

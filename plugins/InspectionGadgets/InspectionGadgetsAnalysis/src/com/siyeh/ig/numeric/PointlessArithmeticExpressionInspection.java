@@ -17,7 +17,7 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -39,10 +39,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class PointlessArithmeticExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
   private static final TokenSet arithmeticTokens = TokenSet.create(
@@ -55,9 +57,9 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
   public boolean m_ignoreExpressionsContainingConstants = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("pointless.boolean.expression.ignore.option"),
-                                          this, "m_ignoreExpressionsContainingConstants");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreExpressionsContainingConstants", InspectionGadgetsBundle.message("pointless.boolean.expression.ignore.option")));
   }
 
   @Override
@@ -133,9 +135,9 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
   }
 
   private static @NotNull @NonNls String numberAsText(int num, PsiType type) {
-    if (PsiType.DOUBLE.equals(type)) return num + ".0";
-    if (PsiType.FLOAT.equals(type)) return num + ".0f";
-    if (PsiType.LONG.equals(type)) return num + "L";
+    if (PsiTypes.doubleType().equals(type)) return num + ".0";
+    if (PsiTypes.floatType().equals(type)) return num + ".0f";
+    if (PsiTypes.longType().equals(type)) return num + "L";
     return String.valueOf(num);
   }
 
@@ -155,10 +157,9 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
     @Override
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiPolyadicExpression)) {
+      if (!(element instanceof PsiPolyadicExpression expression)) {
         return;
       }
-      final PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
       final CommentTracker tracker = new CommentTracker();
       tracker.replaceExpressionAndRestoreComments(expression, calculateReplacementExpression(expression, tracker));
     }
@@ -185,7 +186,7 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
       final boolean isPointless;
       final PsiType expressionType = expression.getType();
       if (expressionType == null) return;
-      if (PsiType.DOUBLE.equals(expressionType) || PsiType.FLOAT.equals(expressionType)) {
+      if (PsiTypes.doubleType().equals(expressionType) || PsiTypes.floatType().equals(expressionType)) {
         isPointless = floatingPointOperationIsPointless(tokenType, operands);
       }
       else if (tokenType.equals(JavaTokenType.PLUS)) {

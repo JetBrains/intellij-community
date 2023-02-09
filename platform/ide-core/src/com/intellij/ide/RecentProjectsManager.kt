@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.PathUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.SystemIndependent
@@ -13,14 +14,10 @@ import java.nio.file.Path
 interface RecentProjectsManager {
   companion object {
     @Topic.AppLevel
-    val RECENT_PROJECTS_CHANGE_TOPIC = Topic("Change of recent projects", RecentProjectsChange::class.java, Topic.BroadcastDirection.NONE)
+    val RECENT_PROJECTS_CHANGE_TOPIC: Topic<RecentProjectsChange> = Topic(RecentProjectsChange::class.java, Topic.BroadcastDirection.NONE)
 
     @JvmStatic
     fun getInstance(): RecentProjectsManager = ApplicationManager.getApplication().getService(RecentProjectsManager::class.java)
-
-    fun fireChangeEvent() {
-      ApplicationManager.getApplication().messageBus.syncPublisher(RECENT_PROJECTS_CHANGE_TOPIC).change()
-    }
   }
 
   // a path pointing to a directory where the last project was created or null if not available
@@ -72,7 +69,9 @@ interface RecentProjectsManager {
 
   fun suggestNewProjectLocation(): String
 
+  // Change of recent projects
   interface RecentProjectsChange {
+    @RequiresEdt
     fun change()
   }
 }

@@ -13,7 +13,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaNameSuggestionUtil {
+public final class JavaNameSuggestionUtil {
   public static NameSuggestionsGenerator createFieldNameGenerator(final boolean willBeDeclaredStatic,
                                                                   final PsiLocalVariable localVariable,
                                                                   final PsiExpression initializerExpression,

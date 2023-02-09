@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author irengrig
- */
 public final class VcsSynchronousProgressWrapper {
   private VcsSynchronousProgressWrapper() {
   }

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.search
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
@@ -12,6 +13,9 @@ import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 abstract class AbstractAnnotatedMembersSearchTest : AbstractSearcherTest() {
+
+    override fun runInDispatchThread(): Boolean = false
+
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
@@ -25,27 +29,29 @@ abstract class AbstractAnnotatedMembersSearchTest : AbstractSearcherTest() {
 
         TestCase.assertFalse("Specify ANNOTATION directive in test file", directives.isEmpty())
 
-        val annotationClassName = directives.first()
-        val psiClass = getPsiClass(annotationClassName)
-        PsiBasedClassResolver.trueHits.set(0)
-        PsiBasedClassResolver.falseHits.set(0)
+        runReadAction {
+            val annotationClassName = directives.first()
+            val psiClass = getPsiClass(annotationClassName)
+            PsiBasedClassResolver.trueHits.set(0)
+            PsiBasedClassResolver.falseHits.set(0)
 
-        val actualResult = AnnotatedElementsSearch.searchElements(
-            psiClass,
-            projectScope,
-            PsiModifierListOwner::class.java
-        )
+            val actualResult = AnnotatedElementsSearch.searchElements(
+                psiClass,
+                projectScope,
+                PsiModifierListOwner::class.java
+            )
 
-        checkResult(testDataFile, actualResult)
+            checkResult(testDataFile, actualResult)
 
-        val optimizedTrue = InTextDirectivesUtils.getPrefixedInt(fileText, "// OPTIMIZED_TRUE:")
-        if (optimizedTrue != null) {
-            TestCase.assertEquals(optimizedTrue.toInt(), PsiBasedClassResolver.trueHits.get())
-        }
+            val optimizedTrue = InTextDirectivesUtils.getPrefixedInt(fileText, "// OPTIMIZED_TRUE:")
+            if (optimizedTrue != null) {
+                TestCase.assertEquals(optimizedTrue.toInt(), PsiBasedClassResolver.trueHits.get())
+            }
 
-        val optimizedFalse = InTextDirectivesUtils.getPrefixedInt(fileText, "// OPTIMIZED_FALSE:")
-        if (optimizedFalse != null) {
-            TestCase.assertEquals(optimizedFalse.toInt(), PsiBasedClassResolver.falseHits.get())
+            val optimizedFalse = InTextDirectivesUtils.getPrefixedInt(fileText, "// OPTIMIZED_FALSE:")
+            if (optimizedFalse != null) {
+                TestCase.assertEquals(optimizedFalse.toInt(), PsiBasedClassResolver.falseHits.get())
+            }
         }
     }
 }

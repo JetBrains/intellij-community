@@ -107,10 +107,9 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
       }
       final Query<PsiReference> search = ReferencesSearch.search(field, scope, false);
       for (PsiReference reference : search) {
-        if (!(reference instanceof PsiReferenceExpression)) {
+        if (!(reference instanceof PsiReferenceExpression referenceExpression)) {
           continue;
         }
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)reference;
         if (!myReplaceInWholeProject) {
           boolean isInheritor =
             ReadAction.compute(() -> {

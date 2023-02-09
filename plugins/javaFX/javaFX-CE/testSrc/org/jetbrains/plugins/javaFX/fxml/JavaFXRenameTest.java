@@ -18,9 +18,11 @@ package org.jetbrains.plugins.javaFX.fxml;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.openapi.impl.JavaRenameRefactoringImpl;
@@ -32,6 +34,7 @@ import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.refactoring.JavaFxPropertyRenameHandler;
@@ -281,8 +284,10 @@ public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
       .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull(element);
     if (inline) {
-      CodeInsightTestUtil.doInlineRename(new MemberInplaceRenameHandler(), newName, getEditor(), element);
-    } else {
+      Editor editorForElement = PsiEditorUtil.findEditor(element);
+      CodeInsightTestUtil.doInlineRename(new MemberInplaceRenameHandler(), newName, ObjectUtils.notNull(editorForElement, getEditor()), element);
+    }
+    else {
       new RenameProcessor(getProject(), element, newName, true, true).run();
     }
     myFixture.checkResultByFile(getTestName(true) + "_after.fxml");

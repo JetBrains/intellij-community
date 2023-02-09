@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.gradleJava.scripting.roots
 
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.io.exists
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
 import org.jetbrains.kotlin.idea.gradle.scripting.LastModifiedFiles
@@ -15,6 +14,7 @@ import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.exists
 
 /**
  * [GradleBuildRoot] is a linked gradle build (don't confuse with gradle project and included build).

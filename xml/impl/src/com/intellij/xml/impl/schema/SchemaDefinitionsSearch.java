@@ -27,8 +27,7 @@ import java.util.function.BiFunction;
 public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement> {
   @Override
   public boolean execute(@NotNull final PsiElement queryParameters, @NotNull final Processor<? super PsiElement> consumer) {
-    if (queryParameters instanceof XmlTag) {
-      final XmlTag xml = (XmlTag)queryParameters;
+    if (queryParameters instanceof XmlTag xml) {
       if (ReadAction.compute(() -> isTypeElement(xml))) {
         final Collection<SchemaTypeInfo> infos = ReadAction.compute(() -> gatherInheritors(xml));
 

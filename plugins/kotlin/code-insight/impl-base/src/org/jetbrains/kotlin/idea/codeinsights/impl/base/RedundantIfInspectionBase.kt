@@ -1,20 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
-import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiFile
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
+import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 /**
  * A parent class for K1 and K2 RedundantIfInspection.
@@ -39,10 +40,15 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
             val (redundancyType, branchType, returnAfterIf) = RedundancyType.of(expression)
             if (redundancyType == RedundancyType.NONE) return@ifExpressionVisitor
 
+            val highlightRange = TextRange(
+                expression.ifKeyword.startOffset,
+                (expression.rightParenthesis ?: expression).endOffset
+            ).shiftLeft(expression.startOffset)
             holder.registerProblem(
                 expression,
                 KotlinBundle.message("redundant.if.statement"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                highlightRange,
                 RemoveRedundantIf(redundancyType, branchType, returnAfterIf)
             )
         }
@@ -62,10 +68,12 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
 
         data class LabeledReturn(val label: String) : BranchType()
 
-        class Assign(val lvalue: KtExpression) : BranchType() {
-            override fun equals(other: Any?) = other is Assign && lvalue.text == other.lvalue.text
+        class Assign(left: KtExpression) : BranchType() {
+            val lvalue: SmartPsiElementPointer<KtExpression> = left.let(SmartPointerManager::createPointer)
 
-            override fun hashCode() = lvalue.text.hashCode()
+            override fun equals(other: Any?) = other is Assign && lvalue.element?.text == other.lvalue.element?.text
+
+            override fun hashCode() = lvalue.element?.text.hashCode()
         }
     }
 
@@ -75,7 +83,7 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
         ELSE_TRUE;
 
         companion object {
-            private val RedundancyInfoWithNone = IfExpressionRedundancyInfo(RedundancyType.NONE, BranchType.Simple, null)
+            private val RedundancyInfoWithNone = IfExpressionRedundancyInfo(NONE, BranchType.Simple, null)
 
             fun of(expression: KtIfExpression): IfExpressionRedundancyInfo {
                 val (thenReturn, thenType) = expression.then?.getBranchExpression() ?: return RedundancyInfoWithNone
@@ -111,8 +119,11 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                     }
 
                     is KtBlockExpression -> statements.singleOrNull()?.getBranchExpression()
-                    is KtBinaryExpression -> if (operationToken == KtTokens.EQ && left != null) right to BranchType.Assign(left!!)
-                    else null
+                    is KtBinaryExpression -> {
+                        val left = left
+                        if (operationToken == KtTokens.EQ && left != null) right to BranchType.Assign(left)
+                        else null
+                    }
 
                     else -> this to BranchType.Simple
                 }
@@ -122,10 +133,11 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
 
     private inner class RemoveRedundantIf(
         private val redundancyType: RedundancyType,
-        @SafeFieldForPreview // may refer to PsiElement of original file but we are only reading from it
         private val branchType: BranchType,
-        private val returnAfterIf: KtExpression?,
+        returnAfterIf: KtExpression?,
     ) : LocalQuickFix {
+        val returnExpressionAfterIf: SmartPsiElementPointer<KtExpression>? = returnAfterIf?.let(SmartPointerManager::createPointer)
+
         override fun getName() = KotlinBundle.message("remove.redundant.if.text")
         override fun getFamilyName() = name
 
@@ -144,18 +156,24 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
             val newExpressionOnlyWithCondition = when (branchType) {
                 is BranchType.Return -> factory.createExpressionByPattern("return $0", condition)
                 is BranchType.LabeledReturn -> factory.createExpressionByPattern("return${branchType.label} $0", condition)
-                is BranchType.Assign -> factory.createExpressionByPattern("$0 = $1", branchType.lvalue, condition)
+                is BranchType.Assign -> factory.createExpressionByPattern("$0 = $1", branchType.lvalue.element!!, condition)
                 else -> condition
             }
 
+            val commentSaver = CommentSaver(element)
             runWriteAction {
                 /**
                  * This is the case that we used the next expression of the if expression as the else expression.
                  * See the code and comment in [RedundancyType.of].
                  */
-                returnAfterIf?.delete()
+                returnExpressionAfterIf?.element?.let {
+                    val prev = it.prevSibling
+                    if (prev is PsiWhiteSpace && prev.prevSibling == element) prev.delete()
+                    it.delete()
+                }
 
-                element.replace(newExpressionOnlyWithCondition)
+                val replaced = element.replace(newExpressionOnlyWithCondition)
+                commentSaver.restore(replaced)
             }
         }
 

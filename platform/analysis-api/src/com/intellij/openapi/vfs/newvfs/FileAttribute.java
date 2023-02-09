@@ -123,4 +123,13 @@ public class FileAttribute {
   public static void resetRegisteredIds() {
     ourRegisteredIds.clear();
   }
+
+  @Override
+  public String toString() {
+    return "FileAttribute[" + myId + "]{" +
+           ", version: " + myVersion +
+           ", fixedSize: " + myFixedSize +
+           ", shouldEnumerate: " + myShouldEnumerate +
+           '}';
+  }
 }

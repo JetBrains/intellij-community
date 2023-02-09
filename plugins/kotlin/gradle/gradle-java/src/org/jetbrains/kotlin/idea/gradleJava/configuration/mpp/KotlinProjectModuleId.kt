@@ -6,7 +6,7 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinSourceCoordinates
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectCoordinates
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
 import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.tooling.core.UnsafeApi
@@ -27,8 +27,18 @@ value class KotlinProjectModuleId @UnsafeApi constructor(private val id: String)
 fun KotlinProjectModuleId(resolverContext: ProjectResolverContext, gradleIdeaModule: GradleIdeaModule) =
     KotlinProjectModuleId(GradleProjectResolverUtil.getModuleId(resolverContext, gradleIdeaModule))
 
-fun KotlinProjectModuleId(coordinates: IdeaKotlinSourceCoordinates): KotlinProjectModuleId {
-    return KotlinProjectModuleId(GradleProjectResolverUtil.getModuleId(coordinates.projectPath, coordinates.projectName))
+fun KotlinProjectModuleId(coordinates: IdeaKotlinProjectCoordinates): KotlinProjectModuleId {
+    /* Only include buildId as prefix if the coordinates point to an included build (root is ':') */
+    val buildIdPrefix = if (coordinates.buildId != ":") coordinates.buildId else ""
+
+    /*
+    Only include project for root build or subprojects in composite builds.
+    The root project of an included build is just identified by the buildId alone!
+     */
+    val projectPart = if (coordinates.buildId == ":" || coordinates.projectPath != ":")
+        GradleProjectResolverUtil.getModuleId(coordinates.projectPath, coordinates.projectName) else ""
+
+    return KotlinProjectModuleId(buildIdPrefix + projectPart)
 }
 
 @OptIn(UnsafeApi::class)

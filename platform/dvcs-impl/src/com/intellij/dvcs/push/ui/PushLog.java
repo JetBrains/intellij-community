@@ -6,6 +6,7 @@ import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -72,7 +73,10 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
   private final @NotNull Project myProject;
   private final boolean myAllowSyncStrategy;
 
-  public PushLog(@NotNull Project project, final CheckedTreeNode root, final boolean allowSyncStrategy) {
+  public PushLog(@NotNull Project project,
+                 @NotNull CheckedTreeNode root,
+                 @NotNull ModalityState modalityState,
+                 boolean allowSyncStrategy) {
     myProject = project;
     myAllowSyncStrategy = allowSyncStrategy;
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
@@ -231,7 +235,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
                                               ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
 
-    myChangesBrowser = new PushLogChangesBrowser(project, false, false, myChangesLoadingPane);
+    myChangesBrowser = new PushLogChangesBrowser(project, false, false, myChangesLoadingPane, modalityState);
     myChangesBrowser.hideViewerBorder();
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), myTree);
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);
@@ -516,8 +520,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
   @Nullable
   private DefaultMutableTreeNode getFirstNodeToEdit() {
     // start edit last selected component if editable
-    if (myTree.getLastSelectedPathComponent() instanceof RepositoryNode) {
-      RepositoryNode selectedNode = ((RepositoryNode)myTree.getLastSelectedPathComponent());
+    if (myTree.getLastSelectedPathComponent() instanceof RepositoryNode selectedNode) {
       if (selectedNode.isEditableNow()) return selectedNode;
     }
     List<RepositoryNode> repositoryNodes = getChildNodesByType((DefaultMutableTreeNode)myTree.getModel().getRoot(),
@@ -629,9 +632,8 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
       // null border works as expected always.
       ColoredTreeCellRenderer renderer = getTextRenderer();
       renderer.setIpad(JBInsets.emptyInsets());
-      if (value instanceof RepositoryNode) {
+      if (value instanceof RepositoryNode valueNode) {
         //todo simplify, remove instance of
-        RepositoryNode valueNode = (RepositoryNode)value;
         boolean isCheckboxVisible = valueNode.isCheckboxVisible();
         myCheckbox.setVisible(isCheckboxVisible);
         if (!isCheckboxVisible) {
@@ -675,8 +677,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
 
     @Override
     public boolean isCellEditable(EventObject anEvent) {
-      if (anEvent instanceof MouseEvent) {
-        MouseEvent me = ((MouseEvent)anEvent);
+      if (anEvent instanceof MouseEvent me) {
         final TreePath path = myTree.getClosestPathForLocation(me.getX(), me.getY());
         final int row = myTree.getRowForLocation(me.getX(), me.getY());
         myTree.getCellRenderer().getTreeCellRendererComponent(myTree, path.getLastPathComponent(), false, false, true, row, true);

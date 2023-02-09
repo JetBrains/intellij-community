@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.vfs;
 
-import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.testFramework.LightVirtualFile;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import org.jetbrains.annotations.NotNull;
@@ -9,13 +9,13 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 public class TerminalSessionVirtualFileImpl extends LightVirtualFile {
-  private final JBTerminalWidget myTerminal;
+  private final TerminalWidget myTerminalWidget;
   private final SettingsProvider mySettingsProvider;
 
   public TerminalSessionVirtualFileImpl(@NotNull String name,
-                                        @NotNull JBTerminalWidget terminalWidget,
+                                        @NotNull TerminalWidget terminalWidget,
                                         @NotNull SettingsProvider settingsProvider) {
-    myTerminal = terminalWidget;
+    myTerminalWidget = terminalWidget;
     mySettingsProvider = settingsProvider;
     setFileType(TerminalSessionFileType.INSTANCE);
     setWritable(true);
@@ -27,8 +27,8 @@ public class TerminalSessionVirtualFileImpl extends LightVirtualFile {
     }
   }
 
-  public @NotNull JBTerminalWidget getTerminalWidget() {
-    return myTerminal;
+  public @NotNull TerminalWidget getTerminalWidget() {
+    return myTerminalWidget;
   }
 
   public @NotNull SettingsProvider getSettingsProvider() {

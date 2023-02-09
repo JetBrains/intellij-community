@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -6,13 +6,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceVariableUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
@@ -45,7 +48,28 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
         PsiTypeElement typeElement = parameter.getTypeElement();
         if (typeElement != null && !typeElement.isInferredType()) {
           PsiForeachStatement copy = (PsiForeachStatement)statement.copy();
-          doCheck(parameter, copy.getIterationParameter(), typeElement);
+          doCheck(parameter, Objects.requireNonNull(copy.getIterationParameter()), typeElement);
+        }
+      }
+
+      @Override
+      public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
+        PsiPattern deconstructionComponent = variable.getPattern();
+        if (deconstructionComponent.getParent() instanceof PsiDeconstructionList deconstructionList &&
+            deconstructionList.getParent() instanceof PsiDeconstructionPattern deconstruction) {
+          PsiTypeElement typeElement = variable.getTypeElement();
+          if (!typeElement.isInferredType()) {
+            @NotNull PsiPattern @NotNull [] patterns = deconstructionList.getDeconstructionComponents();
+            int index = ArrayUtil.indexOf(patterns, deconstructionComponent);
+            // We need a copy of the entire pattern, not just the pattern variable, as we will
+            // replace the variable type with 'var' inside the 'doCheck' method by calling the
+            // 'IntroduceVariableUtil#expandDiamondsAndReplaceExplicitTypeWithVar' method.
+            // Without the record pattern as context, we will not be able to get the type of
+            // the deconstruction component variable when calling the 'getNormalizedType' method.
+            PsiDeconstructionPattern deconstructionCopy = (PsiDeconstructionPattern)deconstruction.copy();
+            PsiPattern componentCopy = deconstructionCopy.getDeconstructionList().getDeconstructionComponents()[index];
+            doCheck(variable, Objects.requireNonNull(JavaPsiPatternUtil.getPatternVariable(componentCopy)), typeElement);
+          }
         }
       }
 
@@ -67,11 +91,11 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
         }
        }
 
-      private PsiType getNormalizedType(PsiVariable copyVariable) {
+      private static PsiType getNormalizedType(PsiVariable copyVariable) {
         PsiType type = copyVariable.getType();
         PsiClass refClass = PsiUtil.resolveClassInType(type);
-        if (refClass instanceof PsiAnonymousClass) {
-          type = ((PsiAnonymousClass)refClass).getBaseClassType();
+        if (refClass instanceof PsiAnonymousClass anonymousClass) {
+          type = anonymousClass.getBaseClassType();
         }
         return type;
       }

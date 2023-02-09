@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.presentation
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -21,7 +22,7 @@ import kotlin.math.ceil
 import kotlin.math.max
 
 @ApiStatus.Internal
-class InlayTextMetricsStorage(val editor: EditorImpl) {
+class InlayTextMetricsStorage(val editor: Editor) {
   private var smallTextMetrics : InlayTextMetrics? = null
   private var normalTextMetrics : InlayTextMetrics? = null
 
@@ -65,14 +66,14 @@ class InlayTextMetricsStorage(val editor: EditorImpl) {
 }
 
 class InlayTextMetrics(
-  editor: EditorImpl,
+  editor: Editor,
   val fontHeight: Int,
   val fontBaseline: Int,
   private val fontMetrics: FontMetrics,
   val fontType: Int
 ) {
   companion object {
-    internal fun create(editor: EditorImpl, size: Float, fontType: Int) : InlayTextMetrics {
+    internal fun create(editor: Editor, size: Float, fontType: Int) : InlayTextMetrics {
       val font = if (EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays) {
         val editorFont = EditorUtil.getEditorFont()
         editorFont.deriveFont(fontType, size)
@@ -101,7 +102,7 @@ class InlayTextMetrics(
 
   // Editor metrics:
   val ascent: Int = editor.ascent
-  val descent: Int = editor.descent
+  val descent: Int = (editor as? EditorImpl)?.descent ?: 0
   val lineHeight = editor.lineHeight
   private val editorComponent = editor.component
 

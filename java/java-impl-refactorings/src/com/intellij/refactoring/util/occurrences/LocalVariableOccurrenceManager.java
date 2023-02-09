@@ -7,9 +7,6 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public class LocalVariableOccurrenceManager extends BaseOccurrenceManager {
   private final PsiLocalVariable myLocalVariable;
 

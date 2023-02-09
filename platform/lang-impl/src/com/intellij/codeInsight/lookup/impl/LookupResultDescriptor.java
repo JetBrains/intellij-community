@@ -3,6 +3,7 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,4 +15,6 @@ public interface LookupResultDescriptor {
   @Nullable LookupElement getSelectedItem();
 
   LookupUsageTracker.FinishType getFinishType();
+
+  @Nullable Language getLanguage();
 }

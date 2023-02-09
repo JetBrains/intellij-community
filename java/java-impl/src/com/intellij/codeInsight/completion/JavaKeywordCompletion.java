@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -176,17 +176,16 @@ public class JavaKeywordCompletion {
         return TailType.NONE;
       }
 
-      if (scope instanceof PsiMethod){
-        final PsiMethod method = (PsiMethod)scope;
-        if(method.isConstructor() || PsiType.VOID.equals(method.getReturnType())) {
+      if (scope instanceof PsiMethod method){
+        if(method.isConstructor() || PsiTypes.voidType().equals(method.getReturnType())) {
           return TailType.SEMICOLON;
         }
 
         return TailType.HUMBLE_SPACE_BEFORE_WORD;
       }
-      if (scope instanceof PsiLambdaExpression) {
-        final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(((PsiLambdaExpression)scope));
-        if (PsiType.VOID.equals(returnType)) {
+      if (scope instanceof PsiLambdaExpression lambda) {
+        final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambda);
+        if (PsiTypes.voidType().equals(returnType)) {
           return TailType.SEMICOLON;
         }
         return TailType.HUMBLE_SPACE_BEFORE_WORD;
@@ -869,7 +868,7 @@ public class JavaKeywordCompletion {
   private static boolean mayExpectBoolean(CompletionParameters parameters) {
     for (ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
       PsiType type = info.getType();
-      if (type instanceof PsiClassType || PsiType.BOOLEAN.equals(type)) return true;
+      if (type instanceof PsiClassType || PsiTypes.booleanType().equals(type)) return true;
     }
     return false;
   }

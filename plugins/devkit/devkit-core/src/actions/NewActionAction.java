@@ -34,7 +34,7 @@ public class NewActionAction extends CreateElementActionBase implements Descript
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return super.getActionUpdateThread();
   }
 
   @Override

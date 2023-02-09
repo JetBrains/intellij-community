@@ -23,8 +23,8 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryUsageInfo
 import java.awt.datatransfer.StringSelection
 import java.util.Locale
 
@@ -57,8 +57,8 @@ internal sealed class RepositoryTreeItem {
         override fun isCopyEnabled(dataContext: DataContext) = true
     }
 
-    data class Module(val usageInfo: RepositoryUsageInfo) : RepositoryTreeItem() {
+    data class Module(val module: PackageSearchModule) : RepositoryTreeItem() {
 
-        override fun toSimpleIdentifier(): String = usageInfo.projectModule.name.lowercase(Locale.ROOT)
+        override fun toSimpleIdentifier(): String = module.name.lowercase(Locale.ROOT)
     }
 }

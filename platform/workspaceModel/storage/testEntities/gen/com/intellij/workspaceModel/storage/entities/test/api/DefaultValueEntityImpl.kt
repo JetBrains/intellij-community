@@ -14,6 +14,9 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -92,8 +95,7 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.isGenerated != dataSource.isGenerated) this.isGenerated = dataSource.isGenerated
       if (this.anotherName != dataSource.anotherName) this.anotherName = dataSource.anotherName
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

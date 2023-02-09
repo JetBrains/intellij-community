@@ -4,7 +4,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.*
+import com.intellij.util.io.Decompressor
+import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.isDirectory
+import com.intellij.util.io.toByteArray
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException

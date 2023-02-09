@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.SpacingConfiguration
+import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -24,6 +25,7 @@ import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import java.awt.geom.Path2D
 import java.awt.geom.RoundRectangle2D
+import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.border.Border
 import kotlin.math.max
@@ -41,7 +43,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
     setMinimumButtonSize(Dimension(0, 0))
     layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps(size = DarculaUIUtil.BW.get()))
-    putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true)
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(true, true))
 
     addFocusListener(object : FocusListener {
       override fun focusGained(e: FocusEvent?) {
@@ -93,7 +95,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
                                    look: ActionButtonLook?,
                                    place: String,
                                    presentation: Presentation,
-                                   minimumSize: Dimension): ActionButton {
+                                   minimumSize: Supplier<out Dimension>): ActionButton {
     val result = DeprecatedSegmentedButton(action, presentation, place, minimumSize, spacingConfiguration)
     result.isEnabled = isEnabled
     return result
@@ -165,7 +167,7 @@ private class DeprecatedSegmentedButton(
   action: AnAction,
   presentation: Presentation,
   place: String,
-  minimumSize: Dimension,
+  minimumSize: Supplier<out Dimension>,
   private val spacingConfiguration: SpacingConfiguration
 ) : ActionButtonWithText(action, presentation, place, minimumSize) {
 
@@ -231,14 +233,21 @@ internal class SegmentedButtonBorder : Border {
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
-      val r = Rectangle(x, y, width, height)
+      g2.translate(x, y)
+      val r = Rectangle(0, 0, width, height)
       val arc = DarculaUIUtil.BUTTON_ARC.float
-      if (c.hasFocus()) {
-        DarculaUIUtil.paintOutlineBorder(g2, r.width, r.height, arc, true, true, DarculaUIUtil.Outline.focus)
+      var outline = DarculaUIUtil.getOutline(c as JComponent)
+      if (outline == null && c.hasFocus()) {
+        outline = DarculaUIUtil.Outline.focus
       }
-      g2.paint = getSegmentedButtonBorderPaint(c, false)
-      JBInsets.removeFrom(r, JBUI.insets(DarculaUIUtil.BW.unscaled.toInt()))
-      paintBorder(g2, r)
+      if (outline == null) {
+        g2.paint = getSegmentedButtonBorderPaint(c, false)
+        JBInsets.removeFrom(r, JBUI.insets(DarculaUIUtil.BW.unscaled.toInt()))
+        paintBorder(g2, r)
+      }
+      else {
+        DarculaUIUtil.paintOutlineBorder(g2, r.width, r.height, arc, true, c.hasFocus(), outline)
+      }
     }
     finally {
       g2.dispose()
@@ -262,9 +271,9 @@ internal object SegmentedButtonLook : IdeaActionButtonLook() {
     // Border is painted in parent
   }
 
-  override fun getStateBackground(component: JComponent, state: Int): Color {
+  override fun getStateBackground(component: JComponent, state: Int): Color? {
     if (!component.isEnabled) {
-      return component.background
+      return if (component.isBackgroundSet) component.background else null
     }
 
     val focused = component.parent?.hasFocus() == true
@@ -274,7 +283,7 @@ internal object SegmentedButtonLook : IdeaActionButtonLook() {
       ActionButtonComponent.PUSHED ->
         if (focused) JBUI.CurrentTheme.SegmentedButton.FOCUSED_SELECTED_BUTTON_COLOR
         else JBUI.CurrentTheme.SegmentedButton.SELECTED_BUTTON_COLOR
-      else -> component.background
+      else -> if (component.isBackgroundSet) component.background else null
     }
   }
 }

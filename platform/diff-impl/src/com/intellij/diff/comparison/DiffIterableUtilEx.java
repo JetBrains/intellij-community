@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class DiffIterableUtilEx {
+public final class DiffIterableUtilEx {
   @NotNull
   public static FairDiffIterable diff(int @NotNull [] data1, int @NotNull [] data2, @NotNull ProgressIndicator indicator)
     throws DiffTooBigException {

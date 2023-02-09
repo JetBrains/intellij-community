@@ -4,11 +4,11 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
-import com.intellij.ide.actions.IdeScaleTransformer;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.ui.laf.MouseDragSelectionEventHandler;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
@@ -60,8 +60,6 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -70,6 +68,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.mac.MacGestureSupportInstaller;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.paint.PaintUtil;
@@ -110,7 +109,7 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
-import java.lang.reflect.Field;
+import java.lang.invoke.MethodHandle;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
@@ -490,7 +489,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       return Collections.emptyIterator();
     });
-    myPanel.putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true);
+    myPanel.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
 
     myHeaderPanel = new MyHeaderPanel();
     myGutterComponent = new EditorGutterComponentImpl(this);
@@ -512,7 +511,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }, myCaretModel);
 
-    setFontSize(IdeScaleTransformer.INSTANCE.getCurrentEditorFontSize());
+    setFontSize(UISettingsUtils.getInstance().getScaledEditorFontSize());
 
     myGutterComponent.updateSize();
     Dimension preferredSize = getPreferredSize();
@@ -535,7 +534,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.addPropertyChangeListener(propertyChangeListener);
     Disposer.register(myDisposable, () -> myDocument.removePropertyChangeListener(propertyChangeListener));
 
-    CodeStyleSettingsManager.getInstance(myProject).addListener(this);
+    CodeStyleSettingsManager.getInstance(myProject).subscribe(this, myDisposable);
 
     myFocusModeModel = new FocusModeModel(this);
     Disposer.register(myDisposable, myFocusModeModel);
@@ -628,9 +627,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int start = MathUtil.clamp(highlighter.getAffectedAreaStartOffset(), 0, textLength);
     int end = MathUtil.clamp(highlighter.getAffectedAreaEndOffset(), 0, textLength);
 
-    if (getGutterComponentEx().getCurrentAccessibleLine() != null &&
-        AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer()))
-    {
+    if (myGutterComponent.getCurrentAccessibleLine() != null &&
+        AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer())) {
       escapeGutterAccessibleLine(start, end);
     }
     int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
@@ -1047,8 +1045,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
       myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
-      CodeStyleSettingsManager.removeListener(myProject, this);
-
       Disposer.dispose(myDisposable);
       myVerticalScrollBar.setPersistentUI(JBScrollBar.createUI(null)); // clear error panel's cached image
     });
@@ -1352,7 +1348,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!(highlighter instanceof EmptyEditorHighlighter)) {
       EditorHighlighterCache.rememberEditorHighlighterForCachesOptimization(document, highlighter);
     }
+
+    EditorHighlighter oldHighlighter = myHighlighter;
     myHighlighter = highlighter;
+    myPropertyChangeSupport.firePropertyChange(EditorEx.PROP_HIGHLIGHTER, oldHighlighter, highlighter);
 
     if (myPanel != null) {
       reinitSettings();
@@ -1371,7 +1370,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
-  public @NotNull EditorGutterComponentImpl getGutterComponentEx() {
+  public @NotNull EditorGutterComponentEx getGutterComponentEx() {
     return myGutterComponent;
   }
 
@@ -1711,7 +1710,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
-    if (getGutterComponentEx().getCurrentAccessibleLine() != null) {
+    if (myGutterComponent.getCurrentAccessibleLine() != null) {
       escapeGutterAccessibleLine(e.getOffset(), e.getOffset() + e.getNewLength());
     }
 
@@ -1752,7 +1751,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int endVisLine = offsetToVisualLine(offsetEnd);
     int line = getCaretModel().getPrimaryCaret().getVisualPosition().line;
     if (startVisLine <= line && endVisLine >= line) {
-      getGutterComponentEx().escapeCurrentAccessibleLine();
+      myGutterComponent.escapeCurrentAccessibleLine();
     }
   }
 
@@ -2032,9 +2031,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Color getBackgroundColor() {
-    if (myForcedBackground != null) return myForcedBackground;
-
-    return getBackgroundIgnoreForced();
+    return myForcedBackground == null ? getBackgroundIgnoreForced() : myForcedBackground;
   }
 
   @Override
@@ -3109,8 +3106,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static final Field decrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "decrButton");
-  private static final Field incrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "incrButton");
+  // not used on macOS and some other platforms - lazy creation
+  private static final class BasicScrollBarUiButtonHolder {
+    private static final MethodHandle decrButtonField = MethodHandleUtil.getPrivateField(BasicScrollBarUI.class, "decrButton", JButton.class);
+    private static final MethodHandle incrButtonField = MethodHandleUtil.getPrivateField(BasicScrollBarUI.class, "incrButton", JButton.class);
+  }
 
   final class MyScrollBar extends OpaqueAwareScrollBar {
     private static final @NonNls String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
@@ -3146,12 +3146,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       if (barUI instanceof BasicScrollBarUI) {
         try {
-          JButton decrButtonValue = (JButton)decrButtonField.get(barUI);
+          JButton decrButtonValue = (JButton)BasicScrollBarUiButtonHolder.decrButtonField.invoke(barUI);
           LOG.assertTrue(decrButtonValue != null);
           return top + decrButtonValue.getHeight();
         }
-        catch (Exception exc) {
-          throw new IllegalStateException(exc);
+        catch (Throwable e) {
+          throw new IllegalStateException(e);
         }
       }
       return top + 15;
@@ -3171,12 +3171,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       if (barUI instanceof BasicScrollBarUI) {
         try {
-          JButton incrButtonValue = (JButton)incrButtonField.get(barUI);
+          JButton incrButtonValue = (JButton)BasicScrollBarUiButtonHolder.incrButtonField.invoke(barUI);
           LOG.assertTrue(incrButtonValue != null);
           return insets.bottom + incrButtonValue.getHeight();
         }
-        catch (Exception exc) {
-          throw new IllegalStateException(exc);
+        catch (Throwable e) {
+          throw new IllegalStateException(e);
         }
       }
       if (barUI != null && APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS.equals(barUI.getClass().getName())) {
@@ -4569,7 +4569,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return myFontPreferences.getSize2D(myFontPreferences.getFontFamily());
       }
       if (myFontSize == FONT_SIZE_TO_IGNORE) {
-        return IdeScaleTransformer.INSTANCE.scaledEditorFontSize(getDelegate().getEditorFontSize2D());
+        return UISettingsUtils.getInstance().scaleFontSize(getDelegate().getEditorFontSize2D());
       }
       return myFontSize;
     }
@@ -4595,8 +4595,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myFontPreferencesAreSetExplicitly = false;
 
-      IdeScaleTransformer scaleTransformer = IdeScaleTransformer.INSTANCE;
-      if (!scaleTransformer.isEditorFontSizeForced() && fontSize == scaleTransformer.scaledEditorFontSize(super.getEditorFontSize2D())) {
+      if (fontSize == UISettingsUtils.getInstance().scaleFontSize(super.getEditorFontSize2D())) {
         myFontSize = FONT_SIZE_TO_IGNORE;
       }
       else {
@@ -4762,7 +4761,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 new Point(
                   mouseLocationOnScreen.x - editorComponentLocationOnScreen.x,
                   mouseLocationOnScreen.y - editorComponentLocationOnScreen.y
-                ), editor.getGutterComponentEx().getDragImage((GutterIconRenderer)attachedObject), painterListenersDisposable
+                ), editor.myGutterComponent.getDragImage((GutterIconRenderer)attachedObject), painterListenersDisposable
               );
               IdeGlassPaneUtil.installPainter(
                 editorComponent,
@@ -4983,9 +4982,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
     if (myProject != null) {
-      if (event.getPsiFile() != null) {
-        PsiFile editorFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(getDocument());
-        if (editorFile != event.getPsiFile()) return;
+      VirtualFile eventFile = event.getVirtualFile();
+      if (eventFile != null && !eventFile.equals(getVirtualFile())) {
+        return;
       }
       int oldTabSize = EditorUtil.getTabSize(this);
       mySettings.reinitSettings();
@@ -5033,8 +5032,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       else {
         FoldRegion foldRegion = event.getCollapsedFoldRegion();
-        if (foldRegion instanceof CustomFoldRegion) {
-          CustomFoldRegion customFoldRegion = (CustomFoldRegion)foldRegion;
+        if (foldRegion instanceof CustomFoldRegion customFoldRegion) {
           ActionGroup group = customFoldRegion.getRenderer().getContextMenuGroup(customFoldRegion);
           if (group != null) return group;
         }
@@ -5206,10 +5204,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     NullEditorHighlighter() {
       super(NULL_ATTRIBUTES);
     }
-
-    @SuppressWarnings("removal")
-    @Override
-    public void setAttributes(TextAttributes attributes) {}
 
     @Override
     public void setColorScheme(@NotNull EditorColorsScheme scheme) {}

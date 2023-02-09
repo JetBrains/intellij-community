@@ -3,7 +3,7 @@ package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.workspaceModel.storage.EntityStorage;
+import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +18,6 @@ public abstract class ModuleManagerEx extends ModuleManager {
     return (ModuleManagerEx)getInstance(project);
   }
 
-  public void unloadNewlyAddedModulesIfPossible(@NotNull EntityStorage storage) {
+  public void unloadNewlyAddedModulesIfPossible(@NotNull MutableEntityStorage builder, @NotNull MutableEntityStorage unloadedEntityBuilder) {
   }
 }

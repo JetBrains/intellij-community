@@ -49,9 +49,6 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class ExternalProjectPathField extends ComponentWithBrowseButton<ExternalProjectPathField.MyPathAndProjectButtonPanel>
   implements TextAccessor
 {
@@ -99,8 +96,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
             Object lastPathComponent = path.getLastPathComponent();
             if (lastPathComponent instanceof ExternalSystemNode) {
               Object e1 = ((ExternalSystemNode)lastPathComponent).getDescriptor().getElement();
-              if (e1 instanceof ExternalProjectPojo) {
-                ExternalProjectPojo pojo = (ExternalProjectPojo)e1;
+              if (e1 instanceof ExternalProjectPojo pojo) {
                 textField.setText(pojo.getPath());
                 Editor editor = textField.getEditor();
                 if (editor != null) {

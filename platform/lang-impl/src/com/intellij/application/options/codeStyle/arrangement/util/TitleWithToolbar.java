@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class TitleWithToolbar extends JPanel {
 
   public TitleWithToolbar(@NlsContexts.BorderTitle @NotNull String title,

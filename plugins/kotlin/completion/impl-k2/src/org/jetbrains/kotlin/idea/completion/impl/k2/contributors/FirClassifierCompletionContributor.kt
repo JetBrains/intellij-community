@@ -72,15 +72,17 @@ internal open class FirClassifierCompletionContributor(
                 addClassifierSymbolToCompletion(classifierSymbol, context, ImportStrategy.DoNothing)
             }
 
-        getAvailableClassifiersFromIndex(
-            symbolFromIndexProvider,
-            scopeNameFilter,
-            visibilityChecker
-        )
-            .filter { it !in availableFromScope && filterClassifiers(it) }
-            .forEach { classifierSymbol ->
-                addClassifierSymbolToCompletion(classifierSymbol, context, getImportingStrategy(classifierSymbol))
-            }
+        if (prefixMatcher.prefix.isNotEmpty()) {
+            getAvailableClassifiersFromIndex(
+                symbolFromIndexProvider,
+                scopeNameFilter,
+                visibilityChecker
+            )
+                .filter { it !in availableFromScope && filterClassifiers(it) }
+                .forEach { classifierSymbol ->
+                    addClassifierSymbolToCompletion(classifierSymbol, context, getImportingStrategy(classifierSymbol))
+                }
+        }
     }
 }
 

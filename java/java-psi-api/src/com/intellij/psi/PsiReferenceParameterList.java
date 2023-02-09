@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents the list of type arguments specified on a Java reference.
  *
- * @author dsl
  * @see PsiJavaCodeReferenceElement#getParameterList()
  */
 public interface PsiReferenceParameterList extends PsiElement {

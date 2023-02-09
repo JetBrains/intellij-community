@@ -42,7 +42,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,9 +54,6 @@ import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static java.util.Objects.requireNonNull;
 
-/**
- * @author irengrig
- */
 public class TodoCheckinHandlerWorker {
   private final static Logger LOG = Logger.getInstance(TodoCheckinHandlerWorker.class);
 
@@ -112,12 +108,6 @@ public class TodoCheckinHandlerWorker {
           return null;
         }
 
-        String beforeContent = getRevisionContent(beforeRevision);
-        if (beforeContent == null) {
-          mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.previous.revision")));
-          return null;
-        }
-
         Document afterDocument = FileDocumentManager.getInstance().getDocument(afterFile);
         if (afterDocument == null) {
           mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.current.revision")));
@@ -127,16 +117,10 @@ public class TodoCheckinHandlerWorker {
         List<? extends TodoItem> afterTodoItems = collectTodoItems(afterPsiFile, false);
 
         if (afterRevision instanceof CurrentContentRevision) {
-          return new SimpleEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, afterTodoItems);
+          return new SimpleEditedFileProcessor(myProject, afterFilePath, beforeRevision, afterContent, afterTodoItems);
         }
         else {
-          String afterChangeContent = getRevisionContent(afterRevision);
-          if (afterChangeContent == null) {
-            mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.current.revision")));
-            return null;
-          }
-
-          return new NonLocalEditedFileProcessor(myProject, afterFilePath, beforeContent, afterChangeContent, afterContent, afterTodoItems);
+          return new NonLocalEditedFileProcessor(myProject, afterFilePath, beforeRevision, afterRevision, afterContent, afterTodoItems);
         }
       });
 
@@ -168,32 +152,45 @@ public class TodoCheckinHandlerWorker {
   }
 
   private static List<TodoItem> applyFilterAndRemoveDuplicatesAndSort(TodoItem @NotNull [] items, @Nullable TodoFilter filter) {
-    List<TodoItem> todoItems = ContainerUtil.newArrayList(items);
-    todoItems.sort(TodoItem.BY_START_OFFSET);
-
-    TodoItem previous = null;
-    for (Iterator<TodoItem> iterator = todoItems.iterator(); iterator.hasNext(); ) {
-      final TodoItem next = iterator.next();
-      if (filter != null && !filter.contains(next.getPattern())) {
-        iterator.remove();
-        continue;
+    record ByRange(@NotNull TextRange range, @NotNull TodoItem item) {
+      @Override
+      public boolean equals(Object obj) {
+        return obj instanceof ByRange br && range.equals(br.range);
       }
-      if (previous != null && next.getTextRange().equals(previous.getTextRange())) {
-        iterator.remove();
-        continue;
+      @Override
+      public int hashCode() {
+        return range.hashCode();
       }
-      previous = next;
     }
-    return todoItems;
+    return Arrays.stream(items)
+      .filter(next -> filter == null || filter.contains(next.getPattern()))
+      .map(p->new ByRange(p.getTextRange(), p))
+      .distinct()
+      .map(br -> br.item())
+      .sorted(TodoItem.BY_START_OFFSET)
+      .toList();
   }
 
   private final class SimpleEditedFileProcessor extends EditedFileProcessorBase {
+    private final ContentRevision myBeforeRevision;
+
     private SimpleEditedFileProcessor(@NotNull Project project,
                                       @NotNull FilePath afterFilePath,
-                                      @NotNull String beforeContent,
+                                      @NotNull ContentRevision beforeRevision,
                                       @NotNull String afterContent,
                                       @NotNull List<? extends TodoItem> afterTodoItems) {
-      super(project, afterFilePath, beforeContent, afterContent, afterTodoItems);
+      super(project, afterFilePath, afterContent, afterTodoItems);
+      myBeforeRevision = beforeRevision;
+    }
+
+    @Override
+    protected boolean loadContents() {
+      myBeforeContent = getRevisionContent(myBeforeRevision);
+      if (myBeforeContent == null) {
+        mySkipped.add(Pair.create(myAfterFile, VcsBundle.message("checkin.can.not.load.previous.revision")));
+        return false;
+      }
+      return true;
     }
 
     @Override
@@ -204,16 +201,37 @@ public class TodoCheckinHandlerWorker {
   }
 
   private final class NonLocalEditedFileProcessor extends EditedFileProcessorBase {
-    private final String myAfterChangeContent;
+    private final ContentRevision myBeforeRevision;
+    private final ContentRevision myAfterChangeRevision;
+
+    private String myAfterChangeContent;
 
     private NonLocalEditedFileProcessor(@NotNull Project project,
                                         @NotNull FilePath afterFilePath,
-                                        @NotNull String beforeContent,
-                                        @NotNull String afterChangeContent,
+                                        @NotNull ContentRevision beforeRevision,
+                                        @NotNull ContentRevision afterChangeRevision,
                                         @NotNull String afterContent,
                                         @NotNull List<? extends TodoItem> afterTodoItems) {
-      super(project, afterFilePath, beforeContent, afterContent, afterTodoItems);
-      myAfterChangeContent = afterChangeContent;
+      super(project, afterFilePath, afterContent, afterTodoItems);
+      myBeforeRevision = beforeRevision;
+      myAfterChangeRevision = afterChangeRevision;
+    }
+
+    @Override
+    protected boolean loadContents() {
+      myBeforeContent = getRevisionContent(myBeforeRevision);
+      if (myBeforeContent == null) {
+        mySkipped.add(Pair.create(myAfterFile, VcsBundle.message("checkin.can.not.load.previous.revision")));
+        return false;
+      }
+
+      myAfterChangeContent = getRevisionContent(myAfterChangeRevision);
+      if (myAfterChangeContent == null) {
+        mySkipped.add(Pair.create(myAfterFile, VcsBundle.message("checkin.can.not.load.current.revision")));
+        return false;
+      }
+
+      return true;
     }
 
     @Override
@@ -237,22 +255,22 @@ public class TodoCheckinHandlerWorker {
 
   private abstract class EditedFileProcessorBase {
     @NotNull protected final Project myProject;
-    @NotNull protected final String myBeforeContent;
+    protected String myBeforeContent;
     @NotNull protected final String myAfterContent;
     @NotNull protected final FilePath myAfterFile;
     @NotNull private final List<? extends TodoItem> myNewTodoItems;
 
     private EditedFileProcessorBase(@NotNull Project project,
                                     @NotNull FilePath afterFilePath,
-                                    @NotNull String beforeContent,
                                     @NotNull String afterContent,
                                     @NotNull List<? extends TodoItem> afterTodoItems) {
       myProject = project;
       myAfterFile = afterFilePath;
-      myBeforeContent = beforeContent;
       myAfterContent = afterContent;
       myNewTodoItems = afterTodoItems;
     }
+
+    protected abstract boolean loadContents();
 
     protected abstract @NotNull List<LineFragment> computeFragments();
 
@@ -264,6 +282,8 @@ public class TodoCheckinHandlerWorker {
     }
 
     public void process() throws DiffTooBigException {
+      if (!loadContents()) return;
+
       List<LineFragment> lineFragments = computeFragments();
 
       List<Pair<TodoItem, LineFragment>> changedTodoItems = new ArrayList<>();

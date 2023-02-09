@@ -10,9 +10,6 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.ArrayList;
 
-/**
- * @author lambdamix
- */
 @SuppressWarnings({"unused", "IOResourceOpenedButNotSafelyClosed"})
 public class Test01 {
   @ExpectContract("null,_->fail;_,_->param1")

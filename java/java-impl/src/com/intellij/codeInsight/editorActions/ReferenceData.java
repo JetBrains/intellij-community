@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.datatransfer.DataFlavor;
 import java.io.Serializable;
 
-/**
-* @author Denis Fokin
-*/
 public class ReferenceData implements Cloneable, Serializable {
   public static @NonNls DataFlavor ourFlavor;
 

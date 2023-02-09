@@ -18,9 +18,6 @@ import org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework;
 
 import static com.intellij.psi.util.InheritanceUtil.isInheritor;
 
-/**
- * @author Sergey Evdokimov
- */
 public class SpockTestFramework extends GroovyTestFramework {
   private static final ExternalLibraryDescriptor SPOCK_DESCRIPTOR = new ExternalLibraryDescriptor("org.spockframework", "spock-core");
 

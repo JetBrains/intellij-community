@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidKeys
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 internal class AddNamesToFollowingArgumentsIntention :
     AbstractKotlinApplicableIntentionWithContext<KtValueArgument, AddNamesToFollowingArgumentsIntention.Context>(KtValueArgument::class),
@@ -46,11 +48,10 @@ internal class AddNamesToFollowingArgumentsIntention :
     }
 
     context(KtAnalysisSession)
-    override fun prepareContext(element: KtValueArgument): Context? {
-        val argumentList = element.parent as? KtValueArgumentList ?: return null
-        val call = argumentList.parent as? KtCallElement ?: return null
-        return associateArgumentNamesStartingAt(call, element)?.let { Context(it) }
-    }
+    override fun prepareContext(element: KtValueArgument): Context? =
+        element.parents.match(KtValueArgumentList::class, last = KtCallElement::class)
+            ?.let { call -> associateArgumentNamesStartingAt(call, element) }
+            ?.let(::Context)
 
     override fun apply(element: KtValueArgument, context: Context, project: Project, editor: Editor?) =
         addArgumentNames(context.argumentNames.dereferenceValidKeys())

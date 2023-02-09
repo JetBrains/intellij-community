@@ -34,9 +34,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class MigrationClassImpl extends LightElement implements PsiClass{
   private final String myQualifiedName;
   private final String myName;

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.messages.MessageBus
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
@@ -16,6 +17,7 @@ import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThr
 import java.util.concurrent.CompletableFuture
 
 interface GHPRReviewDataProvider {
+  val messageBus: MessageBus
 
   val submitReviewCommentDocument: Document
 
@@ -53,10 +55,6 @@ interface GHPRReviewDataProvider {
   fun canComment(): Boolean
 
   @RequiresEdt
-  fun addComment(progressIndicator: ProgressIndicator, reviewId: String, body: String, commitSha: String, fileName: String, diffLine: Int)
-    : CompletableFuture<out GHPullRequestReviewComment>
-
-  @RequiresEdt
   fun addComment(progressIndicator: ProgressIndicator, replyToCommentId: String, body: String)
     : CompletableFuture<out GHPullRequestReviewComment>
 
@@ -69,7 +67,13 @@ interface GHPRReviewDataProvider {
     : CompletableFuture<GHPullRequestReviewComment>
 
   @RequiresEdt
-  fun createThread(progressIndicator: ProgressIndicator, reviewId: String?, body: String, line: Int, side: Side, startLine: Int, fileName: String)
+  fun createThread(progressIndicator: ProgressIndicator,
+                   reviewId: String?,
+                   body: String,
+                   line: Int,
+                   side: Side,
+                   startLine: Int,
+                   fileName: String)
     : CompletableFuture<GHPullRequestReviewThread>
 
   @RequiresEdt

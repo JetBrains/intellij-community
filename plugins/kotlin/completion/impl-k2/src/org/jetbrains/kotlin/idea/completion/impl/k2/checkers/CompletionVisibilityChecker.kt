@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
+import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 
 internal fun interface CompletionVisibilityChecker {
     context(KtAnalysisSession)
@@ -26,14 +27,14 @@ internal fun interface CompletionVisibilityChecker {
     companion object {
         fun create(
             basicContext: FirBasicCompletionContext,
-            positionContext: FirNameReferencePositionContext
+            positionContext: FirRawPositionCompletionContext
         ): CompletionVisibilityChecker = object : CompletionVisibilityChecker {
             context(KtAnalysisSession)
             override fun isVisible(symbol: KtSymbolWithVisibility): Boolean {
                 return basicContext.parameters.invocationCount > 1 || isVisible(
                     symbol,
                     basicContext.originalKtFile.getFileSymbol(),
-                    positionContext.explicitReceiver,
+                    (positionContext as? FirNameReferencePositionContext)?.explicitReceiver,
                     positionContext.position
                 )
             }

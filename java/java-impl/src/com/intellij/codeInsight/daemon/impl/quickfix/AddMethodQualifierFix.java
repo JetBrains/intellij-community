@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -26,6 +27,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +50,17 @@ public class AddMethodQualifierFix implements IntentionAction {
 
   public AddMethodQualifierFix(final PsiMethodCallExpression methodCallExpression) {
     myMethodCall = SmartPointerManager.getInstance(methodCallExpression.getProject()).createSmartPsiElementPointer(methodCallExpression);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiMethodCallExpression element = myMethodCall.getElement();
+    if (element == null || myCandidates.isEmpty()) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    PsiMethodCallExpression copyExpression = PsiTreeUtil.findSameElementInCopy(element, file);
+    replaceWithQualifier(myCandidates.get(0), copyExpression);
+    return IntentionPreviewInfo.DIFF;
   }
 
   @NotNull
@@ -87,6 +100,9 @@ public class AddMethodQualifierFix implements IntentionAction {
   private List<PsiVariable> findCandidates(@NotNull SearchMode mode) {
     List<PsiVariable> candidates = new ArrayList<>();
     final PsiMethodCallExpression methodCallElement = myMethodCall.getElement();
+    if (methodCallElement == null) {
+      return Collections.emptyList();
+    }
     final String methodName = methodCallElement.getMethodExpression().getReferenceName();
     if (methodName == null) {
       return Collections.emptyList();
@@ -155,7 +171,8 @@ public class AddMethodQualifierFix implements IntentionAction {
         @NotNull
         @Override
         public String getTextFor(final PsiVariable value) {
-          return value.getName();
+          String name = value.getName();
+          return name == null ? "" : name;
         }
 
         @Override
@@ -170,13 +187,21 @@ public class AddMethodQualifierFix implements IntentionAction {
 
   private void qualify(final PsiVariable qualifier, final Editor editor) {
     WriteCommandAction.runWriteCommandAction(qualifier.getProject(), () -> {
-      final String qualifierPresentableText = qualifier.getName();
-      final PsiMethodCallExpression oldExpression = myMethodCall.getElement();
-      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(qualifier.getProject());
-      final PsiExpression expression = elementFactory
-        .createExpressionFromText(qualifierPresentableText + "." + oldExpression.getMethodExpression().getReferenceName() + "()", null);
-      final PsiElement replacedExpression = oldExpression.replace(expression);
+      PsiMethodCallExpression element = myMethodCall.getElement();
+      if (element == null) {
+        return;
+      }
+      final PsiElement replacedExpression = replaceWithQualifier(qualifier, element);
       editor.getCaretModel().moveToOffset(replacedExpression.getTextOffset() + replacedExpression.getTextLength());
     });
+  }
+
+  private static PsiElement replaceWithQualifier(@NotNull PsiVariable qualifier,
+                                                 @NotNull PsiMethodCallExpression oldExpression) {
+    final String qualifierPresentableText = qualifier.getName();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(qualifier.getProject());
+    final PsiExpression expression = elementFactory
+      .createExpressionFromText(qualifierPresentableText + "." + oldExpression.getMethodExpression().getReferenceName() + "()", null);
+    return oldExpression.replace(expression);
   }
 }

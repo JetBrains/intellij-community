@@ -5,9 +5,8 @@ package org.jetbrains.kotlin.idea.codeInliner
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
 import org.jetbrains.kotlin.idea.intentions.isInvokeOperator
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -50,13 +49,13 @@ class CallableUsageReplacementStrategy(
         return when {
             usage is KtArrayAccessExpression || usage is KtCallExpression -> {
                 {
-                    val nameExpression = OperatorToFunctionIntention.convert(usage).second
+                    val nameExpression = OperatorToFunctionConverter.convert(usage).second
                     createReplacer(nameExpression)?.invoke()
                 }
             }
             usage is KtOperationReferenceExpression && usage.getReferencedNameElementType() != KtTokens.IDENTIFIER -> {
                 {
-                    val nameExpression = OperatorToFunctionIntention.convert(usage.parent as KtExpression).second
+                    val nameExpression = OperatorToFunctionConverter.convert(usage.parent as KtExpression).second
                     createReplacer(nameExpression)?.invoke()
                 }
             }

@@ -43,6 +43,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -61,8 +63,8 @@ object UpdateChecker {
   private const val DISABLED_UPDATE = "disabled_update.txt"
   private const val DISABLED_PLUGIN_UPDATE = "plugin_disabled_updates.txt"
   private const val PRODUCT_DATA_TTL_MIN = 5L
-  private const val MACHINE_ID_DISABLED_PROPERTY = "machine.id.disabled"
-  private const val MACHINE_ID_PARAMETER = "mid"
+  const val MACHINE_ID_DISABLED_PROPERTY = "machine.id.disabled"
+  const val MACHINE_ID_PARAMETER = "mid"
 
   private enum class NotificationKind { PLATFORM, PLUGINS, EXTERNAL }
 
@@ -374,10 +376,12 @@ object UpdateChecker {
 
     val incompatible = if (buildNumber == null) emptyList() else {
       // collecting plugins that aren't going to be updated and are incompatible with the new build
-      // (the map may contain updateable bundled plugins - those are expected to have a compatible version in IDE)
+      // (the map may contain updateable and already-updated bundled plugins - those are expected to have a compatible version in IDE)
       updateable.values.asSequence()
         .filterNotNull()
-        .filter { it.isEnabled && !it.isBundled && !PluginManagerCore.isCompatible(it, buildNumber) }
+        .filter { it.isEnabled }
+        .filterNot { it.isBundled || it.allowBundledUpdate() }
+        .filterNot { PluginManagerCore.isCompatible(it, buildNumber) }
         .toSet()
     }
 
@@ -434,18 +438,28 @@ object UpdateChecker {
     val marketplacePluginIds = MarketplaceRequests.getInstance().getMarketplacePlugins(indicator)
     val idsToUpdate = updateable.keys.filter { it in marketplacePluginIds }.toSet()
     val updates = MarketplaceRequests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
-    updateable.forEach { (id, descriptor) ->
+    for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString }
       if (lastUpdate != null &&
           (descriptor == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version, descriptor,
                                                                                            buildNumber) > 0)) {
         runCatching { MarketplaceRequests.loadPluginDescriptor(id.idString, lastUpdate, indicator) }
-          .onFailure { if (it !is HttpRequests.HttpStatusException || it.statusCode != HttpURLConnection.HTTP_NOT_FOUND) throw it }
+          .onFailure {
+            if (!isNetworkError(it)) throw it
+
+            LOG.warn("Unable to read update metadata for plugin: $id, ${it::class.java} ${it.message}")
+          }
           .onSuccess { it.externalPluginIdForScreenShots = lastUpdate.externalPluginId }
           .onSuccess { prepareDownloader(state, it, buildNumber, toUpdate, toUpdateDisabled, indicator, null) }
       }
     }
     (toUpdate.keys.asSequence() + toUpdateDisabled.keys.asSequence()).forEach { updateable.remove(it) }
+  }
+
+  private fun isNetworkError(it: Throwable): Boolean {
+    return it is SocketTimeoutException
+           || it is UnknownHostException
+           || it is HttpRequests.HttpStatusException && it.statusCode == HttpURLConnection.HTTP_NOT_FOUND
   }
 
   @RequiresBackgroundThread

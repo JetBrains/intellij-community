@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -121,6 +121,9 @@ public interface FileEditor extends UserDataHolder, Disposable {
     return null;
   }
 
+  /**
+   * @see com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
+   */
   default @Nullable StructureViewBuilder getStructureViewBuilder() {
     return null;
   }

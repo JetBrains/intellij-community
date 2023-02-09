@@ -25,7 +25,7 @@ import com.intellij.sh.template.ShLiveTemplateTest;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-public class ShTestSuite {
+public final class ShTestSuite {
   public static Test suite() {
     TestSuite testSuite = new TestSuite("All Shell Script tests");
     testSuite.addTest(LexerSuite.suite());
@@ -36,7 +36,7 @@ public class ShTestSuite {
     return testSuite;
   }
 
-  public static class LexerSuite {
+  public static final class LexerSuite {
     public static Test suite() {
       TestSuite suite = new TestSuite("Lexer");
       suite.addTestSuite(ShFileLexerTest.class);
@@ -46,7 +46,7 @@ public class ShTestSuite {
     }
   }
 
-  public static class ParserSuite {
+  public static final class ParserSuite {
     public static Test suite() {
       TestSuite suite = new TestSuite("Parser");
       suite.addTestSuite(ShParserTest.class);
@@ -56,7 +56,7 @@ public class ShTestSuite {
     }
   }
 
-  public static class CompletionAndTemplateSuite {
+  public static final class CompletionAndTemplateSuite {
     public static Test suite() {
       TestSuite suite = new TestSuite("Completion & Template");
       suite.addTestSuite(ShCompletionTest.class);
@@ -69,13 +69,13 @@ public class ShTestSuite {
     }
   }
 
-  public static class InspectionsSuite {
+  public static final class InspectionsSuite {
     public static Test suite() {
       return new ShShellcheckTestSetup(new TestSuite(ShShellcheckInspectionTest.class, "Inspections"));
     }
   }
 
-  public static class OthersSuite {
+  public static final class OthersSuite {
     public static Test suite() {
       TestSuite suite = new TestSuite("Others");
       suite.addTestSuite(ShRenameAllOccurrencesTest.class);

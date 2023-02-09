@@ -15,6 +15,7 @@ import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction;
 import com.intellij.codeInsight.template.impl.actions.NextVariableAction;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -63,6 +64,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -443,6 +446,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     updateListHeight(listModel);
 
     myList.setSelectedIndex(toSelect);
+    if (GeneralSettings.getInstance().isSupportScreenReaders()) {
+      AccessibleContext context = myList.getAccessibleContext();
+      Accessible child = context.getAccessibleChild(myList.getSelectedIndex());
+      context.firePropertyChange(AccessibleContext.ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY, null, child);
+    }
     return !ContainerUtil.equalsIdentity(oldModel, items);
   }
 

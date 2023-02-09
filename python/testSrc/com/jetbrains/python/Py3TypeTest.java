@@ -5,13 +5,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionTest;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
+import java.util.List;
+import java.util.Map;
+
 public class Py3TypeTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "/types/";
 
@@ -1450,7 +1452,7 @@ public class Py3TypeTest extends PyTestCase {
     doTest("UnionType",
            """
              class MyMeta(type):
-                 def __or__(self, other) -> Any:
+                 def __or__(self, other):
                      return other
 
              class Foo(metaclass=MyMeta):
@@ -1533,7 +1535,7 @@ public class Py3TypeTest extends PyTestCase {
     assertExpressionType("dict[str, Any]", dict);
   }
 
-  // PY-52656 Requires PY-53896 or patching Typeshed
+  // PY-52656
   public void testDictValuesType() {
     doTest("int",
            """
@@ -1547,11 +1549,11 @@ public class Py3TypeTest extends PyTestCase {
     doTest("int",
            """
              from enum import IntEnum, auto
-                          
+
              class State(IntEnum):
                  A = auto()
                  B = auto()
-                          
+
              def foo(arg: State):
                  expr = arg.value
              """);
@@ -1562,13 +1564,13 @@ public class Py3TypeTest extends PyTestCase {
     doTest("str",
            """
              from enum import Enum
-                          
-                          
+
+
              class IDE(Enum):
                  DS = 'DataSpell'
                  PY = 'PyCharm'
-                          
-                          
+
+
              IDE_TO_CLEAR_SETTINGS_FOR = IDE.PY
              expr = IDE_TO_CLEAR_SETTINGS_FOR.value
              """);
@@ -1579,17 +1581,90 @@ public class Py3TypeTest extends PyTestCase {
     doTest("int",
            """
              from enum import Enum
-                          
+
              class Fruit(Enum):
                  Apple = 1
                  Banana = 2
-                 
+
              def f():
                  return Fruit.Apple
-                 
+
              res = f()
              expr = res.value
              """);
+  }
+
+  // PY-54336
+  public void testCyclePreventionDuringGenericsSubstitution() {
+    PyGenericType typeVarT = new PyGenericType("T", null, false);
+    PyGenericType typeVarV = new PyGenericType("V", null, false);
+    TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+    PyType substituted;
+
+    substituted = PyTypeChecker.substitute(typeVarT, new GenericSubstitutions(Map.of(typeVarT, typeVarT)), context);
+    assertEquals(typeVarT, substituted);
+
+    substituted = PyTypeChecker.substitute(typeVarT, new GenericSubstitutions(Map.of(typeVarT, typeVarV, typeVarV, typeVarT)), context);
+    assertNull(substituted);
+
+    PyCallableType callable = new PyCallableTypeImpl(List.of(), typeVarT);
+    substituted = PyTypeChecker.substitute(callable, new GenericSubstitutions(Map.of(typeVarT, typeVarV, typeVarV, callable)), context);
+    PyCallableType substitutedCallable = assertInstanceOf(substituted, PyCallableType.class);
+    assertNull(substitutedCallable.getReturnType(context));
+  }
+
+  public void testListConstructorCallWithGeneratorExpression() {
+    doTest("list[int]",
+           "expr = list(int(i) for i in '1')");
+  }
+
+  public void testClassDunderNewResult() {
+    doTest("C",
+           """
+             class C(object):
+                 def __new__(cls):
+                     self = object.__new__(cls)
+                     self.foo = 1
+                     return self
+
+             expr = C()
+             """);
+  }
+
+  public void testObjectDunderNewResult() {
+    doTest("C",
+           """
+             class C(object):
+                 def __new__(cls):
+                     expr = object.__new__(cls)
+             """);
+  }
+
+  // PY-37678
+  public void testDataclassesReplace() {
+    doTest("Foo",
+           """
+             import dataclasses as dc
+
+             @dc.dataclass
+             class Foo:
+                 x: int
+                 y: int
+
+             foo = Foo(1, 2)
+             expr = dc.replace(foo, x=3)""");
+  }
+
+  // PY-53612
+  public void testLiteralStringValidLocations() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("str",
+                   """
+                     from typing_extensions import LiteralString
+                     def my_function(literal_string: LiteralString) -> LiteralString: ...
+                     expr = my_function("42")""")
+    );
   }
 
   private void doTest(final String expectedType, final String text) {

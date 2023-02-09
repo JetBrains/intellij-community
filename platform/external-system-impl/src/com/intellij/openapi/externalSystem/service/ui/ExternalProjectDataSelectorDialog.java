@@ -41,6 +41,7 @@ import com.intellij.util.CachedValueImpl;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.indexing.UnindexedFilesScannerExecutor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -152,9 +153,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
   private void reloadTree() {
     final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
     final Object root = treeModel.getRoot();
-    if (!(root instanceof CheckedTreeNode)) return;
-
-    final CheckedTreeNode rootNode = (CheckedTreeNode)root;
+    if (!(root instanceof CheckedTreeNode rootNode)) return;
 
     final Couple<CheckedTreeNode> rootAndPreselectedNode = createRoot();
     final CheckedTreeNode rootCopy = rootAndPreselectedNode.first;
@@ -224,10 +223,9 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
       @Override
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        if (!(value instanceof DataNodeCheckedTreeNode)) {
+        if (!(value instanceof DataNodeCheckedTreeNode node)) {
           return;
         }
-        final DataNodeCheckedTreeNode node = (DataNodeCheckedTreeNode)value;
 
         String tooltip = null;
         boolean hasErrors = false;
@@ -337,9 +335,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
             rootModuleNode[0] = treeNode;
           }
           String ideGrouping = moduleData.getIdeGrouping();
-          if (ideGrouping != null) {
-            ideGroupingMap.put(ideGrouping, node);
-          }
+          ideGroupingMap.put(ideGrouping, node);
         } else {
           // add elements under module node like web/enterprise artifacts
           DataNode<ModuleData> parentModule = node.getParent(ModuleData.class);
@@ -358,8 +354,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
     for (Map.Entry<String, DataNode<?>> groupingEntry : ideGroupingMap.entrySet()) {
       DataNode node = groupingEntry.getValue();
-      if (!(node.getData() instanceof ModuleData)) continue;
-      ModuleData moduleData = (ModuleData)node.getData();
+      if (!(node.getData() instanceof ModuleData moduleData)) continue;
       String ideParentGrouping = moduleData.getIdeParentGrouping();
       DataNode structuralParent = ideParentGrouping != null ? ideGroupingMap.get(ideParentGrouping) : null;
       DataNodeCheckedTreeNode treeParentNode = structuralParent != null ? treeNodeMap.get(structuralParent) : null;
@@ -801,7 +796,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
   @Override
   public boolean showAndGet() {
     final BooleanValueHolder result = new BooleanValueHolder(false);
-    DumbService.getInstance(myProject).suspendIndexingAndRun(ExternalSystemBundle.message("activity.name.select.external.data"),
+    UnindexedFilesScannerExecutor.getInstance(myProject).suspendScanningAndIndexingThenRun(ExternalSystemBundle.message("activity.name.select.external.data"),
       () -> result.setValue(super.showAndGet())
     );
     return result.getValue();

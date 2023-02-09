@@ -597,8 +597,10 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static boolean isPrintableUnicode(char c) {
     int t = Character.getType(c);
+    Character.UnicodeBlock block = Character.UnicodeBlock.of(c);
     return t != Character.UNASSIGNED && t != Character.LINE_SEPARATOR && t != Character.PARAGRAPH_SEPARATOR &&
-           t != Character.CONTROL && t != Character.FORMAT && t != Character.PRIVATE_USE && t != Character.SURROGATE;
+           t != Character.CONTROL && t != Character.FORMAT && t != Character.PRIVATE_USE && t != Character.SURROGATE &&
+           block != Character.UnicodeBlock.VARIATION_SELECTORS && block != Character.UnicodeBlock.VARIATION_SELECTORS_SUPPLEMENT;
   }
 
   @Contract(pure = true)
@@ -1260,26 +1262,31 @@ public class StringUtil extends StringUtilRt {
 
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<String> split(@NotNull String s, @NotNull String separator) {
     return split(s, separator, true);
   }
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator) {
     return split(s, separator, true, true);
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator) {
     return split(s, separator, excludeSeparator, true);
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
     //noinspection unchecked,rawtypes
     return (List)split((CharSequence)s, separator, excludeSeparator, excludeEmptyStrings);
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
     if (separator.length() == 0) {
       return Collections.singletonList(s);

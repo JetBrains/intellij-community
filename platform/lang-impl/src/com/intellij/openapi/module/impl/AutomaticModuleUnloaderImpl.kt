@@ -14,8 +14,11 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.xmlb.annotations.XCollection
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.getModuleLevelLibraries
 import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.launch
@@ -27,7 +30,7 @@ import kotlinx.coroutines.launch
 @State(name = "AutomaticModuleUnloader", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
 internal class AutomaticModuleUnloaderImpl(private val project: Project) : SimplePersistentStateComponent<LoadedModulesListStorage>(LoadedModulesListStorage()),
                                                                            AutomaticModuleUnloader {
-  override fun processNewModules(currentModules: Set<String>, storage: EntityStorage) {
+  override fun processNewModules(currentModules: Set<String>, builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage) {
     if (currentModules.isEmpty()) {
       return
     }
@@ -53,7 +56,7 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
 
     val oldLoadedWithDependencies = HashSet<String>()
     for (name in oldLoaded) {
-      processTransitiveDependencies(ModuleId(name), storage, unloadedModules, oldLoadedWithDependencies)
+      processTransitiveDependencies(ModuleId(name), builder, unloadedEntityBuilder, unloadedModules, oldLoadedWithDependencies)
     }
 
     val toLoad = currentModules.filter { it in oldLoadedWithDependencies && it !in oldLoaded }
@@ -65,16 +68,33 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
     }
     fireNotifications(toLoad, toUnload)
     unloadedStorage.addUnloadedModuleNames(toUnload)
+    if (toUnload.isNotEmpty()) {
+      val toUnloadSet = toUnload.toSet()
+      /* we need to create a snapshot because adding entities from one builder to another will result
+         in "Entity is already created in a different builder" exception */
+      val snapshot = builder.toSnapshot()
+      val moduleEntitiesToAdd = snapshot.entities(ModuleEntity::class.java).filter { it.name in toUnloadSet }.toList()
+      val moduleEntitiesToRemove = builder.entities(ModuleEntity::class.java).filter { it.name in toUnloadSet }.toList()
+      for (moduleEntity in moduleEntitiesToAdd) {
+        unloadedEntityBuilder.addEntity(moduleEntity)
+        moduleEntity.getModuleLevelLibraries(snapshot).forEach { libraryEntity ->
+          unloadedEntityBuilder.addEntity(libraryEntity)
+        }
+      }
+      for (moduleEntity in moduleEntitiesToRemove) {
+        builder.removeEntity(moduleEntity)
+      }
+    }
   }
 
-  private fun processTransitiveDependencies(moduleId: ModuleId, storage: EntityStorage, explicitlyUnloaded: Set<String>,
-                                            result: MutableSet<String>) {
+  private fun processTransitiveDependencies(moduleId: ModuleId, storage: EntityStorage, unloadedEntitiesStorage: EntityStorage,
+                                            explicitlyUnloaded: Set<String>, result: MutableSet<String>) {
     if (moduleId.name in explicitlyUnloaded) return
-    val moduleEntity = storage.resolve(moduleId) ?: return
+    val moduleEntity = storage.resolve(moduleId) ?: unloadedEntitiesStorage.resolve(moduleId) ?: return
     if (!result.add(moduleEntity.name)) return
     moduleEntity.dependencies.forEach {
       if (it is ModuleDependencyItem.Exportable.ModuleDependency) {
-        processTransitiveDependencies(it.module, storage, explicitlyUnloaded, result)
+        processTransitiveDependencies(it.module, storage, unloadedEntitiesStorage, explicitlyUnloaded, result)
       }
     }
   }

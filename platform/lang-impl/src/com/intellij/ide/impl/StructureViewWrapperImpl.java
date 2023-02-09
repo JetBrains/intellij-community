@@ -20,9 +20,9 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -68,7 +68,8 @@ import java.util.Optional;
  * @author Eugene Belyaev
  */
 public final class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
-  public static final Topic<Runnable> STRUCTURE_CHANGED = new Topic<>("structure view changed", Runnable.class, Topic.BroadcastDirection.NONE);
+  public static final Topic<Runnable> STRUCTURE_CHANGED = new Topic<>("structure view changed", Runnable.class,
+                                                                      Topic.BroadcastDirection.NONE);
 
   @ApiStatus.Experimental
   public static final DataKey<Optional<VirtualFile>> STRUCTURE_VIEW_TARGET_FILE_KEY = DataKey.create("STRUCTURE_VIEW_TARGET_FILE_KEY");
@@ -251,15 +252,20 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
     boolean forceRebuild = !Comparing.equal(file, myFile);
     if (!forceRebuild && myStructureView != null) {
       StructureViewModel model = myStructureView.getTreeModel();
-      StructureViewTreeElement treeElement = model.getRoot();
-      Object value = treeElement.getValue();
-      if (value == null ||
-          value instanceof PsiElement && !((PsiElement)value).isValid() ||
-          myStructureView instanceof StructureViewComposite && ((StructureViewComposite)myStructureView).isOutdated()) {
+      if (model instanceof TextEditorBasedStructureViewModel && !((TextEditorBasedStructureViewModel)model).isValid()) {
         forceRebuild = true;
       }
-      else if (file != null) {
-        forceRebuild = FileEditorManager.getInstance(myProject).getSelectedEditor(file) != myFileEditor;
+      else {
+        StructureViewTreeElement treeElement = model.getRoot();
+        Object value = treeElement.getValue();
+        if (value == null ||
+            value instanceof PsiElement && !((PsiElement)value).isValid() ||
+            myStructureView instanceof StructureViewComposite && ((StructureViewComposite)myStructureView).isOutdated()) {
+          forceRebuild = true;
+        }
+        else if (file != null) {
+          forceRebuild = FileEditorManager.getInstance(myProject).getSelectedEditor(file) != myFileEditor;
+        }
       }
     }
     if (forceRebuild) {
@@ -300,10 +306,12 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
     if (isStructureViewShowing()) {
       if (myUpdateQueue.isEmpty()) {
         runnable.run();
-      } else {
+      }
+      else {
         myPendingSelection = runnable;
       }
-    } else {
+    }
+    else {
       myPendingSelection = runnable;
     }
 
@@ -378,8 +386,7 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
           myFileEditor = editor;
           Disposer.register(this, myStructureView);
 
-          if (myStructureView instanceof StructureViewComposite) {
-            final StructureViewComposite composite = (StructureViewComposite)myStructureView;
+          if (myStructureView instanceof StructureViewComposite composite) {
             final StructureViewComposite.StructureViewDescriptor[] views = composite.getStructureViews();
             myPanels = new JPanel[views.length];
             names = new String[views.length];
@@ -467,8 +474,8 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
     List<FileEditorProvider> providers = FileEditorProviderManager.getInstance().getProviderList(myProject, file);
     FileEditorProvider provider = providers.size() == 0 ? null : providers.get(0);
     if (provider == null) return null;
-    if (provider instanceof TextEditorProvider) {
-      return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, myProject);
+    if (provider instanceof StructureViewFileEditorProvider) {
+      return ((StructureViewFileEditorProvider)provider).getStructureViewBuilder(myProject, file);
     }
 
     FileEditor editor = provider.createEditor(myProject, file);

@@ -15,7 +15,6 @@ import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieCustomFixWrappe
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
-import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -28,6 +27,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.parents
 import com.intellij.refactoring.suggested.startOffset
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 
 class CheckerRunner(val text: TextContent) {
   private val tokenizer
@@ -68,7 +68,7 @@ class CheckerRunner(val text: TextContent) {
     if (isSuppressed(problem) ||
         hasIgnoredCategory(problem) ||
         isIgnoredByStrategies(problem) ||
-        isIgnoredByFilters(problem)) {
+        ProblemFilter.allIgnoringFilters(problem).findAny().isPresent) {
       return false
     }
 
@@ -110,9 +110,6 @@ class CheckerRunner(val text: TextContent) {
       return tooltip
     }
   }
-
-  private fun isIgnoredByFilters(problem: TextProblem) =
-    filterEp.allForLanguageOrAny(problem.text.commonParent.language).any { it.shouldIgnore(problem) }
 
   private fun isIgnoredByStrategies(descriptor: TextProblem): Boolean {
     for (root in text.findPsiElementAt(0).parents(withSelf = true)) {
@@ -168,7 +165,9 @@ class CheckerRunner(val text: TextContent) {
     return patternRange != null && sentence != null && SuppressionPattern(errorText, sentence).isSuppressed()
   }
 
-  private fun findSentence(problem: TextProblem) =
+  // used in rider
+  @ApiStatus.Experimental
+  fun findSentence(problem: TextProblem) =
     sentences.find { problem.highlightRanges.any { range -> range.intersects(it.range.first, it.range.last + 1) } }?.token
 
   fun toFixes(problem: TextProblem, descriptor: ProblemDescriptor): Array<LocalQuickFix> {
@@ -202,7 +201,9 @@ class CheckerRunner(val text: TextContent) {
       .toList()
   }
 
-  private fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): SuppressionPattern {
+  // used in rider
+  @ApiStatus.Experimental
+  fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): SuppressionPattern {
     val text = problem.text
     val patternRange = problem.patternRange
     if (patternRange != null) {
@@ -214,5 +215,3 @@ class CheckerRunner(val text: TextContent) {
   private fun highlightSpan(problem: TextProblem) =
     TextRange(problem.highlightRanges[0].startOffset, problem.highlightRanges.last().endOffset)
 }
-
-private val filterEp = LanguageExtension<ProblemFilter>("com.intellij.grazie.problemFilter")

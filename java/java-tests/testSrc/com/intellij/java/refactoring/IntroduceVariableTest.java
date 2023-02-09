@@ -4,6 +4,7 @@ package com.intellij.java.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,9 +31,6 @@ import java.util.regex.Pattern;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
-/**
- * @author dsl
- */
 public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
@@ -540,6 +538,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     String baseName = "/refactoring/introduceVariable/" + getTestName(false);
     configureByFile(baseName + ".java");
     testMe.invoke(getProject(), getEditor(), getFile(), null);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
     if (state == null) return;
     state.gotoEnd(false);

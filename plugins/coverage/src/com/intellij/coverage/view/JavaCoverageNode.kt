@@ -16,7 +16,7 @@ import com.intellij.psi.*
 class JavaCoverageNode(project: Project,
                        classOrPackage: PsiNamedElement,
                        bundle: CoverageSuitesBundle,
-                       stateBean: CoverageViewManager.StateBean) : CoverageListNode(project, classOrPackage, bundle, stateBean) {
+                       stateBean: CoverageViewManager.StateBean) : CoverageListNode(project, classOrPackage, bundle, stateBean, classOrPackage is PsiClass) {
   init {
     require(classOrPackage is PsiClass || classOrPackage is PsiPackage)
   }
@@ -25,9 +25,7 @@ class JavaCoverageNode(project: Project,
     (classOrPackage as? PsiQualifiedNamedElement)?.qualifiedName ?: classOrPackage.name ?: ""
   }
 
-  val isClassCoverage = classOrPackage is PsiClass
-
-  override fun getWeight() = if (isClassCoverage) 40 else 30
+  override fun getWeight() = if (isLeaf) 40 else 30
 }
 
 class JavaCoverageRootNode(project: Project,

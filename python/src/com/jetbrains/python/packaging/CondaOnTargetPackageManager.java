@@ -1,20 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PyCondaRunTargetsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
-public class CondaOnTargetPackageManager {
+public final class CondaOnTargetPackageManager {
   private CondaOnTargetPackageManager() { }
 
   @NotNull
@@ -27,7 +26,7 @@ public class CondaOnTargetPackageManager {
                                      new ProcessOutput());
     }
 
-    final ArrayList<String> parameters = ContainerUtil.newArrayList("create", "-p", destinationDir, "-y", "python=" + version);
+    List<String> parameters = List.of("create", "-p", destinationDir, "-y", "python=" + version);
 
     PyCondaRunTargetsKt.runCondaOnTarget(targetEnvironmentRequest, condaExecutable, parameters);
     final String binary = PythonSdkUtil.getPythonExecutable(destinationDir);

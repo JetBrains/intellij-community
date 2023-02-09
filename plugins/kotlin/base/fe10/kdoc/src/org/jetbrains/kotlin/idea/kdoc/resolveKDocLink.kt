@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.kdoc
 
 import com.intellij.openapi.components.serviceOrNull
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
@@ -15,12 +16,12 @@ import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.kdoc.parser.KDocKnownTag
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.FunctionDescriptorUtil
 import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
@@ -36,6 +37,7 @@ fun resolveKDocLink(
     context: BindingContext,
     resolutionFacade: ResolutionFacade,
     fromDescriptor: DeclarationDescriptor,
+    contextElement: KtElement,
     fromSubjectOfTag: KDocTag?,
     qualifiedName: List<String>
 ): Collection<DeclarationDescriptor> {
@@ -58,7 +60,8 @@ fun resolveKDocLink(
             return declarationDescriptors
         }
     }
-    return resolveDefaultKDocLink(context, resolutionFacade, fromDescriptor, qualifiedName, contextScope)
+
+    return resolveDefaultKDocLink(context, resolutionFacade, contextElement, qualifiedName, contextScope)
 }
 
 fun getParamDescriptors(fromDescriptor: DeclarationDescriptor): List<DeclarationDescriptor> {
@@ -117,16 +120,13 @@ private fun resolveLocal(
 private fun resolveDefaultKDocLink(
     context: BindingContext,
     resolutionFacade: ResolutionFacade,
-    fromDescriptor: DeclarationDescriptor,
+    contextElement: PsiElement,
     qualifiedName: List<String>,
     contextScope: LexicalScope
 ): Collection<DeclarationDescriptor> {
-    val moduleDescriptor = fromDescriptor.module
-
     @OptIn(FrontendInternals::class)
-    val qualifiedExpressionResolver = resolutionFacade.getFrontendService(moduleDescriptor, QualifiedExpressionResolver::class.java)
+    val qualifiedExpressionResolver = resolutionFacade.getFrontendService(QualifiedExpressionResolver::class.java)
 
-    val contextElement = DescriptorToSourceUtils.descriptorToDeclaration(fromDescriptor)
     val factory = KtPsiFactory(resolutionFacade.project)
     // TODO escape identifiers
     val codeFragment = factory.createExpressionCodeFragment(qualifiedName.joinToString("."), contextElement)

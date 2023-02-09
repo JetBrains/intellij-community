@@ -16,6 +16,7 @@ import org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverE
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionProperty
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.getCapitalizedAccessorName
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
@@ -76,24 +77,4 @@ private class GroovySettingsFileResolveVisitor(val element : PsiElement) : Groov
   }
 }
 
-internal fun getCapitalizedAccessorName(method: PsiMethod): String? {
-  val propertyName = GroovyPropertyUtils.getPropertyName(method) ?: return null
-  val methodFinalPart = GroovyPropertyUtils.capitalize(propertyName)
-  val methodParts = method.containingClass?.takeUnless { it.name?.startsWith(LIBRARIES_FOR_PREFIX) == true }?.name?.trimAccessorName()
-  return (methodParts ?: "") + methodFinalPart
-}
 
-
-private fun String.trimAccessorName(): String {
-  for (suffix in listOf(BUNDLE_ACCESSORS_SUFFIX, LIBRARY_ACCESSORS_SUFFIX, PLUGIN_ACCESSORS_SUFFIX, VERSION_ACCESSORS_SUFFIX)) {
-    if (endsWith(suffix)) return substringBeforeLast(suffix)
-  }
-  return this
-}
-
-internal const val BUNDLE_ACCESSORS_SUFFIX = "BundleAccessors"
-internal const val LIBRARY_ACCESSORS_SUFFIX = "LibraryAccessors"
-internal const val PLUGIN_ACCESSORS_SUFFIX = "PluginAccessors"
-internal const val VERSION_ACCESSORS_SUFFIX = "VersionAccessors"
-
-internal const val LIBRARIES_FOR_PREFIX = "LibrariesFor"

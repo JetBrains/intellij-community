@@ -1,4 +1,5 @@
 public final class TestPropertyInitializer {
+    @org.jetbrains.annotations.NotNull private var withSetter: java.lang.String = "/sdcard"
     public final fun getWithSetter() : java.lang.String {
         return field
     }

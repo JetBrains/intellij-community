@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.RGBImageFilter;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.HashSet;
@@ -90,8 +89,6 @@ public final class Presentation implements Cloneable {
   @NonNls public static final String PROP_ENABLED = "enabled";
 
   @NonNls public static final Key<@Nls String> PROP_VALUE = Key.create("value");
-
-  @NonNls public static final Key<Supplier<RGBImageFilter>> DISABLE_ICON_FILTER = Key.create("DISABLE_ICON_FILTER");
 
   public static final double DEFAULT_WEIGHT = 0;
   public static final double HIGHER_WEIGHT = 42;
@@ -462,7 +459,7 @@ public final class Presentation implements Cloneable {
 
   void assertNotTemplatePresentation() {
     if (BitUtil.isSet(myFlags, IS_TEMPLATE)) {
-      LOG.warn(new Throwable("Template presentations must not be used directly"));
+      LOG.warnInProduction(new Throwable("Template presentations must not be used directly"));
     }
   }
 

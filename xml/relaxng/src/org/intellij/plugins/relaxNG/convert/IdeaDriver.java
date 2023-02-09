@@ -97,8 +97,7 @@ public class IdeaDriver {
       final String input = inputFile.getPath();
       final String uri = UriOrFile.toUri(input);
       try {
-        if (inFormat instanceof MultiInputFormat) {
-          final MultiInputFormat format = (MultiInputFormat)inFormat;
+        if (inFormat instanceof MultiInputFormat format) {
           final String[] uris = new String[inputFiles.length];
           for (int i = 0; i < inputFiles.length; i++) {
             uris[i] = UriOrFile.toUri(inputFiles[i].getPath());

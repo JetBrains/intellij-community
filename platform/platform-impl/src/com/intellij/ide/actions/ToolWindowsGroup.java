@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -35,12 +35,12 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
     return result.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  public static List<ActivateToolWindowAction> getToolWindowActions(@NotNull Project project, boolean shouldSkipHidden) {
+  public static List<ActivateToolWindowAction> getToolWindowActions(@NotNull Project project, boolean shouldSkipShown) {
     ActionManager actionManager = ActionManager.getInstance();
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
     List<ActivateToolWindowAction> result = new ArrayList<>();
     for (ToolWindow window : manager.getToolWindows()) {
-      if (shouldSkipHidden && !window.isShowStripeButton()) {
+      if (shouldSkipShown && window.isShowStripeButton() && window.isAvailable()) {
         continue;
       }
       String actionId = ActivateToolWindowAction.getActionIdForToolWindow(window.getId());
@@ -51,9 +51,14 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
     }
     AnAction activateGroup = actionManager.getAction("ActivateToolWindowActions");
     if (activateGroup instanceof ActionGroup) {
-      AnAction[] children = ((DefaultActionGroup)activateGroup).getChildren(null);
+      AnAction[] children = ((ActionGroup)activateGroup).getChildren(null);
       for (AnAction child : children) {
         if (child instanceof ActivateToolWindowAction && !result.contains(child)) {
+          String windowId = ((ActivateToolWindowAction)child).getToolWindowId();
+          ToolWindow window = manager.getToolWindow(windowId);
+          if (window != null && window.isShowStripeButton() && shouldSkipShown) {
+            continue;
+          }
           result.add((ActivateToolWindowAction) child);
         }
       }

@@ -34,8 +34,7 @@ public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBas
     }
 
     //case: MyBundle.message("literalAnnotatedWithPropertyKey", param1, param2)
-    if (uElement instanceof UCallExpression) {
-      final UCallExpression call = (UCallExpression)uElement;
+    if (uElement instanceof UCallExpression call) {
       for (UExpression expression : call.getValueArguments()) {
         if (expression instanceof ULiteralExpression && PropertyFoldingBuilder.isI18nProperty((ULiteralExpression)expression)) {
           Property property = JavaI18nUtil.resolveProperty(expression);

@@ -6,7 +6,6 @@ At present the active maintainers are (alphabetically):
 * Sebastian Rittau (@srittau)
 * Guido van Rossum (@gvanrossum)
 * Shantanu (@hauntsaninja)
-* Rune Tynan (@CraftSpider)
 * Aku Viljanen (@Akuli)
 * Alex Waygood (@AlexWaygood)
 * Jelle Zijlstra (@JelleZijlstra)
@@ -14,9 +13,10 @@ At present the active maintainers are (alphabetically):
 Former maintainers include:
 
 * David Fisher (@ddfisher)
-* Łukasz Langa (@ambv)
 * Matthias Kramm (@matthiaskramm)
+* Łukasz Langa (@ambv)
 * Greg Price (@gnprice)
+* Rune Tynan (@CraftSpider)
 
 For security reasons, maintainers who haven't been active for twelve months
 (no PR reviews or merges, no opened PRs, no significant participation in

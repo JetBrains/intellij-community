@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * @author ibessonov
  * @deprecated since Bintray service is scheduled for sunsetting in May 2021
  */
 @Deprecated(forRemoval = true)

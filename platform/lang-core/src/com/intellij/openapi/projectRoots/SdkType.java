@@ -111,7 +111,7 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   @Nullable
-  public String getVersionString(String sdkHome) {
+  public String getVersionString(@NotNull String sdkHome) {
     return null;
   }
 
@@ -181,9 +181,7 @@ public abstract class SdkType implements SdkTypeId {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof SdkType)) return false;
-
-    SdkType sdkType = (SdkType)o;
+    if (!(o instanceof SdkType sdkType)) return false;
 
     if (!myName.equals(sdkType.myName)) return false;
 

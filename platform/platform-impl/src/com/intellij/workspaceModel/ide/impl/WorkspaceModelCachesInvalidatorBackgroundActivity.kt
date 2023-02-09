@@ -3,16 +3,16 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.projectsDataDir
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.exists
 import com.intellij.util.io.lastModified
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Files
+import kotlin.io.path.exists
 
-internal class WorkspaceModelCachesInvalidatorBackgroundActivity : ProjectPostStartupActivity {
+internal class WorkspaceModelCachesInvalidatorBackgroundActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val invalidateCachesMarkerFile = WorkspaceModelCacheImpl.invalidateCachesMarkerFile
     if (!invalidateCachesMarkerFile.exists()) {

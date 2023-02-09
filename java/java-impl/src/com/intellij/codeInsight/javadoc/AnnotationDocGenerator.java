@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -251,8 +251,7 @@ public final class AnnotationDocGenerator {
         LOG.debug(e);
       }
 
-      if (resolve instanceof PsiField) {
-        PsiField field = (PsiField)resolve;
+      if (resolve instanceof PsiField field) {
         PsiClass aClass = field.getContainingClass();
 
         if (generateLink) {

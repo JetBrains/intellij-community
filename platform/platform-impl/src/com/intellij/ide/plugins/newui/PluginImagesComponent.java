@@ -202,6 +202,9 @@ public class PluginImagesComponent extends JPanel {
               images.add(image);
             }
           }
+          catch (IOException e) {
+            throw new IOException("Unable to read image file " + imageFile.getAbsolutePath(), e);
+          }
         }
         catch (IOException e) {
           Logger.getInstance(PluginImagesComponent.class).error(e);

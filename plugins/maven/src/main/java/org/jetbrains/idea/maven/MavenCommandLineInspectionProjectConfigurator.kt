@@ -36,6 +36,7 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.resolved
 import java.util.concurrent.CompletableFuture
@@ -48,6 +49,7 @@ private const val MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY = "mave
 private val LOG = Logger.getInstance(MavenCommandLineInspectionProjectConfigurator::class.java)
 private const val DISABLE_EXTERNAL_SYSTEM_AUTO_IMPORT = "external.system.auto.import.disabled"
 private const val MAVEN_COMMAND_LINE_CONFIGURATOR_EXIT_ON_UNRESOLVED_PLUGINS = "maven.command.line.configurator.exit.on.unresolved.plugins"
+private const val MAVEN_LINEAR_IMPORT = "maven.linear.import"
 private val MAVEN_OUTPUT_LOG = Logger.getInstance("MavenOutput")
 
 class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProjectConfigurator {
@@ -85,6 +87,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
         mavenProjectAware.linkAndLoadProject(project, basePath)
       }
     }
+    MavenLog.LOG.warn("linked finished for ${project.name}")
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
     val promise = mavenProjectsManager.waitForImportCompletion()
     while (true) {
@@ -138,7 +141,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
 
   private fun setupDefaultJdk(projects: List<MavenProject>, context: ConfiguratorContext, project: Project) {
 
-    if (ProjectJdkTable.getInstance().allJdks.isNotEmpty()) return
+    if (ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()).isNotEmpty()) return
 
     val maxLevel = projects.flatMap {
       val javaVersions = MavenImportUtil.getMavenJavaVersions(it)

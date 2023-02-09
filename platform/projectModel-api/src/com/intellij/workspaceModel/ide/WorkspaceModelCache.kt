@@ -13,6 +13,7 @@ interface WorkspaceModelCache {
   val enabled: Boolean
 
   fun loadCache(): EntityStorage?
+  fun loadUnloadedEntitiesCache(): EntityStorage?
 
   /**
    * Save workspace model caches

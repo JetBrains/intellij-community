@@ -31,6 +31,19 @@ public final class GetterProcessor extends AbstractClassProcessor {
   }
 
   @Override
+  protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    Collection<String> result = new ArrayList<>();
+
+    final AccessorsInfo.AccessorsValues classAccessorsValues = AccessorsInfo.getAccessorsValues(psiClass);
+    for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
+      final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField, classAccessorsValues);
+      result.add(LombokUtils.getGetterName(psiField, accessorsInfo));
+    }
+
+    return result;
+  }
+
+  @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     validateAnnotationOnRightType(psiClass, builder);
     validateVisibility(psiAnnotation, builder);
@@ -99,7 +112,7 @@ public final class GetterProcessor extends AbstractClassProcessor {
         //Skip fields if a method with same name and arguments count already exists
         final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField, classAccessorsValues);
         final Collection<String> methodNames =
-          LombokUtils.toAllGetterNames(accessorsInfo, psiField.getName(), PsiType.BOOLEAN.equals(psiField.getType()));
+          LombokUtils.toAllGetterNames(accessorsInfo, psiField.getName(), PsiTypes.booleanType().equals(psiField.getType()));
         for (String methodName : methodNames) {
           createGetter &= !PsiMethodUtil.hasSimilarMethod(classMethods, methodName, 0);
         }

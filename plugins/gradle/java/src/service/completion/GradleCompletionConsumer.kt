@@ -11,9 +11,9 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.ui.JBColor
 import com.intellij.util.asSafely
 import com.intellij.util.lazyPub
-import org.jetbrains.plugins.gradle.codeInspection.GradleForeignDelegateInspection.Companion.getDelegationHierarchy
-import org.jetbrains.plugins.gradle.codeInspection.GradleForeignDelegateInspection.Companion.getDelegationSourceCaller
-import org.jetbrains.plugins.gradle.codeInspection.GradleForeignDelegateInspection.DelegationHierarchy
+import org.jetbrains.plugins.gradle.codeInspection.groovy.DelegationHierarchy
+import org.jetbrains.plugins.gradle.codeInspection.groovy.getDelegationHierarchy
+import org.jetbrains.plugins.gradle.codeInspection.groovy.getDelegationSourceCaller
 import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor
 import org.jetbrains.plugins.groovy.lang.completion.api.GroovyCompletionConsumer
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField

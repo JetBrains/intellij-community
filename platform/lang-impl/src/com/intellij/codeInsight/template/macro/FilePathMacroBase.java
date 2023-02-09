@@ -26,9 +26,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Nikolay Matveev
- */
 public abstract class FilePathMacroBase extends Macro {
 
   @Override

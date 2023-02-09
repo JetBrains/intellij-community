@@ -14,30 +14,27 @@ import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
-import com.intellij.util.indexing.IdIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 public abstract class StubIndex {
-
-  private static StubIndex ourInstance = CachedSingletonsRegistry.markCachedField(StubIndex.class);
+  private static final Supplier<StubIndex> ourInstance = CachedSingletonsRegistry.lazy(() -> {
+    return ApplicationManager.getApplication().getService(StubIndex.class);
+  });
 
   public static StubIndex getInstance() {
-    var instance = ourInstance;
-    if (instance == null) {
-      ourInstance = instance = ApplicationManager.getApplication().getService(StubIndex.class);
-    }
-    return instance;
+    return ourInstance.get();
   }
 
   /**
    * @deprecated use {@link #getElements(StubIndexKey, Object, Project, GlobalSearchScope, Class)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                            @NotNull Key key,
                                                            @NotNull Project project,
@@ -107,15 +104,6 @@ public abstract class StubIndex {
   }
 
   /**
-   * @deprecated use {@link StubIndex#getContainingFiles(StubIndexKey, Object, Project, GlobalSearchScope)}.
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public abstract <Key> IdIterator getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull @NonNls Key dataKey,
-                                                    @NotNull Project project,
-                                                    @NotNull final GlobalSearchScope scope);
-
-  /**
    * @return lazily reified iterator of VirtualFile's.
    */
   @NotNull
@@ -127,7 +115,7 @@ public abstract class StubIndex {
   /**
    * @deprecated use {@link StubIndex#getContainingFilesIterator(StubIndexKey, Object, Project, GlobalSearchScope)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public <Key> Set<VirtualFile> getContainingFiles(@NotNull StubIndexKey<Key, ?> indexKey,
                                                    @NotNull @NonNls Key dataKey,
@@ -156,5 +144,9 @@ public abstract class StubIndex {
    */
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  abstract public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType);
+  public abstract @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType);
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public abstract @NotNull ModificationTracker getStubIndexModificationTracker(@NotNull Project project);
 }

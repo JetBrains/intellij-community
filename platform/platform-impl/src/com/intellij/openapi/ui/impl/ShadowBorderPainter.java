@@ -12,7 +12,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /**
- * @author spleaner
  * @author Konstantin Bulenkov
  */
 public final class ShadowBorderPainter {

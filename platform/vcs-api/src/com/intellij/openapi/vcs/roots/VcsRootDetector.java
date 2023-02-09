@@ -12,7 +12,6 @@ import java.util.Collection;
 /**
  * Interface for detecting VCS roots in the project.
  *
- * @author Nadya Zabrodina
  * @see VcsRootChecker
  */
 public interface VcsRootDetector {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,7 +12,7 @@ import java.util.List;
 /*
  * Supports only trivial cases like "file:*.js||file:*.java"
  */
-public class NamedScopeToGlobConverter {
+public final class NamedScopeToGlobConverter {
   private final static String FILE_PREFIX = "file:";
   private final static String OR_SEPARATOR = "\\|\\|";
 

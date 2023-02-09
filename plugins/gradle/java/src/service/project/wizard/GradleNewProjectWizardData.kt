@@ -7,11 +7,12 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.projectRoots.Sdk
 
 interface GradleNewProjectWizardData : MavenizedNewProjectWizardData<ProjectData> {
+
   val sdkProperty: GraphProperty<Sdk?>
-  val gradleDslProperty: GraphProperty<GradleDsl>
 
   var sdk: Sdk?
-  var gradleDsl: GradleDsl
 
-  enum class GradleDsl { KOTLIN, GROOVY }
+  val gradleDslProperty: GraphProperty<GradleNewProjectWizardStep.GradleDsl>
+
+  var gradleDsl: GradleNewProjectWizardStep.GradleDsl
 }

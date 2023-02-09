@@ -4,14 +4,15 @@ package com.intellij.codeInspection
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.StaticAnalysisAnnotationManager
+import com.intellij.codeInsight.options.JavaClassValidator
 import com.intellij.codeInspection.AnnotatedApiUsageUtil.findAnnotatedContainingDeclaration
 import com.intellij.codeInspection.AnnotatedApiUsageUtil.findAnnotatedTypeUsedInDeclarationSignature
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.codeInspection.deprecation.DeprecationInspection
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.*
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.*
@@ -20,7 +21,6 @@ import com.intellij.util.ArrayUtilRt
 import com.siyeh.ig.ui.ExternalizableStringSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
-import javax.swing.JPanel
 
 class UnstableApiUsageInspection : LocalInspectionTool() {
 
@@ -58,18 +58,14 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
     }
   }
 
-  override fun createOptionsPanel(): JPanel {
-    val panel = MultipleCheckboxOptionsPanel(this)
-    panel.addCheckbox(JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.inside.imports"), "myIgnoreInsideImports")
-    panel.addCheckbox(JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.declared.inside.this.project"), "myIgnoreApiDeclaredInThisProject")
-
-    //TODO in add annotation window "Include non-project items" should be enabled by default
-    val annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      unstableApiAnnotations, JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list")
+  override fun getOptionsPane(): OptPane {
+    return pane(
+      checkbox("myIgnoreInsideImports", JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.inside.imports")),
+      checkbox("myIgnoreApiDeclaredInThisProject", JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.declared.inside.this.project")),
+      //TODO in add annotation window "Include non-project items" should be enabled by default
+      stringList("unstableApiAnnotations", JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list"),
+                 JavaClassValidator().annotationsOnly())
     )
-
-    panel.add(annotationsListControl, "growx, wrap")
-    return panel
   }
 }
 

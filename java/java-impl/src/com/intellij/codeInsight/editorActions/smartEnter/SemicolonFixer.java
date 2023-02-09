@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.application.options.CodeStyle;
@@ -28,7 +28,7 @@ public class SemicolonFixer implements Fixer {
   private static boolean fixReturn(@NotNull Editor editor, @Nullable PsiElement psiElement) {
     if (psiElement instanceof PsiReturnStatement) {
       PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class, true, PsiLambdaExpression.class);
-      if (method != null && PsiType.VOID.equals(method.getReturnType())) {
+      if (method != null && PsiTypes.voidType().equals(method.getReturnType())) {
         PsiReturnStatement stmt = (PsiReturnStatement)psiElement;
         if (stmt.getReturnValue() != null) {
           Document doc = editor.getDocument();
@@ -41,11 +41,10 @@ public class SemicolonFixer implements Fixer {
   }
 
   private static boolean fixForUpdate(@NotNull Editor editor, @Nullable PsiElement psiElement) {
-    if (!(psiElement instanceof PsiForStatement)) {
+    if (!(psiElement instanceof PsiForStatement forStatement)) {
       return false;
     }
 
-    PsiForStatement forStatement = (PsiForStatement)psiElement;
     PsiExpression condition = forStatement.getCondition();
     if (forStatement.getUpdate() != null || condition == null) {
       return false;

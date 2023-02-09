@@ -6,12 +6,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
 import com.intellij.util.Alarm;
-import com.intellij.util.AlarmFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
-public class WaitForSmartCommand extends AbstractCommand {
+public final class WaitForSmartCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "waitForSmart";
 
   /**
@@ -32,7 +31,7 @@ public class WaitForSmartCommand extends AbstractCommand {
    */
   private static final int SMART_MODE_MINIMUM_DELAY = 10000;
 
-  private final Alarm myAlarm = AlarmFactory.getInstance().create();
+  private final Alarm myAlarm = new Alarm();
 
   public WaitForSmartCommand(@NotNull String text, int line) {
     super(text, line);

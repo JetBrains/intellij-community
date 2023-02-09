@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java.inst;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
@@ -20,7 +20,7 @@ public class EndOfInstanceInitializerInstruction extends Instruction {
   @Override
   public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter,
                                       @NotNull DfaMemoryState stateBefore) {
-    interpreter.getListener().beforePush(new DfaValue[0], interpreter.getFactory().getUnknown(),
+    interpreter.getListener().beforePush(DfaValue.EMPTY_ARRAY, interpreter.getFactory().getUnknown(),
                                          new JavaEndOfInstanceInitializerAnchor(), stateBefore);
     return nextStates(interpreter, stateBefore);
   }

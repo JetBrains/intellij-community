@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.java.JavaBundle;
@@ -96,7 +96,7 @@ public class JavaColorProvider implements ElementColorProvider {
 
   private static boolean isIntLiteralInsideNewJBColorExpression(PsiElement element) {
     ULiteralExpression literalExpression = UastContextKt.toUElement(element, ULiteralExpression.class);
-    if (literalExpression != null && PsiType.INT.equals(literalExpression.getExpressionType())) {
+    if (literalExpression != null && PsiTypes.intType().equals(literalExpression.getExpressionType())) {
       UElement parent = literalExpression.getUastParent();
       if (parent != null) {
         return isNewJBColorExpression(parent);
@@ -106,12 +106,9 @@ public class JavaColorProvider implements ElementColorProvider {
   }
 
   private static boolean isNewJBColorExpression(UElement element) {
-    if (element instanceof UCallExpression) {
-      UCallExpression callExpression = (UCallExpression)element;
-      if (callExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
-        final PsiClass psiClass = PsiTypesUtil.getPsiClass(callExpression.getReturnType());
-        return psiClass != null && JBColor.class.getName().equals(psiClass.getQualifiedName());
-      }
+    if (element instanceof UCallExpression callExpression && callExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
+      final PsiClass psiClass = PsiTypesUtil.getPsiClass(callExpression.getReturnType());
+      return psiClass != null && JBColor.class.getName().equals(psiClass.getQualifiedName());
     }
     return false;
   }
@@ -141,8 +138,8 @@ public class JavaColorProvider implements ElementColorProvider {
     return switch (paramCount) {
       case 1 -> ColorConstructors.INT;
       case 2 -> ColorConstructors.INT_BOOL;
-      case 3 -> PsiType.INT.equals(paramType) ? ColorConstructors.INT_x3 : ColorConstructors.FLOAT_x3;
-      case 4 -> PsiType.INT.equals(paramType) ? ColorConstructors.INT_x4 : ColorConstructors.FLOAT_x4;
+      case 3 -> PsiTypes.intType().equals(paramType) ? ColorConstructors.INT_x3 : ColorConstructors.FLOAT_x3;
+      case 4 -> PsiTypes.intType().equals(paramType) ? ColorConstructors.INT_x4 : ColorConstructors.FLOAT_x4;
       default -> null;
     };
   }

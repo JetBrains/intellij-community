@@ -16,9 +16,9 @@ public class DuplicateLabels {
     switch (s) {
       case "abc":
         break;
-      case <error descr="Duplicate total pattern">Object oo</error>:
+      case <error descr="Duplicate unconditional pattern">Object oo</error>:
         break;
-      case <error descr="Duplicate total pattern">Object oo && true</error>:
+      case <error descr="Duplicate unconditional pattern">Object oo && true</error>:
         break;
     }
   }

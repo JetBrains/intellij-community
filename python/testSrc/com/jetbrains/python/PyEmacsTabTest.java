@@ -6,9 +6,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
-/**
- * @author Denis Zhdanov
- */
 public class PyEmacsTabTest extends PyTestCase {
   
   public void testIndentToRightAfterCompositeStatementStart() {

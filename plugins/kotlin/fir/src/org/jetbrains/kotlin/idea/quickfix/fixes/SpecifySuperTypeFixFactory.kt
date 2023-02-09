@@ -12,10 +12,10 @@ import com.intellij.util.containers.toMutableSmartList
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -29,7 +29,7 @@ object SpecifySuperTypeFixFactory {
 
     class Input(val superTypes: List<TypeStringWithoutArgs>) : KotlinApplicatorInput
 
-    val applicator = applicator<KtSuperExpression, Input> {
+    private val applicator = applicator<KtSuperExpression, Input> {
         familyAndActionName(KotlinBundle.lazyMessage("intention.name.specify.supertype"))
         applyToWithEditorRequired { psi, input, project, editor ->
             when (input.superTypes.size) {

@@ -166,7 +166,9 @@ class KotlinFunctionCallInstruction(
         val constructedClass = (expr.resolveToCall()?.resultingDescriptor as? ConstructorDescriptor)?.constructedClass
         if (constructedClass != null) {
             // Set exact class type for constructor
-            return TypeConstraints.exactClass(KtClassDef(constructedClass)).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
+            return TypeConstraints.exactClass(KtClassDef(constructedClass))
+                .convert(KtClassDef.typeConstraintFactory(expr))
+                .asDfType().meet(DfTypes.NOT_NULL_OBJECT)
         }
         return expr.getKotlinType().toDfType()
     }

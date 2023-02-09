@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.eventLog.fus
 import com.intellij.internal.statistic.eventLog.FilteredEventMergeStrategy
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.eventLog.StatisticsEventMergeStrategy
+import com.intellij.internal.statistic.eventLog.events.EventFieldIds
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationInfo
@@ -23,7 +24,8 @@ internal class FeatureUsageEventLoggerProvider : StatisticsEventLoggerProvider("
   }
 
   override fun createEventsMergeStrategy(): StatisticsEventMergeStrategy {
-    val ignoredFields = EventFields.FieldsIgnoredByMerge.map { it.name }.toSet()
+    // this happens rather early on startup, do not touch EventFields.*
+    val ignoredFields = EventFieldIds.FieldsIgnoredByMerge.toSet()
     return FilteredEventMergeStrategy(ignoredFields)
   }
 }

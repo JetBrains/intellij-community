@@ -68,6 +68,7 @@
 
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.configuration.MultipleScriptDefinitionsChecker"/>
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.configuration.ScriptingSupportChecker"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.configuration.IndexScriptDependenciesSourcesNotificationProvider"/>
 
     <projectConfigurable groupId="language"
                          bundle="messages.KotlinBundle"
@@ -84,6 +85,12 @@
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptResolveScopeProvider"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
 
+    <registryKey key="kotlin.script.use.workspace.file.index.contributor.api" defaultValue="true"
+                 description="Use new WorkspaceFileIndexContributor API for custom entities.
+                 The flag is temporary, legacy API will be removed in the future."/>
+    <!--suppress PluginXmlValidity -->
+    <workspaceModel.fileIndexContributor
+            implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptWorkspaceFileIndexContributor"/>
     <!--suppress PluginXmlValidity -->
     <customEntityProjectModelInfoProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptProjectModelInfoProvider"/>
 
@@ -95,9 +102,11 @@
     <!--suppress PluginXmlValidity -->
     <indexableEntityProvider implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptDependencyIndexableEntityProvider"/>
 
+    <workspaceModel.cache.version implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptWorkspaceModelCacheVersion"/>
+
     <registryKey key="kotlin.scripts.as.entities"
                  description="Enables explicit script dependencies support"
-                 defaultValue="false"
+                 defaultValue="true"
                  restartRequired="true"/>
 
     <registryKey key="kotlin.scripting.support.warning"
@@ -115,8 +124,8 @@
                  defaultValue="false"
                  restartRequired="true"/>
 
-    <registryKey key="kotlin.scripting.filter.redundant.deps"
-                 description="Filter redundant dependencies from Kotlin/Gradle script dependencies like groovy/kotlin-daemon-embeddable/etc"
+    <registryKey key="kotlin.scripting.index.dependencies.sources"
+                 description="Index script dependencies sources eagerly (not deferred)"
                  defaultValue="false"
                  restartRequired="true"/>
 

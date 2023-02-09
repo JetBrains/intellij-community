@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.components
 
+import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.SettingValidator
@@ -21,7 +23,7 @@ import javax.swing.JPanel
 
 abstract class UIComponent<V : Any>(
     context: Context,
-    labelText: String? = null,
+    labelText: @NlsContexts.Label String? = null,
     private val validator: SettingValidator<V>? = null,
     private val onValueUpdate: (V, isByUser: Boolean) -> Unit = { _, _ -> }
 ) : DynamicComponent(context), FocusableComponent {

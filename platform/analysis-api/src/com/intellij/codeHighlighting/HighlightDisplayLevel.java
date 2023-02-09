@@ -118,12 +118,12 @@ public class HighlightDisplayLevel {
 
   @NotNull
   public Icon getIcon() {
-    return myIconPair.first != null ? myIconPair.first : EmptyIcon.ICON_16;
+    return myIconPair.first;
   }
 
   @NotNull
   public Icon getOutlineIcon() {
-    return myIconPair.second != null ? myIconPair.second : EmptyIcon.ICON_16;
+    return myIconPair.second;
   }
 
   @NotNull

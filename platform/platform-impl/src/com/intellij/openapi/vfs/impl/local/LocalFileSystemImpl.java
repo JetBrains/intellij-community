@@ -25,6 +25,7 @@ import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.*;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -291,10 +292,9 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
       return list;
     }
-    catch (IOException | RuntimeException e) {
-      LOG.warn(e);
-      return Map.of();
-    }
+    catch (AccessDeniedException e) { LOG.debug(e); }
+    catch (IOException | RuntimeException e) { LOG.warn(e); }
+    return Map.of();
   }
 
   private static @Nullable FileAttributes copyWithCustomTimestamp(Path file, FileAttributes attributes) {

@@ -45,7 +45,7 @@ class HTMLNewProjectWizard : LanguageNewProjectWizard {
         it.name = parent.name
         it.contentEntryPath = "${parent.path}/${parent.name}"
       }
-      builder.commit(project)
+      setupProjectFromBuilder(project, builder)
 
       if (!addSampleCode.get()) return
 

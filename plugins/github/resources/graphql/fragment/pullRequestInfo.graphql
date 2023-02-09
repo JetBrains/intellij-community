@@ -8,6 +8,13 @@ fragment pullRequestInfo on PullRequest {
   }
   createdAt
 
+  reviewDecision
+  reviews(last: 100) {
+    nodes {
+      ...pullRequestReview
+    }
+  }
+
   baseRefName
   baseRefOid
   baseRepository {

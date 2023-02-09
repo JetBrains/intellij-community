@@ -26,12 +26,12 @@ public class Incompatible {
       case RecordWithInterface(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'I'">Integer x</error>, <error descr="Incompatible types. Found: 'java.lang.Integer', required: 'I'">Integer y</error>) s when true -> {}
       case RecordWithInterface(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'I'">Integer x</error>, D y) s when true -> {}
       case RecordWithInterface(I x, D y) s when true -> {}
-      case <error descr="Deconstruction pattern can only be applied to a record">Integer</error>(double x) -> {}
+      case <error descr="Deconstruction pattern can only be applied to a record, 'java.lang.Integer' is not a record">Integer</error>(double x) -> {}
       case PrimitiveRecord(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'int'">Integer x</error>) s when true -> {}
       case PrimitiveRecord(int x) s when true -> {}
       case IntegerRecord(Integer x) s when true -> {}
       case IntegerRecord(<error descr="Incompatible types. Found: 'int', required: 'java.lang.Integer'">int x</error>) s when true -> {}
-      case <error descr="'java.lang.Object' cannot be safely cast to 'T'">T(Integer x)</error> -> {}
+      case <error descr="'Object' cannot be safely cast to 'T'">T(Integer x)</error> -> {}
 
     }
     switch (integer){
@@ -46,9 +46,9 @@ public class Incompatible {
       case <error descr="Raw deconstruction patterns are not allowed">TypedRecord</error>(C x) s-> {}
       case <error descr="Raw deconstruction patterns are not allowed">TypedRecord</error>(I x) s-> {}
       case TypedRecord<I>(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'I'">Integer t</error>) -> {}
-      case TypedRecord<?>(<error descr="'java.lang.Object' cannot be safely cast to 'java.util.List<java.lang.Number>'">List<Number> nums</error>) -> {}
+      case TypedRecord<?>(<error descr="'Object' cannot be safely cast to 'List<Number>'">List<Number> nums</error>) -> {}
       case TypedRecord<?>(List<?> list) -> {}
-      case TypedRecord<?>(<error descr="'java.lang.Object' cannot be safely cast to 'T'">T t</error>) -> {}
+      case TypedRecord<?>(<error descr="'Object' cannot be safely cast to 'T'">T t</error>) -> {}
       case TypedRecord<?>(String s) -> {}
       case TypedRecord<?>(var x) -> {}
       default -> {}

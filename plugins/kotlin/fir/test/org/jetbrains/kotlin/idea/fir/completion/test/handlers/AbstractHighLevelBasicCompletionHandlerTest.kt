@@ -28,8 +28,9 @@ abstract class AbstractHighLevelBasicCompletionHandlerTest : AbstractBasicComple
         IgnoreTests.runTestIfEnabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON, ".after") {
             super.doTest(testPath)
             val originalTestFile = dataFile()
-            val originalAfterFile = originalTestFile.withExtension("kt.after")
-            val firAfterFile = originalTestFile.withExtension("fir.kt.after")
+            val extension = originalTestFile.extension
+            val originalAfterFile = originalTestFile.withExtension("$extension.after")
+            val firAfterFile = originalTestFile.withExtension("fir.$extension.after")
             IgnoreTests.cleanUpIdenticalFirTestFile(
                 originalTestFile,
                 additionalFileToMarkFirIdentical = originalAfterFile,

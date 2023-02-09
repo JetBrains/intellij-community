@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.WriteAction;
@@ -42,7 +42,8 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
   public void testIndexingModule() throws Exception {
     doTest(this::createModuleAndSourceRoot, this::removeModule,
            pair -> IndexableEntityProviderMethods.INSTANCE.createIterators(pair.getFirst(),
-                                                                           Collections.singletonList(pair.getSecond())));
+                                                                           Collections.singletonList(pair.getSecond())
+           ));
   }
 
   @NotNull
@@ -135,7 +136,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
   }
 
   public void testIndexingSdk() throws Exception {
-    doTest(this::createSdk, this::removeSdk, IndexableEntityProviderMethods.INSTANCE::createIterators);
+    doTest(this::createSdk, this::removeSdk, sdk -> IndexableEntityProviderMethods.INSTANCE.createIterators(sdk));
   }
 
   @NotNull

@@ -9,7 +9,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.toUElement
@@ -57,12 +56,17 @@ class KotlinUIdentifier(
         if (parentParent is KtCallElement && parentParent.calleeExpression == parent) { // method identifiers in calls
             return parentParent.toUElement()
         }
-        (generateSequence(parent) { it.parent }.take(3).find { it is KtTypeReference && it.parent is KtConstructorCalleeExpression })?.let {
-            val parent2 = it.parent.parent
-            return parent2.parent.parent.parent.safeAs<KtObjectLiteralExpression>()?.toUElement()
-                .safeAs<KotlinUObjectLiteralExpression>()?.constructorCall ?: parent2.toUElement()
-        }
-        return null
+        return generateSequence(parent) { it.parent }.take(3)
+            .mapNotNull { (it as? KtTypeReference)?.parentAs<KtConstructorCalleeExpression>() }
+            .mapNotNull {
+                val entry = it.parentAs<KtSuperTypeCallEntry>()
+                if (entry != null)
+                    (entry.getParentObjectLiteralExpression()?.toUElement() as? KotlinUObjectLiteralExpression)?.constructorCall
+                        ?: entry.toUElement()
+                else
+                    it.parentAs<KtAnnotationEntry>()?.toUElement()
+            }
+            .firstOrNull()
     }
 
     constructor(javaPsi: PsiElement?, sourcePsi: PsiElement?, uastParent: UElement?) : this({ javaPsi }, sourcePsi, uastParent)

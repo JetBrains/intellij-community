@@ -73,7 +73,7 @@ public final class SourceRootIconProvider {
           // but mark file if they are under different root type (e.g. test root file under source root dir)
           if (parentSourceRoot == null || !sourceRoot.equals(parentSourceRoot)) {
             JpsModuleSourceRootType<?> rootType = index.getContainingSourceRootType(vFile);
-            return SourceRootPresentation.getSourceRootFileLayerIcon(rootType);
+            return rootType != null ? SourceRootPresentation.getSourceRootFileLayerIcon(rootType) : null;
           }
         }
       }
@@ -84,8 +84,7 @@ public final class SourceRootIconProvider {
   public static class DirectoryProvider extends IconProvider implements DumbAware {
     @Override
     public Icon getIcon(@NotNull final PsiElement element, final int flags) {
-      if (element instanceof PsiDirectory) {
-        final PsiDirectory psiDirectory = (PsiDirectory)element;
+      if (element instanceof PsiDirectory psiDirectory) {
         return getDirectoryIcon(psiDirectory.getVirtualFile(), psiDirectory.getProject());
       }
       return null;

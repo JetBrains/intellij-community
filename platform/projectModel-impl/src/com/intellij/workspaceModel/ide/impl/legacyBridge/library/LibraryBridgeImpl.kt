@@ -21,6 +21,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.getGlobalInstance
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
@@ -29,6 +32,7 @@ import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
@@ -42,7 +46,7 @@ interface LibraryBridge : LibraryEx {
 @ApiStatus.Internal
 class LibraryBridgeImpl(
   var libraryTable: LibraryTable,
-  val project: Project,
+  val project: Project?,
   initialId: LibraryId,
   initialEntityStorage: VersionedEntityStorage,
   private var targetBuilder: MutableEntityStorage?
@@ -97,7 +101,8 @@ class LibraryBridgeImpl(
   }
 
   override fun getModifiableModel(builder: MutableEntityStorage): LibraryEx.ModifiableModelEx {
-    return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder, false)
+    val virtualFileUrlManager = if (project == null) VirtualFileUrlManager.getGlobalInstance() else VirtualFileUrlManager.getInstance(project)
+    return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder, virtualFileUrlManager, false)
   }
 
   override fun getSource(): Library? = null
@@ -152,13 +157,18 @@ class LibraryBridgeImpl(
         null
       }
       val isDisposedGlobally = libraryEntity?.let {
-        WorkspaceModel.getInstance(project).entityStorage.current.libraryMap.getDataByEntity(it)?.isDisposed
+        val snapshot = if (project != null) {
+          WorkspaceModel.getInstance(project).currentSnapshot
+        } else {
+          GlobalWorkspaceModel.getInstance().currentSnapshot
+        }
+        snapshot.libraryMap.getDataByEntity(it)?.isDisposed
       }
       val message = """
         Library $entityId already disposed:
         Library id: $libraryId
         Entity: ${libraryEntity.run { "$name, $this" }}
-        Is disposed in project model: ${isDisposedGlobally != false}
+        Is disposed in ${if (project != null) "project" else "global"} model: ${isDisposedGlobally != false}
         Stack trace: $stackTrace
         """.trimIndent()
       try {
@@ -173,6 +183,10 @@ class LibraryBridgeImpl(
 
   internal fun fireRootSetChanged() {
     dispatcher.multicaster.rootSetChanged(this)
+  }
+
+  fun setTargetBuilder(builder: MutableEntityStorage) {
+    targetBuilder = builder
   }
 
   fun clearTargetBuilder() {

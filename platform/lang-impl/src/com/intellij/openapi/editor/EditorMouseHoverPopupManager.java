@@ -191,6 +191,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
                                     boolean forceShowing,
                                     boolean requestFocus) {
     ProgressIndicatorBase progress = new ProgressIndicatorBase();
+    progress.setModalityProgress(null);
     myCurrentProgress = progress;
     myAlarm.addRequest(() -> {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {

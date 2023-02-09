@@ -100,8 +100,7 @@ final class PortUnificationServerHandler extends Decoder {
           pipeline.addLast(new ChannelOutboundHandlerAdapter() {
             @Override
             public void write(ChannelHandlerContext context, Object message, ChannelPromise promise) throws Exception {
-              if (message instanceof HttpResponse) {
-                HttpResponse response = (HttpResponse)message;
+              if (message instanceof HttpResponse response) {
                 logger.debug("OUT HTTP: " + response);
               }
               super.write(context, message, promise);

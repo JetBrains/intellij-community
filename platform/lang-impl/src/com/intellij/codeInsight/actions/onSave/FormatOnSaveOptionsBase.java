@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 import java.util.function.Function;
@@ -124,7 +125,8 @@ public class FormatOnSaveOptionsBase<S extends FormatOnSaveOptionsBase.StateBase
     return myState.myRunOnSave;
   }
 
-  void setRunOnSaveEnabled(boolean enabled) {
+  @VisibleForTesting
+  public void setRunOnSaveEnabled(boolean enabled) {
     myState.myRunOnSave = enabled;
   }
 

@@ -27,10 +27,9 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
   @Nullable
   @Override
   protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
-    if (!(usage instanceof PsiElementUsage)) {
+    if (!(usage instanceof PsiElementUsage elementUsage)) {
       return null;
     }
-    PsiElementUsage elementUsage = (PsiElementUsage)usage;
 
     PsiElement element = elementUsage.getElement();
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
@@ -115,8 +114,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
 
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof UsageScopeGroup)) return false;
-      final UsageScopeGroup usageTypeGroup = (UsageScopeGroup)o;
+      if (!(o instanceof UsageScopeGroup usageTypeGroup)) return false;
       return myCode == usageTypeGroup.myCode;
     }
 

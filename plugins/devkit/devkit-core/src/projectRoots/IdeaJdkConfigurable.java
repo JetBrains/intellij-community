@@ -193,8 +193,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     updateJdkList();
     myFreeze = false;
     mySandboxHome.reset();
-    if (myIdeaJdk != null && myIdeaJdk.getSdkAdditionalData() instanceof Sandbox) {
-      final Sandbox sandbox = (Sandbox)myIdeaJdk.getSdkAdditionalData();
+    if (myIdeaJdk != null && myIdeaJdk.getSdkAdditionalData() instanceof Sandbox sandbox) {
       final String sandboxHome = sandbox.getSandboxHome();
       mySandboxHome.setText(sandboxHome);
       mySandboxHome.setSelectedItem(sandboxHome);

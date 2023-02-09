@@ -36,8 +36,8 @@ sealed interface PluginAdvertiserService {
 
     internal fun getSuggestedCommercialIdeCode(activeProductCode: String): String? {
       return when (activeProductCode) {
-        "IC", "IE", "AS" -> "IU"
-        "PC", "PE" -> "PY"
+        "IC", "AS" -> "IU"
+        "PC" -> "PY"
         else -> null
       }
     }
@@ -48,7 +48,7 @@ sealed interface PluginAdvertiserService {
     val ideaUltimate = SuggestedIde("IntelliJ IDEA Ultimate", "https://www.jetbrains.com/idea/download/")
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
-    internal val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")
+    private val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")
 
     @Suppress("HardCodedStringLiteral")
     internal val ides: Map<String, SuggestedIde> = linkedMapOf(
@@ -59,7 +59,6 @@ sealed interface PluginAdvertiserService {
       "GO" to SuggestedIde("GoLand", "https://www.jetbrains.com/go/download/"),
       "CL" to SuggestedIde("CLion", "https://www.jetbrains.com/clion/download/"),
       "RD" to SuggestedIde("Rider", "https://www.jetbrains.com/rider/download/"),
-      "OC" to SuggestedIde("AppCode", "https://www.jetbrains.com/objc/download/"),
       "IU" to ideaUltimate
     )
 

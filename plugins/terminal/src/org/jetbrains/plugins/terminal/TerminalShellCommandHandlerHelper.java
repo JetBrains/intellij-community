@@ -31,7 +31,6 @@ import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
@@ -48,6 +47,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.jediterm.terminal.ui.AwtTransformers.fromAwtToTerminalColor;
 
 public final class TerminalShellCommandHandlerHelper {
   private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandlerHelper.class);
@@ -193,7 +194,7 @@ public final class TerminalShellCommandHandlerHelper {
   private String getWorkingDirectory() {
     String workingDirectory = myWorkingDirectory;
     if (workingDirectory == null) {
-      workingDirectory = StringUtil.notNullize(TerminalWorkingDirectoryManager.getWorkingDirectory(myWidget, null));
+      workingDirectory = StringUtil.notNullize(TerminalWorkingDirectoryManager.getWorkingDirectory(myWidget.asNewWidget(), null));
       myWorkingDirectory = workingDirectory;
     }
     return StringUtil.nullize(workingDirectory);
@@ -239,7 +240,7 @@ public final class TerminalShellCommandHandlerHelper {
     if (attributes == null) {
       return null;
     }
-    return new TextStyle(TerminalColor.awt(attributes.getForegroundColor()), TerminalColor.awt(attributes.getBackgroundColor()));
+    return new TextStyle(fromAwtToTerminalColor(attributes.getForegroundColor()), fromAwtToTerminalColor(attributes.getBackgroundColor()));
   }
 
   public boolean processEnterKeyPressed(@NotNull KeyEvent keyPressed) {

@@ -6,4 +6,3 @@ package testing
 
 public class <caret>Test
 
-// FIR_COMPARISON

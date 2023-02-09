@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionStubBase
+import com.intellij.openapi.util.CachedImageIcon
 import com.intellij.openapi.util.IconLoader
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.Nls
@@ -15,7 +16,7 @@ internal val NONE = ActionIconInfo(null, IdeBundle.message("default.icons.none.t
 internal val SEPARATOR = ActionIconInfo(null, "", "", null)
 
 /**
- * @param actionId id of the action that use this icon.
+ * @param actionId id of the action that uses this icon.
  * @param iconPath path or URL of the icon.
  * @param text template presentation text of the action or file name.
  */
@@ -48,8 +49,8 @@ internal fun getDefaultIcons(): List<ActionIconInfo> {
 }
 
 private fun getIconInfo(icon: Icon, @Nls text: String): ActionIconInfo? {
-  val iconUrl = (icon as? IconLoader.CachedImageIcon)?.url
-  return iconUrl?.let { ActionIconInfo(icon, text, null, it.toString()) }
+  val iconUrl = (icon as? CachedImageIcon)?.url
+  return iconUrl?.let { ActionIconInfo(icon = icon, text = text, actionId = null, iconPath = it.toString()) }
 }
 
 internal fun getAvailableIcons(): List<ActionIconInfo> {
@@ -64,14 +65,16 @@ internal fun getAvailableIcons(): List<ActionIconInfo> {
       val presentation = action.templatePresentation
       presentation.getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON) ?: presentation.icon
     }
-    icon?.let { ActionIconInfo(it, action.templateText.nullize() ?: actionId, actionId, null) }
+    icon?.let { ActionIconInfo(icon = it, text = action.templateText.nullize() ?: actionId, actionId = actionId, iconPath = null) }
   }
 }
 
 internal fun getCustomIcons(schema: CustomActionsSchema): List<ActionIconInfo> {
   val actionManager = ActionManager.getInstance()
-  return schema.iconCustomizations.mapNotNull { (actionId, iconReference) ->
-    if (actionId == null || iconReference == null) return@mapNotNull null
+  return schema.getIconCustomizations().mapNotNull { (actionId, iconReference) ->
+    if (iconReference == null) {
+      return@mapNotNull null
+    }
     val action = actionManager.getAction(iconReference)
     if (action == null) {
       val icon = try {

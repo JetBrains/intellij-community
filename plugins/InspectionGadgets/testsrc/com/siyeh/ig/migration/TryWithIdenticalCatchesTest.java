@@ -71,6 +71,15 @@ public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTest
     highlightTest(false, false);
   }
 
+  public void testMoreCommonCatchPreserved() {
+    doTest();
+  }
+  public void testMoreCommonCatchPreservedWithOneLine() {
+    doTest();
+  }
+  public void testPreservedNewLine() {
+    doTest();
+  }
   public void doTest() {
     doTest(false, false, false);
   }

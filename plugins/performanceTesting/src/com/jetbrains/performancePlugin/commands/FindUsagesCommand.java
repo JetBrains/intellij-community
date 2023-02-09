@@ -37,6 +37,7 @@ import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath;
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
+import com.jetbrains.performancePlugin.utils.DataDumper;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Context;
 import org.jetbrains.annotations.NotNull;
@@ -52,8 +53,6 @@ import java.util.concurrent.CountDownLatch;
 
 public class FindUsagesCommand extends AbstractCommand {
   private static final String DUMP_FOUND_USAGES_DESTINATION_FILE = "find.usages.command.found.usages.list.file";
-  private static final ObjectMapper objectMapper = ExtensionsKt.jacksonObjectMapper()
-    .setDefaultPrettyPrinter(new DefaultPrettyPrinter());
 
   public static final String PREFIX = CMD_PREFIX + "findUsages";
   private static final Logger LOG = Logger.getInstance(FindUsagesCommand.class);
@@ -151,20 +150,14 @@ public class FindUsagesCommand extends AbstractCommand {
     Collections.sort(foundUsages);
 
     FoundUsagesReport foundUsagesReport = new FoundUsagesReport(foundUsages.size(), foundUsages);
-    try {
-      objectMapper.writerWithDefaultPrettyPrinter().writeValue(jsonPath.toFile(), foundUsagesReport);
-    }
-    catch (IOException e) {
-      throw new RuntimeException("Failed to write found usages to " + jsonPath, e);
-    }
+    DataDumper.dump(foundUsagesReport,jsonPath);
   }
 
   @NotNull
   public static FoundUsage convertToFoundUsage(@NotNull Project project, @NotNull Usage usage) {
     PortableFilePath portableFilePath = null;
     Integer line = null;
-    if (usage instanceof UsageInfo2UsageAdapter) {
-      UsageInfo2UsageAdapter adapter = (UsageInfo2UsageAdapter)usage;
+    if (usage instanceof UsageInfo2UsageAdapter adapter) {
       VirtualFile file = ReadAction.compute(() -> adapter.getFile());
       if (file != null) {
         portableFilePath = PortableFilePaths.INSTANCE.getPortableFilePath(file, project);
@@ -186,7 +179,7 @@ public class FindUsagesCommand extends AbstractCommand {
 
   @NotNull
   public static FoundUsagesReport parseFoundUsagesReportFromFile(@NotNull Path reportPath) throws IOException {
-    return objectMapper.readValue(reportPath.toFile(), FoundUsagesReport.class);
+    return DataDumper.objectMapper.readValue(reportPath.toFile(), FoundUsagesReport.class);
   }
 
   public static final class FoundUsagesReport {
@@ -233,8 +226,7 @@ public class FindUsagesCommand extends AbstractCommand {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof FoundUsage)) return false;
-      FoundUsage usage = (FoundUsage)o;
+      if (!(o instanceof FoundUsage usage)) return false;
       return text.equals(usage.text) &&
              Objects.equals(portableFilePath, usage.portableFilePath) &&
              Objects.equals(line, usage.line);

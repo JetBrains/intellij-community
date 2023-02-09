@@ -14,6 +14,7 @@
                         overrides="true"/>
     <fileType name="Dictionary" implementationClass="com.intellij.spellchecker.DictionaryFileType" extensions="dic"/>
     <postStartupActivity implementation="com.intellij.spellchecker.settings.SettingsTransferActivity"/>
+    <postStartupActivity implementation="com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine$SpellerLoadActivity"/>
     <projectConfigurable parentId="proofread" instance="com.intellij.spellchecker.settings.SpellCheckerSettingsManager" id="reference.settings.ide.settings.spelling" key="spelling" bundle="messages.SpellCheckerBundle" />
 
     <localInspection shortName="SpellCheckingInspection" bundle="messages.SpellCheckerBundle"

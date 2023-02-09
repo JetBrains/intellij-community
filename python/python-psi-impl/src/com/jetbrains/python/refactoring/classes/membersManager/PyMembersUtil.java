@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class PyMembersUtil {
+public final class PyMembersUtil {
   /**
    * Filters out {@link PyMemberInfo}
    * that should not be displayed in this refactoring (like object)

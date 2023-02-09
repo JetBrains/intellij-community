@@ -19,9 +19,6 @@ import com.intellij.maven.testFramework.MavenDomTestCase;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import org.junit.Test;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenSpellcheckerTest extends MavenDomTestCase {
 
   @Test

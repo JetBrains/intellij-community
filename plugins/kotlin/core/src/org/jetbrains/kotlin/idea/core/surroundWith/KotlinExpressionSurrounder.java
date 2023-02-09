@@ -24,12 +24,11 @@ public abstract class KotlinExpressionSurrounder implements Surrounder {
 
     @Override
     public boolean isApplicable(@NotNull PsiElement[] elements) {
-        if (elements.length != 1 || !(elements[0] instanceof KtExpression)) {
+        if (elements.length != 1 || !(elements[0] instanceof KtExpression expression)) {
             return false;
         }
 
-        KtExpression expression = (KtExpression) elements[0];
-        if (expression instanceof KtCallExpression && expression.getParent() instanceof KtQualifiedExpression) {
+      if (expression instanceof KtCallExpression && expression.getParent() instanceof KtQualifiedExpression) {
             return false;
         }
 

@@ -59,9 +59,6 @@ import java.util.List;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author ilyas
- */
 public final class GroovyCompletionData {
   public static final String[] BUILT_IN_TYPES = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"};
   public static final String[] MODIFIERS = new String[]{"private", "public", "protected", "transient", "abstract", "native", "volatile", "strictfp", "static", "sealed", "non-sealed"};
@@ -382,7 +379,7 @@ public final class GroovyCompletionData {
 
     PsiElement parent = flowOwner.getParent();
     if (parent instanceof GrMethod) {
-      return !PsiType.VOID.equals(((GrMethod)parent).getReturnType());
+      return !PsiTypes.voidType().equals(((GrMethod)parent).getReturnType());
     }
     else if (parent instanceof GrClassInitializer) {
       return false;
@@ -423,8 +420,7 @@ public final class GroovyCompletionData {
     final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
     if (leaf != null) {
       PsiElement parent = leaf.getParent();
-      if (parent instanceof GroovyFile) {
-        GroovyFile groovyFile = (GroovyFile) parent;
+      if (parent instanceof GroovyFile groovyFile) {
         if (groovyFile.getPackageDefinition() == null) {
           return GroovyCompletionUtil.isNewStatement(context, false);
         }

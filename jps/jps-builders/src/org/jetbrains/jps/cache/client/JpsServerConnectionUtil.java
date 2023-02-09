@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.client;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,7 +41,7 @@ import java.util.Map;
  * 4  212.48.195.38 (212.48.195.38)  30.396 ms  13.616 ms  9.258 ms
  * 5  100.64.97.116 (100.64.97.116)  9.306 ms !X  8.332 ms !X  14.542 ms !X
  */
-public class JpsServerConnectionUtil {
+public final class JpsServerConnectionUtil {
   private static final Logger LOG = Logger.getInstance(JpsServerConnectionUtil.class);
   private static final String CDN_CACHE_HEADER = "X-Cache";
   private static final String INITIAL_FILE_FOR_SPEED_TEST = "2_MB.zip";

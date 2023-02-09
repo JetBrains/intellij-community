@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,17 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.PsiMethodUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ConfusingMainMethodInspection extends BaseInspection {
@@ -35,8 +38,9 @@ public class ConfusingMainMethodInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "confusing.main.method.problem.descriptor");
+    return infos.length > 0
+           ? InspectionGadgetsBundle.message("unrunnable.main.method.problem.descriptor")
+           : InspectionGadgetsBundle.message("confusing.main.method.problem.descriptor");
   }
 
   @Override
@@ -49,40 +53,22 @@ public class ConfusingMainMethodInspection extends BaseInspection {
     return new ConfusingMainMethodVisitor();
   }
 
-  private static class ConfusingMainMethodVisitor
-    extends BaseInspectionVisitor {
+  private static class ConfusingMainMethodVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(@NotNull PsiMethod aMethod) {
-      // no call to super, so it doesn't drill down into inner classes
-      final String methodName = aMethod.getName();
-      if (!HardcodedMethodConstants.MAIN.equals(methodName)) {
+    public void visitMethod(@NotNull PsiMethod method) {
+      if (!HardcodedMethodConstants.MAIN.equals(method.getName()) ||
+          method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+          MethodUtils.hasSuper(method)) {
         return;
       }
-      if (!aMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
-        registerMethodError(aMethod);
+      if (!PsiMethodUtil.isMainMethod(method)) {
+        registerMethodError(method);
         return;
       }
-      if (!aMethod.hasModifierProperty(PsiModifier.STATIC)) {
-        registerMethodError(aMethod);
-        return;
-      }
-      final PsiType returnType = aMethod.getReturnType();
-
-      if (!TypeUtils.typeEquals(PsiKeyword.VOID, returnType)) {
-        registerMethodError(aMethod);
-        return;
-      }
-      final PsiParameterList parameterList = aMethod.getParameterList();
-      if (parameterList.getParametersCount() != 1) {
-        registerMethodError(aMethod);
-        return;
-      }
-      final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiType parameterType = parameters[0].getType();
-      if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING + "[]",
-                                parameterType)) {
-        registerMethodError(aMethod);
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && containingClass.getQualifiedName() == null) {
+        registerMethodError(method, Boolean.TRUE); // main method not runnable
       }
     }
   }

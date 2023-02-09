@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -25,10 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-/**
- * @author lex
- */
-public abstract class GotoFrameSourceAction extends DebuggerAction{
+public abstract class GotoFrameSourceAction extends DebuggerAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
@@ -37,7 +34,7 @@ public abstract class GotoFrameSourceAction extends DebuggerAction{
 
   public static void doAction(DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if(project == null) return;
+    if (project == null) return;
     StackFrameDescriptorImpl stackFrameDescriptor = getStackFrameDescriptor(dataContext);
     XDebugSession session = XDebugSession.DATA_KEY.getData(dataContext);
     if (stackFrameDescriptor != null && session != null) {
@@ -82,9 +79,8 @@ public abstract class GotoFrameSourceAction extends DebuggerAction{
 
   private static StackFrameDescriptorImpl getStackFrameDescriptor(DataContext dataContext) {
     DebuggerTreeNodeImpl selectedNode = getSelectedNode(dataContext);
-    if(selectedNode == null) return null;
-    if(selectedNode.getDescriptor() == null || !(selectedNode.getDescriptor() instanceof StackFrameDescriptorImpl)) return null;
+    if (selectedNode == null) return null;
+    if (selectedNode.getDescriptor() == null || !(selectedNode.getDescriptor() instanceof StackFrameDescriptorImpl)) return null;
     return (StackFrameDescriptorImpl)selectedNode.getDescriptor();
   }
-
 }

@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.exists
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.size
 import io.netty.handler.codec.http.HttpRequest
@@ -15,6 +14,7 @@ import org.jetbrains.builtInWebServer.RootProvider
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.exists
 
 @NlsSafe
 private val VARIABLE_NAMES = arrayOf("AUTH_TYPE", "CONTENT_LENGTH", "CONTENT_TYPE", "DOCUMENT_NAME", "DOCUMENT_URI", "GATEWAY_INTERFACE",

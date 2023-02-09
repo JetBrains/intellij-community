@@ -1529,7 +1529,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   void 'test stub index updated after language level change'() {
     def file = myFixture.addFileToProject("src1/A.java", "class A {}").virtualFile
-    def javaLanguageLevelKey = FilePropertyPusher.EP_NAME.findExtension(JavaLanguageLevelPusher.class).getFileDataKey()
+    def javaLanguageLevelKey = FilePropertyPusher.EP_NAME.findExtension(JavaLanguageLevelPusher.class).getFilePropertyKey()
 
     def languageLevel = javaLanguageLevelKey.getPersistentValue(file.parent)
     assertNotNull(languageLevel)

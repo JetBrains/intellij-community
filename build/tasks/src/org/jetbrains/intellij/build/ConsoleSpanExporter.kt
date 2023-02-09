@@ -4,7 +4,6 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.diagnostic.telemetry.AsyncSpanExporter
-import com.intellij.openapi.util.text.Formats
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.StatusCode
@@ -19,6 +18,8 @@ import java.time.format.DateTimeFormatterBuilder
 import java.time.temporal.ChronoField
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 class ConsoleSpanExporter : AsyncSpanExporter {
   companion object {
@@ -60,7 +61,7 @@ private val buildRootMacro = "\${buildRoot}${File.separatorChar}"
 private fun writeSpan(sb: StringBuilder, span: SpanData, duration: Long, endEpochNanos: Long) {
   sb.append(span.name)
   sb.append(" (duration=")
-  sb.append(Formats.formatDuration(TimeUnit.NANOSECONDS.toMillis(duration)))
+  sb.append(duration.toDuration(DurationUnit.NANOSECONDS).toString())
   sb.append(", end=")
   writeTime(endEpochNanos, sb)
   if (span.status.statusCode == StatusCode.ERROR && !span.status.description.isEmpty()) {

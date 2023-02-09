@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -38,11 +37,9 @@ public final class VfsUtil extends VfsUtilCore {
    */
   public static final long NOTIFICATION_DELAY_MILLIS = 300;
 
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
-    Charset charset = file.getCharset();
-    try (OutputStream stream = file.getOutputStream(file)) {
-      stream.write(text.getBytes(charset));
-    }
+    VfsUtilCore.saveText(file, text);
   }
 
   public static byte @NotNull [] toByteArray(@NotNull VirtualFile file, @NotNull String text) throws IOException {

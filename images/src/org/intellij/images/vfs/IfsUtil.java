@@ -91,7 +91,7 @@ public final class IfsUtil {
 
           try {
             // ensure svg can be displayed
-            SVGLoader.load(url.get(), new ByteArrayInputStream(content), 1.0f);
+            SVGLoader.INSTANCE.load(url.get(), new ByteArrayInputStream(content), 1.0f);
           }
           catch (Throwable t) {
             LOG.warn(url.get() + " " + t.getMessage());

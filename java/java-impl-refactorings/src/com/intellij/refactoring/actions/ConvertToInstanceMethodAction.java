@@ -22,9 +22,6 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodHandler;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public class ConvertToInstanceMethodAction extends BaseJavaRefactoringAction {
   @Override
   protected boolean isAvailableInEditorOnly() {

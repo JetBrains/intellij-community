@@ -87,18 +87,16 @@ public class StaticFieldReferenceOnSubclassInspection extends BaseInspection imp
         return;
       }
       final PsiElement referent = expression.resolve();
-      if (!(referent instanceof PsiField)) {
+      if (!(referent instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)referent;
       if (!field.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
       final PsiElement qualifierReferent = ((PsiReferenceExpression)qualifier).resolve();
-      if (!(qualifierReferent instanceof PsiClass)) {
+      if (!(qualifierReferent instanceof PsiClass referencedClass)) {
         return;
       }
-      final PsiClass referencedClass = (PsiClass)qualifierReferent;
       final PsiClass declaringClass = field.getContainingClass();
       if (declaringClass == null || declaringClass.equals(referencedClass)) {
         return;

@@ -65,7 +65,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p/>
  * Thread-safe.
  *
- * @author Denis Zhdanov, Vladislav Soroka
+ * @author Vladislav Soroka
  */
 @Service(Service.Level.PROJECT)
 public final class ExternalSystemNotificationManager implements Disposable {
@@ -113,8 +113,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
     Integer column = null;
 
     Throwable unwrapped = RemoteUtil.unwrap(error);
-    if (unwrapped instanceof LocationAwareExternalSystemException) {
-      LocationAwareExternalSystemException locationAwareExternalSystemException = (LocationAwareExternalSystemException)unwrapped;
+    if (unwrapped instanceof LocationAwareExternalSystemException locationAwareExternalSystemException) {
       filePath = locationAwareExternalSystemException.getFilePath();
       line = locationAwareExternalSystemException.getLine();
       column = locationAwareExternalSystemException.getColumn();

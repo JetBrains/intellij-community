@@ -123,7 +123,7 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   @NotNull
   @Override
   public InlayModel getInlayModel() {
-    return new TextComponentInlayModel();
+    return new EmptyInlayModel();
   }
 
   @NotNull

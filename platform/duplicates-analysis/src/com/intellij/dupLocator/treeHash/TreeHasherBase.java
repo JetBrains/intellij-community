@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 class TreeHasherBase extends AbstractTreeHasher {
   private final FragmentsCollector myCallback;
   private final int myDiscardCost;

@@ -4,7 +4,6 @@ package org.jetbrains.settingsRepository.git
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.deleteWithParentsIfEmpty
-import com.intellij.util.io.exists
 import com.intellij.util.io.toByteArray
 import org.eclipse.jgit.dircache.BaseDirCacheEditor
 import org.eclipse.jgit.dircache.DirCache
@@ -16,6 +15,7 @@ import org.eclipse.jgit.lib.Repository
 import java.io.File
 import java.io.FileInputStream
 import java.text.MessageFormat
+import kotlin.io.path.exists
 
 private val EDIT_CMP = Comparator<PathEdit> { o1, o2 ->
   val a = o1.path

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -52,13 +52,7 @@ import java.util.concurrent.Future;
  * See also <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>.
  */
 public interface Application extends ComponentManager {
-  /**
-   * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
-   * with {@link ModalityState#defaultModalityState()} modality state.
-   *
-   * @param action the runnable to execute.
-   */
-  @ApiStatus.Experimental
+  @ApiStatus.Obsolete
   void invokeLaterOnWriteThread(@NotNull Runnable action);
 
   /**
@@ -68,7 +62,7 @@ public interface Application extends ComponentManager {
    * @param action the runnable to execute.
    * @param modal  the state in which action will be executed
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Obsolete
   void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal);
 
   /**
@@ -80,7 +74,7 @@ public interface Application extends ComponentManager {
    * @param modal   the state in which action will be executed
    * @param expired condition to check before execution.
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Obsolete
   void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired);
 
   /**
@@ -90,6 +84,7 @@ public interface Application extends ComponentManager {
    * See also {@link ReadAction#run} for a more lambda-friendly version.
    *
    * @param action the action to run.
+   * @see CoroutinesKt#readAction
    */
   void runReadAction(@NotNull Runnable action);
 
@@ -166,6 +161,23 @@ public interface Application extends ComponentManager {
   boolean hasWriteAction(@NotNull Class<?> actionClass);
 
   /**
+   * Runs the specified computation in a write intent. Must be called from the Swing dispatch thread. The action is executed
+   * immediately if no write action is currently running, or blocked until the currently running write action
+   * completes.
+   * <p>
+   * See also {@link WriteIntentAction#compute} for a more lambda-friendly version.
+   *
+   * @param computation the computation to perform.
+   * @return the result returned by the computation.
+   * @throws E re-frown from ThrowableComputable
+   */
+  @ApiStatus.Experimental
+  default <T, E extends Throwable> T runWriteIntentAction(@NotNull ThrowableComputable<T, E> computation) throws E {
+    assertWriteIntentLockAcquired();
+    return computation.compute();
+  }
+
+  /**
    * Asserts whether read access is allowed.
    */
   void assertReadAccessAllowed();
@@ -196,7 +208,7 @@ public interface Application extends ComponentManager {
    * Asserts whether the method is being called from under the write-intent lock.
    */
   @ApiStatus.Experimental
-  void assertIsWriteThread();
+  void assertWriteIntentLockAcquired();
 
   /**
    * Adds an {@link ApplicationListener}.
@@ -251,7 +263,7 @@ public interface Application extends ComponentManager {
   /**
    * Checks if the current thread is the event dispatch thread and has IW lock acquired.
    *
-   * @see #isWriteThread()
+   * @see #isWriteIntentLockAcquired()
    * @return {@code true} if the current thread is the Swing dispatch thread with IW lock, {@code false} otherwise.
    */
   @Contract(pure = true)
@@ -264,7 +276,7 @@ public interface Application extends ComponentManager {
    */
   @ApiStatus.Experimental
   @Contract(pure = true)
-  boolean isWriteThread();
+  boolean isWriteIntentLockAcquired();
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
@@ -485,15 +497,22 @@ public interface Application extends ComponentManager {
 
   boolean isEAP();
 
+  @ApiStatus.Internal
+  default void withoutImplicitRead(@NotNull Runnable runnable) {
+    runnable.run();
+  }
+
+  //<editor-fold desc="Deprecated stuff">
   /**
    * @deprecated this scope will die only with the application => plugin coroutines which use it will leak on unloading.
-   * Instead, use Disposable application service approach described here https://youtrack.jetbrains.com/articles/IDEA-A-237338670
+   * Instead, use <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#service-scopes">service constructor injection</a>.
+   * <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#why-application.getcoroutinescope-are-project.getcoroutinescope-are-bad">Why? See here.</a>
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @ApiStatus.Internal
   CoroutineScope getCoroutineScope();
 
-  //<editor-fold desc="Deprecated stuff">
   /** @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead */
   @Deprecated
   void addApplicationListener(@NotNull ApplicationListener listener);
@@ -503,6 +522,7 @@ public interface Application extends ComponentManager {
   void removeApplicationListener(@NotNull ApplicationListener listener);
 
   /** @deprecated use corresponding {@link Application#invokeLater} methods */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @NotNull ModalityInvokator getInvokator();
 
@@ -525,5 +545,20 @@ public interface Application extends ComponentManager {
   @Deprecated
   @SuppressWarnings({"override", "DeprecatedIsStillUsed"})
   <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName);
+
+  /** @deprecated bad name, use {@link #isWriteIntentLockAcquired()} instead */
+  @Deprecated
+  @ApiStatus.Experimental
+  @Contract(pure = true)
+  default boolean isWriteThread() {
+    return isWriteIntentLockAcquired();
+  }
+
+  /** @deprecated bad name, use {@link #assertWriteIntentLockAcquired()} instead */
+  @Deprecated
+  @ApiStatus.Experimental
+  default void assertIsWriteThread() {
+    assertWriteIntentLockAcquired();
+  }
   //</editor-fold>
 }

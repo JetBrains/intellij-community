@@ -95,7 +95,7 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
 
     val pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml") ?: continue
 
-    val pluginLayout = nonTrivialPlugins.get(moduleName) ?: PluginLayout.simplePlugin(moduleName)
+    val pluginLayout = nonTrivialPlugins.get(moduleName) ?: PluginLayout.plugin(moduleName)
     val xml = JDOMUtil.load(pluginXml)
     if (JDOMUtil.isEmpty(xml)) {
       // throws an exception

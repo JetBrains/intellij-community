@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.module.Module
@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.platform.JsPlatform
 import java.io.File
 
 data class MockLibraryFacility(
@@ -16,21 +15,25 @@ data class MockLibraryFacility(
     val attachSources: Boolean = true,
     val platform: KotlinCompilerStandalone.Platform = KotlinCompilerStandalone.Platform.Jvm(),
     val options: List<String> = emptyList(),
-    val classpath: List<File> = emptyList()
+    val classpath: List<File> = emptyList(),
+    val libraryName: String = MOCK_LIBRARY_NAME,
+    val target: File = KotlinCompilerStandalone.defaultTargetJar(),
 ) {
     constructor(
         source: File,
         attachSources: Boolean = true,
         platform: KotlinCompilerStandalone.Platform = KotlinCompilerStandalone.Platform.Jvm(),
         options: List<String> = emptyList(),
-        classpath: List<File> = emptyList()
-    ) : this(listOf(source), attachSources, platform, options, classpath)
+        classpath: List<File> = emptyList(),
+        libraryName: String = MOCK_LIBRARY_NAME,
+        target: File = KotlinCompilerStandalone.defaultTargetJar(),
+    ) : this(listOf(source), attachSources, platform, options, classpath, libraryName, target)
 
     companion object {
         const val MOCK_LIBRARY_NAME = "kotlinMockLibrary"
 
-        fun tearDown(module: Module) {
-            ConfigLibraryUtil.removeLibrary(module, MOCK_LIBRARY_NAME)
+        fun tearDown(module: Module, libraryName: String) {
+            ConfigLibraryUtil.removeLibrary(module, libraryName)
         }
     }
 
@@ -39,11 +42,12 @@ data class MockLibraryFacility(
             sources,
             platform = platform,
             options = options,
-            classpath = classpath
+            classpath = classpath,
+            target = target,
         ).compile()
 
-        val kind = if (platform is JsPlatform) KotlinJavaScriptLibraryKind else null
-        ConfigLibraryUtil.addLibrary(module, MOCK_LIBRARY_NAME, kind) {
+        val kind = if (platform is KotlinCompilerStandalone.Platform.JavaScript) KotlinJavaScriptLibraryKind else null
+        ConfigLibraryUtil.addLibrary(module, libraryName, kind) {
             addRoot(libraryJar, OrderRootType.CLASSES)
 
             if (attachSources) {
@@ -54,7 +58,7 @@ data class MockLibraryFacility(
         }
     }
 
-    fun tearDown(module: Module) = Companion.tearDown(module)
+    fun tearDown(module: Module) = tearDown(module, libraryName)
 
     val asKotlinLightProjectDescriptor: KotlinLightProjectDescriptor
         get() = object : KotlinLightProjectDescriptor() {

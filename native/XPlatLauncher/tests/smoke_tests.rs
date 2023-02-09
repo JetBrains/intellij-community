@@ -17,11 +17,9 @@ mod tests {
 
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::JBR})]
-    #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
     fn correct_launcher_startup_test(#[case] layout_spec: &LayoutSpec) {
-        let test = prepare_test_env(layout_spec);
-        let status = &run_launcher_with_default_args_and_env(&test, &[], std::collections::HashMap::from([(" ", "")])).exit_status;
-
+        let status = &run_launcher(layout_spec).exit_status;
         let exit_status_string = exit_status_to_string(status);
         println!("Launcher's exit status:\n{exit_status_string}");
 
@@ -33,9 +31,10 @@ mod tests {
 
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::JBR})]
-    #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
     fn classpath_test(#[case] layout_spec: &LayoutSpec) {
-        let dump = run_launcher_and_get_dump(layout_spec);
+        let test = prepare_test_env(layout_spec);
+        let dump = run_launcher_and_get_dump_default(&test);
         let classpath = &dump.systemProperties["java.class.path"];
 
         assert!(
@@ -46,9 +45,10 @@ mod tests {
 
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::JBR})]
-    #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
     fn additional_jvm_arguments_in_product_info_test(#[case] layout_spec: &LayoutSpec) {
-        let dump = run_launcher_and_get_dump(layout_spec);
+        let test = prepare_test_env(layout_spec);
+        let dump = run_launcher_and_get_dump_default(&test);
         let idea_vendor_name_vm_option = dump.vmOptions.iter().find(|&vm| vm.starts_with("-Didea.vendor.name=JetBrains"));
 
         assert!(
@@ -59,15 +59,13 @@ mod tests {
 
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::JBR})]
-    #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
     fn arguments_test(#[case] layout_spec: &LayoutSpec) {
         let test = prepare_test_env(layout_spec);
 
         let args = &["arguments-test-123"];
-        let result = run_launcher_with_default_args_and_env(&test, args, std::collections::HashMap::from([(" ", "")]));
-        assert!(&result.exit_status.success());
 
-        let dump = &result.dump.expect("Launcher exited successfully, but no dump received");
+        let dump = run_launcher_and_get_dump_with_args(&test, args);
 
         assert_eq!(&dump.cmdArguments[0], &test.launcher_path.to_string_lossy());
         assert_eq!(&dump.cmdArguments[1], "dump-launch-parameters");
@@ -85,9 +83,11 @@ mod tests {
     #[cfg(target_os = "freebsd")]
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::EnvVar})]
-    #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::EnvVar})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::EnvVar})]
     fn jre_is_idea_jdk_test(#[case] layout_spec: &LayoutSpec) {
-        let dump = run_launcher_and_get_dump_with_java_env(layout_spec, "IU_JDK");
+        let test = prepare_test_env(layout_spec);
+
+        let dump = run_launcher_and_get_dump_with_java_env(&test, "IU_JDK");
 
         assert!(&dump.environmentVariables.contains_key("IU_JDK"), "IU_JDK is not set");
         assert!(
@@ -119,10 +119,11 @@ mod tests {
     // fi
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::UserJRE})]
-    #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::UserJRE})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::UserJRE})]
     #[cfg(target_os = "macos")]
     fn jre_is_user_jre_test(#[case] layout_spec: &LayoutSpec) {
-        let dump = run_launcher_and_get_dump(layout_spec);
+        let test = prepare_test_env(layout_spec);
+        let dump = run_launcher_and_get_dump_default(&test);
 
         let idea_jdk = get_custom_user_file_with_java_path().unwrap().join("idea.jdk");
         let idea_jdk_content = fs::read_to_string(&idea_jdk).unwrap();
@@ -145,10 +146,11 @@ mod tests {
 
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::UserJRE})]
-    #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::UserJRE})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::UserJRE})]
     #[cfg(any(target_os = "windows", target_os = "linux"))]
     fn jre_is_user_jre_test(#[case] layout_spec: &LayoutSpec) {
-        let dump = run_launcher_and_get_dump(layout_spec);
+        let test = prepare_test_env(layout_spec);
+        let dump = run_launcher_and_get_dump_default(&test);
 
         let idea_jdk = get_custom_user_file_with_java_path().unwrap().join("idea.jdk");
         let idea_jdk_content = fs::read_to_string(&idea_jdk).unwrap();
@@ -176,13 +178,11 @@ mod tests {
     // fi
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::JBR})]
-    #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
     fn jre_is_jbr_test(#[case] layout_spec: &LayoutSpec) {
         let test = prepare_test_env(layout_spec);
-        let result = run_launcher_with_default_args_and_env(&test, &[], std::collections::HashMap::from([(" ", "")]));
-        assert!(result.exit_status.success(), "Launcher didn't exit successfully");
+        let dump = run_launcher_and_get_dump_default(&test);
 
-        let dump = result.dump.expect("Launcher exited successfully, but there is no output");
         let test_root_dir = test.test_root_dir.path();
 
         let jbr_dir = match std::env::consts::OS {
@@ -218,9 +218,10 @@ mod tests {
 
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::EnvVar})]
-    #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::EnvVar})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::EnvVar})]
     fn jre_is_jdk_home_test(#[case] layout_spec: &LayoutSpec) {
-        let dump = run_launcher_and_get_dump_with_java_env(layout_spec, "JDK_HOME");
+        let test = prepare_test_env(layout_spec);
+        let dump = run_launcher_and_get_dump_with_java_env(&test, "JDK_HOME");
 
         assert!(
             std::env::var("IU_JDK").is_err(),
@@ -255,9 +256,10 @@ mod tests {
     #[cfg(target_os = "freebsd")]
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::EnvVar})]
-    #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::EnvVar})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::EnvVar})]
     fn jre_is_java_home_test(#[case] layout_spec: &LayoutSpec) {
-        let dump = run_launcher_and_get_dump_with_java_env(layout_spec, "JAVA_HOME");
+        let test = prepare_test_env(layout_spec);
+        let dump = run_launcher_and_get_dump_with_java_env(&test, "JAVA_HOME");
 
         assert!(
             std::env::var("IU_JDK").is_err(),

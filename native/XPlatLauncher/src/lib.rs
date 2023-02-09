@@ -33,7 +33,9 @@ variant_size_differences
 mod java;
 mod remote_dev;
 mod default;
+mod docker;
 
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs::File;
@@ -43,6 +45,7 @@ use native_dialog::{MessageDialog, MessageType};
 use simplelog::{ColorChoice, CombinedLogger, Config, TerminalMode, TermLogger, WriteLogger};
 use crate::default::DefaultLaunchConfiguration;
 use anyhow::{bail, Result};
+use utils::get_current_exe;
 use crate::remote_dev::RemoteDevLaunchConfiguration;
 
 #[cfg(target_os = "windows")] use {
@@ -55,12 +58,7 @@ use crate::remote_dev::RemoteDevLaunchConfiguration;
 pub fn main_lib() {
     let show_error_ui = match env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR) {
         Ok(_) => false,
-        Err(_) => {
-            let cmd_args: Vec<String> = env::args().collect();
-            let is_remote_dev = cmd_args.len() > 1 && cmd_args[1] == "--remote-dev";
-
-            !is_remote_dev
-        }
+        Err(_) => !is_remote_dev(),
     };
 
     let main_result = main_impl();
@@ -115,6 +113,25 @@ fn main_impl() -> Result<()> {
 }
 
 #[allow(non_snake_case)]
+#[derive(Debug)]
+pub struct IjStarterCommand {
+    pub ij_command: String,
+    pub is_project_path_required: bool,
+    pub is_arguments_required: bool,
+}
+
+#[allow(non_snake_case)]
+#[derive(Debug)]
+pub struct RemoteDevEnvVar {
+    pub name: String,
+    pub description: String,
+}
+
+#[allow(non_snake_case)]
+#[derive(Debug)]
+pub struct RemoteDevEnvVars(pub Vec<RemoteDevEnvVar>);
+
+#[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ProductInfo {
     pub productCode: String,
@@ -155,18 +172,20 @@ trait LaunchConfiguration {
     fn prepare_for_launch(&self) -> Result<PathBuf>;
 }
 
-pub fn is_remote_dev(cmd_args: &[String]) -> bool {
-    // 0 arg is binary itself
-    let args = cmd_args.join(" ");
-    debug!("cmd_args={args}");
+pub fn is_remote_dev() -> bool {
+    let current_exe_path = get_current_exe();
+    debug!("Executable path: {:?}", current_exe_path);
+    let current_exe_name = current_exe_path.file_name()
+        .expect("Failed to get current exe filename");
+    debug!("Executable name: {:?}", current_exe_name);
 
-    cmd_args.len() > 1 && cmd_args[1] == "--remote-dev"
+    current_exe_name.to_string_lossy().starts_with("remote-dev-server")
 }
 
 fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
     let cmd_args: Vec<String> = env::args().collect();
     
-    let is_remote_dev = is_remote_dev(&cmd_args);
+    let is_remote_dev = is_remote_dev();
     debug!("is_remote_dev={is_remote_dev}");
 
     let (remote_dev_project_path, ij_args) = match is_remote_dev {
@@ -188,7 +207,7 @@ fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
     match remote_dev_project_path {
         None => Ok(Box::new(default)),
         Some(x) => {
-            let config = RemoteDevLaunchConfiguration::new(x, default)?;
+            let config = RemoteDevLaunchConfiguration::new(&x, default)?;
             Ok(Box::new(config))
         }
     }
@@ -241,6 +260,58 @@ fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<V
     full_vm_options.extend_from_slice(&intellij_vm_options);
 
     Ok(full_vm_options)
+}
+
+impl std::fmt::Display for IjStarterCommand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let path = if self.is_project_path_required {"/path/to/project"} else { "" };
+        let args = if self.is_arguments_required {"[arguments...]"} else { "" };
+        write!(f, "{} {}", path, args)
+    }
+}
+
+pub fn get_known_intellij_commands() -> HashMap<&'static str, IjStarterCommand> {
+    std::collections::HashMap::from([
+        ("run", IjStarterCommand {ij_command: "cwmHostNoLobby".to_string(), is_project_path_required: true, is_arguments_required: true}),
+        ("status", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("cwmHostStatus", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("remoteDevStatus", IjStarterCommand {ij_command: "remoteDevStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("dumpLaunchParameters", IjStarterCommand {ij_command: "dump-launch-parameters".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("warmup", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
+        ("warm-up", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
+        ("invalidate-caches", IjStarterCommand {ij_command: "invalidateCaches".to_string(), is_project_path_required: true, is_arguments_required: false}),
+        ("installPlugins", IjStarterCommand {ij_command: "installPlugins".to_string(), is_project_path_required: false, is_arguments_required: true}),
+        ("stop", IjStarterCommand {ij_command: "exit".to_string(), is_project_path_required: true, is_arguments_required: false}),
+        ("registerBackendLocationForGateway", IjStarterCommand {ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("help", IjStarterCommand{ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
+    ])
+}
+
+impl std::fmt::Display for RemoteDevEnvVars {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let max_len = self
+            .0
+            .iter()
+            .map(|remote_dev_env_var| remote_dev_env_var.name.len())
+            .max()
+            .unwrap_or(0);
+
+        for remote_dev_env_var in &self.0 {
+            write!(f, "\t{:max_len$} {}\n", remote_dev_env_var.name, remote_dev_env_var.description)?;
+        }
+        Ok(())
+    }
+}
+
+pub fn get_remote_dev_env_vars() -> RemoteDevEnvVars {
+    RemoteDevEnvVars(vec![
+        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_TRACE".to_string(), description: "set to any value to get more debug output from the startup script".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_JCEF_ENABLED".to_string(), description: "set to '1' to enable JCEF (embedded chromium) in IDE".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS".to_string(), description: "set to '0' to skip using bundled X11 and other linux libraries from plugins/remote-dev-server/selfcontained. Use everything from the system. by default bundled libraries are used".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE".to_string(), description: "set to any value to use as the script name in this output".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_TRUST_PROJECTS".to_string(), description: "set to any value to skip project trust warning (will execute build scripts automatically)".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_NON_INTERACTIVE".to_string(), description: "set to any value to skip all interactive shell prompts (set automatically if running without TTY)".to_string()},
+    ])
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
@@ -408,4 +479,31 @@ fn get_user_home() -> PathBuf {
             PathBuf::from("/")
         }
     }
+}
+
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+pub fn is_running_in_docker() -> Result<bool> {
+    docker::is_running_in_docker()
+}
+
+#[cfg(any(target_os = "linux"))]
+pub fn is_docker_env_file_exist(home_path: Option<PathBuf>) -> Result<bool> {
+    docker::is_docker_env_file_exist(home_path)
+}
+
+#[cfg(any(target_os = "linux"))]
+pub fn is_docker_init_file_exist(home_path: Option<PathBuf>) -> Result<bool> {
+    docker::is_docker_init_file_exist(home_path)
+}
+
+#[cfg(any(target_os = "linux"))]
+pub fn is_control_group_matches_docker(cgroup_path: Option<PathBuf>) -> bool {
+    docker::is_control_group_matches_docker(cgroup_path)
+        .expect("Unable to detect Docker environment by cgroup file.")
+}
+
+#[cfg(any(target_os = "windows"))]
+pub fn is_service_present(service_name: &str) -> bool {
+    docker::is_service_present(service_name)
+        .expect("Unable to detect Docker environment by getting windows service 'cexecsvc'.")
 }

@@ -15,9 +15,12 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.StubFileElementType;
+import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
@@ -89,7 +92,11 @@ public final class StubIndexImpl extends StubIndexEx {
         }
       }
       else {
-        state = ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
+        CompletableFuture<AsyncState> future = myStateFuture;
+        if (future == null) {
+          throw new AlreadyDisposedException("Stub Index is already disposed");
+        }
+        state = ProgressIndicatorUtils.awaitWithCheckCanceled(future);
       }
       myState = state;
     }
@@ -136,13 +143,10 @@ public final class StubIndexImpl extends StubIndexEx {
       }
     }
 
-    UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> stubUpdatingIndex = getStubUpdatingIndex();
-    ReadWriteLock lock = stubUpdatingIndex.getLock();
-
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
         UpdatableIndex<K, Void, FileContent, ?> index =
-          TransientFileContentIndex.createIndex(wrappedExtension, new StubIndexStorageLayout<>(wrappedExtension, indexKey), lock);
+          TransientFileContentIndex.createIndex(wrappedExtension, new StubIndexStorageLayout<>(wrappedExtension, indexKey));
 
         for (FileBasedIndexInfrastructureExtension infrastructureExtension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
           UpdatableIndex<K, Void, FileContent, ?> intermediateIndex = infrastructureExtension.combineIndex(wrappedExtension, index);
@@ -228,25 +232,22 @@ public final class StubIndexImpl extends StubIndexEx {
       FileBasedIndex.getInstance();
 
       myStateFuture = new CompletableFuture<>();
-      Future<AsyncState> future = IndexDataInitializer.submitGenesisTask(new StubIndexInitialization());
-
-      if (!IndexDataInitializer.ourDoAsyncIndicesInitialization) {
-        try {
-          future.get();
-        }
-        catch (Throwable t) {
-          LOG.error(t);
-        }
-      }
+      IndexDataInitializer.submitGenesisTask(new StubIndexInitialization());
     }
   }
 
   public void dispose() {
     try {
       myPerFileElementTypeStubModificationTracker.dispose();
-      for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
-        index.dispose();
-      }
+      Collection<UpdatableIndex<?, Void, FileContent, ?>> values = getAsyncState().myIndices.values();
+      IndexDataInitializer.runParallelTasks(ContainerUtil.map(values, index -> (ThrowableRunnable<Throwable>)() -> {
+        try {
+          index.dispose();
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }), false);
     } finally {
       clearState();
     }
@@ -413,6 +414,11 @@ public final class StubIndexImpl extends StubIndexEx {
       }
       return myPerFileElementTypeStubModificationTracker.getModificationStamp(fileElementType);
     };
+  }
+
+  @Override
+  public @NotNull ModificationTracker getStubIndexModificationTracker(@NotNull Project project) {
+    return () -> FileBasedIndex.getInstance().getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project);
   }
 
   @Override

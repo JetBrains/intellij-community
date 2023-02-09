@@ -82,7 +82,7 @@ public class UnifiedDiffPanel extends DiffPanelBase {
 
   @Override
   protected void setCurrentCard(@NotNull String card) {
-    if (card == LOADING_CONTENT) {
+    if (card.equals(LOADING_CONTENT)) {
       myBusyIcon.resume();
     }
     else {

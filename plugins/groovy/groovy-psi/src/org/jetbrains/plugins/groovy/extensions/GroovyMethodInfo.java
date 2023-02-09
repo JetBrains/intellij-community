@@ -20,9 +20,6 @@ import org.jetbrains.plugins.groovy.util.FixedValuesReferenceProvider;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class GroovyMethodInfo {
   private static volatile Map<String, Map<String, List<GroovyMethodInfo>>> METHOD_INFOS;
   private static Map<String, Map<String, List<GroovyMethodInfo>>> LIGHT_METHOD_INFOS;

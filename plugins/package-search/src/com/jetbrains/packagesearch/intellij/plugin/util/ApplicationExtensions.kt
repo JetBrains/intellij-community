@@ -65,7 +65,3 @@ internal val Application.powerSaveModeFlow
         PowerSaveMode.Listener { trySend(PowerSaveModeState.getCurrentState()) }
     }
 
-internal val Application.offlineModeFlow
-    get() = messageBusFlow(PowerSaveMode.TOPIC, { PowerSaveModeState.getCurrentState() }) {
-        PowerSaveMode.Listener { trySend(PowerSaveModeState.getCurrentState()) }
-    }

@@ -5,7 +5,7 @@ import com.intellij.openapi.util.text.StringUtil
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
-class Git(private val dir: Path) {
+class Git(val dir: Path) {
   fun log(commitsCount: Int): List<String> {
     return execute("git", "log", "-$commitsCount", "--pretty=tformat:%H")
   }

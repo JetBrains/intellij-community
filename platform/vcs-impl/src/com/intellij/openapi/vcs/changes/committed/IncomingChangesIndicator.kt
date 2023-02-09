@@ -42,8 +42,6 @@ private class IncomingChangesIndicatorFactory : StatusBarWidgetFactory {
 
   override fun createWidget(project: Project): StatusBarWidget = IncomingChangesIndicator(project)
 
-  override fun canBeEnabledOn(statusBar: StatusBar): Boolean = true
-
   class Listener(private val project: Project) : VcsListener {
     override fun directoryMappingChanged() {
       project.getService(StatusBarWidgetsManager::class.java).updateWidget(IncomingChangesIndicatorFactory::class.java)

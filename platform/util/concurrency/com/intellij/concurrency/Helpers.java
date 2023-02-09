@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 /*
@@ -8,7 +8,7 @@ package com.intellij.concurrency;
  */
 
 /** Shared implementation code for java.util.concurrent. */
-class Helpers {
+final class Helpers {
     /** Optimized form of: key + "=" + val */
     static String mapEntryToString(Object key, Object val) {
         final String k, v;

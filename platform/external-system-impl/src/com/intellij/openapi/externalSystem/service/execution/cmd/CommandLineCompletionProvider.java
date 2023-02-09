@@ -11,9 +11,6 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class CommandLineCompletionProvider extends TextFieldCompletionProvider {
 
   private final Options myOptions;

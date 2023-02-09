@@ -1,12 +1,14 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
 import com.intellij.codeInsight.intention.CustomizableIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionBean
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
 import com.intellij.grazie.text.*
@@ -18,6 +20,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.text.StringOperation
 import java.util.*
 
 class ReportingTest : BasePlatformTestCase() {
@@ -74,6 +77,32 @@ class ReportingTest : BasePlatformTestCase() {
     ), emptyList())
     assertEquals(listOf("Fix 'this problem'", "' '", "another suggestion", "Remove"),
                  GrazieReplaceTypoQuickFix.getReplacementFixes(problem, emptyList()).map { it.name })
+  }
+
+  fun `test batch quick fix presence`() {
+    myFixture.configureByText("a.txt", "Some text")
+    val range = TextRange(0, 1)
+    val problem = mockProblemWithSuggestions(TextExtractor.findTextAt(myFixture.file, 0, TextContent.TextDomain.ALL)!!, range, listOf(
+      object: TextProblem.Suggestion {
+        override fun getChanges(): List<StringOperation> = listOf(StringOperation.replace(range, "x"))
+        override fun getPresentableText() = "x"
+        override fun getBatchId() = "batchX"
+      },
+      object: TextProblem.Suggestion {
+        override fun getChanges(): List<StringOperation> = listOf(StringOperation.replace(range, "y"))
+        override fun getPresentableText() = "y"
+      }
+    ), emptyList())
+    val fixes = GrazieReplaceTypoQuickFix.getReplacementFixes(problem, emptyList())
+    assertEquals(listOf("Fix 'this problem'", "x", "y"), fixes.map { it.name })
+
+    assertTrue((fixes[1] as CustomizableIntentionAction).isShowSubmenu)
+    assertFalse((fixes[2] as CustomizableIntentionAction).isShowSubmenu)
+
+    val applyBatch = assertOneElement((fixes[1] as IntentionActionWithFixAllOption).options)
+    assertEquals(GrazieBundle.message("grazie.grammar.quickfix.apply.batch.text"), applyBatch.text)
+
+    assertEmpty((fixes[2] as IntentionActionWithFixAllOption).options)
   }
 
   fun `test quick fix sorting`() {
@@ -146,13 +175,20 @@ class ReportingTest : BasePlatformTestCase() {
     || text == CodeInsightBundle.message("remove.intention.shortcut")
 
   private fun mockProblem(text: TextContent, range: TextRange, corrections: List<String>, customFixes: List<LocalQuickFix>): TextProblem {
+    return mockProblemWithSuggestions(text, range, corrections.map { TextProblem.Suggestion.replace(range, it) }, customFixes)
+  }
+
+  private fun mockProblemWithSuggestions(text: TextContent,
+                                         range: TextRange,
+                                         suggestions: List<TextProblem.Suggestion>,
+                                         customFixes: List<LocalQuickFix>): TextProblem {
     val rule = object : Rule("something.something", "something", "something") {
       override fun getDescription() = "something"
     }
     return object : TextProblem(rule, text, range) {
       override fun getShortMessage() = "this problem"
       override fun getDescriptionTemplate(isOnTheFly: Boolean) = "something"
-      override fun getSuggestions() = corrections.map { Suggestion.replace(range, it) }
+      override fun getSuggestions() = suggestions
       override fun getCustomFixes() = customFixes
     }
   }

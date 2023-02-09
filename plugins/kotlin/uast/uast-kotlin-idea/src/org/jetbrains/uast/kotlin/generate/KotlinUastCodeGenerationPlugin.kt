@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.references.fe10.KtFe10SimpleNameReference
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.UParameterInfo
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin
@@ -71,7 +70,7 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
             else ->
                 oldPsi to newPsi
         }
-        val replaced = updOldPsi.replace(updNewPsi)?.safeAs<KtElement>()?.let { ShortenReferences.DEFAULT.process(it) }
+        val replaced = (updOldPsi.replace(updNewPsi) as? KtElement)?.let { ShortenReferences.DEFAULT.process(it) }
         return when  {
             newElement.sourcePsi is KtCallExpression && replaced is KtQualifiedExpression -> replaced.selectorExpression
             else -> replaced
@@ -99,13 +98,13 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
         return ptr.element?.toUElementOfType()
     }
 
-    override fun initializeField(uField: UField, uParameter: UParameter) {
-        val uMethod = uParameter.getParentOfType(UMethod::class.java, false) ?: return
-        val sourcePsi = uMethod.sourcePsi ?: return
+    override fun initializeField(uField: UField, uParameter: UParameter): UExpression? {
+        val uMethod = uParameter.getParentOfType(UMethod::class.java, false) ?: return null
+        val sourcePsi = uMethod.sourcePsi ?: return null
         if (sourcePsi is KtPrimaryConstructor) {
             if (uField.name == uParameter.name) {
-                val psiElement = uParameter.sourcePsi ?: return
-                val ktParameter = KtPsiFactory(psiElement.project).createParameter(uField.sourcePsi?.text ?: return)
+                val psiElement = uParameter.sourcePsi ?: return null
+                val ktParameter = KtPsiFactory(psiElement.project).createParameter(uField.sourcePsi?.text ?: return null)
                 ktParameter.modifierList?.getModifier(KtTokens.FINAL_KEYWORD)?.delete()
                 ktParameter.defaultValue?.delete()
                 ktParameter.equalsToken?.delete()
@@ -118,17 +117,18 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
                     psiField.delete()
                 }
                 psiElement.replace(ktParameter)
+                return ktParameter.toUElementOfType()
             }
             else {
-                val property = uField.sourcePsi as? KtProperty ?: return
+                val property = uField.sourcePsi as? KtProperty ?: return null
                 property.initializer = KtPsiFactory(property.project).createExpression(uParameter.name)
+                return property.initializer.toUElementOfType()
             }
-            return
         }
 
-        val body = (sourcePsi as? KtDeclarationWithBody)?.bodyBlockExpression ?: return
-        val ktPsiFactory = KtPsiFactory(sourcePsi)
-        val assigmentExpression = ktPsiFactory.buildExpression {
+        val body = (sourcePsi as? KtDeclarationWithBody)?.bodyBlockExpression ?: return null
+        val ktPsiFactory = KtPsiFactory(sourcePsi.project, true)
+        val assignmentExpression = ktPsiFactory.buildExpression {
             if (uField.name == uParameter.name) {
                 appendFixedText("this.")
             }
@@ -137,7 +137,8 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
             appendName(Name.identifier(uParameter.name))
         }
 
-        body.addBefore(assigmentExpression, body.rBrace)
+        body.addBefore(assignmentExpression, body.rBrace)
+        return assignmentExpression.toUElementOfType()
     }
 }
 
@@ -161,6 +162,9 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         }
     }
 
+    override fun createMethodFromText(methodText: String, context: PsiElement?): UMethod? =
+        psiFactory(context).createFunction(methodText).toUElementOfType()
+
     override fun createCallExpression(
         receiver: UExpression?,
         methodName: String,
@@ -178,7 +182,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
             buildString {
                 if (receiver != null) {
                     append("a")
-                    receiver.sourcePsi?.nextSibling.safeAs<PsiWhiteSpace>()?.let { whitespaces ->
+                    (receiver.sourcePsi?.nextSibling as? PsiWhiteSpace)?.let { whitespaces ->
                         append(whitespaces.text)
                     }
                     append(".")
@@ -189,7 +193,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         ).getPossiblyQualifiedCallExpression() ?: return null
 
         if (receiver != null) {
-            methodCall.parent.safeAs<KtDotQualifiedExpression>()?.receiverExpression?.replace(wrapULiteral(receiver).sourcePsi!!)
+            methodCall.parentAs<KtDotQualifiedExpression>()?.receiverExpression?.replace(wrapULiteral(receiver).sourcePsi!!)
         }
 
         val valueArgumentList = methodCall.valueArgumentList
@@ -338,10 +342,10 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
     @Deprecated("use version with context parameter")
     fun createReturnExpresion(expression: UExpression?, inLambda: Boolean): UReturnExpression {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
-        return createReturnExpresion(expression, inLambda, null)
+        return createReturnExpression(expression, inLambda, null)
     }
 
-    override fun createReturnExpresion(expression: UExpression?, inLambda: Boolean, context: PsiElement?): UReturnExpression {
+    override fun createReturnExpression(expression: UExpression?, inLambda: Boolean, context: PsiElement?): UReturnExpression {
         val label = if (inLambda && context != null) getParentLambdaLabelName(context)?.let { "@$it" } ?: "" else ""
         val returnExpression = psiFactory(context).createExpression("return$label 1") as KtReturnExpression
         val sourcePsi = expression?.sourcePsi
@@ -354,8 +358,8 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
     }
 
     private fun getParentLambdaLabelName(context: PsiElement): String? {
-        val lambdaExpression = context.getParentOfType<KtLambdaExpression>(false) ?: return null
-        lambdaExpression.parent.safeAs<KtLabeledExpression>()?.let { return it.getLabelName() }
+        val lambdaExpression = context.getNonStrictParentOfType<KtLambdaExpression>() ?: return null
+        lambdaExpression.parentAs<KtLabeledExpression>()?.let { return it.getLabelName() }
         val callExpression = lambdaExpression.getStrictParentOfType<KtCallExpression>() ?: return null
         callExpression.valueArguments.find {
             it.getArgumentExpression()?.unpackFunctionLiteral(allowParentheses = false) === lambdaExpression
@@ -467,8 +471,8 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
 
         val newLambdaStatements = if (body is UBlockExpression) {
             body.expressions.flatMap { member ->
-                when {
-                    member is UReturnExpression -> member.returnExpression?.toSourcePsiFakeAware().orEmpty()
+                when (member) {
+                    is UReturnExpression -> member.returnExpression?.toSourcePsiFakeAware().orEmpty()
                     else -> member.toSourcePsiFakeAware()
                 }
             }

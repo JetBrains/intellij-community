@@ -61,15 +61,15 @@ public class MockClassType extends MockReferenceType implements ClassType {
   }
 
   @Override
-  public void setValue(Field field,Value value) {
+  public void setValue(Field field, Value value) {
     throw new UnsupportedOperationException("Not implemented: \"setValue\" in " + getClass().getName());
   }
 
   @Override
-  public Value invokeMethod(ThreadReference threadReference,Method method,List<? extends Value> list,int i) throws InvocationException {
+  public Value invokeMethod(ThreadReference threadReference, Method method, List<? extends Value> list, int i) throws InvocationException {
     try {
       Object[] args = values2Objects(list);
-      java.lang.reflect.Method refMethod = ((MockMethod) method).getMethod();
+      java.lang.reflect.Method refMethod = ((MockMethod)method).getMethod();
       return MockValue.createValue(refMethod.invoke(null, args), refMethod.getReturnType(), myVirtualMachine);
     }
     catch (IllegalAccessException | InvocationTargetException e) {
@@ -82,10 +82,10 @@ public class MockClassType extends MockReferenceType implements ClassType {
   }
 
   @Override
-  public ObjectReference newInstance(ThreadReference threadReference,Method method,List<? extends Value> list,int i) throws
-                                                                                                                     InvocationException {
+  public ObjectReference newInstance(ThreadReference threadReference, Method method, List<? extends Value> list, int i) throws
+                                                                                                                        InvocationException {
     Object[] args = values2Objects(list);
-    Constructor constructor = ((MockConstructor) method).getConstructor();
+    Constructor constructor = ((MockConstructor)method).getConstructor();
     try {
       return MockObjectReference.createObjectReference(constructor.newInstance(args), myType, myVirtualMachine);
     }
@@ -95,7 +95,7 @@ public class MockClassType extends MockReferenceType implements ClassType {
   }
 
   @Override
-  public Method concreteMethodByName(String string,String string1) {
+  public Method concreteMethodByName(String string, String string1) {
     List<Method> methods = methodsByName(string, string1);
     if (methods.isEmpty()) {
       return null;

@@ -9,13 +9,14 @@ import com.intellij.psi.impl.light.LightModifierList
 import com.intellij.psi.impl.light.LightParameterListBuilder
 import com.intellij.psi.impl.light.LightReferenceListBuilder
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterBuilder
 import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterListBuilder
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.lz
@@ -39,9 +40,9 @@ open class UastFakeLightMethod(
                         private val myExtendsList by lz {
                             super.getExtendsList().apply {
                                 p.extendsBound?.let { extendsBound ->
-                                    baseResolveProviderService.resolveToType(extendsBound, this@UastFakeLightMethod)
-                                        ?.safeAs<PsiClassType>()
-                                        ?.let { addReference(it) }
+                                    val psiType =
+                                        baseResolveProviderService.resolveToType(extendsBound, this@UastFakeLightMethod)
+                                    (psiType as? PsiClassType)?.let { addReference(it) }
                                 }
                             }
                         }
@@ -76,12 +77,16 @@ open class UastFakeLightMethod(
                 }
 
                 for ((i, p) in original.valueParameters.withIndex()) {
+                    val type = baseResolveProviderService.getType(p, this@UastFakeLightMethod, isForFake = true)
+                        ?: UastErrorType
+                    val adjustedType = if (p.isVarArg && type is PsiArrayType)
+                        PsiEllipsisType(type.componentType, type.annotationProvider)
+                    else type
                     this.addParameter(
                         UastKotlinPsiParameter(
+                            baseResolveProviderService,
                             p.name ?: "p$i",
-                            p.typeReference?.let { typeReference ->
-                                baseResolveProviderService.resolveToType(typeReference, this@UastFakeLightMethod)
-                            } ?: UastErrorType,
+                            adjustedType,
                             parameterList,
                             original.language,
                             p.isVarArg,
@@ -119,7 +124,7 @@ abstract class UastFakeLightMethodBase<T: KtDeclaration>(
 
     init {
         this.containingClass = containingClass
-        if (original.safeAs<KtNamedFunction>()?.isTopLevel == true) {
+        if ((original as? KtNamedFunction)?.isTopLevel == true) {
             addModifier(PsiModifier.STATIC)
         }
     }
@@ -149,14 +154,28 @@ abstract class UastFakeLightMethodBase<T: KtDeclaration>(
     }
 
     private val _annotations: Array<PsiAnnotation> by lz {
-        original.annotationEntries.map { entry ->
+        val annotations = SmartList<PsiAnnotation>()
+
+        val isUnitFunction = original is KtFunction && _returnType == PsiTypes.voidType()
+        // Do not annotate Unit function
+        if (!isUnitFunction) {
+            val nullability = baseResolveProviderService.nullability(original)
+            if (nullability != null && nullability != KtTypeNullability.UNKNOWN) {
+                annotations.add(
+                    UastFakeLightNullabilityAnnotation(nullability, this)
+                )
+            }
+        }
+        original.annotationEntries.mapTo(annotations) { entry ->
             KtLightAnnotationForSourceEntry(
                 name = entry.shortName?.identifier,
                 lazyQualifiedName = { baseResolveProviderService.qualifiedAnnotationName(entry) },
                 kotlinOrigin = entry,
                 parent = original,
             )
-        }.toTypedArray()
+        }
+
+        if (annotations.isNotEmpty()) annotations.toTypedArray() else PsiAnnotation.EMPTY_ARRAY
     }
 
     override fun getAnnotations(): Array<PsiAnnotation> {
@@ -177,8 +196,12 @@ abstract class UastFakeLightMethodBase<T: KtDeclaration>(
         return original is KtConstructor<*>
     }
 
+    private val _returnType: PsiType? by lz {
+        baseResolveProviderService.getType(original, this, isForFake = true)
+    }
+
     override fun getReturnType(): PsiType? {
-        return baseResolveProviderService.getType(original, this)
+        return _returnType
     }
 
     override fun getParent(): PsiElement? = containingClass

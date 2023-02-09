@@ -149,10 +149,9 @@ public final class TodoFilter implements Cloneable {
   }
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof TodoFilter)) {
+    if (!(obj instanceof TodoFilter filter)) {
       return false;
     }
-    TodoFilter filter = (TodoFilter)obj;
 
     if (!myName.equals(filter.myName)) {
       return false;

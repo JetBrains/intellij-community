@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.completion.BaseCompletionService;
@@ -13,6 +13,7 @@ import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCou
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.events.*;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
@@ -26,10 +27,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class LookupUsageTracker {
+public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 10);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 11);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
   private static final EnumEventField<FinishType> FINISH_TYPE = EventFields.Enum("finish_type", FinishType.class);
@@ -50,7 +51,7 @@ public final class LookupUsageTracker {
                                                                          EventFields.Language,
                                                                          EventFields.CurrentFile,
                                                                          SCHEMA,
-                                                                         ALPHABETICALLY ,
+                                                                         ALPHABETICALLY,
                                                                          FINISH_TYPE,
                                                                          DURATION,
                                                                          SELECTED_INDEX,
@@ -73,13 +74,18 @@ public final class LookupUsageTracker {
     lookup.addLookupListener(new MyLookupTracker(createdTimestamp, lookup));
   }
 
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
+  }
+
   private static class MyLookupTracker implements LookupListener {
-    private final LookupImpl myLookup;
+    private final @NotNull LookupImpl myLookup;
     private final long myCreatedTimestamp;
     private final long myTimeToShow;
     private final boolean myIsDumbStart;
-    private final Language myLanguage;
-    private final MyTypingTracker myTypingTracker;
+    private final @Nullable Language myLanguage;
+    private final @NotNull MyTypingTracker myTypingTracker;
 
     private int mySelectionChangedCount = 0;
 
@@ -137,21 +143,21 @@ public final class LookupUsageTracker {
 
     private void triggerLookupUsed(@NotNull FinishType finishType, @Nullable LookupElement currentItem,
                                    char completionChar) {
-      FeatureUsageData featureUsageData = new FeatureUsageData();
-      getCommonUsageInfo(finishType, currentItem, completionChar).forEach(pair -> pair.addData(featureUsageData));
+      final List<EventPair<?>> data = getCommonUsageInfo(finishType, currentItem, completionChar);
 
+      final List<EventPair<?>> additionalData = new ArrayList<>();
       LookupUsageDescriptor.EP_NAME.forEachExtensionSafe(usageDescriptor -> {
         if (PluginInfoDetectorKt.getPluginInfo(usageDescriptor.getClass()).isSafeToReport()) {
-          List<EventPair<?>> data = usageDescriptor.getAdditionalUsageData(new MyLookupResultDescriptor(myLookup, currentItem, finishType));
-          if(!data.isEmpty()) {
-            ADDITIONAL.addData(featureUsageData, new ObjectEventData(data));
-          } else {
-            // it is required to support usages in Iren plugin
-            usageDescriptor.fillUsageData(myLookup, featureUsageData);
-          }
+          additionalData.addAll(usageDescriptor.getAdditionalUsageData(
+            new MyLookupResultDescriptor(myLookup, currentItem, finishType, myLanguage)));
         }
       });
-      FUCounterUsageLogger.getInstance().logEvent(myLookup.getProject(), GROUP.getId(), FINISHED_EVENT_ID, featureUsageData);
+
+      if (!additionalData.isEmpty()) {
+        data.add(ADDITIONAL.with(new ObjectEventData(additionalData)));
+      }
+
+      FINISHED.log(myLookup.getProject(), data);
     }
 
     private List<EventPair<?>> getCommonUsageInfo(@NotNull FinishType finishType,
@@ -167,7 +173,7 @@ public final class LookupUsageTracker {
         if (vFile != null) {
           String schema = FileTypeUsageCounterCollector.findSchema(myLookup.getProject(), vFile);
           if (schema != null) {
-            SCHEMA.with(schema);
+            data.add(SCHEMA.with(schema));
           }
         }
       }
@@ -248,13 +254,16 @@ public final class LookupUsageTracker {
     private final Lookup myLookup;
     private final LookupElement mySelectedItem;
     private final FinishType myFinishType;
+    private final Language myLanguage;
 
     private MyLookupResultDescriptor(Lookup lookup,
                                      LookupElement item,
-                                     FinishType type) {
+                                     FinishType type,
+                                     Language language) {
       myLookup = lookup;
       mySelectedItem = item;
       myFinishType = type;
+      myLanguage = language;
     }
 
     @Override
@@ -270,6 +279,11 @@ public final class LookupUsageTracker {
     @Override
     public FinishType getFinishType() {
       return myFinishType;
+    }
+
+    @Override
+    public @Nullable Language getLanguage() {
+      return myLanguage;
     }
   }
 }

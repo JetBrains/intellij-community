@@ -2,7 +2,7 @@
 <project version="4">
   <component name="RemoteRepositoriesConfiguration">
     <remote-repository>
-      <option name="id" value="central" />
+      <option name="id" value="central-proxy" />
       <option name="name" value="Maven Central repository" />
       <option name="url" value="https://cache-redirector.jetbrains.com/maven-central" />
     </remote-repository>
@@ -12,13 +12,13 @@
       <option name="url" value="https://cache-redirector.jetbrains.com/intellij-dependencies" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="jcenter" />
+      <option name="id" value="jcenter-proxy" />
       <option name="name" value="JCenter on Bintray" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/jcenter" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/jcenter.bintray.com" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="18c13506-e994-44b4-9eef-4e6ec3262e15" />
-      <option name="name" value="18c13506-e994-44b4-9eef-4e6ec3262e15" />
+      <option name="id" value="3e981f81-9991-429f-bed8-5e9b000571d9" />
+      <option name="name" value="3e981f81-9991-429f-bed8-5e9b000571d9" />
       <option name="url" value="https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2" />
     </remote-repository>
     <remote-repository>
@@ -65,6 +65,11 @@
       <option name="id" value="86ec9d3a-2b8e-4273-8498-49095616f989" />
       <option name="name" value="86ec9d3a-2b8e-4273-8498-49095616f989" />
       <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ki/maven" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="8f9cf434-9624-468e-8d58-d8cf1473736c" />
+      <option name="name" value="8f9cf434-9624-468e-8d58-d8cf1473736c" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev" />
     </remote-repository>
   </component>
 </project>

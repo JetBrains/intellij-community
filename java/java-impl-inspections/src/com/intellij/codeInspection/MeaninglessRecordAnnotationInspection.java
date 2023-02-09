@@ -32,7 +32,6 @@ public class MeaninglessRecordAnnotationInspection extends AbstractBaseJavaLocal
         PsiClass recordClass = recordComponent.getContainingClass();
         if (recordClass == null) return;
         String name = recordComponent.getName();
-        if (name == null) return;
         for (PsiAnnotation annotation : recordComponent.getAnnotations()) {
           processAnnotation(recordClass, name, annotation);
         }

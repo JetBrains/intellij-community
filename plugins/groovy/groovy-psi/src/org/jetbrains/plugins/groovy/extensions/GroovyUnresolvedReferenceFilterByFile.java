@@ -20,9 +20,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class GroovyUnresolvedReferenceFilterByFile extends GroovyUnresolvedHighlightFilter {
 
   private static final Key<Boolean> KEY = Key.create("GroovyUnresolvedHighlightFileFilter");

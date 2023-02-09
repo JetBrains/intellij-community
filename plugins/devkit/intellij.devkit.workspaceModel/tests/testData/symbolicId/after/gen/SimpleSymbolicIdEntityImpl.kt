@@ -102,8 +102,7 @@ open class SimpleSymbolicIdEntityImpl(val dataSource: SimpleSymbolicIdEntityData
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.related != dataSource.related) this.related = dataSource.related
       if (this.sealedClassWithLinks != dataSource.sealedClassWithLinks) this.sealedClassWithLinks = dataSource.sealedClassWithLinks
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

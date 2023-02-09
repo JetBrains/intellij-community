@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -323,6 +324,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   public void testPatternUsedInSubsequentCondition() {
     doTest(null);
   }
+  
+  public void testSplitMutuallyExclusiveIf() { doTestReplaceChoice("Replace all 0 occurrences"); }
+  
+  public void testDontSplitNotMutuallyExclusiveIf() { doTestReplaceChoice("Replace all 0 occurrences"); }
 
   private void doTestStopEditing(Consumer<? super AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
@@ -393,6 +398,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
         UiInterceptors.register(new ChooserInterceptor(expectedOptions, Pattern.quote(secondChoiceText)));
       }
       final AbstractInplaceIntroducer<?, ?> introducer = invokeRefactoring(handler);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       if (pass != null) {
         pass.accept(introducer);
       }

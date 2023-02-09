@@ -5,7 +5,6 @@ import com.intellij.CommonBundle
 import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.DiffTool
-import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.actions.impl.OpenInEditorAction
 import com.intellij.diff.impl.DiffRequestProcessor.getToolOrderFromSettings
@@ -364,7 +363,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
       model.reload()
     }
 
-    override fun getTools(): List<FrameDiffTool> = availableTools.toList()
+    override fun getTools(): List<CombinedDiffTool> = availableTools.toList()
 
     override fun getActiveTool(): DiffTool = activeTool
 

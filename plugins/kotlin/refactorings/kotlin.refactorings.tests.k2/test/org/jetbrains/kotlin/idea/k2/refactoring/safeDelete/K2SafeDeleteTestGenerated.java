@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.safeDelete;
 
@@ -476,6 +476,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("propertyInLocalObject.kt")
         public void testPropertyInLocalObject() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/propertyInLocalObject.kt");
+        }
+
+        @TestMetadata("propertyInLocalObject2.kt")
+        public void testPropertyInLocalObject2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/propertyInLocalObject2.kt");
         }
     }
 

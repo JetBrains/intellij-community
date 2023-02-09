@@ -158,8 +158,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     assert getExternalProjectsView(externalProjectsView.getSystemId()) == null;
 
     myProjectsViews.add(externalProjectsView);
-    if (externalProjectsView instanceof ExternalProjectsViewImpl) {
-      ExternalProjectsViewImpl view = (ExternalProjectsViewImpl)externalProjectsView;
+    if (externalProjectsView instanceof ExternalProjectsViewImpl view) {
       view.loadState(myState.getExternalSystemsState().get(externalProjectsView.getSystemId().getId()).getProjectsViewState());
       view.init();
     }
@@ -259,7 +258,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   @NotNull
   @Override
   public ExternalProjectsState getState() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     for (ExternalProjectsView externalProjectsView : myProjectsViews) {
       if (externalProjectsView instanceof ExternalProjectsViewImpl) {
         final ExternalProjectsViewState externalProjectsViewState = ((ExternalProjectsViewImpl)externalProjectsView).getState();

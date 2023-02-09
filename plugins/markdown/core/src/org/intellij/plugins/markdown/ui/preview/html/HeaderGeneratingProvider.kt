@@ -33,12 +33,13 @@ class HeaderGeneratingProvider(headerTag: String): SimpleTagProvider(headerTag) 
 
     fun buildAnchorText(node: ASTNode, fileText: String): String? {
       val contentHolder = findContentHolder(node) ?: return null
-      val children = contentHolder.children().filterNot { it.type in whitespaces }
+      val children = contentHolder.children().dropWhile { it.type == MarkdownTokenTypes.WHITE_SPACE }
       val text = buildString {
         var count = 0
         for (child in children) {
-          if (count >= 1) {
+          if (child.type == MarkdownTokenTypes.WHITE_SPACE) {
             append(" ")
+            continue
           }
           when (child.type) {
             MarkdownElementTypes.IMAGE -> append("")

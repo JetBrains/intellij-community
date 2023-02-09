@@ -198,6 +198,9 @@ fun JKFieldAccessExpression.isInDecrementOrIncrement(): Boolean =
         else -> false
     }
 
+fun JKVariable.hasUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
+    findUsages(scope, context).isNotEmpty()
+
 fun JKVariable.hasWritableUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
     findUsages(scope, context).any {
         it.asAssignmentFromTarget() != null
@@ -369,6 +372,9 @@ fun JKInheritanceInfo.supertypeCount(): Int =
 fun JKClass.isLocalClass(): Boolean =
     parent !is JKClassBody && parent !is JKFile && parent !is JKTreeRoot
 
+fun JKMethod.isTopLevel(): Boolean =
+    parent is JKFile || parent is JKTreeRoot
+
 val JKClass.declarationList: List<JKDeclaration>
     get() = classBody.declarations
 
@@ -408,3 +414,6 @@ fun LanguageVersionSettings.areKotlinVersionsSufficientToUseRangeUntil(module: M
 }
 
 private val COMPILER_VERSION_WITH_RANGEUNTIL_SUPPORT = IdeKotlinVersion.get("1.7.20-Beta")
+
+val JKAnnotationListOwner.hasAnnotations: Boolean
+    get() = annotationList.annotations.isNotEmpty()

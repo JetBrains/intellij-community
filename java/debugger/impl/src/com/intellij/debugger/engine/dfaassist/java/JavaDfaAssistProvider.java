@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist.java;
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
@@ -29,17 +29,16 @@ public class JavaDfaAssistProvider implements DfaAssistProvider {
   public boolean locationMatches(@NotNull PsiElement element, @NotNull Location location) {
     Method method = location.method();
     PsiElement context = DebuggerUtilsEx.getContainingMethod(element);
-    if (context instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod)context;
+    if (context instanceof PsiMethod psiMethod) {
       String name = psiMethod.isConstructor() ? "<init>" : psiMethod.getName();
       return name.equals(method.name()) && psiMethod.getParameterList().getParametersCount() == method.argumentTypeNames().size();
     }
-    if (context instanceof PsiLambdaExpression) {
+    if (context instanceof PsiLambdaExpression lambda) {
       return DebuggerUtilsEx.isLambda(method) &&
-             method.argumentTypeNames().size() >= ((PsiLambdaExpression)context).getParameterList().getParametersCount();
+             method.argumentTypeNames().size() >= lambda.getParameterList().getParametersCount();
     }
-    if (context instanceof PsiClassInitializer) {
-      String expectedMethod = ((PsiClassInitializer)context).hasModifierProperty(PsiModifier.STATIC) ? "<clinit>" : "<init>";
+    if (context instanceof PsiClassInitializer initializer) {
+      String expectedMethod = initializer.hasModifierProperty(PsiModifier.STATIC) ? "<clinit>" : "<init>";
       return method.name().equals(expectedMethod);
     }
     return false;
@@ -145,7 +144,7 @@ public class JavaDfaAssistProvider implements DfaAssistProvider {
     }
     if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
       String varName = ((PsiVariable)psi).getName();
-      if (varName == null || PsiResolveHelper.getInstance(psi.getProject()).resolveReferencedVariable(varName, anchor) != psi) {
+      if (PsiResolveHelper.getInstance(psi.getProject()).resolveReferencedVariable(varName, anchor) != psi) {
         // Another variable with the same name could be tracked by DFA in different code branch but not visible at current code location
         return null;
       }

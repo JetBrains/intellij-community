@@ -9,12 +9,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.ints.IntSets;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Map;
 
 public final class StaleIndexesChecker {
@@ -26,6 +24,7 @@ public final class StaleIndexesChecker {
   }
 
   static @NotNull IntSet checkIndexForStaleRecords(@NotNull UpdatableIndex<?, ?, FileContent, ?> index,
+                                                   IntSet knownStaleIds,
                                                    boolean onStartup) throws StorageException {
     if (!ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isEAP()) {
       return IntSets.EMPTY_SET;
@@ -37,16 +36,14 @@ public final class StaleIndexesChecker {
 
     Int2ObjectMap<String> staleFiles = new Int2ObjectOpenHashMap<>();
     for (int freeRecord : onStartup ? FSRecords.getRemainFreeRecords() : FSRecords.getNewFreeRecords()) {
+      if (knownStaleIds.contains(freeRecord)) {
+        continue;
+      }
       Map<?, ?> dataAsMap = index.getIndexedFileData(freeRecord);
       Object data = ContainerUtil.getFirstItem(dataAsMap.values());
       if (data != null) {
         String name;
-        try {
-          name = getRecordPath(freeRecord);
-        }
-        catch (Exception e) {
-          name = e.getMessage();
-        }
+        name = getStaleRecordOrExceptionMessage(freeRecord);
         staleFiles.put(freeRecord, name);
       }
     }
@@ -66,6 +63,15 @@ public final class StaleIndexesChecker {
     return staleFiles.keySet();
   }
 
+  static String getStaleRecordOrExceptionMessage(int record) {
+    try {
+      return getRecordPath(record);
+    }
+    catch (Exception e) {
+      return e.getMessage();
+    }
+  }
+
   private static String getRecordPath(int record) {
     StringBuilder name = new StringBuilder(FSRecords.getName(record));
     int parent = FSRecords.getParent(record);
@@ -78,11 +84,15 @@ public final class StaleIndexesChecker {
 
   static void clearStaleIndexes(@NotNull IntSet staleIds) {
     IS_IN_STALE_IDS_DELETION.set(Boolean.TRUE);
+    boolean unitTest = ApplicationManager.getApplication().isUnitTestMode();
     try {
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        for (Integer staleId : staleIds) {
+        staleIds.forEach((staleId) -> {
+          if (unitTest) {
+            LOG.info("clearing stale id = " + staleId + ", path =  " + getRecordPath(staleId));
+          }
           clearStaleIndexesForId(staleId);
-        }
+        });
       });
     }
     finally {
@@ -92,26 +102,15 @@ public final class StaleIndexesChecker {
 
   static void clearStaleIndexesForId(int staleInputId) {
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    IndexConfiguration state = fileBasedIndex.getRegisteredIndexes().getState();
-    for (ID<?, ?> id : state.getIndexIDs()) {
-      try {
-        UpdatableIndex<?, ?, FileContent, ?> index = state.getIndex(id);
-        if (index != null) {
-          fileBasedIndex.runUpdateForPersistentData(index.mapInputAndPrepareUpdate(staleInputId, null));
-        }
-      }
-      catch (Exception e) {
-        LOG.info(e);
-        fileBasedIndex.requestRebuild(id);
-      }
-    }
+    Collection<ID<?, ?>> indexIds = fileBasedIndex.getRegisteredIndexes().getState().getIndexIDs();
+    fileBasedIndex.removeFileDataFromIndices(indexIds, staleInputId, null);
   }
 
   @NotNull
   private static String getStaleInputIdsMessage(Int2ObjectMap<String> staleTrees, IndexId<?, ?> indexId) {
     return "`" + indexId + "` index contains several stale file ids (size = "
            + staleTrees.size()
-           + "). Ids & filenames: "
+           + "). Ids & paths: "
            + StringUtil.first(staleTrees.toString(), 300, true)
            + ".";
   }

@@ -8,8 +8,6 @@ import java.util.function.Consumer;
 
 /**
  * Exports aggregate results that can't be attached to any specific problem descriptor.
- *
- * @author Pavel.Dolgov
  */
 public interface AggregateResultsExporter {
   void exportAggregateResults(@NotNull Consumer<? super Element> resultConsumer);

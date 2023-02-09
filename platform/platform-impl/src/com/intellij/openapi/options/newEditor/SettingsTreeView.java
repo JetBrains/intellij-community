@@ -5,12 +5,16 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.SortedConfigurableGroup;
+import com.intellij.openapi.options.ex.Weighted;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -27,6 +31,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -51,11 +56,14 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
@@ -100,6 +108,25 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     setComponentPopupMenuTo(myTree);
 
     myTree.setTransferHandler(new TransferHandler() {
+      @Override
+      public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
+        return ArrayUtil.contains(DataFlavor.stringFlavor, transferFlavors);
+      }
+
+      @Override
+      public boolean importData(JComponent comp, Transferable t) {
+        try {
+          String value = ObjectUtils.tryCast(t.getTransferData(DataFlavor.stringFlavor), String.class);
+          if (value == null) return false;
+
+          myFilter.setFilterText(value);
+          return true;
+        }
+        catch (IOException | UnsupportedFlavorException e) {
+          return false;
+        }
+      }
+
       @Nullable
       @Override
       protected Transferable createTransferable(JComponent c) {
@@ -170,7 +197,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     myModel = FilteringTreeModel.createModel(structure, myFilter, this);
     myFilter.addListener((preferredSelection, adjustSelection, now) -> {
-      myModel.updateTree(myTree, !myFilter.getFilterText().isEmpty(), preferredSelection);
+      myModel.updateTree(myTree, !myFilter.isEmptyFilter(), preferredSelection);
       return Promises.resolvedPromise();
     }, this);
     myTree.setModel(new AsyncTreeModel(myModel, this));
@@ -260,8 +287,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   @Nullable
   Transferable createTransferable(@Nullable InputEvent event) {
-    if (event instanceof MouseEvent) {
-      MouseEvent mouse = (MouseEvent)event;
+    if (event instanceof MouseEvent mouse) {
       Point location = mouse.getLocationOnScreen();
       SwingUtilities.convertPointFromScreen(location, myTree);
       return createTransferable(myTree.getClosestPathForLocation(location.x, location.y));
@@ -329,12 +355,10 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   @ApiStatus.Internal
   public static @Nullable Project prepareProject(@Nullable CachingSimpleNode parent,
                                                  @Nullable Configurable configurable) {
-    if (configurable instanceof ConfigurableWrapper) {
-      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+    if (configurable instanceof ConfigurableWrapper wrapper) {
       return wrapper.getExtensionPoint().getProject();
     }
-    if (configurable instanceof SortedConfigurableGroup) {
-      SortedConfigurableGroup group = (SortedConfigurableGroup)configurable;
+    if (configurable instanceof SortedConfigurableGroup group) {
       Configurable[] configurables = group.getConfigurables();
       if (configurables.length != 0) {
         Project project = prepareProject(parent, configurables[0]);
@@ -376,8 +400,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   @Nullable
   private static MyNode extractNode(@Nullable Object object) {
-    if (object instanceof TreePath) {
-      TreePath path = (TreePath)object;
+    if (object instanceof TreePath path) {
       object = path.getLastPathComponent();
     }
     if (object instanceof DefaultMutableTreeNode) {
@@ -496,14 +519,14 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   }
 
   private final class MyNode extends CachingSimpleNode {
-    private final Configurable.Composite myComposite;
-    private final Configurable myConfigurable;
+    private final @Nullable Configurable.Composite myComposite;
+    private final @NotNull Configurable myConfigurable;
     private final @NlsContexts.ConfigurableName String myDisplayName;
     private final int myLevel;
     private ConfigurableTreeRenderer myRenderer;
     private boolean myPrepareRenderer = true;
 
-    private MyNode(CachingSimpleNode parent, Configurable configurable, int level) {
+    private MyNode(CachingSimpleNode parent, @NotNull Configurable configurable, int level) {
       super(prepareProject(parent, configurable), parent);
       myComposite = configurable instanceof Configurable.Composite ? (Configurable.Composite)configurable : null;
       myConfigurable = configurable;
@@ -519,8 +542,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         if (myConfigurable instanceof ConfigurableTreeRenderer) {
           myRenderer = (ConfigurableTreeRenderer)myConfigurable;
         }
-        else if (myConfigurable instanceof ConfigurableWrapper) {
-          ConfigurableWrapper wrapper = (ConfigurableWrapper)myConfigurable;
+        else if (myConfigurable instanceof ConfigurableWrapper wrapper) {
           UnnamedConfigurable configurable = wrapper.getRawConfigurable();
           if (configurable instanceof ConfigurableTreeRenderer) {
             myRenderer = (ConfigurableTreeRenderer)configurable;
@@ -535,9 +557,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     @Override
     protected SimpleNode[] buildChildren() {
-      if (myConfigurable != null) {
-        myConfigurableToNodeMap.put(myConfigurable, this);
-      }
+      myConfigurableToNodeMap.put(myConfigurable, this);
       if (myComposite == null) {
         return NO_CHILDREN;
       }
@@ -548,9 +568,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       SimpleNode[] result = new SimpleNode[configurables.length];
       for (int i = 0; i < configurables.length; i++) {
         result[i] = new MyNode(this, configurables[i], myLevel + 1);
-        if (myConfigurable != null) {
-          myFilter.myContext.registerKid(myConfigurable, configurables[i]);
-        }
+        myFilter.myContext.registerKid(myConfigurable, configurables[i]);
       }
       return result;
     }
@@ -567,7 +585,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     }
   }
 
-  private final class MyRenderer extends CellRendererPanel implements TreeCellRenderer {
+  private final class MyRenderer extends CellRendererPanel implements TreeCellRenderer, UiInspectorTreeRendererContextProvider {
     final SimpleColoredComponent myTextLabel = new SimpleColoredComponent();
     final JLabel myNodeIcon = new JLabel();
     final JLabel myProjectIcon = new JLabel();
@@ -623,13 +641,11 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground(true) : UIUtil.getTreeForeground());
       if (!selected && node != null) {
         Configurable configurable = node.myConfigurable;
-        if (configurable != null) {
-          if (myFilter.myContext.getErrors().containsKey(configurable)) {
-            myTextLabel.setForeground(WRONG_CONTENT);
-          }
-          else if (myFilter.myContext.getModified().contains(configurable)) {
-            myTextLabel.setForeground(MODIFIED_CONTENT);
-          }
+        if (myFilter.myContext.getErrors().containsKey(configurable)) {
+          myTextLabel.setForeground(WRONG_CONTENT);
+        }
+        else if (myFilter.myContext.getModified().contains(configurable)) {
+          myTextLabel.setForeground(MODIFIED_CONTENT);
         }
       }
       // configure project icon
@@ -739,6 +755,34 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         myRenderInfo = null;
       }
     }
+
+    @Override
+    public @NotNull List<PropertyBean> getUiInspectorContext(@NotNull JTree tree, @Nullable Object value, int row) {
+      MyNode node = extractNode(value);
+      if (node == null) return Collections.emptyList();
+
+      Configurable wrapper = node.myConfigurable;
+      UnnamedConfigurable configurable = ConfigurableWrapper.cast(UnnamedConfigurable.class, wrapper);
+      if (configurable == null) return Collections.emptyList();
+
+      List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Configurable class", UiInspectorUtil.getClassPresentation(configurable), true));
+
+      if (wrapper instanceof SearchableConfigurable searchableConfigurable) {
+        result.add(new PropertyBean("Configurable ID", searchableConfigurable.getId(), true));
+      }
+      if (wrapper.getHelpTopic() != null) {
+        result.add(new PropertyBean("Configurable HelpTopic", wrapper.getHelpTopic()));
+      }
+      if (wrapper instanceof Weighted weightedConfigurable && weightedConfigurable.getWeight() != 0) {
+        result.add(new PropertyBean("Configurable Weight", weightedConfigurable.getWeight(), true));
+      }
+      if (wrapper instanceof ConfigurableMarkerProvider markerProvider && markerProvider.getMarkerText() != null) {
+        result.add(new PropertyBean("Configurable Marker", markerProvider.getMarkerText(), true));
+      }
+
+      return result;
+    }
   }
 
   private static boolean isBeta(Configurable c) {
@@ -765,8 +809,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     public String getToolTipText(MouseEvent event) {
       if (event != null) {
         Component component = getDeepestRendererComponentAt(event.getX(), event.getY());
-        if (component instanceof JLabel) {
-          JLabel label = (JLabel)component;
+        if (component instanceof JLabel label) {
           if (label.getIcon() != null) {
             String text = label.getToolTipText();
             if (text != null) {
@@ -936,7 +979,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       MyNode node = findNode(toSelect);
       if (node != null) {
         FilteringTreeStructure.FilteringNode filteringNode = myModel.getTreeStructure().getVisibleNodeFor(node);
-        myModel.select(filteringNode, myTree, treePath -> {});
+        myModel.select(filteringNode, myTree, treePath -> {
+        });
       }
     });
   }

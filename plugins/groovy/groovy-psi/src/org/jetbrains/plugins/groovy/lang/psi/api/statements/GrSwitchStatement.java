@@ -2,8 +2,5 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
-/**
- * @author ilyas
- */
 public interface GrSwitchStatement extends GrSwitchElement, GrStatement {
 }

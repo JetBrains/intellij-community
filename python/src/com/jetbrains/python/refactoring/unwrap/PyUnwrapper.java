@@ -95,8 +95,7 @@ public abstract class PyUnwrapper extends AbstractUnwrapper<PyUnwrapper.Context>
 
     public void extractFromElseBlock(PyStatementPart from) {
       PyStatementList body = from.getStatementList();
-      if (body != null)
-        extract(body.getFirstChild(), body.getLastChild(), from.getParent());
+      extract(body.getFirstChild(), body.getLastChild(), from.getParent());
     }
 
     public void extractFromWithBlock(PyWithStatement from) {

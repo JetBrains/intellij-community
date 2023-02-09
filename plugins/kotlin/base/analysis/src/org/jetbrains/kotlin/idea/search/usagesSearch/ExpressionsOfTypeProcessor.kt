@@ -24,19 +24,17 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.diagnostics.PsiDiagnosticUtils
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.everythingScopeExcludeFileTypes
 import org.jetbrains.kotlin.idea.base.util.excludeFileTypes
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.hasType
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isInProjectSource
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isSamInterface
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
-import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -129,14 +127,13 @@ class ExpressionsOfTypeProcessor(
 
         // optimization
         if (runReadAction {
-                searchScope is GlobalSearchScope && !FileTypeIndex.containsFileOfType(
-                    KotlinFileType.INSTANCE,
-                    searchScope
-                )
+                noKotlinFilesInScope(searchScope)
             }) return
 
         // for class from library always use plain search because we cannot search usages in compiled code (we could though)
-        if (!runReadAction { classToSearch.isValid && isInProjectSource(classToSearch) }) {
+        if (!runReadAction {
+                classToSearch.isValid && isInProjectScope(classToSearch)
+            }) {
             possibleMatchesInScopeHandler(searchScope)
             return
         }
@@ -154,6 +151,17 @@ class ExpressionsOfTypeProcessor(
                 possibleMatchesInScopeHandler(LocalSearchScope(scopeElements))
             }
         }
+    }
+
+    private fun isInProjectScope(classToSearch: PsiClass): Boolean {
+        return RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = false).matches(classToSearch)
+    }
+
+    private fun noKotlinFilesInScope(searchScope: SearchScope): Boolean {
+        if (searchScope is GlobalSearchScope && !FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, searchScope)) {
+            return true
+        }
+        return searchScope is LocalSearchScope && searchScope.virtualFiles.none { it.fileType == KotlinFileType.INSTANCE }
     }
 
     private fun addTask(task: Task) {
@@ -551,10 +559,8 @@ class ExpressionsOfTypeProcessor(
 
                 if (element.getStrictParentOfType<KtImportDirective>() != null) return true // ignore usage in import
 
-                if (element.hasType) { // access to object or companion object
-                    processSuspiciousExpression(element)
-                    return true
-                }
+                processSuspiciousExpression(element)
+                return true
             }
 
             is KDocName -> return true // ignore usage in doc-comment
@@ -785,7 +791,7 @@ class ExpressionsOfTypeProcessor(
             if (psiClass != null) {
                 testLog { "Resolved java class to descriptor: ${psiClass.qualifiedName}" }
 
-                if (psiClass.isSamInterface) {
+                if (LambdaUtil.isFunctionalClass(psiClass)) {
                     addSamInterfaceToProcess(psiClass)
                     return true
                 }

@@ -19,9 +19,6 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDesc
 
 import java.util.Set;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class JavaFxResourcePropertyValueInspection extends XmlSuppressableInspectionTool {
   @NotNull
   @Override

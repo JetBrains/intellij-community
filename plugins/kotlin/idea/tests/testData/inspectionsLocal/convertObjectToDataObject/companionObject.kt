@@ -1,7 +1,8 @@
 // PROBLEM: none
 // COMPILER_ARGUMENTS: -XXLanguage:+DataObjects
-import java.io.Serializable
 
 class Foo {
-    companion <caret>object : Serializable
+    companion object<caret> Named {
+        override fun toString(): String = "Named"
+    }
 }

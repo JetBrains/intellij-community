@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -29,11 +29,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createConfiguration;
 import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createLegacyConfiguration;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
@@ -262,8 +260,9 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         createLegacyConfiguration(SSRBundle.message("predefined.template.li.not.contained.in.ul.or.ol"), "<li> not contained in <ul> or <ol>",
                                   "[!within( <ul> or <ol> )]<li />", getHtmlXml(), HtmlFileType.INSTANCE),
         createLegacyConfiguration(SSRBundle.message("predefined.configuration.xml.attribute.referencing.java.class"), "xml attribute referencing java class",
-                                  "<'_tag 'attribute=\"'_value:[ref( classes, interfaces & enums )]\"/>",
-                                  SSRBundle.message("xml_html.category"), XmlFileType.INSTANCE),
+                                  "<'_tag 'attribute=\"'_value:[ref( classes, interfaces & enums )]\"/>", getHtmlXml(), XmlFileType.INSTANCE),
+        createConfiguration(SSRBundle.message("predefined.template.xml.tag.without.specific.attribute"), "XML tag without a specific attribute",
+          "<'_tag '_attr{0,0}:attributeName />", getHtmlXml(), XmlFileType.INSTANCE),
       };
     }
 

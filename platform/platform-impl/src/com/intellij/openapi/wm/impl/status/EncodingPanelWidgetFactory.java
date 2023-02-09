@@ -6,9 +6,13 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory;
 import com.intellij.ui.UIBundle;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-final class EncodingPanelWidgetFactory extends StatusBarEditorBasedWidgetFactory {
+
+@ApiStatus.NonExtendable
+public class EncodingPanelWidgetFactory extends StatusBarEditorBasedWidgetFactory {
   @Override
   public @NotNull String getId() {
     return StatusBar.StandardWidgets.ENCODING_PANEL;
@@ -20,7 +24,7 @@ final class EncodingPanelWidgetFactory extends StatusBarEditorBasedWidgetFactory
   }
 
   @Override
-  public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
-    return new EncodingPanel(project);
+  public @NotNull StatusBarWidget createWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
+    return new EncodingPanel(project, scope);
   }
 }

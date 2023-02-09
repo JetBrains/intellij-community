@@ -15,8 +15,5 @@
  */
 package org.jetbrains.idea.maven.artifactResolver;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenArtifactResolvedM3RtMarker {
 }

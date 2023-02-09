@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -509,22 +509,27 @@ public final class MavenIndex implements MavenSearchIndex {
     return doIndexAndRecoveryTask(() -> {
       Set<MavenArchetype> archetypes = new HashSet<>();
       IndexData indexData = myData;
-      for (String ga : indexData.archetypeIdToDescriptionMap.getAllKeysWithExistingMapping()) {
+      indexData.archetypeIdToDescriptionMap.consumeKeysWithExistingMapping(ga -> {
         List<String> gaParts = split(ga, ":");
 
         String groupId = gaParts.get(0);
         String artifactId = gaParts.get(1);
 
-        for (String vd : indexData.archetypeIdToDescriptionMap.get(ga)) {
-          int index = vd.indexOf(':');
-          if (index == -1) continue;
+        try {
+          for (String vd : indexData.archetypeIdToDescriptionMap.get(ga)) {
+            int index = vd.indexOf(':');
+            if (index == -1) continue;
 
-          String version = vd.substring(0, index);
-          String description = vd.substring(index + 1);
+            String version = vd.substring(0, index);
+            String description = vd.substring(index + 1);
 
-          archetypes.add(new MavenArchetype(groupId, artifactId, version, myRepositoryPathOrUrl, description));
+            archetypes.add(new MavenArchetype(groupId, artifactId, version, myRepositoryPathOrUrl, description));
+          }
         }
-      }
+        catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
+      });
       return archetypes;
     }, Collections.emptySet());
   }
@@ -656,15 +661,6 @@ public final class MavenIndex implements MavenSearchIndex {
     CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<>();
     myData.groupToArtifactMap.processKeysWithExistingMapping(processor);
     return processor.getResults();
-  }
-
-  /**
-   * @deprecated use {@link MavenIndexUtils#normalizePathOrUrl(String)}
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public static String normalizePathOrUrl(@NotNull String pathOrUrl) {
-    return MavenIndexUtils.normalizePathOrUrl(pathOrUrl);
   }
 
   private static class SetDescriptor implements DataExternalizer<Set<String>> {

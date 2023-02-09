@@ -7,6 +7,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -69,7 +70,7 @@ public final class ConsoleViewUtil {
 
       DelegateColorScheme scheme = updateConsoleColorScheme(editor.getColorsScheme());
       if (UISettings.getInstance().getPresentationMode()) {
-        scheme.setEditorFontSize(UISettings.getInstance().getPresentationModeFontSize());
+        scheme.setEditorFontSize(UISettingsUtils.getInstance().getPresentationModeFontSize());
       }
       editor.setColorsScheme(scheme);
       editor.setHighlighter(new NullEditorHighlighter());
@@ -93,9 +94,6 @@ public final class ConsoleViewUtil {
     NullEditorHighlighter() {
       super(NULL_ATTRIBUTES);
     }
-
-    @Override
-    public void setAttributes(TextAttributes attributes) { }
 
     @Override
     public void setColorScheme(@NotNull EditorColorsScheme scheme) {}

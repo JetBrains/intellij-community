@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.jdkEx.JdkEx;
@@ -20,11 +20,12 @@ import java.awt.event.ComponentEvent;
 import java.awt.image.VolatileImage;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
  * Provides a heavyweight window "facade" for a lightweight component.
- * Used to workaround the problem of overlapping a heavyweight JCEF browser component.
+ * Used to work around the problem of overlapping a heavyweight JCEF browser component.
  * The "facade" means that a hw window follows the lifecycle of the target lw component
  * (add/show/hide/dispose), follows its bounds and intercepts its painting.
  * The hw window itself is non-focusable and mouse-transparent, so the target lw
@@ -43,33 +44,38 @@ public class HwFacadeHelper {
   private ComponentAdapter myTargetListener;
   private VolatileImage myBackBuffer;
 
-  @NotNull Consumer<? super JBCefBrowser> myOnBrowserMoveResizeCallback =
-    browser -> {
-      if (!browser.isOffScreenRendering()) activateIfNeeded(Collections.singletonList(browser.getCefBrowser()));
-    };
+  @NotNull Consumer<? super JBCefBrowser> onBrowserMoveResizeCallback = browser -> {
+    if (!browser.isOffScreenRendering()) activateIfNeeded(Collections.singletonList(browser.getCefBrowser()));
+  };
 
   // [tav] todo: export visible browser bounds from jcef instead
   private static final class JCEFAccessor {
-    private static FieldAccessor<CefApp, HashSet<CefClient>> clientsField;
-    private static FieldAccessor<CefClient, HashMap<Integer, CefBrowser>> browsersField;
+    private static FieldAccessor<CefApp, Set<CefClient>> clientsField;
+    private static FieldAccessor<CefClient, Map<Integer, CefBrowser>> browsersField;
     private static CefApp ourCefApp;
 
-    @Nullable
-    public static CefApp getCefApp() {
+    public static @Nullable CefApp getCefApp() {
       if (ourCefApp == null && CefApp.getState() != CefApp.CefAppState.NONE) {
         ourCefApp = CefApp.getInstance();
-        clientsField = new FieldAccessor<>(CefApp.class, "clients_");
-        browsersField = new FieldAccessor<>(CefClient.class, "browser_");
+        //noinspection unchecked,rawtypes
+        clientsField = new FieldAccessor(CefApp.class, "clients_", HashSet.class);
+        //noinspection unchecked,rawtypes
+        browsersField = new FieldAccessor(CefClient.class, "browser_", ConcurrentHashMap.class);
       }
       return ourCefApp;
     }
 
-    @NotNull
-    public static List<CefBrowser> getHwBrowsers() {
+    public static @NotNull List<CefBrowser> getHwBrowsers() {
       List<CefBrowser> list = new LinkedList<>();
-      if (getCefApp() == null || !clientsField.isAvailable() || !browsersField.isAvailable()) return list;
+      if (getCefApp() == null || !clientsField.isAvailable() || !browsersField.isAvailable()) {
+        return list;
+      }
+
       Set<CefClient> clients = clientsField.get(ourCefApp);
-      if (clients == null) return list;
+      if (clients == null) {
+        return list;
+      }
+
       for (CefClient client : clients) {
         Map<?, CefBrowser> browsers = browsersField.get(client);
         if (browsers == null) return list;
@@ -113,7 +119,7 @@ public class HwFacadeHelper {
   }
 
   private boolean isActive() {
-    return Registry.is("ide.browser.jcef.hwfacade.enabled") && myHwFacade != null;
+    return myHwFacade != null && Registry.is("ide.browser.jcef.hwfacade.enabled");
   }
 
   private static boolean isCefAppActive() {
@@ -203,7 +209,7 @@ public class HwFacadeHelper {
     if (myTarget.isVisible()) {
       onShowing();
     }
-    if (!SystemInfo.isLinux) JBCefBrowser.addOnBrowserMoveResizeCallback(myOnBrowserMoveResizeCallback);
+    if (!SystemInfo.isLinux) JBCefBrowser.addOnBrowserMoveResizeCallback(onBrowserMoveResizeCallback);
   }
 
   public void show() {
@@ -229,7 +235,7 @@ public class HwFacadeHelper {
       assert owner != null;
       owner.removeComponentListener(myOwnerListener);
     }
-    if (!SystemInfo.isLinux) JBCefBrowser.removeOnBrowserMoveResizeCallback(myOnBrowserMoveResizeCallback);
+    if (!SystemInfo.isLinux) JBCefBrowser.removeOnBrowserMoveResizeCallback(onBrowserMoveResizeCallback);
   }
 
   public void hide() {

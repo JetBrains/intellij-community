@@ -29,6 +29,11 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 
+/**
+ * @see PlatformCoreDataKeys
+ * @see CommonDataKeys
+ * @see com.intellij.openapi.actionSystem.PlatformDataKeys
+ */
 public class LangDataKeys extends PlatformCoreDataKeys {
 
   /**

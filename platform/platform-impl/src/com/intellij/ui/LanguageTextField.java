@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -87,18 +88,21 @@ public class LanguageTextField extends EditorTextField {
   public static Document createDocument(String value, @Nullable Language language, @Nullable Project project,
                                         @NotNull SimpleDocumentCreator documentCreator) {
     if (language != null) {
-      if (project == null) {
-        project = ProjectManager.getInstance().getDefaultProject();
-      }
-      final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+      final Project notNullProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
+      final PsiFileFactory factory = PsiFileFactory.getInstance(notNullProject);
       final FileType fileType = language.getAssociatedFileType();
       assert fileType != null;
 
       final long stamp = LocalTimeCounter.currentTime();
       final PsiFile psiFile = factory.createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, "", stamp, true, false);
       documentCreator.customizePsiFile(psiFile);
-      final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+
+      // No need to guess project in getDocument - we already know it
+      final Document document = ProjectLocator.computeWithPreferredProject(
+        psiFile.getVirtualFile(), notNullProject,
+        () -> PsiDocumentManager.getInstance(notNullProject).getDocument(psiFile));
       assert document != null;
+
       if (!value.isEmpty()) {
         ApplicationManager.getApplication().runWriteAction(() -> {
           document.setText(value); // do not put initial value into backing LightVirtualFile.contentsToByteArray

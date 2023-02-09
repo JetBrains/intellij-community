@@ -20,6 +20,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NonNls;
 
@@ -41,7 +42,7 @@ public final class UiUtils {
 
   public static JPanel createAddRemovePanel(final ListTable table) {
     final JPanel panel = ToolbarDecorator.createDecorator(table)
-      .setToolbarPosition(ActionToolbarPosition.RIGHT)
+      .setToolbarPosition(ActionToolbarPosition.LEFT)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -76,7 +77,7 @@ public final class UiUtils {
     }
     final JPanel panel = ToolbarDecorator.createDecorator(table)
       .disableUpDownActions()
-      .setToolbarPosition(ActionToolbarPosition.RIGHT)
+      .setToolbarPosition(ActionToolbarPosition.LEFT)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -113,6 +114,7 @@ public final class UiUtils {
       .setRemoveAction(button -> TableUtil.removeSelectedItems(table))
       .createPanel();
     panel.setMinimumSize(InspectionOptionsPanel.getMinimumListSize());
+    panel.setPreferredSize(InspectionOptionsPanel.getMinimumListSize());
     return panel;
   }
 
@@ -153,8 +155,10 @@ public final class UiUtils {
       filter = new SubclassFilter(ancestorClasses);
     }
     final JBList<String> list = new JBList<>(collection);
+    list.setBorder(JBUI.Borders.empty());
 
     final JPanel panel = ToolbarDecorator.createDecorator(list)
+      .setToolbarPosition(ActionToolbarPosition.LEFT)
       .disableUpDownActions()
       .setAddAction(new AnActionButtonRunnable() {
         @Override
@@ -191,6 +195,7 @@ public final class UiUtils {
         }
       }).createPanel();
     panel.setMinimumSize(InspectionOptionsPanel.getMinimumListSize());
+    panel.setPreferredSize(InspectionOptionsPanel.getMinimumListSize());
     return UI.PanelFactory.panel(panel).withLabel(borderTitle).moveLabelOnTop().resizeY(true).createPanel();
   }
 

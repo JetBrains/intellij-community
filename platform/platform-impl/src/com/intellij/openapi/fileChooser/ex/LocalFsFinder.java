@@ -193,12 +193,6 @@ public class LocalFsFinder implements Finder {
   public static final class VfsFile extends LookupFileWithMacro {
     private final VirtualFile myFile;
 
-    /** @deprecated please use {@link #VfsFile(VirtualFile)} instead */
-    @Deprecated(forRemoval = true)
-    public VfsFile(@SuppressWarnings("unused") LocalFsFinder finder, VirtualFile file) {
-      this(file);
-    }
-
     public VfsFile(@NotNull VirtualFile file) {
       myFile = file;
       RefreshQueue.getInstance().refresh(true, false, null, file);

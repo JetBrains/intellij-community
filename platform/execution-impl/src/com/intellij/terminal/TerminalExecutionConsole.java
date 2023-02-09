@@ -49,6 +49,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private final JBTerminalWidget myTerminalWidget;
   private final Project myProject;
+  private final boolean myDestroyProcessOnClose;
   private final AppendableTerminalDataStream myDataStream;
   private final AtomicBoolean myAttachedToProcess = new AtomicBoolean(false);
   private volatile boolean myLastCR = false;
@@ -65,19 +66,28 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   public TerminalExecutionConsole(@NotNull Project project,
                                   @Nullable ProcessHandler processHandler,
                                   @NotNull JBTerminalSystemSettingsProviderBase settingsProvider) {
-    this(project, 200, 24, processHandler, settingsProvider);
+    this(project, processHandler, settingsProvider, true);
+  }
+
+  public TerminalExecutionConsole(@NotNull Project project,
+                                  @Nullable ProcessHandler processHandler,
+                                  @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
+                                  boolean destroyProcessOnClose) {
+    this(project, 200, 24, processHandler, settingsProvider, destroyProcessOnClose);
   }
 
   public TerminalExecutionConsole(@NotNull Project project, int columns, int lines, @Nullable ProcessHandler processHandler) {
-    this(project, columns, lines, processHandler, getProvider());
+    this(project, columns, lines, processHandler, getProvider(), true);
   }
 
   public TerminalExecutionConsole(@NotNull Project project,
                                   int columns,
                                   int lines,
                                   @Nullable ProcessHandler processHandler,
-                                  @NotNull JBTerminalSystemSettingsProviderBase settingsProvider) {
+                                  @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
+                                  boolean destroyProcessOnClose) {
     myProject = project;
+    myDestroyProcessOnClose = destroyProcessOnClose;
     myDataStream = new AppendableTerminalDataStream();
     myTerminalWidget = new ConsoleTerminalWidget(project, columns, lines, settingsProvider);
     if (processHandler != null) {
@@ -211,7 +221,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       return;
     }
     myTerminalWidget.createTerminalSession(new ProcessHandlerTtyConnector(
-      processHandler, EncodingProjectManager.getInstance(myProject).getDefaultCharset())
+      processHandler, EncodingProjectManager.getInstance(myProject).getDefaultCharset(), myDestroyProcessOnClose)
     );
     myTerminalWidget.start();
 

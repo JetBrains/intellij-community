@@ -138,8 +138,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     boolean pasteInFStringInFString = PsiTreeUtil.getParentOfType(stringElement, PyFormattedStringElement.class) != null;
 
     var elementParent = element.getParent();
-    if (valueIsStringElement && elementParent instanceof PyFStringFragment) {
-      var fStringFragment = (PyFStringFragment)elementParent;
+    if (valueIsStringElement && elementParent instanceof PyFStringFragment fStringFragment) {
       var stringLiteralValue = (PyStringLiteralExpression)value;
       if (fStringFragment.getTypeConversion() == null && fStringFragment.getFormatPart() == null) {
         PyStringElement valueStringElement = valueStringElements.get(0);
@@ -195,8 +194,8 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       var replacements = fString2Replacements.get(fString);
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(fString.getProject());
 
-      var replacementsSegments = ContainerUtil.map(replacements, it -> Pair.create(it.first.getTextRangeInParent(), it.second));
-      replacementsSegments.sort(Comparator.comparingInt(it -> -it.first.getStartOffset()));
+      var replacementsSegments = ContainerUtil.sorted(ContainerUtil.map(replacements, it -> Pair.create(it.first.getTextRangeInParent(), it.second)),
+      Comparator.comparingInt(it -> -it.first.getStartOffset()));
 
       StringBuilder elementStringBuilder = new StringBuilder(fString.getText());
       for (var segment : replacementsSegments) {
@@ -421,8 +420,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
   private static PyExpression prepareValue(@NotNull PyStatement def, @NotNull String localName, @NotNull Project project) {
     final PyExpression value = getValue(def);
     assert value != null;
-    if (def instanceof PyAugAssignmentStatement) {
-      final PyAugAssignmentStatement expression = (PyAugAssignmentStatement)def;
+    if (def instanceof PyAugAssignmentStatement expression) {
       final PsiElement operation = expression.getOperation();
       assert operation != null;
       final String op = operation.getText().replace('=', ' ');

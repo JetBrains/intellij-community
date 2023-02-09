@@ -15,7 +15,6 @@ import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.predicates.AndPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
-import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Contract;
@@ -95,15 +94,6 @@ public class SubstitutionHandler extends MatchingHandler {
     return predicate;
   }
 
-  /**
-   * @deprecated Use {@link SubstitutionHandler#findPredicate instead}
-   */
-  @Nullable
-  @Deprecated(forRemoval = true)
-  public RegExpPredicate findRegExpPredicate() {
-    return findPredicate(getPredicate(), RegExpPredicate.class);
-  }
-
   public @Nullable <T extends MatchPredicate> T findPredicate(@NotNull Class<T> aClass) {
     return findPredicate(getPredicate(), aClass);
   }
@@ -112,8 +102,7 @@ public class SubstitutionHandler extends MatchingHandler {
   private static @Nullable <T extends MatchPredicate> T findPredicate(@Nullable MatchPredicate start, @NotNull Class<T> aClass) {
     if (start == null) return null;
     if (aClass.isInstance(start)) return aClass.cast(start);
-    if (start instanceof AndPredicate) {
-      final AndPredicate binaryPredicate = (AndPredicate)start;
+    if (start instanceof AndPredicate binaryPredicate) {
       final T firstBranchCheck = findPredicate(binaryPredicate.getFirst(), aClass);
       if (firstBranchCheck != null) return firstBranchCheck;
       return findPredicate(binaryPredicate.getSecond(), aClass);

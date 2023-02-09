@@ -76,9 +76,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkU
 import static org.jetbrains.plugins.groovy.lang.resolve.ReceiverKt.processReceiverType;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialState;
 
-/**
- * @author ven
- */
 public final class ResolveUtil {
   public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
   public static final Key<String> DOCUMENTATION_DELEGATE_FQN = Key.create("groovy.documentation.delegate.fqn");
@@ -455,8 +452,7 @@ public final class ResolveUtil {
 
       final PsiMethod currentMethod;
       final PsiSubstitutor currentSubstitutor;
-      if (currentResult instanceof GroovyMethodResult) {
-        final GroovyMethodResult currentMethodResult = (GroovyMethodResult)currentResult;
+      if (currentResult instanceof GroovyMethodResult currentMethodResult) {
         currentMethod = currentMethodResult.getElement();
         currentSubstitutor = currentMethodResult.getContextSubstitutor();
       }
@@ -476,8 +472,7 @@ public final class ResolveUtil {
         GroovyResolveResult candidateResult = iterator.next();
         final PsiMethod otherMethod;
         final PsiSubstitutor otherSubstitutor;
-        if (candidateResult instanceof GroovyMethodResult) {
-          final GroovyMethodResult otherMethodResult = (GroovyMethodResult)candidateResult;
+        if (candidateResult instanceof GroovyMethodResult otherMethodResult) {
           otherMethod = otherMethodResult.getElement();
           otherSubstitutor = otherMethodResult.getContextSubstitutor();
         }
@@ -901,8 +896,7 @@ public final class ResolveUtil {
   }
 
   public static boolean isClassReference(@NotNull PsiElement expression) {
-    if (!(expression instanceof GrReferenceExpression)) return false;
-    GrReferenceExpression ref = (GrReferenceExpression)expression;
+    if (!(expression instanceof GrReferenceExpression ref)) return false;
     GrExpression qualifier = ref.getQualifier();
     if (!"class".equals(ref.getReferenceName())) return false;
     return qualifier != null && getClassReferenceFromExpression(qualifier) != null;
@@ -945,8 +939,7 @@ public final class ResolveUtil {
   }
 
   public static boolean isAccessible(@NotNull PsiElement place, @NotNull PsiNamedElement namedElement) {
-    if (namedElement instanceof GrField) {
-      final GrField field = (GrField)namedElement;
+    if (namedElement instanceof GrField field) {
       if (org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isAccessible(place, field)) {
         return true;
       }

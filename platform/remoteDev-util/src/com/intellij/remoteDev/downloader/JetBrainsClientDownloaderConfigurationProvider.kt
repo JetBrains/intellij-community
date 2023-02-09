@@ -1,15 +1,15 @@
 package com.intellij.remoteDev.downloader
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.remoteDev.RemoteDevSystemSettings
-import com.intellij.remoteDev.util.getJetBrainsSystemCachesDir
 import com.intellij.remoteDev.util.onTerminationOrNow
-import com.intellij.util.io.*
+import com.intellij.util.io.inputStream
+import com.intellij.util.io.isFile
+import com.intellij.util.io.size
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.Signal
 import com.sun.net.httpserver.HttpHandler
@@ -20,7 +20,6 @@ import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import kotlin.io.path.*
 
 // If you want to provide a custom url:
@@ -55,38 +54,22 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     get() = RemoteDevSystemSettings.getClientDownloadUrl().value
   override val jreDownloadUrl: URI
     get() = RemoteDevSystemSettings.getJreDownloadUrl().value
+
   override val clientCachesDir: Path get () {
     val downloadDestination = IntellijClientDownloaderSystemSettings.getDownloadDestination()
     if (downloadDestination.value != null) {
       return Path(downloadDestination.value)
     }
-    return getJetBrainsSystemCachesDir() / "JetBrainsClientDist"
+
+    return Path.of(PathManager.getDefaultSystemPathFor("JetBrainsClientDist"))
   }
+
   override val clientVersionManagementEnabled: Boolean
     get() = IntellijClientDownloaderSystemSettings.isVersionManagementEnabled().value
   override val verifySignature: Boolean = true
 
-  private val ytKey = "application.info.youtrack.url"
-  private val ytUrl = "https://youtrack.jetbrains.com/newissue?project=GTW&amp;clearDraft=true&amp;description=\$DESCR"
-  private val remoteDevYouTrackFlag = "-D$ytKey=$ytUrl"
   override fun patchVmOptions(vmOptionsFile: Path, connectionUri: URI) {
-    if (!vmOptionsFile.exists()) { // on macos
-      FileUtil.createIfNotExists(vmOptionsFile.toFile())
-    }
 
-    require(vmOptionsFile.isFile() && vmOptionsFile.exists())
-
-    val originalContent = vmOptionsFile.readText(Charsets.UTF_8)
-    if (CodeWithMeGuestLauncher.isUnattendedModeUri(connectionUri)) {
-      if (!originalContent.contains(remoteDevYouTrackFlag)) {
-        val patchedContent = originalContent + "\n" + remoteDevYouTrackFlag
-        vmOptionsFile.writeText(patchedContent)
-      }
-    }
-    else {
-      val removed = originalContent.replace(remoteDevYouTrackFlag, "")
-      vmOptionsFile.writeText(removed)
-    }
   }
 
   override val clientLaunched: Signal<Unit> = Signal()
@@ -198,10 +181,6 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     tarGzServer = server
 
     return server.address
-  }
-
-  fun serveFiles(files: Array<Path>) {
-    files.forEach { serveFile(it) }
   }
 
   fun serveFile(file: Path) {

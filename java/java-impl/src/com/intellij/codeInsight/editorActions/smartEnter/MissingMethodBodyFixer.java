@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -29,11 +15,10 @@ import static com.intellij.psi.PsiModifier.*;
 public class MissingMethodBodyFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-    if (psiElement instanceof PsiField) {
+    if (psiElement instanceof PsiField field) {
       // replace something like `void x` with `void x() {...}`
       // while it's ambiguous whether user wants a field or a method, declaring a field is easier (just append a semicolon),
       // so completing a method looks more useful
-      PsiField field = (PsiField)psiElement;
       if (field.hasInitializer()) return;
       PsiElement lastChild = field.getLastChild();
       if (!(lastChild instanceof PsiErrorElement)) return;
@@ -42,7 +27,7 @@ public class MissingMethodBodyFixer implements Fixer {
       if (modifiers == null) return;
       // Impossible modifiers for a method
       if (modifiers.hasExplicitModifier(TRANSIENT) || modifiers.hasExplicitModifier(VOLATILE)) return;
-      if (!PsiType.VOID.equals(field.getType())) return;
+      if (!PsiTypes.voidType().equals(field.getType())) return;
       int endOffset = field.getTextRange().getEndOffset();
       editor.getDocument().insertString(endOffset, "(){}");
       editor.getCaretModel().moveToOffset(endOffset + 1);
@@ -50,8 +35,7 @@ public class MissingMethodBodyFixer implements Fixer {
       processor.setSkipEnter(true);
       return;
     }
-    if (!(psiElement instanceof PsiMethod)) return;
-    PsiMethod method = (PsiMethod) psiElement;
+    if (!(psiElement instanceof PsiMethod method)) return;
     if (!shouldHaveBody(method)) return;
 
     final PsiCodeBlock body = method.getBody();

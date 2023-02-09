@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -29,7 +15,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,10 +24,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author Danila Ponomarenko
- */
 public final class FieldFromParameterUtils {
+  private FieldFromParameterUtils() {}
+
   @Nullable
   public static PsiParameter findParameterAtCursor(@NotNull PsiFile file, @NotNull Editor editor) {
     int offset = editor.getCaretModel().getOffset();
@@ -108,8 +92,7 @@ public final class FieldFromParameterUtils {
   @Nullable
   public static PsiField getParameterAssignedToField(@NotNull PsiParameter parameter, boolean findIndirectAssignments) {
     for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false)) {
-      if (!(reference instanceof PsiReferenceExpression)) continue;
-      PsiReferenceExpression expression = (PsiReferenceExpression)reference;
+      if (!(reference instanceof PsiReferenceExpression expression)) continue;
       PsiAssignmentExpression assignmentExpression;
       if (findIndirectAssignments) {
         assignmentExpression = PsiTreeUtil.getParentOfType(expression, PsiAssignmentExpression.class, true, PsiClass.class);
@@ -145,19 +128,16 @@ public final class FieldFromParameterUtils {
     for (; i < statements.length; i++) {
       PsiStatement psiStatement = statements[i];
 
-      if (psiStatement instanceof PsiExpressionStatement) {
-        PsiExpressionStatement expressionStatement = (PsiExpressionStatement)psiStatement;
+      if (psiStatement instanceof PsiExpressionStatement expressionStatement) {
         PsiExpression expression = expressionStatement.getExpression();
 
-        if (expression instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+        if (expression instanceof PsiMethodCallExpression methodCallExpression) {
           String text = methodCallExpression.getMethodExpression().getText();
           if (text.equals("super") || text.equals("this")) {
             continue;
           }
         }
-        else if (expression instanceof PsiAssignmentExpression) {
-          PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+        else if (expression instanceof PsiAssignmentExpression assignmentExpression) {
           PsiExpression lExpression = assignmentExpression.getLExpression();
 
           if (!(lExpression instanceof PsiReferenceExpression)) break;
@@ -204,14 +184,14 @@ public final class FieldFromParameterUtils {
     return i;
   }
 
-  public static void createFieldAndAddAssignment(@NotNull Project project,
-                                                 @NotNull PsiClass targetClass,
-                                                 @NotNull PsiMethod method,
-                                                 @NotNull PsiParameter parameter,
-                                                 @NotNull PsiType fieldType,
-                                                 @NotNull String fieldName,
-                                                 boolean isStatic,
-                                                 boolean isFinal) throws IncorrectOperationException {
+  public static PsiField createFieldAndAddAssignment(@NotNull Project project,
+                                                     @NotNull PsiClass targetClass,
+                                                     @NotNull PsiMethod method,
+                                                     @NotNull PsiParameter parameter,
+                                                     @NotNull PsiType fieldType,
+                                                     @NotNull String fieldName,
+                                                     boolean isStatic,
+                                                     boolean isFinal) {
     PsiManager psiManager = PsiManager.getInstance(project);
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
     PsiElementFactory factory = psiFacade.getElementFactory();
@@ -219,7 +199,7 @@ public final class FieldFromParameterUtils {
     PsiField field = factory.createField(fieldName, fieldType);
 
     PsiModifierList modifierList = field.getModifierList();
-    if (modifierList == null) return;
+    if (modifierList == null) return null;
     modifierList.setModifierProperty(PsiModifier.STATIC, isStatic);
     modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
 
@@ -229,7 +209,7 @@ public final class FieldFromParameterUtils {
     }
 
     PsiCodeBlock methodBody = method.getBody();
-    if (methodBody == null) return;
+    if (methodBody == null) return null;
     PsiStatement[] statements = methodBody.getStatements();
 
 
@@ -264,16 +244,17 @@ public final class FieldFromParameterUtils {
       if (!anchor.isNull()) {
         PsiField inField = anchor.get();
         if (isBefore.get()) {
-          targetClass.addBefore(field, inField);
+          return (PsiField)targetClass.addBefore(field, inField);
         }
         else {
-          targetClass.addAfter(field, inField);
+          return (PsiField)targetClass.addAfter(field, inField);
         }
       }
       else {
-        targetClass.add(field);
+        return (PsiField)targetClass.add(field);
       }
     }
+    return null;
   }
 
   public static boolean isAvailable(@NotNull PsiParameter myParameter,
@@ -296,6 +277,4 @@ public final class FieldFromParameterUtils {
            !targetClass.isInterface() &&
            getParameterAssignedToField(myParameter, findIndirectAssignments) == null;
   }
-
-  private FieldFromParameterUtils() { }
 }

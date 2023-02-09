@@ -28,20 +28,12 @@ public abstract class InspectionExtensionsFactory {
   public abstract String getSuppressedInspectionIdsIn(@NotNull PsiElement element);
 
   /**
-   * @deprecated use {@link #isProjectConfiguredToRunInspections(Project, boolean, Runnable)}
-   */
-  @Deprecated(forRemoval = true)
-  public boolean isProjectConfiguredToRunInspections(@NotNull Project project, boolean online) {
-    return true;
-  }
-
-  /**
    * @return true to allow inspections run locally or false to stop it. The {@param rerunAction}
    * can be used later to restart the same inspections once again (e.g. after the configuration is fixed by a user)
    */
   public boolean isProjectConfiguredToRunInspections(@NotNull Project project,
                                                      boolean online,
                                                      @NotNull Runnable rerunAction) {
-    return isProjectConfiguredToRunInspections(project, online);
+    return true;
   }
 }

@@ -139,11 +139,9 @@ public class RandomDoubleForRandomIntegerInspection extends BaseInspection imple
       if (expression == null) {
         return false;
       }
-      if (!(expression instanceof PsiBinaryExpression)) {
+      if (!(expression instanceof PsiBinaryExpression binaryExpression)) {
         return false;
       }
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)expression;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       return JavaTokenType.ASTERISK.equals(tokenType);
     }
@@ -152,13 +150,11 @@ public class RandomDoubleForRandomIntegerInspection extends BaseInspection imple
       if (expression == null) {
         return false;
       }
-      if (!(expression instanceof PsiTypeCastExpression)) {
+      if (!(expression instanceof PsiTypeCastExpression castExpression)) {
         return false;
       }
-      final PsiTypeCastExpression castExpression =
-        (PsiTypeCastExpression)expression;
       final PsiType type = castExpression.getType();
-      return PsiType.INT.equals(type);
+      return PsiTypes.intType().equals(type);
     }
   }
 

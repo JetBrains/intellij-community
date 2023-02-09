@@ -36,9 +36,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author ven
- */
 public class MissingReturnInspection extends GroovyLocalInspectionTool {
 
   public enum ReturnStatus {
@@ -51,10 +48,10 @@ public class MissingReturnInspection extends GroovyLocalInspectionTool {
           PsiClass resolved = ((PsiClassType)inferredReturnType).resolve();
           if (resolved != null && !(resolved instanceof PsiTypeParameter)) return mustReturnValue;
         }
-        return inferredReturnType != null && !PsiType.VOID.equals(inferredReturnType) ? shouldReturnValue : shouldNotReturnValue;
+        return inferredReturnType != null && !PsiTypes.voidType().equals(inferredReturnType) ? shouldReturnValue : shouldNotReturnValue;
       }
       else if (subject instanceof GrMethod) {
-        return ((GrMethod)subject).getReturnTypeElementGroovy() != null && !PsiType.VOID.equals(((GrMethod)subject).getReturnType())
+        return ((GrMethod)subject).getReturnTypeElementGroovy() != null && !PsiTypes.voidType().equals(((GrMethod)subject).getReturnType())
                ? mustReturnValue
                : shouldNotReturnValue;
       }
@@ -104,7 +101,7 @@ public class MissingReturnInspection extends GroovyLocalInspectionTool {
     }
 
     for (PsiType type : expectedReturnTypes) {
-      if (PsiType.VOID.equals(type) || PsiType.VOID.equals(PsiPrimitiveType.getUnboxedType(type))) return PsiType.VOID;
+      if (PsiTypes.voidType().equals(type) || PsiTypes.voidType().equals(PsiPrimitiveType.getUnboxedType(type))) return PsiTypes.voidType();
     }
     return TypesUtil.getLeastUpperBoundNullable(expectedReturnTypes, closure.getManager());
   }

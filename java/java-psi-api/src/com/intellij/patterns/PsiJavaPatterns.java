@@ -17,6 +17,7 @@ package com.intellij.patterns;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,9 +91,7 @@ public class PsiJavaPatterns extends StandardPatterns{
         if (o instanceof PsiNewExpression) {
           PsiJavaCodeReferenceElement reference = ((PsiNewExpression)o).getClassOrAnonymousClassReference();
           if (reference != null) {
-            for (String fqn : fqns) {
-              if (fqn.equals(reference.getQualifiedName())) return true;
-            }
+            return ArrayUtil.contains(reference.getQualifiedName(), fqns);
           }
         }
         return false;

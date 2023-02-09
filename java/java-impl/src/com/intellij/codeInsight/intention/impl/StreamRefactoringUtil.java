@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.util.OptionalRefactoringUtil;
@@ -14,12 +14,10 @@ import java.util.Objects;
 
 public final class StreamRefactoringUtil {
   static boolean isRefactoringCandidate(PsiExpression expression, boolean requireExpressionLambda) {
-    if(expression instanceof PsiLambdaExpression) {
-      PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)expression;
+    if(expression instanceof PsiLambdaExpression lambdaExpression) {
       return lambdaExpression.getParameterList().getParametersCount() == 1 &&
              (!requireExpressionLambda || LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody()) != null);
-    } else if(expression instanceof PsiMethodReferenceExpression) {
-      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
+    } else if(expression instanceof PsiMethodReferenceExpression methodRef) {
       return methodRef.resolve() != null && LambdaRefactoringUtil.canConvertToLambdaWithoutSideEffects(methodRef);
     }
     return false;
@@ -63,10 +61,10 @@ public final class StreamRefactoringUtil {
       if (outType.equals(inType)) {
         return "";
       }
-      if (PsiType.LONG.equals(outType) && PsiType.INT.equals(inType)) {
+      if (PsiTypes.longType().equals(outType) && PsiTypes.intType().equals(inType)) {
         return "asLongStream";
       }
-      if (PsiType.DOUBLE.equals(outType) && (PsiType.LONG.equals(inType) || PsiType.INT.equals(inType))) {
+      if (PsiTypes.doubleType().equals(outType) && (PsiTypes.longType().equals(inType) || PsiTypes.intType().equals(inType))) {
         return "asDoubleStream";
       }
     }
@@ -84,11 +82,11 @@ public final class StreamRefactoringUtil {
   public static String getMapOperationName(PsiType inType, @Nullable PsiType outType) {
     if(outType instanceof PsiPrimitiveType) {
       if(!outType.equals(inType)) {
-        if(PsiType.INT.equals(outType)) {
+        if(PsiTypes.intType().equals(outType)) {
           return "mapToInt";
-        } else if(PsiType.LONG.equals(outType)) {
+        } else if(PsiTypes.longType().equals(outType)) {
           return "mapToLong";
-        } else if(PsiType.DOUBLE.equals(outType)) {
+        } else if(PsiTypes.doubleType().equals(outType)) {
           return "mapToDouble";
         }
       }
@@ -101,13 +99,13 @@ public final class StreamRefactoringUtil {
   @Nullable
   public static String getFlatMapOperationName(PsiType inType, PsiType outType) {
     if (!(inType instanceof PsiPrimitiveType)) {
-      if (PsiType.INT.equals(outType)) {
+      if (PsiTypes.intType().equals(outType)) {
         return "flatMapToInt";
       }
-      else if (PsiType.LONG.equals(outType)) {
+      else if (PsiTypes.longType().equals(outType)) {
         return "flatMapToLong";
       }
-      else if (PsiType.DOUBLE.equals(outType)) {
+      else if (PsiTypes.doubleType().equals(outType)) {
         return "flatMapToDouble";
       }
     } else if (!inType.equals(outType)) return null;

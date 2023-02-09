@@ -52,9 +52,9 @@ public class IdentifierHighlighterPass {
 
   private final PsiFile myFile;
   private final Editor myEditor;
-  private final Collection<TextRange> myReadAccessRanges = Collections.synchronizedList(new ArrayList<>());
-  private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedList(new ArrayList<>());
-  private final Collection<TextRange> myCodeBlockMarkerRanges = Collections.synchronizedList(new ArrayList<>());
+  private final Collection<TextRange> myReadAccessRanges = Collections.synchronizedSet(new LinkedHashSet<>());
+  private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedSet(new LinkedHashSet<>());
+  private final Collection<TextRange> myCodeBlockMarkerRanges = Collections.synchronizedSet(new LinkedHashSet<>());
   private final int myCaretOffset;
   private final ProperTextRange myVisibleRange;
 
@@ -229,7 +229,7 @@ public class IdentifierHighlighterPass {
     int id = IdentifierHighlighterPass.id;
     if (id == 0) {
       IdentifierHighlighterPass.id = id = ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(
-        myFile.getProject())).getNextAvailableId().incrementAndGet();
+        myFile.getProject())).getNextAvailableId();
     }
     return id;
   }

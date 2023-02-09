@@ -25,9 +25,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
@@ -36,7 +34,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.function.BiConsumer;
 
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final Logger LOG = Logger.getInstance(VirtualDirectoryImpl.class);
@@ -145,7 +143,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         return null;
       }
 
-
       if (ensureCanonicalName) {
         CharSequence persistedName = childInfo.getName();
         if (!Comparing.equal(name, persistedName)) {
@@ -240,6 +237,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
+  @NotNull
   private VirtualFileSystemEntry createChild(int id, int nameId, @PersistentFS.Attributes int attributes, boolean isEmptyDirectory) {
     FileLoadingTracker.fileLoaded(this, nameId);
 
@@ -343,7 +341,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  @SuppressWarnings("SpellCheckingInspection")
   public @NotNull Iterable<VirtualFile> iterInDbChildren() {
     if (!getPersistence().wereChildrenAccessed(this)) {
       return Collections.emptyList();
@@ -359,7 +356,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  @SuppressWarnings("SpellCheckingInspection")
   public @NotNull Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
     if (!getPersistence().wereChildrenAccessed(this)) {
       return Collections.emptyList();
@@ -444,9 +440,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           files[i] = file;
         }
         if (!prevChildren.isEmpty()) {
-          LOG.error("Loaded child disappeared: " +
-                    "parent=" + verboseToString(this) +
-                    "; child=" + verboseToString(vfsData.getFileById(prevChildren.iterator().nextInt(), this, true)));
+          var missing = vfsData.getFileById(prevChildren.iterator().nextInt(), this, true);
+          LOG.error("Loaded child disappeared: parent=" + verboseToString(this) + "; child=" + verboseToString(missing));
         }
       }
 
@@ -476,11 +471,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (cmp <= 0) {
         VirtualFileSystemEntry prevFile = vfsData.getFileById(prev, this, true);
         VirtualFileSystemEntry child = vfsData.getFileById(id, this, true);
-        String info = "prevFile.isCaseSensitive()=" + (prevFile == null ? "?" : prevFile.isCaseSensitive()) + ";" +
-                      "child.isCaseSensitive()=" + (child == null ? "?" : child.isCaseSensitive()) + ";" +
+        String info = "prevFile.isCaseSensitive()=" + (prevFile == null ? "?" : prevFile.isCaseSensitive()) + ';' +
+                      "child.isCaseSensitive()=" + (child == null ? "?" : child.isCaseSensitive()) + ';' +
                       "this.isCaseSensitive()=" + this.isCaseSensitive();
-
-        String message = info + " but in "+this+" the " +verboseToString(prevFile) + "\n is wrongly placed before " + verboseToString(child)+"\n";
+        String message = info + " but in " + this + " the " + verboseToString(prevFile) + "\n is wrongly placed before " + verboseToString(child) + '\n';
         error(message, details);
       }
       synchronized (myData) {
@@ -494,31 +488,32 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
-  private static @NotNull @NonNls String verboseToString(@Nullable VirtualFileSystemEntry file) {
-    if (file == null) return "null";
-    return file + " (name: '" + file.getName()
-           + "', " + file.getClass()
-           + ", parent: " + file.getParent()
-           + "; id: " + file.getId()
-           + "; FS: " + file.getFileSystem()
-           + "; fs.attrs: " + file.getFileSystem().getAttributes(file)
-           + "; isCaseSensitive: " + file.isCaseSensitive()
-           + "; canonical: " + file.getFileSystem().getCanonicallyCasedName(file)
-           + ") ";
+  private static String verboseToString(@Nullable VirtualFileSystemEntry file) {
+    return file == null ? "null" :
+           file +
+           " (name: '" + file.getName() + "'" +
+           ", " + file.getClass() +
+           ", parent: " + file.getParent() +
+           ", id: " + file.getId() +
+           ", FS: " + file.getFileSystem() +
+           ", fs.attrs: " + file.getFileSystem().getAttributes(file) +
+           ", isCaseSensitive: " + file.isCaseSensitive() +
+           ", canonical: " + file.getFileSystem().getCanonicallyCasedName(file) +
+           ')';
   }
 
-  private void error(@NonNls String message, @NonNls Object @NotNull ... details) {
-    VirtualFileSystemEntry[] array = getArraySafely(true);
-    String children = StringUtil.join(array, VirtualDirectoryImpl::verboseToString, "\n");
-    String detailsStr = StringUtil.join(ContainerUtil.<Object, Object>map(details, o -> o instanceof Object[] ? Arrays.toString((Object[])o) : o), "\n");
-    throw new AssertionError(message + ";\n children: \n" + children + "\nDetails: " + detailsStr);
+  private void error(String message, Object... details) {
+    var builder = new StringBuilder().append(message).append("\n--- children ---");
+    for (var child : getArraySafely(true)) builder.append('\n').append(verboseToString(child));
+    builder.append("--- details ---");
+    for (var o : details) builder.append('\n').append(o instanceof Object[] ? Arrays.toString((Object[])o) : o.toString());
+    throw new AssertionError(builder.toString());
   }
 
   @Override
   public @Nullable VirtualFileSystemEntry findChild(@NotNull String name) {
     return findChild(name, false, true, getFileSystem());
   }
-
 
   @ApiStatus.Internal
   public VirtualFileSystemEntry doFindChildById(int id) {
@@ -549,10 +544,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   // optimisation: works faster than added.forEach(this::addChild)
   @ApiStatus.Internal
-  public void createAndAddChildren(@NotNull List<? extends ChildInfo> added,
-                                   boolean markAllChildrenLoaded,
-                                   @NotNull PairConsumer<? super VirtualFile, ? super ChildInfo> fileCreated) {
+  public void createAndAddChildren(@NotNull List<ChildInfo> added, boolean markAllChildrenLoaded, @NotNull BiConsumer<? super VirtualFile, ? super ChildInfo> callback) {
     if (added.size() <= 1) {
+      //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < added.size(); i++) {
         ChildInfo info = added.get(i);
         assert info.getId() > 0 : info;
@@ -564,7 +558,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           if (ArrayUtil.indexOf(oldIds, info.getId()) < 0) {
             VirtualFileSystemEntry file = createChild(info.getId(), info.getNameId(), attributes, isEmptyDirectory);
             addChild(file);
-            fileCreated.consume(file, info);
+            callback.accept(file, info);
           }
         }
       }
@@ -604,7 +598,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           boolean isEmptyDirectory = nextInfo.getChildren() != null && nextInfo.getChildren().length == 0;
           myData.removeAdoptedName(nextInfo.getName());
           VirtualFileSystemEntry file = createChild(nextInfo.getId(), nextInfo.getNameId(), attributes, isEmptyDirectory);
-          fileCreated.consume(file, nextInfo);
+          callback.accept(file, nextInfo);
         }
         mergedIds.add(nextInfo.getId());
       });
@@ -667,7 +661,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
       }
       if (o != newIds.length) {
-        newIds = o == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : Arrays.copyOf(newIds, o);
+        newIds = o == 0 ? ArrayUtil.EMPTY_INT_ARRAY : Arrays.copyOf(newIds, o);
       }
       myData.myChildrenIds = newIds;
 

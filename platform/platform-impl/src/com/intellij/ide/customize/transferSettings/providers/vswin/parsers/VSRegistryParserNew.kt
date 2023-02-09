@@ -8,18 +8,17 @@ import com.intellij.ide.customize.transferSettings.db.WindowsEnvVariables
 import com.intellij.ide.customize.transferSettings.models.FeatureInfo
 import com.intellij.ide.customize.transferSettings.models.ILookAndFeel
 import com.intellij.ide.customize.transferSettings.models.RecentPathInfo
-import com.intellij.openapi.util.io.systemIndependentPath
-import com.intellij.util.io.exists
-import com.jetbrains.rd.util.lifetime.Lifetime
 import com.intellij.ide.customize.transferSettings.providers.vswin.mappings.FontsAndColorsMappings
 import com.intellij.ide.customize.transferSettings.providers.vswin.mappings.PluginsMapping
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSHive
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSHiveDetourFileNotFoundException
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSProfileDetectorUtils
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSProfileSettingsFileNotFound
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.registryUtils.impl.PrivateRegistryRoot
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.registryUtils.impl.RegistryRoot
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.io.systemIndependentPath
+import com.jetbrains.rd.util.lifetime.Lifetime
 import com.sun.jna.platform.win32.WinReg
 import java.io.File
 import java.nio.file.Files
@@ -28,6 +27,7 @@ import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 class VSRegistryParserNew private constructor(val hive: VSHive) {
   companion object {

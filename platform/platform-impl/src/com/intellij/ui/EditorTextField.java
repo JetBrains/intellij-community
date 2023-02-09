@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.actions.IdeScaleTransformer;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.ui.laf.PluggableLafInfo;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.Disposable;
@@ -46,6 +46,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.LineSeparator;
@@ -66,6 +68,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.ui.dsl.gridLayout.GapsKt.JBGaps;
 
 /**
  * Use {@code editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);} to disable search/replace component.
@@ -150,6 +154,14 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
         if (myEditor == null) initEditor();
       }
     });
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, JBGaps(3, 3, 3, 3));
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, this); // Disable warning in Kotlin UI DSL, see IDEA-309743
+  }
+
+  @Nullable
+  private Project getProjectIfValid() {
+    return myProject == null || myProject.isDisposed() ? null : myProject;
   }
 
   //prevent from editor reinitialisation on add/remove
@@ -259,10 +271,10 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     Editor editor = getEditor();
     if (editor != null) {
       EditorEx newEditor = createEditor();
-      scheduleEditorRelease();
+      releaseEditorAndScheduleForRemoval();
       myEditor = newEditor;
       add(newEditor.getComponent(), BorderLayout.CENTER);
-      releaseScheduledEditors();
+      removeScheduledEditors();
 
       validate();
     }
@@ -320,7 +332,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
    * is instantiated lazily by the editor text field and provided placeholder text is applied to the editor during its
    * actual construction then.
    *
-   * @param text    {@link EditorEx#setPlaceholder(CharSequence) editor's placeholder} text to use
+   * @param text {@link EditorEx#setPlaceholder(CharSequence) editor's placeholder} text to use
    */
   public void setPlaceholder(@Nls @Nullable CharSequence text) {
     myHintText = text;
@@ -371,6 +383,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       myCaretPosition = position;
     }
   }
+
   public CaretModel getCaretModel() {
     Editor editor = getEditor(true);
     return editor == null ? null : editor.getCaretModel();
@@ -399,12 +412,13 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
 
     myDisposable = Disposer.newDisposable("ETF dispose");
-    Disposer.register(myDisposable, this::releaseEditorLater);
-    if (myProject != null) {
-      myProject.getMessageBus().connect(myDisposable).subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
+    Disposer.register(myDisposable, this::releaseEditorAndScheduleForRemovalLater);
+    Project project = getProjectIfValid();
+    if (project != null) {
+      project.getMessageBus().connect(myDisposable).subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
         @Override
-        public void projectClosing(@NotNull Project project) {
-          if (project == myProject) {
+        public void projectClosing(@NotNull Project p) {
+          if (p == project) {
             releaseEditorNow();
           }
         }
@@ -420,7 +434,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       }
     });
     if (myEditor != null) {
-      releaseEditorLater();
+      releaseEditorAndScheduleForRemovalLater();
     }
 
     boolean isFocused = isFocusOwner();
@@ -468,52 +482,49 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
   }
 
-  private void releaseEditor(@NotNull Editor editor) {
-    // todo IMHO this should be removed completely
-    if (myProject != null && !myProject.isDisposed() && myIsViewer) {
-      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+  private void releaseEditorNow() {
+    releaseEditorAndScheduleForRemoval();
+    removeScheduledEditors();
+  }
+
+  // releasing an editor implies removing it from a component hierarchy
+  // invokeLater is required because releaseEditor() may be called from
+  // removeNotify(), so we need to let swing complete its removeNotify() chain
+  // and only then execute another removal from the hierarchy. Otherwise
+  // swing goes nuts because of nested removals and indices get corrupted
+  private boolean releaseEditorAndScheduleForRemoval() {
+    EditorEx editor = myEditor;
+    if (editor == null) return false;
+
+    //TODO: this probably should be removed completely (see 6c7c95cef4e5accc03f9cb1c6b2b2952c01395cd)
+    Project project = getProjectIfValid();
+    if (project != null && myIsViewer) {
+      final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile != null) {
-        DaemonCodeAnalyzer.getInstance(myProject).setHighlightingEnabled(psiFile, true);
+        DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, true);
       }
     }
-
-    remove(editor.getComponent());
-
-    editor.getContentComponent().removeFocusListener(this);
-    editor.getContentComponent().removeMouseListener(this);
 
     if (!editor.isDisposed()) {
       EditorFactory.getInstance().releaseEditor(editor);
     }
-  }
 
-  private void releaseEditorNow() {
-    scheduleEditorRelease();
-    releaseScheduledEditors();
-  }
-
-  private boolean scheduleEditorRelease() {
-    EditorEx editor = myEditor;
-    if (editor == null) return false;
     myEditorsToBeReleased.add(editor);
     myEditor = null;
     return true;
   }
 
-  void releaseEditorLater() {
-    // releasing an editor implies removing it from a component hierarchy
-    // invokeLater is required because releaseEditor() may be called from
-    // removeNotify(), so we need to let swing complete its removeNotify() chain
-    // and only then execute another removal from the hierarchy. Otherwise
-    // swing goes nuts because of nested removals and indices get corrupted
-    if (scheduleEditorRelease()) {
-      ApplicationManager.getApplication().invokeLater(() -> releaseScheduledEditors(), ModalityState.stateForComponent(this));
+  void releaseEditorAndScheduleForRemovalLater() {
+    if (releaseEditorAndScheduleForRemoval()) {
+      ApplicationManager.getApplication().invokeLater(() -> removeScheduledEditors(), ModalityState.stateForComponent(this));
     }
   }
 
-  private void releaseScheduledEditors() {
+  private void removeScheduledEditors() {
     for (Editor editorToRelease : myEditorsToBeReleased) {
-      releaseEditor(editorToRelease);
+      remove(editorToRelease.getComponent());
+      editorToRelease.getContentComponent().removeFocusListener(this);
+      editorToRelease.getContentComponent().removeMouseListener(this);
     }
     myEditorsToBeReleased.clear();
   }
@@ -530,6 +541,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   /**
    * This option will be used for embedded editor creation. It's ok to override this method if you don't want to configure
    * it using class constructor
+   *
    * @return is one line mode or not
    */
   protected boolean isOneLineMode() {
@@ -561,34 +573,36 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   protected Document createDocument() {
-    final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
+    Project project = getProjectIfValid();
+    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
     final long stamp = LocalTimeCounter.currentTime();
     final PsiFile psiFile = factory.createFileFromText("Dummy." + myFileType.getDefaultExtension(), myFileType, "", stamp, true, false);
-    return PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
+    return PsiDocumentManager.getInstance(project).getDocument(psiFile);
   }
 
   @NotNull
   protected EditorEx createEditor() {
+    Project project = getProjectIfValid();
     Document document = getDocument();
     final EditorFactory factory = EditorFactory.getInstance();
-    EditorEx editor = (EditorEx)(myIsViewer ? factory.createViewer(document, myProject) : factory.createEditor(document, myProject));
+    EditorEx editor = (EditorEx)(myIsViewer ? factory.createViewer(document, project) : factory.createEditor(document, project));
     editor.putUserData(MANAGED_BY_FIELD, Boolean.TRUE);
 
     setupTextFieldEditor(editor);
     editor.setCaretEnabled(!myIsViewer);
 
-    if (myProject != null) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+    if (project != null) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile != null) {
-        DaemonCodeAnalyzer.getInstance(myProject).setHighlightingEnabled(psiFile, !myIsViewer);
+        DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, !myIsViewer);
       }
     }
 
-    if (myProject != null) {
+    if (project != null) {
       EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
       VirtualFile virtualFile = myDocument == null ? null : FileDocumentManager.getInstance().getFile(myDocument);
-      EditorHighlighter highlighter = virtualFile != null ? highlighterFactory.createEditorHighlighter(myProject, virtualFile) :
-                                      myFileType != null ? highlighterFactory.createEditorHighlighter(myProject, myFileType) : null;
+      EditorHighlighter highlighter = virtualFile != null ? highlighterFactory.createEditorHighlighter(project, virtualFile) :
+                                      myFileType != null ? highlighterFactory.createEditorHighlighter(project, myFileType) : null;
       if (highlighter != null) editor.setHighlighter(highlighter);
     }
 
@@ -658,8 +672,11 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   protected void updateBorder(@NotNull final EditorEx editor) {
     if (editor.isOneLineMode()
-        && !Boolean.TRUE.equals(getClientProperty("JComboBox.isTableCellEditor"))
-        && (SwingUtilities.getAncestorOfClass(JTable.class, this) == null || Boolean.TRUE.equals(getClientProperty("JBListTable.isTableCellEditor")))) {
+        &&
+        !Boolean.TRUE.equals(getClientProperty("JComboBox.isTableCellEditor"))
+        &&
+        (SwingUtilities.getAncestorOfClass(JTable.class, this) == null ||
+         Boolean.TRUE.equals(getClientProperty("JBListTable.isTableCellEditor")))) {
       final Container parent = getParent();
       if (parent instanceof JTable || parent instanceof CellRendererPane) return;
 
@@ -690,7 +707,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       editor.getColorsScheme().setEditorFontSize(getFont().getSize());
       return;
     }
-    float currentEditorFontSize = IdeScaleTransformer.INSTANCE.getCurrentEditorFontSize();
+    float currentEditorFontSize = UISettingsUtils.getInstance().getScaledEditorFontSize();
     if (editor.getColorsScheme().getEditorFontSize2D() != currentEditorFontSize) {
       editor.putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true);
       editor.setFontSize(currentEditorFontSize);
@@ -719,9 +736,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     final EditorEx editor = myEditor;
 
     if (editor != null) {
-      scheduleEditorRelease();
+      releaseEditorAndScheduleForRemoval();
       initEditorInner();
-      releaseScheduledEditors();
+      removeScheduledEditors();
       revalidate();
     }
   }
@@ -744,7 +761,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     return color != null ? color : super.getBackground();
   }
 
-  private Color getBackgroundColor(boolean enabled, final EditorColorsScheme colorsScheme){
+  private Color getBackgroundColor(boolean enabled, final EditorColorsScheme colorsScheme) {
     if (myEnforcedBgColor != null) return myEnforcedBgColor;
     if (ComponentUtil.getParentOfType(CellRendererPane.class, this) != null &&
         (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
@@ -908,7 +925,6 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   /**
-   *
    * @return null if the editor is not initialized (e.g. if the field is not added to a container)
    * @see #createEditor()
    * @see #addNotify()
@@ -1041,6 +1057,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   private static class Jdk7DelegatingToRootTraversalPolicy extends AbstractDelegatingToRootTraversalPolicy {
     private boolean invokedFromBeforeOrAfter;
+
     @Override
     public Component getFirstComponent(Container aContainer) {
       return getDefaultComponent(aContainer);
@@ -1064,16 +1081,17 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       Component after;
       try {
         after = super.getComponentAfter(aContainer, aComponent);
-      } finally {
+      }
+      finally {
         invokedFromBeforeOrAfter = false;
       }
-      return after != aComponent? after: null;  // escape our container
+      return after != aComponent ? after : null;  // escape our container
     }
 
     @Override
     public Component getComponentBefore(Container aContainer, Component aComponent) {
       Component before = super.getComponentBefore(aContainer, aComponent);
-      return before != aComponent ? before: null;  // escape our container
+      return before != aComponent ? before : null;  // escape our container
     }
 
     @Override

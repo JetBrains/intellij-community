@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,7 +42,9 @@ public class UsageViewPresentation {
   private boolean myMergeDupLinesAvailable = true;
   private boolean myExcludeAvailable = true;
   private Pattern mySearchPattern;
-  private Pattern myReplacePattern;
+  private boolean myCaseSensitive;
+  private boolean myPreserveCase;
+  private String myReplaceString;
   private boolean myReplaceMode;
 
   public @NlsContexts.TabTitle String getTabText() {
@@ -220,12 +222,42 @@ public class UsageViewPresentation {
     return mySearchPattern;
   }
 
-  public void setReplacePattern(Pattern replacePattern) {
-    myReplacePattern = replacePattern;
+  public void setCaseSensitive(boolean caseSensitive) {
+    myCaseSensitive = caseSensitive;
   }
 
+  public boolean isCaseSensitive() {
+    return myCaseSensitive;
+  }
+
+  public void setPreserveCase(boolean preserveCase) {
+    myPreserveCase = preserveCase;
+  }
+
+  public boolean isPreserveCase() {
+    return myPreserveCase;
+  }
+
+  /**
+   * @deprecated Use {@link #setReplaceString(String)}
+   */
+  @Deprecated
+  public void setReplacePattern(Pattern replacePattern) { }
+
+  public void setReplaceString(String replaceString) {
+    myReplaceString = replaceString;
+  }
+
+  /**
+   * @deprecated Use {@link #getReplaceString()}
+   */
+  @Deprecated(forRemoval = true)
   public Pattern getReplacePattern() {
-    return myReplacePattern;
+    return null;
+  }
+
+  public String getReplaceString() {
+    return myReplaceString;
   }
 
   public boolean isReplaceMode() {
@@ -261,7 +293,7 @@ public class UsageViewPresentation {
            && Objects.equals(myUsagesString, that.myUsagesString)
            && Objects.equals(mySearchString, that.mySearchString)
            && arePatternsEqual(mySearchPattern, that.mySearchPattern)
-           && arePatternsEqual(myReplacePattern, that.myReplacePattern);
+           && Objects.equals(myReplaceString, that.myReplaceString);
   }
 
   public static boolean arePatternsEqual(Pattern p1, Pattern p2) {
@@ -297,10 +329,10 @@ public class UsageViewPresentation {
       myDetachedMode,
       myDynamicCodeUsagesString,
       myMergeDupLinesAvailable,
-      myReplaceMode
+      myReplaceMode,
+      myReplaceString
     );
     result = 31 * result + getHashCode(mySearchPattern);
-    result = 31 * result + getHashCode(myReplacePattern);
     return result;
   }
 
@@ -325,7 +357,7 @@ public class UsageViewPresentation {
     copyInstance.myMergeDupLinesAvailable = myMergeDupLinesAvailable;
     copyInstance.myExcludeAvailable = myExcludeAvailable;
     copyInstance.mySearchPattern = mySearchPattern;
-    copyInstance.myReplacePattern = myReplacePattern;
+    copyInstance.myReplaceString = myReplaceString;
     copyInstance.myReplaceMode = myReplaceMode;
     return copyInstance;
   }

@@ -18,10 +18,11 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.*
 import org.jetbrains.kotlin.idea.base.util.projectScope
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.scriptDefinitionExists
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.scriptDefinitionExists
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.util.minus' instead",
     ReplaceWith("this.minus", imports = ["org.jetbrains.kotlin.idea.base.util.minus"]),
@@ -51,6 +53,7 @@ fun Project.allScope(): GlobalSearchScope = GlobalSearchScope.allScope(this)
 )
 fun Project.projectScope(): GlobalSearchScope = GlobalSearchScope.projectScope(this)
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.util.moduleScope' instead",
     ReplaceWith("this.moduleScope()", imports = ["org.jetbrains.kotlin.idea.base.util.moduleScope"]),
@@ -143,6 +146,7 @@ fun PsiReference.isImportUsage(): Boolean =
     element.getNonStrictParentOfType<KtImportDirective>() != null
 
 // Used in the "mirai" plugin
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Use org.jetbrains.kotlin.idea.base.psi.kotlinFqName",
     level = DeprecationLevel.ERROR,

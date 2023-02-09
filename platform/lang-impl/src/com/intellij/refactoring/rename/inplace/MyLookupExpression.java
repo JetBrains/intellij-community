@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
@@ -33,6 +34,7 @@ public class MyLookupExpression extends Expression {
   protected final LookupElement[] myLookupItems;
   private final @NlsContexts.PopupAdvertisement String myAdvertisementText;
   private volatile LookupFocusDegree myLookupFocusDegree = LookupFocusDegree.FOCUSED;
+  private SuggestedNameInfo mySuggestedNameInfo;
 
   public MyLookupExpression(@NlsSafe String name,
                             @Nullable LinkedHashSet<@NlsSafe String> names,
@@ -45,7 +47,12 @@ public class MyLookupExpression extends Expression {
     myLookupItems = initLookupItems(names, elementToRename, nameSuggestionContext, shouldSelectAll);
   }
 
-  private static LookupElement[] initLookupItems(@Nullable LinkedHashSet<String> names,
+  @Nullable
+  public SuggestedNameInfo getSuggestedNameInfo() {
+    return mySuggestedNameInfo;
+  }
+
+  private LookupElement[] initLookupItems(@Nullable LinkedHashSet<String> names,
                                                  @Nullable PsiNamedElement elementToRename,
                                                  @Nullable PsiElement nameSuggestionContext,
                                                  final boolean shouldSelectAll) {
@@ -53,8 +60,9 @@ public class MyLookupExpression extends Expression {
       if (elementToRename == null) return LookupElement.EMPTY_ARRAY;
       names = new LinkedHashSet<>();
       final LinkedHashSet<String> finalNames = names;
-      ActionUtil.underModalProgress(elementToRename.getProject(), RefactoringBundle.message("progress.title.collecting.suggested.names"),
-                                    () -> NameSuggestionProvider.suggestNames(elementToRename, nameSuggestionContext, finalNames));
+      mySuggestedNameInfo =
+        ActionUtil.underModalProgress(elementToRename.getProject(), RefactoringBundle.message("progress.title.collecting.suggested.names"),
+                                      () -> NameSuggestionProvider.suggestNames(elementToRename, nameSuggestionContext, finalNames));
     }
     final LookupElement[] lookupElements = new LookupElement[names.size()];
     final Iterator<String> iterator = names.iterator();

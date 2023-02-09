@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,9 +26,6 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class ParametrizedDuplicates {
   private static final Logger LOG = Logger.getInstance(ParametrizedDuplicates.class);
 
@@ -486,11 +483,10 @@ public final class ParametrizedDuplicates {
   @Nullable
   private static PsiExpression wrapExpressionWithCodeBlock(PsiElement @NotNull [] copy,
                                                            @NotNull ExtractMethodProcessor originalProcessor) {
-    if (copy.length != 1 || !(copy[0] instanceof PsiExpression)) return null;
+    if (copy.length != 1 || !(copy[0] instanceof PsiExpression expression)) return null;
 
-    PsiExpression expression = (PsiExpression)copy[0];
     PsiType type = expression.getType();
-    if (type == null || PsiType.NULL.equals(type)) return null;
+    if (type == null || PsiTypes.nullType().equals(type)) return null;
 
     PsiElement parent = expression.getParent();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
@@ -501,7 +497,7 @@ public final class ParametrizedDuplicates {
     if (parentClassStart == null) return null;
 
     // It's syntactically correct to write "new Object() {void foo(){}}.foo()" - see JLS 15.9.5
-    @NonNls String wrapperBodyText = (PsiType.VOID.equals(type) ? "" : "return ") + expression.getText() + ";";
+    @NonNls String wrapperBodyText = (PsiTypes.voidType().equals(type) ? "" : "return ") + expression.getText() + ";";
     String wrapperClassImmediateCallText = "new " + CommonClassNames.JAVA_LANG_OBJECT + "() { " +
                                            type.getCanonicalText() + " wrapperMethod() {" + wrapperBodyText + "} " +
                                            "}.wrapperMethod()";
@@ -526,7 +522,7 @@ public final class ParametrizedDuplicates {
     }
 
     PsiExpression wrapped = null;
-    if (PsiType.VOID.equals(type) && bodyStatement instanceof PsiExpressionStatement) {
+    if (PsiTypes.voidType().equals(type) && bodyStatement instanceof PsiExpressionStatement) {
       wrapped = ((PsiExpressionStatement)bodyStatement).getExpression();
     }
     else if (bodyStatement instanceof PsiReturnStatement) {

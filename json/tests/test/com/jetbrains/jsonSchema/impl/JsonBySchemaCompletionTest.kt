@@ -373,4 +373,27 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
   private fun renderPresentation(lookupElement: LookupElement): LookupElementPresentation = LookupElementPresentation().also {
     lookupElement.renderElement(it)
   }
+
+  fun testNoDefaultString() {
+    val schema = """{
+  "properties": {
+    "prop": {
+      "type": "string"
+    }
+  }
+}"""
+    testImpl(schema, """{"prop": <caret>}""")
+  }
+
+  fun testDefaultEmptyString() {
+    val schema = """{
+  "properties": {
+    "prop": {
+      "type": "string",
+      "default": ""
+    }
+  }
+}"""
+    testImpl(schema, """{"prop": <caret>}""", "\"\"")
+  }
 }

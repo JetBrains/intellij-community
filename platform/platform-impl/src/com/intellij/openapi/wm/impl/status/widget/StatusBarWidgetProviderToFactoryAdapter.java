@@ -61,11 +61,6 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
   }
 
   @Override
-  public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
-    return true;
-  }
-
-  @Override
   public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
     return Objects.requireNonNull(getWidget());
   }
@@ -84,11 +79,6 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
     myWidget = null;
     widgetWasCreated = false;
     Disposer.dispose(widget);
-  }
-
-  public @NotNull String getAnchor() {
-    //noinspection removal
-    return provider.getAnchor();
   }
 
   @Override

@@ -59,9 +59,6 @@ import java.util.HashSet;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createTypeByFQClassName;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP;
 
-/**
- * @author ilyas
- */
 public class ConvertParameterToMapEntryIntention extends Intention {
 
   private static final Logger LOG =
@@ -278,8 +275,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       final Collection<PsiReference> references = ReferencesSearch.search(param).findAll();
       for (PsiReference ref : references) {
         final PsiElement elt = ref.getElement();
-        if (elt instanceof GrReferenceExpression) {
-          GrReferenceExpression expr = (GrReferenceExpression)elt;
+        if (elt instanceof GrReferenceExpression expr) {
           final GrExpression newExpr = factory.createExpressionFromText(mapName + "." + paramName);
           expr.replaceWithExpression(newExpr, true);
         }
@@ -310,8 +306,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     if (element instanceof GrParameter) {
       return (GrParameter)element;
     }
-    if (element instanceof GrReferenceExpression) {
-      final GrReferenceExpression expr = (GrReferenceExpression)element;
+    if (element instanceof GrReferenceExpression expr) {
       final PsiElement resolved = expr.resolve();
       LOG.assertTrue(resolved instanceof GrParameter);
       return ((GrParameter)resolved);
@@ -340,8 +335,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   private static FIRST_PARAMETER_KIND analyzeForNamedArguments(final GrParameterListOwner owner, final Collection<PsiElement> occurrences) {
     boolean thereAreNamedArguments = false;
     for (PsiElement occurrence : occurrences) {
-      if (occurrence instanceof GrReferenceExpression && occurrence.getParent() instanceof GrCall) {
-        final GrCall call = (GrCall)occurrence.getParent();
+      if (occurrence instanceof GrReferenceExpression && occurrence.getParent() instanceof GrCall call) {
         final GrArgumentList args = call.getArgumentList();
         if (args != null && args.getNamedArguments().length > 0) {
           thereAreNamedArguments = true;
@@ -478,8 +472,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       if (element instanceof GrParameter) {
         parameter = (GrParameter)element;
       }
-      else if (element instanceof GrReferenceExpression) {
-        GrReferenceExpression expr = (GrReferenceExpression)element;
+      else if (element instanceof GrReferenceExpression expr) {
         if (expr.getQualifierExpression() != null) return false;
         final PsiElement resolved = expr.resolve();
         if (resolved instanceof GrParameter) {

@@ -40,7 +40,6 @@ import static com.intellij.openapi.util.NlsContexts.*;
  * @see NotificationAction
  * @see com.intellij.notification.SingletonNotificationManager
  *
- * @author spleaner
  * @author Alexander Lobas
  */
 public class Notification {
@@ -164,23 +163,21 @@ public class Notification {
 
   @ApiStatus.Internal
   public boolean canShowFor(@Nullable Project project) {
-    if (mySuggestionType) {
-      if (myDoNotAskId == null) {
-        @NlsSafe String title = NotificationGroup.getGroupTitle(myGroupId);
-        if (title == null) {
-          title = myGroupId;
-        }
-        myDoNotAskDisplayName = title;
-        myDoNotAskId = myGroupId;
+    if (myDoNotAskId == null) {
+      @NlsSafe String title = NotificationGroup.getGroupTitle(myGroupId);
+      if (title == null) {
+        title = myGroupId;
       }
-      String id = "Notification.DoNotAsk-" + myDoNotAskId;
-      boolean doNotAsk = PropertiesComponent.getInstance().getBoolean(id, false);
-      if (doNotAsk) {
-        return false;
-      }
-      if (project != null) {
-        return !PropertiesComponent.getInstance(project).getBoolean(id, false);
-      }
+      myDoNotAskDisplayName = title;
+      myDoNotAskId = myGroupId;
+    }
+    String id = "Notification.DoNotAsk-" + myDoNotAskId;
+    boolean doNotAsk = PropertiesComponent.getInstance().getBoolean(id, false);
+    if (doNotAsk) {
+      return false;
+    }
+    if (project != null) {
+      return !PropertiesComponent.getInstance(project).getBoolean(id, false);
     }
     return true;
   }

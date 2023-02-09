@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -351,8 +351,7 @@ public final class JavaCompletionUtil {
 
   @NotNull
   private static List<PsiType> getQualifierCastTypes(PsiJavaReference javaReference, @NotNull CompletionParameters parameters) {
-    if (javaReference instanceof PsiReferenceExpression) {
-      PsiReferenceExpression refExpr = (PsiReferenceExpression)javaReference;
+    if (javaReference instanceof PsiReferenceExpression refExpr) {
       PsiExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier != null) {
         Project project = qualifier.getProject();
@@ -592,7 +591,11 @@ public final class JavaCompletionUtil {
       return Collections.singletonList(item);
     }
     if (completion instanceof PsiVariable) {
-      return Collections.singletonList(new VariableLookupItem((PsiVariable)completion).setSubstitutor(substitutor).qualifyIfNeeded(reference));
+      if (completion instanceof PsiEnumConstant enumConstant &&
+          PsiTreeUtil.isAncestor(enumConstant.getArgumentList(), reference.getElement(), true)) {
+        return Collections.emptyList();
+      }
+      return Collections.singletonList(new VariableLookupItem((PsiVariable)completion).setSubstitutor(substitutor).qualifyIfNeeded(reference, null));
     }
     if (completion instanceof PsiPackage) {
       return Collections.singletonList(new PackageLookupItem((PsiPackage)completion, reference.getElement()));
@@ -687,51 +690,47 @@ public final class JavaCompletionUtil {
     PsiElement element = file.findElementAt(startOffset);
     if (element instanceof PsiIdentifier) {
       PsiElement parent = element.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement &&
-          !((PsiJavaCodeReferenceElement)parent).isQualified() &&
-          !(parent.getParent() instanceof PsiPackageStatement)) {
-        PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)parent;
+      if (parent instanceof PsiJavaCodeReferenceElement ref && !ref.isQualified() &&
+          !(parent.getParent() instanceof PsiPackageStatement) && psiClass.isValid() &&
+          !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference(ref))) {
+        boolean staticImport = ref instanceof PsiImportStaticReferenceElement;
+        PsiElement newElement;
+        try {
+          newElement = staticImport
+                       ? ((PsiImportStaticReferenceElement)ref).bindToTargetClass(psiClass)
+                       : ref.bindToElement(psiClass);
+        }
+        catch (IncorrectOperationException e) {
+          return endOffset; // can happen if fqn contains reserved words, for example
+        }
+        SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager.createPointer(psiClass);
 
-        if (psiClass.isValid() && !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference(ref))) {
-          boolean staticImport = ref instanceof PsiImportStaticReferenceElement;
-          PsiElement newElement;
-          try {
-            newElement = staticImport
-                                    ? ((PsiImportStaticReferenceElement)ref).bindToTargetClass(psiClass)
-                                    : ref.bindToElement(psiClass);
-          }
-          catch (IncorrectOperationException e) {
-            return endOffset; // can happen if fqn contains reserved words, for example
-          }
-          SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager.createPointer(psiClass);
+        RangeMarker rangeMarker = document.createRangeMarker(newElement.getTextRange());
+        documentManager.doPostponedOperationsAndUnblockDocument(document);
+        documentManager.commitDocument(document);
 
-          RangeMarker rangeMarker = document.createRangeMarker(newElement.getTextRange());
-          documentManager.doPostponedOperationsAndUnblockDocument(document);
-          documentManager.commitDocument(document);
-
-          newElement = CodeInsightUtilCore.findElementInRange(file, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
-                                                              PsiJavaCodeReferenceElement.class,
-                                                              JavaLanguage.INSTANCE);
-          rangeMarker.dispose();
-          if (newElement != null) {
-            newEndOffset = newElement.getTextRange().getEndOffset();
-            if (!(newElement instanceof PsiReferenceExpression)) {
-              PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)newElement).getParameterList();
-              if (parameterList != null) {
-                newEndOffset = parameterList.getTextRange().getStartOffset();
-              }
+        newElement = CodeInsightUtilCore.findElementInRange(file, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
+                                                            PsiJavaCodeReferenceElement.class,
+                                                            JavaLanguage.INSTANCE);
+        rangeMarker.dispose();
+        if (newElement != null) {
+          newEndOffset = newElement.getTextRange().getEndOffset();
+          if (!(newElement instanceof PsiReferenceExpression)) {
+            PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)newElement).getParameterList();
+            if (parameterList != null) {
+              newEndOffset = parameterList.getTextRange().getStartOffset();
             }
-            psiClass = classPointer.getElement();
+          }
+          psiClass = classPointer.getElement();
 
-            if (!staticImport &&
-                psiClass != null &&
-                !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference((PsiReference)newElement)) &&
-                !PsiUtil.isInnerClass(psiClass)) {
-              String qName = psiClass.getQualifiedName();
-              if (qName != null) {
-                document.replaceString(newElement.getTextRange().getStartOffset(), newEndOffset, qName);
-                newEndOffset = newElement.getTextRange().getStartOffset() + qName.length();
-              }
+          if (!staticImport &&
+              psiClass != null &&
+              !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference((PsiReference)newElement)) &&
+              !PsiUtil.isInnerClass(psiClass)) {
+            String qName = psiClass.getQualifiedName();
+            if (qName != null) {
+              document.replaceString(newElement.getTextRange().getStartOffset(), newEndOffset, qName);
+              newEndOffset = newElement.getTextRange().getStartOffset() + qName.length();
             }
           }
         }
@@ -852,7 +851,7 @@ public final class JavaCompletionUtil {
       toInsert = TailType.UNKNOWN;
     }
     if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
-      if (!hasTail && item.getObject() instanceof PsiMethod && PsiType.VOID.equals(((PsiMethod)item.getObject()).getReturnType())) {
+      if (!hasTail && item.getObject() instanceof PsiMethod && PsiTypes.voidType().equals(((PsiMethod)item.getObject()).getReturnType())) {
         PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
         if (psiElement().beforeLeaf(psiElement().withText(".")).accepts(context.getFile().findElementAt(context.getTailOffset() - 1))) {
           return false;
@@ -979,10 +978,9 @@ public final class JavaCompletionUtil {
   }
 
   private static boolean isAnonymous(@NotNull PsiCall call) {
-    if (!(call instanceof PsiNewExpression)) {
+    if (!(call instanceof PsiNewExpression newExpression)) {
       return false;
     }
-    PsiNewExpression newExpression = (PsiNewExpression)call;
 
     PsiImmediateClassType targetType = ObjectUtils.tryCast(newExpression.getType(), PsiImmediateClassType.class);
     if (targetType == null) return false;

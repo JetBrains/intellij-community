@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inheritanceToDelegation;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -45,9 +45,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InheritanceToDelegationProcessor.class);
   private final PsiClass myClass;
@@ -212,15 +209,11 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   private void analyzeConflicts(UsageInfo[] usage, MultiMap<PsiElement, String> conflicts) {
     HashMap<PsiElement,HashSet<PsiElement>> reportedNonDelegatedUsages = new HashMap<>();
     HashMap<PsiClass,HashSet<PsiElement>> reportedUpcasts = new HashMap<>();
-//    HashSet reportedObjectUpcasts = new HashSet();
-
-//    final String nameJavaLangObject = ConflictsUtil.htmlEmphasize("java.lang.Object");
     final String classDescription = RefactoringUIUtil.getDescription(myClass, false);
 
     for (UsageInfo aUsage : usage) {
       final PsiElement element = aUsage.getElement();
-      if (aUsage instanceof InheritanceToDelegationUsageInfo) {
-        InheritanceToDelegationUsageInfo usageInfo = (InheritanceToDelegationUsageInfo)aUsage;
+      if (aUsage instanceof InheritanceToDelegationUsageInfo usageInfo) {
         /*if (usageInfo instanceof ObjectUpcastedUsageInfo) {
          PsiElement container = ConflictsUtil.getContainer(usageInfo.element);
          if (!reportedObjectUpcasts.contains(container)) {
@@ -264,8 +257,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
           }
         }
       }
-      else if (aUsage instanceof NoLongerOverridingSubClassMethodUsageInfo) {
-        NoLongerOverridingSubClassMethodUsageInfo info = (NoLongerOverridingSubClassMethodUsageInfo)aUsage;
+      else if (aUsage instanceof NoLongerOverridingSubClassMethodUsageInfo info) {
         String message = JavaRefactoringBundle.message("0.will.no.longer.override.1",
                                                    RefactoringUIUtil.getDescription(info.getSubClassMethod(), true),
                                                    RefactoringUIUtil.getDescription(info.getOverridenMethod(), true));
@@ -390,8 +382,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   private void delegateUsageFromClass(PsiElement element, PsiElement nonDelegatedMember,
                                       FieldAccessibility fieldAccessibility) throws IncorrectOperationException {
-    if (element instanceof PsiReferenceExpression) {
-      PsiReferenceExpression referenceExpression = (PsiReferenceExpression) element;
+    if (element instanceof PsiReferenceExpression referenceExpression) {
       if (referenceExpression.getQualifierExpression() != null) {
         upcastToDelegation(referenceExpression.getQualifierExpression(), fieldAccessibility);
       } else {
@@ -416,8 +407,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
         final String name = ((PsiNamedElement) nonDelegatedMember).getName();
 
       PsiElement parent = element.getParent ();
-      if (!isStatic (nonDelegatedMember) && parent instanceof PsiNewExpression) {
-        final PsiNewExpression newExpr = (PsiNewExpression) parent;
+      if (!isStatic (nonDelegatedMember) && parent instanceof PsiNewExpression newExpr) {
         if (newExpr.getQualifier() != null) {
           upcastToDelegation(newExpr.getQualifier(), fieldAccessibility);
         } else {
@@ -443,11 +433,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   }
 
   private static boolean isStatic(PsiElement member) {
-    if (member instanceof PsiModifierListOwner) {
-      final PsiModifierListOwner method = (PsiModifierListOwner) member;
-      return method.hasModifierProperty (PsiModifier.STATIC);
-    }
-    return false;
+    return member instanceof PsiModifierListOwner method && method.hasModifierProperty(PsiModifier.STATIC);
   }
 
   private void upcastToDelegation(PsiElement element, FieldAccessibility fieldAccessibility) throws IncorrectOperationException {
@@ -529,7 +515,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     StringBuilder buffer = new StringBuilder();
     buffer.append("{\n");
 
-    if (!PsiType.VOID.equals(methodToAdd.getReturnType())) {
+    if (!PsiTypes.voidType().equals(methodToAdd.getReturnType())) {
       buffer.append("return ");
     }
 
@@ -928,8 +914,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   }
 
   private boolean isDelegated(PsiMember classMember) {
-    if(!(classMember instanceof PsiMethod)) return false;
-    final PsiMethod method = (PsiMethod) classMember;
+    if(!(classMember instanceof PsiMethod method)) return false;
     for (PsiMethod delegatedMethod : myDelegatedMethods) {
       //methods reside in base class, so no substitutor needed
       if (MethodSignatureUtil.areSignaturesEqual(method.getSignature(PsiSubstitutor.EMPTY),
@@ -1066,9 +1051,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     @Override
     protected void visitClassMemberReferenceExpression(PsiMember classMember,
                                                        PsiReferenceExpression classMemberReference) {
-      if (classMember instanceof PsiField) {
-        final PsiField field = (PsiField) classMember;
-
+      if (classMember instanceof PsiField field) {
         if (field.getContainingClass().equals(myClass)) {
           final String name = field.getName();
           final PsiField baseField = myBaseClass.findFieldByName(name, true);
@@ -1078,9 +1061,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
             myPsiActions.add(new QualifyThis((PsiThisExpression) classMemberReference.getQualifierExpression()));
           }
         }
-      } else if (classMember instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod) classMember;
-
+      } else if (classMember instanceof PsiMethod method) {
         if (method.getContainingClass().equals(myClass)) {
           if (!myOverriddenMethods.contains(method)) {
             final PsiMethod baseMethod = findSuperMethodInBaseClass(method);

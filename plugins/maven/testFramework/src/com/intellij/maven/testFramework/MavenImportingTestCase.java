@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.compiler.CompilerTestUtil;
+import com.intellij.java.library.LibraryWithMavenCoordinatesProperties;
+import com.intellij.java.library.MavenCoordinates;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
@@ -10,10 +12,13 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
@@ -52,15 +57,18 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.junit.Assume;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.testFramework.PlatformTestUtil.waitForFuture;
 import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
@@ -130,8 +138,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   public boolean supportModuleGroups() {
-    return !isWorkspaceImport()
-           && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
+    return !isWorkspaceImport();
   }
 
   public boolean supportsKeepingManualChanges() {
@@ -143,8 +150,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   public boolean supportsKeepingModulesFromPreviousImport() {
-    return !isWorkspaceImport()
-           && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
+    return !isWorkspaceImport();
   }
 
   public boolean supportsLegacyKeepingFoldersFromPreviousImport() {
@@ -156,8 +162,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   public boolean supportsCreateAggregatorOption() {
-    return !isWorkspaceImport()
-           && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
+    return !isWorkspaceImport();
   }
 
   protected void stopMavenImportManager() {
@@ -175,10 +180,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     removeFromLocalRepository("test");
   }
 
-  protected String mn(String parent, String moduleName) {
-    if (MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject)) {
-      return parent + "." + moduleName;
-    }
+  @SuppressWarnings("unused")
+  protected String mn(String parent/* can be used to prepend module name depending on the importing settings*/,
+                      String moduleName) {
     return moduleName;
   }
 
@@ -356,7 +360,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertEquals(scope, dep.getScope());
   }
 
-  private LibraryOrderEntry getModuleLibDep(String moduleName, String depName) {
+  protected LibraryOrderEntry getModuleLibDep(String moduleName, String depName) {
     return getModuleDep(moduleName, depName, LibraryOrderEntry.class);
   }
 
@@ -433,6 +437,34 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       actualNames.add(name == null ? "<unnamed>" : name);
     }
     assertUnorderedElementsAreEqual(actualNames, expectedNames);
+  }
+
+  public void assertProjectLibraryCoordinates(@NotNull String libraryName,
+                                              @Nullable String groupId,
+                                              @Nullable String artifactId,
+                                              @Nullable String version) {
+    assertProjectLibraryCoordinates(libraryName, groupId, artifactId, null, JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING, version);
+  }
+
+  public void assertProjectLibraryCoordinates(@NotNull String libraryName,
+                                              @Nullable String groupId,
+                                              @Nullable String artifactId,
+                                              @Nullable String classifier,
+                                              @Nullable String packaging,
+                                              @Nullable String version)
+
+  {
+    Library lib = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libraryName);
+    assertNotNull("Library [" + libraryName + "] not found", lib);
+    LibraryProperties libraryProperties = ((LibraryEx)lib).getProperties();
+    assertInstanceOf(libraryProperties, LibraryWithMavenCoordinatesProperties.class);
+    MavenCoordinates coords = ((LibraryWithMavenCoordinatesProperties)libraryProperties).getMavenCoordinates();
+    assertNotNull("Expected non-empty maven coordinates", coords);
+    assertEquals("Unexpected groupId", groupId, coords.getGroupId());
+    assertEquals("Unexpected artifactId", artifactId, coords.getArtifactId());
+    assertEquals("Unexpected classifier", classifier, coords.getClassifier());
+    assertEquals("Unexpected packaging", packaging, coords.getPackaging());
+    assertEquals("Unexpected version", version, coords.getVersion());
   }
 
   protected void assertModuleGroupPath(String moduleName, String... expected) {
@@ -652,7 +684,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
                               Arrays.asList(profiles),
                               disabledProfiles);
       myProjectsManager.initForTests();
-      myReadContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        myReadContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
+      });
+      edt(() -> waitForFuture(future, 10_000));
+
       flow.updateProjectManager(myReadContext);
     }
     else {
@@ -829,6 +865,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected Sdk setupJdkForModule(final String moduleName) {
     final Sdk sdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
     ModuleRootModificationUtil.setModuleSdk(getModule(moduleName), sdk);
     return sdk;
   }

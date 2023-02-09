@@ -6,7 +6,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -19,24 +18,19 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -94,74 +88,6 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     });
   }
 
-  static final class MyStartupActivity implements StartupActivity.DumbAware {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        return;
-      }
-
-      project.getMessageBus().connect().subscribe(PsiDocumentListener.TOPIC, MyStartupActivity::documentCreated);
-
-      BookmarkManager bookmarkManager = getInstance(project);
-      if (bookmarkManager.myBookmarks.isEmpty() && bookmarkManager.myPendingState.get() == null) {
-        return;
-      }
-
-      ReadAction.nonBlocking(() -> {
-        FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-        FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-
-        for (VirtualFile file : fileEditorManager.getOpenFiles()) {
-          Document document = fileDocumentManager.getDocument(file);
-          if (document != null) {
-            checkFile(document, file, bookmarkManager, project);
-          }
-        }
-      })
-        .expireWith(project)
-        .submit(NonUrgentExecutor.getInstance());
-    }
-
-    private static void documentCreated(@NotNull Document document, @Nullable PsiFile psiFile, @NotNull Project project) {
-      BookmarkManager bookmarkManager = getInstance(project);
-      if (bookmarkManager.myBookmarks.isEmpty()) {
-        return;
-      }
-
-      VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-      if (file == null) {
-        return;
-      }
-
-      checkFile(document, file, bookmarkManager, project);
-    }
-
-    private static void checkFile(@NotNull Document document, @NotNull VirtualFile file, @NotNull BookmarkManager bookmarkManager, @NotNull Project project) {
-      Collection<Bookmark> fileBookmarks = bookmarkManager.myBookmarks.get(file);
-      if (fileBookmarks.isEmpty()) {
-        return;
-      }
-
-      AppUIUtil.invokeLaterIfProjectAlive(project, () -> {
-        MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
-        for (Bookmark bookmark : fileBookmarks) {
-          bookmark.createHighlighter(markup);
-        }
-      });
-    }
-  }
-
-  public void editDescription(@NotNull Bookmark bookmark, @NotNull Component popup) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    String description = Messages.showInputDialog(popup, BookmarkBundle.message("action.bookmark.edit.description.dialog.message"),
-                       BookmarkBundle.message("action.bookmark.edit.description.dialog.title"), Messages.getQuestionIcon(),
-                       bookmark.getDescription(), null);
-    if (description != null) {
-      setDescription(bookmark, description);
-    }
-  }
-
   @NotNull
   public Bookmark addTextBookmark(@NotNull VirtualFile file, int lineIndex, @NotNull @NlsSafe String description) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -206,12 +132,11 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   public List<Bookmark> getValidBookmarks() {
     List<Bookmark> answer = ContainerUtil.filter(myBookmarks.values(), b -> b.isValid());
     if (UISettings.getInstance().getSortBookmarks()) {
-      Collections.sort(answer);
+      return ContainerUtil.sorted(answer);
     }
     else {
-      answer.sort(Comparator.comparingInt(b -> b.index));
+      return ContainerUtil.sorted(answer, Comparator.comparingInt(b -> b.index));
     }
-    return answer;
   }
 
   @NotNull

@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.collaboration.async.disposingMainScope
+import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -19,8 +21,7 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes.ERROR_ATTRIBUTES
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBEmptyBorder
@@ -39,18 +40,17 @@ import org.jetbrains.plugins.github.authentication.ui.GithubLoginPanel
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import javax.swing.JButton
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.SwingConstants
 
 internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
-  JBPanel<CloneDialogLoginPanel>(VerticalLayout(0)),
+  JBPanel<CloneDialogLoginPanel>(ListLayout.vertical(0)),
   Disposable {
 
   private val cs = disposingMainScope()
 
   private val accountManager get() = service<GHAccountManager>()
 
-  private val errorPanel = JPanel(VerticalLayout(10))
+  private val errorPanel = VerticalListPanel(10)
   private val loginPanel = GithubLoginPanel(GithubApiRequestExecutor.Factory.getInstance()) { name, server ->
     if (account == null) accountManager.accountsState.value.none {
       it.name == name && it.server.equals(server, true)
@@ -112,7 +112,7 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
   }
 
   private fun buildLayout() {
-    add(JPanel(HorizontalLayout(0)).apply {
+    add(HorizontalListPanel().apply {
       add(loginPanel)
       add(inlineCancelPanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { left = scale(6) }) })
     })

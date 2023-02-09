@@ -26,4 +26,3 @@ fun test() {
     B().p = 1
 }
 
-// FIR_COMPARISON

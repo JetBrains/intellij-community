@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.InlayHintsUtils
+import com.intellij.codeInsight.hints.declarative.InlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.codeInsight.hints.presentation.withTranslated
@@ -21,7 +22,12 @@ import java.awt.geom.Rectangle2D
 /**
  * @see PresentationTreeBuilderImpl
  */
-class InlayPresentationList(private var state: TinyTree<Any?>, @TestOnly var hasBackground: Boolean, @TestOnly var isDisabled: Boolean) {
+class InlayPresentationList(
+  private var state: TinyTree<Any?>,
+  @TestOnly var hasBackground: Boolean,
+  @TestOnly var isDisabled: Boolean,
+  var payloads: Map<String, InlayActionPayload>? = null
+) {
   companion object {
     private const val NOT_COMPUTED = -1
     private const val LEFT_MARGIN = 7
@@ -30,7 +36,7 @@ class InlayPresentationList(private var state: TinyTree<Any?>, @TestOnly var has
     private const val TOP_MARGIN = 1
     private const val ARC_WIDTH = 8
     private const val ARC_HEIGHT = 8
-    private const val BACKGROUND_ALPHA : Float = 0.55f
+    private const val BACKGROUND_ALPHA: Float = 0.55f
   }
 
   private var entries: Array<InlayPresentationEntry> = PresentationEntryBuilder(state).buildPresentationEntries()
@@ -57,9 +63,9 @@ class InlayPresentationList(private var state: TinyTree<Any?>, @TestOnly var has
     return computed
   }
 
-  fun handleClick(e: EditorMouseEvent, pointInsideInlay: Point, fontMetricsStorage: InlayTextMetricsStorage) {
+  fun handleClick(e: EditorMouseEvent, pointInsideInlay: Point, fontMetricsStorage: InlayTextMetricsStorage, controlDown: Boolean) {
     val entry = findEntryByPoint(fontMetricsStorage, pointInsideInlay) ?: return
-    entry.handleClick(e.editor, this)
+    entry.handleClick(e.editor, this, controlDown)
   }
 
   private fun findEntryByPoint(fontMetricsStorage: InlayTextMetricsStorage, pointInsideInlay: Point): InlayPresentationEntry? {
@@ -67,7 +73,7 @@ class InlayPresentationList(private var state: TinyTree<Any?>, @TestOnly var has
     val partialWidthSums = getPartialWidthSums(fontMetricsStorage)
     for ((index, entry) in entries.withIndex()) {
       val leftBound = partialWidthSums[index] + LEFT_MARGIN
-      val rightBound = partialWidthSums.getOrElse(index + 1) { Int.MAX_VALUE - LEFT_MARGIN }  + LEFT_MARGIN
+      val rightBound = partialWidthSums.getOrElse(index + 1) { Int.MAX_VALUE - LEFT_MARGIN } + LEFT_MARGIN
 
       if (x in leftBound..rightBound) {
         return entry
@@ -87,7 +93,10 @@ class InlayPresentationList(private var state: TinyTree<Any?>, @TestOnly var has
     this.hasBackground = hasBackground
   }
 
-  private fun updateStateTree(treeToUpdate: TinyTree<Any?>, treeToUpdateFrom: TinyTree<Any?>, treeToUpdateIndex: Byte, treeToUpdateFromIndex: Byte) {
+  private fun updateStateTree(treeToUpdate: TinyTree<Any?>,
+                              treeToUpdateFrom: TinyTree<Any?>,
+                              treeToUpdateIndex: Byte,
+                              treeToUpdateFromIndex: Byte) {
     // we want to preserve the structure
     val treeToUpdateTag = treeToUpdate.getBytePayload(treeToUpdateIndex)
     val treeToUpdateFromTag = treeToUpdateFrom.getBytePayload(treeToUpdateFromIndex)
@@ -100,8 +109,9 @@ class InlayPresentationList(private var state: TinyTree<Any?>, @TestOnly var has
         treeToUpdate.setBytePayload(nodePayload = treeToUpdateFromTag, index = treeToUpdateIndex)
       }
     }
-    
-    treeToUpdateFrom.syncProcessChildren(treeToUpdateFromIndex, treeToUpdateIndex, treeToUpdate) { treeToUpdateFromChildIndex, treeToUpdateChildIndex ->
+
+    treeToUpdateFrom.syncProcessChildren(treeToUpdateFromIndex, treeToUpdateIndex,
+                                         treeToUpdate) { treeToUpdateFromChildIndex, treeToUpdateChildIndex ->
       updateStateTree(treeToUpdate, treeToUpdateFrom, treeToUpdateChildIndex, treeToUpdateFromChildIndex)
       true
     }
@@ -122,7 +132,7 @@ class InlayPresentationList(private var state: TinyTree<Any?>, @TestOnly var has
     updateState(state, isDisabled, hasBackground)
   }
 
-  fun getWidthInPixels(textMetricsStorage: InlayTextMetricsStorage) : Int {
+  fun getWidthInPixels(textMetricsStorage: InlayTextMetricsStorage): Int {
     if (computedWidth == NOT_COMPUTED) {
       val width = entries.sumOf { it.computeWidth(textMetricsStorage) } + LEFT_MARGIN + RIGHT_MARGIN
       computedWidth = width
@@ -134,14 +144,14 @@ class InlayPresentationList(private var state: TinyTree<Any?>, @TestOnly var has
   fun paint(inlay: Inlay<*>, g: Graphics2D, targetRegion: Rectangle2D, textAttributes: TextAttributes) {
     val editor = inlay.editor as EditorImpl
     val storage = InlayHintsUtils.getTextMetricStorage(editor)
-    val height = if (entries.isEmpty()) 0 else entries.maxOf { it.computeHeight(storage) }
     var xOffset = 0
-    val gap = (targetRegion.height.toInt() - height) / 2
+    val metrics = storage.getFontMetrics(small = false)
+    val gap =  if (targetRegion.height.toInt() < metrics.lineHeight + 2) 1 else 2
     val attrKey = if (hasBackground) DefaultLanguageHighlighterColors.INLAY_DEFAULT else DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND
     val attrs = editor.colorsScheme.getAttributes(attrKey)
     g.withTranslated(targetRegion.x, targetRegion.y) {
       if (hasBackground) {
-        val rectHeight = height + TOP_MARGIN + BOTTOM_MARGIN
+        val rectHeight = targetRegion.height.toInt() - gap * 2
         val rectWidth = getWidthInPixels(storage)
         val config = GraphicsUtil.setupAAPainting(g)
         GraphicsUtil.paintWithAlpha(g, BACKGROUND_ALPHA)
@@ -165,7 +175,7 @@ class InlayPresentationList(private var state: TinyTree<Any?>, @TestOnly var has
           attrs
         }
         g.withTranslated(xOffset, 0) {
-          entry.render(g, storage, finalAttrs, isDisabled, gap)
+          entry.render(g, storage, finalAttrs, isDisabled, gap, targetRegion.height.toInt(), editor)
         }
         xOffset += entry.computeWidth(storage)
       }

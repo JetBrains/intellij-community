@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.*;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -336,7 +336,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   private final class AddAction extends DumbAwareAction {
     AddAction() {
       super(IdeBundle.messagePointer("action.NamedItemsListEditor.AddAction.text.add"),
-            IdeBundle.messagePointer("action.NamedItemsListEditor.AddAction.description.add"), IconUtil.getAddIcon());
+            IdeBundle.messagePointer("action.NamedItemsListEditor.AddAction.description.add"), AllIcons.General.Add);
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
     }
 

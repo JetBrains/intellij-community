@@ -170,7 +170,7 @@ public class TestFinderHelperTest extends JavaPsiTestCase {
     final PsiMethod[] method = new PsiMethod[1];
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       try {
-        method[0] = (PsiMethod)c.add(getPsiFactory().createMethod("foo", PsiType.VOID));
+        method[0] = (PsiMethod)c.add(getPsiFactory().createMethod("foo", PsiTypes.voidType()));
       }
       catch (IncorrectOperationException e) {
         throw new RuntimeException(e);

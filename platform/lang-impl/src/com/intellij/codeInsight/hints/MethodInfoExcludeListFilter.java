@@ -35,8 +35,7 @@ public class MethodInfoExcludeListFilter implements HintInfoFilter {
 
   @Override
   public boolean showHint(@NotNull HintInfo info) {
-    if (info instanceof HintInfo.MethodInfo) {
-      HintInfo.MethodInfo methodInfo = (HintInfo.MethodInfo)info;
+    if (info instanceof HintInfo.MethodInfo methodInfo) {
       return !ContainerUtil.exists(myMatchers, (e) -> e.isMatching(methodInfo.getFullyQualifiedName(), methodInfo.getParamNames()));
     }
     return false;

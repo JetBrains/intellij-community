@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.ui.IconManager
 import com.intellij.ui.RowIcon
@@ -56,10 +57,7 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
     override fun getIcon(psiElement: PsiElement, flags: Int): Icon? {
         if (psiElement is KtFile) {
             if (psiElement.isScript()) {
-                return when {
-                    psiElement.name.endsWith(".gradle.kts") -> GRADLE_SCRIPT
-                    else -> SCRIPT
-                }
+                return psiElement.scriptIcon()
             }
             val mainClass = getSingleClass(psiElement)
             return if (mainClass != null) getIcon(mainClass, flags) else FILE
@@ -84,19 +82,26 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
     companion object {
         fun isSingleClassFile(file: KtFile) = getSingleClass(file) != null
 
-        fun getSingleClass(file: KtFile): KtClassOrObject? =
-            getMainClass(file)?.takeIf {
-                file.declarations
-                    .filterNot { it.isPrivate() || it is KtTypeAlias }
-                    .size == 1
+        fun getSingleClass(file: KtFile): KtClassOrObject? {
+            var targetDeclaration: KtDeclaration? = null
+            for (declaration: KtDeclaration in file.declarations) {
+                if (!declaration.isPrivate() && declaration !is KtTypeAlias) {
+                    if (targetDeclaration != null) return null
+                    targetDeclaration = declaration
+                }
             }
+            return targetDeclaration?.takeIf { it is KtClassOrObject && StringUtil.getPackageName(file.name) == it.name } as? KtClassOrObject
+        }
 
         fun getMainClass(file: KtFile): KtClassOrObject? {
-            val classes = file.declarations.filterNot { it.isPrivate() }.filterIsInstance<KtClassOrObject>()
-            if (classes.size == 1 && StringUtil.getPackageName(file.name) == classes[0].name) {
-                return classes[0]
+            var targetClassOrObject: KtClassOrObject? = null
+            for (declaration in file.declarations) {
+                if (!declaration.isPrivate() && declaration is KtClassOrObject) {
+                    if (targetClassOrObject != null) return null
+                    targetClassOrObject = declaration
+                }
             }
-            return null
+            return targetClassOrObject?.takeIf { StringUtil.getPackageName(file.name) == it.name }
         }
 
         private fun createRowIcon(baseIcon: Icon, visibilityIcon: Icon): RowIcon {
@@ -107,19 +112,23 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
         }
 
         fun getVisibilityIcon(list: KtModifierList?): Icon {
-            if (list != null) {
-                if (list.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
-                    return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Private)
+            val icon: com.intellij.ui.PlatformIcons? = if (list != null) {
+                when {
+                    list.hasModifier(KtTokens.PRIVATE_KEYWORD) -> com.intellij.ui.PlatformIcons.Private
+                    list.hasModifier(KtTokens.PROTECTED_KEYWORD) -> com.intellij.ui.PlatformIcons.Protected
+                    list.hasModifier(KtTokens.INTERNAL_KEYWORD) -> com.intellij.ui.PlatformIcons.Local
+                    else -> null
                 }
-                if (list.hasModifier(KtTokens.PROTECTED_KEYWORD)) {
-                    return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Protected)
-                }
-                if (list.hasModifier(KtTokens.INTERNAL_KEYWORD)) {
-                    return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Local)
-                }
+            } else {
+                null
             }
 
-            return PlatformIcons.PUBLIC_ICON
+            return icon?.let(IconManager.getInstance()::getPlatformIcon) ?: PlatformIcons.PUBLIC_ICON
+        }
+
+        private fun PsiFile.scriptIcon(): Icon = when {
+            virtualFile.name.endsWith(".gradle.kts") -> GRADLE_SCRIPT
+            else -> SCRIPT
         }
 
         fun PsiElement.getBaseIcon(): Icon? = when (this) {
@@ -130,15 +139,15 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
                 receiverTypeReference != null ->
                     if (KtPsiUtil.isAbstract(this)) ABSTRACT_EXTENSION_FUNCTION else EXTENSION_FUNCTION
                 getStrictParentOfType<KtNamedDeclaration>() is KtClass ->
-                    if (KtPsiUtil.isAbstract(this)) PlatformIcons.ABSTRACT_METHOD_ICON else IconManager.getInstance().getPlatformIcon(
-                      com.intellij.ui.PlatformIcons.Method)
+                    if (KtPsiUtil.isAbstract(this)) PlatformIcons.ABSTRACT_METHOD_ICON else
+                        IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
                 else ->
                     FUNCTION
             }
             is KtConstructor<*> -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
             is KtLightMethod -> when(val u = unwrapped) {
-                is KtProperty -> if (!u.hasBody()) PlatformIcons.ABSTRACT_METHOD_ICON else IconManager.getInstance().getPlatformIcon(
-                  com.intellij.ui.PlatformIcons.Method)
+                is KtProperty -> if (!u.hasBody()) PlatformIcons.ABSTRACT_METHOD_ICON else
+                    IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
                 else -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
             }
             is KtFunctionLiteral -> LAMBDA
@@ -157,6 +166,7 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
                     PARAMETER
             }
             is KtProperty -> if (isVar) FIELD_VAR else FIELD_VAL
+            is KtScriptInitializer -> LAMBDA
             is KtClassInitializer -> CLASS_INITIALIZER
             is KtTypeAlias -> TYPE_ALIAS
             is KtAnnotationEntry -> {

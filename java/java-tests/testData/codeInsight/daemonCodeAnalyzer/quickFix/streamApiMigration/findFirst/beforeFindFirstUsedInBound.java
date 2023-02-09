@@ -1,4 +1,4 @@
-// "Replace with findFirst()" "false"
+// "Collapse loop with stream 'findFirst()'" "false"
 
 public class Main {
   public boolean check(int value) {

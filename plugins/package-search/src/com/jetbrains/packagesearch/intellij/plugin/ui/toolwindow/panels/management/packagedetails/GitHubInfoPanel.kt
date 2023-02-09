@@ -26,7 +26,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.compensateForHighligh
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.noInsets
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledAsString
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.skipInvisibleComponents
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
@@ -81,7 +80,7 @@ internal class GitHubInfoPanel : JPanel() {
         layout = MigLayout(
             LC().skipInvisibleComponents()
                 .noInsets()
-                .gridGap((8 - 2).scaledAsString(), "0"), // Compensate for the -2 pad below
+                .gridGap("${8 - 2}", "0"), // Compensate for the -2 pad below
             AC().grow(),
             AC().fill()
         )

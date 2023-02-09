@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gradle.testFramework.configuration
 
 import com.intellij.openapi.externalSystem.util.*
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.*
+import com.intellij.testFramework.utils.vfs.createDirectory
+import com.intellij.testFramework.utils.vfs.createFile
 import java.util.ArrayList
 import java.util.HashMap
 
@@ -35,7 +37,7 @@ open class TestFilesConfigurationImpl : TestFilesConfiguration {
   override fun areContentsEqual(root: VirtualFile): Boolean {
     for ((path, expectedContent) in files) {
       val file = root.findFile(path) ?: return false
-      val content = file.loadText()
+      val content = file.readText()
       if (expectedContent != content) {
         return false
       }
@@ -52,7 +54,7 @@ open class TestFilesConfigurationImpl : TestFilesConfiguration {
     runWriteActionAndWait {
       for ((path, content) in files) {
         val file = root.createFile(path)
-        file.text = content
+        file.writeText(content)
       }
       for (path in directories) {
         root.createDirectory(path)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("WebTestUtil")
 
 package com.intellij.webSymbols
@@ -14,7 +14,6 @@ import com.intellij.find.usages.impl.buildUsageViewQuery
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
-import com.intellij.lang.documentation.impl.computeDocumentationBlocking
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.impl.referencesAt
@@ -24,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.documentation.impl.computeDocumentationBlocking
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -347,8 +347,10 @@ fun CodeInsightTestFixture.assertUnresolvedReference(signature: String, okWithNo
   if (okWithNoRef && ref == null) {
     return
   }
-  assertNotNull(ref)
-  assertNull(ref!!.resolve())
+  assertNotNull("Expected not null reference for signature '$signature' at offset $offsetBySignature in file\n${file.text}", ref)
+  val resolved = ref!!.resolve()
+  assertNull("Expected that reference for signature '$signature' at offset $offsetBySignature resolves to null but resolved to $resolved (${resolved?.text}) in file ${resolved?.containingFile?.name}",
+             resolved)
   if (ref is PsiPolyVariantReference) {
     assertEmpty(ref.multiResolve(false))
   }

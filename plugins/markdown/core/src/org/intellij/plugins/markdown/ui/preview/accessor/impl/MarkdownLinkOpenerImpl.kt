@@ -10,14 +10,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectForFile
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DoNotAskOption
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -71,16 +70,18 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
       actuallyBrowseExternalLink(project, uri)
       return
     }
-    val dialogResult = showOkCancelDialog(
-      title = MarkdownBundle.message("markdown.browse.external.link.open.confirmation.dialog.title"),
-      message = MarkdownBundle.message("markdown.browse.external.link.open.confirmation.dialog.text", uri),
-      okText = Messages.getOkButton(),
-      doNotAskOption = createDoNotAskOption(project, uri),
-      project = project
-    )
-    if (dialogResult == DialogWrapper.OK_EXIT_CODE) {
+    if (showDialog(project, uri)) {
       actuallyBrowseExternalLink(project, uri)
     }
+  }
+
+  @RequiresEdt
+  private fun showDialog(project: Project?, uri: URI): Boolean {
+    val dialog = MessageDialogBuilder.yesNo(
+      title = MarkdownBundle.message("markdown.browse.external.link.open.confirmation.dialog.title"),
+      message = MarkdownBundle.message("markdown.browse.external.link.open.confirmation.dialog.text", uri)
+    ).doNotAsk(createDoNotAskOption(project, uri))
+    return dialog.ask(project)
   }
 
   @RequiresEdt
@@ -98,7 +99,7 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
     }
   }
 
-  private fun createDoNotAskOption(project: Project?, uri: URI): DialogWrapper.DoNotAskOption? {
+  private fun createDoNotAskOption(project: Project?, uri: URI): DoNotAskOption? {
     if (project == null) {
       return null
     }
@@ -107,7 +108,7 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
       logger.error("Failed to obtain protocol for link: $uri")
       return null
     }
-    return object: DialogWrapper.DoNotAskOption.Adapter() {
+    return object: DoNotAskOption.Adapter() {
       override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
         if (isSelected) {
           DocumentLinksSafeState.getInstance(project).allowProtocol(protocol)
@@ -159,6 +160,7 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
     private fun actuallyOpenInEditor(project: Project?, uri: URI): Boolean {
       val anchor = uri.fragment
       val targetFile = uri.findVirtualFile() ?: return false
+      @Suppress("NAME_SHADOWING")
       val project = project ?: guessProjectForFile(targetFile) ?: return false
       if (anchor == null) {
         invokeLater {

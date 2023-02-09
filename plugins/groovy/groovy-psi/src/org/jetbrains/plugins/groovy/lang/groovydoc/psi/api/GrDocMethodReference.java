@@ -20,9 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ilyas
- */
 public interface GrDocMethodReference extends GrDocMemberReference{
 
   @NotNull

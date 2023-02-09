@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -65,9 +65,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * @author dsl
- */
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   public static class JavaReplaceChoice implements OccurrencesChooser.BaseReplaceChoice {
     public static final JavaReplaceChoice NO = new JavaReplaceChoice(ReplaceChoice.NO, null, false);
@@ -353,7 +350,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       return false;
     }
 
-    if (PsiType.VOID.equals(originalType)) {
+    if (PsiTypes.voidType().equals(originalType)) {
       String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("selected.expression.has.void.type"));
       showErrorMessage(project, editor, message);
       return false;
@@ -586,7 +583,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   public static boolean canBeExtractedWithoutExplicitType(PsiExpression expr) {
     if (PsiUtil.isLanguageLevel10OrHigher(expr)) {
       PsiType type = getNormalizedType(expr);
-      if (type != null && !PsiType.NULL.equals(type) && PsiTypesUtil.isDenotableType(type, expr)) {
+      if (type != null && !PsiTypes.nullType().equals(type) && PsiTypesUtil.isDenotableType(type, expr)) {
         PsiExpression copy =
           (PsiExpression)(type instanceof PsiDisjunctionType ? expr.copy() : LambdaUtil.copyWithExpectedType(expr, type));
         if (type.equals(getNormalizedType(copy))) {
@@ -674,7 +671,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       if (containerParent instanceof PsiMethod) {
         PsiClass containingClass = ((PsiMethod)containerParent).getContainingClass();
         if (containingClass == null || !PsiUtil.isLocalOrAnonymousClass(containingClass)) break;
-        if (vars.stream().anyMatch(variable -> PsiTreeUtil.isAncestor(containingClass, variable, true))) {
+        if (ContainerUtil.exists(vars, variable -> PsiTreeUtil.isAncestor(containingClass, variable, true))) {
           break;
         }
       }
@@ -684,11 +681,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           break;
         }
       }
-      if (containerParent instanceof PsiForStatement) {
-        PsiForStatement forStatement = (PsiForStatement)containerParent;
-        if (vars.stream().anyMatch(variable -> PsiTreeUtil.isAncestor(forStatement.getInitialization(), variable, true))) {
-          break;
-        }
+      if (containerParent instanceof PsiForStatement forStatement &&
+          ContainerUtil.exists(vars, variable -> PsiTreeUtil.isAncestor(forStatement.getInitialization(), variable, true))) {
+        break;
       }
       containerParent = containerParent.getParent();
       if (containerParent instanceof PsiCodeBlock) {
@@ -738,8 +733,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         }
       }
     }
-    else if (initializer instanceof PsiNewExpression) {
-      final PsiNewExpression newExpression = (PsiNewExpression)initializer;
+    else if (initializer instanceof PsiNewExpression newExpression) {
       if (newExpression.getArrayInitializer() != null) {
         if (inDeclaration) {
           return newExpression.getArrayInitializer();

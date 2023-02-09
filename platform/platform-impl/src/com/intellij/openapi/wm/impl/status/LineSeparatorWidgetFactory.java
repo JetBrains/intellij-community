@@ -6,9 +6,13 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory;
 import com.intellij.ui.UIBundle;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-final class LineSeparatorWidgetFactory extends StatusBarEditorBasedWidgetFactory {
+
+@ApiStatus.NonExtendable
+public class LineSeparatorWidgetFactory extends StatusBarEditorBasedWidgetFactory {
   @Override
   public @NotNull String getId() {
     return StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL;
@@ -20,7 +24,7 @@ final class LineSeparatorWidgetFactory extends StatusBarEditorBasedWidgetFactory
   }
 
   @Override
-  public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
-    return new LineSeparatorPanel(project);
+  public @NotNull StatusBarWidget createWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
+    return new LineSeparatorPanel(project, scope);
   }
 }

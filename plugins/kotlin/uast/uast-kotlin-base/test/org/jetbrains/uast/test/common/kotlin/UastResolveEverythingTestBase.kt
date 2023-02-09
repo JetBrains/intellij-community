@@ -78,7 +78,7 @@ interface UastResolveEverythingTestBase : UastPluginSelection, UastFileCompariso
 
         // NB: Except for class, all other kinds' name is redundant, hence captured by regex and removed.
         private val REGEXES: Map<Regex, String> = mapOf(
-            Regex("^SymbolLight.*Class:") to "$TAG_CLASS:",
+            Regex("^SymbolLightClassFor.*?:") to "$TAG_CLASS:",
 
             Regex("^PsiClass:.+$") to TAG_CLASS_DECOMPILED,
 

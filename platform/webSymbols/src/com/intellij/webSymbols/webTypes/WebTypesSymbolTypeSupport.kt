@@ -24,7 +24,7 @@ interface WebTypesSymbolTypeSupport : WebSymbolTypeSupport {
 
   companion object {
 
-    const val DEFAULT_TYPE_SYNTAX = "typescript"
+    private const val DEFAULT_TYPE_SYNTAX = "typescript"
 
     @JvmStatic
     fun get(webTypes: WebTypes, project: Project? = null, context: List<VirtualFile> = emptyList()): WebTypesSymbolTypeSupport =

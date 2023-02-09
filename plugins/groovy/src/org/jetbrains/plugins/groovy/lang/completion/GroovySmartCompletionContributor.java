@@ -109,7 +109,7 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
                                                  }
                                                  else if (o instanceof String) {
                                                    if ("true".equals(o) || "false".equals(o)) {
-                                                     type = PsiType.BOOLEAN;
+                                                     type = PsiTypes.booleanType();
                                                    }
                                                  }
                                                  if (type == null) return;
@@ -325,8 +325,7 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
     }
     else if (pparent instanceof GrApplicationStatement) {
       PsiElement ppparent = pparent.getParent();
-      if (ppparent instanceof GrAssignmentExpression) {
-        GrAssignmentExpression assignment = (GrAssignmentExpression)ppparent;
+      if (ppparent instanceof GrAssignmentExpression assignment) {
 
         GrExpression lvalue = assignment.getLValue();
         GrExpression rvalue = assignment.getRValue();

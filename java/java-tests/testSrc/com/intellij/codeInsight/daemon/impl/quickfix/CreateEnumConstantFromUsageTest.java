@@ -4,9 +4,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.pom.java.LanguageLevel;
 
-/**
- * @author ven
- */
 public class CreateEnumConstantFromUsageTest extends LightQuickFixParameterizedTestCase {
 
   @Override

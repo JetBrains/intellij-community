@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
 import com.intellij.idea.TestFor
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.impl.CoreProgressManager.shouldEnterModalityState
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -183,6 +184,53 @@ class ProgressManagerContractsTest : LightPlatformTestCase() {
     }
 
     UIUtil.dispatchAllInvocationEvents()
+  }
+
+  @TestFor(issues = ["IDEA-307428"])
+  fun `test should enter modality state`() {
+    fun modalTask(): Task = object : Task.Modal(null, "", true) {
+      override fun run(indicator: ProgressIndicator) = fail()
+    }
+
+    fun bgTask(startInBackground: Boolean): Task = object : Task.Backgroundable(null, "", true, { startInBackground }) {
+      override fun run(indicator: ProgressIndicator) = fail()
+    }
+
+    fun cmTask(startInBackground: Boolean): Task = object : Task.ConditionalModal(null, "", true, { startInBackground }) {
+      override fun run(indicator: ProgressIndicator) = fail()
+    }
+
+    fun doTest(vararg data: Pair<Boolean, Task>) {
+      for ((expected, task) in data) {
+        assertThat(shouldEnterModalityState(task)).isEqualTo(expected)
+      }
+    }
+
+    val baselineData = arrayOf(
+      true to modalTask(),
+      false to bgTask(false),
+      false to bgTask(true),
+      false to cmTask(false),
+      false to cmTask(true),
+    )
+
+    ApplicationManager.getApplication().executeOnPooledThread {
+      doTest(*baselineData)
+      runWithGuiTasksMode {
+        doTest(*baselineData)
+      }
+    }.get()
+
+    doTest(*baselineData)
+    runWithGuiTasksMode {
+      doTest(
+        true to modalTask(),
+        false to bgTask(false),
+        false to bgTask(true),
+        true to cmTask(false), // this is the only difference with baseline
+        false to cmTask(true),
+      )
+    }
   }
 
   private fun runWithGuiTasksMode(action: () -> Unit) {

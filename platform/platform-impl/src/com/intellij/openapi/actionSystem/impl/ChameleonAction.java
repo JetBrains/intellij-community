@@ -42,8 +42,7 @@ public class ChameleonAction extends AnAction {
   }
 
   @Nullable ChameleonAction addAction(@NotNull AnAction action, @Nullable ProjectType projectType) {
-    if (action instanceof ActionStub) {
-      ActionStub actionStub = (ActionStub)action;
+    if (action instanceof ActionStub actionStub) {
       action = ActionManagerImpl.convertStub(actionStub);
 
       if (action == null) return this;

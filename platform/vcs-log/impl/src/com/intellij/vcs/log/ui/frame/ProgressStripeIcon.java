@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -23,8 +23,7 @@ import static com.intellij.ui.JBColor.namedColor;
 
 public abstract class ProgressStripeIcon implements Icon {
   private static final int TRANSLATE = 1;
-  @NotNull
-  private final JComponent myReferenceComponent;
+  private final @NotNull JComponent myReferenceComponent;
   private final int myShift;
 
   private ProgressStripeIcon(@NotNull JComponent component, int shift) {
@@ -103,8 +102,7 @@ public abstract class ProgressStripeIcon implements Icon {
     }
   }
 
-  @NotNull
-  public static AsyncProcessIcon generateIcon(@NotNull JComponent component) {
+  public static @NotNull AsyncProcessIcon generateIcon(@NotNull JComponent component) {
     List<Icon> result = new ArrayList<>();
     for (int i = 0; i < 2 * JBUIScale.scale(GradientIcon.GRADIENT); i += JBUIScale.scale(TRANSLATE)) {
       result.add(new GradientIcon(component, i));

@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.UriUtil;
@@ -120,44 +122,47 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
 
     @Override
     protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-      if (value instanceof MapInfo) {
-        MapInfo info = (MapInfo)value;
+      if (value instanceof MapInfo info) {
+        SimpleTextAttributes textAttributes = getAttributes(info);
 
         if (!selected && (info == MapInfo.SEPARATOR || info.type == MapInfo.Type.UNREGISTERED)) {
           setBackground(UIUtil.getDecoratedRowColor());
         }
 
         if (info == MapInfo.SEPARATOR) {
-          append(VcsBundle.message("unregistered.roots.label"), getAttributes(info));
+          append(VcsBundle.message("unregistered.roots.label"), textAttributes);
           return;
         }
 
-        if (info.mapping.isDefaultMapping()) {
-          append(VcsDirectoryMapping.PROJECT_CONSTANT.get(), getAttributes(info));
-          return;
-        }
+        String presentablePath = getPresentablePath(myProject, info.mapping);
+        SpeedSearchUtil.appendFragmentsForSpeedSearch(table, presentablePath, textAttributes, selected, this);
+      }
+    }
 
-        String directory = info.mapping.getDirectory();
-        VirtualFile baseDir = myProject.getBaseDir();
-        if (baseDir != null) {
-          final File directoryFile = new File(StringUtil.trimEnd(UriUtil.trimTrailingSlashes(directory), "\\") + "/");
-          File ioBase = new File(baseDir.getPath());
-          if (directoryFile.isAbsolute() && !FileUtil.isAncestor(ioBase, directoryFile, false)) {
-            append(new File(directory).getPath(), getAttributes(info));
-            return;
-          }
-          String relativePath = FileUtil.getRelativePath(ioBase, directoryFile);
-          if (".".equals(relativePath) || relativePath == null) {
-            append(ioBase.getPath(), getAttributes(info));
-          }
-          else {
-            append(relativePath, getAttributes(info));
-            append(" (" + ioBase + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          }
-        }
-        else {
-          append(new File(directory).getPath(), getAttributes(info));
-        }
+    private static @NotNull @NlsSafe String getPresentablePath(@NotNull Project project, @NotNull VcsDirectoryMapping mapping) {
+      if (mapping.isDefaultMapping()) {
+        return VcsDirectoryMapping.PROJECT_CONSTANT.get();
+      }
+
+      String directory = mapping.getDirectory();
+
+      VirtualFile baseDir = project.getBaseDir();
+      if (baseDir == null) {
+        return new File(directory).getPath();
+      }
+
+      File directoryFile = new File(StringUtil.trimEnd(UriUtil.trimTrailingSlashes(directory), "\\") + "/");
+      File ioBase = new File(baseDir.getPath());
+      if (directoryFile.isAbsolute() && !FileUtil.isAncestor(ioBase, directoryFile, false)) {
+        return new File(directory).getPath();
+      }
+
+      String relativePath = FileUtil.getRelativePath(ioBase, directoryFile);
+      if (".".equals(relativePath) || relativePath == null) {
+        return ioBase.getPath();
+      }
+      else {
+        return relativePath + " (" + ioBase + ")";
       }
     }
   }
@@ -239,6 +244,9 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
     myDirectoryMappingTable = new TableView<>();
     myDirectoryMappingTable.setShowGrid(false);
     myDirectoryMappingTable.setIntercellSpacing(JBUI.emptySize());
+    new TableSpeedSearch(myDirectoryMappingTable, info -> {
+      return info instanceof MapInfo ? MyDirectoryRenderer.getPresentablePath(myProject, ((MapInfo)info).mapping) : "";
+    });
 
     myScopeFilterConfig = new VcsUpdateInfoScopeFilterConfigurable(myProject, myVcsConfiguration);
 

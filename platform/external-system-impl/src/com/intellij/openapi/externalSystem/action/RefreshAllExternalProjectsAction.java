@@ -25,8 +25,6 @@ import java.util.List;
 /**
  * Forces the ide to retrieve the most up-to-date info about the linked external projects and updates project state if necessary
  * (e.g. imports missing libraries).
- *
- * @author Denis Zhdanov
  */
 public class RefreshAllExternalProjectsAction extends DumbAwareAction {
   public RefreshAllExternalProjectsAction() {

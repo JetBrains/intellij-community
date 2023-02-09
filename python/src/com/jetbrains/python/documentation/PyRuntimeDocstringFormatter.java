@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.documentation;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -24,7 +24,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-public class PyRuntimeDocstringFormatter {
+public final class PyRuntimeDocstringFormatter {
   private static final Logger LOG = Logger.getInstance(PyStructuredDocstringFormatter.class);
   private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 

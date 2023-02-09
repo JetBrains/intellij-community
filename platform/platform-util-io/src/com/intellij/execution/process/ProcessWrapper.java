@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class ProcessWrapper extends Process {
 
   @NotNull private final Process myOriginalProcess;

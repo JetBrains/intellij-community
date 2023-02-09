@@ -65,8 +65,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
       final PsiExpression parentExpression = (PsiExpression)prefixExpression.getParent();
       final CommentTracker commentTracker = new CommentTracker();
       @NonNls final StringBuilder newExpression = new StringBuilder();
-      if (parentExpression instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parentExpression;
+      if (parentExpression instanceof PsiAssignmentExpression assignmentExpression) {
         final PsiExpression lhs = assignmentExpression.getLExpression();
         newExpression.append(commentTracker.text(lhs));
         final IElementType tokenType = assignmentExpression.getOperationTokenType();
@@ -78,8 +77,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
         }
         newExpression.append(commentTracker.text(operand));
       }
-      else if (parentExpression instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parentExpression;
+      else if (parentExpression instanceof PsiPolyadicExpression polyadicExpression) {
         int lastOperatorIndex = -1;
         IElementType lastOperator = null;
         for (PsiElement child = polyadicExpression.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -179,8 +177,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
 
     private static InspectionGadgetsFix createReplaceParentOperatorFix(@NotNull PsiPrefixExpression prefixExpr) {
       final PsiElement parent = prefixExpr.getParent();
-      if (parent instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+      if (parent instanceof PsiPolyadicExpression polyadicExpression) {
         if (ExpressionUtils.hasType(polyadicExpression, CommonClassNames.JAVA_LANG_STRING)) {
           return null;
         }
@@ -194,8 +191,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
         }
         return new ReplaceParentOperatorFix();
       }
-      else if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+      else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
         if (ExpressionUtils.hasType(assignmentExpression, CommonClassNames.JAVA_LANG_STRING)) {
           return null;
         }

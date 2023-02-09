@@ -11,9 +11,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.refreshAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
-import com.intellij.openapi.observable.operation.core.ObservableOperationTrace
-import com.intellij.openapi.observable.operation.core.withCompletedOperation
-import com.intellij.openapi.observable.util.getPromise
+import com.intellij.openapi.observable.operation.core.getOperationPromise
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
@@ -25,16 +23,14 @@ import com.intellij.testFramework.observable.waitForPromise
 import com.intellij.testFramework.openProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
-import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.util.generateWrapper
 import org.jetbrains.plugins.gradle.testFramework.util.openProjectAsyncAndWait
 import org.jetbrains.plugins.gradle.testFramework.util.withSuppressedErrors
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.waitForProjectReload
-import java.util.concurrent.TimeUnit
 
 internal class GradleProjectTestFixtureImpl private constructor(
   override val projectName: String,
@@ -62,7 +58,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
     GradleTestFixtureFactory.getFixtureFactory().createFileTestFixture("GradleTestFixture/$gradleVersion/$projectName") {
       configureProject()
       excludeFiles(".gradle", "build")
-      withFiles { generateWrapper(it, gradleVersion) }
+      withFiles { generateGradleWrapper(it.toNioPath(), gradleVersion) }
       withFiles { runBlocking { createProjectCaches(it) } }
     }
   )
@@ -82,7 +78,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
   override fun tearDown() {
     runAll(
       { fileFixture.root.refreshAndWait() },
-      { projectOperations.waitForOperation() },
+      { projectOperations.getOperationPromise(testDisposable).waitForPromise() },
       { if (_project.isInitialized) runBlocking { _project.closeProjectAsync() } },
       { Disposer.dispose(testDisposable) },
       { fileFixture.tearDown() },
@@ -135,10 +131,6 @@ internal class GradleProjectTestFixtureImpl private constructor(
   }
 
   companion object {
-
-    fun ObservableOperationTrace.waitForOperation() {
-      getPromise(null, ::withCompletedOperation).waitForPromise()
-    }
 
     private suspend fun createProjectCaches(projectRoot: VirtualFile) {
       val project = openProjectAsyncAndWait(projectRoot)

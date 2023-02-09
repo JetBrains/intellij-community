@@ -56,6 +56,7 @@ class JarLoader extends Loader {
   String getClassPathManifestAttribute() {
     loadManifestAttributes();
     String manifestAttribute = myClassPathManifestAttribute;
+    //noinspection StringEquality
     return manifestAttribute != NULL_STRING ? manifestAttribute : null;
   }
 

@@ -114,8 +114,7 @@ public abstract class InspectionRVContentProvider {
         .traverse(TreeTraversal.PRE_ORDER_DFS)
         .processEach(node -> {
         if (!((InspectionTreeNode) node).isValid()) return true;
-        if (node instanceof ProblemDescriptionNode) {
-          ProblemDescriptionNode problemDescriptionNode = (ProblemDescriptionNode)node;
+        if (node instanceof ProblemDescriptionNode problemDescriptionNode) {
           if (!problemDescriptionNode.isQuickFixAppliedFromView()) {
             final CommonProblemDescriptor descriptor = problemDescriptionNode.getDescriptor();
             final QuickFix<?>[] fixes = descriptor != null ? descriptor.getFixes() : null;

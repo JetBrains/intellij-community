@@ -14,15 +14,17 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 
 
 interface MainEntityToParent : WorkspaceEntity {
-  val child: @Child AttachedEntityToParent?
   val x: String
+  val child: @Child AttachedEntityToParent?
+  val childNullableParent: @Child AttachedEntityToNullableParent?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : MainEntityToParent, WorkspaceEntity.Builder<MainEntityToParent>, ObjBuilder<MainEntityToParent> {
     override var entitySource: EntitySource
-    override var child: AttachedEntityToParent?
     override var x: String
+    override var child: AttachedEntityToParent?
+    override var childNullableParent: AttachedEntityToNullableParent?
   }
 
   companion object : Type<MainEntityToParent, Builder>() {
@@ -83,3 +85,41 @@ var AttachedEntityToParent.Builder.ref: MainEntityToParent
 
 val AttachedEntityToParent.ref: MainEntityToParent
     by WorkspaceEntity.extension()
+
+
+interface AttachedEntityToNullableParent: WorkspaceEntity {
+  val data: String
+
+  //region generated code
+  @GeneratedCodeApiVersion(1)
+  interface Builder : AttachedEntityToNullableParent, WorkspaceEntity.Builder<AttachedEntityToNullableParent>, ObjBuilder<AttachedEntityToNullableParent> {
+    override var entitySource: EntitySource
+    override var data: String
+  }
+
+  companion object : Type<AttachedEntityToNullableParent, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): AttachedEntityToNullableParent {
+      val builder = builder()
+      builder.data = data
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
+  }
+  //endregion
+}
+
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: AttachedEntityToNullableParent,
+                                      modification: AttachedEntityToNullableParent.Builder.() -> Unit) = modifyEntity(
+  AttachedEntityToNullableParent.Builder::class.java, entity, modification)
+
+var AttachedEntityToNullableParent.Builder.nullableRef: MainEntityToParent?
+  by WorkspaceEntity.extension()
+//endregion
+
+val AttachedEntityToNullableParent.nullableRef: MainEntityToParent?
+  by WorkspaceEntity.extension()

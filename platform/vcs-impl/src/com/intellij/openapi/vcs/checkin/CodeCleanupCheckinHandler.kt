@@ -11,6 +11,7 @@ import com.intellij.codeInspection.actions.PerformFixesTask
 import com.intellij.codeInspection.ex.CleanupProblems
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.CommandProcessorEx
 import com.intellij.openapi.command.UndoConfirmationPolicy
@@ -52,7 +53,7 @@ private class CodeCleanupCheckinHandler(private val project: Project) :
                    settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_PROFILE,
                    "before.checkin.cleanup.code",
                    "before.checkin.cleanup.code.profile")
-      .withCheckinHandler(this)
+      .build(this)
 
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION
 
@@ -71,11 +72,11 @@ private class CodeCleanupCheckinHandler(private val project: Project) :
   }
 
   private suspend fun findProblems(committedFiles: List<VirtualFile>): CleanupProblems {
-    val files = filterOutGeneratedAndExcludedFiles(committedFiles, project)
     val globalContext = InspectionManager.getInstance(project).createNewGlobalContext() as GlobalInspectionContextImpl
     val profile = getProfile()
-    val scope = AnalysisScope(project, files)
     return withContext(Dispatchers.Default + textToDetailsSinkContext(coroutineContext.progressSink)) {
+      val files = readAction { filterOutGeneratedAndExcludedFiles(committedFiles, project) }
+      val scope = AnalysisScope(project, files)
       coroutineToIndicator {
         val indicator = ProgressManager.getGlobalProgressIndicator()
         globalContext.findProblems(scope, profile, indicator) { true }
@@ -95,17 +96,17 @@ private class CodeCleanupCheckinHandler(private val project: Project) :
   }
 
   private suspend fun applyFixes(cleanupProblems: CleanupProblems) {
-    if (cleanupProblems.files.isEmpty()) return
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(cleanupProblems.files)) return
+    if (cleanupProblems.files().isEmpty()) return
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(cleanupProblems.files())) return
 
     val commandProcessor = CommandProcessor.getInstance() as CommandProcessorEx
     commandProcessor.executeCommand {
-      if (cleanupProblems.isGlobalScope) commandProcessor.markCurrentCommandAsGlobal(project)
+      if (cleanupProblems.isGlobalScope()) commandProcessor.markCurrentCommandAsGlobal(project)
 
       val sink = coroutineContext.progressSink
       val runner = SequentialModalProgressTask(project, "", true)
       runner.setMinIterationTime(200)
-      runner.setTask(ApplyFixesTask(project, cleanupProblems.problemDescriptors, sink))
+      runner.setTask(ApplyFixesTask(project, cleanupProblems.problemDescriptors(), sink))
 
       withContext(Dispatchers.IO + noTextSinkContext(sink)) {
         coroutineToIndicator {

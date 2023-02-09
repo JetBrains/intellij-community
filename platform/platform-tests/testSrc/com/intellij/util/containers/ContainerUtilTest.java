@@ -99,7 +99,7 @@ public class ContainerUtilTest extends TestCase {
   }
 
   private static void assertIterating(List<Integer> collection, Condition<? super Integer> condition, Integer... expected) {
-    List<Integer> actual = ContainerUtil.newArrayList(ContainerUtil.iterate(collection, condition));
+    List<Integer> actual = ContainerUtil.filter(collection, condition);
     assertEquals(Arrays.asList(expected), actual);
   }
 
@@ -262,7 +262,7 @@ public class ContainerUtilTest extends TestCase {
   public void testImmutableListEquals() {
     String value = "stringValue";
     List<String> expected = ContainerUtil.immutableList(value);
-    List<String> actual = ContainerUtil.newArrayList(value);
+    List<String> actual = List.of(value);
     assertEquals(expected, actual);
   }
 

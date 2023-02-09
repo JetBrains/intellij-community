@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author irengrig
- */
 public final class ShowAllAffectedGenericAction extends AnAction implements DumbAware {
 
   private static final @NonNls String ACTION_ID = "VcsHistory.ShowAllAffected";

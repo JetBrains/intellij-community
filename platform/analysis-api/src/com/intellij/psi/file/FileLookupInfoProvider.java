@@ -24,9 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author spleaner
- */
 public abstract class FileLookupInfoProvider {
   public static final ExtensionPointName<FileLookupInfoProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileLookupInfoProvider");
 

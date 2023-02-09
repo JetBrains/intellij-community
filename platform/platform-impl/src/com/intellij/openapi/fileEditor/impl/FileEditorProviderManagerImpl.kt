@@ -115,12 +115,12 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
     }
 
     updateState {
-      FileEditorProviderManagerState(it.selectedProviders + (computeKey(providers) to composite.selectedWithProvider.provider.editorTypeId))
+      FileEditorProviderManagerState(it.selectedProviders + (computeKey(providers) to composite.selectedWithProvider!!.provider.editorTypeId))
     }
   }
 
-  fun getSelectedFileEditorProvider(composite: EditorComposite): FileEditorProvider? {
-    val editorHistoryManager = EditorHistoryManager.getInstance(composite.project)
+  internal fun getSelectedFileEditorProvider(composite: EditorComposite, project: Project): FileEditorProvider? {
+    val editorHistoryManager = EditorHistoryManager.getInstance(project)
     val provider = editorHistoryManager.getSelectedProvider(composite.file)
     val providers = composite.allProviders
     if (provider != null || providers.size < 2) {

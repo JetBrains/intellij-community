@@ -77,8 +77,7 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
           container = editor.getRootContainer();
         }
         if (container instanceof RadRootContainer && container.getComponentCount() == 1 &&
-          container.getComponent(0) instanceof RadContainer) {
-          RadContainer childContainer = (RadContainer)container.getComponent(0);
+            container.getComponent(0) instanceof RadContainer childContainer) {
           dropLocation = childContainer.getDropLocation(null);
         }
         else {
@@ -87,8 +86,7 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
       }
       else {
         final RadRootContainer container = editor.getRootContainer();
-        if (container.getComponentCount() == 1 && container.getComponent(0) instanceof RadContainer) {
-          RadContainer childContainer = (RadContainer)container.getComponent(0);
+        if (container.getComponentCount() == 1 && container.getComponent(0) instanceof RadContainer childContainer) {
           dropLocation = childContainer.getDropLocation(null);
         }
         else {

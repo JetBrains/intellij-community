@@ -8,12 +8,12 @@ import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,28 +22,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public final class InstallAndEnableTask extends Task.Modal {
-
-  private final Set<PluginDownloader> myPlugins = new HashSet<>();
+@ApiStatus.Internal
+abstract class InstallAndEnableTask extends Task.Modal {
+  private final boolean allowInstallingPlugins;
+  protected final Set<PluginDownloader> myPlugins = new HashSet<>();
   private final @NotNull Set<PluginId> myPluginIds;
-  private final boolean myShowDialog;
-  private final boolean mySelectAllInDialog;
-  private final @Nullable ModalityState myModalityState;
-  private @NotNull final Runnable myOnSuccess;
-  private @Nullable List<PluginNode> myCustomPlugins;
+  protected @Nullable List<PluginNode> myCustomPlugins;
 
   InstallAndEnableTask(@Nullable Project project,
                        @NotNull Set<PluginId> pluginIds,
-                       boolean showDialog,
-                       boolean selectAllInDialog,
-                       @Nullable ModalityState modalityState,
-                       @NotNull Runnable onSuccess) {
+                       boolean allowInstallingPlugins) {
     super(project, IdeBundle.message("plugins.advertiser.task.searching.for.plugins"), true);
     myPluginIds = pluginIds;
-    myShowDialog = showDialog;
-    mySelectAllInDialog = selectAllInDialog;
-    myModalityState = modalityState;
-    myOnSuccess = onSuccess;
+    this.allowInstallingPlugins = allowInstallingPlugins;
   }
 
   @Override
@@ -57,7 +48,8 @@ public final class InstallAndEnableTask extends Task.Modal {
 
       var org = PluginManagerFilters.getInstance();
       for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-        if (!descriptor.isEnabled() && PluginManagerCore.isCompatible(descriptor) && org.allowInstallingPlugin(descriptor)) {
+        if (!descriptor.isEnabled() && PluginManagerCore.isCompatible(descriptor) &&
+            org.allowInstallingPlugin(descriptor) || allowInstallingPlugins) {
           descriptors.add(descriptor);
         }
       }
@@ -75,25 +67,4 @@ public final class InstallAndEnableTask extends Task.Modal {
 
   public Set<PluginDownloader> getPlugins() { return myPlugins; }
   public @Nullable List<PluginNode> getCustomPlugins() { return myCustomPlugins; }
-
-
-  @Override
-  public void onSuccess() {
-    if (myCustomPlugins == null) {
-      return;
-    }
-
-    new PluginsAdvertiserDialog(myProject,
-                                myPlugins,
-                                myCustomPlugins,
-                                mySelectAllInDialog,
-                                this::runOnSuccess)
-      .doInstallPlugins(myShowDialog, myModalityState);
-  }
-
-  private void runOnSuccess(boolean onSuccess) {
-    if (onSuccess) {
-      myOnSuccess.run();
-    }
-  }
 }

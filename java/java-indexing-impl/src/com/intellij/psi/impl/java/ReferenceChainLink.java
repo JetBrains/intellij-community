@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java;
 
 import com.intellij.openapi.project.Project;
@@ -40,15 +40,10 @@ public class ReferenceChainLink {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ReferenceChainLink)) return false;
-
-    ReferenceChainLink link = (ReferenceChainLink)o;
-
-    if (isCall != link.isCall) return false;
-    if (argCount != link.argCount) return false;
-    if (!referenceName.equals(link.referenceName)) return false;
-
-    return true;
+    return o instanceof ReferenceChainLink link &&
+           isCall == link.isCall &&
+           argCount == link.argCount &&
+           referenceName.equals(link.referenceName);
   }
 
   @Override

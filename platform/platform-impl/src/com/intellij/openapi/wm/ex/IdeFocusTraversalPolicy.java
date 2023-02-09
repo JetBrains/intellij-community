@@ -111,8 +111,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
       }
     }
 
-    if (component instanceof JTabbedPane) {
-      JTabbedPane tabbedPane = (JTabbedPane)component;
+    if (component instanceof JTabbedPane tabbedPane) {
       Component selectedComponent = tabbedPane.getSelectedComponent();
       if (selectedComponent instanceof JComponent) {
         return getPreferredFocusedComponent((JComponent)selectedComponent);

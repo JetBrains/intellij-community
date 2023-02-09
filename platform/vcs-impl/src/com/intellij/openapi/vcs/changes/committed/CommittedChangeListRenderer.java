@@ -46,13 +46,22 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
 
   @Contract(pure = true)
   public static @NotNull String truncateDescription(@NotNull String initDescription, @NotNull FontMetrics fontMetrics, int maxWidth) {
-    String description = initDescription;
-    int descWidth = fontMetrics.stringWidth(description);
-    while (description.length() > 0 && (descWidth > maxWidth)) {
-      description = trimLastWord(description);
-      descWidth = fontMetrics.stringWidth(description + " ");
+    int low = 0;
+    int high = initDescription.length() - 1;
+
+    while (low <= high) {
+      int mid = low + (high - low) / 2;
+      String iteration = initDescription.substring(0, mid);
+      int stringWidth = fontMetrics.stringWidth(iteration);
+      if (stringWidth > maxWidth) {
+        high = mid - 1;
+      } else {
+        low = mid + 1;
+      }
     }
-    return description;
+
+    int lastSpaceIndex = initDescription.lastIndexOf(" ", low - 1);
+    return lastSpaceIndex == -1 ? initDescription : initDescription.substring(0, lastSpaceIndex);
   }
 
   @Override
@@ -62,8 +71,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
 
   public void customize(JComponent tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-    if (userObject instanceof CommittedChangeList) {
-      CommittedChangeList changeList = (CommittedChangeList)userObject;
+    if (userObject instanceof CommittedChangeList changeList) {
       renderChangeList(tree, changeList);
     }
     else if (userObject instanceof String) {
@@ -163,19 +171,10 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  private static String trimLastWord(final String description) {
-    int pos = description.trim().lastIndexOf(' ');
-    if (pos >= 0) {
-      return description.substring(0, pos).trim();
-    }
-    return description.substring(0, description.length()-1);
-  }
-
   public static int getRowX(JTree tree, int depth) {
     if (tree == null) return 0;
     final TreeUI ui = tree.getUI();
-    if (ui instanceof BasicTreeUI) {
-      final BasicTreeUI treeUI = ((BasicTreeUI)ui);
+    if (ui instanceof BasicTreeUI treeUI) {
       return (treeUI.getLeftChildIndent() + treeUI.getRightChildIndent()) * depth;
     }
 

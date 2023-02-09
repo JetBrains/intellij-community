@@ -73,7 +73,7 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
       super.visitAssignmentExpression(expression);
       if (expression.getRExpression() == null ||
           expression.getOperationTokenType() != JavaTokenType.EQ ||
-          !PsiType.BOOLEAN.equals(expression.getType())) {
+          !PsiTypes.booleanType().equals(expression.getType())) {
         return;
       }
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());

@@ -2,11 +2,11 @@
 
 package sample
 
-expect interface <!LINE_MARKER("descr='Has actuals in jvm module'"), LINE_MARKER("descr='Is subclassed by A [common-2] B [jvm]  Click or press ... to navigate'")!>C<!> {
+expect interface <!LINE_MARKER("descr='Has actuals in jvm module'"), LINE_MARKER("descr='Is subclassed by A [common-2] (sample) B [jvm] (sample) Press ... to navigate'")!>C<!> {
     fun <!LINE_MARKER("descr='Has actuals in jvm module'")!>common_2_C<!>()
 }
 
-actual interface <!LINE_MARKER("descr='Has expects in common-1 module'"), LINE_MARKER("descr='Is implemented by B [jvm]  Click or press ... to navigate'")!>A<!> : C {
+actual interface <!LINE_MARKER("descr='Has expects in common-1 module'"), LINE_MARKER("descr='Is implemented by B [jvm] (sample) Press ... to navigate'")!>A<!> : C {
     actual fun <!LINE_MARKER("descr='Has expects in common-1 module'")!>common_1_A<!>()
     fun common_2_A()
 }

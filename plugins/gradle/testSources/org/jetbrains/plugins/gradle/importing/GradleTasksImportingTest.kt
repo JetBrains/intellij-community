@@ -26,7 +26,7 @@ class GradleTasksImportingTest : BuildViewMessagesImportingTestCase() {
 
   @Test
   @TargetVersions("5.0+")
-  fun `test task registration failure doesn't break other tasks importing of unrelated projects`() {
+  fun `test task configuration failure doesn't break tasks importing`() {
     createSettingsFile("include 'project1', 'project2'")
     createProjectSubFile("project1/build.gradle", """
       tasks.register('badTask') {
@@ -35,11 +35,10 @@ class GradleTasksImportingTest : BuildViewMessagesImportingTestCase() {
     """.trimIndent())
     importProject()
     assertSyncViewTreeEquals("-\n" +
-                             " -finished\n" +
-                             "  Can not load tasks for project ':project1'")
+                             " finished")
 
     assertThat(findTasks(projectPath)).isNotEmpty
-    assertThat(findTasks(path("project1"))).isEmpty()
+    assertThat(findTasks(path("project1"))).isNotEmpty
     assertThat(findTasks(path("project2"))).isNotEmpty
   }
 

@@ -29,13 +29,13 @@ public abstract class CachedValueBase<T> {
   }
 
   @NotNull
-  private Data<T> computeData(@NotNull Computable<? extends CachedValueProvider.Result<T>> doCompute) {
+  private Data<T> computeData(@NotNull Computable<CachedValueProvider.Result<T>> doCompute) {
     CachedValueProvider.Result<T> result;
     CachedValueProfiler.ValueTracker tracker;
     if (CachedValueProfiler.isProfiling()) {
       try (CachedValueProfiler.Frame frame = CachedValueProfiler.newFrame()) {
         result = doCompute.compute();
-        tracker = frame.newValueTracker(result);
+        tracker = result == null ? null : frame.newValueTracker(result);
       }
     }
     else {
@@ -199,7 +199,8 @@ public abstract class CachedValueBase<T> {
       if (dependencies.length == 1 && dependencies[0] == PsiModificationTracker.MODIFICATION_COUNT) {
         // there is no sense in storing hundreds of new arrays of [PsiModificationTracker.MODIFICATION_COUNT]
         myDependencies = PSI_MODIFICATION_DEPENDENCIES;
-      } else {
+      }
+      else {
         myDependencies = dependencies;
       }
 

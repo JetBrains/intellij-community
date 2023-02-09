@@ -109,7 +109,7 @@ public final class JdkEx {
   private static MethodInvocator mySetTabbingMode;
 
   private static @Nullable MethodInvocator getTabbingModeInvocator() {
-    if (ExperimentalUI.isNewUI() ||
+    if ((ExperimentalUI.isNewUI() && !Registry.is("ide.mac.os.wintabs.version2", true)) ||
         !SystemInfo.isJetBrainsJvm ||
         !SystemInfo.isMacOSBigSur ||
         !Registry.is("ide.mac.bigsur.window.with.tabs.enabled", true)) {
@@ -117,8 +117,9 @@ public final class JdkEx {
         LOG.info("=== TabbingMode: disabled (" +
                  SystemInfo.isJetBrainsJvm + "," +
                  SystemInfo.isMacOSBigSur + "," +
-                 Registry.is("ide.mac.bigsur.window.with.tabs.enabled", true) + "," +
-                 ExperimentalUI.isNewUI() + ") ===");
+                 Registry.is("ide.mac.bigsur.window.with.tabs.enabled") + "," +
+                 ExperimentalUI.isNewUI() +
+                 Registry.is("ide.mac.os.wintabs.version2") + ") ===");
       }
       return null;
     }

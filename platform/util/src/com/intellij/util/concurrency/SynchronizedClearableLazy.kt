@@ -3,11 +3,12 @@ package com.intellij.util.concurrency
 
 import com.intellij.util.ObjectUtils
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Supplier
 
 /**
  * Kotlin-friendly version of ClearableLazyValue
  */
-class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T> {
+class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T>, Supplier<T> {
   private val computedValue = AtomicReference(notYetInitialized())
 
   @Suppress("UNCHECKED_CAST")
@@ -23,6 +24,8 @@ class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T> {
 
   val valueIfInitialized: T?
     get() = nullize(computedValue.get())
+
+  override fun get(): T = value
 
   override var value: T
     get() {

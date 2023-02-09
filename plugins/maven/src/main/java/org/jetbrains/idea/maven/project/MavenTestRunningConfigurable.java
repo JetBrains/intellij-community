@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenTestRunningConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myMainPanel;
 

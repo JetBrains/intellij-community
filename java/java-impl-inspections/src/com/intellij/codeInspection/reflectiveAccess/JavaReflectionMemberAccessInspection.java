@@ -1,10 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reflectiveAccess;
 
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -17,24 +16,20 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final Set<String> MEMBER_METHOD_NAMES = Set.of(GET_FIELD, GET_DECLARED_FIELD,
@@ -50,23 +45,13 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
     parseSettings();
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-
-    final ListTable table = new ListTable(
-      new ListWrappingTableModel(ignoredClassNames, JavaBundle.message("inspection.reflection.member.access.check.exists.exclude.chooser")));
-    final JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(
-      JavaBundle.message("inspection.reflection.member.access.check.exists.exclude.chooser"),
-      JavaBundle.message("inspection.reflection.member.access.check.exists.exclude.label"),
-      table,
-      true);
-
-    panel.addCheckbox(JavaBundle.message("inspection.reflection.member.access.check.exists"), "checkMemberExistsInNonFinalClasses");
-    panel.addGrowing(tablePanel);
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("ignoredClassNames", JavaBundle.message("inspection.reflection.member.access.check.exists.exclude.label"),
+                 new JavaClassValidator().withTitle(JavaBundle.message("inspection.reflection.member.access.check.exists.exclude.chooser"))),
+      checkbox("checkMemberExistsInNonFinalClasses", JavaBundle.message("inspection.reflection.member.access.check.exists"))
+    );
   }
 
   @Override
@@ -245,7 +230,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
       return null;
     }
     final List<ReflectiveType> argumentTypes =
-      ContainerUtil.map(methodArguments.expressions, JavaReflectionReferenceUtil::getReflectiveType);
+      ContainerUtil.map(methodArguments.expressions(), JavaReflectionReferenceUtil::getReflectiveType);
 
     return JavaLangClassMemberReference.matchMethod(methods, argumentTypes);
   }

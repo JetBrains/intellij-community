@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.io.File;
 
-/**
- * @author irengrig
- */
 public class VirtualFileListCellRenderer extends ColoredListCellRenderer {
   protected final Project myProject;
   private final FileStatusManager myFileStatusManager;

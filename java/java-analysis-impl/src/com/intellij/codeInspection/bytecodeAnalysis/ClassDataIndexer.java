@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.*;
@@ -39,8 +39,6 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  *
  * Based on "Nullness Analysis of Java Bytecode via Supercompilation over Abstract Values" by Ilya Klyuchnikov
  *     (http://meta2014.pereslavl.ru/papers/2014_Klyuchnikov__Nullness_Analysis_of_Java_Bytecode_via_Supercompilation_over_Abstract_Values.pdf)
- *
- * @author lambdamix
  */
 public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMember, Equations>> {
   static final String STRING_CONCAT_FACTORY = "java/lang/invoke/StringConcatFactory";
@@ -134,8 +132,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   }
 
   private static Result hash(Result result) {
-    if (result instanceof Effects) {
-      Effects effects = (Effects)result;
+    if (result instanceof Effects effects) {
       return new Effects(effects.returnValue, StreamEx.of(effects.effects).map(ClassDataIndexer::hash).toSet());
     }
     else if (result instanceof Pending) {
@@ -149,8 +146,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   }
 
   private static EffectQuantum hash(EffectQuantum effect) {
-    if (effect instanceof EffectQuantum.CallQuantum) {
-      EffectQuantum.CallQuantum call = (EffectQuantum.CallQuantum)effect;
+    if (effect instanceof EffectQuantum.CallQuantum call) {
       return new EffectQuantum.CallQuantum(call.key.hashed(), call.data, call.isStatic);
     }
     return effect;

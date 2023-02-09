@@ -1,11 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables
 
-import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.util.siblings
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.containers.ContainerUtil
@@ -19,6 +16,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow.CellAlignment
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.jetbrains.annotations.ApiStatus
 
@@ -63,7 +61,7 @@ object TableModificationUtils {
 
   fun MarkdownTableCell.hasCorrectPadding(): Boolean {
     val cellText = text
-    return text.length >= TableProps.MIN_CELL_WIDTH && cellText.startsWith(" ") && cellText.endsWith(" ")
+    return cellText.startsWith(" ") && cellText.endsWith(" ")
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
@@ -96,22 +94,19 @@ object TableModificationUtils {
     return hasValidAlignment(columnAlignment)
   }
 
-  fun MarkdownTableCell.hasValidAlignment(expected: MarkdownTableSeparatorRow.CellAlignment): Boolean {
+  fun MarkdownTableCell.hasValidAlignment(expected: CellAlignment): Boolean {
     val content = text
-    if (content.length < TableProps.MIN_CELL_WIDTH) {
-      return false
-    }
     if (content.isBlank()) {
       return true
     }
     when (expected) {
-      MarkdownTableSeparatorRow.CellAlignment.LEFT -> {
+      CellAlignment.LEFT -> {
         return content[0] == ' ' && content[1] != ' '
       }
-      MarkdownTableSeparatorRow.CellAlignment.RIGHT -> {
+      CellAlignment.RIGHT -> {
         return content.last() == ' ' && content[content.lastIndex - 1] != ' '
       }
-      MarkdownTableSeparatorRow.CellAlignment.CENTER -> {
+      CellAlignment.CENTER -> {
         var spacesLeft = content.indexOfFirst { it != ' ' }
         var spacesRight = content.indexOfLast { it != ' ' }
         if (spacesLeft == -1 || spacesRight == -1) {
@@ -127,30 +122,26 @@ object TableModificationUtils {
 
   fun MarkdownTable.validateColumnAlignment(columnIndex: Int): Boolean {
     val expected = separatorRow!!.getCellAlignment(columnIndex)
-    if (expected == MarkdownTableSeparatorRow.CellAlignment.NONE) {
+    if (expected == CellAlignment.NONE) {
       return true
     }
     return getColumnCells(columnIndex, true).all { it.hasValidAlignment(expected) }
   }
 
-  /**
-   * @param cellContentWidth Should be at least 5
-   */
-  fun buildSeparatorCellContent(alignment: MarkdownTableSeparatorRow.CellAlignment, cellContentWidth: Int): String {
-    check(cellContentWidth > 4)
+  fun buildSeparatorCellContent(alignment: CellAlignment, cellContentWidth: Int): String {
     return when (alignment) {
-      MarkdownTableSeparatorRow.CellAlignment.NONE -> "-".repeat(cellContentWidth)
-      MarkdownTableSeparatorRow.CellAlignment.LEFT -> ":${"-".repeat(cellContentWidth - 1)}"
-      MarkdownTableSeparatorRow.CellAlignment.RIGHT -> "${"-".repeat(cellContentWidth - 1)}:"
-      MarkdownTableSeparatorRow.CellAlignment.CENTER -> ":${"-".repeat(cellContentWidth - 2)}:"
+      CellAlignment.NONE -> "-".repeat(cellContentWidth)
+      CellAlignment.LEFT -> ":${"-".repeat((cellContentWidth - 1).coerceAtLeast(1))}"
+      CellAlignment.RIGHT -> "${"-".repeat((cellContentWidth - 1).coerceAtLeast(1))}:"
+      CellAlignment.CENTER -> ":${"-".repeat((cellContentWidth - 2).coerceAtLeast(1))}:"
     }
   }
 
-  fun buildRealignedCellContent(cellContent: String, wholeCellWidth: Int, alignment: MarkdownTableSeparatorRow.CellAlignment): String {
+  fun buildRealignedCellContent(cellContent: String, wholeCellWidth: Int, alignment: CellAlignment): String {
     check(wholeCellWidth >= cellContent.length)
     return when (alignment) {
-      MarkdownTableSeparatorRow.CellAlignment.RIGHT -> "${" ".repeat(wholeCellWidth - cellContent.length - 1)}$cellContent "
-      MarkdownTableSeparatorRow.CellAlignment.CENTER -> {
+      CellAlignment.RIGHT -> "${" ".repeat((wholeCellWidth - cellContent.length - 1).coerceAtLeast(0))}$cellContent "
+      CellAlignment.CENTER -> {
         val leftPadding = (wholeCellWidth - cellContent.length) / 2
         val rightPadding = wholeCellWidth - cellContent.length - leftPadding
         buildString {
@@ -164,7 +155,7 @@ object TableModificationUtils {
         }
       }
       // MarkdownTableSeparatorRow.CellAlignment.LEFT
-      else -> " $cellContent${" ".repeat(wholeCellWidth - cellContent.length - 1)}"
+      else -> " $cellContent${" ".repeat((wholeCellWidth - cellContent.length - 1).coerceAtLeast(0))}"
     }
   }
 
@@ -174,16 +165,15 @@ object TableModificationUtils {
     return content.trim(' ')
   }
 
-  fun MarkdownTableSeparatorRow.updateAlignment(document: Document, columnIndex: Int, alignment: MarkdownTableSeparatorRow.CellAlignment) {
+  fun MarkdownTableSeparatorRow.updateAlignment(document: Document, columnIndex: Int, alignment: CellAlignment) {
     val cellRange = getCellRange(columnIndex)!!
     val width = cellRange.length
-    //check(width >= TableProps.MIN_CELL_WIDTH)
     val replacement = buildSeparatorCellContent(alignment, width)
     document.replaceString(cellRange.startOffset, cellRange.endOffset, replacement)
   }
 
-  fun MarkdownTableCell.updateAlignment(document: Document, alignment: MarkdownTableSeparatorRow.CellAlignment) {
-    if (alignment == MarkdownTableSeparatorRow.CellAlignment.NONE) {
+  fun MarkdownTableCell.updateAlignment(document: Document, alignment: CellAlignment) {
+    if (alignment == CellAlignment.NONE) {
       return
     }
     val documentText = document.charsSequence
@@ -194,7 +184,7 @@ object TableModificationUtils {
     document.replaceString(cellRange.startOffset, cellRange.endOffset, replacement)
   }
 
-  fun MarkdownTable.updateColumnAlignment(document: Document, columnIndex: Int, alignment: MarkdownTableSeparatorRow.CellAlignment) {
+  fun MarkdownTable.updateColumnAlignment(document: Document, columnIndex: Int, alignment: CellAlignment) {
     modifyColumn(
       columnIndex,
       transformSeparator = { separatorRow?.updateAlignment(document, columnIndex, alignment) },
@@ -207,76 +197,12 @@ object TableModificationUtils {
     updateColumnAlignment(document, columnIndex, alignment)
   }
 
-  fun MarkdownTable.buildEmptyRow(builder: StringBuilder = StringBuilder()): StringBuilder {
-    val header = checkNotNull(headerRow)
-    builder.append(TableProps.SEPARATOR_CHAR)
-    for (cell in header.cells) {
-      repeat(cell.textRange.length) {
-        builder.append(' ')
-      }
-      builder.append(TableProps.SEPARATOR_CHAR)
-    }
-    return builder
-  }
-
-  fun MarkdownTable.selectColumn(
-    editor: Editor,
-    columnIndex: Int,
-    withHeader: Boolean = false,
-    withSeparator: Boolean = false,
-    withBorders: Boolean = false
-  ) {
-    val cells = getColumnCells(columnIndex, withHeader)
-    val caretModel = editor.caretModel
-    caretModel.removeSecondaryCarets()
-    caretModel.currentCaret.apply {
-      val textRange = obtainCellSelectionRange(cells.first(), withBorders)
-      moveToOffset(textRange.startOffset)
-      setSelectionFromRange(textRange)
-    }
-    if (withSeparator) {
-      val range = when {
-        withBorders -> separatorRow?.getCellRangeWithPipes(columnIndex)
-        else -> separatorRow?.getCellRange(columnIndex)
-      }
-      range?.let { textRange ->
-        val caret = caretModel.addCaret(editor.offsetToVisualPosition(textRange.startOffset))
-        caret?.setSelectionFromRange(textRange)
-      }
-    }
-    for (cell in cells.asSequence().drop(1)) {
-      val textRange = obtainCellSelectionRange(cell, withBorders)
-      val caret = caretModel.addCaret(editor.offsetToVisualPosition(textRange.startOffset))
-      caret?.setSelectionFromRange(textRange)
-    }
-  }
-
-  private fun obtainCellSelectionRange(cell: MarkdownTableCell, withBorders: Boolean): TextRange {
-    val range = cell.textRange
-    if (!withBorders) {
-      return range
-    }
-    val leftPipe = cell.siblings(forward = false, withSelf = false)
-      .takeWhile { it !is MarkdownTableCell }
-      .find { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) }
-    val rightPipe = cell.siblings(forward = true, withSelf = false)
-      .takeWhile { it !is MarkdownTableCell }
-      .find { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) }
-    val left = leftPipe?.startOffset ?: range.startOffset
-    val right = rightPipe?.endOffset ?: range.endOffset
-    return TextRange(left, right)
-  }
-
-  private fun Caret.setSelectionFromRange(textRange: TextRange) {
-    setSelection(textRange.startOffset, textRange.endOffset)
-  }
-
   fun MarkdownTable.insertColumn(
     document: Document,
     columnIndex: Int,
     after: Boolean = true,
-    alignment: MarkdownTableSeparatorRow.CellAlignment = MarkdownTableSeparatorRow.CellAlignment.NONE,
-    columnWidth: Int = TableProps.MIN_CELL_WIDTH
+    alignment: CellAlignment = CellAlignment.NONE,
+    columnWidth: Int = 5
   ) {
     val cells = getColumnCells(columnIndex, withHeader = false)
     val headerCell = headerRow?.getCell(columnIndex)!!
@@ -296,36 +222,6 @@ object TableModificationUtils {
       after -> document.insertString(headerCell.endOffset + 1, "${cellContent}${TableProps.SEPARATOR_CHAR}")
       else -> document.insertString(headerCell.startOffset - 1, "${TableProps.SEPARATOR_CHAR}${cellContent}")
     }
-  }
-
-  fun buildEmptyRow(columns: Int, fillCharacter: Char = ' ', builder: StringBuilder = StringBuilder()): StringBuilder {
-    return builder.apply {
-      repeat(columns) {
-        append(TableProps.SEPARATOR_CHAR)
-        repeat(TableProps.MIN_CELL_WIDTH) {
-          append(fillCharacter)
-        }
-      }
-      append(TableProps.SEPARATOR_CHAR)
-    }
-  }
-
-  @Suppress("MemberVisibilityCanBePrivate")
-  fun buildHeaderSeparator(columns: Int, builder: StringBuilder = StringBuilder()): StringBuilder {
-    return buildEmptyRow(columns, '-', builder)
-  }
-
-  fun buildEmptyTable(contentRows: Int, columns: Int): String {
-    val builder = StringBuilder()
-    buildEmptyRow(columns, builder = builder)
-    builder.append('\n')
-    buildHeaderSeparator(columns, builder = builder)
-    builder.append('\n')
-    repeat(contentRows) {
-      buildEmptyRow(columns, builder = builder)
-      builder.append('\n')
-    }
-    return builder.toString()
   }
 
   fun MarkdownTableRow.hasCorrectBorders(): Boolean {

@@ -5,17 +5,16 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.UIBundle;
 import com.intellij.xdebugger.XDebuggerBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author spleaner
- */
 public class DefaultDebugExecutor extends Executor {
   @NonNls public static final String EXECUTOR_ID = ToolWindowId.DEBUG;
 
@@ -68,6 +67,14 @@ public class DefaultDebugExecutor extends Executor {
   @NotNull
   public String getStartActionText() {
     return XDebuggerBundle.message("debugger.runner.start.action.text");
+  }
+
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Override
+  public @NotNull String getStartActionText(@NotNull String configurationName) {
+    if (configurationName.isEmpty()) return getStartActionText();
+    return TextWithMnemonic.parse(XDebuggerBundle.message("debugger.runner.start.action.text.2"))
+      .replaceFirst("%s", shortenNameIfNeeded(configurationName)).toString();
   }
 
   @Override

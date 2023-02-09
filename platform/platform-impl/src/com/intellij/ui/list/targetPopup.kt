@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.util.RoundedCellRenderer
 import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -55,7 +56,7 @@ fun <T> buildTargetPopup(
   }
   return JBPopupFactory.getInstance()
     .createPopupChooserBuilder(items)
-    .setRenderer(createTargetPresentationRenderer(presentationProvider))
+    .setRenderer(RoundedCellRenderer(createTargetPresentationRenderer(presentationProvider)))
     .setFont(EditorUtil.getEditorFont())
     .withHintUpdateSupply()
     .setNamerForFiltering { item: T ->

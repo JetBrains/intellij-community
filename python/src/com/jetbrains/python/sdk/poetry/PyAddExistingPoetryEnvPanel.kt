@@ -35,9 +35,6 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 import kotlin.streams.toList
 
-/**
- * @author vlan
- */
 
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>

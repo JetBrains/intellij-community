@@ -7,9 +7,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class GenericCreateFromUsageTest extends LightQuickFixParameterizedTestCase {
 
   @Override

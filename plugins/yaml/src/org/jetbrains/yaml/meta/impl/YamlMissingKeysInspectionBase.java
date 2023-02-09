@@ -1,13 +1,13 @@
 //Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.meta.impl;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInspection.*;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -18,10 +18,7 @@ import org.jetbrains.yaml.YAMLElementGenerator;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.meta.model.YamlMetaType;
 import org.jetbrains.yaml.meta.model.YamlScalarType;
-import org.jetbrains.yaml.psi.YAMLDocument;
-import org.jetbrains.yaml.psi.YAMLKeyValue;
-import org.jetbrains.yaml.psi.YAMLMapping;
-import org.jetbrains.yaml.psi.YAMLSequenceItem;
+import org.jetbrains.yaml.psi.*;
 
 import java.util.Collection;
 import java.util.Set;
@@ -61,17 +58,26 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
       final Collection<String> missingKeys = getMissingKeys(mapping, metaType);
       if (!missingKeys.isEmpty()) {
         String msg = YAMLBundle.message("YamlMissingKeysInspectionBase.missing.keys", composeKeyList(missingKeys));
-        myProblemsHolder.registerProblem(getElementToHighlight(mapping), msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                         new AddMissingKeysQuickFix(missingKeys));
+        PsiElement element = getElementToHighlight(mapping);
+        myProblemsHolder.registerProblem(element, msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                         new AddMissingKeysQuickFix(missingKeys, element));
       }
     }
   }
 
-  private static class AddMissingKeysQuickFix implements LocalQuickFix {
+  private static class AddMissingKeysQuickFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     @SafeFieldForPreview private final Collection<String> myMissingKeys;
 
-    AddMissingKeysQuickFix(@NotNull final Collection<String> missingKeys) {
+    AddMissingKeysQuickFix(@NotNull final Collection<String> missingKeys, @NotNull final PsiElement psiElement) {
+      super(psiElement);
       myMissingKeys = missingKeys;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getText() {
+      return getFamilyName();
     }
 
     @Nls
@@ -82,17 +88,41 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final YAMLElementGenerator elementGenerator = YAMLElementGenerator.getInstance(project);
-      PsiElement mapping = getMappingFromHighlightElement(descriptor.getPsiElement());
+    public boolean isAvailable(@NotNull Project project,
+                               @NotNull PsiFile file,
+                               @Nullable Editor editor,
+                               @NotNull PsiElement startElement,
+                               @NotNull PsiElement endElement) {
+      PsiElement mapping = getMappingFromHighlightElement(startElement);
+      return mapping != null;
+    }
+
+    @Override
+    public void invoke(@NotNull Project project,
+                       @NotNull PsiFile file,
+                       @Nullable Editor editor,
+                       @NotNull PsiElement startElement,
+                       @NotNull PsiElement endElement) {
+      PsiElement mapping = getMappingFromHighlightElement(startElement);
       if (mapping == null) {
         return;
       }
 
+      final YAMLElementGenerator elementGenerator = YAMLElementGenerator.getInstance(project);
+      int indent = YAMLUtil.getIndentToThisElement(mapping);
+
+      PsiElement firstInsertedKey = null;
       for (final String missingKey : myMissingKeys) {
         mapping.add(elementGenerator.createEol());
-        mapping.add(elementGenerator.createIndent(YAMLUtil.getIndentToThisElement(mapping)));
-        mapping.add(elementGenerator.createYamlKeyValue(missingKey, ""));
+        mapping.add(elementGenerator.createIndent(indent));
+        PsiElement newElement = mapping.add(elementGenerator.createYamlKeyValue(missingKey, ""));
+        if (firstInsertedKey == null) {
+          firstInsertedKey = newElement;
+        }
+      }
+
+      if (editor != null && firstInsertedKey != null) {
+        editor.getCaretModel().moveToOffset(firstInsertedKey.getTextOffset() + firstInsertedKey.getTextLength());
       }
     }
   }
@@ -102,8 +132,13 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
     if (elementToHighlight instanceof YAMLDocument) {
       return PsiTreeUtil.getChildOfAnyType(elementToHighlight, YAMLMapping.class);
     }
-    else if (elementToHighlight.getParent() instanceof YAMLKeyValue) {
-      return ((YAMLKeyValue)elementToHighlight.getParent()).getValue();
+
+    PsiElement parent = elementToHighlight.getParent();
+    if (parent instanceof YAMLKeyValue) {
+      return ((YAMLKeyValue)parent).getValue();
+    }
+    else if (parent instanceof YAMLSequenceItem) {
+      return ((YAMLSequenceItem)parent).getValue();
     }
     else {
       return PsiTreeUtil.getParentOfType(elementToHighlight, YAMLMapping.class);

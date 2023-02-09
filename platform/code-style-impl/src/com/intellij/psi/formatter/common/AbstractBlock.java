@@ -83,7 +83,8 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
     }
 
     TextRange blockRange = myNode.getTextRange();
-    List<DocumentWindow> documentWindows = InjectedLanguageManager.getInstance(file.getProject()).getCachedInjectedDocumentsInRange(file, blockRange);
+    List<DocumentWindow> documentWindows =
+      InjectedLanguageManager.getInstance(file.getProject()).getCachedInjectedDocumentsInRange(file, blockRange);
     if (documentWindows.isEmpty()) {
       return EMPTY;
     }
@@ -106,14 +107,13 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
 
   protected abstract List<Block> buildChildren();
 
-  @Nullable
   @Override
-  public Wrap getWrap() {
+  public @Nullable Wrap getWrap() {
     return myWrap;
   }
 
   @Override
-  public Indent getIndent() {
+  public @Nullable Indent getIndent() {
     return null;
   }
 

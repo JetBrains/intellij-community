@@ -368,8 +368,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
    */
   private void syncFontFamilies(AWTEvent event) {
     Object source = event.getSource();
-    if (source instanceof AbstractFontCombo) {
-      AbstractFontCombo<?> combo = (AbstractFontCombo<?>)source;
+    if (source instanceof AbstractFontCombo<?> combo) {
       if (combo.isEnabled() && combo.isShowing() && combo.getSelectedItem() != null) {
         syncFontFamilies();
       }
@@ -381,8 +380,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
       return;
     }
     FontPreferences fontPreferences = getFontPreferences();
-    if (fontPreferences instanceof ModifiableFontPreferences) {
-      ModifiableFontPreferences modifiableFontPreferences = (ModifiableFontPreferences)fontPreferences;
+    if (fontPreferences instanceof ModifiableFontPreferences modifiableFontPreferences) {
       modifiableFontPreferences.clearFonts();
       modifiableFontPreferences.setUseLigatures(myEnableLigaturesCheckbox.isSelected());
       String primaryFontFamily = myPrimaryCombo.getFontName();

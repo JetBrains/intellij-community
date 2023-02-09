@@ -6,9 +6,9 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -53,7 +53,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
 
     EditorMarkupModel markup = (EditorMarkupModel) editor.getMarkupModel();
     markup.setErrorPanelPopupHandler(new DaemonEditorPopup(myProject, editor));
-    markup.setErrorStripTooltipRendererProvider(createTooltipRenderer(editor));
+    markup.setErrorStripTooltipRendererProvider(new DaemonTooltipRendererProvider(myProject, editor));
     markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
     setOrRefreshErrorStripeRenderer(markup, psiFile);
   }
@@ -64,14 +64,13 @@ public final class ErrorStripeUpdateManager implements Disposable {
       return;
     }
     ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
-    if (renderer instanceof TrafficLightRenderer) {
-      TrafficLightRenderer tlr = (TrafficLightRenderer) renderer;
+    if (renderer instanceof TrafficLightRenderer tlr) {
       EditorMarkupModelImpl markupModelImpl = (EditorMarkupModelImpl) editorMarkupModel;
       tlr.refresh(markupModelImpl);
       markupModelImpl.repaintTrafficLightIcon();
       if (tlr.isValid()) return;
     }
-
+    ModalityState modality = ModalityState.defaultModalityState();
     ProjectUtilKt.executeOnPooledThread(myProject, () -> {
       Editor editor = editorMarkupModel.getEditor();
       if (editor.isDisposed()) {
@@ -85,12 +84,8 @@ public final class ErrorStripeUpdateManager implements Disposable {
           return;
         }
         editorMarkupModel.setErrorStripeRenderer(tlRenderer);
-      }, myProject.getDisposed());
+      }, modality, myProject.getDisposed());
     });
-  }
-
-  private @NotNull ErrorStripTooltipRendererProvider createTooltipRenderer(Editor editor) {
-    return new DaemonTooltipRendererProvider(myProject, editor);
   }
 
   private @NotNull TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {

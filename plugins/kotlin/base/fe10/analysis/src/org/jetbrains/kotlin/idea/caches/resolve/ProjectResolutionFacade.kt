@@ -20,10 +20,12 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
-import org.jetbrains.kotlin.idea.caches.project.*
+import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
+import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
 import org.jetbrains.kotlin.psi.KtElement
@@ -154,7 +156,7 @@ internal class ProjectResolutionFacade(
     internal fun resolverForModuleInfo(moduleInfo: IdeaModuleInfo) = cachedResolverForProject.resolverForModule(moduleInfo)
 
     internal fun resolverForElement(element: PsiElement): ResolverForModule {
-        val moduleInfos = mutableListOf<IdeaModuleInfo>()
+        val moduleInfos = mutableSetOf<IdeaModuleInfo>()
 
         for (result in ModuleInfoProvider.getInstance(element.project).collect(element)) {
             val moduleInfo = result.getOrNull()
@@ -163,7 +165,7 @@ internal class ProjectResolutionFacade(
                 if (resolver != null) {
                     return resolver
                 } else {
-                    moduleInfos += moduleInfos
+                    moduleInfos += moduleInfo
                 }
             }
 
@@ -173,8 +175,9 @@ internal class ProjectResolutionFacade(
             }
         }
 
-        return cachedResolverForProject.tryGetResolverForModule(NotUnderContentRootModuleInfo)
-            ?: cachedResolverForProject.diagnoseUnknownModuleInfo(moduleInfos)
+        val containingFile = element.containingFile as? KtFile
+        return cachedResolverForProject.tryGetResolverForModule(NotUnderContentRootModuleInfo(project, containingFile))
+            ?: cachedResolverForProject.diagnoseUnknownModuleInfo(moduleInfos.toList())
     }
 
     internal fun resolverForDescriptor(moduleDescriptor: ModuleDescriptor) =

@@ -29,10 +29,9 @@ public class ValProcessor extends AbstractProcessor {
     if (psiVariable instanceof PsiLocalVariable) {
       return isVal((PsiLocalVariable) psiVariable);
     }
-    if (!(psiVariable instanceof PsiParameter)) {
+    if (!(psiVariable instanceof PsiParameter psiParameter)) {
       return false;
     }
-    PsiParameter psiParameter = (PsiParameter) psiVariable;
     PsiTypeElement typeElement = psiParameter.getTypeElement();
     if (typeElement == null) {
       return false;
@@ -44,10 +43,9 @@ public class ValProcessor extends AbstractProcessor {
     if (psiVariable instanceof PsiLocalVariable) {
       return isVar((PsiLocalVariable) psiVariable);
     }
-    if (!(psiVariable instanceof PsiParameter)) {
+    if (!(psiVariable instanceof PsiParameter psiParameter)) {
       return false;
     }
-    PsiParameter psiParameter = (PsiParameter) psiVariable;
     PsiTypeElement typeElement = psiParameter.getTypeElement();
     if (typeElement == null) {
       return false;
@@ -208,14 +206,14 @@ public class ValProcessor extends AbstractProcessor {
         PsiType type = psiExpression.getType();
         // This is how IntelliJ resolves intersection types.
         // This way auto-completion won't show unavailable methods.
-        if (type instanceof PsiIntersectionType) {
-          PsiType[] conjuncts = ((PsiIntersectionType) type).getConjuncts();
+        if (type instanceof final PsiIntersectionType psiIntersectionType) {
+          PsiType[] conjuncts = psiIntersectionType.getConjuncts();
           if (conjuncts.length > 0) {
             return conjuncts[0];
           }
         }
         if (type != null) {
-          //Get upward projection so you don't get types with missing diamonds.
+          //Get upward projection, so you don't get types with missing diamonds.
           return JavaVarTypeUtil.getUpwardProjection(type);
         }
         return null;
@@ -227,8 +225,7 @@ public class ValProcessor extends AbstractProcessor {
 
   private static PsiType processParameterDeclaration(PsiElement parentDeclarationScope) {
     PsiType result = null;
-    if (parentDeclarationScope instanceof PsiForeachStatement) {
-      final PsiForeachStatement foreachStatement = (PsiForeachStatement) parentDeclarationScope;
+    if (parentDeclarationScope instanceof PsiForeachStatement foreachStatement) {
       final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
       if (iteratedValue != null) {
         result = JavaGenericsUtil.getCollectionItemType(iteratedValue);

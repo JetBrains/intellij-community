@@ -6,13 +6,15 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.PropertyBinding
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import javax.swing.JComboBox
 import kotlin.reflect.KMutableProperty0
 import com.intellij.openapi.observable.util.whenItemSelectedFromUi as whenItemSelectedFromUiImpl
 
 @Deprecated("Use overloaded method")
+@ScheduledForRemoval
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(binding: PropertyBinding<T?>): Cell<C> {
   return bindItem(MutableProperty(binding.get, binding.set))
 }
@@ -29,19 +31,15 @@ fun <T, C : ComboBox<T>> Cell<C>.bindItem(property: ObservableMutableProperty<T>
 }
 
 /**
- * If ComboBox doesn't have any items, then NPE will be thrown. Because of that the method is deprecated now and will be changed in
- * the future. What to do:
- *
- * 1. If the property is nullable, use [bindItemNullable]
- * 2. If the property is non-nullable:
- *     * If the ComboBox is not empty use `bindItem(::prop.toNullableProperty())
- *     * In other cases other approaches should be used depending on desired behaviour
+ * If the ComboBox is not empty and non-nullable property is used then
+ * the following code can be used: `bindItem(::prop.toNullableProperty())`
  */
-@Deprecated("Signature of the method is going to be changed to bindItem(prop: KMutableProperty0<T?>). See the doc for details")
-fun <T, C : ComboBox<T>> Cell<C>.bindItem(prop: KMutableProperty0<T>): Cell<C> {
-  return bindItem(prop.toMutableProperty().toNullableProperty())
+fun <T, C : ComboBox<T>> Cell<C>.bindItem(prop: KMutableProperty0<T?>): Cell<C> {
+  return bindItem(prop.toMutableProperty())
 }
 
+@ScheduledForRemoval
+@Deprecated("Use bindItem instead with the same functionality")
 fun <T, C : ComboBox<T>> Cell<C>.bindItemNullable(prop: KMutableProperty0<T?>): Cell<C> {
   return bindItem(prop.toMutableProperty())
 }

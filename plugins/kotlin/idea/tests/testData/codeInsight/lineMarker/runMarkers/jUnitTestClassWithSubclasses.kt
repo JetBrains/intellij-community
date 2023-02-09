@@ -4,7 +4,7 @@ package testing
 import junit.framework.TestCase
 import org.junit.Test
 
-abstract class <lineMarker descr="Is subclassed by KTest KTest2  Click or press ... to navigate"><lineMarker descr="Run Test">KBase</lineMarker></lineMarker> : TestCase() {
+abstract class <lineMarker descr="Is subclassed by KTest (testing) KTest2 (testing) Press ... to navigate"><lineMarker descr="Run Test">KBase</lineMarker></lineMarker> : TestCase() {
     // NOTE: this differs from Java tooling behaviour, see KT-27977
     @Test
     fun <lineMarker descr="Run Test">testFoo</lineMarker>() {

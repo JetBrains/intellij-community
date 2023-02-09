@@ -108,15 +108,15 @@ class InspectionRunner {
 
     List<LocalInspectionToolWrapper> applicableByLanguage =
       InspectionEngine.filterToolsApplicableByLanguage(toolWrappers, InspectionEngine.calcElementDialectIds(inside, outside));
-    List<LocalInspectionToolWrapper> filteredWrappers = enabledToolsPredicate != null ?
-                                                        ContainerUtil.filter(applicableByLanguage, enabledToolsPredicate) : applicableByLanguage;
 
-    List<InspectionContext> init = new ArrayList<>(filteredWrappers.size());
+    List<InspectionContext> init = new ArrayList<>(applicableByLanguage.size());
     List<InspectionContext> redundantContexts = new ArrayList<>();
     InspectionEngine.withSession(myPsiFile, myRestrictRange, TextRangeScalarUtil.create(finalPriorityRange), myIsOnTheFly, session -> {
       long start = System.nanoTime();
-      for (LocalInspectionToolWrapper wrapper : filteredWrappers) {
-        ContainerUtil.addIfNotNull(init, createContext(wrapper, session, applyIncrementallyCallback));
+      for (LocalInspectionToolWrapper wrapper : applicableByLanguage) {
+        if (enabledToolsPredicate == null || enabledToolsPredicate.value(wrapper)) {
+          ContainerUtil.addIfNotNull(init, createContext(wrapper, session, applyIncrementallyCallback));
+        }
       }
       //sort init according to the priorities saved earlier to run in order
       InspectionProfilerDataHolder profileData = InspectionProfilerDataHolder.getInstance(myPsiFile.getProject());
@@ -228,10 +228,9 @@ class InspectionRunner {
     InspectionToolWrapper<?,?> toolWrapper = inspectionProfile.getInspectionTool(RedundantSuppressInspectionBase.SHORT_NAME, myPsiFile);
     Language fileLanguage = myPsiFile.getLanguage();
     InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(fileLanguage);
-    if (!(suppressor instanceof RedundantSuppressionDetector)) {
+    if (!(suppressor instanceof RedundantSuppressionDetector redundantSuppressionDetector)) {
       return;
     }
-    RedundantSuppressionDetector redundantSuppressionDetector = (RedundantSuppressionDetector)suppressor;
     Set<String> activeTools = new HashSet<>();
     for (LocalInspectionToolWrapper tool : toolWrappers) {
       if (tool.runForWholeFile()) {
@@ -271,7 +270,7 @@ class InspectionRunner {
                              @NotNull List<? super InspectionContext> injectedInsideContexts,
                              @NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                              @NotNull BiPredicate<? super ProblemDescriptor, ? super LocalInspectionToolWrapper> applyIncrementallyCallback,
-                             Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
+                             @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
     processInOrder(init, elements, inVisibleRange, finalPriorityRange, TOMB_STONE, afterProcessCallback);
 
     if (myInspectInjected && InjectionUtils.shouldInspectInjectedFiles(myPsiFile)) {
@@ -369,7 +368,7 @@ class InspectionRunner {
                                   @NotNull Map<? super PsiFile, PsiElement> injectedToHost,
                                   @NotNull List<? super InspectionContext> outInjectedContexts,
                                   @NotNull BiPredicate<? super ProblemDescriptor, ? super LocalInspectionToolWrapper> addDescriptorIncrementallyCallback,
-                                  Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
+                                  @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
     Project project = myPsiFile.getProject();
     List<PsiFile> toInspect = new ArrayList<>();
     for (PsiElement element : elements) {
@@ -405,7 +404,8 @@ class InspectionRunner {
              InspectionRunner injectedRunner =
                new InspectionRunner(injectedPsi, injectedPsi.getTextRange(), injectedPsi.getTextRange(), false, myIsOnTheFly, myProgress,
                                     myIgnoreSuppressed, myInspectionProfileWrapper, mySuppressedElements);
-             outInjectedContexts.addAll(injectedRunner.inspect(wrappers, true, cc, emptyCallback(), emptyCallback(), enabledToolsPredicate));
+             List<? extends InspectionContext> injectedContexts = injectedRunner.inspect(wrappers, true, cc, emptyCallback(), emptyCallback(), enabledToolsPredicate);
+             outInjectedContexts.addAll(injectedContexts);
            }
            return true;
          })) {

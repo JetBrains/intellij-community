@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.ComboBox
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.component2
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.EditorTextFieldWithBrowseButton
 import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.containers.FactoryMap
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.Callable
 import java.util.function.Consumer
@@ -77,12 +79,12 @@ abstract class DefaultJreSelector {
   }
 
   open class SdkFromModuleDependencies<T: ComboBox<*>>(private val moduleComboBox: T, val getSelectedModule: (T) -> Module?, val productionOnly: () -> Boolean): DefaultJreSelector() {
+    private val jdkCache = FactoryMap.create<Module, Sdk?> { JavaParameters.getJdkToRunModule(it, productionOnly()) }
     override fun getNameAndDescription(): Pair<String?, String> {
       val moduleNotSpecified = ExecutionBundle.message("module.not.specified")
       val module = getSelectedModule(moduleComboBox) ?: return Pair.create(null, moduleNotSpecified)
 
-      val productionOnly = productionOnly()
-      val jdkToRun = JavaParameters.getJdkToRunModule(module, productionOnly)
+      val jdkToRun = jdkCache.get(module)
       val moduleJdk = ModuleRootManager.getInstance(module).sdk
       if (moduleJdk == null || jdkToRun == null) {
         return Pair.create(null, moduleNotSpecified)
@@ -90,12 +92,13 @@ abstract class DefaultJreSelector {
       if (moduleJdk.homeDirectory == jdkToRun.homeDirectory) {
         return Pair.create(moduleJdk.name, ExecutionBundle.message("sdk.of.0.module", module.name))
       }
-      return Pair.create(jdkToRun.name, ExecutionBundle.message("newest.sdk.from.0.module.1.choice.0.1.test.dependencies", module.name, if (productionOnly) 0 else 1))
+      return Pair.create(jdkToRun.name, ExecutionBundle.message("newest.sdk.from.0.module.1.choice.0.1.test.dependencies", module.name,
+                                                                if (productionOnly()) 0 else 1))
     }
 
     override fun getVersion(): String? {
       val module = getSelectedModule(moduleComboBox) ?: return null
-      return JavaParameters.getJdkToRunModule(module, productionOnly())?.versionString
+      return jdkCache.get(module)?.versionString
     }
 
     override fun addChangeListener(listener: Runnable) {

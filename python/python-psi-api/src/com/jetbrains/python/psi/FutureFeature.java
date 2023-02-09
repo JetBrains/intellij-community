@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
  * Lists interesting features importable from __future__.
  * {@code .toString()} returns the Python name of the feature.
  * <br/>
- * User: dcheryasov
  */
 public enum FutureFeature {
   DIVISION("division", LanguageLevel.PYTHON24, LanguageLevel.PYTHON30), // actually since 2.2

@@ -35,7 +35,7 @@ class DeclarativeHintsTogglingOptionIntention(
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    val settings = DeclarativeInlayHintsSettings.getInstance(project)
+    val settings = DeclarativeInlayHintsSettings.getInstance()
 
     when (mode) {
       Mode.EnableProviderAndOption -> {
@@ -49,7 +49,7 @@ class DeclarativeHintsTogglingOptionIntention(
         settings.setOptionEnabled(optionId, providerId, false)
       }
     }
-    DeclarativeInlayHintsPassFactory.scheduleRecompute(editor)
+    DeclarativeInlayHintsPassFactory.scheduleRecompute(editor, project)
   }
 
   enum class Mode(val messageKey: String) {

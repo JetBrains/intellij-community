@@ -138,16 +138,6 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   @Override
-  protected void notifyProcessTerminated(int exitCode) {
-    try {
-      super.closeStreams();
-    }
-    finally {
-      super.notifyProcessTerminated(exitCode);
-    }
-  }
-
-  @Override
   protected void doDestroyProcess() {
     boolean gracefulTerminationAttempted = shouldKillProcessSoftly() && canDestroyProcessGracefully() && destroyProcessGracefully();
     if (!gracefulTerminationAttempted) {

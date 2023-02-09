@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PsiIdentifierTokenizer extends Tokenizer<PsiIdentifier> {
   @Override
-  public void tokenize(@NotNull PsiIdentifier element, TokenConsumer consumer) {
+  public void tokenize(@NotNull PsiIdentifier element, @NotNull TokenConsumer consumer) {
     consumer.consumeToken(element, true, IdentifierSplitter.getInstance());
   }
 }

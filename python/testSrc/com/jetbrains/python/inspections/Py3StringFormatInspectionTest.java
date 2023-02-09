@@ -18,9 +18,6 @@ package com.jetbrains.python.inspections;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public class Py3StringFormatInspectionTest extends PyInspectionTestCase {
   public static final String TEST_DIRECTORY = "inspections/PyStringFormatInspection/";
 

@@ -105,8 +105,7 @@ public class LocalCopyPasteManager implements ClientCopyPasteManager {
         return content;
       }
 
-      if (content instanceof KillRingTransferable) {
-        KillRingTransferable killRingContent = (KillRingTransferable)content;
+      if (content instanceof KillRingTransferable killRingContent) {
         if (killRingContent.isReadyToCombine() && !myData.isEmpty()) {
           Transferable prev = myData.get(0);
           if (prev instanceof KillRingTransferable) {
@@ -169,9 +168,6 @@ public class LocalCopyPasteManager implements ClientCopyPasteManager {
 
     Object newDataText = newData.getTransferData(DataFlavor.stringFlavor);
     Object oldDataText = oldData.getTransferData(DataFlavor.stringFlavor);
-    if (newDataText == null || oldDataText == null) {
-      return null;
-    }
 
     if (oldData.isCut()) {
       if (newData.getStartOffset() == oldData.getStartOffset()) {

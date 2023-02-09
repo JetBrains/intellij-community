@@ -84,7 +84,7 @@ class KotlinNameSuggester(
     }
 
     enum class Case(val case: CaseTransformation, val separator: String?, val capitalizeFirst: Boolean, val capitalizeNext: Boolean) {
-        PASCAL(CaseTransformation.DEFAULT, separator = null, capitalizeFirst = true, capitalizeNext = true, ), // FooBar
+        PASCAL(CaseTransformation.DEFAULT, separator = null, capitalizeFirst = true, capitalizeNext = true), // FooBar
         CAMEL(CaseTransformation.DEFAULT, separator = null, capitalizeFirst = false, capitalizeNext = true), // fooBar
         SNAKE(CaseTransformation.LOWERCASE, separator = "_", capitalizeFirst = false, capitalizeNext = false), // foo_bar
         SCREAMING_SNAKE(CaseTransformation.UPPERCASE, separator = "_", capitalizeFirst = false, capitalizeNext = false), // FOO_BAR
@@ -145,7 +145,12 @@ class KotlinNameSuggester(
         return sequence {
             val primitiveType = getPrimitiveType(type)
             if (primitiveType != null) {
-                PRIMITIVE_TYPE_NAMES.getValue(primitiveType).forEach { registerCompoundName(it) }
+                PRIMITIVE_TYPE_NAMES.getValue(primitiveType).forEachIndexed { index, s ->
+                    // skip first item for the primitives like `int`
+                    if (index > 0) {
+                        registerCompoundName(s)
+                    }
+                }
                 return@sequence
             }
 
@@ -199,7 +204,8 @@ class KotlinNameSuggester(
                     val primitiveElementType = FqNames.arrayClassFqNameToPrimitiveType[fqName]
                     if (primitiveElementType != null) {
                         val primitiveName = PRIMITIVE_TYPE_NAMES.getValue(primitiveElementType).first()
-                        registerCompoundName(Strings.pluralize(primitiveName))
+                        val chunk = Strings.pluralize(primitiveName)
+                        registerCompoundName(chunk)
                         return@sequence
                     }
 

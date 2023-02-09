@@ -40,11 +40,11 @@ import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesO
 import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindFunctionUsagesDialog
 import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindPropertyUsagesDialog
 import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
-import org.jetbrains.kotlin.idea.findUsages.*
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.getTopMostOverriddenElementsToHighlight
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.isDataClassComponentFunction
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.filterDataClassComponentsIfDisabled
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.dataClassComponentMethodName
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.filterDataClassComponentsIfDisabled
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector
@@ -55,6 +55,8 @@ import org.jetbrains.kotlin.idea.search.isOnlyKotlinSearch
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
+import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.util.match
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 
@@ -137,10 +139,8 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             }
         }
 
-        private val isPropertyOfDataClass = runReadAction {
-            propertyDeclaration.parent is KtParameterList &&
-                    propertyDeclaration.parent.parent is KtPrimaryConstructor &&
-                    propertyDeclaration.parent.parent.parent.let { it is KtClass && it.isData() }
+        private val isPropertyOfDataClass = true == runReadAction {
+            propertyDeclaration.parents.match(KtParameterList::class, KtPrimaryConstructor::class, last = KtClass::class)?.isData()
         }
 
         override fun getPrimaryElements(): Array<PsiElement> {
@@ -277,7 +277,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                 if (element is KtElement && !isOnlyKotlinSearch(options.searchScope)) {
                     // TODO: very bad code!! ReferencesSearch does not work correctly for constructors and annotation parameters
                     val psiMethodScopeSearch = when {
-                        element is KtParameter && element.isDataClassComponentFunction ->
+                        element is KtParameter && element.dataClassComponentMethodName != null ->
                             options.searchScope.excludeKotlinSources(project)
                         else -> options.searchScope
                     }
@@ -325,11 +325,11 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
     override fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope): Collection<PsiReference> {
 
-        val baseDeclarations = getTopMostOverriddenElementsToHighlight(target)
+        val baseDeclarations = KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping(target)
 
         return if (baseDeclarations.isNotEmpty()) {
             baseDeclarations.flatMap {
-                val handler = (FindManager.getInstance(project) as FindManagerImpl).findUsagesManager.getFindUsagesHandler(it!!, true)
+                val handler = (FindManager.getInstance(project) as FindManagerImpl).findUsagesManager.getFindUsagesHandler(it, true)
                 handler?.findReferencesToHighlight(it, searchScope) ?: emptyList()
             }
         } else {

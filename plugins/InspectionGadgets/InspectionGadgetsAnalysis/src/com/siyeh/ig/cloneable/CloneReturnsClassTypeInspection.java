@@ -66,10 +66,9 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiTypeElement)) {
+      if (!(element instanceof PsiTypeElement typeElement)) {
         return;
       }
-      final PsiTypeElement typeElement = (PsiTypeElement)element;
       final PsiElement parent = typeElement.getParent();
       if (!(parent instanceof PsiMethod)) {
         return;
@@ -93,7 +92,7 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
             return;
           }
           final PsiType type = returnValue.getType();
-          if (newType.equals(type) || PsiType.NULL.equals(type)) {
+          if (newType.equals(type) || PsiTypes.nullType().equals(type)) {
             return;
           }
           final CommentTracker commentTracker = new CommentTracker();
@@ -124,8 +123,7 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
       final PsiType returnType = typeElement.getType();
       final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(returnType);
       PsiClass containingClass = method.getContainingClass();
-      if (containingClass instanceof PsiAnonymousClass) {
-        final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)containingClass;
+      if (containingClass instanceof PsiAnonymousClass anonymousClass) {
         final PsiClassType baseClassType = anonymousClass.getBaseClassType();
         containingClass = PsiUtil.resolveClassInClassTypeOnly(baseClassType);
       }

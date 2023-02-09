@@ -47,6 +47,8 @@
       "background": "#e3e3e3",
       "border": "com.intellij.laf.win10.WinIntelliJButtonBorder",
       "disabledText": "#8a8a8a",
+      "startBackground": "#e3e3e3",
+      "endBackground": "#e3e3e3",
       "intellij.native": {
         "borderColor": "#adadad",
         "focusDottedRingColor": "#000000",

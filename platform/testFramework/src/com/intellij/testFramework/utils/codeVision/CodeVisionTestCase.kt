@@ -6,10 +6,10 @@ import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionRenderer
+import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
-import com.intellij.testFramework.utils.inlays.InlayTestUtil
 
 abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
@@ -32,7 +32,7 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
       settings.setProviderEnabled(it.id, enabledProviderIds.contains(it.id))
     }
 
-    val sourceText = InlayTestUtil.inlayPattern.matcher(expectedText).replaceAll("")
+    val sourceText = InlayDumpUtil.removeHints(expectedText)
     myFixture.configureByText(fileName, sourceText)
 
     val editor = myFixture.editor
@@ -51,12 +51,12 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
   }
 
   private fun dumpCodeVisionHints(sourceText: String): String {
-    return InlayTestUtil.dumpHintsInternal(sourceText, myFixture, {
+    return InlayDumpUtil.dumpHintsInternal(sourceText, {
       val rendererSupported = it.renderer is CodeVisionRenderer
       if (onlyCodeVisionHintsAllowed && !rendererSupported) error("renderer not supported")
       rendererSupported
-    }) { _, inlay ->
-      inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation }
-    }
+    }, { _, inlay ->
+                                             inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation }
+                                           }, myFixture.file!!, myFixture.editor, myFixture.getDocument(myFixture.file!!))
   }
 }

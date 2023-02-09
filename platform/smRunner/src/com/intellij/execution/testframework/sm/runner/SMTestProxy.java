@@ -605,9 +605,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   public List<? extends SMTestProxy> collectChildren() {
     final List<? extends SMTestProxy> allChildren = getChildren();
 
-    final List<SMTestProxy> result = new ArrayList<>();
-
-    result.addAll(allChildren);
+    final List<SMTestProxy> result = new ArrayList<>(allChildren);
 
     for (SMTestProxy p : allChildren) {
       result.addAll(p.collectChildren());
@@ -741,16 +739,20 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     }
   }
 
-  @NotNull
-  public @NlsSafe String getPresentableName() {
+  public @NotNull @NlsSafe String getPresentableName() {
     if (myPresentableName == null) {
-      if (myPreservePresentableName) {
-        myPresentableName = TestsPresentationUtil.getPresentableNameTrimmedOnly(this);
-      } else {
-        myPresentableName = TestsPresentationUtil.getPresentableName(this);
-      }
+      setPresentableName(getName());
     }
     return myPresentableName;
+  }
+
+  public void setPresentableName(final @Nullable String name) {
+    myPresentableName = calculatePresentableName(this, name);
+  }
+
+  private static @NotNull String calculatePresentableName(final @NotNull SMTestProxy proxy, final @Nullable String name) {
+    return proxy.isPreservePresentableName() ? TestsPresentationUtil.getPresentableNameTrimmedOnly(name)
+                                             : TestsPresentationUtil.getPresentableName(proxy, name);
   }
 
   @Override
@@ -956,14 +958,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   }
 
   public SMRootTestProxy getRoot() {
-    if (this instanceof SMRootTestProxy) {
-      return (SMRootTestProxy)this;
-    }
-    SMTestProxy parent = getParent();
-    while (parent != null && !(parent instanceof SMRootTestProxy)) {
-      parent = parent.getParent();
-    }
-    return parent != null ? (SMRootTestProxy)parent : null;
+    return (SMRootTestProxy)getTestRoot(this);
   }
 
   public static class SMRootTestProxy extends SMTestProxy implements TestProxyRoot {
@@ -1107,6 +1102,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
       myTestConsoleProperties = properties;
     }
 
+    @Override
     public TestConsoleProperties getTestConsoleProperties() {
       return myTestConsoleProperties;
     }

@@ -25,9 +25,6 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyNumericLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Author: Alexey.Ivanov
- */
 public class ReplaceOctalNumericLiteralQuickFix implements LocalQuickFix {
   @NotNull
   @Override

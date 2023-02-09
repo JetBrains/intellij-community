@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
-import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ConcurrencyUtil;
@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * In VFS/Index/PersistentMap storages typically we use 8kb, 1mb and 10mb pages.
  */
 @ApiStatus.Internal
+@SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
 public final class DirectByteBufferAllocator {
   // Fixes IDEA-222358 Linux native memory leak. Please do not replace to BoundedTaskExecutor
   private static final ExecutorService ourAllocator =
@@ -31,14 +32,19 @@ public final class DirectByteBufferAllocator {
 
   private static final boolean USE_POOLED_ALLOCATOR = SystemProperties.getBooleanProperty("idea.index.use.pooled.page.allocator", true);
 
-  static <E extends Exception>  ByteBuffer allocate(ThrowableComputable<? extends ByteBuffer, E> computable) throws E {
+  /**
+   * Workaround for IDEA-222358 (linux native memory 'leak'): runs code dealing with DirectByteBuffer
+   * so that it doesn't trigger Linux to over-allocate too many per-thread memory pools.
+   */
+  static <E extends Exception> ByteBuffer allocate(ThrowableComputable<? extends ByteBuffer, E> computable) throws E {
     if (ourAllocator != null) {
       // Fixes IDEA-222358 Linux native memory leak
       try {
         return ourAllocator.submit(computable::compute).get();
       }
       catch (InterruptedException e) {
-        throw new RuntimeException(e);
+        Logger.getInstance(DirectByteBufferAllocator.class).error(e);
+        return computable.compute();
       }
       catch (ExecutionException e) {
         Throwable cause = e.getCause();
@@ -55,36 +61,35 @@ public final class DirectByteBufferAllocator {
     }
   }
 
+
+  /** How many buffers of given size to pool */
+  private static final int POOL_CAPACITY_PER_BUFFER_SIZE = 40;
+
+
   private final ConcurrentSkipListMap<Integer, ArrayBlockingQueue<ByteBuffer>> myPool = new ConcurrentSkipListMap<>();
   private final AtomicInteger mySize = new AtomicInteger();
   private final int mySizeLimitInBytes;
 
-  private static final boolean dumpStats = false;
-  private static volatile int hit;
-  private static volatile int miss;
-  private static volatile int reused;
-  private static volatile int disposed;
+  //====== Statistics:
 
-  static {
-    if (dumpStats) {
-      ShutDownTracker.getInstance().registerShutdownTask(() -> {
-        //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("pooled buffer stats: hits = " + hit + ", miss = " + miss + ", reused = " + reused + ", disposed = " + disposed);
-      });
-    }
-  }
+  //RC: stats fields are updated non-atomically: it is intentional, we're ready to miss a few updates
 
-  public static final DirectByteBufferAllocator ALLOCATOR = new DirectByteBufferAllocator();
+  /** Buffers requests served from already pooled buffer (myPool) */
+  private volatile int hits;
+  /** Buffers requests served by allocating new buffer */
+  private volatile int misses;
+  /** Buffers released by returning them to the pool */
+  private volatile int reclaimed;
+  /** Buffers released by releasing them to JVM (because too many such buffers are already pooled) */
+  private volatile int disposed;
+
+  public static final DirectByteBufferAllocator ALLOCATOR = new DirectByteBufferAllocator(PageCacheUtils.ALLOCATOR_SIZE);
 
   private DirectByteBufferAllocator(int sizeLimitInBytes) {
     mySizeLimitInBytes = sizeLimitInBytes;
   }
 
-  DirectByteBufferAllocator() {
-    this(FilePageCache.ALLOCATOR_SIZE);
-  }
-
-  public @NotNull ByteBuffer allocate(int size) {
+  public @NotNull ByteBuffer allocate(final int size) {
     if (USE_POOLED_ALLOCATOR) {
       Map.Entry<Integer, ArrayBlockingQueue<ByteBuffer>> buffers = myPool.ceilingEntry(size);
 
@@ -96,18 +101,13 @@ public final class DirectByteBufferAllocator {
           cachedBuffer.rewind();
           cachedBuffer.limit(size);
           mySize.addAndGet(-capacity);
-          if (dumpStats) {
-            hit++;
-          }
+          hits++;
           return cachedBuffer;
         }
         buffers = myPool.higherEntry(capacity);
       }
-
-      if (dumpStats) {
-        miss++;
-      }
     }
+    misses++;
     return allocateNewBuffer(size);
   }
 
@@ -120,18 +120,43 @@ public final class DirectByteBufferAllocator {
       // mySize can be slightly more than limit due to race
       if (mySize.get() < mySizeLimitInBytes) {
         int capacity = buffer.capacity();
-        if (myPool.computeIfAbsent(capacity, __ -> new ArrayBlockingQueue<>(40)).offer(buffer)) {
-          if (dumpStats) {
-            reused++;
-          }
+        if (myPool.computeIfAbsent(capacity, __ -> new ArrayBlockingQueue<>(POOL_CAPACITY_PER_BUFFER_SIZE)).offer(buffer)) {
           mySize.addAndGet(capacity);
+          reclaimed++;
           return;
         }
       }
-      if (dumpStats) {
-        disposed++;
-      }
     }
     ByteBufferUtil.cleanBuffer(buffer);
+    disposed++;
+  }
+
+  public Statistics getStatistics() {
+    return new Statistics(hits, misses, reclaimed, disposed, mySize.get());
+  }
+
+  public static class Statistics {
+    /** Buffers requests served from already pooled buffer (myPool) */
+    public final int hits;
+    /** Buffers requests served by allocating new buffer */
+    public final int misses;
+    /** Buffers released by returning them to the pool */
+    public final int reclaimed;
+    /** Buffers released by releasing them to JVM (because too many such buffers are already pooled) */
+    public final int disposed;
+    /** Total size of all buffers cached at the moment (bytes) */
+    public final int totalSizeOfBuffersCachedInBytes;
+
+    private Statistics(final int hits,
+                       final int misses,
+                       final int reclaimed,
+                       final int disposed,
+                       final int totalSizeOfBuffersCachedInBytes) {
+      this.hits = hits;
+      this.misses = misses;
+      this.reclaimed = reclaimed;
+      this.disposed = disposed;
+      this.totalSizeOfBuffersCachedInBytes = totalSizeOfBuffersCachedInBytes;
+    }
   }
 }

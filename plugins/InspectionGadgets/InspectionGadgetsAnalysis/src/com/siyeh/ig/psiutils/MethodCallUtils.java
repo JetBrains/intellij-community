@@ -214,8 +214,7 @@ public final class MethodCallUtils {
     if (member instanceof PsiClassInitializer || member instanceof PsiField) {
       return !member.hasModifierProperty(PsiModifier.STATIC);
     }
-    if (member instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)member;
+    if (member instanceof PsiMethod method) {
       if (method.isConstructor()) {
         return true;
       }
@@ -240,10 +239,9 @@ public final class MethodCallUtils {
       return false;
     }
     final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
-    if (!(qualifier instanceof PsiReferenceExpression)) {
+    if (!(qualifier instanceof PsiReferenceExpression referenceExpression)) {
       return false;
     }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
     final PsiElement element = referenceExpression.resolve();
     return variable.equals(element);
   }
@@ -256,14 +254,7 @@ public final class MethodCallUtils {
       return null;
     }
     final PsiExpression[] expressions = argumentList.getExpressions();
-    int index = -1;
-    for (int i = 0; i < expressions.length; i++) {
-      final PsiExpression expression = expressions[i];
-      if (expression == target) {
-        index = i;
-        break;
-      }
-    }
+    int index = ArrayUtil.indexOf(expressions, target);
     if (index < 0) {
       return null;
     }
@@ -301,10 +292,9 @@ public final class MethodCallUtils {
       return false;
     }
     final PsiElement grandParent = parent.getParent();
-    if (!(grandParent instanceof PsiCall)) {
+    if (!(grandParent instanceof PsiCall call)) {
       return false;
     }
-    final PsiCall call = (PsiCall)grandParent;
     return call.resolveMethod() != findMethodWithReplacedArgument(call, expression, replacement);
   }
 
@@ -379,11 +369,9 @@ public final class MethodCallUtils {
     if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       return false;
     }
-    if (considerStaticFinalConstant && argument instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)argument;
+    if (considerStaticFinalConstant && argument instanceof PsiReferenceExpression referenceExpression) {
       final PsiElement target = referenceExpression.resolve();
-      if (target instanceof PsiField) {
-        final PsiField field = (PsiField)target;
+      if (target instanceof PsiField field) {
         if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL)) {
           return false;
         }
@@ -408,10 +396,9 @@ public final class MethodCallUtils {
   @Contract(pure = true)
   public static boolean isUsedAsSuperConstructorCallArgument(@NotNull PsiParameter parameter, boolean superMustBeLibrary) {
     final PsiElement scope = parameter.getDeclarationScope();
-    if (!(scope instanceof PsiMethod) || !((PsiMethod)scope).isConstructor()) {
+    if (!(scope instanceof PsiMethod method) || !((PsiMethod)scope).isConstructor()) {
       return false;
     }
-    PsiMethod method = (PsiMethod)scope;
     final Set<PsiMethod> checked = new HashSet<>();
 
     while (true) {

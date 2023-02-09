@@ -76,7 +76,8 @@ object JavaPluginLayout {
         "intellij.java.featuresTrainer"
       ))
 
-      spec.withArtifact("debugger-agent", "rt")
+      spec.withModuleLibrary("debugger-agent", "intellij.java.debugger.agent.holder", "rt")
+
       spec.withProjectLibrary("Eclipse", "ecj", LibraryPackMode.STANDALONE_MERGED)
       // used in JPS - do not use uber jar
       spec.withProjectLibrary("jgoodies-common", LibraryPackMode.STANDALONE_MERGED)

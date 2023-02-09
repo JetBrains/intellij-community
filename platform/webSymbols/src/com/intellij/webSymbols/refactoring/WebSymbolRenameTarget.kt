@@ -16,7 +16,7 @@ open class WebSymbolRenameTarget(val symbol: WebSymbol) : RenameTarget {
   }
 
   override val targetName: String
-    get() = symbol.matchedName
+    get() = symbol.name
 
   override fun presentation(): TargetPresentation {
     return symbol.presentation

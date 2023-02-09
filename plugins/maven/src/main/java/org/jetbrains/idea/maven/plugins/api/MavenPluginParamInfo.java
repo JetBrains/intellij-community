@@ -22,9 +22,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.*;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class MavenPluginParamInfo {
 
   private static final Logger LOG = Logger.getInstance(MavenPluginParamInfo.class);

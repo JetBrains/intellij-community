@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeIn
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -186,6 +187,8 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         //TODO: make similar to `createAddMethodActions`
         val (kToken, shouldPresentMapped) = when {
             modifier == JvmModifier.FINAL -> KtTokens.OPEN_KEYWORD to !shouldPresent
+            modifier == JvmModifier.STATIC && !shouldPresent && kModifierOwner is KtClass && !kModifierOwner.isTopLevel() ->
+                KtTokens.INNER_KEYWORD to true
             modifier == JvmModifier.PUBLIC && shouldPresent ->
                 kModifierOwner.visibilityModifierType()
                     ?.takeIf { it != KtTokens.DEFAULT_VISIBILITY_KEYWORD }
@@ -211,6 +214,8 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
     }
 
     override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
+        if (!request.isValid) return emptyList()
+
         val targetKtClass =
             targetClass.toKtClassOrFile().safeAs<KtClass>() ?: return emptyList()
         val modifierBuilder = ModifierBuilder(targetKtClass).apply { addJvmModifiers(request.modifiers) }
@@ -329,7 +334,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             fun getCreatedPropertyType(): ExpectedType? {
                 if (setterRequired) {
                     val jvmPsiConversionHelper = JvmPsiConversionHelper.getInstance(targetContainer.project)
-                    if (returnTypes.any { jvmPsiConversionHelper.convertType(it.theType) != PsiType.VOID }) return null
+                    if (returnTypes.any { jvmPsiConversionHelper.convertType(it.theType) != PsiTypes.voidType() }) return null
                     val expectedParameter = expectedParameters.singleOrNull() ?: return null
                     return expectedParameter.expectedTypes.firstOrNull()
                 } else if (expectedParameters.isEmpty()) {
@@ -504,23 +509,23 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
         companion object {
             private val primitiveTypeMapping = mapOf(
-                PsiType.VOID.name to "kotlin.Unit",
-                PsiType.BOOLEAN.name to "kotlin.Boolean",
-                PsiType.BYTE.name to "kotlin.Byte",
-                PsiType.CHAR.name to "kotlin.Char",
-                PsiType.SHORT.name to "kotlin.Short",
-                PsiType.INT.name to "kotlin.Int",
-                PsiType.FLOAT.name to "kotlin.Float",
-                PsiType.LONG.name to "kotlin.Long",
-                PsiType.DOUBLE.name to "kotlin.Double",
-                "${PsiType.BOOLEAN.name}[]" to "kotlin.BooleanArray",
-                "${PsiType.BYTE.name}[]" to "kotlin.ByteArray",
-                "${PsiType.CHAR.name}[]" to "kotlin.CharArray",
-                "${PsiType.SHORT.name}[]" to "kotlin.ShortArray",
-                "${PsiType.INT.name}[]" to "kotlin.IntArray",
-                "${PsiType.FLOAT.name}[]" to "kotlin.FloatArray",
-                "${PsiType.LONG.name}[]" to "kotlin.LongArray",
-                "${PsiType.DOUBLE.name}[]" to "kotlin.DoubleArray"
+                PsiTypes.voidType().name to "kotlin.Unit",
+                PsiTypes.booleanType().name to "kotlin.Boolean",
+                PsiTypes.byteType().name to "kotlin.Byte",
+                PsiTypes.charType().name to "kotlin.Char",
+                PsiTypes.shortType().name to "kotlin.Short",
+                PsiTypes.intType().name to "kotlin.Int",
+                PsiTypes.floatType().name to "kotlin.Float",
+                PsiTypes.longType().name to "kotlin.Long",
+                PsiTypes.doubleType().name to "kotlin.Double",
+                "${PsiTypes.booleanType().name}[]" to "kotlin.BooleanArray",
+                "${PsiTypes.byteType().name}[]" to "kotlin.ByteArray",
+                "${PsiTypes.charType().name}[]" to "kotlin.CharArray",
+                "${PsiTypes.shortType().name}[]" to "kotlin.ShortArray",
+                "${PsiTypes.intType().name}[]" to "kotlin.IntArray",
+                "${PsiTypes.floatType().name}[]" to "kotlin.FloatArray",
+                "${PsiTypes.longType().name}[]" to "kotlin.LongArray",
+                "${PsiTypes.doubleType().name}[]" to "kotlin.DoubleArray"
             )
         }
     }
@@ -549,7 +554,11 @@ internal fun addAnnotationEntry(
     val psiFactory = KtPsiFactory(target.project)
     // could be generated via descriptor when KT-30478 is fixed
     val annotationText = '@' + annotationUseSiteTargetPrefix + renderAnnotation(target, request, psiFactory)
-    return target.addAnnotationEntry(psiFactory.createAnnotationEntry(annotationText))
+    val annotationEntry = psiFactory.createAnnotationEntry(annotationText)
+    target.findAnnotation(FqName(request.qualifiedName))?.let {
+        return it.replace(annotationEntry) as KtAnnotationEntry
+    }
+    return target.addAnnotationEntry(annotationEntry)
 }
 
 private fun renderAnnotation(target: PsiElement, request: AnnotationRequest, psiFactory: KtPsiFactory): String {

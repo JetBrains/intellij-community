@@ -437,8 +437,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       if (o instanceof TemplateGroup) {
         myTemplateGroups.remove(o);
         removeNodeFromParent(node);
-      } else if (o instanceof TemplateImpl) {
-        TemplateImpl template = (TemplateImpl)o;
+      } else if (o instanceof TemplateImpl template) {
         TemplateGroup templateGroup = getTemplateGroup(template.getGroupName());
         if (templateGroup != null) {
           templateGroup.removeElement(template);
@@ -468,8 +467,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         if (!(value instanceof DefaultMutableTreeNode)) return;
         value = ((DefaultMutableTreeNode)value).getUserObject();
 
-        if (value instanceof TemplateImpl) {
-          TemplateImpl template = (TemplateImpl)value;
+        if (value instanceof TemplateImpl template) {
           TemplateImpl defaultTemplate = TemplateSettings.getInstance().getDefaultTemplate(template);
           LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
           Color fgColor = defaultTemplate == null || templatesDiffer(allContexts, template, defaultTemplate) ? JBColor.BLUE : null;

@@ -33,13 +33,12 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
   private final SingleAlarm myRebuildAlarm = new SingleAlarm(() -> {
     try {
       final DebuggerContextImpl context = getContext();
-      if(context.getDebuggerSession() != null) {
+      if (context.getDebuggerSession() != null) {
         getTree().rebuild(context);
       }
     }
     catch (VMDisconnectedException ignored) {
     }
-
   }, 100);
 
   protected DebuggerTree myTree;

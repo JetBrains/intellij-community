@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
@@ -402,7 +402,10 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
   internal fun contentChanged() {
     combinedEditorSettingsAction.installGutterPopup()
     combinedEditorSettingsAction.applyDefaults()
-    editors.forEach { editor -> editor.settings.additionalLinesCount = 0 }
+    editors.forEach { editor ->
+      editor.settings.additionalLinesCount = 0
+      (editor as? EditorEx)?.setVerticalScrollbarVisible(false)
+    }
   }
 
   private val foldingModels: List<FoldingModelSupport>

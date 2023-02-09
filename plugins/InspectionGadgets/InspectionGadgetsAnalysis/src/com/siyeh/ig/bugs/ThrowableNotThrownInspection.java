@@ -158,33 +158,30 @@ public class ThrowableNotThrownInspection extends BaseInspection {
         return checkDeep && !isUsedElsewhere((PsiLocalVariable)parent);
       }
     }
-    else if (parent instanceof PsiExpressionStatement) {
+    else if (parent instanceof PsiExpressionStatement expressionStatement) {
       // void method (like printStackTrace()) provides no result, thus can't be ignored
-      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)parent;
       final PsiExpression expression1 = expressionStatement.getExpression();
-      return !PsiType.VOID.equals(expression1.getType());
+      return !PsiTypes.voidType().equals(expression1.getType());
     }
     else if (parent instanceof PsiExpressionList) {
       return parent.getParent() instanceof PsiExpressionListStatement;
     }
     else if (parent instanceof PsiLambdaExpression) {
-      return PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent));
+      return PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent));
     }
     else if (parent instanceof PsiReturnStatement || parent instanceof PsiThrowStatement || parent instanceof PsiLoopStatement
              || parent instanceof PsiIfStatement || parent instanceof PsiAssertStatement) {
       return false;
     }
-    else if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+    else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
       final PsiExpression rhs = assignmentExpression.getRExpression();
       if (!PsiTreeUtil.isAncestor(rhs, expression, false)) {
         return false;
       }
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
-      if (!(lhs instanceof PsiReferenceExpression)) {
+      if (!(lhs instanceof PsiReferenceExpression referenceExpression)) {
         return false;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
       final PsiElement target = referenceExpression.resolve();
       if (!(target instanceof PsiLocalVariable)) {
         return false;

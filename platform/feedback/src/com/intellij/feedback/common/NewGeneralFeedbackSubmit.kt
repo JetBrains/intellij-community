@@ -1,9 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.feedback
+package com.intellij.feedback.common
 
-import com.intellij.feedback.common.FeedbackRequestType
-import com.intellij.feedback.common.getProductTag
 import com.intellij.feedback.common.notification.ThanksForFeedbackNotification
+import com.intellij.notification.Notification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -39,7 +38,6 @@ private val LOG = Logger.getInstance(FeedbackRequestDataHolder::class.java)
 sealed interface FeedbackRequestDataHolder {
   val feedbackType: String
   val collectedData: JsonObject
-  val privacyConsentType: String?
 
   fun toJsonObject(): JsonObject
 }
@@ -51,20 +49,12 @@ sealed interface FeedbackRequestDataHolder {
  * [privacyConsentType] is only required if the feedback contains personal data or system data. Otherwise, pass null.
  */
 data class FeedbackRequestData(override val feedbackType: String,
-                               override val collectedData: JsonObject,
-                               override val privacyConsentType: String?) : FeedbackRequestDataHolder {
+                               override val collectedData: JsonObject) : FeedbackRequestDataHolder {
   override fun toJsonObject(): JsonObject {
     return buildJsonObject {
       put(FEEDBACK_FROM_ID_KEY, FEEDBACK_FORM_ID_ONLY_DATA)
       put(FEEDBACK_INTELLIJ_PRODUCT_KEY, getProductTag())
       put(FEEDBACK_TYPE_KEY, feedbackType)
-      if (privacyConsentType != null) {
-        put(FEEDBACK_PRIVACY_CONSENT_KEY, true)
-        put(FEEDBACK_PRIVACY_CONSENT_TYPE_KEY, privacyConsentType)
-      }
-      else {
-        put(FEEDBACK_PRIVACY_CONSENT_KEY, false)
-      }
       put(FEEDBACK_COLLECTED_DATA_KEY, collectedData)
     }
   }
@@ -78,9 +68,9 @@ data class FeedbackRequestData(override val feedbackType: String,
 data class FeedbackRequestDataWithDetailedAnswer(val email: String,
                                                  val title: String,
                                                  val description: String,
+                                                 val privacyConsentType: String,
                                                  override val feedbackType: String,
-                                                 override val collectedData: JsonObject,
-                                                 override val privacyConsentType: String) : FeedbackRequestDataHolder {
+                                                 override val collectedData: JsonObject) : FeedbackRequestDataHolder {
   override fun toJsonObject(): JsonObject {
     return buildJsonObject {
       put(FEEDBACK_FROM_ID_KEY, FEEDBACK_FORM_ID_WITH_DETAILED_ANSWER)
@@ -101,7 +91,7 @@ fun submitFeedback(project: Project?,
                    onDone: () -> Unit,
                    onError: () -> Unit,
                    feedbackRequestType: FeedbackRequestType = FeedbackRequestType.TEST_REQUEST,
-                   showNotification: Boolean = true) {
+                   thanksNotification: Notification? = ThanksForFeedbackNotification()) {
   ApplicationManager.getApplication().executeOnPooledThread {
     val feedbackUrl = when (feedbackRequestType) {
       FeedbackRequestType.NO_REQUEST -> return@executeOnPooledThread
@@ -111,9 +101,9 @@ fun submitFeedback(project: Project?,
     sendFeedback(feedbackUrl, feedbackData, onDone, onError)
   }
 
-  if (showNotification) {
+  if (thanksNotification != null) {
     ApplicationManager.getApplication().invokeLater {
-      ThanksForFeedbackNotification().notify(project)
+      thanksNotification.notify(project)
     }
   }
 }

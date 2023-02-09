@@ -12,8 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Defines common interface for resolving gradle project, i.e. building object-level representation of {@code 'build.gradle'}.
- * 
- * @author Denis Zhdanov
  */
 public class RemoteExternalSystemProjectResolverImpl<S extends ExternalSystemExecutionSettings>
   extends AbstractRemoteExternalSystemService<S> implements RemoteExternalSystemProjectResolver<S>

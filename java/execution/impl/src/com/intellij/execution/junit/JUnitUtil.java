@@ -61,7 +61,7 @@ public final class JUnitUtil {
   public static final String AFTER_ALL_ANNOTATION_NAME = "org.junit.jupiter.api.AfterAll";
 
   public static final Collection<String> TEST5_JUPITER_ANNOTATIONS =
-    ContainerUtil.immutableList(TEST5_ANNOTATION, TEST5_FACTORY_ANNOTATION);
+    List.of(TEST5_ANNOTATION, TEST5_FACTORY_ANNOTATION);
 
   private static final List<String> INSTANCE_CONFIGS = Arrays.asList(BEFORE_ANNOTATION_NAME, AFTER_ANNOTATION_NAME);
   private static final List<String> INSTANCE_5_CONFIGS = Arrays.asList(BEFORE_EACH_ANNOTATION_NAME, AFTER_EACH_ANNOTATION_NAME);
@@ -70,9 +70,9 @@ public final class JUnitUtil {
     BEFORE_CLASS_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, PARAMETRIZED_PARAMETERS_ANNOTATION_NAME);
   private static final List<String> STATIC_5_CONFIGS = Arrays.asList(BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME);
 
-  private static final Collection<String> CONFIGURATIONS_ANNOTATION_NAME = ContainerUtil
-    .immutableList(DATA_POINT, AFTER_ANNOTATION_NAME, BEFORE_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, BEFORE_CLASS_ANNOTATION_NAME,
-                   BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME, RULE_ANNOTATION);
+  private static final Collection<String> CONFIGURATIONS_ANNOTATION_NAME =
+    List.of(DATA_POINT, AFTER_ANNOTATION_NAME, BEFORE_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, BEFORE_CLASS_ANNOTATION_NAME,
+            BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME, RULE_ANNOTATION);
 
   public static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
   public static final String SUITE_CLASS_NAME = "org.junit.runners.Suite";
@@ -151,7 +151,7 @@ public final class JUnitUtil {
       if (psiMethod.getContainingClass() == null) return false;
       if (testCaseClass == null || !psiMethod.getContainingClass().isInheritor(testCaseClass, true)) return false;
     }
-    return PsiType.VOID.equals(psiMethod.getReturnType());
+    return PsiTypes.voidType().equals(psiMethod.getReturnType());
   }
 
   public static boolean isTestCaseInheritor(final PsiClass aClass) {
@@ -528,11 +528,6 @@ public final class JUnitUtil {
     public boolean value(final PsiMethod method) {
       return framework != null && framework.isTestMethod(method, myClass);
     }
-  }
-
-  public static PsiClass findPsiClass(final String qualifiedName, final Module module, final Project project) {
-    final GlobalSearchScope scope = module == null ? GlobalSearchScope.projectScope(project) : GlobalSearchScope.moduleWithDependenciesScope(module);
-    return JavaPsiFacade.getInstance(project).findClass(qualifiedName, scope);
   }
 
   public static PsiPackage getContainingPackage(@NotNull PsiClass psiClass) {

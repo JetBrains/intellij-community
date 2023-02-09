@@ -3,6 +3,7 @@ package com.intellij.util.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeCoreBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;

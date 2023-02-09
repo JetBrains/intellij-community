@@ -1,11 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.externalSystem.ImportedLibraryProperties;
+import com.intellij.externalSystem.ImportedLibraryType;
+import com.intellij.java.library.MavenCoordinates;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -36,7 +43,7 @@ import java.util.*;
 public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInterface {
 
   private final MavenProject myMavenProject;
-  private final ModuleModelProxy myModuleModel;
+  private final ModifiableModuleModel myModuleModel;
   private final ModifiableRootModel myRootModel;
 
   private final MavenSourceFoldersModuleExtension myRootModelModuleExtension;
@@ -44,9 +51,9 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   private final Set<String> myOrderEntriesBeforeJdk = new HashSet<>();
   private volatile Map<String, Library> myLibrariesTable;
 
-  public MavenRootModelAdapterLegacyImpl(@NotNull MavenProject p, @NotNull Module module, final ModifiableModelsProviderProxy rootModelsProvider) {
+  public MavenRootModelAdapterLegacyImpl(@NotNull MavenProject p, @NotNull Module module, final IdeModifiableModelsProvider rootModelsProvider) {
     myMavenProject = p;
-    myModuleModel = rootModelsProvider.getModuleModelProxy();
+    myModuleModel = rootModelsProvider.getModifiableModuleModel();
     myRootModel = rootModelsProvider.getModifiableRootModel(module);
 
     myRootModelModuleExtension = myRootModel.getModuleExtension(MavenSourceFoldersModuleExtension.class);
@@ -352,7 +359,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   @Override
   public LibraryOrderEntry addLibraryDependency(MavenArtifact artifact,
                                                 DependencyScope scope,
-                                                ModifiableModelsProviderProxy provider,
+                                                IdeModifiableModelsProvider provider,
                                                 MavenProject project) {
     assert !MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope()); // System dependencies must be added ad module library, not as project wide library.
 
@@ -364,9 +371,26 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
     }
     Library.ModifiableModel libraryModel = provider.getModifiableLibraryModel(library);
 
+    if (library.getExternalSource() == null) {
+      ((LibraryEx.ModifiableModelEx)libraryModel).setExternalSource(getMavenExternalSource());
+    }
     updateUrl(libraryModel, OrderRootType.CLASSES, artifact, null, null, true);
     updateUrl(libraryModel, OrderRootType.SOURCES, artifact, MavenExtraArtifactType.SOURCES, project, false);
     updateUrl(libraryModel, JavadocOrderRootType.getInstance(), artifact, MavenExtraArtifactType.DOCS, project, false);
+
+    if (libraryModel != null) {
+      LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)libraryModel;
+      PersistentLibraryKind<ImportedLibraryProperties> importedLibraryKind = ImportedLibraryType.Companion.getIMPORTED_LIBRARY_KIND();
+      if (model.getKind() != importedLibraryKind) {
+        model.setKind(importedLibraryKind);
+        model.setProperties(new ImportedLibraryProperties(new MavenCoordinates(artifact.getGroupId(),
+                                                                               artifact.getArtifactId(),
+                                                                               artifact.getVersion(),
+                                                                               artifact.getPackaging(),
+                                                                               artifact.getClassifier())));
+      }
+    }
+
 
     LibraryOrderEntry e = myRootModel.addLibraryEntry(library);
     e.setScope(scope);
@@ -501,6 +525,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   @Override
   public void setLanguageLevel(LanguageLevel level) {
     try {
+      level = MavenImportUtil.adjustLevelAndNotify(myRootModel.getProject(), level);
       myRootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level);
     }
     catch (IllegalArgumentException e) {

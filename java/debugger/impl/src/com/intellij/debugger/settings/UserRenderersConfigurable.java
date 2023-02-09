@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -160,11 +160,11 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     final ArrayList<NodeRenderer> elementsToSelect = new ArrayList<>(1);
     rendererConfiguration.iterateRenderers(renderer -> {
       final NodeRenderer clonedRenderer = (NodeRenderer)renderer.clone();
-    myRendererChooser.addElement(clonedRenderer, clonedRenderer.isEnabled());
-    if (elementsToSelect.size() == 0) {
-      elementsToSelect.add(clonedRenderer);
-    }
-    return true;
+      myRendererChooser.addElement(clonedRenderer, clonedRenderer.isEnabled());
+      if (elementsToSelect.size() == 0) {
+        elementsToSelect.add(clonedRenderer);
+      }
+      return true;
     });
     myRendererChooser.selectElements(elementsToSelect);
     updateCurrentRenderer(elementsToSelect);
@@ -231,7 +231,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
       if (selectedRow < 0) {
         return;
       }
-      int newRow = selectedRow + (myMoveUp? -1 : 1);
+      int newRow = selectedRow + (myMoveUp ? -1 : 1);
       if (newRow < 0) {
         newRow = myRendererChooser.getElementCount() - 1;
       }

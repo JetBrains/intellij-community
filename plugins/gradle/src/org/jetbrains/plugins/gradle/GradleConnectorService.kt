@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecu
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.task.RunConfigurationTaskState
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
@@ -129,7 +130,8 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
     val wrapperPropertyFile: String?,
     val verboseProcessing: Boolean?,
     val ttlMs: Int?,
-    val environmentConfigurationProvider: TargetEnvironmentConfigurationProvider?
+    val environmentConfigurationProvider: TargetEnvironmentConfigurationProvider?,
+    val taskState: RunConfigurationTaskState?
   )
 
   companion object {
@@ -172,7 +174,8 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
         executionSettings?.wrapperPropertyFile,
         executionSettings?.isVerboseProcessing,
         executionSettings?.remoteProcessIdleTtlInMs?.toInt(),
-        targetEnvironmentConfigurationProvider
+        targetEnvironmentConfigurationProvider,
+        executionSettings?.getUserData(RunConfigurationTaskState.KEY)
       )
       val connectionService = getInstance(projectPath, taskId)
       if (connectionService != null) {
@@ -196,7 +199,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
                                 listener: ExternalSystemTaskNotificationListener?): GradleConnector {
       val connector: GradleConnector
       if (connectorParams.environmentConfigurationProvider != null) {
-        connector = TargetGradleConnector(connectorParams.environmentConfigurationProvider, taskId, listener)
+        connector = TargetGradleConnector(connectorParams.environmentConfigurationProvider, taskId, listener, connectorParams.taskState)
       }
       else {
         connector = GradleConnector.newConnector()

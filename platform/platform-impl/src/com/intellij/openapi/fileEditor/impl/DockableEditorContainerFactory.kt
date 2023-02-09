@@ -10,6 +10,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockContainerFactory
 import com.intellij.ui.docking.DockableContent
+import com.intellij.util.childScope
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 
@@ -18,11 +19,15 @@ internal class DockableEditorContainerFactory(private val fileEditorManager: Fil
     const val TYPE: @NonNls String = "file-editors"
   }
 
-  override fun createContainer(content: DockableContent<*>?): DockContainer = createContainer(false)
+  override fun createContainer(content: DockableContent<*>?): DockContainer {
+    return createContainer(loadingState = false)
+  }
 
   private fun createContainer(loadingState: Boolean): DockableEditorTabbedContainer {
     var container: DockableEditorTabbedContainer? = null
-    val splitters = object : EditorsSplitters(fileEditorManager) {
+    @Suppress("DEPRECATION")
+    val coroutineScope = fileEditorManager.project.coroutineScope.childScope()
+    val splitters = object : EditorsSplitters(fileEditorManager, coroutineScope = coroutineScope) {
       override fun afterFileClosed(file: VirtualFile) {
         container!!.fireContentClosed(file)
       }
@@ -42,7 +47,7 @@ internal class DockableEditorContainerFactory(private val fileEditorManager: Fil
     if (!loadingState) {
       splitters.createCurrentWindow()
     }
-    container = DockableEditorTabbedContainer(splitters, true)
+    container = DockableEditorTabbedContainer(splitters, true, coroutineScope)
     return container
   }
 

@@ -2,6 +2,8 @@ package com.intellij.grazie.ide.language.xml;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.grazie.text.TextContent;
+import com.intellij.grazie.text.TextContent.Exclusion;
+import com.intellij.grazie.text.TextContent.ExclusionKind;
 import com.intellij.grazie.text.TextContentBuilder;
 import com.intellij.grazie.text.TextExtractor;
 import com.intellij.grazie.utils.HtmlUtilsKt;
@@ -66,7 +68,10 @@ public class XmlTextExtractor extends TextExtractor {
     }
 
     if (type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && allowedDomains.contains(LITERALS) && hasSuitableDialect(element)) {
-      return builder.build(element, LITERALS);
+      TextContent content = builder.build(element, LITERALS);
+      if (content != null && seemsNatural(content)) {
+        return content;
+      }
     }
 
     return null;
@@ -85,17 +90,22 @@ public class XmlTextExtractor extends TextExtractor {
     var visitor = new PsiRecursiveElementWalkingVisitor() {
       final Map<PsiElement, TextContent> result = new HashMap<>();
       final List<PsiElement> group = new ArrayList<>();
+      final Set<Integer> markupIndices = new HashSet<>();
+      final Set<XmlTag> inlineTags = new HashSet<>();
       boolean unknownBefore = unknownContainer;
 
       @Override
       public void visitElement(@NotNull PsiElement each) {
-        if (each instanceof XmlTag) {
-          TagKind kind = classifier.apply((XmlTag)each);
+        if (each instanceof XmlTag tag) {
+          TagKind kind = classifier.apply(tag);
           if (kind != TagKind.Inline) {
             boolean unknown = kind == TagKind.Unknown;
             flushGroup(unknown);
             unknownBefore = unknown;
             return;
+          } else {
+            inlineTags.add(tag);
+            markupIndices.add(group.size());
           }
         }
         if (each instanceof OuterLanguageElement) {
@@ -109,11 +119,29 @@ public class XmlTextExtractor extends TextExtractor {
         super.visitElement(each);
       }
 
+      @Override
+      protected void elementFinished(PsiElement element) {
+        super.elementFinished(element);
+        if (inlineTags.contains(element)) {
+          markupIndices.add(group.size());
+        }
+      }
+
       private void flushGroup(boolean unknownAfter) {
         int containerStart = container.getTextRange().getStartOffset();
-        TextContent content = TextContent.join(ContainerUtil.map(group, e ->
-          extractRange(fullContent.getValue(), e.getTextRange().shiftLeft(containerStart))
-        ));
+        List<TextContent> components = new ArrayList<>(group.size());
+        for (int i = 0; i < group.size(); i++) {
+          PsiElement e = group.get(i);
+          TextContent component = extractRange(fullContent.getValue(), e.getTextRange().shiftLeft(containerStart));
+          if (markupIndices.contains(i)) {
+            component = component.excludeRanges(List.of(new Exclusion(0, 0, ExclusionKind.markup)));
+          }
+          if (markupIndices.contains(i + 1)) {
+            component = component.excludeRanges(List.of(new Exclusion(component.length(), component.length(), ExclusionKind.markup)));
+          }
+          components.add(component);
+        }
+        TextContent content = TextContent.join(components);
         if (content != null) {
           if (unknownBefore) content = content.markUnknown(TextRange.from(0, 0));
           if (unknownAfter) content = content.markUnknown(TextRange.from(content.length(), 0));
@@ -130,6 +158,10 @@ public class XmlTextExtractor extends TextExtractor {
     container.acceptChildren(visitor);
     visitor.flushGroup(unknownContainer);
     return visitor.result;
+  }
+
+  private static boolean seemsNatural(TextContent content) {
+    return content.toString().contains(" ");
   }
 
   private static TextContent extractRange(TextContent full, TextRange range) {

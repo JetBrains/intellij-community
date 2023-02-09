@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.build.events.MessageEvent;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.WriteAction;
@@ -17,7 +18,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
@@ -125,13 +128,26 @@ public final class MavenImportUtil {
     String mavenProjectReleaseLevel = useReleaseCompilerProp
                                       ? isTest ? mavenProject.getTestReleaseLevel() : mavenProject.getReleaseLevel()
                                       : null;
-    LanguageLevel level = LanguageLevel.parse(mavenProjectReleaseLevel);
-    if (level == null) {
-      String mavenProjectLanguageLevel = getMavenLanguageLevel(mavenProject, isTest, isSource);
-      level = LanguageLevel.parse(mavenProjectLanguageLevel);
-      if (level == null && (StringUtil.isNotEmpty(mavenProjectLanguageLevel) || StringUtil.isNotEmpty(mavenProjectReleaseLevel))) {
-        level = LanguageLevel.HIGHEST;
+      LanguageLevel level = LanguageLevel.parse(mavenProjectReleaseLevel);
+      if (level == null) {
+        String mavenProjectLanguageLevel = getMavenLanguageLevel(mavenProject, isTest, isSource);
+        level = LanguageLevel.parse(mavenProjectLanguageLevel);
+        if (level == null && (StringUtil.isNotEmpty(mavenProjectLanguageLevel) || StringUtil.isNotEmpty(mavenProjectReleaseLevel))) {
+          level = LanguageLevel.HIGHEST;
+        }
       }
+      return level;
+    }
+
+  @NotNull
+  public static LanguageLevel adjustLevelAndNotify(@NotNull Project project, @NotNull LanguageLevel level) {
+    if (!AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(level)) {
+      LanguageLevel highestAcceptedLevel = AcceptedLanguageLevelsSettings.getHighestAcceptedLevel();
+      if (highestAcceptedLevel.isLessThan(level)) {
+        MavenProjectsManager.getInstance(project).getSyncConsole()
+          .addBuildIssue(new NonAcceptedJavaLevelIssue(level), MessageEvent.Kind.WARNING);
+      }
+      level = highestAcceptedLevel.isAtLeast(level) ? LanguageLevel.HIGHEST : highestAcceptedLevel;
     }
     return level;
   }
@@ -165,8 +181,8 @@ public final class MavenImportUtil {
       Element compilerArgs = compilerConfiguration.getChild("compilerArgs");
       if (compilerArgs != null) {
         if (isPreviewText(compilerArgs) ||
-            compilerArgs.getChildren("arg").stream().anyMatch(MavenImportUtil::isPreviewText) ||
-            compilerArgs.getChildren("compilerArg").stream().anyMatch(MavenImportUtil::isPreviewText)) {
+            ContainerUtil.exists(compilerArgs.getChildren("arg"), MavenImportUtil::isPreviewText) ||
+            ContainerUtil.exists(compilerArgs.getChildren("compilerArg"), MavenImportUtil::isPreviewText)) {
           try {
             return LanguageLevel.valueOf(level.name() + "_PREVIEW");
           }
@@ -213,15 +229,21 @@ public final class MavenImportUtil {
     return moduleName;
   }
 
+  /**
+   * @deprecated only used for experimental tree importer. Not used in Workpsace import
+   */
   @NotNull
-  @Deprecated // only user for experimental tree importer. Not used in Workpsace import
+  @Deprecated
   public static String getModuleName(@NotNull MavenProject mavenProject, @NotNull Project project) {
     MavenProjectsTree projectsTree = MavenProjectsManager.getInstance(project).getProjectsTree();
-    return projectsTree != null ? getModuleName(mavenProject, projectsTree, new HashMap<>()) : StringUtils.EMPTY;
+    return getModuleName(mavenProject, projectsTree, new HashMap<>());
   }
 
+  /**
+   * @deprecated only used for experimental tree importer. Not used in Workpsace import
+   */
   @NotNull
-  @Deprecated // only user for experimental tree importer. Not used in Workpsace import
+  @Deprecated
   public static String getModuleName(@NotNull MavenProject project,
                                       @NotNull MavenProjectsTree projectsTree,
                                       @NotNull Map<MavenProject, String> moduleNameMap) {

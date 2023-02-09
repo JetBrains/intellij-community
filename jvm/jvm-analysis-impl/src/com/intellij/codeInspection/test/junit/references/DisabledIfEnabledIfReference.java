@@ -12,7 +12,7 @@ import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UastContextKt;
 
 final class DisabledIfEnabledIfReference extends BaseJunitAnnotationReference {
-  public DisabledIfEnabledIfReference(PsiLanguageInjectionHost element) {
+  DisabledIfEnabledIfReference(PsiLanguageInjectionHost element) {
     super(element);
   }
 

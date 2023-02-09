@@ -2,14 +2,10 @@ package org.jetbrains.plugins.textmate.language.preferences;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.TestUtil;
-import org.jetbrains.plugins.textmate.bundles.Bundle;
+import org.jetbrains.plugins.textmate.bundles.TextMatePreferences;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
-import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
-import org.jetbrains.plugins.textmate.plist.Plist;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -84,22 +80,22 @@ public class PreferencesTest {
   @Test
   public void loadIndentationRules() throws Exception {
     PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.PHP_VSC);
-    Preferences preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("source.php")));
+    Preferences preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html.php")));
     assertFalse(preferences.getIndentationRules().isEmpty());
     assertNotNull(preferences.getIndentationRules().getIncreaseIndentPattern());
   }
 
   @NotNull
-  private static PreferencesRegistry loadPreferences(@NotNull String bundleName) throws IOException {
-    final Bundle bundle = TestUtil.getBundle(bundleName);
-    assertNotNull(bundle);
-    final PreferencesRegistryImpl preferencesRegistry = new PreferencesRegistryImpl();
-    for (File file : bundle.getPreferenceFiles()) {
-      for (Map.Entry<String, Plist> settingsPair : bundle.loadPreferenceFile(file, new CompositePlistReader())) {
-        if (settingsPair != null) {
-          preferencesRegistry.fillFromPList(settingsPair.getKey(), settingsPair.getValue());
-        }
-      }
+  private static PreferencesRegistry loadPreferences(@NotNull String bundleName) {
+    Iterator<TextMatePreferences> preferences = TestUtil.readBundle(bundleName).readPreferences().iterator();
+    assertNotNull(preferences);
+    PreferencesRegistryImpl preferencesRegistry = new PreferencesRegistryImpl();
+    while (preferences.hasNext()) {
+      TextMatePreferences next = preferences.next();
+      preferencesRegistry.addPreferences(new Preferences(next.getScopeName(),
+                                                         next.getHighlightingPairs(),
+                                                         next.getSmartTypingPairs(),
+                                                         next.getIndentationRules()));
     }
     return preferencesRegistry;
   }
@@ -125,6 +121,7 @@ public class PreferencesTest {
   }
 
   private static Set<TextMateBracePair> newHashSet(TextMateBracePair... pairs) {
+    //noinspection SSBasedInspection
     return new HashSet<>(Arrays.asList(pairs));
   }
 }

@@ -26,13 +26,12 @@ import java.awt.event.MouseEvent;
 
 public class SimpleColoredComponentLinkMouseListener extends TableLinkMouseListener {
   @Override
-  protected Object tryGetTag(@NotNull MouseEvent e, @NotNull JTable table, int row, int column) {
-    TableCellRenderer cellRenderer = table.getCellRenderer(row, column);
+  protected Object tryGetTag(@NotNull MouseEvent e, @NotNull JTable table, int row, int column, @NotNull TableCellRenderer cellRenderer) {
     Component component = cellRenderer.getTableCellRendererComponent(table, table.getValueAt(row, column), false, false, row, column);
     if (component instanceof SimpleColoredComponent) {
       Rectangle rc = table.getCellRect(row, column, false);
       return ((SimpleColoredComponent)component).getFragmentTagAt(e.getX() - rc.x);
     }
-    return super.tryGetTag(e, table, row, column);
+    return super.tryGetTag(e, table, row, column, cellRenderer);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -148,8 +148,7 @@ public final class MethodParameterInfoHandler
         PsiElement element = currentMethodInfo instanceof CandidateInfo ? ((CandidateInfo)currentMethodInfo).getElement() :
                              currentMethodInfo instanceof PsiElement ? (PsiElement) currentMethodInfo :
                              null;
-        if ((element instanceof PsiMethod)) {
-          PsiMethod method = (PsiMethod)element;
+        if ((element instanceof PsiMethod method)) {
           PsiElement parent = expressionList.getParent();
 
           String originalMethodName = method.getName();
@@ -265,8 +264,7 @@ public final class MethodParameterInfoHandler
     return ContainerUtil.find(candidates, c -> {
       if (!(c instanceof CandidateInfo)) return false;
       PsiElement e = ((CandidateInfo)c).getElement();
-      if (!(e instanceof PsiMethod)) return false;
-      PsiMethod m = (PsiMethod)e;
+      if (!(e instanceof PsiMethod m)) return false;
       return m.getParameterList().isEmpty() && m.getName().equals(methodName);
     }) != null;
   }
@@ -829,8 +827,7 @@ public final class MethodParameterInfoHandler
 
   @Override
   public void updateUI(final Object p, @NotNull final ParameterInfoUIContext context) {
-    if (p instanceof CandidateInfo) {
-      CandidateInfo info = (CandidateInfo)p;
+    if (p instanceof CandidateInfo info) {
       PsiMethod method = (PsiMethod)info.getElement();
       PsiElement parameterOwner = context.getParameterOwner();
       if (!method.isValid() || !parameterOwner.isValid() || 

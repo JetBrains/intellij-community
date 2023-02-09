@@ -3,6 +3,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
@@ -13,6 +14,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,11 +27,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.nio.charset.Charset;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class NonAsciiCharactersInspection extends LocalInspectionTool {
   public boolean CHECK_FOR_NOT_ASCII_IDENTIFIER_NAME = true;
@@ -287,10 +290,30 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
     }
   }
 
-  @NotNull
   @Override
-  public JComponent createOptionsPanel() {
-    return new NonAsciiCharactersInspectionFormUi(this).getPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("CHECK_FOR_FILES_CONTAINING_BOM", CodeInsightBundle.message("non.ascii.chars.inspection.option.files.containing.bom.checkbox"))
+        .description(HtmlChunk.raw(CodeInsightBundle.message("non.ascii.chars.inspection.option.files.containing.bom.label"))),
+      group(CodeInsightBundle.message("non.ascii.chars.inspection.non.ascii.top.label"),
+            checkbox("CHECK_FOR_NOT_ASCII_IDENTIFIER_NAME", CodeInsightBundle.message("non.ascii.chars.inspection.option.characters.in.identifiers.checkbox"))
+              .description(HtmlChunk.raw(CodeInsightBundle.message("non.ascii.chars.inspection.example.characters.in.identifiers.label"))),
+            checkbox("CHECK_FOR_NOT_ASCII_STRING_LITERAL", CodeInsightBundle.message("non.ascii.chars.inspection.option.characters.in.strings.checkbox"))
+              .description(HtmlChunk.raw(CodeInsightBundle.message("non.ascii.chars.inspection.example.characters.in.strings.label"))),
+            checkbox("CHECK_FOR_NOT_ASCII_COMMENT", CodeInsightBundle.message("non.ascii.chars.inspection.option.characters.in.comments.checkbox"))
+              .description(HtmlChunk.raw(CodeInsightBundle.message("non.ascii.chars.inspection.example.characters.in.comments.label"))),
+            checkbox("CHECK_FOR_NOT_ASCII_IN_ANY_OTHER_WORD", CodeInsightBundle.message("non.ascii.chars.inspection.option.characters.in.any.other.word.checkbox"))
+              .description(HtmlChunk.raw(CodeInsightBundle.message("non.ascii.chars.inspection.example.characters.in.any.other.word.label")))),
+      group(CodeInsightBundle.message("non.ascii.chars.inspection.mixed.chars.top.label"),
+            checkbox("CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME", CodeInsightBundle.message("non.ascii.chars.inspection.option.mixed.languages.in.identifiers.checkbox"))
+              .description(HtmlChunk.raw(CodeInsightBundle.message("non.ascii.chars.inspection.example.mixed.languages.in.identifiers.label"))),
+            checkbox("CHECK_FOR_DIFFERENT_LANGUAGES_IN_STRING", CodeInsightBundle.message("non.ascii.chars.inspection.option.mixed.languages.in.strings.checkbox"))
+              .description(HtmlChunk.raw(CodeInsightBundle.message("non.ascii.chars.inspection.example.mixed.languages.in.string.label"))),
+            checkbox("CHECK_FOR_DIFFERENT_LANGUAGES_IN_COMMENTS", CodeInsightBundle.message("non.ascii.chars.inspection.option.mixed.languages.in.comments.checkbox"))
+              .description(HtmlChunk.raw(CodeInsightBundle.message("non.ascii.chars.inspection.example.mixed.languages.in.comments.label"))),
+            checkbox("CHECK_FOR_DIFFERENT_LANGUAGES_IN_ANY_OTHER_WORD", CodeInsightBundle.message("non.ascii.chars.inspection.option.mixed.languages.in.any.other.word.checkbox"))
+              .description(HtmlChunk.raw(CodeInsightBundle.message("non.ascii.chars.inspection.example.mixed.languages.in.any.other.word.label"))))
+    );
   }
 
   enum PsiElementKind { IDENTIFIER, STRING, COMMENT, OTHER}

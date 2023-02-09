@@ -12,9 +12,7 @@ public final class TableCell {
 
   @Override public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof TableCell)) return false;
-
-    final TableCell myKey = (TableCell)o;
+    if (!(o instanceof TableCell myKey)) return false;
 
     if (column != myKey.column) return false;
     if (row != myKey.row) return false;

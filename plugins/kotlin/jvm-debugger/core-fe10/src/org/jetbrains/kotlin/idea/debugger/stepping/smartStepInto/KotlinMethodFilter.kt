@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 import com.intellij.debugger.PositionManager
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.NamedMethodFilter
+import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.util.Range
 import com.sun.jdi.LocalVariable
@@ -12,9 +13,11 @@ import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
 import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
-import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -30,14 +33,20 @@ open class KotlinMethodFilter(
 ) : NamedMethodFilter {
     private val declarationPtr = declaration?.createSmartPointer()
 
-    override fun locationMatches(process: DebugProcessImpl, location: Location): Boolean {
-        if (!nameMatches(location)) {
+    // TODO(KTIJ-23034): make Location non-null (because actually it's always non null) in next PR.
+    //  This wasn't done in current PR because this it going to be cherry-picked to kt- branches, and we can't modify java debugger part.
+    override fun locationMatches(process: DebugProcessImpl, location: Location?, frameProxy: StackFrameProxyImpl?): Boolean {
+        if (location == null || !nameMatches(location, frameProxy)) {
             return false
         }
 
         return ReadAction.nonBlocking<Boolean> {
             declarationMatches(process, location)
         }.executeSynchronously()
+    }
+
+    override fun locationMatches(process: DebugProcessImpl, location: Location): Boolean {
+        return locationMatches(process, location, null)
     }
 
     private fun declarationMatches(process: DebugProcessImpl, location: Location): Boolean {
@@ -76,7 +85,7 @@ open class KotlinMethodFilter(
     override fun getMethodName(): String =
         methodInfo.name
 
-    private fun nameMatches(location: Location): Boolean {
+    private fun nameMatches(location: Location, frameProxy: StackFrameProxyImpl?): Boolean {
         val method = location.safeMethod() ?: return false
         val targetMethodName = methodName
         val isNameMangledInBytecode = methodInfo.isNameMangledInBytecode
@@ -84,6 +93,7 @@ open class KotlinMethodFilter(
 
         return actualMethodName == targetMethodName ||
                actualMethodName == "$targetMethodName${JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX}" ||
+               actualMethodName.isGeneratedIrBackendLambdaMethodName() && getMethodNameInCallerFrame(frameProxy) == targetMethodName ||
                // A correct way here is to memorize the original location (where smart step into was started)
                // and filter out ranges that contain that original location.
                // Otherwise, nested inline with the same method name will not work correctly.
@@ -114,4 +124,14 @@ private fun LocalVariable.isInlinedFromFunction(methodName: String, isNameMangle
     val variableName = name().trimIfMangledInBytecode(isNameMangledInBytecode)
     return variableName.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) &&
            variableName.substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) == methodName
+}
+
+private fun getMethodNameInCallerFrame(frameProxy: StackFrameProxyImpl?): String? {
+    val threadProxy = frameProxy?.threadProxy() ?: return null
+    val callerFrameIndex = frameProxy.frameIndex + 1
+    if (callerFrameIndex >= threadProxy.frameCount()) {
+        return null
+    }
+    val callerFrame = threadProxy.frame(callerFrameIndex)
+    return callerFrame?.safeLocation()?.safeMethod()?.name()
 }

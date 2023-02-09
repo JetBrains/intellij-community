@@ -265,7 +265,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
   private static final String WIDGET_ID = "settingsEntryPointWidget";
 
-  public static class StatusBarManager implements StatusBarWidgetFactory {
+  static final class StatusBarManager implements StatusBarWidgetFactory {
     @Override
     public @NotNull String getId() {
       return WIDGET_ID;
@@ -345,9 +345,6 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     public @NotNull Icon getIcon() {
       return getActionIcon();
     }
-
-    @Override
-    public void dispose() { }
   }
 
   public interface ActionProvider {

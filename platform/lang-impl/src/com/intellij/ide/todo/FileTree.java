@@ -41,7 +41,7 @@ final class FileTree {
 
     VirtualFile dir = file.getParent();
     if (dir == null) {
-      LOG.error(file);
+      LOG.error("Parent is null for " + file);
       return;
     }
 

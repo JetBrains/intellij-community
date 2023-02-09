@@ -27,9 +27,6 @@ import java.util.Objects;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.normalizePath;
 
-/**
- * @author Denis Zhdanov
- */
 public final class ExternalSystemTaskSettingsControl implements ExternalSystemSettingsControl<ExternalSystemTaskExecutionSettings> {
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private final Project myProject;

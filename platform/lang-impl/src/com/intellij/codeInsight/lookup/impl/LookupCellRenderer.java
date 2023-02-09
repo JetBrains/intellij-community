@@ -447,15 +447,13 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
 
   @NotNull
   private static Icon removeVisibility(@Nullable Editor editor, @NotNull Icon icon, @NotNull Icon standard) {
-    if (icon instanceof IconDecorator) {
-      IconDecorator decoratorIcon = (IconDecorator)icon;
+    if (icon instanceof IconDecorator decoratorIcon) {
       Icon delegateIcon = decoratorIcon.getDelegate();
       if (delegateIcon != null) {
         return decoratorIcon.withDelegate(removeVisibility(editor, delegateIcon, standard));
       }
     }
-    else if (icon instanceof RowIcon) {
-      RowIcon rowIcon = (RowIcon)icon;
+    else if (icon instanceof RowIcon rowIcon) {
       if (rowIcon.getIconCount() >= 1) {
         Icon firstIcon = rowIcon.getIcon(0);
         if (firstIcon != null) {
@@ -477,8 +475,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     }
     if (icon == null) {
       return standard;
-    } else if (icon instanceof IconDecorator ) {
-      IconDecorator decoratorIcon = (IconDecorator)icon;
+    } else if (icon instanceof IconDecorator decoratorIcon) {
       return decoratorIcon.withDelegate(augmentIcon(editor, decoratorIcon.getDelegate(), standard));
     }
 
@@ -548,7 +545,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
       if (myShrinkLookup || maxWidth > myLookupTextWidth) {
         myLookupTextWidth = maxWidth;
         myLookup.requestResize();
-        try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RENDERING)) {
           myLookup.refreshUi(false, false);
         }
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.integration;
 
 import com.intellij.openapi.diagnostic.LogLevel;
@@ -35,7 +35,7 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
   private static final String APPLICATION_PASSWORD = System.getProperty("tasks.tests.youtrack.application.password");
   private static final String SERVER_URL = "https://yt-ij-integration-tests.myjetbrains.com/youtrack";
 
-  private static class Issues {
+  private static final class Issues {
     static final String ASSIGNED_OPEN_BUG = "TEST-1";
     static final String ASSIGNED_CLOSED_BUG = "TEST-2";
     static final String UNASSIGNED_OPEN_BUG = "TEST-3";

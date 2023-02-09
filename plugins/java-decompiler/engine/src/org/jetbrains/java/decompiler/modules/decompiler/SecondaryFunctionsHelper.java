@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -368,7 +368,6 @@ public final class SecondaryFunctionsHelper {
   }
 
   public static Exprent propagateBoolNot(Exprent exprent) {
-
     if (exprent.type == Exprent.EXPRENT_FUNCTION) {
       FunctionExprent fexpr = (FunctionExprent)exprent;
 
@@ -386,8 +385,7 @@ public final class SecondaryFunctionsHelper {
               Exprent newexpr = fparam.getLstOperands().get(0);
               Exprent retexpr = propagateBoolNot(newexpr);
               return retexpr == null ? newexpr : retexpr;
-            case FunctionExprent.FUNCTION_CADD:
-            case FunctionExprent.FUNCTION_COR:
+            case FunctionExprent.FUNCTION_CADD, FunctionExprent.FUNCTION_COR: {
               List<Exprent> operands = fparam.getLstOperands();
               for (int i = 0; i < operands.size(); i++) {
                 Exprent newparam = new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, operands.get(i), operands.get(i).bytecode);
@@ -395,15 +393,12 @@ public final class SecondaryFunctionsHelper {
                 Exprent retparam = propagateBoolNot(newparam);
                 operands.set(i, retparam == null ? newparam : retparam);
               }
-            case FunctionExprent.FUNCTION_EQ:
-            case FunctionExprent.FUNCTION_NE:
+            }
+            case FunctionExprent.FUNCTION_EQ, FunctionExprent.FUNCTION_NE:
               canSimplify = true;
-            case FunctionExprent.FUNCTION_LT:
-            case FunctionExprent.FUNCTION_GE:
-            case FunctionExprent.FUNCTION_GT:
-            case FunctionExprent.FUNCTION_LE:
+            case FunctionExprent.FUNCTION_LT, FunctionExprent.FUNCTION_GE, FunctionExprent.FUNCTION_GT, FunctionExprent.FUNCTION_LE:
               if (!canSimplify) {
-                operands = fparam.getLstOperands();
+                List<Exprent> operands = fparam.getLstOperands();
                 VarType left = operands.get(0).getExprType();
                 VarType right = operands.get(1).getExprType();
                 VarType commonSupertype = VarType.getCommonSupertype(left, right);

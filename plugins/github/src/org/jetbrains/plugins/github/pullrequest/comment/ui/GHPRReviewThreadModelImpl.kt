@@ -4,10 +4,15 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.ui.CollectionListModel
 import com.intellij.util.EventDispatcher
+import kotlinx.coroutines.flow.MutableStateFlow
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import javax.swing.ListModel
+import javax.swing.event.ListDataEvent
+import javax.swing.event.ListDataListener
 
 class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
-  : CollectionListModel<GHPRReviewCommentModel>(thread.comments.map(GHPRReviewCommentModel::convert)), GHPRReviewThreadModel {
+  : CollectionListModel<GHPRReviewCommentModel>(thread.comments.map(GHPRReviewCommentModelImpl::convert)), GHPRReviewThreadModel {
 
   override val id: String = thread.id
   override val createdAt = thread.createdAt
@@ -23,6 +28,10 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
   override val line = thread.line
   override val startLine = thread.startLine
 
+  override val collapsedState = MutableStateFlow(isResolved || isOutdated)
+
+  override val repliesModel: ListModel<GHPRReviewCommentModel> = RepliesModel(this)
+
   private val stateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   init {
@@ -37,10 +46,12 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     }
     if (isResolved != thread.isResolved) {
       isResolved = thread.isResolved
+      collapsedState.value = isResolved
       dataChanged = true
     }
     if (isOutdated != thread.isOutdated) {
       isOutdated = thread.isOutdated
+      collapsedState.value = isOutdated
       dataChanged = true
     }
     if (dataChanged) stateEventDispatcher.multicaster.eventOccurred()
@@ -66,7 +77,7 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     }
 
     val newComments = thread.comments.subList(size, thread.comments.size)
-    add(newComments.map(GHPRReviewCommentModel::convert))
+    add(newComments.map(GHPRReviewCommentModelImpl::convert))
     maybeMarkFirstCommentResolved()
   }
 
@@ -79,8 +90,8 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     }
   }
 
-  override fun addComment(comment: GHPRReviewCommentModel) {
-    add(comment)
+  override fun addComment(comment: GHPullRequestReviewComment) {
+    add(GHPRReviewCommentModelImpl.convert(comment))
   }
 
   override fun addAndInvokeStateChangeListener(listener: () -> Unit) =
@@ -97,5 +108,40 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
 
   override fun hashCode(): Int {
     return id.hashCode()
+  }
+
+  private class RepliesModel(private val thread: GHPRReviewThreadModelImpl) : ListModel<GHPRReviewCommentModel> {
+    private val eventDispatcher = EventDispatcher.create(ListDataListener::class.java)
+
+    init {
+      thread.addListDataListener(object : ListDataListener {
+        override fun intervalAdded(e: ListDataEvent) {
+          if (e.index0 < 1 || e.index1 < 1) return
+          eventDispatcher.multicaster.intervalAdded(ListDataEvent(e.source, e.type, e.index0 - 1, e.index1 - 1))
+        }
+
+        override fun intervalRemoved(e: ListDataEvent) {
+          if (e.index0 < 1 || e.index1 < 1) return
+          eventDispatcher.multicaster.intervalRemoved(ListDataEvent(e.source, e.type, e.index0 - 1, e.index1 - 1))
+        }
+
+        override fun contentsChanged(e: ListDataEvent) {
+          if (e.index0 < 1 || e.index1 < 1) return
+          eventDispatcher.multicaster.contentsChanged(ListDataEvent(e.source, e.type, e.index0 - 1, e.index1 - 1))
+        }
+      })
+    }
+
+    override fun getSize(): Int = thread.size - 1
+
+    override fun getElementAt(index: Int): GHPRReviewCommentModel = thread.getElementAt(index + 1)
+
+    override fun addListDataListener(l: ListDataListener) {
+      eventDispatcher.addListener(l)
+    }
+
+    override fun removeListDataListener(l: ListDataListener) {
+      eventDispatcher.removeListener(l)
+    }
   }
 }

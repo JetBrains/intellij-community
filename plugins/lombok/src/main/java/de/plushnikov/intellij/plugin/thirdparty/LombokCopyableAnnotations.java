@@ -29,10 +29,6 @@ public enum LombokCopyableAnnotations {
     }
   }
 
-  public Map<String, Set<String>> getShortNames() {
-    return shortNames;
-  }
-
   public static void copyOnXAnnotations(@Nullable PsiAnnotation processedAnnotation,
                                         @NotNull PsiModifierList modifierList,
                                         @NotNull String onXParameterName) {
@@ -44,8 +40,7 @@ public enum LombokCopyableAnnotations {
     annotationsToAdd.forEach(modifierList::addAnnotation);
   }
 
-  public static @NotNull <T extends PsiModifierListOwner & PsiMember> List<PsiAnnotation> collectCopyableAnnotations(@NotNull T psiFromElement,
-                                                                                                                     @NotNull LombokCopyableAnnotations copyableAnnotations) {
+  public @NotNull <T extends PsiModifierListOwner & PsiMember> List<PsiAnnotation> collectCopyableAnnotations(@NotNull T psiFromElement) {
     final PsiAnnotation[] fieldAnnotations = psiFromElement.getAnnotations();
     if (0 == fieldAnnotations.length) {
       // nothing to copy if no annotations defined
@@ -55,7 +50,6 @@ public enum LombokCopyableAnnotations {
     final Set<String> annotationNames = new HashSet<>();
     final Collection<String> existedShortAnnotationNames = ContainerUtil.map2Set(fieldAnnotations, PsiAnnotationSearchUtil::getShortNameOf);
 
-    final Map<String, Set<String>> shortNames = copyableAnnotations.getShortNames();
     for (String shortName : existedShortAnnotationNames) {
       Set<String> fqns = shortNames.get(shortName);
       if (fqns != null) {
@@ -65,7 +59,7 @@ public enum LombokCopyableAnnotations {
 
     final PsiClass containingClass = psiFromElement.getContainingClass();
     // append only for BASE_COPYABLE
-    if (BASE_COPYABLE.equals(copyableAnnotations) && null != containingClass) {
+    if (BASE_COPYABLE.equals(this) && null != containingClass) {
       Collection<String> configuredCopyableAnnotations =
         ConfigDiscovery.getInstance().getMultipleValueLombokConfigProperty(ConfigKey.COPYABLE_ANNOTATIONS, containingClass);
 
@@ -92,7 +86,7 @@ public enum LombokCopyableAnnotations {
   public static <T extends PsiModifierListOwner & PsiMember> void copyCopyableAnnotations(@NotNull T fromPsiElement,
                                                                                           @NotNull LombokLightModifierList toModifierList,
                                                                                           @NotNull LombokCopyableAnnotations copyableAnnotations) {
-    List<PsiAnnotation> annotationsToAdd = collectCopyableAnnotations(fromPsiElement, copyableAnnotations);
+    List<PsiAnnotation> annotationsToAdd = copyableAnnotations.collectCopyableAnnotations(fromPsiElement);
     annotationsToAdd.forEach(toModifierList::withAnnotation);
   }
 }

@@ -53,6 +53,7 @@ public interface EditorEx extends Editor {
   @NonNls String PROP_FONT_SIZE = "fontSize";
   @NonNls String PROP_FONT_SIZE_2D = "fontSize2D";
   @NonNls String PROP_ONE_LINE_MODE = "oneLineMode";
+  @NonNls String PROP_HIGHLIGHTER = "highlighter";
   Key<TextRange> LAST_PASTED_REGION = Key.create("LAST_PASTED_REGION");
 
   @NotNull
@@ -173,6 +174,7 @@ public interface EditorEx extends Editor {
   boolean isEmbeddedIntoDialogWrapper();
   void setEmbeddedIntoDialogWrapper(boolean b);
 
+  @Override
   VirtualFile getVirtualFile();
 
   TextDrawingCallback getTextDrawingCallback();

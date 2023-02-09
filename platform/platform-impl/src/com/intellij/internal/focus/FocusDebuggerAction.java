@@ -21,9 +21,6 @@ import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
 
-/**
- * @author spleaner
- */
 final class FocusDebuggerAction extends AnAction implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance(FocusDebuggerAction.class);
@@ -185,8 +182,7 @@ final class FocusDebuggerAction extends AnAction implements DumbAware {
 
     @Override
     public void eventDispatched(AWTEvent event) {
-      if (event instanceof FocusEvent) {
-        FocusEvent focusEvent = (FocusEvent)event;
+      if (event instanceof FocusEvent focusEvent) {
         Component fromComponent = focusEvent.getComponent();
         Component oppositeComponent = focusEvent.getOppositeComponent();
 

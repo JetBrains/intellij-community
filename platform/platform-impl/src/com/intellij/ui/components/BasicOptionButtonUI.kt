@@ -3,6 +3,7 @@ package com.intellij.ui.components
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager.getApplication
@@ -318,7 +319,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
   open inner class BaseButton : JButton() {
     override fun hasFocus(): Boolean = optionButton.hasFocus()
-    override fun isDefaultButton(): Boolean = optionButton.isDefaultButton
+    override fun isDefaultButton(): Boolean = DarculaButtonUI.isDefaultButton(optionButton)
     override fun getBackground(): Color? = optionButton.background
 
     override fun paint(g: Graphics): Unit = if (isSimpleButton) super.paint(g) else cloneAndPaint(g) { paintNotSimple(it) }

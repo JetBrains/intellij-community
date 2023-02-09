@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.intellij.openapi.util.io.NioFiles
@@ -13,8 +13,11 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.*
+import kotlin.io.path.exists
 
-fun Path.exists(): Boolean = Files.exists(this)
+@Suppress("DeprecatedCallableAddReplaceWith") // ReplaceWith does not work
+@Deprecated(message = "Use kotlin.io.path.exists", level = DeprecationLevel.ERROR)
+fun Path.exists(): Boolean = exists()
 
 fun Path.createDirectories(): Path = NioFiles.createDirectories(this)
 
@@ -210,11 +213,17 @@ inline fun <R> Path.directoryStreamIfExists(task: (stream: DirectoryStream<Path>
 
 inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Boolean), task: (stream: DirectoryStream<Path>) -> R): R? {
   try {
-    return Files.newDirectoryStream(this, DirectoryStream.Filter { filter(it) }).use(task)
+    return Files.newDirectoryStream(this, makeFilter(filter)).use(task)
   }
   catch (ignored: NoSuchFileException) {
   }
   return null
+}
+
+@PublishedApi
+internal fun makeFilter(filter: (path: Path) -> Boolean): DirectoryStream.Filter<Path> {
+  // extracted in order to not introduce additional JVM class for every directoryStreamIfExists call site
+  return DirectoryStream.Filter { filter(it) }
 }
 
 val Path.isWritable: Boolean

@@ -7,6 +7,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.Disposable;
@@ -44,8 +45,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.FontUtil;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +69,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public final class NotificationsManagerImpl extends NotificationsManager {
   public static final Color DEFAULT_TEXT_COLOR = new JBColor(Gray._0, Gray._191);
@@ -462,15 +466,22 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       text.addHyperlinkListener(listener);
     }
 
-    String fontStyle = NotificationsUtil.getFontStyle();
-    int prefSize = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null, fontStyle)).getPreferredSize().width;
-    String style = prefSize > BalloonLayoutConfiguration.MaxWidth() ? BalloonLayoutConfiguration.MaxWidthStyle() : null;
+    Supplier<@Nls String> textBuilder = () -> {
+      String fontStyle = NotificationsUtil.getFontStyle();
+      int prefSize = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null, fontStyle)).getPreferredSize().width;
+      String style;
 
-    if (layoutData.showFullContent) {
-      style = prefSize > BalloonLayoutConfiguration.MaxFullContentWidth() ? BalloonLayoutConfiguration.MaxFullContentWidthStyle() : null;
-    }
+      if (layoutData.showFullContent) {
+        style = prefSize > BalloonLayoutConfiguration.MaxFullContentWidth() ? BalloonLayoutConfiguration.MaxFullContentWidthStyle() : null;
+      }
+      else {
+        style = prefSize > BalloonLayoutConfiguration.MaxWidth() ? BalloonLayoutConfiguration.MaxWidthStyle() : null;
+      }
 
-    String textContent = NotificationsUtil.buildHtml(notification, style, true, null, fontStyle);
+      return NotificationsUtil.buildHtml(notification, style, true, null, fontStyle);
+    };
+
+    String textContent = textBuilder.get();
     text.setText(textContent);
     setTextAccessibleName(text, textContent);
     text.setEditable(false);
@@ -599,7 +610,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     content.add(centerPanel, BorderLayout.CENTER);
 
     if (notification.hasTitle()) {
-      String titleStyle = StringUtil.defaultIfEmpty(fontStyle, "") + "white-space:nowrap;";
+      String titleStyle = StringUtil.defaultIfEmpty(NotificationsUtil.getFontStyle(), "") + "white-space:nowrap;";
       JLabel title = new JLabel();
       String titleContent = NotificationsUtil.buildHtml(notification, titleStyle, false, null, null);
       title.setText(titleContent);
@@ -626,8 +637,10 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       }
     };
     iconComponent.setOpaque(false);
-    iconComponent.setPreferredSize(
+
+    Runnable iconSizeRunnable = () -> iconComponent.setPreferredSize(
       new Dimension(layoutData.configuration.iconPanelWidth, 2 * layoutData.configuration.iconOffset.height + icon.getIconHeight()));
+    iconSizeRunnable.run();
 
     content.add(iconComponent, BorderLayout.WEST);
 
@@ -667,14 +680,17 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     text.setSize(text.getPreferredSize());
 
-    Dimension paneSize = new Dimension(text.getPreferredSize());
-    int maxWidth = JBUIScale.scale(600);
-    if (windowComponent != null) {
-      maxWidth = Math.min(maxWidth, windowComponent.getWidth() - 20);
-    }
-    if (paneSize.width > maxWidth) {
-      pane.setPreferredSize(new Dimension(maxWidth, paneSize.height + UIUtil.getScrollBarWidth()));
-    }
+    Runnable paneSizeRunnable = () -> {
+      Dimension paneSize = new Dimension(text.getPreferredSize());
+      int maxWidth = JBUIScale.scale(600);
+      if (windowComponent != null) {
+        maxWidth = Math.min(maxWidth, windowComponent.getWidth() - 20);
+      }
+      if (paneSize.width > maxWidth) {
+        pane.setPreferredSize(new Dimension(maxWidth, paneSize.height + UIUtil.getScrollBarWidth()));
+      }
+    };
+    paneSizeRunnable.run();
 
     content.putClientProperty(NOTIFICATION_BALLOON_FLAG, new Object());
 
@@ -693,8 +709,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     Balloon balloon = builder.createBalloon();
 
-    if (balloon instanceof BalloonImpl) {
-      var balloonImpl = (BalloonImpl)balloon;
+    if (balloon instanceof BalloonImpl balloonImpl) {
       balloonImpl.getContent().addMouseListener(new MouseAdapter() {
       });
       balloon.setAnimationEnabled(false);
@@ -706,8 +721,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       }
 
       if (!layoutData.welcomeScreen) {
-        balloonImpl.setActionProvider(new NotificationBalloonActionProvider(
-          balloonImpl, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id, notification.getDisplayId()));
+        balloonImpl.setActionProvider(new NotificationBalloonActionProvider(balloonImpl, centerPanel.getTitle(), layoutData, notification));
       }
 
       if (layoutData.fadeoutTime != 0) {
@@ -716,12 +730,69 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
     notification.setBalloon(balloon);
 
-    ApplicationManager.getApplication().getMessageBus().connect(balloon).subscribe(LafManagerListener.TOPIC, source -> {
+    int _lines = lines;
+    Runnable lafCallback = () -> {
       NotificationsUtil.configureHtmlEditorKit(text, true);
-      text.setText(textContent);
+      text.setText(textBuilder.get());
+
+      text.setPreferredSize(null);
+      Dimension size = text.getPreferredSize();
+
+      layoutData.fullHeight = size.height;
+      layoutData.twoLineHeight = calculateContentHeight(_lines);
+      layoutData.maxScrollHeight = Math.min(layoutData.fullHeight, calculateContentHeight(10));
+      layoutData.configuration = BalloonLayoutConfiguration.create(notification, layoutData, actions);
+
+      if (layoutData.welcomeScreen) {
+        layoutData.maxScrollHeight = layoutData.fullHeight;
+      }
+
+      if (showFullContent) {
+        if (windowComponent == null) {
+          pane.setPreferredSize(size);
+        }
+        else {
+          pane.setPreferredSize(new Dimension(size.width, (int)Math.min(layoutData.fullHeight, windowComponent.getHeight() * 0.75)));
+        }
+      }
+      else if (layoutData.twoLineHeight < layoutData.fullHeight) {
+        size.height = layoutData.twoLineHeight;
+        text.setPreferredSize(size);
+        text.setSize(size);
+        layoutData.showMinSize = true;
+
+        pane.setPreferredSize(size);
+      }
+
       text.revalidate();
       text.repaint();
+
+      iconSizeRunnable.run();
+      paneSizeRunnable.run();
+
+      content.doLayout();
+
+      Runnable doLayout = layoutData.doLayout;
+      if (doLayout != null) {
+        doLayout.run();
+      }
+
+      Container parent = content.getParent();
+      if (parent == null) {
+        parent = content;
+      }
+      parent.doLayout();
+      parent.revalidate();
+      parent.repaint();
+    };
+
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(balloon);
+    connection.subscribe(LafManagerListener.TOPIC, source -> {
+      // We need to call this callback in the next iteration,
+      // because otherwise some components inside the balloon may update their borders after all sizes are calculated inside `lafCallback`
+      SwingUtilities.invokeLater(lafCallback);
     });
+    connection.subscribe(UISettingsListener.TOPIC, uiSettings -> lafCallback.run());
 
     Disposer.register(parentDisposable, balloon);
     return balloon;
@@ -917,8 +988,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     private void handleEvent(MouseEvent e, boolean pressed, boolean moved) {
-      if (e.getSource() instanceof JEditorPane) {
-        JEditorPane pane = (JEditorPane)e.getSource();
+      if (e.getSource() instanceof JEditorPane pane) {
         int pos = pane.viewToModel2D(e.getPoint());
         if (pos >= 0) {
           HTMLDocument document = (HTMLDocument)pane.getDocument();
@@ -1475,12 +1545,10 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     private static void cutWidth(@NotNull Component component, @NotNull Dimension size, int width) {
       size.width = width;
       component.setPreferredSize(size);
-      if (component instanceof JButton) {
-        JButton button = (JButton)component;
+      if (component instanceof JButton button) {
         button.setToolTipText(button.getText());
       }
-      else if (component instanceof JLabel) {
-        JLabel label = (JLabel)component;
+      else if (component instanceof JLabel label) {
         label.setToolTipText(label.getText());
       }
     }

@@ -5,7 +5,10 @@ package org.jetbrains.kotlin.idea.codeInsight
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.impl.InheritorsLineMarkerNavigator
+import com.intellij.codeInsight.navigation.GotoImplementationHandler
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDocumentManager
@@ -15,7 +18,10 @@ import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.highlighter.markers.TestableLineMarkerNavigator
+import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerCodeMetaInfo
+import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerConfiguration
+import org.jetbrains.kotlin.idea.base.test.KotlinExpectedHighlightingData
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.TestableLineMarkerNavigator
 import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
@@ -71,7 +77,7 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
 
             val markers = doAndCheckHighlighting(ktFile, document, data, dataFile())
 
-            assertNavigationElements(myFixture.project, ktFile, markers)
+            assertNavigationElements(myFixture.project, ktFile, myFixture.editor, markers)
             additionalCheck()
         } catch (exc: Exception) {
             throw RuntimeException(exc)
@@ -88,7 +94,7 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
         private const val LINE_MARKER_PREFIX = "LINEMARKER:"
         private const val TARGETS_PREFIX = "TARGETS"
 
-        fun assertNavigationElements(project: Project, file: KtFile, markers: List<LineMarkerInfo<*>>) {
+        fun assertNavigationElements(project: Project, file: KtFile, editor : Editor, markers: List<LineMarkerInfo<*>>) {
             val navigationDataComments = KotlinTestUtils.getLastCommentsInFile(
                 file, KotlinTestUtils.CommentType.BLOCK_COMMENT, false
             )
@@ -110,7 +116,18 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
                 val lineMarker = navigateMarker!!.lineMarker
 
                 val handler = lineMarker.navigationHandler
-                if (handler is TestableLineMarkerNavigator) {
+                if (handler is InheritorsLineMarkerNavigator) {
+                    val gotoData =
+                        GotoImplementationHandler().createDataForSourceForTests(editor, lineMarker.element!!.parent!!)
+                    val targets = gotoData.targets.toMutableList().sortedBy {
+                        it.renderAsGotoImplementation()
+                    }
+                    val actualNavigationData = NavigationTestUtils.getNavigateElementsText(project, targets)
+
+                    UsefulTestCase.assertSameLines(getExpectedNavigationText(navigationComment), actualNavigationData)
+
+                }
+                else if (handler is TestableLineMarkerNavigator) {
                     val navigateElements = handler.getTargetsPopupDescriptor(lineMarker.element)?.targets?.sortedBy {
                         it.renderAsGotoImplementation()
                     }

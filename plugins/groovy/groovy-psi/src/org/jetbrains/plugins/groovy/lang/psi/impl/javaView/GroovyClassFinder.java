@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.javaView;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementFinder;
@@ -32,9 +33,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class GroovyClassFinder extends PsiElementFinder {
   private final GroovyShortNamesCache myCache;
 
@@ -45,6 +43,7 @@ public class GroovyClassFinder extends PsiElementFinder {
   @Override
   @Nullable
   public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    ProgressManager.checkCanceled();
     final List<PsiClass> classes = myCache.getClassesByFQName(qualifiedName, scope, true);
     if (classes.isEmpty()) return null;
     if (classes.size() == 1) return classes.get(0);
@@ -59,6 +58,7 @@ public class GroovyClassFinder extends PsiElementFinder {
 
   @Override
   public PsiClass @NotNull [] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    ProgressManager.checkCanceled();
     final Collection<PsiClass> classes = myCache.getClassesByFQName(qualifiedName, scope, true);
     return classes.isEmpty() ? PsiClass.EMPTY_ARRAY : classes.toArray(PsiClass.EMPTY_ARRAY);
   }

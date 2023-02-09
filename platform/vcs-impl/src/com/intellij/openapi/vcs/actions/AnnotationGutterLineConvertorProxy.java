@@ -14,7 +14,6 @@ import java.awt.*;
 import java.util.List;
 
 /**
- * @author Irina Chernushina
  * @author Konstantin Bulenkov
  */
 public class AnnotationGutterLineConvertorProxy implements ActiveAnnotationGutter {

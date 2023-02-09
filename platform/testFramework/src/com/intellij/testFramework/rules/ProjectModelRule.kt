@@ -6,6 +6,7 @@ import com.intellij.facet.FacetConfiguration
 import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetType
 import com.intellij.facet.impl.FacetUtil
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.EmptyModuleType
@@ -191,6 +192,12 @@ open class ProjectModelRule : TestRule {
 
   fun removeModule(module: Module) {
     runWriteActionAndWait { moduleManager.disposeModule(module) }
+  }
+
+  fun setUnloadedModules(vararg moduleName: String) {
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(moduleName.toList())
+    }
   }
 
   fun <F: Facet<C>, C: FacetConfiguration> addFacet(module: Module, type: FacetType<F, C>, configuration: C = type.createDefaultConfiguration()): F {

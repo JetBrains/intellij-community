@@ -1,24 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMember
 import com.intellij.psi.search.PsiShortNamesCache
+import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfTypeSafe
-import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
+import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.platform.isCommon
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 class KtSymbolFromIndexProvider(private val project: Project) {
     context(KtAnalysisSession)
@@ -28,11 +26,18 @@ class KtSymbolFromIndexProvider(private val project: Project) {
     ): Sequence<KtNamedClassOrObjectSymbol> {
         val scope = analysisScope
         val isCommon = useSiteModule.platform.isCommon()
-        return KotlinClassShortNameIndex[name.asString(), project, scope]
-            .asSequence()
-            .filter { ktClass -> isCommon || !ktClass.isExpectDeclaration() }
-            .filter (psiFilter)
-            .mapNotNull { it.getNamedClassOrObjectSymbol() }
+        val values = KotlinClassShortNameIndex.getAllElements(
+            name.asString(),
+            project,
+            scope
+        ) {
+            (isCommon || !it.isExpectDeclaration()) && psiFilter(it)
+        }
+        return sequence {
+            for (value in values) {
+                value.getNamedClassOrObjectSymbol()?.let { yield(it) }
+            }
+        }
     }
 
     context(KtAnalysisSession)
@@ -42,13 +47,17 @@ class KtSymbolFromIndexProvider(private val project: Project) {
     ): Sequence<KtNamedClassOrObjectSymbol> {
         val scope = analysisScope
         val isCommon = useSiteModule.platform.isCommon()
-        val index = KotlinFullClassNameIndex
-        return index.getAllKeys(project).asSequence()
-            .filter { fqName -> nameFilter(getShortName(fqName)) }
-            .flatMap { fqName -> index[fqName, project, scope] }
-            .filter { ktClass -> isCommon || !ktClass.isExpectDeclaration() }
-            .filter (psiFilter)
-            .mapNotNull { it.getNamedClassOrObjectSymbol() }
+        val values = KotlinFullClassNameIndex.getAllElements(
+            project,
+            scope,
+            keyFilter = { nameFilter(getShortName(it)) },
+            valueFilter = { (isCommon || !it.isExpectDeclaration()) && psiFilter(it) }
+        )
+        return sequence {
+            for (ktClassOrObject in values) {
+                ktClassOrObject.getNamedClassOrObjectSymbol()?.let { yield(it) }
+            }
+        }
     }
 
     context(KtAnalysisSession)
@@ -101,13 +110,18 @@ class KtSymbolFromIndexProvider(private val project: Project) {
         val scope = analysisScope
         val nameString = name.asString()
 
-        return sequence {
-            yieldAll(KotlinFunctionShortNameIndex[nameString, project, scope])
-            yieldAll(KotlinPropertyShortNameIndex[nameString, project, scope])
+        val values = SmartList<KtNamedDeclaration>()
+        val processor = CancelableCollectFilterProcessor(values) {
+            it is KtCallableDeclaration && psiFilter(it) && !it.isExpectDeclaration()
         }
-            .onEach { ProgressManager.checkCanceled() }
-            .filter { it is KtCallableDeclaration && psiFilter(it) && !it.isExpectDeclaration()}
-            .mapNotNull { it.getSymbolOfTypeSafe<KtCallableSymbol>() }
+        KotlinFunctionShortNameIndex.processElements(nameString, project, scope, processor)
+        KotlinPropertyShortNameIndex.processElements(nameString, project, scope, processor)
+
+        return sequence {
+            for (callableDeclaration in values) {
+                callableDeclaration.getSymbolOfTypeSafe<KtCallableSymbol>()?.let { yield(it) }
+            }
+        }
     }
 
     context(KtAnalysisSession)

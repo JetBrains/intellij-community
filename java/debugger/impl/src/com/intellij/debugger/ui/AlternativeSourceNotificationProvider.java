@@ -37,7 +37,9 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public final class AlternativeSourceNotificationProvider implements EditorNotificationProvider {
 
@@ -45,7 +47,7 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
 
   @Override
   public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
-                                                                                                                @NotNull VirtualFile file) {
+                                                                                                                 @NotNull VirtualFile file) {
     if (!DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE) {
       return null;
     }
@@ -88,21 +90,14 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
     if (altClasses.length == 0) {
       altClasses = JavaPsiFacade.getInstance(project).findClasses(name, GlobalSearchScope.allScope(project));
     }
-    ArrayList<PsiClass> alts = ContainerUtil.newArrayList(altClasses);
-    ContainerUtil.removeDuplicates(alts);
-
     setFileProcessed(file, true);
-
-    if (alts.size() <= 1) {
+    if (altClasses.length <= 1) {
       return null;
     }
-
-    for (PsiClass cls : alts) {
-      if (cls.equals(baseClass) || cls.getNavigationElement().equals(baseClass)) {
-        alts.remove(cls);
-        break;
-      }
-    }
+    ArrayList<PsiClass> alts = Arrays.stream(altClasses)
+      .distinct()
+      .filter(cls -> !(cls.equals(baseClass) || cls.getNavigationElement().equals(baseClass)))
+      .collect(Collectors.toCollection(()->new ArrayList<>()));
     alts.add(0, baseClass);
 
     ComboBoxClassElement[] elems = ContainerUtil.map2Array(alts,

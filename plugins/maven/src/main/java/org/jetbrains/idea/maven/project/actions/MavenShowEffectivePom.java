@@ -22,9 +22,6 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 import java.io.IOException;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenShowEffectivePom extends AnAction implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance(MavenShowEffectivePom.class);

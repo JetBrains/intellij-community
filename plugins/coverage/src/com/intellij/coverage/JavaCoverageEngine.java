@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -266,8 +267,7 @@ public class JavaCoverageEngine extends CoverageEngine {
                                            @NotNull final String name,
                                            @NotNull final CoverageFileProvider coverageDataFileProvider,
                                            @NotNull final CoverageEnabledConfiguration config) {
-    if (config instanceof JavaCoverageEnabledConfiguration) {
-      final JavaCoverageEnabledConfiguration javaConfig = (JavaCoverageEnabledConfiguration)config;
+    if (config instanceof JavaCoverageEnabledConfiguration javaConfig) {
       return createSuite(covRunner, name, coverageDataFileProvider,
                          javaConfig.getPatterns(),
                          javaConfig.getExcludePatterns(),
@@ -395,6 +395,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(uncoveredLines, content, suite.getProject());
     }
     catch (Exception e) {
+      if (e instanceof ControlFlowException) throw e;
       LOG.error("Fail to process class from: " + classFile.getPath(), e);
     }
     return uncoveredLines;
@@ -446,8 +447,9 @@ public class JavaCoverageEngine extends CoverageEngine {
       return Collections.emptySet();
     }
     final Set<File> classFiles = new HashSet<>();
-    final @Nullable File outputpath = getOutputpath(CompilerModuleExtension.getInstance(module));
-    final @Nullable File testOutputpath = getTestOutputpath(CompilerModuleExtension.getInstance(module));
+    final CompilerModuleExtension moduleExtension = Objects.requireNonNull(CompilerModuleExtension.getInstance(module));
+    final @Nullable File outputpath = getOutputpath(moduleExtension);
+    final @Nullable File testOutputpath = getTestOutputpath(moduleExtension);
 
     final @Nullable VirtualFile outputpathVirtualFile = fileToVirtualFileWithRefresh(outputpath);
     final @Nullable VirtualFile testOutputpathVirtualFile = fileToVirtualFileWithRefresh(testOutputpath);
@@ -545,9 +547,9 @@ public class JavaCoverageEngine extends CoverageEngine {
       else if (parent instanceof PsiAssertStatement) {
         condition = ((PsiAssertStatement)parent).getAssertCondition();
       }
-      if (PsiTreeUtil.isAncestor(condition, psiFile.findElementAt(offset), false)) {
+      if (PsiTreeUtil.isAncestor(condition, Objects.requireNonNull(psiFile.findElementAt(offset)), false)) {
         try {
-          final ControlFlow controlFlow = ControlFlowFactory.getInstance(project).getControlFlow(
+          final ControlFlow controlFlow = ControlFlowFactory.getInstance(Objects.requireNonNull(project)).getControlFlow(
             parent, AllVariablesControlFlowPolicy.getInstance());
           for (Instruction instruction : controlFlow.getInstructions()) {
             if (instruction instanceof ConditionalBranchingInstruction) {
@@ -624,8 +626,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   @Nullable
   public String getTestMethodName(@NotNull final PsiElement element,
                                   @NotNull final AbstractTestProxy testProxy) {
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
+    if (element instanceof PsiMethod method) {
       PsiClass aClass = method.getContainingClass();
       if (aClass != null) {
         String qualifiedName = ClassUtil.getJVMClassName(aClass);

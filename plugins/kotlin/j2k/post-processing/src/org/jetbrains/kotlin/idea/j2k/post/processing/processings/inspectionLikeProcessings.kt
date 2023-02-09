@@ -303,24 +303,6 @@ internal class RemoveForExpressionLoopParameterTypeProcessing :
     }
 }
 
-internal class RemoveRedundantConstructorKeywordProcessing :
-    InspectionLikeProcessingForElement<KtPrimaryConstructor>(KtPrimaryConstructor::class.java) {
-    override fun isApplicableTo(element: KtPrimaryConstructor, settings: ConverterSettings?): Boolean =
-        element.containingClassOrObject is KtClass
-                && element.getConstructorKeyword() != null
-                && element.annotationEntries.isEmpty()
-                && element.visibilityModifier() == null
-
-
-    override fun apply(element: KtPrimaryConstructor) {
-        element.getConstructorKeyword()?.delete()
-        element.prevSibling
-            ?.safeAs<PsiWhiteSpace>()
-            ?.takeUnless { it.textContains('\n') }
-            ?.delete()
-    }
-}
-
 internal class RemoveRedundantModalityModifierProcessing : InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
     override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings?): Boolean {
         if (element.hasModifier(KtTokens.FINAL_KEYWORD)) {

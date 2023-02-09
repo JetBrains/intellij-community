@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext", "ReplaceNegatedIsEmptyWithIsNotEmpty", "PrivatePropertyName")
 
 package org.jetbrains.intellij.build.impl
@@ -12,6 +12,10 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -25,7 +29,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
-import org.jetbrains.intellij.build.impl.SVGPreBuilder.createPrebuildSvgIconsJob
+import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.tasks.ZipSource
@@ -51,6 +55,8 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Predicate
 import java.util.stream.Collectors
+import kotlin.io.path.exists
+import kotlin.io.path.name
 
 /**
  * Assembles output of modules to platform JARs (in [BuildPaths.distAllDir]/lib directory),
@@ -162,6 +168,50 @@ class DistributionJARsBuilder {
     }
   }
 
+  private fun validatePlugin(path: Path, context: BuildContext) {
+    spanBuilder("plugin validation").setAttribute("path", "$path").useWithScope {
+      if (!path.exists()) {
+        it.addEvent("path doesn't exist, skipped")
+        return@useWithScope
+      }
+      var id: String? = null
+      val problems = when (val result = IdePluginManager.createManager().createPlugin(path)) {
+        is PluginCreationSuccess -> {
+          id = result.plugin.pluginId
+          result.unacceptableWarnings
+        }
+        is PluginCreationFail -> {
+          result.errorsAndWarnings
+        }
+      }
+      if (problems.isNotEmpty()) {
+        val msg = problems.joinToString(
+          prefix = "${id ?: path}: ",
+          separator = ". ",
+          transform = PluginProblem::message
+        )
+        when (id) {
+          // https://youtrack.jetbrains.com/issue/IDEA-308174
+          "androidx.compose.plugins.idea",
+            // https://youtrack.jetbrains.com/issue/IDEA-312410
+          "com.intellij.tasks",
+            // https://youtrack.jetbrains.com/issue/IDEA-312409
+          "org.jetbrains.plugins.sass",
+            // https://youtrack.jetbrains.com/issue/IDEA-312408
+          "org.toml.lang",
+            // https://youtrack.jetbrains.com/issue/IDEA-312407
+          "com.intellij.plugins.webcomponents",
+            // https://youtrack.jetbrains.com/issue/IDEA-312406
+          "cucumber-javascript",
+            // https://youtrack.jetbrains.com/issue/IDEA-312405
+          "com.jetbrains.plugins.yeoman"
+          -> context.messages.warning(msg)
+          else -> reportBuildProblem(msg, identity = "${id ?: path}")
+        }
+      }
+    }
+  }
+
   // filter out jars with relative paths in name
   val productModules: List<String>
     get() {
@@ -186,12 +236,18 @@ class DistributionJARsBuilder {
     val modules = withContext(Dispatchers.IO) {
       val ideClasspath = createIdeClassPath(context)
       NioFiles.deleteRecursively(targetDirectory)
+      // bundled maven is also downloaded during traverseUI execution in external process
+      // making it fragile to call more than one traverseUI at the same time (in reproducibility test for example)
+      // so it's pre-downloaded with proper synchronization
+      BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDirRoot)
+      BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
       // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
       // It'll process all UI elements in Settings dialog and build index for them.
       runApplicationStarter(context = context,
                             tempDir = context.paths.tempDir.resolve("searchableOptions"),
                             ideClasspath = ideClasspath,
                             arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
+                            vmOptions = listOf("-Xmx2g"),
                             systemProperties = systemProperties)
       check(Files.isDirectory(targetDirectory)) {
         "Failed to build searchable options index: $targetDirectory does not exist. See log above for error output from traverseUI run."
@@ -356,7 +412,7 @@ class DistributionJARsBuilder {
         }
 
         // buildPlugins pluginBuilt listener is called concurrently
-        val pluginsToIncludeInCustomRepository = ConcurrentLinkedQueue<PluginRepositorySpec>()
+        val pluginSpecs = ConcurrentLinkedQueue<PluginRepositorySpec>()
         val autoPublishPluginChecker = loadPluginAutoPublishList(context)
         val prepareCustomPluginRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                             !context.isStepSkipped(BuildOptions.ARCHIVE_PLUGINS)
@@ -378,10 +434,8 @@ class DistributionJARsBuilder {
             defaultPluginVersion
           }
           val destFile = targetDirectory.resolve("${plugin.directoryName}-$pluginVersion.zip")
-          if (prepareCustomPluginRepository) {
-            val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
-            pluginsToIncludeInCustomRepository.add(PluginRepositorySpec(destFile, pluginXml))
-          }
+          val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
+          pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
           dirToJar.add(NonBundledPlugin(pluginDirOrFile, destFile, !plugin.enableSymlinksAndExecutableResources))
         }
 
@@ -394,21 +448,24 @@ class DistributionJARsBuilder {
                                      targetDir = autoUploadingDir,
                                      moduleOutputPatcher = moduleOutputPatcher,
                                      context = context)
-          if (prepareCustomPluginRepository) {
-            pluginsToIncludeInCustomRepository.add(spec)
-          }
+          pluginSpecs.add(spec)
         }
 
+        for (item in buildKeymapPluginsTask.await()) {
+          pluginSpecs.add(PluginRepositorySpec(pluginZip = item.first, pluginXml = item.second))
+        }
         if (prepareCustomPluginRepository) {
-          for (item in buildKeymapPluginsTask.await()) {
-            pluginsToIncludeInCustomRepository.add(PluginRepositorySpec(pluginZip = item.first, pluginXml = item.second))
-          }
-
-          val list = pluginsToIncludeInCustomRepository.sortedBy { it.pluginZip }
+          val list = pluginSpecs.sortedBy { it.pluginZip }
           generatePluginRepositoryMetaFile(list, nonBundledPluginsArtifacts, context)
           generatePluginRepositoryMetaFile(list.filter { it.pluginZip.startsWith(autoUploadingDir) }, autoUploadingDir, context)
         }
-
+        pluginSpecs.forEach {
+          if (it.pluginZip.startsWith(autoUploadingDir)) {
+            launch {
+              validatePlugin(it.pluginZip, context)
+            }
+          }
+        }
         mappings
       }
     }
@@ -570,7 +627,7 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
   for (moduleName in modules) {
     val customLayouts = pluginLayoutsByMainModule.get(moduleName)
     if (customLayouts == null) {
-      check(moduleName == "kotlin-ultimate.kmm-plugin" || result.add(PluginLayout.simplePlugin(moduleName))) {
+      check(moduleName == "kotlin-ultimate.kmm-plugin" || result.add(PluginLayout.plugin(moduleName))) {
         "Plugin layout for module $moduleName is already added (duplicated module name?)"
       }
     }
@@ -910,7 +967,9 @@ private suspend fun buildKeymapPlugins(targetDir: Path, context: BuildContext): 
         arrayOf("Mac OS X", "Mac OS X 10.5+"),
         arrayOf("Default for GNOME"),
         arrayOf("Default for KDE"),
-        arrayOf("Default for XWin")
+        arrayOf("Default for XWin"),
+        arrayOf("Emacs"),
+        arrayOf("Sublime Text", "Sublime Text (Mac OS X)"),
       ).map {
         async { buildKeymapPlugin(it, context.buildNumber, targetDir, keymapDir) }
       }

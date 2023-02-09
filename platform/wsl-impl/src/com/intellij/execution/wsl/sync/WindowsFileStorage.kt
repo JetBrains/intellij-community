@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.sync
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -14,6 +14,7 @@ import java.nio.channels.FileChannel
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.CompletableFuture
+import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.notExists
@@ -134,7 +135,7 @@ class WindowsFileStorage(dir: Path,
         }
       }
     }
-    val dest = distro.getUNCRootVirtualFile(true)!!.toNioPath().resolve(destTar)
+    val dest = distro.getUNCRootPath().resolve(destTar)
     feature.get()
     LOGGER.info("Copying")
     Files.copy(tarFile, dest)

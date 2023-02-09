@@ -32,7 +32,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.BalloonLayoutData;
@@ -44,7 +46,6 @@ import com.intellij.util.Function;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -153,7 +154,7 @@ public final class EventLog {
   public static LogEntry formatForLog(final @NotNull Notification notification, final String indent) {
     DocumentImpl logDoc = new DocumentImpl("",true);
     AtomicBoolean showMore = new AtomicBoolean(false);
-    Map<RangeMarker, HyperlinkInfo> links = new LinkedHashMap<>();
+    Map<RangeMarker, HyperlinkInfo> links = new java.util.LinkedHashMap<>();
     List<RangeMarker> lineSeparators = new ArrayList<>();
 
     String title = notification.getTitle();
@@ -560,18 +561,7 @@ public final class EventLog {
     document.insertString(document.getTextLength(), StringUtil.unescapeXmlEntities(text));
   }
 
-  public static class LogEntry {
-    public final String message;
-    public final @NlsContexts.StatusBarText String status;
-    public final List<Pair<TextRange, HyperlinkInfo>> links;
-    public final int titleLength;
-
-    public LogEntry(@NotNull String message, @NotNull @Nls String status, @NotNull List<Pair<TextRange, HyperlinkInfo>> links, int titleLength) {
-      this.message = message;
-      this.status = status;
-      this.links = links;
-      this.titleLength = titleLength;
-    }
+  record LogEntry(@NotNull String message, @NotNull @Nls String status, @NotNull List<Pair<TextRange, HyperlinkInfo>> links, int titleLength) {
   }
 
   public static @Nullable ToolWindow getEventLog(@Nullable Project project) {

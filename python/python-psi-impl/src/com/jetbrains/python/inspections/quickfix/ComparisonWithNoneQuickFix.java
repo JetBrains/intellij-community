@@ -13,9 +13,6 @@ import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Author: Alexey.Ivanov
- */
 public class ComparisonWithNoneQuickFix implements LocalQuickFix {
   @Override
   @NotNull
@@ -26,8 +23,7 @@ public class ComparisonWithNoneQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement problemElement = descriptor.getPsiElement();
-    if (problemElement instanceof PyBinaryExpression) {
-      PyBinaryExpression binaryExpression = (PyBinaryExpression)problemElement;
+    if (problemElement instanceof PyBinaryExpression binaryExpression) {
       PyElementType operator = binaryExpression.getOperator();
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       String temp;

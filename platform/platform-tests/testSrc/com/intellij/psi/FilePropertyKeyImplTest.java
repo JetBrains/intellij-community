@@ -31,6 +31,9 @@ public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
 
   private static final FilePropertyKey<String> STRING_KEY =
     FilePropertyKeyImpl.createPersistentStringKey("test_string_attr", new FileAttribute("string_key", 1, true));
+  private static final FilePropertyKey<Integer> INT_KEY =
+    FilePropertyKeyImpl.createPersistentIntKey("test_int_attr", "test_int_attr", 1);
+
   private static final FilePropertyKey<TestEnum> ENUM_KEY =
     FilePropertyKeyImpl.createPersistentEnumKey("test_enum_attr", "test_enum_attr", 1, TestEnum.class);
 
@@ -53,16 +56,17 @@ public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
     VirtualFile file = tempDir.createVirtualFile(name, content);
 
     // this should be new physical file with no any data associated with it
-    assertTrue(file.getClass().getName(), file instanceof VirtualFileWithId);
-    assertNull(file.toString(), memKey.get(file));
-    assertNull(file.toString(), key.getPersistentValue(file));
+    assertTrue("VirtualFile should be VirtualFileWithId, actual type is " + file.getClass(), file instanceof VirtualFileWithId);
+    assertNull("File [" + file + "] should be fresh, no data associated with it", memKey.get(file));
+    assertNull("File [" + file + "] should be fresh, no data associated with it", key.getPersistentValue(file));
     return file;
   }
 
   @Test
   public void testLightVirtualFile() {
     LightVirtualFile file = new LightVirtualFile();
-    TestCase.assertFalse("Precondition failed", file instanceof VirtualFileWithId);
+    TestCase.assertFalse("VirtualFile should NOT be VirtualFileWithId, actual type is " + file.getClass(),
+                         file instanceof VirtualFileWithId);
 
     TestCase.assertTrue(key.setPersistentValue(file, sample1));
     TestCase.assertEquals(sample1, key.getPersistentValue(file));
@@ -134,11 +138,11 @@ public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
   }
 
   @Test
-  public void testStringNotModifiedWhenPersisted(){
+  public void testStringNotModifiedWhenPersisted() {
     Assume.assumeTrue(key == STRING_KEY);
     VirtualFile file = createVirtualFile("Foo.java", "");
 
-    List<String> values = Arrays.asList("value", "s p a c e s", "," ,"", " ", "\t", "null", null);
+    List<String> values = Arrays.asList("value", "s p a c e s", ",", "", " ", "\t", "null", null);
     for (String value : values) {
       STRING_KEY.setPersistentValue(file, value);
       assertEquals("Should read exactly the same string (read from memory)", value, STRING_KEY.getPersistentValue(file));
@@ -157,6 +161,7 @@ public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
   public static Collection samples() {
     return Arrays.asList(new Object[][]{
       {STRING_KEY, "sample1", "sample2"},
+      {INT_KEY, 1, 42},
       {ENUM_KEY, TestEnum.ONE, TestEnum.TWO}
     });
   }

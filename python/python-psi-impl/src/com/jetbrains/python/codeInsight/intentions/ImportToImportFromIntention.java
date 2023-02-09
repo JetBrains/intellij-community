@@ -32,7 +32,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * <br>
  * <i>NOTE: currently we only check usage of module name in the same file. For re-exported module names this is not sufficient.</i>
  * <br>
- * <small>User: dcheryasov
  */
 public class ImportToImportFromIntention extends PyBaseIntentionAction {
 
@@ -55,8 +54,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
           myRelativeLevel = 0;
           available = true;
         }
-        else if (parent instanceof PyFromImportStatement) {
-          final PyFromImportStatement fromImport = (PyFromImportStatement)parent;
+        else if (parent instanceof PyFromImportStatement fromImport) {
           final int relativeLevel = fromImport.getRelativeLevel();
           PyPsiUtils.assertValid(fromImport);
           if (fromImport.isValid() && relativeLevel > 0 && fromImport.getImportSource() == null) {
@@ -90,8 +88,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
           PsiTreeUtil.processElements(file, new PsiElementProcessor() {
             @Override
             public boolean execute(@NotNull PsiElement element) {
-              if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
-                final PyReferenceExpression ref = (PyReferenceExpression)element;
+              if (element instanceof PyReferenceExpression ref && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
                 if (myQualifierName.equals(PyPsiUtils.toPath(ref))) {  // filter out other names that might resolve to our target
                   final PsiElement parentElt = ref.getParent();
                   if (parentElt instanceof PyQualifiedExpression) { // really qualified by us, not just referencing?

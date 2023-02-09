@@ -20,9 +20,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implements PsiArrayInitializerMemberValue {
   private final ClsElementImpl myParent;
   private final PsiAnnotationMemberValue[] myInitializers;

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.google.common.collect.Sets;
@@ -20,6 +20,7 @@ import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
 import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
 import com.intellij.ide.ui.laf.UiThemeProviderListManager;
+import com.intellij.ide.util.RunOnceUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -49,12 +50,14 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ComponentTreeEventDispatcher;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -564,12 +567,29 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   @Override
   public void loadState(@NotNull State state) {
-    themeIsCustomized = true;
     myState = state;
-    EditorColorsScheme colorsScheme = mySchemeManager.findSchemeByName(myState.colorScheme);
-    setGlobalSchemeInner(myState.colorScheme == null ? getDefaultScheme() : colorsScheme);
-
-    notifyAboutSolarizedColorSchemeDeprecationIfSet(colorsScheme);
+    EditorColorsScheme colorsScheme = myState.colorScheme != null ? mySchemeManager.findSchemeByName(myState.colorScheme) : null;
+    if (colorsScheme == null) {
+      if (myState.colorScheme != null) {
+        LOG.warn(myState.colorScheme + " color scheme is missing");
+      }
+      noStateLoaded();
+    } else {
+      themeIsCustomized = true;
+      Ref<EditorColorsScheme> schemeRef = Ref.create(colorsScheme);
+      String schemeName = colorsScheme.getName();
+      //todo[kb] remove after 23.1 EAPs
+      if (ExperimentalUI.isNewUI() && (schemeName.equals("_@user_Dark") || schemeName.equals("Dark"))) {
+        RunOnceUtil.runOnceForApp("force.switch.to.new.dark.editor.scheme", ()-> {
+          EditorColorsScheme newDark = mySchemeManager.findSchemeByName("New Dark RC");
+          if (newDark != null) {
+            schemeRef.set(newDark);
+          }
+        });
+      }
+      setGlobalSchemeInner(schemeRef.get());
+      notifyAboutSolarizedColorSchemeDeprecationIfSet(colorsScheme);
+    }
   }
 
   @Override
@@ -718,8 +738,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
                   @Override
                   public void lookAndFeelChanged(@NotNull LafManager source) {
-                    if (!(source.getCurrentLookAndFeel() instanceof UIThemeBasedLookAndFeelInfo)) return;
-                    UIThemeBasedLookAndFeelInfo themeInfo = (UIThemeBasedLookAndFeelInfo)source.getCurrentLookAndFeel();
+                    if (!(source.getCurrentLookAndFeel() instanceof UIThemeBasedLookAndFeelInfo themeInfo)) return;
 
                     if (themeInfo.getName().contains("Solarized")) {
                       if (isDark && themeInfo.getTheme().isDark() || !isDark && !themeInfo.getTheme().isDark()) {

@@ -4,128 +4,47 @@
 
 package com.intellij.ide.impl
 
-import com.intellij.ide.IdeBundle
-import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.trustedProjects.TrustedProjectsDialog
+import com.intellij.ide.trustedProjects.TrustedProjectsListener
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DoNotAskOption
-import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.project.*
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
 import com.intellij.util.ThreeState
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Attribute
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.function.Consumer
-import kotlin.io.path.pathString
 
-/**
- * Shows the "Trust this project?" dialog, if the user wasn't asked yet if they trust this project,
- * and sets the project trusted state according to the user choice.
- *
- * @return false if the user chose not to open the project at all;
- *   true otherwise, i.e. if the user chose to open the project either in trust or in the safe mode,
- *   or if the confirmation wasn't shown because the project trust state was already known.
- */
-@ApiStatus.Internal
-suspend fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectFileOrDir: Path): Boolean {
-  val projectDir = if (Files.isDirectory(projectFileOrDir)) projectFileOrDir else projectFileOrDir.parent
-  val trustedPaths = TrustedPaths.getInstance()
-  val trustedState = trustedPaths.getProjectPathTrustedState(projectDir)
-  if (trustedState == ThreeState.UNSURE) {
-    when (confirmOpeningUntrustedProject(projectDir)) {
-      OpenUntrustedProjectChoice.TRUST_AND_OPEN -> trustedPaths.setProjectPathTrusted(projectDir, true)
-      OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE -> trustedPaths.setProjectPathTrusted(projectDir, false)
-      OpenUntrustedProjectChoice.CANCEL -> return false
-    }
-  }
-  return true
-}
-
-private suspend fun confirmOpeningUntrustedProject(projectDir: Path): OpenUntrustedProjectChoice {
-  val fileName = projectDir.fileName ?: projectDir.pathString
-  return confirmOpeningUntrustedProject(
-    projectDir,
-    IdeBundle.message("untrusted.project.open.dialog.title", fileName),
-    IdeBundle.message("untrusted.project.open.dialog.text", ApplicationNamesInfo.getInstance().fullProductName),
-    IdeBundle.message("untrusted.project.dialog.trust.button"),
-    IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-    IdeBundle.message("untrusted.project.open.dialog.cancel.button")
-  )
-}
-
-private suspend fun confirmOpeningUntrustedProject(
-  projectDir: Path,
+@Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
+@Deprecated("Use com.intellij.ide.impl.trustedProjects.TrustedProjectsDialog instead")
+fun confirmOpeningOrLinkingUntrustedProject(
+  projectRoot: Path,
+  project: Project,
   @NlsContexts.DialogTitle title: String,
   @NlsContexts.DialogMessage message: String,
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String,
   @NlsContexts.Button cancelButtonText: String
-): OpenUntrustedProjectChoice {
-  if (isProjectImplicitlyTrusted(projectDir)) {
-    return OpenUntrustedProjectChoice.TRUST_AND_OPEN
-  }
+): Boolean = TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject(
+  projectRoot, project, title, message, trustButtonText, distrustButtonText, cancelButtonText
+)
 
-  val doNotAskOption = projectDir.parent?.let(::createDoNotAskOptionForLocation)
-  val choice = withContext(Dispatchers.EDT) {
-    MessageDialogBuilder.Message(title, message)
-      .buttons(trustButtonText, distrustButtonText, cancelButtonText)
-      .defaultButton(trustButtonText)
-      .focusedButton(distrustButtonText)
-      .doNotAsk(doNotAskOption)
-      .asWarning()
-      .help(TRUSTED_PROJECTS_HELP_TOPIC)
-      .show()
-  }
-
-  val openChoice = when (choice) {
-    trustButtonText -> OpenUntrustedProjectChoice.TRUST_AND_OPEN
-    distrustButtonText -> OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE
-    cancelButtonText, null -> OpenUntrustedProjectChoice.CANCEL
-    else -> {
-      LOG.error("Illegal choice $choice")
-      return OpenUntrustedProjectChoice.CANCEL
-    }
-  }
-  TrustedProjectsStatistics.NEW_PROJECT_OPEN_OR_IMPORT_CHOICE.log(openChoice)
-  return openChoice
-}
-
+@Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
+@Deprecated("Use com.intellij.ide.impl.trustedProjects.TrustedProjectsDialog instead")
 fun confirmLoadingUntrustedProject(
   project: Project,
   @NlsContexts.DialogTitle title: String,
   @NlsContexts.DialogMessage message: String,
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String
-): Boolean = invokeAndWaitIfNeeded {
-  if (isProjectImplicitlyTrusted(project)) {
-    project.setTrusted(true)
-    return@invokeAndWaitIfNeeded true
-  }
-
-  val answer = MessageDialogBuilder.yesNo(title, message)
-    .yesText(trustButtonText)
-    .noText(distrustButtonText)
-    .asWarning()
-    .help(TRUSTED_PROJECTS_HELP_TOPIC)
-    .ask(project)
-  project.setTrusted(answer)
-  TrustedProjectsStatistics.LOAD_UNTRUSTED_PROJECT_CONFIRMATION_CHOICE.log(project, answer)
-  return@invokeAndWaitIfNeeded answer
-}
+): Boolean = TrustedProjectsDialog.confirmLoadingUntrustedProject(
+  project, title, message, trustButtonText, distrustButtonText
+)
 
 @ApiStatus.Internal
 enum class OpenUntrustedProjectChoice {
@@ -134,84 +53,21 @@ enum class OpenUntrustedProjectChoice {
   CANCEL;
 }
 
-fun Project.isTrusted() = getTrustedState () == ThreeState.YES
+fun Project.isTrusted() = TrustedProjects.isProjectTrusted(TrustedProjectsLocator.locateProject(this))
+
+fun Project.setTrusted(isTrusted: Boolean) = TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(this), isTrusted)
+
+fun Project.getTrustedState() = TrustedProjects.getProjectTrustedState(TrustedProjectsLocator.locateProject(this))
 
 @ApiStatus.Internal
-fun Project.getTrustedState(): ThreeState {
-  val projectPath = basePath
-  if (projectPath != null) {
-    val explicit = TrustedPaths.getInstance().getProjectPathTrustedState(Paths.get(projectPath))
-    if (explicit != ThreeState.UNSURE) {
-      return explicit
-    }
-  }
-
-  if (isProjectImplicitlyTrusted(this)) {
-    return ThreeState.YES
-  }
-
-  @Suppress("DEPRECATION")
-  return this.service<TrustedProjectSettings>().trustedState
-}
-
-fun Project.setTrusted(value: Boolean) {
-  val projectPath = basePath
-  if (projectPath != null) {
-    val path = Paths.get(projectPath)
-    val trustedPaths = TrustedPaths.getInstance()
-    val oldValue = trustedPaths.getProjectPathTrustedState(path)
-    trustedPaths.setProjectPathTrusted(path, value)
-
-    if (value && oldValue != ThreeState.YES) {
-      ApplicationManager.getApplication().messageBus.syncPublisher(TrustStateListener.TOPIC).onProjectTrusted(this)
-    }
-  }
-}
-
-private fun createDoNotAskOptionForLocation(projectLocation: Path): DoNotAskOption {
-  val projectLocationPath = projectLocation.toString()
-  return object : DoNotAskOption.Adapter() {
-    override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
-      if (isSelected && exitCode == Messages.YES) {
-        TrustedProjectsStatistics.TRUST_LOCATION_CHECKBOX_SELECTED.log()
-        service<TrustedPathsSettings>().addTrustedPath(projectLocationPath)
-      }
-    }
-
-    override fun getDoNotShowMessage(): String {
-      val path = getLocationRelativeToUserHome(projectLocationPath, false)
-      return IdeBundle.message("untrusted.project.warning.trust.location.checkbox", path)
-    }
-  }
-}
-
-@ApiStatus.Internal
-fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
-                               ApplicationManager.getApplication().isHeadlessEnvironment ||
-                               ApplicationManagerEx.isInIntegrationTest() ||
-                               java.lang.Boolean.getBoolean("idea.trust.all.projects")
-
-private fun isTrustedCheckDisabledForProduct(): Boolean = java.lang.Boolean.getBoolean("idea.trust.disabled")
-
-private fun isProjectImplicitlyTrusted(project: Project): Boolean {
-  return isProjectImplicitlyTrusted(project.basePath?.let { Path.of(it) }, project)
-}
+fun isTrustedCheckDisabled() = TrustedProjects.isTrustedCheckDisabled()
 
 @JvmOverloads
 @ApiStatus.Internal
-fun isProjectImplicitlyTrusted(projectDir: Path?, project: Project? = null): Boolean {
-  if (isTrustedCheckDisabled() || isTrustedCheckDisabledForProduct()) {
-    return true
-  }
-  if (LightEdit.owns(project)) {
-    return true
-  }
-  if (projectDir != null && isPathTrustedInSettings(projectDir)) {
-    TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_PATH.log(project)
-    return true
-  }
-  return false
-}
+@Suppress("DEPRECATION")
+@Deprecated("Use TrustedProjects.isProjectTrusted instead")
+fun isProjectImplicitlyTrusted(projectDir: Path?, project: Project? = null) =
+  TrustedProjects.isProjectImplicitlyTrusted(projectDir, project)
 
 /**
  * Per-project "is this project trusted" setting from the previous version of the trusted API.
@@ -220,6 +76,7 @@ fun isProjectImplicitlyTrusted(projectDir: Path?, project: Project? = null): Boo
 @State(name = "Trusted.Project.Settings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
+@Suppress("DEPRECATION")
 @Deprecated("Use TrustedPaths instead")
 internal class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSettings.State>(State()) {
   class State : BaseState() {
@@ -234,26 +91,38 @@ internal class TrustedProjectSettings : SimplePersistentStateComponent<TrustedPr
     }
 }
 
-/**
- * Listens to the change of the project trusted state, i.e. when a non-trusted project becomes trusted (the vice versa is not possible).
- *
- * Consider using the helper method [whenProjectTrusted] which accepts a lambda.
- */
-@ApiStatus.Experimental
+@Suppress("DEPRECATION")
+@Deprecated("Use TrustedProjectsListener instead")
 interface TrustStateListener {
-  /**
-   * Executed when the project becomes trusted.
-   */
+
   fun onProjectTrusted(project: Project) {
   }
 
-  /**
-   * Executed when the user clicks to the "Trust Project" button in the [editor notification][UntrustedProjectEditorNotificationPanel].
-   * Use this method if you need to know that the project has become trusted exactly because the user has clicked to that button.
-   *
-   * NB: [onProjectTrusted] is also called in this case, and most probably you want to use that method.
-   */
+  fun onProjectUntrusted(project: Project) {
+  }
+
   fun onProjectTrustedFromNotification(project: Project) {
+  }
+
+  class Bridge : TrustedProjectsListener {
+
+    override fun onProjectTrusted(project: Project) {
+      ApplicationManager.getApplication().messageBus
+        .syncPublisher(TOPIC)
+        .onProjectTrusted(project)
+    }
+
+    override fun onProjectUntrusted(project: Project) {
+      ApplicationManager.getApplication().messageBus
+        .syncPublisher(TOPIC)
+        .onProjectUntrusted(project)
+    }
+
+    override fun onProjectTrustedFromNotification(project: Project) {
+      ApplicationManager.getApplication().messageBus
+        .syncPublisher(TOPIC)
+        .onProjectTrustedFromNotification(project)
+    }
   }
 
   companion object {
@@ -263,28 +132,15 @@ interface TrustStateListener {
   }
 }
 
-/**
- * Adds a one-time listener of the project's trust state change: when the project becomes trusted, the listener is called and disconnected.
- */
 @JvmOverloads
+@Deprecated("Use onceWhenProjectTrusted instead", ReplaceWith("onceWhenProjectTrusted(parentDisposable, listener)"))
 fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: (Project) -> Unit) {
-  val messageBus = ApplicationManager.getApplication().messageBus
-  val connection = if (parentDisposable == null) messageBus.connect() else messageBus.connect(parentDisposable)
-  connection.subscribe(TrustStateListener.TOPIC, object : TrustStateListener {
-    override fun onProjectTrusted(project: Project) {
-      listener(project)
-      connection.disconnect()
-    }
-  })
+  TrustedProjectsListener.onceWhenProjectTrusted(parentDisposable, listener)
 }
 
 @JvmOverloads
-fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: Consumer<Project>) {
-  whenProjectTrusted(parentDisposable) { project ->
-    listener.accept(project)
-  }
-}
+@Deprecated("Use onceWhenProjectTrusted instead", ReplaceWith("onceWhenProjectTrusted(parentDisposable, listener::accept)"))
+fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: Consumer<Project>) =
+  TrustedProjectsListener.onceWhenProjectTrusted(parentDisposable, listener::accept)
 
 const val TRUSTED_PROJECTS_HELP_TOPIC = "Project_security"
-
-private val LOG = Logger.getInstance("com.intellij.ide.impl.TrustedProjects")

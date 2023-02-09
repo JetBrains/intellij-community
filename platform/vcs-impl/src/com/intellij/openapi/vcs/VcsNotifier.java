@@ -162,16 +162,6 @@ public class VcsNotifier {
   }
 
   /**
-   * @deprecated use {@link #notifyImportantInfo(String, String, String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public Notification notifyImportantInfo(@NotificationTitle @NotNull String title,
-                                          @NotificationContent @NotNull String message) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, null, title, message, NotificationType.INFORMATION, (NotificationListener)null);
-  }
-
-  /**
    * @deprecated use {@link #notifyImportantInfo(String, String, String, NotificationListener)} instead
    */
   @Deprecated(forRemoval = true)
@@ -259,16 +249,6 @@ public class VcsNotifier {
                                     @NotificationTitle @NotNull String title,
                                     @NotificationContent @NotNull String message) {
     return notify(NOTIFICATION_GROUP_ID, displayId, title, message, NotificationType.WARNING);
-  }
-
-  /**
-   * @deprecated use {@link #notifyImportantWarning(String, String, String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public Notification notifyImportantWarning(@NotificationTitle @NotNull String title,
-                                             @NotificationContent @NotNull String message) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, null, title, message, NotificationType.WARNING);
   }
 
   @NotNull
@@ -422,8 +402,7 @@ public class VcsNotifier {
     }
     @Nls StringBuilder content = new StringBuilder();
     for (Exception e : errors) {
-      if (e instanceof VcsException) {
-        VcsException vcsException = (VcsException)e;
+      if (e instanceof VcsException vcsException) {
         for (String message : vcsException.getMessages()) {
           content.append(message.replace(LINE_SEPARATOR, BR)).append(BR);
         }

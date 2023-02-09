@@ -16,12 +16,6 @@ import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.util.function.Supplier;
-
-/**
- * @author pegov
- */
 public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   public static final Key<Boolean> MARK_MODIFIED_KEY = Key.create("EDITOR_TABS_MARK_MODIFIED");
   /**
@@ -89,10 +83,6 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   public JBTabsPresentation setAlphabeticalMode(boolean alphabeticalMode) {
     myAlphabeticalModeChanged = true;
     return super.setAlphabeticalMode(alphabeticalMode);
-  }
-
-  @Override
-  public void setEmptySpaceColorCallback(@NotNull Supplier<? extends Color> callback) {
   }
 
   public boolean shouldPaintBottomBorder() {

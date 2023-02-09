@@ -722,7 +722,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       }
     }
     XBreakpointManagerImpl debuggerManager = myDebuggerManager.getBreakpointManager();
-    debuggerManager.getLineBreakpointManager().queueBreakpointUpdate((XLineBreakpointImpl<?>)breakpoint, () -> debuggerManager.fireBreakpointPresentationUpdated(breakpoint, this));
+    debuggerManager.getLineBreakpointManager().queueBreakpointUpdate(breakpoint, () -> debuggerManager.fireBreakpointPresentationUpdated(breakpoint, this));
   }
 
   @Override
@@ -733,11 +733,6 @@ public final class XDebugSessionImpl implements XDebugSession {
   @Override
   public void setBreakpointInvalid(@NotNull XLineBreakpoint<?> breakpoint, @Nullable String errorMessage) {
     updateBreakpointPresentation(breakpoint, AllIcons.Debugger.Db_invalid_breakpoint, errorMessage);
-  }
-
-  @Override
-  public boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @NotNull final XSuspendContext suspendContext) {
-    return breakpointReached(breakpoint, null, suspendContext);
   }
 
   @Override

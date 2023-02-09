@@ -35,9 +35,6 @@ import java.util.function.IntConsumer;
 
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.reversedPostOrder;
 
-/**
- * @author ven
- */
 public final class ReachingDefinitionsCollector {
   private ReachingDefinitionsCollector() {
   }
@@ -437,10 +434,9 @@ public final class ReachingDefinitionsCollector {
     Int2ObjectMap<int[]> result = new Int2ObjectOpenHashMap<>();
     for (int i = 0; i < flow.length; i++) {
       Instruction insn = flow[i];
-      if (!(insn instanceof ReadWriteVariableInstruction)) {
+      if (!(insn instanceof ReadWriteVariableInstruction rwInsn)) {
         continue;
       }
-      ReadWriteVariableInstruction rwInsn = (ReadWriteVariableInstruction)insn;
       if (rwInsn.isWrite()) {
         continue;
       }

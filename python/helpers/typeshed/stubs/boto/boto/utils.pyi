@@ -96,14 +96,14 @@ class LRUCache(dict[_KT, _VT]):
     def __init__(self, capacity: int) -> None: ...
 
 # This exists to work around Password.str's name shadowing the str type
-_str: TypeAlias = str
+_Str: TypeAlias = str
 
 class Password:
     hashfunc: Callable[[bytes], _Hash]
-    str: _str | None
-    def __init__(self, str: _str | None = ..., hashfunc: Callable[[bytes], _Hash] | None = ...) -> None: ...
-    def set(self, value: bytes | _str) -> None: ...
-    def __eq__(self, other: _str | bytes | None) -> bool: ...  # type: ignore[override]
+    str: _Str | None
+    def __init__(self, str: _Str | None = ..., hashfunc: Callable[[bytes], _Hash] | None = ...) -> None: ...
+    def set(self, value: bytes | _Str) -> None: ...
+    def __eq__(self, other: _Str | bytes | None) -> bool: ...  # type: ignore[override]
     def __len__(self) -> int: ...
 
 def notify(

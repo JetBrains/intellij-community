@@ -271,4 +271,20 @@ public class MavenRenameModulesWatcherTest extends MavenDomTestCase {
     var tag = findTag(m2File, "project.dependencies.dependency.artifactId");
     assertEquals(oldModuleName, tag.getValue().getText());
   }
+
+  @Test
+  public void test_when_ModuleMovedToGroup_then_ArtifactIdRemains() {
+    importProject("""
+                  <groupId>group</groupId>
+                  <artifactId>module</artifactId>
+                  <version>1</version>
+                  """);
+
+    var oldModuleName = "module";
+    var newModuleName = "group.module";
+    renameModule(oldModuleName, newModuleName);
+
+    var tag = findTag("project.artifactId");
+    assertEquals(oldModuleName, tag.getValue().getText());
+  }
 }

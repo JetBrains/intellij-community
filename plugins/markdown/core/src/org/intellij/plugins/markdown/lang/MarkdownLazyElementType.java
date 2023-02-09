@@ -35,7 +35,7 @@ public class MarkdownLazyElementType extends ILazyParseableElementType {
       flavour = MarkdownParserManager.FLAVOUR;
     }
 
-    final var parser = new MarkdownParser(flavour);
+    final var parser = new MarkdownParser(flavour, true);
     final var nodeType = MarkdownElementType.markdownType(chameleon.getElementType());
     final var node = parser.parseInline(nodeType, chars, 0, chars.length());
 

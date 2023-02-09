@@ -34,9 +34,6 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author vlan
- */
 public final class PyPackageManagerUI {
   @NotNull private static final Logger LOG = Logger.getInstance(PyPackageManagerUI.class);
 

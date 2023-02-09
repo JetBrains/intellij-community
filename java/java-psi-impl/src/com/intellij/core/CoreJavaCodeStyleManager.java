@@ -203,6 +203,12 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
 
   @NotNull
   @Override
+  public Collection<String> suggestSemanticNames(@NotNull PsiExpression expression, @NotNull VariableKind kind) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
   public SuggestedNameInfo suggestNames(@NotNull Collection<String> semanticNames, @NotNull VariableKind kind, @Nullable PsiType type) {
     return SuggestedNameInfo.NULL_INFO;
   }

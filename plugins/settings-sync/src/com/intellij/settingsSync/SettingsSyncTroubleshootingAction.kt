@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBAccountInfoService
@@ -33,6 +34,8 @@ import com.jetbrains.cloudconfig.FileVersionInfo
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.io.File
+import java.io.FileNotFoundException
+import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.swing.Action
@@ -59,18 +62,11 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
     }
 
     try {
-      val version =
+      val fileStructure =
         ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-          val fileVersion = remoteCommunicator.getLatestVersion()
-          if (fileVersion == null) {
-            null
-          }
-          else {
-            val zip = downloadToZip(fileVersion, remoteCommunicator)
-            Version(fileVersion, SettingsSnapshotZipSerializer.extractFromZip(zip!!.toPath()))
-          }
+          collectFileStructure(remoteCommunicator)
         }, SettingsSyncBundle.message("troubleshooting.loading.info.progress.dialog.title"), false, e.project)
-      TroubleshootingDialog(e.project, remoteCommunicator, version).show()
+      TroubleshootingDialog(e.project, remoteCommunicator, fileStructure).show()
     }
     catch (ex: Exception) {
       LOG.error(ex)
@@ -83,11 +79,62 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
     }
   }
 
-  private data class Version(val fileVersion: FileVersionInfo, val snapshot: SettingsSnapshot?)
+  private data class Version(val filePath: @NlsSafe String, val fileVersion: FileVersionInfo, val snapshot: SettingsSnapshot?)
+
+  private fun collectFileStructure(remoteCommunicator: CloudConfigServerCommunicator): TreeNode.Root {
+    return processFileOrDir("/", remoteCommunicator) as TreeNode.Root
+  }
+
+  private fun processFileOrDir(path: String, remoteCommunicator: CloudConfigServerCommunicator): TreeNode {
+    val client = remoteCommunicator.client
+    try {
+      val children = client.list(path)
+      if (children.isEmpty()) {
+        if (path == "/") { // the root is empty => no files on the server
+          return TreeNode.Root(emptyList())
+        }
+        val fileVersion = client.getLatestVersion(path)
+        val version = getVersion(path, fileVersion, remoteCommunicator)
+        return TreeNode.Leaf(version)
+      }
+      else {
+        val childNodes = mutableListOf<TreeNode>()
+        for (child in children) {
+          val childPath = if (path == "/") child else "${path.trim('/')}/$child"
+          childNodes += processFileOrDir(childPath, remoteCommunicator)
+        }
+        return if (path == "/") TreeNode.Root(childNodes) else TreeNode.Branch(childNodes)
+      }
+    }
+    catch (e: FileNotFoundException) {
+      // The cloud-config library supports only 1 level of nested folders
+      // It throws a FNFE from client.list(path) when path is already on the level 1 ('/idea/some_file')
+      // for us, it means that it is a file
+      val fileVersion = client.getLatestVersion(path)
+      val version = getVersion(path, fileVersion, remoteCommunicator)
+      return TreeNode.Leaf(version)
+    }
+  }
+
+  private sealed class TreeNode {
+    open class Branch(val children: List<TreeNode>) : TreeNode()
+    class Root(children: List<TreeNode>) : Branch(children)
+    class Leaf(val version: Version) : TreeNode()
+  }
+
+  private fun getVersion(filePath: String, version: FileVersionInfo, remoteCommunicator: CloudConfigServerCommunicator): Version {
+    val stream = remoteCommunicator.downloadSnapshot(filePath, version)!!
+    if (filePath.endsWith(".zip")) {
+      return Version(filePath, version, extractSnapshotFromZipStream(stream))
+    }
+    else {
+      return Version(filePath, version, null)
+    }
+  }
 
   private class TroubleshootingDialog(val project: Project?,
                                       val remoteCommunicator: CloudConfigServerCommunicator,
-                                      val latestVersion: Version?) : DialogWrapper(project, true) {
+                                      val rootNode: TreeNode.Branch) : DialogWrapper(project, true) {
 
     val userData = SettingsSyncAuthService.getInstance().getUserData()
 
@@ -110,23 +157,26 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
         emailRow(userData)
         appInfoRow()
 
-        if (latestVersion == null) {
-          row {
-            label(SettingsSyncBundle.message("troubleshooting.dialog.no.file.on.server", SETTINGS_SYNC_SNAPSHOT_ZIP))
-          }
-        }
-        else {
-          row { label(SettingsSyncBundle.message("troubleshooting.dialog.latest.version.label", SETTINGS_SYNC_SNAPSHOT_ZIP)).bold() }
-          versionRow(latestVersion)
+        row("Files: ") {}
+        generateFileSubTree(this, rootNode)
+      }
+    }
 
-          row {
-            button(SettingsSyncBundle.message("troubleshooting.dialog.show.history.button")) {
-              showHistoryDialog(project, remoteCommunicator, userData?.loginName!!)
-            }
-            button(SettingsSyncBundle.message("troubleshooting.dialog.delete.button")) {
-              deleteFile(project, remoteCommunicator)
-            }
-          }
+    private fun generateFileSubTree(panel: Panel, node: TreeNode) {
+      fun generateSubTreesForChildren(node: TreeNode.Branch) {
+        for (child in node.children) {
+          generateFileSubTree(panel, child)
+        }
+      }
+
+      when (node) {
+        is TreeNode.Root -> generateSubTreesForChildren(node)
+        is TreeNode.Branch -> panel.indent {
+          generateSubTreesForChildren(node)
+        }
+        is TreeNode.Leaf -> {
+          val itIsSettingsSnapshotFile = node.version.filePath.endsWith(".zip")
+          panel.versionRow(node.version, showHistoryButton = itIsSettingsSnapshotFile, showDeleteButton = true)
         }
       }
     }
@@ -176,13 +226,16 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
       }.layout(RowLayout.PARENT_GRID)
     }
 
-    private fun String.shorten() = StringUtil.shortenTextWithEllipsis(this, 12, 0, true)
+    private fun String.shorten() = StringUtil.shortenTextWithEllipsis(this, 12, 5, true)
 
-    private fun Panel.versionRow(version: Version) = row {
-      label(SettingsSyncBundle.message("troubleshooting.dialog.version.date.label"))
+    private fun Panel.versionRow(version: Version, showHistoryButton: Boolean, showDeleteButton: Boolean) = row {
+      val split = version.filePath.split("/")
+      val folder = split.subList(0, split.size - 1).joinToString("/").run {
+        if (isNotEmpty()) "$this/" else ""
+      }
+      val file = split[split.size - 1]
+      label("<html><b>$folder</b>$file</html>")
       copyableLabel(formatDate(version.fileVersion.modifiedDate))
-
-      label(SettingsSyncBundle.message("troubleshooting.dialog.version.id.label"))
       copyableLabel(version.fileVersion.versionId.shorten())
 
       val snapshot = version.snapshot
@@ -202,54 +255,70 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
 
       actionButton(object : DumbAwareAction(AllIcons.Actions.Download) {
         override fun actionPerformed(e: AnActionEvent) {
-          downloadVersion(version.fileVersion, e.project)
+          downloadVersion(version, e.project)
         }
       })
+
+      if (showHistoryButton) {
+        actionButton(object : DumbAwareAction(AllIcons.Vcs.History) {
+          override fun actionPerformed(e: AnActionEvent) {
+            showHistoryDialog(project, remoteCommunicator, version.filePath, userData?.loginName!!)
+          }
+        })
+      }
+
+      if (showDeleteButton) {
+        button(SettingsSyncBundle.message("troubleshooting.dialog.delete.button")) {
+          deleteFile(project, remoteCommunicator, version.filePath)
+        }
+      }
     }
 
-    private fun downloadVersion(version: FileVersionInfo, project: Project?) {
-      val zipFile = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<File?, Exception> {
-        downloadToZip(version, remoteCommunicator)
+    private fun downloadVersion(version: Version, project: Project?) {
+      val file = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<File?, Exception> {
+        downloadToFile(version.filePath, version.fileVersion, remoteCommunicator)
       }, SettingsSyncBundle.message("troubleshooting.dialog.downloading.settings.from.server.progress.title"), false, project)
 
-      if (zipFile != null) {
-        showFileDownloadedMessage(zipFile, SettingsSyncBundle.message("troubleshooting.dialog.successfully.downloaded.message"))
+      if (file != null) {
+        showFileDownloadedMessage(file, SettingsSyncBundle.message("troubleshooting.dialog.successfully.downloaded.message"))
       }
       else {
         if (Messages.OK == Messages.showOkCancelDialog(contentPane,
                                                        SettingsSyncBundle.message("troubleshooting.dialog.error.check.log.file.for.errors"),
-                                                       SettingsSyncBundle.message("troubleshooting.dialog.error.download.zip.file.failed"),
+                                                       SettingsSyncBundle.message("troubleshooting.dialog.error.download.file.failed"),
                                                        ShowLogAction.getActionName(), CommonBundle.getCancelButtonText(), null)) {
           ShowLogAction.showLog()
         }
       }
     }
 
-    private fun showFileDownloadedMessage(zipFile: File, @Nls message: String) {
+    private fun showFileDownloadedMessage(file: File, @Nls message: String) {
       if (Messages.OK == Messages.showOkCancelDialog(contentPane, message, "",
                                                      RevealFileAction.getActionName(), CommonBundle.getCancelButtonText(), null)) {
-        RevealFileAction.openFile(zipFile)
+        RevealFileAction.openFile(file)
       }
     }
 
     private fun showHistoryDialog(project: Project?,
                                   remoteCommunicator: CloudConfigServerCommunicator,
+                                  filePath: String,
                                   loginName: String) {
       val history = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-        remoteCommunicator.fetchHistory().mapIndexed { index, fileVersion ->
-          val snapshot = if (index < 10) {
-            val zip = downloadToZip(fileVersion, remoteCommunicator)
-            SettingsSnapshotZipSerializer.extractFromZip(zip!!.toPath())
+        remoteCommunicator.fetchHistory(filePath).mapIndexed { index, version ->
+          val snapshot = if (index < 10 && filePath.endsWith(".zip")) {
+            val stream = remoteCommunicator.downloadSnapshot(filePath, version)!!
+            extractSnapshotFromZipStream(stream)
           }
           else null
-          Version(fileVersion, snapshot)
+          Version(filePath, version, snapshot)
         }
       }, SettingsSyncBundle.message("troubleshooting.fetching.history.progress.title"), false, project)
 
-      val dialogBuilder = DialogBuilder(contentPane).title(SettingsSyncBundle.message("troubleshooting.settings.history.dialog.title"))
+      val dialogBuilder = DialogBuilder(contentPane)
+        .title(SettingsSyncBundle.message("troubleshooting.settings.history.dialog.title", filePath))
       val historyPanel = panel {
         for (version in history) {
-          versionRow(version).layout(RowLayout.PARENT_GRID)
+          versionRow(version, showHistoryButton = false, showDeleteButton = false).layout(RowLayout.PARENT_GRID)
         }
       }.withBorder(JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP))
 
@@ -273,8 +342,8 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
                                     history: List<Version>,
                                     loginName: String) {
       val compoundZip = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-        val fileName = "settings-server-history-${FileUtil.sanitizeFileName(loginName)}-${formatDate(Date())}.zip"
-        val zipFile = FileUtil.createTempFile(fileName, null)
+        val historyFileName = "settings-server-history-${FileUtil.sanitizeFileName(loginName)}-${formatDate(Date())}.zip"
+        val zipFile = FileUtil.createTempFile(historyFileName, null)
         val indicator = ProgressManager.getInstance().progressIndicator
         indicator.isIndeterminate = false
         Compressor.Zip(zipFile).use { zip ->
@@ -283,9 +352,10 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
             indicator.fraction = (step.toDouble() / history.size)
 
             val fileVersion = version.fileVersion
-            val stream = remoteCommunicator.downloadSnapshot(fileVersion)
+            val stream = remoteCommunicator.downloadSnapshot(version.filePath, fileVersion)
             if (stream != null) {
-              zip.addFile(getSnapshotFileName(fileVersion), stream)
+              val (fileName, extension) = getSnapshotFileNameAndExtension(version.filePath, fileVersion)
+              zip.addFile("$fileName$extension", stream)
             }
             else {
               LOG.warn("Couldn't download snapshot for version made on ${fileVersion.modifiedDate}")
@@ -298,7 +368,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
       showFileDownloadedMessage(compoundZip, SettingsSyncBundle.message("troubleshooting.dialog.download.full.history.success.message"))
     }
 
-    private fun deleteFile(project: Project?, remoteCommunicator: CloudConfigServerCommunicator) {
+    private fun deleteFile(project: Project?, remoteCommunicator: CloudConfigServerCommunicator, filePath: String) {
       val choice = Messages.showOkCancelDialog(contentPane,
                                                SettingsSyncBundle.message("troubleshooting.dialog.delete.confirmation.message"),
                                                SettingsSyncBundle.message("troubleshooting.dialog.delete.confirmation.title"),
@@ -307,11 +377,11 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
         try {
           ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
             SettingsSyncSettings.getInstance().syncEnabled = false
-            remoteCommunicator.delete()
+            remoteCommunicator.deleteFile(filePath)
           }, SettingsSyncBundle.message("troubleshooting.delete.file.from.server.progress.title"), false, project)
         }
         catch (e: Exception) {
-          LOG.warn("Couldn't delete $SETTINGS_SYNC_SNAPSHOT_ZIP from server", e)
+          LOG.warn("Couldn't delete $filePath from server", e)
           Messages.showErrorDialog(contentPane, e.message, SettingsSyncBundle.message("troubleshooting.dialog.delete.confirmation.title"))
         }
       }
@@ -325,10 +395,22 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
   }
 }
 
-private fun downloadToZip(version: FileVersionInfo, remoteCommunicator: CloudConfigServerCommunicator): File? {
-  val stream = remoteCommunicator.downloadSnapshot(version) ?: return null
+private fun extractSnapshotFromZipStream(stream: InputStream): SettingsSnapshot {
+  val tempFile = FileUtil.createTempFile(UUID.randomUUID().toString(), null)
   try {
-    val tempFile = FileUtil.createTempFile(getSnapshotFileName(version), null)
+    FileUtil.writeToFile(tempFile, stream.readAllBytes())
+    return SettingsSnapshotZipSerializer.extractFromZip(tempFile.toPath())
+  }
+  finally {
+    FileUtil.delete(tempFile)
+  }
+}
+
+private fun downloadToFile(filePath: String, version: FileVersionInfo, remoteCommunicator: CloudConfigServerCommunicator): File? {
+  val stream = remoteCommunicator.downloadSnapshot(filePath, version) ?: return null
+  try {
+    val (fileName, extension) = getSnapshotFileNameAndExtension(filePath, version)
+    val tempFile = FileUtil.createTempFile(fileName, extension)
     FileUtil.writeToFile(tempFile, stream.readAllBytes())
     return tempFile
   }
@@ -338,6 +420,13 @@ private fun downloadToZip(version: FileVersionInfo, remoteCommunicator: CloudCon
   }
 }
 
-private fun getSnapshotFileName(version: FileVersionInfo) = "settings-sync-snapshot-${formatDate(version.modifiedDate)}.zip"
+private fun getSnapshotFileNameAndExtension(filePath: String, version: FileVersionInfo) : Pair<String, String> {
+  val sanitizedName = filePath.replace('/', '-')  // idea/settings-sync-snapshot.zip -> idea-settings-sync-snapshot.zip
+  val fileName = "${FileUtilRt.getNameWithoutExtension(sanitizedName)}-${formatDate(version.modifiedDate)}"
+  val extension = FileUtilRt.getExtension(sanitizedName).run {
+    if (this.isEmpty()) "" else ".$this"
+  }
+  return fileName to extension
+}
 
-private fun formatDate(date: Date) = SimpleDateFormat("yyyy-MM-dd HH-mm-ss", Locale.US).format(date)
+private fun formatDate(date: Date) = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US).format(date)

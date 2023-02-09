@@ -4,6 +4,8 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.RegexValidator;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -21,8 +23,10 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.regex.Pattern;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.string;
 
 public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionTool {
 
@@ -54,10 +58,11 @@ public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionToo
     };
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new OptionsPanel(this).myPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      string("regexp", XmlAnalysisBundle.message("xml.options.label.regexp"), 30, new RegexValidator())
+    );
   }
 
   private static boolean checkDeprecated(@Nullable PsiMetaData metaData, Pattern pattern) {
@@ -67,10 +72,9 @@ public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionToo
     }
     
     PsiElement declaration = metaData.getDeclaration();
-    if (!(declaration instanceof XmlTag)) return false;
+    if (!(declaration instanceof XmlTag tag)) return false;
     XmlComment comment = XmlUtil.findPreviousComment(declaration);
     if (comment != null && pattern.matcher(comment.getCommentText().trim()).matches()) return true;
-    XmlTag tag = (XmlTag)declaration;
     return checkTag(ArrayUtil.getFirstElement(tag.findSubTags("annotation", tag.getNamespace())), pattern);
   }
 
@@ -85,15 +89,5 @@ public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionToo
         return true;
     }
     return false;
-  }
-
-  public static class OptionsPanel {
-    private JTextField myTextField;
-    private JPanel myPanel;
-
-    public OptionsPanel(XmlDeprecatedElementInspection inspection) {
-      myTextField.setText(inspection.regexp);
-      myTextField.addActionListener(e -> inspection.regexp = myTextField.getText());
-    }
   }
 }

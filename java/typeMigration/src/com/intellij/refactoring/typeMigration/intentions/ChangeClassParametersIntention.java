@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -105,12 +105,11 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
               final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
               try {
                 final PsiType targetParam = elementFactory.createTypeFromText(myNewType, aClass);
-                if (!(targetParam instanceof PsiClassType)) {
+                if (!(targetParam instanceof PsiClassType classType)) {
                   HintManager.getInstance().showErrorHint(editor,
                                                           JavaErrorBundle.message("generics.type.argument.cannot.be.of.primitive.type"));
                   return;
                 }
-                final PsiClassType classType = (PsiClassType)targetParam;
                 final PsiClass target = classType.resolve();
                 if (target == null) {
                   HintManager.getInstance().showErrorHint(editor, JavaErrorBundle.message("cannot.resolve.symbol",

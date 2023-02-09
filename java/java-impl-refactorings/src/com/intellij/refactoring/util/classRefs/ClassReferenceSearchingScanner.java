@@ -20,9 +20,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 
-/**
- * @author dsl
- */
 public class ClassReferenceSearchingScanner extends ClassReferenceScanner {
   public ClassReferenceSearchingScanner(PsiClass aClass) {
     super(aClass);

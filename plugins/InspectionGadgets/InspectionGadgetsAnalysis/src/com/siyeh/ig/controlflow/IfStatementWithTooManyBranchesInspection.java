@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiStatement;
 import com.siyeh.InspectionGadgetsBundle;
@@ -24,7 +24,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class IfStatementWithTooManyBranchesInspection
   extends BaseInspection {
@@ -39,11 +40,10 @@ public class IfStatementWithTooManyBranchesInspection
   public int m_limit = DEFAULT_BRANCH_LIMIT;
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "if.statement.with.too.many.branches.max.option"),
-      this, "m_limit");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("m_limit", InspectionGadgetsBundle.message(
+        "if.statement.with.too.many.branches.max.option"), 1, 1000));
   }
 
   @Override

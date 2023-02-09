@@ -4,7 +4,6 @@ package com.intellij.psi.search;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.SystemProperties;
@@ -13,6 +12,7 @@ import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.containers.*;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
+import com.intellij.util.io.UnInterruptibleFileChannel;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -123,11 +122,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     }
   }
 
-  private interface IntShortIndex {
-    void setAssociation(int inputId, short data) throws StorageException;
-  }
-
-  private static class IndexDataController implements MappedFileTypeIndex.IntShortIndex {
+  private static class IndexDataController {
     private final @NotNull Int2ObjectMap<RandomAccessIntContainer> myInvertedIndex;
     private final @NotNull ForwardIndexFileController myForwardIndex;
     private final @NotNull IntConsumer myInvertedIndexChangeCallback;
@@ -141,7 +136,6 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
       myInvertedIndexChangeCallback = invertedIndexChangeCallback;
     }
 
-    @Override
     public synchronized void setAssociation(int inputId, short data) throws StorageException {
       short indexedData = getIndexedData(inputId);
       if (indexedData != 0) {
@@ -205,7 +199,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
 
       private ForwardIndexFileController(@NotNull Path storage) throws StorageException {
         try {
-          myFileChannel = FileChannel.open(storage, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
+          myFileChannel = new UnInterruptibleFileChannel(storage, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
           long fileSize = myFileChannel.size();
           if (fileSize % ELEMENT_BYTES != 0) {
             LOG.error("file type index is corrupted");
@@ -240,9 +234,6 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           myDataBuffer.flip();
           return myDataBuffer.getShort();
         }
-        catch (ClosedChannelException cce) {
-          throw new ProcessCanceledException(cce);
-        }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
         }
@@ -258,9 +249,6 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           while (bytesWritten < ELEMENT_BYTES) {
             bytesWritten += myFileChannel.write(myDataBuffer, offsetInFile(inputId) + bytesWritten);
           }
-        }
-        catch (ClosedChannelException cce) {
-          throw new ProcessCanceledException(cce);
         }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
@@ -285,9 +273,6 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
               myElementsCount += zeroBufSize / ELEMENT_BYTES;
             }
           }
-        }
-        catch (ClosedChannelException cce) {
-          throw new ProcessCanceledException(cce);
         }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
@@ -336,9 +321,6 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           //noinspection NonAtomicOperationOnVolatileField
           myModificationsCounter++;
         }
-        catch (ClosedChannelException cce) {
-          throw new ProcessCanceledException(cce);
-        }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
         }
@@ -347,9 +329,6 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
       public void flush() throws StorageException {
         try {
           myFileChannel.force(true);
-        }
-        catch (ClosedChannelException cce) {
-          throw new ProcessCanceledException(cce);
         }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));

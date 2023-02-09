@@ -77,7 +77,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     List<FileInfo> fileInfos = files.stream()
       .filter(vf-> vf != null && !vf.isWritable() && vf.isInLocalFileSystem())
       .map(vf -> new FileInfo(vf, myProject))
-      .collect(Collectors.toList());
+      .toList();
 
     // if all files are already writable
     if (fileInfos.isEmpty()) {

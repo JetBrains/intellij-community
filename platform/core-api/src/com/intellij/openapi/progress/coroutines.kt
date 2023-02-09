@@ -5,8 +5,10 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.replaceThreadContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -15,6 +17,8 @@ import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
+
+private val LOG = Logger.getInstance("#com.intellij.openapi.progress")
 
 /**
  * Checks whether the coroutine is active, and throws [CancellationException] if the coroutine is canceled.
@@ -25,7 +29,7 @@ import kotlin.coroutines.coroutineContext
  * @see ensureActive
  * @see coroutineSuspender
  */
-suspend fun checkCanceled() {
+suspend fun checkCancelled() {
   val ctx = coroutineContext
   ctx.ensureActive() // standard check first
   ctx[CoroutineSuspenderElementKey]?.checkPaused() // will suspend if paused
@@ -38,32 +42,65 @@ suspend fun checkCanceled() {
  *
  * This is a bridge for invoking suspending code from blocking code.
  *
- * Example: running a coroutine under indicator.
+ * ### IMPORTANT
+ *
+ * Coroutines use [currentCoroutineContext] to handle cancellation or to pass [ModalityState] around.
+ * [ProgressManager.checkCanceled], [ModalityState.defaultModalityState]
+ * (and [Application.invokeAndWait][com.intellij.openapi.application.Application.invokeAndWait] by extension),
+ * and many other platform methods **DO NOT work in a coroutine**.
+ * - Instead of [ProgressManager.checkCanceled] use [ensureActive] in a coroutine.
+ * - [ModalityState] is not expected to be used explicitly. Instead of `invokeAndWait` or `invokeLater` use
+ *   `withContext(`[Dispatchers.EDT][com.intellij.openapi.application.EDT]`) {}` in a coroutine.
+ *   If actually needed (twink twice), use [contextModality] to obtain the context [ModalityState].
+ * - To invoke older code, which cannot be modified but relies on [ProgressManager.checkCanceled] or
+ *   [Application.invokeAndWait][com.intellij.openapi.application.Application.invokeAndWait],
+ *   use [blockingContext] to switch from a coroutine to the blocking context.
+ *
+ * ### EDT
+ *
+ * This method is **forbidden on EDT** because it does not pump the event queue.
+ * Switch to a BGT, or use [runBlockingModal][com.intellij.openapi.progress.runBlockingModal].
+ *
+ * ### Non-cancellable `runBlocking`
+ *
+ * If this function is invoked in a thread without a current job or indicator, then it may block just as a regular [runBlocking].
+ * To prevent such usage an exception is logged.
+ *
+ * What to do with that exception? Options:
+ * - Make sure this method is called under a context job.
+ *   If it's run from a coroutine somewhere deeper in the trace, use [blockingContext] in the latest possible frame.
+ * - Make sure this method is called under an indicator by installing one as a thread indicator via [ProgressManager.runProcess].
+ * - Fall back to [runBlockingMaybeCancellable]. **It may freeze because nobody can cancel it from outside**.
+ *
+ * ### Progress reporting
+ *
+ * - If invoked under indicator, installs [RawProgressReporter], which methods delegate to the indicator, into the [action] context.
+ * - If the thread context contains [ProgressReporter], installs it into the [action] context as is.
+ * - If the thread context contains [RawProgressReporter], installs it into the [action] context as is.
+ *
+ * ### Examples
+ *
+ * #### Running a coroutine inside a code which is run under indicator
  * ```
  * ProgressManager.getInstance().runProcess({
- *   runBlockingCancellable {
- *     someSuspendingFunctionWhichDoesntKnowAboutIndicator()
- *   }
+ *   ... // deeper in the trace
+ *     runBlockingCancellable {
+ *       someSuspendingFunction()
+ *     }
  * }, progress);
  * ```
  *
- * Example 2: running a coroutine under current job.
+ * #### Running a coroutine inside a code which is run under job
  * ```
  * launch { // given a coroutine
- *   blockingContext { // installs the current job
- *     runBlockingCancellable { // becomes a child of the current job
- *       someSuspendingFunction()
- *     }
+ *   readAction { // suspending read action installs job to the thread context
+ *     ... // deeper in the trace
+ *       runBlockingCancellable { // becomes a child of the thread context job
+ *         someSuspendingFunction()
+ *       }
  *   }
  * }
  * ```
- *
- * If this function is invoked without a current job or indicator, then it may block just as a regular [runBlocking].
- * To prevent such usage an exception is logged.
- * Normally, it should not occur in client code, as it's expected to happen only in the newer code which
- * was introduced in a brief moment of time between the initial version (v0) and the current version (v1) of this function.
- * To potentially block, the clients now have to migrate to [runBlockingMaybeCancellable]
- * which repeats exact semantics of v0 w.r.t to cancellation.
  *
  * @throws ProcessCanceledException if [current indicator][ProgressManager.getGlobalProgressIndicator] is cancelled
  * @throws CancellationException if [current job][Cancellation.currentJob] is cancelled
@@ -79,13 +116,16 @@ fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
 private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend CoroutineScope.() -> T): T {
   val indicator = ProgressManager.getGlobalProgressIndicator()
   if (indicator != null) {
-    return runBlockingCancellable(indicator, action)
+    @Suppress("DEPRECATION")
+    return indicatorRunBlockingCancellable(indicator, action)
   }
+  assertBackgroundThreadOrWriteAction()
   return ensureCurrentJob(allowOrphan) { currentJob ->
     val context = currentThreadContext() +
                   currentJob +
                   CoroutineName("job run blocking")
     replaceThreadContext(EmptyCoroutineContext).use {
+      @Suppress("RAW_RUN_BLOCKING")
       runBlocking(context, action)
     }
   }
@@ -105,14 +145,21 @@ fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
   return runBlockingCancellable(allowOrphan = true, action)
 }
 
+@Deprecated(
+  "This method is public for compatibility. " +
+  "It is not supposed to be used outside of the platform. " +
+  "Use `runBlockingCancellable` instead."
+)
 @Internal
-fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
+fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
+  assertBackgroundThreadOrWriteAction()
   return ensureCurrentJob(indicator) { currentJob ->
     val context = currentThreadContext() +
                   currentJob +
                   CoroutineName("indicator run blocking") +
-                  ProgressIndicatorSink(indicator).asContextElement()
+                  IndicatorRawProgressReporter(indicator).asContextElement()
     replaceThreadContext(EmptyCoroutineContext).use {
+      @Suppress("RAW_RUN_BLOCKING")
       runBlocking(context, action)
     }
   }
@@ -160,6 +207,13 @@ suspend fun <T> blockingContext(action: () -> T): T {
  *   }
  * }
  * ```
+ *
+ * ### Progress reporting
+ *
+ * - If [ProgressReporter] is found in the coroutine context, throws an error.
+ * Please wrap the call into [withRawProgressReporter] to switch context [ProgressReporter] to [RawProgressReporter].
+ * - If [RawProgressReporter] is found in the coroutine context, updates of the installed indicator are sent into the reporter.
+ *
  * @see runBlockingCancellable
  * @see ProgressManager.runProcess
  */
@@ -184,6 +238,33 @@ suspend fun <T> coroutineToIndicator(action: () -> T): T {
  *     }
  *   }
  * }
+ * ```
+ *
+ * ### Progress reporting
+ *
+ * - If [ProgressReporter] is found in the thread context, throws an error.
+ * Please wrap the appropriate call into [withRawProgressReporter] to switch context [ProgressReporter] to [RawProgressReporter].
+ * For example:
+ * ```
+ * launch {
+ *   // inside a coroutine
+ *   withBackgroundProgressIndicator(...) { // installs ProgressReporter into coroutine context
+ *     ...
+ *     readAction { // installs coroutine context as thread context
+ *       ...
+ *       // at this point the thread context has ProgressReporter, the following will throw
+ *       blockingContextToIndicator {
+ *         someOldCodeWhichReliesOntoExistenceOfIndicator()
+ *       }
+ *       ...
+ *     }
+ *     ...
+ *   }
+ * }
+ * ```
+ * In the example, either `readAction` call or the whole action, which was passed into `withBackgroundProgressIndicator`,
+ * should be wrapped into [withRawProgressReporter].
+ * - If [RawProgressReporter] is found in the coroutine context, updates of the installed indicator are sent into the reporter.
  */
 @Internal
 fun <T> blockingContextToIndicator(action: () -> T): T {
@@ -201,12 +282,21 @@ private fun <T> contextToIndicator(ctx: CoroutineContext, action: () -> T): T {
 private fun CoroutineContext.createIndicator(): ProgressIndicator {
   val contextModality = contextModality()
                         ?: ModalityState.NON_MODAL
-  val progressSink = progressSink
-  return if (progressSink == null) {
+  if (progressReporter != null) {
+    LOG.error(IllegalStateException(
+      "Current context has `ProgressReporter`. " +
+      "Please switch to `RawProgressReporter` before switching to indicator. " +
+      "See 'Progress reporting' in `coroutineToIndicator` and/or `blockingContextToIndicator`.\n" +
+      "Current context: $this"
+    ))
+    return EmptyProgressIndicator(contextModality)
+  }
+  val reporter = rawProgressReporter
+  return if (reporter == null) {
     EmptyProgressIndicator(contextModality)
   }
   else {
-    ProgressSinkIndicator(progressSink, contextModality)
+    RawProgressReporterIndicator(reporter, contextModality)
   }
 }
 
@@ -247,6 +337,28 @@ fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T):
   }
 }
 
+private fun assertBackgroundThreadOrWriteAction() {
+  val application = ApplicationManager.getApplication()
+  if (!application.isDispatchThread || application.isWriteAccessAllowed || application.isUnitTestMode) {
+    return // OK
+  }
+  LOG.error(IllegalStateException(
+    "This method is forbidden on EDT because it does not pump the event queue. " +
+    "Switch to a BGT, or use com.intellij.openapi.progress.TasksKt.runBlockingModal. "
+  ))
+}
+
+@Deprecated(
+  message = "Method was renamed. Don't use",
+  replaceWith = ReplaceWith("indicatorRunBlockingCancellable(indicator, action)"),
+  level = DeprecationLevel.ERROR,
+)
+fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
+  @Suppress("DEPRECATION")
+  return indicatorRunBlockingCancellable(indicator, action)
+}
+
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Method was renamed",
   replaceWith = ReplaceWith("runBlockingCancellable(action)"),
@@ -256,13 +368,15 @@ fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
   return runBlockingCancellable(action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Method was renamed",
   replaceWith = ReplaceWith("runBlockingCancellable(indicator, action)"),
   level = DeprecationLevel.ERROR,
 )
 fun <T> runSuspendingAction(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
-  return runBlockingCancellable(indicator, action)
+  @Suppress("DEPRECATION")
+  return indicatorRunBlockingCancellable(indicator, action)
 }
 
 @Deprecated(

@@ -4,7 +4,6 @@ package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -20,9 +19,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.util.ReadActionCache;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -88,23 +87,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     return null;
   }
 
-  private static final class CachedText {
-    private final String text;
-    private final long modificationStamp;
-
-    private CachedText(@NotNull String text, long modificationStamp) {
-      this.text = text;
-      this.modificationStamp = modificationStamp;
-    }
-
-    @NotNull
-    private String getText() {
-      return text;
-    }
-
-    private long getModificationStamp() {
-      return modificationStamp;
-    }
+  private record CachedText(@NotNull String text, long modificationStamp) {
   }
 
 
@@ -167,11 +150,11 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   public String getText() {
     CachedText cachedText = myCachedText;
 
-    if (cachedText == null || cachedText.getModificationStamp() != getModificationStamp()) {
+    if (cachedText == null || cachedText.modificationStamp() != getModificationStamp()) {
       myCachedText = cachedText = new CachedText(calcText(), getModificationStamp());
     }
 
-    return cachedText.getText();
+    return cachedText.text();
   }
 
   @NotNull
@@ -263,7 +246,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  public void insertString(final int offset, @NotNull CharSequence s) {
+  public void insertString(int offset, @NotNull CharSequence s) {
     assert intersectWithEditable(new TextRange(offset, offset)) != null;
     if (isOneLine()) {
       s = StringUtil.replace(s.toString(), "\n", "");
@@ -272,7 +255,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  public void deleteString(final int startOffset, final int endOffset) {
+  public void deleteString(int startOffset, int endOffset) {
     assert intersectWithEditable(new TextRange(startOffset, startOffset)) != null;
     assert intersectWithEditable(new TextRange(endOffset, endOffset)) != null;
 
@@ -313,7 +296,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
       s = StringUtil.replace(s.toString(), "\n", "");
     }
 
-    final CharSequence chars = getCharsSequence();
+    CharSequence chars = getCharsSequence();
     CharSequence toDelete = chars.subSequence(startOffset, endOffset);
 
     int prefixLength = StringUtil.commonPrefixLength(s, toDelete);
@@ -395,7 +378,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  public void addDocumentListener(@NotNull final DocumentListener listener) {
+  public void addDocumentListener(@NotNull DocumentListener listener) {
     myDelegate.addDocumentListener(listener);
   }
 
@@ -405,58 +388,40 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  public void removeDocumentListener(@NotNull final DocumentListener listener) {
+  public void removeDocumentListener(@NotNull DocumentListener listener) {
     myDelegate.removeDocumentListener(listener);
   }
 
   @Override
   @NotNull
-  public RangeMarker createRangeMarker(final int startOffset, final int endOffset) {
-    ProperTextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
-    RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange);
-    int startShift = Math.max(0, hostToInjected(hostRange.getStartOffset()) - startOffset);
-    int endShift = Math.max(0, endOffset - hostToInjected(hostRange.getEndOffset()) - startShift);
-    return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker, startShift, endShift);
+  public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
+    return new RangeMarkerWindow(this, startOffset, endOffset, surviveOnExternalChange);
   }
 
   @Override
-  @NotNull
-  public RangeMarker createRangeMarker(final int startOffset, final int endOffset, final boolean surviveOnExternalChange) {
-    if (!surviveOnExternalChange) {
-      return createRangeMarker(startOffset, endOffset);
-    }
-    ProperTextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
-    //todo persistent?
-    RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange.getStartOffset(), hostRange.getEndOffset(), true);
-    int startShift = Math.max(0, hostToInjected(hostRange.getStartOffset()) - startOffset);
-    int endShift = Math.max(0, endOffset - hostToInjected(hostRange.getEndOffset()) - startShift);
-    return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker, startShift, endShift);
-  }
-
-  @Override
-  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myDelegate.addPropertyChangeListener(listener);
   }
 
   @Override
-  public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener) {
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myDelegate.removePropertyChangeListener(listener);
   }
 
   @Override
-  public void setReadOnly(final boolean isReadOnly) {
+  public void setReadOnly(boolean isReadOnly) {
     myDelegate.setReadOnly(isReadOnly);
   }
 
   @Override
   @NotNull
-  public RangeMarker createGuardedBlock(final int startOffset, final int endOffset) {
+  public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
     ProperTextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
     return myDelegate.createGuardedBlock(hostRange.getStartOffset(), hostRange.getEndOffset());
   }
 
   @Override
-  public void removeGuardedBlock(@NotNull final RangeMarker block) {
+  public void removeGuardedBlock(@NotNull RangeMarker block) {
     myDelegate.removeGuardedBlock(block);
   }
 
@@ -485,7 +450,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  public void setCyclicBufferSize(final int bufferSize) {
+  public void setCyclicBufferSize(int bufferSize) {
     myDelegate.setCyclicBufferSize(bufferSize);
   }
 
@@ -531,18 +496,18 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
 
   @Override
   @NotNull
-  public RangeMarker createRangeMarker(@NotNull final TextRange textRange) {
-    final ProperTextRange properTextRange = new ProperTextRange(textRange);
+  public RangeMarker createRangeMarker(@NotNull TextRange textRange) {
+    ProperTextRange properTextRange = new ProperTextRange(textRange);
     return createRangeMarker(properTextRange.getStartOffset(), properTextRange.getEndOffset());
   }
 
   @Override
-  public void setStripTrailingSpacesEnabled(final boolean isEnabled) {
+  public void setStripTrailingSpacesEnabled(boolean isEnabled) {
     myDelegate.setStripTrailingSpacesEnabled(isEnabled);
   }
 
   @Override
-  public int getLineSeparatorLength(final int line) {
+  public int getLineSeparatorLength(int line) {
     return myDelegate.getLineSeparatorLength(injectedToHostLine(line));
   }
 
@@ -553,22 +518,22 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  public void setModificationStamp(final long modificationStamp) {
+  public void setModificationStamp(long modificationStamp) {
     myDelegate.setModificationStamp(modificationStamp);
   }
 
   @Override
-  public void addEditReadOnlyListener(@NotNull final EditReadOnlyListener listener) {
+  public void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
     myDelegate.addEditReadOnlyListener(listener);
   }
 
   @Override
-  public void removeEditReadOnlyListener(@NotNull final EditReadOnlyListener listener) {
+  public void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
     myDelegate.removeEditReadOnlyListener(listener);
   }
 
   @Override
-  public void replaceText(@NotNull final CharSequence chars, final long newModificationStamp) {
+  public void replaceText(@NotNull CharSequence chars, long newModificationStamp) {
     setText(chars);
     myDelegate.setModificationStamp(newModificationStamp);
   }
@@ -647,7 +612,10 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     return offsetInLeftFragment;
   }
 
-  @Override
+  /**
+   * @param minHostOffset if {@code true} minimum host offset corresponding to given injected offset is returned, otherwise maximum related
+   *                      host offset is returned
+   */
   public int injectedToHost(int injectedOffset, boolean minHostOffset) {
     return injectedToHost(injectedOffset, minHostOffset, true);
   }
@@ -659,6 +627,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
         return hostRangeMarker == null ? 0 : hostRangeMarker.getStartOffset();
       }
       int prevEnd = 0;
+      //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < myShreds.size(); i++) {
         PsiLanguageInjectionHost.Shred shred = myShreds.get(i);
         Segment currentRange = shred.getHostRangeMarker();
@@ -693,12 +662,46 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   @NotNull
   public ProperTextRange injectedToHost(@NotNull TextRange injected) {
     int start = injectedToHost(injected.getStartOffset(), false, true);
+    ProperTextRange fixedTextRange = getFixedTextRange(start);
+    if (fixedTextRange != null) {
+      return fixedTextRange;
+    }
     int end = injectedToHost(injected.getEndOffset(), true, true);
     if (end < start) {
       end = injectedToHost(injected.getEndOffset(), false, true);
     }
     return new ProperTextRange(start, end);
   }
+
+  @Nullable("null means invalid")
+  private ProperTextRange getFixedTextRange(int startOffset) {
+    ProperTextRange fixedTextRange;
+    TextRange textRange = getHostRange(startOffset);
+    if (textRange == null) {
+      // todo[cdr] check this fix. prefix/suffix code annotation case
+      textRange = findNearestTextRange(startOffset);
+      if (textRange == null) return null;
+      boolean isBefore = startOffset < textRange.getStartOffset();
+      fixedTextRange = new ProperTextRange(isBefore ? textRange.getStartOffset() - 1 : textRange.getEndOffset(),
+                                     isBefore ? textRange.getStartOffset() : textRange.getEndOffset() + 1);
+    }
+    else {
+      fixedTextRange = null;
+    }
+    return fixedTextRange;
+  }
+
+  @Nullable("null means invalid")
+  private TextRange findNearestTextRange(int startOffset) {
+    TextRange textRange = null;
+    for (Segment marker : getHostRanges()) {
+      TextRange curRange = ProperTextRange.create(marker);
+      if (curRange.getStartOffset() > startOffset && textRange != null) break;
+      textRange = curRange;
+    }
+    return textRange;
+  }
+
 
   @Override
   public int injectedToHostLine(int line) {
@@ -732,10 +735,6 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     }
   }
 
-  /**
-   * @deprecated Use {@link InjectedLanguageManager#intersectWithAllEditableFragments(PsiFile, TextRange)} instead
-   */
-  @Deprecated
   @Nullable
   private TextRange intersectWithEditable(@NotNull TextRange rangeToEdit) {
     int startOffset = -1;
@@ -874,24 +873,26 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     synchronized (myLock) {
       shreds = myShreds; // assumption: myShreds list is immutable
     }
-    // can grab PsiLock in SmartPsiPointer.restore()
-    // will check the 0th element manually (to avoid getting .getHost() twice)
-    for (int i = 1; i < shreds.size(); i++) {
-      PsiLanguageInjectionHost.Shred shred = shreds.get(i);
-      if (!shred.isValid()) return false;
-    }
+    return ReadActionCache.getInstance().allowInWriteAction(
+      () -> {
+        // can grab PsiLock in SmartPsiPointer.restore()
+        // will check the 0th element manually (to avoid getting .getHost() twice)
+        for (int i = 1; i < shreds.size(); i++) {
+          PsiLanguageInjectionHost.Shred shred = shreds.get(i);
+          if (!shred.isValid()) return false;
+        }
 
-    PsiLanguageInjectionHost.Shred firstShred = shreds.get(0);
-    PsiLanguageInjectionHost host = firstShred.getHost();
-    if (host == null || firstShred.getHostRangeMarker() == null) return false;
-    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(this);
-    return virtualFile != null && ((PsiManagerEx)host.getManager()).getFileManager().findCachedViewProvider(virtualFile) != null;
+        PsiLanguageInjectionHost.Shred firstShred = shreds.get(0);
+        PsiLanguageInjectionHost host = firstShred.getHost();
+        if (host == null || firstShred.getHostRangeMarker() == null) return false;
+        VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(this);
+        return virtualFile != null && ((PsiManagerEx)host.getManager()).getFileManager().findCachedViewProvider(virtualFile) != null;
+      });
   }
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof DocumentWindowImpl)) return false;
-    DocumentWindowImpl window = (DocumentWindowImpl)o;
+    if (!(o instanceof DocumentWindowImpl window)) return false;
     return myDelegate.equals(window.getDelegate()) && areRangesEqual(window);
   }
 
@@ -938,5 +939,10 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
     return myDelegate.processRangeMarkersOverlappingWith(start, end, processor);
+  }
+
+  @Override
+  public String toString() {
+    return "DocumentWindow (delegate="+getDelegate()+")";
   }
 }

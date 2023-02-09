@@ -19,7 +19,7 @@ import java.util.*;
 /**
  * Handler for Delegate annotation processing, for fields and for methods
  */
-public class DelegateHandler {
+public final class DelegateHandler {
 
   public static boolean validate(@NotNull PsiModifierListOwner psiModifierListOwner,
                                  @NotNull PsiType psiType,
@@ -241,7 +241,7 @@ public class DelegateHandler {
 
     final boolean isMethodCall = psiElement instanceof PsiMethod;
     blockText = String.format("%sthis.%s%s.%s(%s);",
-      PsiType.VOID.equals(returnType) ? "" : "return ",
+                              PsiTypes.voidType().equals(returnType) ? "" : "return ",
       psiElement.getName(),
       isMethodCall ? "()" : "",
       psiMethod.getName(),

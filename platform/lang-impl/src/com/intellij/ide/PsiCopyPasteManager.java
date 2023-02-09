@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
@@ -115,10 +116,7 @@ public final class PsiCopyPasteManager {
     if (myRecentData.isCopied) return false;
     PsiElement[] elements = myRecentData.getElements();
     if (elements == null) return false;
-    for (PsiElement aElement : elements) {
-      if (aElement == element) return true;
-    }
-    return false;
+    return ArrayUtil.contains(element, elements);
   }
 
   private static final DataFlavor ourDataFlavor;

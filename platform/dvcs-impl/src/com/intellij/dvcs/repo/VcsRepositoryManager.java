@@ -61,6 +61,7 @@ public final class VcsRepositoryManager implements Disposable {
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private volatile boolean myDisposed;
+  private volatile boolean myStarted;
 
   public static @NotNull VcsRepositoryManager getInstance(@NotNull Project project) {
     return Objects.requireNonNull(project.getService(VcsRepositoryManager.class));
@@ -81,7 +82,7 @@ public final class VcsRepositoryManager implements Disposable {
   static final class MyStartupActivity implements VcsStartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      getInstance(project).checkAndUpdateRepositoriesCollection(null);
+      getInstance(project).initManager();
     }
 
     @Override
@@ -119,9 +120,14 @@ public final class VcsRepositoryManager implements Disposable {
   }
 
   private void scheduleUpdate() {
-    if (myUpdateAlarm.isDisposed()) return;
+    if (!myStarted || myDisposed) return;
     myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(() -> checkAndUpdateRepositoriesCollection(null), 0);
+    myUpdateAlarm.addRequest(() -> checkAndUpdateRepositoriesCollection(null), 100);
+  }
+
+  private void initManager() {
+    myStarted = true;
+    checkAndUpdateRepositoriesCollection(null);
   }
 
   @RequiresBackgroundThread
@@ -305,6 +311,7 @@ public final class VcsRepositoryManager implements Disposable {
     }
   }
 
+  @RequiresBackgroundThread
   private void checkAndUpdateRepositoriesCollection(@Nullable VirtualFile checkedRoot) {
     MODIFY_LOCK.lock();
     try {

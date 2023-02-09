@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -27,10 +27,9 @@ import com.siyeh.ig.fixes.ExtractMethodFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
   private static final TokenSet s_booleanOperators =
@@ -58,16 +57,11 @@ public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-
-    final JLabel label = new JLabel(InspectionGadgetsBundle.message("overly.complex.boolean.expression.max.terms.option"));
-    final JFormattedTextField termLimitTextField = prepareNumberEditor("m_limit");
-
-    panel.addRow(label, termLimitTextField);
-    panel.addCheckbox(InspectionGadgetsBundle.message("overly.complex.boolean.expression.ignore.option"), "m_ignorePureConjunctionsDisjunctions");
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("m_limit", InspectionGadgetsBundle.message("overly.complex.boolean.expression.max.terms.option"), 2, 100),
+      checkbox("m_ignorePureConjunctionsDisjunctions", InspectionGadgetsBundle.message("overly.complex.boolean.expression.ignore.option"))
+    );
   }
 
   @Override
@@ -125,43 +119,36 @@ public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
       if (!isBoolean(expression)) {
         return 1;
       }
-      if (expression instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      if (expression instanceof PsiPolyadicExpression polyadicExpression) {
         final PsiExpression[] operands = polyadicExpression.getOperands();
         return Arrays.stream(operands).mapToInt(this::countTerms).sum();
       }
-      else if (expression instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+      else if (expression instanceof PsiPrefixExpression prefixExpression) {
         return countTerms(prefixExpression.getOperand());
       }
-      else if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
         return countTerms(parenthesizedExpression.getExpression());
       }
       return 1;
     }
 
     private boolean isBoolean(PsiExpression expression) {
-      if (expression instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      if (expression instanceof PsiPolyadicExpression polyadicExpression) {
         return s_booleanOperators.contains(polyadicExpression.getOperationTokenType());
       }
-      else if (expression instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+      else if (expression instanceof PsiPrefixExpression prefixExpression) {
         return JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType());
       }
-      else if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
         return isBoolean(parenthesizedExpression.getExpression());
       }
       return false;
     }
 
     private boolean isPureConjunctionDisjunction(PsiExpression expression) {
-      if (!(expression instanceof PsiPolyadicExpression)) {
+      if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) {
         return false;
       }
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       final IElementType sign = polyadicExpression.getOperationTokenType();
       if (!s_booleanOperators.contains(sign)) {
         return false;

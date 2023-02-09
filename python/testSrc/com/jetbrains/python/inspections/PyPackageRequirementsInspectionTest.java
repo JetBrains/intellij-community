@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author vlan
- */
 public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
   @NotNull
   @Override

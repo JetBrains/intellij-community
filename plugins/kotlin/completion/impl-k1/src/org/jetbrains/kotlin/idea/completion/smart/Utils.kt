@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.builtins.ReflectionTypes
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
@@ -208,8 +209,8 @@ private fun MutableCollection<LookupElement>.addLookupElementsForNullable(
 }
 
 @OptIn(FrontendInternals::class)
-fun CallableDescriptor.callableReferenceType(resolutionFacade: ResolutionFacade, lhs: DoubleColonLHS?): FuzzyType? {
-    if (!CallType.CALLABLE_REFERENCE.descriptorKindFilter.accepts(this)) return null // not supported by callable references
+fun CallableDescriptor.callableReferenceType(resolutionFacade: ResolutionFacade, lhs: DoubleColonLHS?, settings: LanguageVersionSettings): FuzzyType? {
+    if (!CallType.CallableReference(settings).descriptorKindFilter.accepts(this)) return null // not supported by callable references
 
     return DoubleColonExpressionResolver.createKCallableTypeForReference(
         this,
@@ -271,11 +272,11 @@ fun DeclarationDescriptor.fuzzyTypesForSmartCompletion(
     smartCastCalculator: SmartCastCalculator,
     callTypeAndReceiver: CallTypeAndReceiver<*, *>,
     resolutionFacade: ResolutionFacade,
-    bindingContext: BindingContext
+    bindingContext: BindingContext,
 ): Collection<FuzzyType> {
     if (callTypeAndReceiver is CallTypeAndReceiver.CALLABLE_REFERENCE) {
         val lhs = callTypeAndReceiver.receiver?.let { bindingContext[BindingContext.DOUBLE_COLON_LHS, it] }
-        return listOfNotNull((this as? CallableDescriptor)?.callableReferenceType(resolutionFacade, lhs))
+        return listOfNotNull((this as? CallableDescriptor)?.callableReferenceType(resolutionFacade, lhs, callTypeAndReceiver.settings))
     }
 
     if (this is CallableDescriptor) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -6,10 +6,10 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -36,8 +36,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "FieldCanBeLocal";
@@ -107,16 +108,13 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     }
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JPanel listPanel = SpecialAnnotationsUtil
-      .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, JavaBundle.message("special.annotations.annotations.list"));
-
-    panel.addCheckbox(JavaBundle.message("checkbox.ignore.fields.used.in.multiple.methods"), "IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS");
-    panel.add(listPanel, "growx, wrap");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("EXCLUDE_ANNOS", JavaBundle.message("special.annotations.annotations.list"),
+                 new JavaClassValidator().annotationsOnly()),
+      checkbox("IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS", JavaBundle.message("checkbox.ignore.fields.used.in.multiple.methods"))
+    );
   }
 
   private static @NotNull PsiClass findVariableScope(@NotNull PsiClass containingClass) {
@@ -177,11 +175,8 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       private void excludeFieldCandidate(PsiReference ref) {
         if (ref == null) return;
         final PsiElement resolved = ref.resolve();
-        if (resolved instanceof PsiField) {
-          final PsiField field = (PsiField)resolved;
-          if (aClass.equals(field.getContainingClass())) {
-            candidates.remove(field);
-          }
+        if (resolved instanceof PsiField field && aClass.equals(field.getContainingClass())) {
+          candidates.remove(field);
         }
       }
     });
@@ -252,18 +247,16 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       final List<PsiReferenceExpression> readBeforeWrites = ControlFlowUtil.getReadBeforeWrite(controlFlow);
       for (final PsiReferenceExpression readBeforeWrite : readBeforeWrites) {
         final PsiElement resolved = readBeforeWrite.resolve();
-        if (resolved instanceof PsiField) {
-          final PsiField field = (PsiField)resolved;
-          if (!isImmutableState(field.getType()) || !PsiUtil.isConstantExpression(field.getInitializer()) || writtenVariables.contains(field)) {
-            PsiElement parent = body.getParent();
-            if (!(parent instanceof PsiMethod) ||
-                !((PsiMethod)parent).isConstructor() ||
-                field.getInitializer() == null ||
-                field.hasModifierProperty(PsiModifier.STATIC) ||
-                !PsiTreeUtil.isAncestor(((PsiMethod)parent).getContainingClass(), field, true)) {
-              candidates.remove(field);
-            }
+        if (resolved instanceof PsiField field &&
+            (!isImmutableState(field.getType()) || !PsiUtil.isConstantExpression(field.getInitializer()) ||
+             writtenVariables.contains(field))) {
+          PsiElement parent = body.getParent();
+          if (parent instanceof PsiMethod method && method.isConstructor() &&
+              field.getInitializer() != null && !field.hasModifierProperty(PsiModifier.STATIC) &&
+              PsiTreeUtil.isAncestor(method.getContainingClass(), field, true)) {
+            continue;
           }
+          candidates.remove(field);
         }
       }
     }

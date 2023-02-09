@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.openapi.project.Project;
@@ -24,9 +24,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-/**
- * @author db
- */
 public class TypeEvaluator {
   private final HashMap<TypeMigrationUsageInfo, LinkedList<PsiType>> myTypeMap;
   private final TypeMigrationRules myRules;
@@ -126,18 +123,15 @@ public class TypeEvaluator {
       return e.getFirst();
     }
 
-    if (expr instanceof PsiArrayAccessExpression) {
-      final PsiType at = evaluateType(((PsiArrayAccessExpression)expr).getArrayExpression());
-
-      if (at instanceof PsiArrayType) {
-        return ((PsiArrayType)at).getComponentType();
+    if (expr instanceof PsiArrayAccessExpression arrayAccess) {
+      if (evaluateType(arrayAccess.getArrayExpression()) instanceof PsiArrayType arrayType) {
+        return arrayType.getComponentType();
       }
     }
-    else if (expr instanceof PsiAssignmentExpression) {
-      return evaluateType(((PsiAssignmentExpression)expr).getLExpression());
+    else if (expr instanceof PsiAssignmentExpression assignment) {
+      return evaluateType(assignment.getLExpression());
     }
-    else if (expr instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)expr;
+    else if (expr instanceof PsiMethodCallExpression call) {
       final JavaResolveResult resolveResult = call.resolveMethodGenerics();
       final PsiMethod method = (PsiMethod)resolveResult.getElement();
 
@@ -147,24 +141,24 @@ public class TypeEvaluator {
         return PsiUtil.captureToplevelWildcards(createMethodSubstitution(parameters, actualParms, method, call, resolveResult.getSubstitutor(), false).substitute(evaluateType(call.getMethodExpression())), expr);
       }
     }
-    else if (expr instanceof PsiPolyadicExpression) {
-      final PsiExpression[] operands = ((PsiPolyadicExpression)expr).getOperands();
-      final IElementType sign = ((PsiPolyadicExpression)expr).getOperationTokenType();
+    else if (expr instanceof PsiPolyadicExpression polyadic) {
+      final PsiExpression[] operands = polyadic.getOperands();
+      final IElementType sign = polyadic.getOperationTokenType();
       PsiType lType = operands.length > 0 ? evaluateType(operands[0]) : null;
       for (int i = 1; i < operands.length; i++) {
         lType = TypeConversionUtil.calcTypeForBinaryExpression(lType, evaluateType(operands[i]), sign, true);
       }
       return lType;
     }
-    else if (expr instanceof PsiUnaryExpression) {
-      return evaluateType(((PsiUnaryExpression)expr).getOperand());
+    else if (expr instanceof PsiUnaryExpression unary) {
+      return evaluateType(unary.getOperand());
     }
-    else if (expr instanceof PsiParenthesizedExpression) {
-      return evaluateType(((PsiParenthesizedExpression)expr).getExpression());
+    else if (expr instanceof PsiParenthesizedExpression paren) {
+      return evaluateType(paren.getExpression());
     }
-    else if (expr instanceof PsiConditionalExpression) {
-      final PsiExpression thenExpression = ((PsiConditionalExpression)expr).getThenExpression();
-      final PsiExpression elseExpression = ((PsiConditionalExpression)expr).getElseExpression();
+    else if (expr instanceof PsiConditionalExpression conditional) {
+      final PsiExpression thenExpression = conditional.getThenExpression();
+      final PsiExpression elseExpression = conditional.getElseExpression();
 
       final PsiType thenType = evaluateType(thenExpression);
       final PsiType elseType = evaluateType(elseExpression);
@@ -182,10 +176,9 @@ public class TypeEvaluator {
           }
           else {
             yield switch ((thenType.equals(thenExpression.getType()) ? 0 : 1) + (elseType.equals(elseExpression.getType()) ? 0 : 2)) {
-              case 0 -> expr.getType();
+              case 0, 3 -> expr.getType();
               case 1 -> thenType;
               case 2 -> elseType;
-              case 3 -> expr.getType();
               default -> throw new AssertionError();
             };
           }
@@ -193,8 +186,8 @@ public class TypeEvaluator {
         default -> throw new AssertionError();
       };
     }
-    else if (expr instanceof PsiNewExpression) {
-      final PsiExpression qualifier = ((PsiNewExpression)expr).getQualifier();
+    else if (expr instanceof PsiNewExpression newExpression) {
+      final PsiExpression qualifier = newExpression.getQualifier();
 
       if (qualifier != null) {
         final PsiClassType.ClassResolveResult qualifierResult = resolveType(evaluateType(qualifier));
@@ -212,8 +205,8 @@ public class TypeEvaluator {
         }
       }
     }
-    else if (expr instanceof PsiFunctionalExpression) {
-      final PsiType functionalInterfaceType = ((PsiFunctionalExpression)expr).getFunctionalInterfaceType();
+    else if (expr instanceof PsiFunctionalExpression functionalExpression) {
+      final PsiType functionalInterfaceType = functionalExpression.getFunctionalInterfaceType();
       if (functionalInterfaceType != null) {
         return functionalInterfaceType;
       }
@@ -261,16 +254,14 @@ public class TypeEvaluator {
         final PsiClass aClass = result.getElement();
         if (aClass != null) {
           final PsiSubstitutor aSubst = result.getSubstitutor();
-          if (element instanceof PsiField) {
-            final PsiField field = (PsiField)element;
+          if (element instanceof PsiField field) {
             PsiType aType = field.getType();
             final PsiClass superClass = field.getContainingClass();
             if (InheritanceUtil.isInheritorOrSelf(aClass, superClass, true)) {
               aType = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY).substitute(aType);
             }
             return aSubst.substitute(aType);
-          }  else if (element instanceof PsiMethod){
-            final PsiMethod method = (PsiMethod)element;
+          }  else if (element instanceof PsiMethod method){
             PsiType aType = method.getReturnType();
             final PsiClass superClass = method.getContainingClass();
             if (InheritanceUtil.isInheritorOrSelf(aClass, superClass, true)) {

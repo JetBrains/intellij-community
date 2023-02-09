@@ -6,17 +6,21 @@ import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.auth.ui.LoadingAccountsDetailsProvider
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.AccountSelectorComponentFactory
+import com.intellij.collaboration.ui.ActionLinkListener
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
-import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.collaboration.ui.SimpleComboboxWithActionsFactory
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.getName
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
@@ -43,9 +47,9 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
     repoNamer: (M) -> @Nls String,
     detailsProvider: LoadingAccountsDetailsProvider<A, *>,
     accountsPopupActionsSupplier: (M) -> List<Action>,
-    credsMissingText: @Nls String,
     submitActionText: @Nls String,
-    loginButtons: List<JButton>
+    loginButtons: List<JButton>,
+    errorPresenter: ErrorStatusPresenter<RepositoryAndAccountSelectorViewModel.Error>
   ): JComponent {
 
     val repoCombo = SimpleComboboxWithActionsFactory(vm.repositoriesState, vm.repoSelectionState).create(scope, { mapping ->
@@ -89,21 +93,28 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
         add(iconLabel, BorderLayout.NORTH)
       }
 
-      val errorTextPane = BaseHtmlEditorPane().apply {
-        bindText(scope, vm.errorState.map {
-          when (it) {
-            is RepositoryAndAccountSelectorViewModel.Error.MissingCredentials -> credsMissingText
-            is RepositoryAndAccountSelectorViewModel.Error.SubmissionError -> {
-              HtmlBuilder()
-                .append(CollaborationToolsBundle.message("review.list.connection.failed", it.repo.repository.toString(), it.account))
-                .br()
-                .append(ExceptionUtil.getPresentableMessage(it.exception))
-                .toString()
+      val errorTextPane = BaseHtmlEditorPane().apply htmlPane@{
+        val actionLinkListener = ActionLinkListener(this@htmlPane)
+        removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+        addHyperlinkListener(actionLinkListener)
+
+        bindText(scope, vm.errorState.map { error ->
+          if (error == null) return@map ""
+          HtmlBuilder().append(errorPresenter.getErrorTitle(error)).br().apply {
+            val errorDescription = errorPresenter.getErrorDescription(error)
+            if (errorDescription != null) {
+              append("$errorDescription ")
             }
-            null -> ""
-          }
+
+            val errorAction = errorPresenter.getErrorAction(error)
+            actionLinkListener.action = errorAction
+            if (errorAction != null) {
+              append(HtmlChunk.link(ActionLinkListener.ERROR_ACTION_HREF, errorAction.getName()))
+            }
+          }.toString()
         })
       }
+
       add(iconPanel, BorderLayout.WEST)
       add(errorTextPane, BorderLayout.CENTER)
 
@@ -128,7 +139,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
     return JPanel(null).apply {
       isOpaque = false
       border = JBUI.Borders.empty(30, 16)
-      layout = MigLayout(LC().fill().gridGap("${UI.scale(10)}px", "${UI.scale(16)}px").insets("0").hideMode(3).noGrid())
+      layout = MigLayout(LC().fill().gridGap("10", "16").insets("0").hideMode(3).noGrid())
 
       add(repoCombo, CC().growX().push())
       add(accountCombo, CC())

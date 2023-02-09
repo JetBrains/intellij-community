@@ -11,7 +11,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public class UnsyncByteArrayOutputStream extends OutputStream {
+public class UnsyncByteArrayOutputStream extends OutputStream implements RepresentableAsByteArraySequence {
   protected byte[] myBuffer;
   protected int myCount;
   private boolean myIsShared;
@@ -112,5 +112,11 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
   @NotNull
   public InputStream toInputStream() {
     return new UnsyncByteArrayInputStream(myBuffer, 0, myCount);
+  }
+
+  @NotNull
+  @Override
+  public ByteArraySequence asByteArraySequence() {
+    return toByteArraySequence();
   }
 }

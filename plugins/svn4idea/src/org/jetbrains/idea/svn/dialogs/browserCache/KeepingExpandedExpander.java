@@ -35,8 +35,7 @@ public class KeepingExpandedExpander implements Expander {
     final Enumeration<TreeNode> children = node.children();
     while (children.hasMoreElements()) {
       final TreeNode treeNode = children.nextElement();
-      if (treeNode instanceof RepositoryTreeNode) {
-        final RepositoryTreeNode repositoryNode = (RepositoryTreeNode) treeNode;
+      if (treeNode instanceof RepositoryTreeNode repositoryNode) {
         final List<TreeNode> thirdLevelChildren = repositoryNode.getAllAlreadyLoadedChildren();
 
         final String nodeName = repositoryNode.getSVNDirEntry().getName();

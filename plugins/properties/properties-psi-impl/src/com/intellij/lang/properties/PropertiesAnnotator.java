@@ -16,6 +16,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -47,8 +48,7 @@ public class PropertiesAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (!(element instanceof Property)) return;
-    final Property property = (Property)element;
+    if (!(element instanceof Property property)) return;
     PropertiesFile propertiesFile = property.getPropertiesFile();
     final String key = property.getUnescapedKey();
     if (key == null) return;
@@ -86,6 +86,7 @@ public class PropertiesAnnotator implements Annotator {
           TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
           AnnotationBuilder builder = holder.newAnnotation(severity, displayName).range(textRange).enforcedTextAttributes(attributes);
 
+          int startOffset = textRange.getStartOffset();
           if (key == PropertiesComponent.PROPERTIES_INVALID_STRING_ESCAPE.getTextAttributesKey()) {
             builder = builder.withFix(new IntentionAction() {
               @Override
@@ -102,18 +103,16 @@ public class PropertiesAnnotator implements Annotator {
 
               @Override
               public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-                if (!property.isValid() || !property.getManager().isInProject(property)) return false;
+                if (!BaseIntentionAction.canModify(file)) return false;
 
-                String text = property.getPropertiesFile().getContainingFile().getText();
-                int startOffset = textRange.getStartOffset();
+                String text = file.getText();
                 return text.length() > startOffset && text.charAt(startOffset) == '\\';
               }
 
               @Override
               public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-                int offset = textRange.getStartOffset();
-                if (property.getPropertiesFile().getContainingFile().getText().charAt(offset) == '\\') {
-                  editor.getDocument().deleteString(offset, offset+1);
+                if (file.getText().charAt(startOffset) == '\\') {
+                  editor.getDocument().deleteString(startOffset, startOffset + 1);
                 }
               }
 

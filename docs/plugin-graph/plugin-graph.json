@@ -2103,30 +2103,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "kP",
-    "name": "intellij.performanceTesting.gradle",
-    "n": "i.performanceTesting.gradle",
-    "package": "com.jetbrains.performancePlugin.gradle",
-    "sourceModule": "intellij.performanceTesting.gradle",
-    "descriptor": "plugins/performanceTesting/gradle/resources/META-INF/plugin.xml",
-    "pluginId": "com.jetbrains.performancePlugin.gradle",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "jU",
-    "name": "intellij.performanceTesting.maven",
-    "n": "i.performanceTesting.maven",
-    "package": "com.jetbrains.performancePlugin.maven",
-    "sourceModule": "intellij.performanceTesting.maven",
-    "descriptor": "plugins/performanceTesting/maven/resources/META-INF/plugin.xml",
-    "pluginId": "com.jetbrains.performancePlugin.maven",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "HX",
     "name": "intellij.php.docker",
     "n": "i.php.docker",
@@ -3614,18 +3590,6 @@
     "pluginId": "Git4Idea",
     "parent": "cJP",
     "type": 2
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "TO",
-    "name": "intellij.vcs.git/terminal",
-    "n": "i.vcs.git/terminal",
-    "package": "git4idea.terminal",
-    "sourceModule": "intellij.vcs.git",
-    "descriptor": "community/plugins/git4idea/resources/intellij.vcs.git.terminal.xml",
-    "parent": "cJP",
-    "type": 0
   }
 }, {
   "group": "nodes",

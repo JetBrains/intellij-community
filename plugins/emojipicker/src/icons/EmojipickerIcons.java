@@ -15,15 +15,15 @@ public final class EmojipickerIcons {
   }
 
   public static final class Categories {
-    /** 20x22 */ public static final @NotNull Icon Activities = load("icons/categories/Activities.svg", 670279055, 0);
-    /** 22x20 */ public static final @NotNull Icon AnimalsAndNature = load("icons/categories/AnimalsAndNature.svg", 1213031931, 0);
-    /** 18x19 */ public static final @NotNull Icon Flags = load("icons/categories/Flags.svg", 1789300166, 0);
-    /** 20x20 */ public static final @NotNull Icon FoodAndDrink = load("icons/categories/FoodAndDrink.svg", -917215748, 0);
-    /** 20x18 */ public static final @NotNull Icon Objects = load("icons/categories/Objects.svg", 263347006, 0);
-    /** 20x20 */ public static final @NotNull Icon RecentlyUsed = load("icons/categories/RecentlyUsed.svg", -1625610943, 0);
-    /** 20x20 */ public static final @NotNull Icon SmileysAndPeople = load("icons/categories/SmileysAndPeople.svg", -1103197033, 0);
-    /** 20x18 */ public static final @NotNull Icon Symbols = load("icons/categories/Symbols.svg", 981977036, 0);
-    /** 20x20 */ public static final @NotNull Icon TravelAndPlaces = load("icons/categories/TravelAndPlaces.svg", 1632773434, 0);
+    /** 20x22 */ public static final @NotNull Icon Activities = load("icons/categories/Activities.svg", 1176897120, 0);
+    /** 22x20 */ public static final @NotNull Icon AnimalsAndNature = load("icons/categories/AnimalsAndNature.svg", -6721029, 0);
+    /** 18x19 */ public static final @NotNull Icon Flags = load("icons/categories/Flags.svg", 1698017990, 0);
+    /** 20x20 */ public static final @NotNull Icon FoodAndDrink = load("icons/categories/FoodAndDrink.svg", 1604485327, 0);
+    /** 20x18 */ public static final @NotNull Icon Objects = load("icons/categories/Objects.svg", 1770401225, 0);
+    /** 20x20 */ public static final @NotNull Icon RecentlyUsed = load("icons/categories/RecentlyUsed.svg", -1034319023, 0);
+    /** 20x20 */ public static final @NotNull Icon SmileysAndPeople = load("icons/categories/SmileysAndPeople.svg", -1263996991, 0);
+    /** 20x18 */ public static final @NotNull Icon Symbols = load("icons/categories/Symbols.svg", 901084350, 0);
+    /** 20x20 */ public static final @NotNull Icon TravelAndPlaces = load("icons/categories/TravelAndPlaces.svg", -226464335, 0);
   }
 
   /** 128x128 */ public static final @NotNull Icon NoEmojiFound = load("icons/NoEmojiFound.png", 0, 0);

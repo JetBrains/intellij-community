@@ -13,7 +13,7 @@ Reports a function that matches one of the operator conventions but lacks the <c
       a.plus(b)
   }
 </code></pre>
-<p>A quick-fix adds the <code>operator</code> modifier keyword:</p>
+<p>The quick-fix adds the <code>operator</code> modifier keyword:</p>
 <pre><code>
   class Complex(val real: Double, val imaginary: Double) {
       operator fun plus(other: Complex) =

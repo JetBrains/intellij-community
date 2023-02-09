@@ -1,16 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickDoc
 
 import com.google.common.html.HtmlEscapers
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.codeInsight.navigation.targetPresentation
-import com.intellij.lang.documentation.DocumentationResult
 import com.intellij.lang.documentation.DocumentationSettings
-import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.model.Pointer
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.platform.documentation.DocumentationResult
+import com.intellij.platform.documentation.DocumentationTarget
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -21,11 +21,9 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtParameterDefaultValueRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtRendererBodyMemberScopeProvider
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtRendererBodyMemberScopeSorter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtPropertyAccessorsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KtSingleTypeParameterSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.asJava.LightClassUtil
@@ -53,7 +51,7 @@ internal class KotlinDocumentationTarget(val element: PsiElement, private val or
         }
     }
 
-    override fun presentation(): TargetPresentation {
+    override fun computePresentation(): TargetPresentation {
         return targetPresentation(element)
     }
 
@@ -65,7 +63,8 @@ internal class KotlinDocumentationTarget(val element: PsiElement, private val or
         get() = element as? Navigatable
 
     override fun computeDocumentation(): DocumentationResult? {
-        val html = computeLocalDocumentation(element, originalElement, false) ?: return null
+        @Suppress("HardCodedStringLiteral") val html =
+            computeLocalDocumentation(element, originalElement, false) ?: return null
         return DocumentationResult.documentation(html)
     }
 
@@ -80,7 +79,6 @@ internal class KotlinDocumentationTarget(val element: PsiElement, private val or
     }
 }
 
-@Nls
 private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiElement?, quickNavigation: Boolean): String? {
     when {
       element is KtFunctionLiteral -> {
@@ -91,7 +89,7 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
                   renderKotlinDeclaration(
                       element,
                       quickNavigation,
-                      symbolFinder = { it -> (it as? KtFunctionLikeSymbol)?.valueParameters?.firstOrNull() })
+                      symbolFinder = { (it as? KtFunctionLikeSymbol)?.valueParameters?.firstOrNull() })
               }
           }
       }
@@ -196,7 +194,7 @@ private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
     }
 }
 
-private fun StringBuilder.renderEnumSpecialFunction(
+private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
     originalElement: PsiElement?,
     element: KtClass,
     quickNavigation: Boolean
@@ -244,7 +242,7 @@ private fun findElementWithText(element: PsiElement?, text: String): PsiElement?
 internal fun PsiElement?.isModifier() =
     this != null && parent is KtModifierList && KtTokens.MODIFIER_KEYWORDS_ARRAY.firstOrNull { it.value == text } != null
 
-private fun StringBuilder.renderKotlinDeclaration(
+private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
     declaration: KtDeclaration,
     onlyDefinition: Boolean,
     symbolFinder: KtAnalysisSession.(KtSymbol) -> KtSymbol? = { it },

@@ -9,12 +9,14 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.*
 import javax.swing.plaf.basic.BasicButtonUI
 import javax.swing.plaf.basic.BasicGraphicsUtils
 
-class ExpandStripeButton(internal val text: () -> String? = { null }, icon: Icon? = null) : JButton(icon) {
+class ExpandStripeButton(internal val text: () -> @Nls(capitalization = Nls.Capitalization.Title) String? = { null },
+                         icon: Icon? = null) : JButton(icon) {
   init {
     isRolloverEnabled = true
     border = JBUI.Borders.empty()

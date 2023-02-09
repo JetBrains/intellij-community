@@ -288,7 +288,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myHeaderAlwaysFocusable = headerAlwaysFocusable;
     myMovable = movable;
 
-    myHeaderPanel = new JPanel(new BorderLayout());
+    myHeaderPanel = new JPanel(new BorderLayout()) {
+      @Override
+      public Color getBackground() {
+        return ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.BACKGROUND : super.getBackground();
+      }
+    };
 
     if (caption != null) {
       if (!caption.isEmpty()) {
@@ -520,8 +525,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   public void showUnderneathOf(@NotNull Component aComponent, boolean useAlignment) {
     boolean isAlignmentUsed = ExperimentalUI.isNewUI() && Registry.is("ide.popup.align.by.content") && useAlignment
                               && isComponentSupportsAlignment(aComponent);
-    int x = isAlignmentUsed ? calcHorizontalAlignment(aComponent) : JBUIScale.scale(2);
-    show(new RelativePoint(aComponent, new Point(x, aComponent.getHeight())));
+    var point = isAlignmentUsed ? pointUnderneathOfAlignedHorizontally(aComponent) : defaultPointUnderneathOf(aComponent);
+    show(new RelativePoint(aComponent, point));
   }
 
   private boolean isComponentSupportsAlignment(Component c) {
@@ -534,9 +539,19 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     return true;
   }
 
-  private static int calcHorizontalAlignment(@NotNull Component comp) {
-    if (!(comp instanceof JComponent jcomp)) return JBUIScale.scale(2);
+  @NotNull
+  private static Point defaultPointUnderneathOf(@NotNull Component aComponent) {
+    return new Point(JBUIScale.scale(2), aComponent.getHeight());
+  }
 
+  private static @NotNull Point pointUnderneathOfAlignedHorizontally(@NotNull Component comp) {
+    if (!(comp instanceof JComponent jcomp)) return defaultPointUnderneathOf(comp);
+    var result = new Point(calcHorizontalAlignment(jcomp), comp.getHeight());
+    fitXToComponentScreen(result, comp);
+    return result;
+  }
+
+  private static int calcHorizontalAlignment(JComponent jcomp) {
     int componentLeftInset = jcomp.getInsets().left;
     int popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left;
     int res = componentLeftInset - popupLeftInset;
@@ -547,6 +562,18 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
     }
     return res;
+  }
+
+  private static void fitXToComponentScreen(@NotNull Point point, @NotNull Component comp) {
+    var componentScreen = ScreenUtil.getScreenRectangle(comp);
+    SwingUtilities.convertPointToScreen(point, comp);
+    if (point.x < componentScreen.x) {
+      point.x = componentScreen.x;
+    }
+    if (point.x > componentScreen.x + componentScreen.width) {
+      point.x = componentScreen.x + componentScreen.width;
+    }
+    SwingUtilities.convertPointFromScreen(point, comp);
   }
 
   @Override
@@ -782,8 +809,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   public final void cancel() {
     InputEvent inputEvent = null;
     AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
-    if (event instanceof InputEvent && myPopup != null) {
-      InputEvent ie = (InputEvent)event;
+    if (event instanceof InputEvent ie && myPopup != null) {
       Window window = myPopup.getWindow();
       if (window != null && UIUtil.isDescendingFrom(ie.getComponent(), window)) {
         inputEvent = ie;
@@ -1134,8 +1160,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         cornerType = PopupCornerType.RoundedWindow;
       }
       if (cornerType != PopupCornerType.None) {
-        if (SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) {
-          WindowRoundedCornersManager.setRoundedCorners(window, new Object[]{cornerType, myPopupBorderColor});
+        if ((SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
+          WindowRoundedCornersManager.setRoundedCorners(window, new Object[]{cornerType,
+            SystemInfoRt.isWindows ? JBUI.CurrentTheme.Popup.borderColor(true) : myPopupBorderColor});
           myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
         }
         else {
@@ -1160,6 +1187,13 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (bounds.width > screen.width || bounds.height > screen.height) {
       ScreenUtil.fitToScreen(bounds);
       window.setBounds(bounds);
+    }
+
+    if (LOG.isDebugEnabled()) {
+      GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
+      StringBuilder sb = new StringBuilder("Popup is shown with bounds " + bounds);
+      if (device != null) sb.append(" on screen with ID \"").append(device.getIDstring()).append("\"");
+      LOG.debug(sb.toString());
     }
 
     WindowAction.setEnabledFor(myPopup.getWindow(), myResizable);
@@ -1325,9 +1359,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
     };
     mySpeedSearchPatternField.getTextEditor().setFocusable(mySpeedSearchAlwaysShown);
-    if (mySpeedSearchAlwaysShown) {
-      setHeaderComponent(mySpeedSearchPatternField);
-    }
 
     JBTextField textField = mySpeedSearchPatternField.getTextEditor();
     if (ExperimentalUI.isNewUI()) {
@@ -1349,6 +1380,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
     if (SystemInfo.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);
+    }
+
+    if (mySpeedSearchAlwaysShown) {
+      setHeaderComponent(mySpeedSearchPatternField);
     }
   }
 
@@ -1581,7 +1616,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (myFinalRunnable != null) {
       Runnable finalRunnable = myFinalRunnable;
       getFocusManager().doWhenFocusSettlesDown(() -> {
-        try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
           finalRunnable.run();
         }
       });
@@ -1600,8 +1635,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         myWindow.removeWindowListener(myWindowListener);
       }
 
-      if (myWindow instanceof RootPaneContainer) {
-        RootPaneContainer container = (RootPaneContainer)myWindow;
+      if (myWindow instanceof RootPaneContainer container) {
         JRootPane root = container.getRootPane();
         root.putClientProperty(KEY, null);
         if (root.getGlassPane() instanceof IdeGlassPaneImpl) {
@@ -1831,7 +1865,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     updateMaskAndAlpha(popupWindow);
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static Window setSize(@NotNull JComponent content, @NotNull Dimension size) {
     final Window popupWindow = getContentWindow(content);
     if (popupWindow == null) return null;
@@ -2037,12 +2071,16 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   public void setWarning(@NotNull @NlsContexts.Label String text) {
+    myHeaderPanel.add(createWarning(text), BorderLayout.SOUTH);
+  }
+
+  protected @NotNull JComponent createWarning(@NotNull @NlsContexts.Label String text) {
     JBLabel label = new JBLabel(text, UIUtil.getBalloonWarningIcon(), SwingConstants.CENTER);
     label.setOpaque(true);
     Color color = HintUtil.getInformationColor();
     label.setBackground(color);
     label.setBorder(BorderFactory.createLineBorder(color, 3));
-    myHeaderPanel.add(label, BorderLayout.SOUTH);
+    return label;
   }
 
   @Override
@@ -2066,16 +2104,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public void setMinimumSize(Dimension size) {
     //todo: consider changing only the caption panel minimum size
-    Dimension sizeFromHeader = myHeaderPanel.getPreferredSize();
-
-    if (sizeFromHeader == null) {
-      sizeFromHeader = myHeaderPanel.getMinimumSize();
-    }
-
-    if (sizeFromHeader == null) {
-      int minimumSize = myWindow.getGraphics().getFontMetrics(myHeaderPanel.getFont()).getHeight();
-      sizeFromHeader = new Dimension(minimumSize, minimumSize);
-    }
+    Dimension sizeFromHeader = calcHeaderSize();
 
     if (size == null) {
       myMinSize = sizeFromHeader;
@@ -2091,6 +2120,25 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       int height = Math.min(screenRectangle.height, myMinSize.height);
       myWindow.setMinimumSize(new Dimension(width, height));
     }
+  }
+
+  public Dimension getMinimumSize() {
+    return myMinSize != null ? myMinSize : calcHeaderSize();
+  }
+
+  @NotNull
+  private Dimension calcHeaderSize() {
+    Dimension sizeFromHeader = myHeaderPanel.getPreferredSize();
+
+    if (sizeFromHeader == null) {
+      sizeFromHeader = myHeaderPanel.getMinimumSize();
+    }
+
+    if (sizeFromHeader == null) {
+      int minimumSize = myWindow.getGraphics().getFontMetrics(myHeaderPanel.getFont()).getHeight();
+      sizeFromHeader = new Dimension(minimumSize, minimumSize);
+    }
+    return sizeFromHeader;
   }
 
   public void setOkHandler(Runnable okHandler) {

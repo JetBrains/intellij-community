@@ -175,8 +175,8 @@ public final class ActionUtil {
         }
       };
       boolean isLikeUpdate = !beforeActionPerformed && Registry.is("actionSystem.update.actions.async");
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(isLikeUpdate ? SlowOperations.ACTION_UPDATE
-                                                                                : SlowOperations.ACTION_PERFORM)) {
+      try (AccessToken ignore = SlowOperations.startSection(isLikeUpdate ? SlowOperations.ACTION_UPDATE
+                                                                         : SlowOperations.ACTION_PERFORM)) {
         long startTime = System.nanoTime();
         runnable.run();
         long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
@@ -270,7 +270,7 @@ public final class ActionUtil {
   public static boolean lastUpdateAndCheckDumb(@NotNull AnAction action, @NotNull AnActionEvent e, boolean visibilityMatters) {
     Project project = e.getProject();
     if (project != null && PerformWithDocumentsCommitted.isPerformWithDocumentsCommitted(action)) {
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
         PsiDocumentManager.getInstance(project).commitAllDocuments();
       }
     }
@@ -311,9 +311,8 @@ public final class ActionUtil {
   public static void doPerformActionOrShowPopup(@NotNull AnAction action,
                                                 @NotNull AnActionEvent e,
                                                 @Nullable Consumer<? super JBPopup> popupShow) {
-    if (action instanceof ActionGroup && !e.getPresentation().isPerformGroup()) {
+    if (action instanceof ActionGroup group && !e.getPresentation().isPerformGroup()) {
       DataContext dataContext = e.getDataContext();
-      ActionGroup group = (ActionGroup)action;
       String place = ActionPlaces.getActionGroupPopupPlace(e.getPlace());
       ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
         e.getPresentation().getText(), group, dataContext,
@@ -353,7 +352,7 @@ public final class ActionUtil {
       return;
     }
     AnActionResult result = null;
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       performRunnable.run();
       result = AnActionResult.PERFORMED;
     }
@@ -443,8 +442,7 @@ public final class ActionUtil {
                                                       @NotNull ActionListener action,
                                                       @NotNull ShortcutSet shortcuts) {
     for (Shortcut shortcut : shortcuts.getShortcuts()) {
-      if (shortcut instanceof KeyboardShortcut) {
-        KeyboardShortcut ks = (KeyboardShortcut)shortcut;
+      if (shortcut instanceof KeyboardShortcut ks) {
         KeyStroke first = ks.getFirstKeyStroke();
         KeyStroke second = ks.getSecondKeyStroke();
         if (second == null) {
@@ -462,8 +460,7 @@ public final class ActionUtil {
                                                   @NotNull Predicate<? super AnAction> condition) {
     for (AnAction child : group.getChildren(null)) {
       if (condition.test(child)) return true;
-      if (child instanceof ActionGroup) {
-        ActionGroup childGroup = (ActionGroup)child;
+      if (child instanceof ActionGroup childGroup) {
         if ((processPopupSubGroups || !childGroup.isPopup()) && anyActionFromGroupMatches(childGroup, processPopupSubGroups, condition)) {
           return true;
         }

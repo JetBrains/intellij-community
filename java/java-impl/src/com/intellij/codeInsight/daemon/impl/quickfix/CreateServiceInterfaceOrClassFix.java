@@ -35,9 +35,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
 
-/**
- * @author Pavel.Dolgov
- */
 public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase {
   private @NlsSafe String myInterfaceName;
 

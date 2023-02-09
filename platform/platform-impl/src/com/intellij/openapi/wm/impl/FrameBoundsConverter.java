@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -22,7 +22,7 @@ public final class FrameBoundsConverter {
    * @param bounds the bounds in the device space
    * @return the bounds in the user space
    */
-  public static @NotNull Pair<@NotNull Rectangle, @Nullable GraphicsDevice> convertFromDeviceSpaceAndFitToScreen(@NotNull Rectangle bounds) {
+  public static @Nullable Pair<@NotNull Rectangle, @Nullable GraphicsDevice> convertFromDeviceSpaceAndFitToScreen(@NotNull Rectangle bounds) {
     Rectangle b = bounds.getBounds();
     int centerX = b.x + b.width / 2;
     int centerY = b.y + b.height / 2;
@@ -51,12 +51,12 @@ public final class FrameBoundsConverter {
         if (b.height > screen.height) {
           b.height = screen.height;
         }
-        return new Pair<>(bounds, gd);
+        return new Pair<>(b, gd);
       }
     }
-    // we didn't find proper device at all, probably it was an external screen that is unavailable now, we cannot use specified bounds
-    ScreenUtil.fitToScreen(b);
-    return new Pair<>(bounds, null);
+
+    // We didn't find a proper device at all. Probably it was an external screen that is unavailable now. We cannot use specified bounds.
+    return null;
   }
 
   /**
@@ -66,12 +66,11 @@ public final class FrameBoundsConverter {
    */
   public static Rectangle convertToDeviceSpace(GraphicsConfiguration gc, @NotNull Rectangle bounds) {
     Rectangle b = bounds.getBounds();
-    if (!shouldConvert()) return b;
-
-    try {
-      scaleUp(b, gc);
-    }
-    catch (HeadlessException ignore) {
+    if (shouldConvert()) {
+      try {
+        scaleUp(b, gc);
+      }
+      catch (HeadlessException ignore) { }
     }
     return b;
   }

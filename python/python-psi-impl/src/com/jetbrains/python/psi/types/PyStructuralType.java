@@ -32,9 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author vlan
- */
 public class PyStructuralType implements PyType {
   @NotNull private final Set<String> myAttributes;
   private final boolean myInferredFromUsages;

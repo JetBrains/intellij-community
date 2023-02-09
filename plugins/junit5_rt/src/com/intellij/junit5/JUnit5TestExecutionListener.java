@@ -193,7 +193,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
           testFailure(CLASS_CONFIGURATION, getId(testIdentifier), parentId, messageName, throwableOptional, 0, reason, true);
           myPrintStream.println("##teamcity[testFinished" + nameAndId + "]");
         }
-        else if (status == TestExecutionResult.Status.ABORTED && descendants.isEmpty()) {
+        else if (descendants.isEmpty()) {
           testFailure(testIdentifier, MapSerializerUtil.TEST_IGNORED, throwableOptional, 0, reason, true);
         }
 

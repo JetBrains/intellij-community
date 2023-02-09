@@ -17,6 +17,7 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
@@ -38,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class UnnecessaryBoxingInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
@@ -48,11 +51,10 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     return true;
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.boxing.superfluous.option"),
-                                          this, "onlyReportSuperfluouslyBoxed");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyReportSuperfluouslyBoxed", InspectionGadgetsBundle.message("unnecessary.boxing.superfluous.option")));
   }
 
   @Override
@@ -299,12 +301,10 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         // Inferred type may change if boxing is removed; if it's possible
         if (typeElement != null && typeElement.isInferredType()) return true;
       }
-      else if (parent instanceof PsiTypeCastExpression) {
-        final PsiTypeCastExpression castExpression = (PsiTypeCastExpression)parent;
+      else if (parent instanceof PsiTypeCastExpression castExpression) {
         return TypeUtils.isTypeParameter(castExpression.getType());
       }
-      else if (parent instanceof PsiConditionalExpression) {
-        final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
+      else if (parent instanceof PsiConditionalExpression conditionalExpression) {
         final PsiExpression thenExpression = conditionalExpression.getThenExpression();
         final PsiExpression elseExpression = conditionalExpression.getElseExpression();
         if (elseExpression == null || thenExpression == null) {
@@ -322,8 +322,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
           return false;
         }
       }
-      else if (parent instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+      else if (parent instanceof PsiPolyadicExpression polyadicExpression) {
         return isPossibleObjectComparison(boxingExpression, polyadicExpression);
       }
       return MethodCallUtils.isNecessaryForSurroundingMethodCall(boxingExpression, boxedExpression) ||

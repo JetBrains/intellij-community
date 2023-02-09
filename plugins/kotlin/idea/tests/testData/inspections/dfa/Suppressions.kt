@@ -1,4 +1,11 @@
 // WITH_STDLIB
+const val ZERO = 0
+
+fun doNotWarnAtZero(x: Int) {
+    if (x < ZERO) return
+    if (x > ZERO) return
+    assert(x == ZERO)
+}
 fun returnInReturn(a: Boolean, b: Boolean): Boolean {
     // KTIJ-23768
     return a || return b

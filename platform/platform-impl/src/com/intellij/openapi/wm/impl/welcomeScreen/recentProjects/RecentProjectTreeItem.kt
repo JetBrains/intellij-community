@@ -157,11 +157,11 @@ internal object ProjectCollectors {
 
   @JvmField
   val cloneableProjectsCollector: () -> List<RecentProjectTreeItem> = {
-    CloneableProjectsService.getInstance().collectCloneableProjects()
+    CloneableProjectsService.getInstance().collectCloneableProjects().toList()
   }
 
   @JvmField
-  val all = listOf(cloneableProjectsCollector, recentProjectsCollector)
+  val all: List<() -> List<RecentProjectTreeItem>> = listOf(cloneableProjectsCollector, recentProjectsCollector)
 
   @JvmStatic
   fun createRecentProjectsWithoutCurrentCollector(currentProject: Project): () -> List<RecentProjectTreeItem> {

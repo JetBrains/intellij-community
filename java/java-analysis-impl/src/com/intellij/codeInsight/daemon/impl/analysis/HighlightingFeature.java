@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -48,7 +48,8 @@ public enum HighlightingFeature {
   INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics"),
   PATTERNS_IN_SWITCH(LanguageLevel.JDK_17_PREVIEW, "feature.patterns.in.switch"),
   GUARDED_AND_PARENTHESIZED_PATTERNS(LanguageLevel.JDK_17_PREVIEW, "feature.guarded.and.parenthesised.patterns"),
-  PATTERN_GUARDS_AND_RECORD_PATTERNS(LanguageLevel.JDK_19_PREVIEW, "feature.pattern.guard.and.record.patterns");
+  PATTERN_GUARDS_AND_RECORD_PATTERNS(LanguageLevel.JDK_19_PREVIEW, "feature.pattern.guard.and.record.patterns"),
+  RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_20_PREVIEW, "feature.record.patterns.in.for.each");
 
   public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
   public static final @NonNls String JDK_INTERNAL_JAVAC_PREVIEW_FEATURE = "jdk.internal.javac.PreviewFeature";
@@ -126,8 +127,7 @@ public enum HighlightingFeature {
     PsiAnnotation annotation = getAnnotation(owner);
     if (annotation != null) return annotation;
 
-    if (owner instanceof PsiMember && !owner.hasModifier(JvmModifier.STATIC)) {
-      PsiMember member = (PsiMember)owner;
+    if (owner instanceof PsiMember member && !owner.hasModifier(JvmModifier.STATIC)) {
       PsiAnnotation result = getPreviewFeatureAnnotation(member.getContainingClass());
       if (result != null) return result;
     }

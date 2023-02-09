@@ -3,8 +3,6 @@ from logging import Logger
 from typing import Any
 from typing_extensions import Literal
 
-chardet_type: Any
-
 def chardet_dammit(s): ...
 
 xml_encoding: str

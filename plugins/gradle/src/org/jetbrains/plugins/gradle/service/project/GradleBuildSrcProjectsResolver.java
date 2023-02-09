@@ -137,6 +137,7 @@ public final class GradleBuildSrcProjectsResolver {
           buildSrcProjectSettings.setRemoteProcessIdleTtlInMs(myMainBuildExecutionSettings.getRemoteProcessIdleTtlInMs());
           buildSrcProjectSettings.setVerboseProcessing(myMainBuildExecutionSettings.isVerboseProcessing());
           buildSrcProjectSettings.setWrapperPropertyFile(myMainBuildExecutionSettings.getWrapperPropertyFile());
+          buildSrcProjectSettings.setDelegatedBuild(myMainBuildExecutionSettings.isDelegatedBuild());
           buildSrcProjectSettings.withArguments(myMainBuildExecutionSettings.getArguments())
             .withEnvironmentVariables(myMainBuildExecutionSettings.getEnv())
             .passParentEnvs(myMainBuildExecutionSettings.isPassParentEnvs())
@@ -255,7 +256,7 @@ public final class GradleBuildSrcProjectsResolver {
 
     if (buildSrcProjectDataNode == null) return;
     for (DataNode<LibraryData> libraryDataNode : getChildren(buildSrcProjectDataNode, ProjectKeys.LIBRARY)) {
-      GradleProjectResolverUtil.linkProjectLibrary(myResolverContext, resultProjectDataNode, libraryDataNode.getData());
+      GradleProjectResolverUtil.linkProjectLibrary(resultProjectDataNode, libraryDataNode.getData());
     }
 
     Map<String, DataNode<? extends ModuleData>> buildSrcModules = new HashMap<>();
@@ -313,8 +314,7 @@ public final class GradleBuildSrcProjectsResolver {
             addSourcePaths(buildSrcRuntimeSourcesPaths, depModuleNode);
           }
         }
-        else if (childData instanceof LibraryDependencyData) {
-          LibraryDependencyData dependencyData = (LibraryDependencyData)childData;
+        else if (childData instanceof LibraryDependencyData dependencyData) {
           // exclude generated gradle-api jar the gradle api classes/sources handled separately by BuildClasspathModuleGradleDataService
           if (dependencyData.getExternalName().startsWith("gradle-api-")) {
             continue;

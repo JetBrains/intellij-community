@@ -6,7 +6,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -20,7 +20,7 @@ import kotlin.math.max
 
 private val LOG = logger<CDSStartupActivity>()
 
-internal class CDSStartupActivity : ProjectPostStartupActivity {
+internal class CDSStartupActivity : ProjectActivity {
   private val isExecuted = AtomicBoolean(false)
 
   //for tests

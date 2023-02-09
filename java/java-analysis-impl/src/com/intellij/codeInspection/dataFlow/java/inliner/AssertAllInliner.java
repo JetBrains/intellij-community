@@ -39,7 +39,7 @@ public class AssertAllInliner implements CallInliner {
         builder.evaluateFunction(arg);
       }
     }
-    DfaVariableValue result = builder.createTempVariable(PsiType.BOOLEAN);
+    DfaVariableValue result = builder.createTempVariable(PsiTypes.booleanType());
     builder.assignAndPop(result, DfTypes.FALSE);
     for (int i = 0; i < args.length; i++) {
       PsiExpression arg = args[i];

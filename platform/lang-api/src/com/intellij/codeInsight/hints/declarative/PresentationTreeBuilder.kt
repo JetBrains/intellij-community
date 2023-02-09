@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative
 
+import com.intellij.psi.SmartPsiElementPointer
+
 /**
  * Once the tree building started, it must provide at least one text node. Otherwise, an exception will be thrown.
  */
@@ -74,5 +76,22 @@ class StringInlayActionPayload(val text: String) : InlayActionPayload {
 
   override fun toString(): String {
     return "StringInlayActionPayload(text='$text')"
+  }
+}
+
+class PsiPointerInlayActionPayload(val pointer: SmartPsiElementPointer<*>) : InlayActionPayload {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as PsiPointerInlayActionPayload
+
+    if (pointer != other.pointer) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return pointer.hashCode()
   }
 }

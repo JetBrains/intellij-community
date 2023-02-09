@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.CliResult
-import com.intellij.idea.SocketLock
+import com.intellij.idea.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
@@ -55,6 +55,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
       throw e
     }
     catch (e: Exception) {
+      e.printStackTrace() // The dialog may sometimes not be shown, e.g. in remote dev scenarios.
       val title = ApplicationBundle.message("app.command.exec.error.title", commandName)
       val message = ApplicationBundle.message("app.command.exec.error", commandName, e.message)
       withContext(Dispatchers.EDT) {
@@ -66,7 +67,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
 
   protected open fun checkArguments(args: List<String>): Boolean {
     @Suppress("DEPRECATION")
-    return Arrays.binarySearch(argsCount, args.size - 1) != -1 && commandName == args[0]
+    return Arrays.binarySearch(argsCount, args.size - 1) >= 0 && commandName == args[0]
   }
 
   protected abstract suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult
@@ -81,7 +82,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
   final override suspend fun start(args: List<String>) {
     try {
       val exitCode: Int = try {
-        val result = executeCommand(args = args, currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR))
+        val result = executeCommand(args = args, currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR))
         result.message?.let(::println)
         result.exitCode
       }

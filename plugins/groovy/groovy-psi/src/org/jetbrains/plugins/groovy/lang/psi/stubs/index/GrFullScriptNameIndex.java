@@ -9,8 +9,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 
 /**
- * @author ilyas
+ * @deprecated consider to use {@link GrFullScriptNameStringIndex}
  */
+@Deprecated(forRemoval = true)
 public class GrFullScriptNameIndex extends CharSequenceHashStubIndexExtension<GroovyFile> {
   public static final StubIndexKey<CharSequence, GroovyFile> KEY = StubIndexKey.createIndexKey("gr.script.fqn");
 

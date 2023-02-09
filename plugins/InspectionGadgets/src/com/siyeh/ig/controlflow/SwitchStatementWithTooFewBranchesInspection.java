@@ -21,7 +21,7 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SetInspectionOptionFix;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,9 +37,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -51,13 +52,11 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
   public boolean ignorePatternSwitch = false;
 
   @Override
-  public JComponent createOptionsPanel() {
-    SingleIntegerFieldOptionsPanel panel =
-      new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.min.option"),
-                                         this, "m_limit");
-    panel.addCheckbox(InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.ignore.pattern.option"),
-                      "ignorePatternSwitch");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("m_limit", InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.min.option"), 1, 1000),
+      checkbox("ignorePatternSwitch", InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.ignore.pattern.option"))
+    );
   }
 
   @Override
@@ -145,8 +144,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
       }
       else {
         PsiStatement[] statements = body.getStatements();
-        if (statements.length == 1 && statements[0] instanceof PsiSwitchLabeledRuleStatement) {
-          PsiSwitchLabeledRuleStatement statement = (PsiSwitchLabeledRuleStatement)statements[0];
+        if (statements.length == 1 && statements[0] instanceof PsiSwitchLabeledRuleStatement statement) {
           fixIsAvailable = SwitchUtils.isDefaultLabel(statement) && statement.getBody() instanceof PsiExpressionStatement;
         }
         else {

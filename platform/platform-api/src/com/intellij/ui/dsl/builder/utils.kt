@@ -2,8 +2,12 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.ui.UINumericRange
+import com.intellij.ui.SimpleListCellRenderer
+import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
 
@@ -26,22 +30,15 @@ enum class DslComponentProperty {
   VISUAL_PADDINGS,
 
   /**
-   * By default, almost every component have [SpacingConfiguration.verticalComponentGap] above and below it.
-   * This flag disables such gap below the component. Should be used in very rare situations (e.g. row with label **and** some additional
-   * label-kind components above related to the label component), because most standard cases are covered by Kotlin UI DSL API
+   * By default, every component except JPanel have [SpacingConfiguration.verticalComponentGap] above and below it.
+   * This behavior can be overridden by this property. Should be used in very rare situations, because most standard cases are covered
+   * by Kotlin UI DSL API. It could be needed for example in the following cases:
+   * * A component with a label and some additional label-kind components above
+   * * Some components are compound and based on [JPanel] that requires [SpacingConfiguration.verticalComponentGap] above and below
    *
-   * Value: [Boolean]
+   * Value: [VerticalComponentGap]
    */
-  NO_BOTTOM_GAP,
-
-  /**
-   * By default, almost every component have [SpacingConfiguration.verticalComponentGap] above and below it.
-   * Some components are compound (usually based on [JPanel]) and Kotlin UI DSL doesn't add vertical gaps around it by default.
-   * Setting this property forces adding vertical gaps.
-   *
-   * Value: [Boolean]
-   */
-  TOP_BOTTOM_GAP,
+  VERTICAL_COMPONENT_GAP,
 
   /**
    * By default, we're trying to assign [javax.swing.JLabel.setLabelFor] for the cell component itself.
@@ -53,8 +50,11 @@ enum class DslComponentProperty {
   LABEL_FOR,
 
   /**
-   * Some compound components can contain several components inside itself. [INTERACTIVE_COMPONENT] points to main interactive one,
-   * which is assigned to [JLabel.labelFor] and which is used as a component for data validation
+   * Some compound components can contain several components inside itself. [INTERACTIVE_COMPONENT] points to main interactive one
+   *
+   * * Assigned to [JLabel.labelFor]
+   * * Used as the component for data validation
+   * * Used as destination for [Cell.onChanged]
    *
    * Value: [JComponent]
    */
@@ -83,7 +83,9 @@ fun interface HyperlinkEventAction {
      * Opens URL in a browser
      */
     @JvmField
-    val HTML_HYPERLINK_INSTANCE = HyperlinkEventAction { e -> BrowserUtil.browse(e.url) }
+    val HTML_HYPERLINK_INSTANCE = HyperlinkEventAction { e ->
+      e.url?.let { BrowserUtil.browse(it) }
+    }
   }
 
   fun hyperlinkActivated(e: HyperlinkEvent)
@@ -93,4 +95,42 @@ fun interface HyperlinkEventAction {
 
   fun hyperlinkExited(e: HyperlinkEvent) {
   }
+}
+
+/**
+ * Values meaning:
+ *
+ * null - use default logic for vertical component gap
+ * true - force setting [SpacingConfiguration.verticalComponentGap]
+ * false - force setting 0 as a vertical gap
+ */
+data class VerticalComponentGap(val top: Boolean? = null, val bottom: Boolean? = null)
+
+fun UINumericRange.asRange(): IntRange = min..max
+
+fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T>.(T) -> Unit): SimpleListCellRenderer<T> {
+  return object : SimpleListCellRenderer<T>() {
+    override fun customize(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
+      // BasicComboBoxUI.getBaseline can try to get renderer for null value even when comboBox doesn't allow nullable elements
+      if (index != -1 || value != null) {
+        renderer(value)
+      }
+    }
+  }
+}
+
+/**
+ * Kotlin UI DSL doesn't allow to use some tags like <html> so all resource strings should be cleared up manually. Sometimes strings are
+ * received from outside, in such cases this method can be useful
+ *
+ * Example: `cleanupHtml("<html>Some string</html>")` returns `"Some string"`
+ */
+fun cleanupHtml(@Nls s: String): @Nls String {
+  val regex = Regex("\\s*<html>(?<body>.*)</html>\\s*", RegexOption.IGNORE_CASE)
+  val result = regex.matchEntire(s)
+  if (result == null) {
+    return s
+  }
+  @Suppress("HardCodedStringLiteral")
+  return result.groups["body"]!!.value
 }

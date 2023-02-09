@@ -19,9 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 
 import java.util.Objects;
 
-/**
- * @author ilyas
- */
 public class NewGantScriptAction extends NewGroovyActionBase {
 
   @Override

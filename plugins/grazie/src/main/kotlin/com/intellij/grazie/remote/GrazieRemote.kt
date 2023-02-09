@@ -6,7 +6,12 @@ import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.exists
+import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.inputStream
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
+import java.security.DigestInputStream
+import kotlin.io.path.exists
 
 object GrazieRemote {
   private fun isLibExists(lib: String) = GrazieDynamic.dynamicFolder.resolve(lib).exists() || GraziePlugin.libFolder.resolve(lib).exists()
@@ -24,4 +29,25 @@ object GrazieRemote {
 
   /** Downloads all missing languages to local storage*/
   fun downloadMissing(project: Project?) = GrazieConfig.get().missedLanguages.forEach { LangDownloader.download(it, project) }
+
+  fun isValidBundleForLanguage(language: Lang, file: Path): Boolean {
+    val actualChecksum = checksum(file)
+    return language.remote.checksum == actualChecksum
+  }
+
+  @ApiStatus.Internal
+  fun checksum(path: Path): String {
+    val digest = path.inputStream().use {
+      val digest = DigestUtil.md5()
+      DigestInputStream(it, digest).use { stream ->
+        val buffer = ByteArray(1024 * 8)
+        var bytesRead = 0
+        while (bytesRead != -1) {
+          bytesRead = stream.read(buffer)
+        }
+      }
+      return@use digest
+    }
+    return DigestUtil.digestToHash(digest)
+  }
 }

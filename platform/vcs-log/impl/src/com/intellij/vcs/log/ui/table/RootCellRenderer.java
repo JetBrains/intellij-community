@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -29,12 +29,12 @@ import static com.intellij.ui.hover.TableHoverListener.getHoveredRow;
 import static com.intellij.vcs.log.impl.CommonUiProperties.SHOW_ROOT_NAMES;
 
 public class RootCellRenderer extends SimpleColoredRenderer implements TableCellRenderer, VcsLogCellRenderer {
-  @NotNull private final VcsLogUiProperties myProperties;
-  @NotNull private final VcsLogColorManager myColorManager;
-  @NotNull private Color myColor = UIUtil.getTableBackground();
-  @NotNull private Color myBorderColor = UIUtil.getTableBackground();
+  private final @NotNull VcsLogUiProperties myProperties;
+  private final @NotNull VcsLogColorManager myColorManager;
+  private @NotNull Color myColor = UIUtil.getTableBackground();
+  private @NotNull Color myBorderColor = UIUtil.getTableBackground();
   private boolean isNarrow = true;
-  @NotNull private @Nls String myTooltip = "";
+  private @NotNull @Nls String myTooltip = "";
 
   public RootCellRenderer(@NotNull VcsLogUiProperties properties, @NotNull VcsLogColorManager colorManager) {
     myProperties = properties;
@@ -67,8 +67,7 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
     myColor = path == null ? UIUtil.getTableBackground(isSelected, hasFocus) :
               VcsLogGraphTable.getPathBackgroundColor(path, myColorManager);
     // FIXME: temporary solution for the new UI
-    boolean hovered = row == getHoveredRow(table);
-    hovered = ExperimentalUI.isNewUI() ? hovered && !isSelected : hovered;
+    boolean hovered = ExperimentalUI.isNewUI() ? false : row == getHoveredRow(table);
     isSelected = ExperimentalUI.isNewUI() ? false : isSelected;
 
     myBorderColor = Objects.requireNonNull(((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected, hovered).getBackground());
@@ -100,13 +99,11 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
     return this;
   }
 
-  @NotNull
   @Override
-  public VcsLogCellController getCellController() {
+  public @NotNull VcsLogCellController getCellController() {
     return new VcsLogCellController() {
-      @Nullable
       @Override
-      public Cursor performMouseClick(int row, @NotNull MouseEvent e) {
+      public @Nullable Cursor performMouseClick(int row, @NotNull MouseEvent e) {
         if (myColorManager.hasMultiplePaths() && myProperties.exists(SHOW_ROOT_NAMES)) {
           VcsLogUsageTriggerCollector.triggerClick("root.column");
           myProperties.set(SHOW_ROOT_NAMES, !myProperties.get(SHOW_ROOT_NAMES));
@@ -114,9 +111,8 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
         return null;
       }
 
-      @NotNull
       @Override
-      public Cursor performMouseMove(int row, @NotNull MouseEvent e) {
+      public @NotNull Cursor performMouseMove(int row, @NotNull MouseEvent e) {
         return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
       }
     };
@@ -140,8 +136,7 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
     return myTooltip;
   }
 
-  @NotNull
-  private @Nls String getTooltipText(@Nullable FilePath path, boolean isNarrow) {
+  private @NotNull @Nls String getTooltipText(@Nullable FilePath path, boolean isNarrow) {
     String clickMessage = !isNarrow
                           ? VcsLogBundle.message("vcs.log.click.to.collapse.paths.column.tooltip")
                           : VcsLogBundle.message("vcs.log.click.to.expand.paths.column.tooltip");

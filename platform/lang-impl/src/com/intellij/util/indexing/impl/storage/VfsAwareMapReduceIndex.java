@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing.impl.storage;
 
@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
 
 /**
  * @author Eugene Zhuravlev
@@ -62,23 +61,20 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
   private final boolean myUpdateMappings;
 
   public VfsAwareMapReduceIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
-                                @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout,
-                                @Nullable ReadWriteLock lock) throws IOException {
+                                @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout) throws IOException {
     this(extension,
          () -> indexStorageLayout.openIndexStorage(),
          () -> indexStorageLayout.openForwardIndex(),
          indexStorageLayout.getForwardIndexAccessor(),
-         () -> indexStorageLayout.createOrClearSnapshotInputMappings(),
-         lock);
+         () -> indexStorageLayout.createOrClearSnapshotInputMappings());
   }
 
   protected VfsAwareMapReduceIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
                                    @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storage,
                                    @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndexMap,
                                    @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                                   @Nullable ThrowableComputable<? extends SnapshotInputMappingIndex<Key, Value, FileContent>, ? extends IOException> snapshotInputMappings,
-                                   @Nullable ReadWriteLock lock) throws IOException {
-    super(extension, storage, forwardIndexMap, forwardIndexAccessor, lock);
+                                   @Nullable ThrowableComputable<? extends SnapshotInputMappingIndex<Key, Value, FileContent>, ? extends IOException> snapshotInputMappings) throws IOException {
+    super(extension, storage, forwardIndexMap, forwardIndexAccessor);
     SnapshotInputMappingIndex<Key, Value, FileContent> inputMappings;
     try {
       inputMappings = snapshotInputMappings == null ? null : snapshotInputMappings.compute();
@@ -210,6 +206,9 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
       }
       catch (IOException e) {
         LOG.error(e);
+        // Index would be rebuilt, and exception would be logged with INFO severity
+        // in com.intellij.util.indexing.FileBasedIndexImpl.requestIndexRebuildOnException
+        throw new RuntimeException(e);
       }
     }
     return null;

@@ -136,17 +136,13 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
         data.addAll(context.features)
       }
 
-      val elementData = getElementsData(selectedElements, shouldLogFeatures, elements, elementIdProvider, selectedItems, project)
+      val elementData = getElementsData(selectedElements, shouldLogFeatures, mixedListInfo,
+                                        elements, elementIdProvider, selectedItems, project)
       data.add(IS_PROJECT_DISPOSED_KEY.with(elementData == null))
       if (elementData != null) {
         data.addAll(elementData)
       }
 
-      val contributors = elements.map { element -> element.contributor }.toHashSet()
-      data.add(CONTRIBUTORS.with(contributors.map { c ->
-        val contributorInfo = contributorFeaturesProvider.getFeatures(c, mixedListInfo)
-        ObjectEventData(contributorInfo)
-      }))
       eventId.log(data)
     }
   }
@@ -156,13 +152,14 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
 
   private fun getElementsData(selectedElements: IntArray,
                               shouldLogFeatures: Boolean,
+                              mixedListInfo: SearchEverywhereMixedListInfo,
                               elements: List<SearchEverywhereFoundElementInfoWithMl>,
                               elementIdProvider: SearchEverywhereMlItemIdProvider,
                               selectedItems: List<Any>,
                               project: Project?): List<EventPair<*>>? {
     return ArrayList<EventPair<*>>().apply {
       addAll(getSelectedElementsData(selectedElements, elements, elementIdProvider, selectedItems))
-      addAll(getCollectedElementsData(project, shouldLogFeatures, elements, elementIdProvider) ?: return null)
+      addAll(getCollectedElementsData(project, shouldLogFeatures, mixedListInfo, elements, elementIdProvider) ?: return null)
     }
   }
 
@@ -195,6 +192,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
    */
   private fun getCollectedElementsData(project: Project?,
                                        shouldLogFeatures: Boolean,
+                                       mixedListInfo: SearchEverywhereMixedListInfo,
                                        elements: List<SearchEverywhereFoundElementInfoWithMl>,
                                        elementIdProvider: SearchEverywhereMlItemIdProvider): ArrayList<EventPair<*>>? {
     val data = ArrayList<EventPair<*>>()
@@ -204,15 +202,19 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
         return null
       }
 
-      val result = arrayListOf<EventPair<*>>(
-        CONTRIBUTOR_ID_KEY.with(it.contributor.searchProviderId)
-      )
+      val result = arrayListOf<EventPair<*>>()
 
       val elementId = elementIdProvider.getId(it.element)
       elementId?.let { id -> result.add(ID_KEY.with(id)) }
+
       if (shouldLogFeatures) {
         addElementFeatures(it, result, actionManager)
+        result.add(CONTRIBUTOR_DATA_KEY.with(ObjectEventData(contributorFeaturesProvider.getFeatures(it.contributor, mixedListInfo))))
       }
+      else {
+        result.add(CONTRIBUTOR_DATA_KEY.with(ObjectEventData(contributorFeaturesProvider.getContributorIdFeature(it.contributor))))
+      }
+
       ObjectEventData(result)
     }
     data.add(COLLECTED_RESULTS_DATA_KEY.with(value))
@@ -268,7 +270,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 38, RECORDER_CODE)
+    private val GROUP = EventLogGroup("mlse.log", 53, RECORDER_CODE)
     private val EMPTY_ARRAY = IntArray(0)
     private const val REPORTED_ITEMS_LIMIT = 50
 
@@ -302,19 +304,21 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     internal val SEARCH_STATE_FEATURES_DATA_KEY =
       ObjectEventField("searchStateFeatures", *SearchEverywhereStateFeaturesProvider.getFeaturesDefinition().toTypedArray())
 
-    internal val ID_KEY = EventFields.Int("id")
+    @VisibleForTesting
+    val ID_KEY = EventFields.Int("id")
     internal val ACTION_ID_KEY = EventFields.StringValidatedByCustomRule("actionId", "action")
-    internal val FEATURES_DATA_KEY = createFeaturesEventObject()
-    internal val CONTRIBUTOR_ID_KEY = EventFields.String("contributorId", SE_TABS)
+    @VisibleForTesting
+    val FEATURES_DATA_KEY = createFeaturesEventObject()
     internal val ML_WEIGHT_KEY = EventFields.Double("mlWeight")
+    internal val CONTRIBUTOR_DATA_KEY = ObjectEventField(
+      "contributor", *SearchEverywhereContributorFeaturesProvider.getFeaturesDeclarations().toTypedArray()
+    )
 
     @VisibleForTesting
     val COLLECTED_RESULTS_DATA_KEY = ObjectListEventField(
-      "collectedItems", ID_KEY, ACTION_ID_KEY, FEATURES_DATA_KEY, CONTRIBUTOR_ID_KEY, ML_WEIGHT_KEY
+      "collectedItems", ID_KEY, ACTION_ID_KEY, FEATURES_DATA_KEY, ML_WEIGHT_KEY, CONTRIBUTOR_DATA_KEY
     )
 
-    private val CONTRIBUTORS = ObjectListEventField("contributors",
-                                                    *SearchEverywhereContributorFeaturesProvider.getFeaturesDeclarations().toTypedArray())
 
     // events
     @VisibleForTesting
@@ -351,7 +355,6 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
         SELECTED_ELEMENTS_DATA_KEY,
         SELECTED_ELEMENTS_CONSISTENT,
         SEARCH_STATE_FEATURES_DATA_KEY,
-        CONTRIBUTORS,
         COLLECTED_RESULTS_DATA_KEY
       )
       fields.addAll(SearchEverywhereContextFeaturesProvider.getContextFields())

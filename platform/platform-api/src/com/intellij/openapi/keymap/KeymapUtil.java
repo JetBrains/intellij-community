@@ -59,8 +59,7 @@ public final class KeymapUtil {
   public static @NlsSafe String getShortcutText(@NotNull Shortcut shortcut) {
     String s = "";
 
-    if (shortcut instanceof KeyboardShortcut) {
-      KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
+    if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
 
       String acceleratorText = getKeystrokeText(keyboardShortcut.getFirstKeyStroke());
       if (!acceleratorText.isEmpty()) {
@@ -75,8 +74,7 @@ public final class KeymapUtil {
     else if (shortcut instanceof MouseShortcut) {
       s = getMouseShortcutText((MouseShortcut)shortcut);
     }
-    else if (shortcut instanceof KeyboardModifierGestureShortcut) {
-      final KeyboardModifierGestureShortcut gestureShortcut = (KeyboardModifierGestureShortcut)shortcut;
+    else if (shortcut instanceof KeyboardModifierGestureShortcut gestureShortcut) {
       s = gestureShortcut.getType() == KeyboardGestureAction.ModifierType.dblClick ? "Press, release and hold " : "Hold ";
       s += getKeystrokeText(gestureShortcut.getStroke());
     }
@@ -561,8 +559,7 @@ public final class KeymapUtil {
   @Nullable
   public static KeyStroke getKeyStroke(@NotNull final ShortcutSet shortcutSet) {
     final Shortcut[] shortcuts = shortcutSet.getShortcuts();
-    if (shortcuts.length == 0 || !(shortcuts[0] instanceof KeyboardShortcut)) return null;
-    final KeyboardShortcut shortcut = (KeyboardShortcut)shortcuts[0];
+    if (shortcuts.length == 0 || !(shortcuts[0] instanceof KeyboardShortcut shortcut)) return null;
     if (shortcut.getSecondKeyStroke() != null) {
       return null;
     }
@@ -577,10 +574,9 @@ public final class KeymapUtil {
     }
     Set<KeyStroke> result = new HashSet<>();
     for (Shortcut shortcut : shortcuts) {
-      if (!(shortcut instanceof KeyboardShortcut)) {
+      if (!(shortcut instanceof KeyboardShortcut kbShortcut)) {
         continue;
       }
-      KeyboardShortcut kbShortcut = (KeyboardShortcut)shortcut;
       if (kbShortcut.getSecondKeyStroke() != null) {
         continue;
       }
@@ -616,8 +612,7 @@ public final class KeymapUtil {
                                                            @NotNull @NonNls String actionId) {
     final MouseShortcut syntheticShortcut = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
     for (Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
-      if (shortcut instanceof MouseShortcut) {
-        final MouseShortcut mouseShortcut = (MouseShortcut)shortcut;
+      if (shortcut instanceof MouseShortcut mouseShortcut) {
         if (mouseShortcut.getModifiers() == syntheticShortcut.getModifiers()) {
           return true;
         }

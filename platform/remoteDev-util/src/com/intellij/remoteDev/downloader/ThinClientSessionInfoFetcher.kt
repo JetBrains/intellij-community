@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.remoteDev.connection.CodeWithMeSessionInfoProvider
 import com.intellij.remoteDev.connection.StunTurnServerInfo
+import com.intellij.remoteDev.downloader.exceptions.CodeWithMeUnavailableException
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.system.CpuArch
 import com.intellij.util.withFragment
@@ -62,16 +63,7 @@ object ThinClientSessionInfoFetcher {
               val learnMoreLink = sessionInfo["learnMoreLink"]?.textValue()
               val message = sessionInfo["message"]?.textValue() ?: "Forbidden"
               val reason = sessionInfo["forbiddenReasonText"]?.textValue()
-              val allTogetherText = StringBuilder()
-                .append(message)
-              if (learnMoreLink != null) {
-                allTogetherText.append("\n" + learnMoreLink)
-              }
-              if (reason != null) {
-                allTogetherText.append("\n" + reason)
-              }
-              // todo: dialog
-              throw Exception(allTogetherText.toString())
+              throw CodeWithMeUnavailableException(message, learnMoreLink, reason, null, connection.responseCode)
             }
           } catch (ex: JacksonException) {
             logger.warn("Failed to decode response", ex)

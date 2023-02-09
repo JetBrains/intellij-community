@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.CollectConsumer
@@ -20,6 +19,12 @@ import git4idea.test.*
 import junit.framework.TestCase
 
 class GitLogIndexTest : GitSingleRepoTest() {
+  //companion object {
+  //  init {
+  //    System.setProperty("vcs.log.sqlite", "true")
+  //  }
+  //}
+
   private val defaultUser = VcsUserImpl(USER_NAME, USER_EMAIL)
 
   private lateinit var disposable: Disposable
@@ -32,7 +37,7 @@ class GitLogIndexTest : GitSingleRepoTest() {
   override fun setUp() {
     super.setUp()
 
-    disposable = Disposable { }
+    disposable = Disposer.newDisposable()
     Disposer.register(testRootDisposable, disposable)
 
     index = setUpIndex(myProject, repo.root, logProvider, disposable)
@@ -233,7 +238,7 @@ class GitLogIndexTest : GitSingleRepoTest() {
 
   fun `test directory history`() {
     val dir = "dir"
-    Executor.mkdir(dir)
+    mkdir(dir)
 
     val expectedHistory = mutableSetOf<Int>()
 

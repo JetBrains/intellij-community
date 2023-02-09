@@ -69,7 +69,7 @@ public class RefreshLogAction extends RefreshAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return super.getActionUpdateThread();
   }
 
   private static Attachment @NotNull [] collectDiagnosticInformation(@Nullable Project project, @NotNull VcsLogManager logManager) {

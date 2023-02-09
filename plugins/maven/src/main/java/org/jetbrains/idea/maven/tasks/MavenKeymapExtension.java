@@ -59,10 +59,9 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
     for (String eachId : getActionIdList(project, null)) {
       AnAction eachAction = actionManager.getAction(eachId);
 
-      if (!(eachAction instanceof MavenGoalAction)) continue;
+      if (!(eachAction instanceof MavenGoalAction mavenAction)) continue;
       if (condition != null && !condition.value(actionManager.getActionOrStub(eachId))) continue;
 
-      MavenGoalAction mavenAction = (MavenGoalAction)eachAction;
       MavenProject mavenProject = mavenAction.getMavenProject();
       Set<Pair<String, String>> actions = projectToActionsMapping.get(mavenProject);
       if (actions == null) {

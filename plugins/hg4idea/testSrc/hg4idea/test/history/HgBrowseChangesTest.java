@@ -30,9 +30,6 @@ import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
 import static java.util.Calendar.YEAR;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgBrowseChangesTest extends HgPlatformTest {
 
   private HgVcs myVcs;

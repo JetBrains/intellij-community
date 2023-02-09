@@ -16,6 +16,7 @@ import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
+import com.intellij.webSymbols.utils.completeMatch
 import com.intellij.webSymbols.utils.hasOnlyExtensions
 import com.intellij.xml.XmlAttributeDescriptor
 import com.intellij.xml.XmlAttributeDescriptorsProvider
@@ -28,9 +29,9 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
     else {
       val queryExecutor = WebSymbolsQueryExecutorFactory.create(context)
       val symbols = (context.descriptor as? WebSymbolElementDescriptor)?.symbol?.let { listOf(it) }
-                    ?: queryExecutor.runNameMatchQuery(listOf(NAMESPACE_HTML, KIND_HTML_ELEMENTS, context.name))
+                    ?: queryExecutor.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ELEMENTS, context.name)
       queryExecutor
-        .runCodeCompletionQuery(listOf(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES), 0, scope = symbols, virtualSymbols = false)
+        .runCodeCompletionQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, "", 0, scope = symbols, virtualSymbols = false)
         .asSequence()
         .filter { it.offset == 0 && !it.completeAfterInsert }
         .filterOutStandardHtmlSymbols()
@@ -38,7 +39,7 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
         .distinct()
         .mapNotNull { name ->
           // TODO code completion query should return name-segments
-          queryExecutor.runNameMatchQuery(listOf(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, name), strictScope = true, scope = symbols)
+          queryExecutor.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, name, strictScope = true, scope = symbols)
             .filter { it.completeMatch }
             .takeIf { it.isNotEmpty() }
             ?.getAttributeDescriptor(name, context, queryExecutor)
@@ -54,9 +55,9 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
       val queryExecutor = WebSymbolsQueryExecutorFactory.create(context.getAttribute(attributeName) ?: context)
       val elementDescriptor = context.descriptor
       val symbols = (elementDescriptor as? WebSymbolElementDescriptor)?.symbol?.let { listOf(it) }
-                    ?: queryExecutor.runNameMatchQuery(listOf(NAMESPACE_HTML, KIND_HTML_ELEMENTS, context.name))
+                    ?: queryExecutor.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ELEMENTS, context.name)
       queryExecutor
-        .runNameMatchQuery(listOf(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, attributeName), scope = symbols)
+        .runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, attributeName, scope = symbols)
         .takeIf {
           it.isNotEmpty()
           && !it.hasOnlyExtensions()

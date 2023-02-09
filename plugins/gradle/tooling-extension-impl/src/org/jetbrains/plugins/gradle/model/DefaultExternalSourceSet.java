@@ -13,7 +13,7 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public final class DefaultExternalSourceSet implements ExternalSourceSet {
-  private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 2L;
 
   private String name;
   private Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources;
@@ -21,6 +21,8 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   private Collection<File> artifacts;
   private String sourceCompatibility;
   private String targetCompatibility;
+
+  private String jdkInstallationPath;
   private boolean isPreview;
 
   public DefaultExternalSourceSet() {
@@ -114,5 +116,14 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   @Override
   public String toString() {
     return "sourceSet '" + name + '\'' ;
+  }
+
+  @Nullable
+  public String getJdkInstallationPath() {
+    return jdkInstallationPath;
+  }
+
+  public void setJdkInstallationPath(@Nullable String jdkInstallationPath) {
+    this.jdkInstallationPath = jdkInstallationPath;
   }
 }

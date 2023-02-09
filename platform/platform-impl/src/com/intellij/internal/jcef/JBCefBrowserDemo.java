@@ -56,7 +56,7 @@ final class JBCefBrowserDemo extends AnAction implements DumbAware {
       return;
     }
 
-    showBrowser(false);
+    showBrowser(JBCefApp.isOffScreenRenderingModeEnabled());
   }
 
   private static void showBrowser(boolean isOffScreenRendering) {
@@ -119,9 +119,7 @@ final class JBCefBrowserDemo extends AnAction implements DumbAware {
       public void actionPerformed(ActionEvent e) {
         myCookieManagerDialog.setVisible(true);
         List<JBCefCookie> cookies = myJBCefBrowser.getJBCefCookieManager().getCookies();
-        if (cookies != null) {
-          myCookieManagerDialog.update(cookies);
-        }
+        myCookieManagerDialog.update(cookies);
       }
     });
     controlPanel.add(myShowCookieManagerButton);
@@ -192,12 +190,12 @@ final class JBCefBrowserDemo extends AnAction implements DumbAware {
     });
 
     if (JBCefApp.isOffScreenRenderingModeEnabled()) {
-      JMenuItem menuItemOSR = new JMenuItem("Create OSR browser");
-      menu.add(menuItemOSR);
-      menuItemOSR.addActionListener(new ActionListener() {
+      JMenuItem menuItemWindowedMode = new JMenuItem("Create jcef browser in Windowed-mode");
+      menu.add(menuItemWindowedMode);
+      menuItemWindowedMode.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          showBrowser(true);
+          showBrowser(false);
         }
       });
     }

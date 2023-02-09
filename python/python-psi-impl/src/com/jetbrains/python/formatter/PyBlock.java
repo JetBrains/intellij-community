@@ -355,9 +355,7 @@ public class PyBlock implements ASTBlock {
 
       if (!PyTokenTypes.ALL_BRACES.contains(childType)) {
         childAlignment = getAlignmentForChildren();
-        if (parentType != PyElementTypes.CALL_EXPRESSION) {
-          childIndent = Indent.getNormalIndent();
-        }
+        childIndent = Indent.getNormalIndent();
       }
       else if (childType == PyTokenTypes.RPAR) {
         childIndent = Indent.getNoneIndent();
@@ -719,8 +717,7 @@ public class PyBlock implements ASTBlock {
   }
 
   private boolean isSliceOperand(@NotNull ASTNode child) {
-    if (myNode.getPsi() instanceof PySliceExpression) {
-      final PySliceExpression sliceExpression = (PySliceExpression)myNode.getPsi();
+    if (myNode.getPsi() instanceof PySliceExpression sliceExpression) {
       final PyExpression operand = sliceExpression.getOperand();
       return operand.getNode() == child;
     }
@@ -1272,8 +1269,7 @@ public class PyBlock implements ASTBlock {
       if (isIncompleteCall(lastChild)) return true;
     }
 
-    if (myNode.getPsi() instanceof PyArgumentList) {
-      final PyArgumentList argumentList = (PyArgumentList)myNode.getPsi();
+    if (myNode.getPsi() instanceof PyArgumentList argumentList) {
       return argumentList.getClosingParen() == null;
     }
     if (isIncompleteCall(myNode) || isIncompleteExpressionWithBrackets(myNode.getPsi())) {

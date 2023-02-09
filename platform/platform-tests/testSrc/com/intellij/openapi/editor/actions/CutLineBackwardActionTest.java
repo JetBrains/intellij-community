@@ -18,9 +18,6 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class CutLineBackwardActionTest extends LightPlatformCodeInsightTestCase {
 
   public void testZeroPosition() {

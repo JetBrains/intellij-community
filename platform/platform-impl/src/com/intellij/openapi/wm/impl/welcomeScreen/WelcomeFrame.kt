@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.CommonBundle
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.impl.ProjectUtilCore
-import com.intellij.idea.SplashManager
+import com.intellij.idea.hideSplashBeforeShow
 import com.intellij.internal.statistic.eventLog.getUiEventLogger
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
@@ -51,9 +51,10 @@ import javax.swing.KeyStroke
 class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
   private val myScreen: WelcomeScreen
   private val myBalloonLayout: BalloonLayout
+  private val listenerDisposable = Disposer.newDisposable()
 
   init {
-    SplashManager.hideBeforeShow(this)
+    hideSplashBeforeShow(this)
     val rootPane = getRootPane()
     val screen = createScreen(rootPane)
     val glassPane = IdeGlassPaneImpl(rootPane)
@@ -62,12 +63,10 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
     contentPane = screen.welcomePanel
     title = ApplicationNamesInfo.getInstance().fullProductName
     AppUIUtil.updateWindowIcon(this)
-    val listenerDisposable = Disposer.newDisposable()
     ApplicationManager.getApplication().messageBus.connect(listenerDisposable).subscribe(ProjectManager.TOPIC,
                                                                                          object : ProjectManagerListener {
                                                                                            @Suppress("removal", "OVERRIDE_DEPRECATION")
                                                                                            override fun projectOpened(project: Project) {
-                                                                                             Disposer.dispose(listenerDisposable)
                                                                                              dispose()
                                                                                            }
                                                                                          })
@@ -81,8 +80,8 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
 
   companion object {
     @JvmField
-    val EP = ExtensionPointName<WelcomeFrameProvider>("com.intellij.welcomeFrameProvider")
-    const val DIMENSION_KEY = "WELCOME_SCREEN"
+    val EP: ExtensionPointName<WelcomeFrameProvider> = ExtensionPointName("com.intellij.welcomeFrameProvider")
+    const val DIMENSION_KEY: String = "WELCOME_SCREEN"
 
     private var instance: IdeFrame? = null
 
@@ -164,10 +163,12 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
         if (instance != null) {
           return@Runnable
         }
-        val frame = EP.computeSafeIfAny(WelcomeFrameProvider::createFrame)
+
+        val frame = EP.lazySequence().mapNotNull { it.createFrame() }.firstOrNull()
                     ?: throw IllegalStateException("No implementation of `com.intellij.welcomeFrameProvider` extension point")
         val jFrame = frame as JFrame
         registerKeyboardShortcuts(jFrame.rootPane)
+        hideSplashBeforeShow(jFrame)
         jFrame.isVisible = true
         IdeMenuBar.installAppMenuIfNeeded(jFrame)
         instance = frame
@@ -211,6 +212,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
     saveLocation(bounds)
     super.dispose()
     Disposer.dispose(myScreen)
+    Disposer.dispose(listenerDisposable)
     resetInstance()
   }
 

@@ -17,22 +17,26 @@ public class RepositoriesImportingTest extends MavenMultiVersionImportingTestCas
   public void testMirrorCentralImport() throws IOException {
     String oldSettingsFile = getMavenGeneralSettings().getUserSettingsFile();
     try {
-      VirtualFile settingsXml = createProjectSubFile("settings.xml", "<settings>" +
-                                                                     "<mirrors>" +
-                                                                     "    <mirror>" +
-                                                                     "      <id>central-mirror</id>" +
-                                                                     "      <name>mirror</name>" +
-                                                                     "      <url>https://example.com/maven2</url>" +
-                                                                     "      <mirrorOf>central</mirrorOf>" +
-                                                                     "    </mirror>" +
-                                                                     "  </mirrors>" +
-                                                                     "</settings>");
+      VirtualFile settingsXml = createProjectSubFile("settings.xml", """
+        <settings>
+        <mirrors>
+            <mirror>
+              <id>central-mirror</id>
+              <name>mirror</name>
+              <url>https://example.com/maven2</url>
+              <mirrorOf>central</mirrorOf>
+            </mirror>
+          </mirrors>
+        </settings>
+        """);
       getMavenGeneralSettings().setUserSettingsFile(settingsXml.getCanonicalPath());
 
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<packaging>pom</packaging>" +
-                    "<version>1</version>");
+      importProject("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <packaging>pom</packaging>
+                      <version>1</version>
+                      """);
 
       assertHaveRepositories("https://example.com/maven2");
     }
@@ -45,22 +49,26 @@ public class RepositoriesImportingTest extends MavenMultiVersionImportingTestCas
   public void testMirrorAllImport() throws IOException {
     String oldSettingsFile = getMavenGeneralSettings().getUserSettingsFile();
     try {
-      VirtualFile settingsXml = createProjectSubFile("settings.xml", "<settings>" +
-                                                                     "<mirrors>" +
-                                                                     "    <mirror>" +
-                                                                     "      <id>central-mirror</id>" +
-                                                                     "      <name>mirror</name>" +
-                                                                     "      <url>https://example.com/maven2</url>" +
-                                                                     "      <mirrorOf>*</mirrorOf>" +
-                                                                     "    </mirror>" +
-                                                                     "  </mirrors>" +
-                                                                     "</settings>");
+      VirtualFile settingsXml = createProjectSubFile("settings.xml", """
+        <settings>
+        <mirrors>
+            <mirror>
+              <id>central-mirror</id>
+              <name>mirror</name>
+              <url>https://example.com/maven2</url>
+              <mirrorOf>*</mirrorOf>
+            </mirror>
+          </mirrors>
+        </settings>
+        """);
       getMavenGeneralSettings().setUserSettingsFile(settingsXml.getCanonicalPath());
 
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<packaging>pom</packaging>" +
-                    "<version>1</version>");
+      importProject("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <packaging>pom</packaging>
+                      <version>1</version>
+                      """);
 
       assertHaveRepositories("https://example.com/maven2");
     }
@@ -73,22 +81,26 @@ public class RepositoriesImportingTest extends MavenMultiVersionImportingTestCas
   public void testMirrorAllExceptCentralImport() throws IOException {
     String oldSettingsFile = getMavenGeneralSettings().getUserSettingsFile();
     try {
-      VirtualFile settingsXml = createProjectSubFile("settings.xml", "<settings>" +
-                                                                     "<mirrors>" +
-                                                                     "    <mirror>" +
-                                                                     "      <id>central-mirror</id>" +
-                                                                     "      <name>mirror</name>" +
-                                                                     "      <url>https://example.com/maven2</url>" +
-                                                                     "      <mirrorOf>*,!central</mirrorOf>" +
-                                                                     "    </mirror>" +
-                                                                     "  </mirrors>" +
-                                                                     "</settings>");
+      VirtualFile settingsXml = createProjectSubFile("settings.xml", """
+        <settings>
+        <mirrors>
+            <mirror>
+              <id>central-mirror</id>
+              <name>mirror</name>
+              <url>https://example.com/maven2</url>
+              <mirrorOf>*,!central</mirrorOf>
+            </mirror>
+          </mirrors>
+        </settings>
+        """);
       getMavenGeneralSettings().setUserSettingsFile(settingsXml.getCanonicalPath());
 
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<packaging>pom</packaging>" +
-                    "<version>1</version>");
+      importProject("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <packaging>pom</packaging>
+                      <version>1</version>
+                      """);
 
       assertHaveRepositories("https://repo1.maven.org/maven2");
       assertDoNotHaveRepositories("https://example.com/maven2<");

@@ -15,6 +15,7 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
 
 import javax.swing.*;
 import java.nio.file.Path;
@@ -107,7 +108,7 @@ public class WizardContext extends UserDataHolderBase {
     return myProject;
   }
 
-  public @NotNull String getProjectFileDirectory() {
+  public @NotNull @SystemDependent String getProjectFileDirectory() {
     return getProjectDirectory().toString();
   }
 
@@ -156,7 +157,7 @@ public class WizardContext extends UserDataHolderBase {
   }
 
   /**
-   * Useses to select presentable name for message bundle texts.
+   * Uses to select presentable name for message bundle texts.
    * <br/>Message bundle examples:
    * <br/><code>sentence="New {0,choice,0#module|1#project}"</code> -> New project, New module
    * <br/><code>title="New {0,choice,0#Module|1#Project}"</code> -> New Project, New Module

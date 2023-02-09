@@ -21,9 +21,9 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -251,6 +251,7 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     configureByTestName();
     myFixture.complete(CompletionType.SMART, 1);
     myFixture.type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 

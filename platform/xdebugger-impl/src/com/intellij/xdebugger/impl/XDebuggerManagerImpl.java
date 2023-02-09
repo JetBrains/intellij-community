@@ -66,6 +66,7 @@ import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -237,6 +238,13 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     return startSessionAndShowTab(sessionName, contentToReuse, false, starter);
   }
 
+  @Override
+  public @NotNull XDebugSession startSessionAndShowTab(@Nls @NotNull String sessionName,
+                                                       @NotNull XDebugProcessStarter starter,
+                                                       @NotNull ExecutionEnvironment environment) throws ExecutionException {
+    return startSessionAndShowTab(sessionName, null, environment, environment.getContentToReuse(), false, starter);
+  }
+
   @NotNull
   @Override
   public XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
@@ -252,8 +260,17 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
                                               @Nullable RunContentDescriptor contentToReuse,
                                               boolean showToolWindowOnSuspendOnly,
                                               @NotNull XDebugProcessStarter starter) throws ExecutionException {
+    return startSessionAndShowTab(sessionName, icon, null, contentToReuse, showToolWindowOnSuspendOnly, starter);
+  }
+
+  private XDebugSession startSessionAndShowTab(@NotNull String sessionName,
+                                              Icon icon,
+                                              @Nullable ExecutionEnvironment environment,
+                                              @Nullable RunContentDescriptor contentToReuse,
+                                              boolean showToolWindowOnSuspendOnly,
+                                              @NotNull XDebugProcessStarter starter) throws ExecutionException {
     XDebugSessionImpl session = startSession(contentToReuse, starter,
-      new XDebugSessionImpl(null, this, sessionName, icon, showToolWindowOnSuspendOnly, contentToReuse));
+      new XDebugSessionImpl(environment, this, sessionName, icon, showToolWindowOnSuspendOnly, contentToReuse));
 
     if (!showToolWindowOnSuspendOnly) {
       session.showSessionTab();
@@ -419,8 +436,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       Editor editor = e.getEditor();
       if (editor.getProject() != myProject || editor.getEditorKind() != EditorKind.MAIN_EDITOR) return;
       EditorGutter editorGutter = editor.getGutter();
-      if (editorGutter instanceof EditorGutterComponentEx) {
-        EditorGutterComponentEx gutter = (EditorGutterComponentEx)editorGutter;
+      if (editorGutter instanceof EditorGutterComponentEx gutter) {
         if (e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA) {
           int line = EditorUtil.yToLogicalLineNoCustomRenderers(editor, e.getMouseEvent().getY());
           Document document = editor.getDocument();

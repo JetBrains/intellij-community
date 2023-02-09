@@ -15,18 +15,17 @@
  */
 package com.siyeh.ig.classmetrics;
 
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class FieldCountInspection extends ClassMetricInspection {
 
@@ -64,27 +63,13 @@ public class FieldCountInspection extends ClassMetricInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final String configurationLabel = getConfigurationLabel();
-    final JLabel label = new JLabel(configurationLabel);
-    final JFormattedTextField valueField = prepareNumberEditor("m_limit");
-
-    final CheckBox includeCheckBox =
-      new CheckBox(InspectionGadgetsBundle.message("field.count.inspection.include.constant.fields.in.count.checkbox"),
-                   this, "m_countConstantFields");
-    final CheckBox considerCheckBox =
-      new CheckBox(InspectionGadgetsBundle.message("field.count.inspection.static.final.fields.count.as.constant.checkbox"),
-                   this, "m_considerStaticFinalFieldsConstant");
-    final CheckBox enumConstantCheckBox =
-      new CheckBox(InspectionGadgetsBundle.message("field.count.inspection.include.enum.constants.in.count"),
-                   this, "myCountEnumConstants");
-
-    final InspectionOptionsPanel panel = new InspectionOptionsPanel();
-    panel.addRow(label, valueField);
-    panel.add(includeCheckBox);
-    panel.add(considerCheckBox);
-    panel.add(enumConstantCheckBox);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("m_limit", getConfigurationLabel(), 1, 1000),
+      checkbox("m_countConstantFields", InspectionGadgetsBundle.message("field.count.inspection.include.constant.fields.in.count.checkbox")),
+      checkbox("m_considerStaticFinalFieldsConstant", InspectionGadgetsBundle.message("field.count.inspection.static.final.fields.count.as.constant.checkbox")),
+      checkbox("myCountEnumConstants", InspectionGadgetsBundle.message("field.count.inspection.include.enum.constants.in.count"))
+    );
   }
 
   @Override

@@ -116,10 +116,10 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     return ptr.element?.parent.toUElementOfType()
   }
 
-  override fun initializeField(uField: UField, uParameter: UParameter) {
-    val uMethod = uParameter.getParentOfType(UMethod::class.java, false) ?: return
-    val psiMethod = uMethod.sourcePsi as? PsiMethod ?: return
-    val body = psiMethod.body ?: return
+  override fun initializeField(uField: UField, uParameter: UParameter): UExpression? {
+    val uMethod = uParameter.getParentOfType(UMethod::class.java, false) ?: return null
+    val psiMethod = uMethod.sourcePsi as? PsiMethod ?: return null
+    val body = psiMethod.body ?: return null
 
     val elementFactory = JavaPsiFacade.getInstance(psiMethod.project).elementFactory
     val prefix = if (uField.name == uParameter.name) "this." else ""
@@ -131,6 +131,7 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     else {
       body.add(statement)
     }
+    return statement.toUElementOfType()
   }
 }
 
@@ -326,9 +327,9 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     return JavaUDeclarationsExpression(null, declarations)
   }
 
-  override fun createReturnExpresion(expression: UExpression?,
-                                     inLambda: Boolean,
-                                     context: PsiElement?): UReturnExpression? {
+  override fun createReturnExpression(expression: UExpression?,
+                                      inLambda: Boolean,
+                                      context: PsiElement?): UReturnExpression? {
     val returnStatement = psiFactory.createStatementFromText("return ;", null) as? PsiReturnStatement ?: return null
 
     expression?.sourcePsi?.node?.let { (returnStatement as CompositeElement).addChild(it, returnStatement.lastChild.node) }
@@ -413,7 +414,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
           parameterInfo.suggestedName,
           VariableKind.PARAMETER,
           parameterInfo.type,
-          context = body.sourcePsi
+          context = context ?: body.sourcePsi
         ) ?: return null
         parameter.nameIdentifier?.replace(psiFactory.createIdentifier(name))
 
@@ -432,12 +433,13 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
       lambda.parameterList.lastChild.delete()
     }
 
-    val normalizedBody = when (val bodyPsi = body.sourcePsi) {
-      is PsiExpression -> bodyPsi
-      is PsiCodeBlock -> normalizeBlockForLambda(bodyPsi)
-      is PsiBlockStatement -> normalizeBlockForLambda(bodyPsi.codeBlock)
-      else -> return null
-    }
+    val normalizedBody = JavaULambdaExpression.unwrapImplicitBody(body)?.copy() // reuse existing lambda body
+                         ?: when (val bodyPsi = body.sourcePsi) {
+                           is PsiExpression -> bodyPsi
+                           is PsiCodeBlock -> normalizeBlockForLambda(bodyPsi)
+                           is PsiBlockStatement -> normalizeBlockForLambda(bodyPsi.codeBlock)
+                           else -> return null
+                         }
 
     lambda.body?.replace(normalizedBody) ?: return null
 
@@ -501,6 +503,9 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
       else -> error("Unexpected type " + result.javaClass)
     }
   }
+
+  override fun createMethodFromText(methodText: String, context: PsiElement?): UMethod? =
+    psiFactory.createMethodFromText(methodText, context).toUElementOfType()
 
   private val PsiElement.branchStatement: PsiStatement?
     get() = when (this) {

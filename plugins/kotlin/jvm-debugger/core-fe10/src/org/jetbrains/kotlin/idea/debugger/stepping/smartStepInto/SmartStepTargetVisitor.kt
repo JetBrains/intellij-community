@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isInlineOnly
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.isFromJava
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.resolve.isInlineClassType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
+import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.SimpleType
 import org.jetbrains.kotlin.types.checker.isSingleClassifierType
@@ -72,7 +74,7 @@ class SmartStepTargetVisitor(
         val resolvedCall = expression.callableReference.getResolvedCall(bindingContext) ?: return
         when (val descriptor = resolvedCall.resultingDescriptor) {
             is FunctionDescriptor -> recordFunctionReference(expression, descriptor)
-            is PropertyDescriptor -> recordGetter(expression, descriptor, bindingContext)
+            is PropertyDescriptor -> recordProperty(expression, descriptor, bindingContext)
         }
     }
 
@@ -94,26 +96,56 @@ class SmartStepTargetVisitor(
         }
     }
 
-    private fun recordGetter(expression: KtExpression, descriptor: PropertyDescriptor, bindingContext: BindingContext) {
-        val getterDescriptor = descriptor.getter
-        if (getterDescriptor == null || getterDescriptor.isDefault) return
+    private fun recordProperty(expression: KtExpression, descriptor: PropertyDescriptor, bindingContext: BindingContext) {
+        if (descriptor is SyntheticJavaPropertyDescriptor) {
+            val functionDescriptor =
+                when ((expression as? KtNameReferenceExpression)?.computeTargetType()) {
+                    KtNameReferenceExpressionUsage.PROPERTY_GETTER, KtNameReferenceExpressionUsage.UNKNOWN, null -> descriptor.getMethod
+                    KtNameReferenceExpressionUsage.PROPERTY_SETTER -> descriptor.setMethod
+                }
+            val declaration = functionDescriptor?.let { DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, it) }
+            if (declaration is PsiMethod) {
+                append(MethodSmartStepTarget(declaration, null, expression, true, lines))
+            }
+            return
+        }
+        val propertyDescriptor =
+            when ((expression as? KtNameReferenceExpression)?.computeTargetType()) {
+                KtNameReferenceExpressionUsage.PROPERTY_GETTER, KtNameReferenceExpressionUsage.UNKNOWN, null -> descriptor.getter
+                KtNameReferenceExpressionUsage.PROPERTY_SETTER -> descriptor.setter
+            }
+        if (propertyDescriptor == null || propertyDescriptor.isDefault) return
 
-        val ktDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, getterDescriptor) as? KtDeclaration ?: return
+        val ktDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, propertyDescriptor) as? KtDeclaration ?: return
 
-        val delegatedResolvedCall = bindingContext[BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL, getterDescriptor]
+        val delegatedResolvedCall = bindingContext[BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL, propertyDescriptor]
         if (delegatedResolvedCall != null) {
-            val delegatedPropertyGetterDescriptor = delegatedResolvedCall.resultingDescriptor
+            val delegatedPropertyDescriptor = delegatedResolvedCall.resultingDescriptor
             val delegateDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(
-                element.project, delegatedPropertyGetterDescriptor
+                element.project, delegatedPropertyDescriptor
             ) as? KtDeclarationWithBody ?: return
-            val label = "${descriptor.name}." + KotlinMethodSmartStepTarget.calcLabel(delegatedPropertyGetterDescriptor)
-            appendPropertyFilter(delegatedPropertyGetterDescriptor, delegateDeclaration, label, expression, lines)
+            val label = "${descriptor.name}." + KotlinMethodSmartStepTarget.calcLabel(delegatedPropertyDescriptor)
+            appendPropertyFilter(delegatedPropertyDescriptor, delegateDeclaration, label, expression, lines)
         } else {
             if (ktDeclaration is KtPropertyAccessor && ktDeclaration.hasBody()) {
-                val label = KotlinMethodSmartStepTarget.calcLabel(getterDescriptor)
-                appendPropertyFilter(getterDescriptor, ktDeclaration, label, expression, lines)
+                val label = KotlinMethodSmartStepTarget.calcLabel(propertyDescriptor)
+                appendPropertyFilter(propertyDescriptor, ktDeclaration, label, expression, lines)
             }
         }
+    }
+
+    private fun KtNameReferenceExpression.computeTargetType(): KtNameReferenceExpressionUsage {
+        val potentialLeftHandSide = parent as? KtQualifiedExpression ?: this
+        val binaryExpr =
+            potentialLeftHandSide.parent as? KtBinaryExpression ?: return KtNameReferenceExpressionUsage.PROPERTY_GETTER
+        return when (binaryExpr.operationToken) {
+            KtTokens.EQ -> KtNameReferenceExpressionUsage.PROPERTY_SETTER
+            else -> KtNameReferenceExpressionUsage.UNKNOWN
+        }
+    }
+
+    private enum class KtNameReferenceExpressionUsage {
+        PROPERTY_GETTER, PROPERTY_SETTER, UNKNOWN
     }
 
     private fun appendPropertyFilter(
@@ -257,7 +289,7 @@ class SmartStepTargetVisitor(
         val bindingContext = expression.analyze(BodyResolveMode.PARTIAL)
         val resolvedCall = expression.getResolvedCall(bindingContext) ?: return
         val propertyDescriptor = resolvedCall.resultingDescriptor as? PropertyDescriptor ?: return
-        recordGetter(expression, propertyDescriptor, bindingContext)
+        recordProperty(expression, propertyDescriptor, bindingContext)
         super.visitSimpleNameExpression(expression)
     }
 
@@ -320,9 +352,11 @@ class SmartStepTargetVisitor(
     }
 }
 
-private fun PropertyAccessorDescriptor.getJvmMethodName(): String {
-    return DescriptorUtils.getJvmName(this) ?: JvmAbi.getterName(correspondingProperty.name.asString())
-}
+private fun PropertyAccessorDescriptor.getJvmMethodName(): String =
+    DescriptorUtils.getJvmName(this) ?: when (this) {
+        is PropertySetterDescriptor -> JvmAbi.setterName(correspondingProperty.name.asString())
+        else -> JvmAbi.getterName(correspondingProperty.name.asString())
+    }
 
 fun DeclarationDescriptor.getMethodName() =
     when (this) {

@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class AbstractCustomLexer extends LexerBase {
   protected CharSequence myBuffer = Strings.EMPTY_CHAR_SEQUENCE;
   protected int myStartOffset = 0;
@@ -23,7 +20,7 @@ public class AbstractCustomLexer extends LexerBase {
   protected TokenInfo myCurrentToken;
   protected int myPosition;
 
-  public AbstractCustomLexer(List<TokenParser> tokenParsers) {
+  public AbstractCustomLexer(List<? extends TokenParser> tokenParsers) {
     myTokenParsers = tokenParsers.toArray(new TokenParser[0]);
   }
 

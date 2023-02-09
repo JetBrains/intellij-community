@@ -23,9 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 import java.util.ArrayList;
 
-/**
- * @author ilyas
- */
 public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocComment {
   public GrDocCommentImpl(CharSequence text) {
     super(GroovyDocElementTypes.GROOVY_DOC_COMMENT, text);

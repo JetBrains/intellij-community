@@ -4,7 +4,6 @@ package git4idea.merge.dialog
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -33,7 +32,7 @@ class CmdLabel(@NlsSafe cmd: String,
     add(component,
         CC()
           .y("${gapY}px")
-          .gapBefore("${JBUI.scale(6)}px"))
+          .gapBefore("6"))
   }
 
   override fun getPreferredSize() = componentSize

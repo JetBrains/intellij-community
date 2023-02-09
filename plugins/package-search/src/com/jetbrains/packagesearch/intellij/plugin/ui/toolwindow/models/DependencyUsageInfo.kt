@@ -17,17 +17,17 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationIndexes
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion.Missing
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 
 internal data class DependencyUsageInfo(
-    val projectModule: ProjectModule,
-    val declaredVersion: PackageVersion,
-    val resolvedVersion: PackageVersion,
+    val module: PackageSearchModule,
+    val declaredVersion: NormalizedPackageVersion<*>,
+    val resolvedVersion: NormalizedPackageVersion<*>,
     val scope: PackageScope,
     val userDefinedScopes: List<PackageScope>,
     val declarationIndexInBuildFile: DependencyDeclarationIndexes?
 ) {
 
-    fun getDeclaredVersionOrFallback() = if (declaredVersion !is Missing) declaredVersion else resolvedVersion
+    fun getDeclaredVersionOrFallback() = if (declaredVersion !is NormalizedPackageVersion.Missing) declaredVersion else resolvedVersion
 }

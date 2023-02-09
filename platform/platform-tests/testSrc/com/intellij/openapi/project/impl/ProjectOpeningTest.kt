@@ -39,7 +39,7 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
     }
 
     val activity = MyStartupActivity()
-    val ep = ExtensionPointName<InitProjectActivity>("com.intellij.startupActivity")
+    val ep = ExtensionPointName<InitProjectActivity>("com.intellij.initProjectActivity")
     ExtensionTestUtil.maskExtensions(ep, listOf(activity), testRootDisposable, fireEvents = false)
     runBlocking {
       job = launch {

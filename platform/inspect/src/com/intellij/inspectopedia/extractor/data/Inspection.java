@@ -120,8 +120,7 @@ public class Inspection implements Comparable<Inspection> {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof Inspection)) return false;
-    Inspection that = (Inspection)o;
+    if (!(o instanceof Inspection that)) return false;
     return appliesToDialects == that.appliesToDialects &&
            isCleanup == that.isCleanup &&
            isEnabledDefault == that.isEnabledDefault &&

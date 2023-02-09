@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -70,8 +70,7 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
     if (!myExpression.isValid()) return;
     if (!FileModificationService.getInstance().prepareFileForWrite(myExpression.getContainingFile())) return;
     PsiElement element = myExpression.resolve();
-    if (!(element instanceof PsiMember)) return;
-    PsiMember myMember = (PsiMember)element;
+    if (!(element instanceof PsiMember myMember)) return;
     if (!myMember.isValid()) return;
 
     PsiClass containingClass = myMember.getContainingClass();

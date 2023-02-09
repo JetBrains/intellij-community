@@ -37,6 +37,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.messages.MessageBusConnection;
@@ -329,10 +330,7 @@ public final class PsiVFSListener implements BulkFileListener {
     Module module = myProjectRootManager.getFileIndex().getModuleForFile(parent);
     if (module == null) return false;
     VirtualFile[] excludeRoots = ModuleRootManager.getInstance(module).getExcludeRoots();
-    for (VirtualFile root : excludeRoots) {
-      if (root.equals(file)) return true;
-    }
-    return false;
+    return ArrayUtil.contains(file, excludeRoots);
   }
 
   private void propertyChanged(@NotNull VFilePropertyChangeEvent event) {
@@ -765,8 +763,7 @@ public final class PsiVFSListener implements BulkFileListener {
     }
     else {
       assert subList.size() == 1;
-      if (event instanceof VFileCopyEvent) {
-        VFileCopyEvent ce = (VFileCopyEvent)event;
+      if (event instanceof VFileCopyEvent ce) {
         VirtualFile copy = ce.getNewParent().findChild(ce.getNewChildName());
         if (copy != null) {
           fileCreated(copy); // no need to group file creation events

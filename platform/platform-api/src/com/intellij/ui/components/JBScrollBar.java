@@ -189,8 +189,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   public void setValue(int value) {
     int delay = 0;
     Component parent = getParent();
-    if (parent instanceof JBScrollPane) {
-      JBScrollPane pane = (JBScrollPane)parent;
+    if (parent instanceof JBScrollPane pane) {
       JViewport viewport = pane.getViewport();
       if (viewport != null && ScrollSettings.isEligibleFor(viewport.getView()) && ScrollSettings.isInterpolationEligibleFor(this)) {
         delay = pane.getInitialDelay(getValueIsAdjusting());
@@ -261,8 +260,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
 
   private JViewport getViewport() {
     Component parent = getParent();
-    if (parent instanceof JScrollPane) {
-      JScrollPane pane = (JScrollPane)parent;
+    if (parent instanceof JScrollPane pane) {
       return pane.getViewport();
     }
     return null;

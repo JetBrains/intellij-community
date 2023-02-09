@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
-/**
- * @author vlan
- */
 public class PyInheritedMembersFilter implements FileStructureFilter {
   private static final String ID = "SHOW_INHERITED";
 
@@ -39,8 +36,7 @@ public class PyInheritedMembersFilter implements FileStructureFilter {
 
   @Override
   public boolean isVisible(TreeElement treeNode) {
-    if (treeNode instanceof PyStructureViewElement) {
-      final PyStructureViewElement sve = (PyStructureViewElement)treeNode;
+    if (treeNode instanceof PyStructureViewElement sve) {
       return !sve.isInherited();
     }
     return true;

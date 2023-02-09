@@ -99,8 +99,7 @@ public final class GrInplaceParameterIntroducer extends GrAbstractInplaceIntrodu
   protected void updateTitle(@Nullable GrVariable variable, String value) {
     if (getPreviewEditor() == null || variable == null) return;
     final PsiElement declarationScope = ((PsiParameter)variable).getDeclarationScope();
-    if (declarationScope instanceof PsiMethod) {
-      final PsiMethod psiMethod = (PsiMethod)declarationScope;
+    if (declarationScope instanceof PsiMethod psiMethod) {
       final StringBuilder buf = new StringBuilder();
       buf.append(psiMethod.getName()).append(" (");
       boolean frst = true;

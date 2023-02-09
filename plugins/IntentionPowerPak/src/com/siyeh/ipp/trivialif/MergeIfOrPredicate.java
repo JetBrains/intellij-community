@@ -33,15 +33,13 @@ class MergeIfOrPredicate implements PsiElementPredicate {
   }
 
   public static boolean isMergableExplicitIf(PsiElement element) {
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken token)) {
       return false;
     }
-    final PsiJavaToken token = (PsiJavaToken)element;
     final PsiElement parent = token.getParent();
-    if (!(parent instanceof PsiIfStatement)) {
+    if (!(parent instanceof PsiIfStatement ifStatement)) {
       return false;
     }
-    final PsiIfStatement ifStatement = (PsiIfStatement)parent;
     final PsiStatement thenBranch = ifStatement.getThenBranch();
     final PsiStatement elseBranch = ifStatement.getElseBranch();
     if (thenBranch == null) {
@@ -50,28 +48,25 @@ class MergeIfOrPredicate implements PsiElementPredicate {
     if (elseBranch == null) {
       return false;
     }
-    if (!(elseBranch instanceof PsiIfStatement)) {
+    if (!(elseBranch instanceof PsiIfStatement childIfStatement)) {
       return false;
     }
     if (ErrorUtil.containsError(ifStatement)) {
       return false;
     }
-    final PsiIfStatement childIfStatement = (PsiIfStatement)elseBranch;
     final PsiStatement childThenBranch = childIfStatement.getThenBranch();
     return EquivalenceChecker.getCanonicalPsiEquivalence().statementsAreEquivalent(thenBranch, childThenBranch);
   }
 
   private static boolean isMergableImplicitIf(PsiElement element) {
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken token)) {
       return false;
     }
-    final PsiJavaToken token = (PsiJavaToken)element;
 
     final PsiElement parent = token.getParent();
-    if (!(parent instanceof PsiIfStatement)) {
+    if (!(parent instanceof PsiIfStatement ifStatement)) {
       return false;
     }
-    final PsiIfStatement ifStatement = (PsiIfStatement)parent;
     final PsiStatement thenBranch = ifStatement.getThenBranch();
     if (thenBranch == null) {
       return false;
@@ -84,10 +79,9 @@ class MergeIfOrPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiElement nextStatement = PsiTreeUtil.skipWhitespacesForward(ifStatement);
-    if (!(nextStatement instanceof PsiIfStatement)) {
+    if (!(nextStatement instanceof PsiIfStatement nextIfStatement)) {
       return false;
     }
-    final PsiIfStatement nextIfStatement = (PsiIfStatement)nextStatement;
     final PsiStatement nextThenBranch = nextIfStatement.getThenBranch();
     return EquivalenceChecker.getCanonicalPsiEquivalence().statementsAreEquivalent(thenBranch, nextThenBranch);
   }

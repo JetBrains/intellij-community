@@ -109,7 +109,7 @@
     <streamProviderFactory implementation="com.intellij.openapi.externalSystem.configurationStore.ExternalSystemStreamProviderFactory"/>
 
     <moduleService serviceInterface="com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager"
-                   serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerImpl"/>
+                   serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ExternalProjectSystemRegistry"
                         serviceImplementation="com.intellij.openapi.externalSystem.ExternalProjectSystemRegistryImpl" overrides="true"/>
@@ -131,13 +131,15 @@
     <notificationGroup id="Gradle Wrapper Update" displayType="BALLOON" bundle="messages.ExternalSystemBundle" key="notification.group.gradle.wrapper.update"/>
 
     <externalSystemSettingsListener implementation="com.intellij.openapi.externalSystem.service.ui.ExternalToolWindowManager"/>
+
+    <trustedProjectsLocator implementation="com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectsLocator"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshFloatingProvider$Listener"
               topic="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware$Listener"
               activeInHeadlessMode="true" activeInTestMode="true"/>
-    <listener class="com.intellij.openapi.externalSystem.service.project.ExternalSystemTrustedListener"
-              topic="com.intellij.ide.impl.TrustStateListener"
+    <listener class="com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedListener"
+              topic="com.intellij.ide.trustedProjects.TrustedProjectsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl$BulkFileListenerImpl"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"

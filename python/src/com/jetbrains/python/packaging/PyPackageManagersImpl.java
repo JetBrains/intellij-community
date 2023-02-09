@@ -9,17 +9,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.python.packaging.ui.PyCondaManagementService;
+import com.jetbrains.python.packaging.common.PackageManagerHolder;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
-import com.jetbrains.python.sdk.PySdkProvider;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
-
 
 public class PyPackageManagersImpl extends PyPackageManagers {
   private static final Logger LOG = Logger.getInstance(PyPackageManagersImpl.class);
@@ -93,18 +90,7 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       LOG.assertTrue(!Disposer.isDisposed((Disposable)sdk),
                      "Requesting a package service for an already disposed SDK " + sdk + " (" + sdk.getClass() + ")");
     }
-    Optional<PyPackageManagementService> provided = PySdkProvider.EP_NAME.getExtensionList().stream()
-      .map(ext -> ext.tryCreatePackageManagementServiceForSdk(project, sdk))
-      .filter(service -> service != null)
-      .findFirst();
-
-    if (provided.isPresent()) {
-      return provided.get();
-    }
-    else if (PythonSdkUtil.isConda(sdk)) {
-      return new PyCondaManagementService(project, sdk);
-    }
-    return new PyPackageManagementService(project, sdk);
+    return project.getService(PackageManagerHolder.class).bridgeForSdk(project, sdk);
   }
 
   @Override

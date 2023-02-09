@@ -19,8 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a Java {@code import static} statement.
- *
- * @author dsl
  */
 public interface PsiImportStaticStatement extends PsiImportStatementBase {
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions.onSave;
 
 import com.intellij.application.options.GeneralCodeStylePanel;
@@ -11,6 +11,7 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.components.ActionLink;
@@ -97,7 +98,8 @@ class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnSaveOpti
 
     String current = isFormatOnlyChangedLines() ? changedLines : wholeFile;
 
-    return new DropDownLink<>(current, List.of(wholeFile, changedLines), choice -> setFormatOnlyChangedLines(choice == changedLines));
+    return new DropDownLink<>(current, List.of(wholeFile, changedLines),
+                              choice -> setFormatOnlyChangedLines(Strings.areSameInstance(choice, changedLines)));
   }
 
 

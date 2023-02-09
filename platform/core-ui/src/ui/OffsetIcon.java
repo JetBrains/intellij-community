@@ -71,8 +71,7 @@ public final class OffsetIcon extends JBCachingScalableIcon<OffsetIcon> {
 
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if (obj instanceof OffsetIcon) {
-      OffsetIcon icon = (OffsetIcon)obj;
+    if (obj instanceof OffsetIcon icon) {
       return icon.myOffset == myOffset && Objects.equals(icon.myIcon, myIcon);
     }
     return false;

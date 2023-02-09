@@ -1,9 +1,0 @@
-package com.intellij.remoteDev.util
-
-val REMOTE_DEV_CACHE_LOCATION = listOf(".cache", "JetBrains", "RemoteDev")
-val REMOTE_DEV_IDE_DIR = REMOTE_DEV_CACHE_LOCATION + "dist"
-val REMOTE_DEV_CUSTOM_IDE_DIR = REMOTE_DEV_CACHE_LOCATION + "userProvidedDist"
-val REMOTE_DEV_RECENT_PROJECTS_DIR = REMOTE_DEV_CACHE_LOCATION + "recent"
-val REMOTE_DEV_ACTIVE_PROJECTS_DIR = REMOTE_DEV_CACHE_LOCATION + "active"
-
-const val REMOTE_DEV_EXPAND_SUCCEEDED_MARKER_FILE_NAME = ".expandSucceeded"

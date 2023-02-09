@@ -24,9 +24,6 @@ import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.event.DocumentEvent
 
-/**
- * @author vlan
- */
 open class PyAddNewVirtualEnvPanel(private val project: Project?,
                               private val module: Module?,
                               private val existingSdks: List<Sdk>,

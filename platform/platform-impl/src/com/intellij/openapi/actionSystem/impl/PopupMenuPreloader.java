@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.IdleTracker;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -21,6 +21,8 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -36,10 +38,10 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Expands action group for a warm-up as less intrusive as possible:
+ * Expands an action group for a warm-up as less intrusive as possible:
  * in an "idle" listener, on a UI-only data-context, with a dedicated action-place.
  */
-public final class PopupMenuPreloader implements Runnable, HierarchyListener {
+public final class PopupMenuPreloader implements HierarchyListener {
   private static final Logger LOG = Logger.getInstance(PopupMenuPreloader.class);
 
   private static final String MODE = Registry.get("actionSystem.update.actions.preload.menus").getSelectedOption();
@@ -54,6 +56,8 @@ public final class PopupMenuPreloader implements Runnable, HierarchyListener {
   private final long myStarted = System.nanoTime();
   private int myRetries;
   private boolean myDisposed;
+
+  private Function0<Unit> removeIdleListener;
 
   public static void install(@NotNull JComponent component,
                              @NotNull String actionPlace,
@@ -72,7 +76,7 @@ public final class PopupMenuPreloader implements Runnable, HierarchyListener {
         return;
       }
       PopupMenuPreloader preloader = new PopupMenuPreloader(component, actionPlace, popupHandler, groupSupplier);
-      IdeEventQueue.getInstance().addIdleListener(preloader, 2000);
+      preloader.removeIdleListener = IdleTracker.getInstance().addIdleListener(2_000, preloader::onIdle);
     };
     UiNotifyConnector.doWhenFirstShown(component, runnable);
     if (component instanceof JMenuBar) return;
@@ -109,8 +113,7 @@ public final class PopupMenuPreloader implements Runnable, HierarchyListener {
     dispose(-1);
   }
 
-  @Override
-  public void run() {
+  private void onIdle() {
     JComponent component = myComponentRef.get();
     PopupHandler popupHandler = myPopupHandlerRef == null ? null : myPopupHandlerRef.get();
     if (component == null || !component.isShowing() ||
@@ -142,10 +145,17 @@ public final class PopupMenuPreloader implements Runnable, HierarchyListener {
 
   @RequiresEdt
   private void dispose(long millis) {
-    if (myDisposed) return;
+    if (myDisposed) {
+      return;
+    }
+
     myDisposed = true;
+    if (removeIdleListener != null) {
+      removeIdleListener.invoke();
+      removeIdleListener = null;
+    }
+
     JComponent component = myComponentRef.get();
-    IdeEventQueue.getInstance().removeIdleListener(this);
     if (component != null) {
       component.removeHierarchyListener(this);
     }

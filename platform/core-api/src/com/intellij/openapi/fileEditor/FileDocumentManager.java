@@ -17,6 +17,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkListener;
 import java.util.function.Predicate;
 
 /**
@@ -204,20 +205,30 @@ public abstract class FileDocumentManager implements SavingRequestor {
 
     private final boolean myWithWriteAccess;
     private final @NotNull @NlsContexts.HintText String myReadOnlyMessage;
+    private final @Nullable HyperlinkListener myHyperlinkListener;
 
     private WriteAccessStatus(boolean withWriteAccess) {
       myWithWriteAccess = withWriteAccess;
       myReadOnlyMessage = withWriteAccess ? "" : CoreBundle.message("editing.read.only.file.hint");
+      myHyperlinkListener = null;
     }
 
     public WriteAccessStatus(@NotNull @NlsContexts.HintText String readOnlyMessage) {
+      this(readOnlyMessage, null);
+    }
+
+    public WriteAccessStatus(@NotNull @NlsContexts.HintText String readOnlyMessage, @Nullable HyperlinkListener hyperlinkListener) {
       myWithWriteAccess = false;
       myReadOnlyMessage = readOnlyMessage;
+      myHyperlinkListener = hyperlinkListener;
     }
 
     public boolean hasWriteAccess() {return myWithWriteAccess;}
 
     @NotNull
     public @NlsContexts.HintText String getReadOnlyMessage() {return myReadOnlyMessage;}
+
+    @Nullable
+    public HyperlinkListener getHyperlinkListener() {return myHyperlinkListener;}
   }
 }

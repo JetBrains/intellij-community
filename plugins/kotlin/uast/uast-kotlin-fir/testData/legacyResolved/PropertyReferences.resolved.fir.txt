@@ -26,10 +26,10 @@ UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identif
     UBinaryExpression (operator = +=) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UPrefixExpression (operator = ++) -> USimpleNameReferenceExpression (identifier = ++) -> FUN: inc
     UPrefixExpression (operator = ++) -> UQualifiedReferenceExpression -> Kotlin_Light_Method: setMutableProp
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = a) -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = mutableProp) -> Kotlin_Light_Method: setMutableProp
     UPostfixExpression (operator = --) -> UQualifiedReferenceExpression -> Kotlin_Light_Method: setMutableProp
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = a) -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = mutableProp) -> Kotlin_Light_Method: setMutableProp
     UPostfixExpression (operator = --) -> USimpleNameReferenceExpression (identifier = --) -> FUN: dec
 UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A(init: Int) {

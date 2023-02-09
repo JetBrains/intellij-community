@@ -1,12 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ikv.Ikv;
-import org.jetbrains.ikv.RecSplitSettings;
-import org.jetbrains.ikv.UniversalHash;
 import org.jetbrains.xxh3.Xxh3;
 
 import java.io.IOException;
@@ -28,23 +26,20 @@ public final class ImmutableZipFile implements ZipFile {
   public static final int MIN_EOCD_SIZE = 22;
   public static final int EOCD = 0x6054B50;
 
-  private static final int INDEX_FORMAT_VERSION = 3;
+  private static final int INDEX_FORMAT_VERSION = 4;
   private static final int COMMENT_SIZE = 5;
 
-  private final Ikv.SizeAwareIkv<String> ikv;
+  private final Ikv.SizeAwareIkv ikv;
   private final int nameDataPosition;
   private volatile String[] names;
   public final long[] classPackages;
   public final long[] resourcePackages;
-  private final long[] hashes;
 
-  private ImmutableZipFile(Ikv.SizeAwareIkv<String> ikv,
-                           long[] hashes,
+  private ImmutableZipFile(Ikv.SizeAwareIkv ikv,
                            long[] classPackages,
                            long[] resourcePackages,
                            int nameDataPosition) {
     this.ikv = ikv;
-    this.hashes = hashes;
     this.nameDataPosition = nameDataPosition;
     this.classPackages = classPackages;
     this.resourcePackages = resourcePackages;
@@ -85,18 +80,6 @@ public final class ImmutableZipFile implements ZipFile {
     }
   }
 
-  private int getIndex(String path) {
-    long hashCode = Xxh3.hash(path);
-    int index = ikv.evaluator.evaluate(path, hashCode, UniversalHash.StringHash.INSTANCE);
-    if (index < 0) {
-      return -1;
-    }
-    if (hashes[index] != hashCode) {
-      return -1;
-    }
-    return index;
-  }
-
   public synchronized String[] getOrComputeNames() {
     String[] names = this.names;
     if (names != null) {
@@ -106,16 +89,16 @@ public final class ImmutableZipFile implements ZipFile {
     // read names
     // assume that file name is not greater than ~4 KiB
     byte[] tempNameBytes = new byte[4096];
-    int entryCount = hashes.length;
+    int entryCount = ikv.getEntryCount();
     names = new String[entryCount];
     short[] nameLengthInBytes = new short[entryCount];
-    ByteBuffer buffer = ikv.getMappedBufferAt(nameDataPosition);
-    buffer.asShortBuffer().get(nameLengthInBytes);
-    buffer.position(buffer.position() + (entryCount * Short.BYTES));
+    ikv.getMappedBufferAt(nameDataPosition).asShortBuffer().get(nameLengthInBytes);
+    int position = (nameDataPosition + (entryCount * Short.BYTES));
     for (int i = 0; i < entryCount; i++) {
       short sizeInBytes = nameLengthInBytes[i];
-      buffer.get(tempNameBytes, 0, sizeInBytes);
+      ikv.readByteArrayAt(position, tempNameBytes, sizeInBytes);
       names[i] = new String(tempNameBytes, 0, sizeInBytes, StandardCharsets.UTF_8);
+      position += sizeInBytes;
     }
 
     this.names = names;
@@ -132,63 +115,50 @@ public final class ImmutableZipFile implements ZipFile {
     }
 
     int minNameLength = dir.length() + 2;
-    for (int i = 0, n = names.length; i < n; i++) {
-      String name = names[i];
+    for (String name : names) {
       if (name.length() >= minNameLength && name.charAt(dir.length()) == '/' && name.startsWith(dir) && nameFilter.test(name)) {
-        try (InputStream stream = new DirectByteBufferBackedInputStream(ikv.getByteBufferAt(i), false)) {
-          consumer.accept(name, stream);
-        }
+        // DirectByteBufferBackedInputStream is not pooled - no need to close
+        consumer.accept(name, getInputStream(name));
       }
     }
   }
 
   @Override
   public @Nullable InputStream getInputStream(@NotNull String path) throws IOException {
-    int index = getIndex(path);
-    if (index < 0) {
-      return null;
-    }
-    return new DirectByteBufferBackedInputStream(ikv.getByteBufferAt(index), false);
+    ByteBuffer byteBuffer = ikv.getValue(Xxh3.hash(path));
+    return byteBuffer == null ? null : new DirectByteBufferBackedInputStream(byteBuffer, false);
   }
 
   @Override
   public byte @Nullable [] getData(@NotNull String path) throws IOException {
-    int index = getIndex(path);
-    if (index < 0) {
-      return null;
-    }
-    return ikv.getByteArrayAt(index);
+    return ikv.getByteArray(Xxh3.hash(path));
   }
 
   @Override
   public ByteBuffer getByteBuffer(@NotNull String path) throws IOException {
-    int index = getIndex(path);
-    if (index < 0) {
-      return null;
-    }
-    return ikv.getByteBufferAt(index);
+    return ikv.getValue(Xxh3.hash(path));
   }
 
   @Override
   public @Nullable ZipResource getResource(String path) {
-    int index = getIndex(path);
-    return index < 0 ? null : new MyZipResource(index, ikv, path);
+    long pair = ikv.getOffsetAndSize(Xxh3.hash(path));
+    return pair == -1 ? null : new MyZipResource(pair, ikv, path);
   }
 
   private static final class MyZipResource implements ZipResource {
-    private final int index;
-    private final Ikv.SizeAwareIkv<String> ikv;
+    private final long entry;
+    private final Ikv.SizeAwareIkv ikv;
     private final String path;
 
-    MyZipResource(int index, Ikv.SizeAwareIkv<String> ikv, String path) {
-      this.index = index;
+    MyZipResource(long pair, Ikv.SizeAwareIkv ikv, String path) {
+      this.entry = pair;
       this.ikv = ikv;
       this.path = path;
     }
 
     @Override
     public int getUncompressedSize() {
-      return ikv.getSizeAt(index);
+      return ikv.getSizeByValue(entry);
     }
 
     @Override
@@ -198,23 +168,23 @@ public final class ImmutableZipFile implements ZipFile {
 
     @Override
     public @NotNull ByteBuffer getByteBuffer() {
-      return ikv.getByteBufferAt(index);
+      return ikv.getByteBufferByValue(entry);
     }
 
     @Override
     public byte @NotNull [] getData() {
-      return ikv.getByteArrayAt(index);
+      return ikv.getByteArrayByValue(entry);
     }
 
     @Override
     public @NotNull InputStream getInputStream() {
-      return new DirectByteBufferBackedInputStream(ikv.getByteBufferAt(index), false);
+      return new DirectByteBufferBackedInputStream(ikv.getByteBufferByValue(entry), false);
     }
   }
 
   @Override
   public void releaseBuffer(ByteBuffer buffer) {
-    // data is never compressed and buffer is always a mapped byte buffer - no need to release
+    // data is never compressed, and buffer is always a mapped byte buffer - no need to release
   }
 
   private static @NotNull ZipFile populateFromCentralDirectory(ByteBuffer buffer, int fileSize, boolean forceNonIkv) throws IOException {
@@ -277,10 +247,7 @@ public final class ImmutableZipFile implements ZipFile {
     }
 
     buffer.position(indexDataEnd);
-    Ikv.SizeAwareIkv<String> ikv = (Ikv.SizeAwareIkv<String>)Ikv.loadIkv(buffer,
-                                                                         UniversalHash.StringHash.INSTANCE,
-                                                                         RecSplitSettings.DEFAULT_SETTINGS);
-
+    Ikv.SizeAwareIkv ikv = (Ikv.SizeAwareIkv)Ikv.loadIkv(buffer, indexDataEnd);
     buffer.position(indexDataEnd);
     // read package class and resource hashes
     long[] classPackages = new long[buffer.getInt()];
@@ -288,16 +255,10 @@ public final class ImmutableZipFile implements ZipFile {
     LongBuffer longBuffer = buffer.asLongBuffer();
     longBuffer.get(classPackages);
     longBuffer.get(resourcePackages);
-    buffer.position(buffer.position() + (longBuffer.position() * Long.BYTES));
 
-    // read fingerprints
-    long[] hashes = new long[buffer.getInt()];
-    buffer.asLongBuffer().get(hashes);
-    buffer.position(buffer.position() + (hashes.length * Long.BYTES));
-
-    int nameDataPosition = buffer.position();
+    int nameDataPosition = indexDataEnd + Long.BYTES + (longBuffer.position() * Long.BYTES);
     buffer.clear();
-    return new ImmutableZipFile(ikv, hashes, classPackages, resourcePackages, nameDataPosition);
+    return new ImmutableZipFile(ikv, classPackages, resourcePackages, nameDataPosition);
   }
 
   @Override

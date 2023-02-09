@@ -34,8 +34,7 @@ public class LombokImplicitUsageProvider implements ImplicitUsageProvider {
   }
 
   private static boolean checkUsage(@NotNull PsiElement element, EnumSet<LombokPsiElementUsage> elementUsages) {
-    if (element instanceof PsiField) {
-      final PsiField psiField = (PsiField)element;
+    if (element instanceof PsiField psiField) {
       if (isUsedByLombokAnnotations(psiField, psiField, elementUsages) ||
           isUsedByLombokAnnotations(psiField, psiField.getContainingClass(), elementUsages)) {
         return true;

@@ -8,6 +8,10 @@ import com.intellij.ide.PasteProvider;
 import com.intellij.ide.actions.UndoRedoAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ide.ui.UISettingsUtils;
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorPreciseContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -72,7 +76,7 @@ import java.util.Map;
 
 @DirtyUI
 public class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible,
-                                                                   UISettingsListener {
+                                                                   UISettingsListener, UiInspectorPreciseContextProvider {
   private static final Logger LOG = Logger.getInstance(EditorComponentImpl.class);
 
   private final EditorImpl myEditor;
@@ -124,8 +128,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    if (uiSettings.getPresentationMode() && myEditor.getFontSize() != uiSettings.getPresentationModeFontSize()) {
-      myEditor.setFontSize(uiSettings.getPresentationModeFontSize());
+    UISettingsUtils settingsUtils = UISettingsUtils.with(uiSettings);
+    if (uiSettings.getPresentationMode() && myEditor.getFontSize() != settingsUtils.getPresentationModeFontSize()) {
+      myEditor.setFontSize(settingsUtils.getPresentationModeFontSize());
     }
   }
 
@@ -844,6 +849,23 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
   }
 
+  @Override
+  public @Nullable UiInspectorPreciseContextProvider.UiInspectorInfo getUiInspectorContext(@NotNull MouseEvent event) {
+    Point point = event.getPoint();
+    Inlay<?> inlay = myEditor.getInlayModel().getElementAt(point);
+    if (inlay != null) {
+      List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Inlay Renderer", inlay.getRenderer()));
+      result.add(new PropertyBean("Inlay Renderer Class", UiInspectorUtil.getClassPresentation(inlay.getRenderer()), true));
+      if (inlay.getGutterIconRenderer() != null) {
+        result.add(new PropertyBean("Inlay Gutter Renderer", inlay.getGutterIconRenderer()));
+      }
+      result.add(new PropertyBean("Inlay Properties", inlay.getProperties()));
+      return new UiInspectorInfo("EditorInlay", result, null);
+    }
+    return null;
+  }
+
   /**
    * Specialized TextUI intended *only* for accessibility usage. Not all the methods are called; only viewToModel, not modelToView.
    */
@@ -1181,6 +1203,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     @Override
     public void selectText(int startIndex, int endIndex) {
       myEditor.getSelectionModel().setSelection(startIndex, endIndex);
+      myEditor.getCaretModel().moveToOffset(endIndex);
     }
 
     @Override

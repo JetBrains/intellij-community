@@ -63,48 +63,13 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
 
     private static void projectOpened(@NotNull Project project) {
       TreeSet<LanguageLevel> previewLevels = new TreeSet<>();
-      MultiMap<LanguageLevel, Module> unacceptedLevels = new MultiMap<>();
-      LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
-      if (projectExtension != null) {
-        LanguageLevel level = projectExtension.getLanguageLevel();
-        if (!isLanguageLevelAccepted(level)) {
-          unacceptedLevels.putValue(level, null);
-        }
-        if (level.isPreview()) {
-          previewLevels.add(level);
-        }
-      }
-      for (Module module : ModuleManager.getInstance(project).getModules()) {
-        LanguageLevel level = LanguageLevelUtil.getCustomLanguageLevel(module);
-        if (level != null) {
-          if (!isLanguageLevelAccepted(level)) {
-            unacceptedLevels.putValue(level, module);
-          }
-          if (level.isPreview()) {
-            previewLevels.add(level);
-          }
-        }
-      }
+      MultiMap<LanguageLevel, Module> unacceptedLevels =
+        getUnacceptedLevels(project, previewLevels);
       if (!unacceptedLevels.isEmpty()) {
         decreaseLanguageLevel(project);
 
         for (LanguageLevel level : unacceptedLevels.keySet()) {
-          NOTIFICATION_GROUP.createNotification(
-              JavaBundle.message("java.preview.features.alert.title"),
-              JavaBundle.message("java.preview.features.legal.notice", level.getPresentableText(), "<br/><br/><a href='accept'>" +
-                                                                                                   JavaBundle.message(
-                                                                                                     "java.preview.features.accept.notification.link") +
-                                                                                                   "</a>"),
-              NotificationType.WARNING)
-            .setListener((notification, event) -> {
-              if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                if (event.getDescription().equals("accept")) {
-                  acceptAndRestore(project, unacceptedLevels.get(level), level);
-                }
-                notification.expire();
-              }
-            })
-            .notify(project);
+          showNotificationToAccept(project, unacceptedLevels, level);
         }
       }
       if (!previewLevels.isEmpty() && !PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
@@ -126,6 +91,56 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
     }
   }
 
+  @NotNull
+  private static MultiMap<LanguageLevel, Module> getUnacceptedLevels(@NotNull Project project, TreeSet<LanguageLevel> previewLevels) {
+    MultiMap<LanguageLevel, Module> unacceptedLevels = new MultiMap<>();
+    LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
+    if (projectExtension != null) {
+      LanguageLevel level = projectExtension.getLanguageLevel();
+      if (!isLanguageLevelAccepted(level)) {
+        unacceptedLevels.putValue(level, null);
+      }
+      if (level.isPreview()) {
+        previewLevels.add(level);
+      }
+    }
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      LanguageLevel level = LanguageLevelUtil.getCustomLanguageLevel(module);
+      if (level != null) {
+        if (!isLanguageLevelAccepted(level)) {
+          unacceptedLevels.putValue(level, module);
+        }
+        if (level.isPreview()) {
+          previewLevels.add(level);
+        }
+      }
+    }
+    return unacceptedLevels;
+  }
+
+  public static void showNotificationToAccept(@NotNull Project project,  LanguageLevel level) {
+    showNotificationToAccept(project, getUnacceptedLevels(project, new TreeSet<>()), level);
+  }
+
+  private static void showNotificationToAccept(@NotNull Project project, MultiMap<LanguageLevel, Module> unacceptedLevels, LanguageLevel level) {
+    NOTIFICATION_GROUP.createNotification(
+        JavaBundle.message("java.preview.features.alert.title"),
+        JavaBundle.message("java.preview.features.legal.notice", level.getPresentableText(), "<br/><br/><a href='accept'>" +
+                                                                                             JavaBundle.message(
+                                                                                               "java.preview.features.accept.notification.link") +
+                                                                                             "</a>"),
+        NotificationType.WARNING)
+      .setListener((notification, event) -> {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          if (event.getDescription().equals("accept")) {
+            acceptAndRestore(project, unacceptedLevels.get(level), level);
+          }
+          notification.expire();
+        }
+      })
+      .notify(project);
+  }
+
   public static boolean isLanguageLevelAccepted(LanguageLevel languageLevel) {
     //allow custom features to appear in EAP
     if (ApplicationManager.getApplication().isEAP()) return true;
@@ -143,7 +158,7 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
       WriteAction.run(() -> {
         for (Module module : modules) {
           if (module != null) {
-            service.changeLanguageLevel(module, languageLevel);
+            service.changeLanguageLevel(module, languageLevel, false);
           }
           else {
             LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
@@ -211,7 +226,7 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
         LanguageLevel languageLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
         if (languageLevel != null && !isLanguageLevelAccepted(languageLevel)) {
           LanguageLevel newLanguageLevel = adjustLanguageLevel(languageLevel);
-          service.changeLanguageLevel(module, newLanguageLevel);
+          service.changeLanguageLevel(module, newLanguageLevel, false);
         }
       }
 

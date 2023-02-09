@@ -9,7 +9,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.JBTreeTraverser;
-import com.intellij.util.containers.TreeTraversal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -41,8 +40,7 @@ class ServiceViewTreeModel extends BaseTreeModel<Object> implements InvokerSuppl
   public boolean isLeaf(Object object) {
     if (object == myRoot) return false;
 
-    if (object instanceof ServiceModel.ServiceNode) {
-      ServiceModel.ServiceNode node = (ServiceModel.ServiceNode)object;
+    if (object instanceof ServiceModel.ServiceNode node) {
       if (!node.isChildrenInitialized() && !node.isLoaded()) {
         return false;
       }
@@ -69,13 +67,21 @@ class ServiceViewTreeModel extends BaseTreeModel<Object> implements InvokerSuppl
   }
 
   Promise<TreePath> findPath(@NotNull Object service, @NotNull Class<?> contributorClass) {
+    return doFindPath(service, contributorClass, false);
+  }
+
+  Promise<TreePath> findPathSafe(@NotNull Object service, @NotNull Class<?> contributorClass) {
+    return doFindPath(service, contributorClass, true);
+  }
+
+  private Promise<TreePath> doFindPath(@NotNull Object service, @NotNull Class<?> contributorClass, boolean safe) {
     AsyncPromise<TreePath> result = new AsyncPromise<>();
     getInvoker().invoke(() -> {
       List<? extends ServiceViewItem> roots = myModel.getVisibleRoots();
       ServiceViewItem serviceNode = JBTreeTraverser.from((Function<ServiceViewItem, List<ServiceViewItem>>)node ->
         contributorClass.isInstance(node.getRootContributor()) ? new ArrayList<>(myModel.getChildren(node)) : null)
         .withRoots(roots)
-        .traverse(ServiceModel.NOT_LOADED_LAST_BFS)
+        .traverse(safe ? ServiceModel.ONLY_LOADED_BFS : ServiceModel.NOT_LOADED_LAST_BFS)
         .filter(node -> node.getValue().equals(service))
         .first();
       if (serviceNode != null) {

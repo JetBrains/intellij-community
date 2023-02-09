@@ -1,5 +1,6 @@
 from _typeshed import SupportsWrite
-from typing import Any, Callable, Generic, Iterable, Mapping, MutableMapping, TypeVar, overload
+from collections.abc import Callable, Iterable, Mapping, MutableMapping
+from typing import Any, Generic, TypeVar, overload
 
 _MappingT = TypeVar("_MappingT", bound=Mapping[str, Any])
 

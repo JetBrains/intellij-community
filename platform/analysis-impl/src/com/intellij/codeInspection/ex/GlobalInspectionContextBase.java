@@ -32,6 +32,7 @@ import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -68,6 +69,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   protected final Map<Key<?>, GlobalInspectionContextExtension<?>> myExtensions = new HashMap<>();
 
   /** null means {@link #initializeTools(List, List, List)} wasn't called yet */
+  @Unmodifiable
   private Map<String, Tools> myTools;
 
   @NonNls public static final String PROBLEMS_TAG_NAME = "problems";
@@ -210,7 +212,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   protected void launchInspections(@NotNull AnalysisScope scope) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     LOG.info("Code inspection started");
@@ -287,15 +289,14 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   protected void runTools(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
   }
 
-
   public void initializeTools(@NotNull List<Tools> outGlobalTools,
                               @NotNull List<Tools> outLocalTools,
                               @NotNull List<? super Tools> outGlobalSimpleTools) {
     List<Tools> usedTools = getUsedTools();
-    myTools = new HashMap<>(usedTools.size());
+    Map<String, Tools> tools = new HashMap<>(usedTools.size());
     for (Tools currentTools : usedTools) {
       String shortName = currentTools.getShortName();
-      myTools.put(shortName, currentTools);
+      tools.put(shortName, currentTools);
       InspectionToolWrapper<?,?> toolWrapper = currentTools.getTool();
       classifyTool(outGlobalTools, outLocalTools, outGlobalSimpleTools, currentTools, toolWrapper);
 
@@ -308,7 +309,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
         appendJobDescriptor(jobDescriptor);
       }
     }
-    myTools = Collections.unmodifiableMap(myTools);
+    myTools = Collections.unmodifiableMap(tools);
     for (GlobalInspectionContextExtension<?> extension : myExtensions.values()) {
       extension.performPreRunActivities(outGlobalTools, outLocalTools, this);
     }

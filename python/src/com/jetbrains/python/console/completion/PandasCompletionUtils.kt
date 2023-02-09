@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import com.intellij.xdebugger.frame.XValueChildrenList
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonLanguage
@@ -35,6 +36,18 @@ data class PandasDataFrameCandidate(val psiName: String, val needValidatorCheck:
 
 // Priority value to control order in CompletionResultSet
 private const val DATAFRAME_COLUMN_PRIORITY = 100.0
+
+fun selectDataFrameDebugValue(valuesEnv: XValueChildrenList): Map<String, DataFrameDebugValue>? {
+  val dataFrameObjects = mutableMapOf<String, DataFrameDebugValue>()
+  for (elem in 0 until valuesEnv.size()) {
+    val currentValue = valuesEnv.getValue(elem)
+    if (currentValue is DataFrameDebugValue) {
+      dataFrameObjects[currentValue.name] = currentValue
+    }
+  }
+  if (dataFrameObjects.isEmpty()) return null
+  return dataFrameObjects
+}
 
 fun collectParentReferences(parentDebug: PyDebugValue?, value: DataFrameDebugValue): String {
   val referencesCollection = mutableListOf<String>()
@@ -85,7 +98,7 @@ private fun createPandasDataFrameCandidate(psiElement: PsiElement, needValidator
           is PyStringLiteralExpression -> {
             columns.add((child as PyStringLiteralExpressionImpl).stringValue)
           }
-          is PyPlainStringElement -> {
+          is PyStringElement -> {
             columns.add(child.content)
           }
           else -> {
@@ -211,10 +224,10 @@ fun processDataFrameColumns(dfName: String,
   val validator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance())
   return columns.mapNotNull { column ->
     when {
-      !needValidatorCheck &&  elementOnPosition !is PyPlainStringElement -> {
-        "'${StringUtil.escapeStringCharacters(column.length,  column, "'", StringBuilder())}'"
+      !needValidatorCheck && elementOnPosition !is PyStringElement -> {
+        "'${StringUtil.escapeStringCharacters(column.length, column, "'", StringBuilder())}'"
       }
-      !needValidatorCheck -> StringUtil.escapeStringCharacters(column.length,  column, "'", StringBuilder())
+      !needValidatorCheck -> StringUtil.escapeStringCharacters(column.length, column, "'\"", StringBuilder())
       validator.isIdentifier(column, project) -> column
       else -> null
     }?.let {

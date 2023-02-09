@@ -28,7 +28,7 @@ public class LightNamedElement extends LightElement implements PyElement, PsiNam
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitElement(this);
+    super.accept(visitor);
   }
 
   @Override

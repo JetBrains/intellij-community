@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.platform
@@ -22,23 +22,20 @@ import java.awt.image.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
-import java.nio.file.StandardOpenOption
+import java.nio.file.*
 import java.util.*
 
 internal object ProjectSelfieUtil {
   val isEnabled: Boolean
     get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.project.loading.show.last.state", true)
 
-  private fun getSelfieLocation(projectWorkspaceId: String): Path {
-    return appSystemDir.resolve("project-selfies-v1").resolve("$projectWorkspaceId.ij-image")
+  internal fun getSelfieLocation(projectWorkspaceId: String): Path {
+    return appSystemDir.resolve("project-selfies-v2").resolve("$projectWorkspaceId.ij")
   }
 
-  fun readProjectSelfie(value: String, device: GraphicsDevice): Image? {
+  fun readImage(file: Path, scaleContextProvider: () -> ScaleContext): BufferedImage? {
     val buffer = try {
-      FileChannel.open(getSelfieLocation(value)).use { channel ->
+      FileChannel.open(file).use { channel ->
         channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size()).order(ByteOrder.LITTLE_ENDIAN)
       }
     }
@@ -51,7 +48,7 @@ internal object ProjectSelfieUtil {
       val w = intBuffer.get()
       val h = intBuffer.get()
 
-      val scaleContext = ScaleContext.create(device.defaultConfiguration)
+      val scaleContext = scaleContextProvider()
 
       val currentSysScale = scaleContext.getScale(ScaleType.SYS_SCALE).toFloat()
       val imageSysScale = java.lang.Float.intBitsToFloat(intBuffer.get())
@@ -60,47 +57,51 @@ internal object ProjectSelfieUtil {
         return null
       }
 
-      val wasNewUi = intBuffer.get() == 1
-      val isNewUi = ExperimentalUI.isNewUI()
-      if (wasNewUi != isNewUi) {
-        logger<ProjectSelfieUtil>().info("Project selfie is not used as UI version differs (current: $isNewUi, image: $wasNewUi)")
-        return null
-      }
-
       val dataBuffer = DataBufferInt(w * h)
       intBuffer.get(SunWritableRaster.stealData(dataBuffer, 0))
       SunWritableRaster.makeTrackable(dataBuffer)
       val colorModel = ColorModel.getRGBdefault() as DirectColorModel
       val raster = Raster.createPackedRaster(dataBuffer, w, h, w, colorModel.masks, Point(0, 0))
+
       @Suppress("UndesirableClassUsage")
       val rawImage = BufferedImage(colorModel, raster, false, null)
-      return ImageUtil.ensureHiDPI(rawImage, scaleContext)
+      return ImageUtil.ensureHiDPI(rawImage, scaleContext) as BufferedImage
     }
     finally {
       ByteBufferCleaner.unmapBuffer(buffer)
     }
   }
 
-  fun takeProjectSelfie(component: Component, workspaceId: String) {
+  fun readProjectSelfie(value: String, device: GraphicsDevice): Image? {
+    return readImage(getSelfieLocation(value), scaleContextProvider = {
+      ScaleContext.create(device.defaultConfiguration)
+    })
+  }
+
+  fun takeProjectSelfie(component: Component, selfieLocation: Path) {
     //val start = System.currentTimeMillis()
     val graphicsConfiguration = component.graphicsConfiguration
     val image = ImageUtil.createImage(graphicsConfiguration, component.width, component.height, BufferedImage.TYPE_INT_ARGB)
     UISettings.setupAntialiasing(image.graphics)
 
     component.paint(image.graphics)
-    val selfieFile = getSelfieLocation(workspaceId)
-    Files.createDirectories(selfieFile.parent)
-    FileChannel.open(selfieFile, EnumSet.of(StandardOpenOption.WRITE,
-                                            StandardOpenOption.TRUNCATE_EXISTING,
-                                            StandardOpenOption.CREATE)).use { channel ->
+    writeImage(file = selfieLocation, image = image, sysScale = JBUIScale.sysScale(graphicsConfiguration))
+
+    //println("Write image: " + (System.currentTimeMillis() - start) + "ms")
+  }
+
+  fun writeImage(file: Path, image: BufferedImage, sysScale: Float) {
+    val parent = file.parent
+    Files.createDirectories(parent)
+    val tempFile = Files.createTempFile(parent, file.fileName.toString(), ".ij")
+    FileChannel.open(tempFile, EnumSet.of(StandardOpenOption.WRITE)).use { channel ->
       val imageData = (image.raster.dataBuffer as DataBufferInt).data
 
       val buffer = ByteBuffer.allocateDirect(imageData.size * Int.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN)
       try {
         buffer.putInt(image.width)
         buffer.putInt(image.height)
-        buffer.putInt(java.lang.Float.floatToIntBits(JBUIScale.sysScale(graphicsConfiguration)))
-        buffer.putInt(if (ExperimentalUI.isNewUI()) 1 else 0)
+        buffer.putInt(java.lang.Float.floatToIntBits(sysScale))
         buffer.flip()
         do {
           channel.write(buffer)
@@ -121,6 +122,11 @@ internal object ProjectSelfieUtil {
       }
     }
 
-    //println("Write image: " + (System.currentTimeMillis() - start) + "ms")
+    try {
+      Files.move(tempFile, file, StandardCopyOption.ATOMIC_MOVE)
+    }
+    catch (e: AtomicMoveNotSupportedException) {
+      Files.move(tempFile, file)
+    }
   }
 }

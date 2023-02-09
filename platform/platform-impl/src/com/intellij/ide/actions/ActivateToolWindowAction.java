@@ -85,7 +85,13 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     }
     else {
       presentation.setVisible(true);
-      presentation.setEnabled(toolWindow.isAvailable() || hasEmptyState(project));
+      boolean available = toolWindow.isAvailable() || hasEmptyState(project);
+      if (e.getPlace().equals(ActionPlaces.POPUP)) {
+        presentation.setVisible(available);
+      } else {
+        presentation.setEnabled(available);
+      }
+
       updatePresentation(presentation, toolWindow);
     }
   }

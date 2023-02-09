@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents the list of name/value elements for an annotation.
  *
- * @author ven
  * @see PsiAnnotation
  */
 public interface PsiAnnotationParameterList extends PsiElement {

@@ -3,7 +3,8 @@ package com.intellij.ide.wizard
 
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Generators
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.ide.wizard.util.CommentNewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
+import com.intellij.ide.wizard.comment.CommentNewProjectWizardStep
 import com.intellij.openapi.module.GeneralModuleType
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.project.Project
@@ -18,13 +19,12 @@ class NewEmptyProjectBuilder : GeneratorNewProjectWizardBuilderAdapter(EmptyNewM
     override val description: String = UIBundle.message("label.project.wizard.empty.project.generator.description")
     override val icon: Icon = EmptyIcon.ICON_0
 
-    override fun createStep(context: WizardContext) =
-      RootNewProjectWizardStep(context).chain(
-        ::CommentStep,
-        ::newProjectWizardBaseStepWithoutGap,
-        ::GitNewProjectWizardStep,
-        ::Step
-      )
+    override fun createStep(context: WizardContext): NewProjectWizardStep =
+      RootNewProjectWizardStep(context)
+        .nextStep(::CommentStep)
+        .nextStep(::newProjectWizardBaseStepWithoutGap)
+        .nextStep(::GitNewProjectWizardStep)
+        .nextStep(::Step)
   }
 
   private class CommentStep(parent: NewProjectWizardStep) : CommentNewProjectWizardStep(parent) {
@@ -34,7 +34,8 @@ class NewEmptyProjectBuilder : GeneratorNewProjectWizardBuilderAdapter(EmptyNewM
   private class Step(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent) {
     override fun setupProject(project: Project) {
       val moduleType = ModuleTypeManager.getInstance().findByID(GeneralModuleType.TYPE_ID)
-      moduleType.createModuleBuilder().commit(project)
+      val builder = moduleType.createModuleBuilder()
+      setupProjectFromBuilder(project, builder)
     }
   }
 }

@@ -18,8 +18,7 @@ package com.jetbrains.packagesearch.intellij.plugin.intentions
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.dependencytoolwindow.DependencyToolWindowFactory
-import com.intellij.openapi.components.service
+import com.intellij.dependencytoolwindow.DependencyToolWindowOpener
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
@@ -36,7 +35,7 @@ class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : 
         Regex("(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{Lu}\\p{javaJavaIdentifierPart}+")
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-        DependencyToolWindowFactory.activateToolWindow(project, PackagesListPanelProvider) {
+        DependencyToolWindowOpener.activateToolWindow(project, PackagesListPanelProvider) {
             project.pkgsUiStateModifier.setSearchQuery(ref.canonicalText)
         }
     }

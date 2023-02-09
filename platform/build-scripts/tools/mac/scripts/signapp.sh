@@ -9,21 +9,12 @@ export COPYFILE_DISABLE=true
 SIT_FILE=$1
 EXPLODED=$2.exploded
 
-set +x
-USERNAME=$3
-PASSWORD=$4
 set -x
 
+NOTARIZE=$3
+BUNDLE_ID=$4
 CODESIGN_STRING=$5
-NOTARIZE=$6
-BUNDLE_ID=$7
-COMPRESS_INPUT=${8:-false}
-JETSIGN_CLIENT=${9:-null}
-
-if [ "$JETSIGN_CLIENT" != "null" ] && [ "$CODESIGN_STRING" == "" ]; then
-  echo "CertificateID is not specified"
-  exit 1
-fi
+COMPRESS_INPUT=${6:-false}
 
 cd "$(dirname "$0")"
 
@@ -72,43 +63,13 @@ log "$SIT_FILE unzipped and removed"
 
 APPLICATION_PATH="$EXPLODED/$BUILD_NAME"
 
-find "$APPLICATION_PATH/Contents/bin" \
-  -maxdepth 1 -type f -name '*.jnilib' -print0 |
-  while IFS= read -r -d $'\0' file; do
-    if [ -f "$file" ]; then
-      log "Linking $file"
-      b="$(basename "$file" .jnilib)"
-      ln -sf "$b.jnilib" "$(dirname "$file")/$b.dylib"
-    fi
-  done
-
-find "$APPLICATION_PATH/Contents/" \
-  -maxdepth 1 -type f -name '*.txt' -print0 |
-  while IFS= read -r -d $'\0' file; do
-    if [ -f "$file" ]; then
-      log "Moving $file"
-      mv "$file" "$APPLICATION_PATH/Contents/Resources"
-    fi
-  done
-
-non_plist=$(find "$APPLICATION_PATH/Contents/" -maxdepth 1 -type f -and -not -name 'Info.plist' | wc -l)
-if [[ $non_plist -gt 0 ]]; then
-  log "Only Info.plist file is allowed in Contents directory but found $non_plist file(s):"
-  log "$(find "$APPLICATION_PATH/Contents/" -maxdepth 1 -type f -and -not -name 'Info.plist')"
-  exit 1
-fi
-
-set +x
-if [ "$USERNAME" != "" ] && [ "$PASSWORD" != "" ]; then
-  log "Unlocking keychain..."
-  # Make sure *.p12 is imported into local KeyChain
-  security unlock-keychain -p "$PASSWORD" "/Users/$USERNAME/Library/Keychains/login.keychain" || true
-fi
-set -ex
-
 function notarize() {
   set +x
   if [[ -f "$HOME/.notarize_token" ]]; then
+    if [ "$CODESIGN_STRING" == "" ]; then
+      echo "CertificateID is not specified, required for $HOME/.notarize_token"
+      exit 1
+    fi
     source "$HOME/.notarize_token"
   fi
   if [[ -z "$APPLE_USERNAME" ]] || [[ -z "$APPLE_PASSWORD" ]]; then
@@ -132,18 +93,12 @@ function notarize() {
   retry "Stapling" 3 xcrun stapler staple "$APPLICATION_PATH"
 }
 
-if [ "$JETSIGN_CLIENT" != "null" ]; then
-  log "Signing ..."
-  retry "Signing" 3 ./sign.sh "$APPLICATION_PATH" "$CODESIGN_STRING" "$JETSIGN_CLIENT" "$SIT_FILE"
-  if [ "$NOTARIZE" = "yes" ]; then
-    log "Notarizing..."
-    notarize
-  else
-    log "Notarization disabled"
-    log "Stapling disabled"
-  fi
+if [ "$NOTARIZE" = "yes" ]; then
+  log "Notarizing..."
+  notarize
 else
-  log "Signing disabled"
+  log "Notarization disabled"
+  log "Stapling disabled"
 fi
 
 if [ "$COMPRESS_INPUT" != "false" ]; then

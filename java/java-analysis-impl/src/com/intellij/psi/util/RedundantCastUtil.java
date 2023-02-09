@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -14,6 +14,7 @@ import com.intellij.psi.impl.RecaptureTypeMapper;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -198,8 +199,7 @@ public final class RedundantCastUtil {
         private @Nullable PsiType processBinaryExpressionOperand(final PsiExpression operand,
                                                                  final PsiType otherType,
                                                                  final IElementType binaryToken) {
-          if (operand instanceof PsiTypeCastExpression) {
-            PsiTypeCastExpression typeCast = (PsiTypeCastExpression)operand;
+          if (operand instanceof PsiTypeCastExpression typeCast) {
             PsiExpression toCast = typeCast.getOperand();
             if (toCast != null && otherType != null &&
                 TypeConversionUtil.isBinaryOperatorApplicable(binaryToken, toCast.getType(), otherType, false)) {
@@ -242,8 +242,7 @@ public final class RedundantCastUtil {
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       PsiExpression qualifier = deparenthesizeExpression(expression.getQualifierExpression());
-      if (qualifier instanceof PsiTypeCastExpression) {
-        PsiTypeCastExpression typeCast = (PsiTypeCastExpression)qualifier;
+      if (qualifier instanceof PsiTypeCastExpression typeCast) {
         PsiExpression operand = getInnerMostOperand(typeCast.getOperand());
         if (operand == null) return;
 
@@ -333,8 +332,7 @@ public final class RedundantCastUtil {
       if (args.length == 0) return;
       final JavaResolveResult oldResult = expression.resolveMethodGenerics();
       final PsiElement element = oldResult.getElement();
-      if (!(element instanceof PsiMethod)) return;
-      PsiMethod oldMethod = (PsiMethod)element;
+      if (!(element instanceof PsiMethod oldMethod)) return;
       PsiParameter[] parameters = oldMethod.getParameterList().getParameters();
 
       PsiCall newCall = null;
@@ -436,9 +434,8 @@ public final class RedundantCastUtil {
           if (newReturnExpression instanceof PsiTypeCastExpression) {
             checkLambdaReturn(i, (PsiTypeCastExpression)returnExpression, (PsiTypeCastExpression)newReturnExpression, interfaceType, newLambdaExpression, oldCall, newCall, parameters);
           }
-          else if (returnExpression instanceof PsiConditionalExpression) {
+          else if (returnExpression instanceof PsiConditionalExpression conditionalExpression) {
             LOG.assertTrue(newReturnExpression instanceof PsiConditionalExpression);
-            PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)returnExpression;
             PsiConditionalExpression newConditionalExpression = (PsiConditionalExpression)newReturnExpression;
 
             final PsiExpression thenExpression = deparenthesizeExpression(conditionalExpression.getThenExpression());
@@ -612,8 +609,7 @@ public final class RedundantCastUtil {
       PsiExpression expr = deparenthesizeExpression(operand);
 
       final PsiType topCastType = typeCast.getType();
-      if (expr instanceof PsiTypeCastExpression) {
-        PsiTypeCastExpression innerCast = (PsiTypeCastExpression)expr;
+      if (expr instanceof PsiTypeCastExpression innerCast) {
         PsiTypeElement typeElement = innerCast.getCastType();
         if (typeElement == null) return;
         PsiType castType = typeElement.getType();
@@ -797,26 +793,26 @@ public final class RedundantCastUtil {
 
     @Override
     public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
-      addIfNarrowing(statement.getAssertCondition(), PsiType.BOOLEAN);
+      addIfNarrowing(statement.getAssertCondition(), PsiTypes.booleanType());
       addIfNarrowing(statement.getAssertDescription(), PsiType.getJavaLangString(statement.getManager(), statement.getResolveScope()));
       super.visitAssertStatement(statement);
     }
 
     @Override
     public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
-      addIfNarrowing(statement.getCondition(), PsiType.BOOLEAN);
+      addIfNarrowing(statement.getCondition(), PsiTypes.booleanType());
       super.visitDoWhileStatement(statement);
     }
 
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement statement) {
-      addIfNarrowing(statement.getCondition(), PsiType.BOOLEAN);
+      addIfNarrowing(statement.getCondition(), PsiTypes.booleanType());
       super.visitIfStatement(statement);
     }
 
     @Override
     public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
-      addIfNarrowing(statement.getCondition(), PsiType.BOOLEAN);
+      addIfNarrowing(statement.getCondition(), PsiTypes.booleanType());
       super.visitWhileStatement(statement);
     }
 
@@ -888,7 +884,7 @@ public final class RedundantCastUtil {
         }
       }
 
-      addIfNarrowing(conditionalExpression.getCondition(), PsiType.BOOLEAN);
+      addIfNarrowing(conditionalExpression.getCondition(), PsiTypes.booleanType());
       super.visitConditionalExpression(conditionalExpression);
     }
 
@@ -1029,8 +1025,7 @@ public final class RedundantCastUtil {
       }
     }
 
-    if (parent instanceof PsiBinaryExpression) {
-      PsiBinaryExpression expression = (PsiBinaryExpression)parent;
+    if (parent instanceof PsiBinaryExpression expression) {
       PsiExpression firstOperand = expression.getLOperand();
       PsiExpression otherOperand = expression.getROperand();
       if (PsiTreeUtil.isAncestor(otherOperand, typeCast, false)) {
@@ -1125,9 +1120,6 @@ public final class RedundantCastUtil {
   }
 
   private static boolean isExceptionThrown(PsiClassType exceptionType, PsiClassType[] thrownTypes) {
-    for (final PsiClassType type : thrownTypes) {
-      if (type.equals(exceptionType)) return true;
-    }
-    return false;
+    return ArrayUtil.contains(exceptionType, thrownTypes);
   }
 }

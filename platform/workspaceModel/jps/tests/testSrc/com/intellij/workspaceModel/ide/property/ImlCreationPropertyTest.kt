@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.property
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
@@ -31,7 +33,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
+import java.util.*
 import kotlin.test.assertContains
+import kotlin.test.fail
 
 
 // TODO: Cover case in com.intellij.workspaceModel.ide.impl.jps.serialization.JpsSplitModuleAndContentRoot.load module without java custom settings
@@ -58,7 +62,7 @@ class ImlCreationPropertyTest {
 
     val configurationManager = ExternalStorageConfigurationManager.getInstance(projectModel.project)
     configurationManager.isEnabled = true
-    val rootFolder = tempDir.resolve("testProject")
+    val rootFolder = tempDir.resolve("testProject" + UUID.randomUUID().hashCode())
     val info = createProjectSerializers(rootFolder.toFile(), virtualFileManager, configurationManager)
     serializers = info.first
     configLocation = info.second
@@ -68,7 +72,7 @@ class ImlCreationPropertyTest {
   fun createAndSave() {
     PropertyChecker.checkScenarios {
       ImperativeCommand { env ->
-        tempDir.toFile().listFiles().forEach { it.deleteRecursively() }
+        tempDir.toFile().listFiles()?.forEach { it.deleteRecursively() }
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
         env.executeCommands(Generator.constant(CreateAndSave(workspace)))
       }
@@ -88,12 +92,18 @@ class ImlCreationPropertyTest {
         assertContains(modulesXml, "${moduleEntity.name}.iml", ignoreCase = true,
                        "Link to module.iml is not found in modules.xml. ${moduleEntity.name}")
 
-        if (moduleEntity.isEmpty) {
+        if (moduleEntity.isEmpty && !javaPluginPresent()) {
           if (moduleEntity.isExternal) {
-            UsefulTestCase.assertDoesntExist(prj.cache.modules.resolve("${moduleEntity.name}.xml").toFile())
+            val file = prj.cache.modules.resolve("${moduleEntity.name}.xml").toFile()
+            if (file.exists()) {
+              fail("File should not exist ${file}. Content: ${file.readText()}")
+            }
           }
           else {
-            UsefulTestCase.assertDoesntExist(prj.resolve("${moduleEntity.name}.iml").toFile())
+            val file = prj.resolve("${moduleEntity.name}.iml").toFile()
+            if (file.exists()) {
+              fail("File should not exist ${file}. Content: ${file.readText()}")
+            }
           }
         }
         else {
@@ -184,6 +194,8 @@ class ImlCreationPropertyTest {
     }
   }
 }
+
+private fun javaPluginPresent() = PluginManagerCore.getPlugin(PluginId.findId("com.intellij.java")) != null
 
 internal val newEmptyWorkspace: Generator<MutableEntityStorage>
   get() = Generator.constant(MutableEntityStorage.create())

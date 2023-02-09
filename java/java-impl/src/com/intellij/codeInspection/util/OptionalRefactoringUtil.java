@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -36,15 +36,14 @@ public final class OptionalRefactoringUtil {
                          targetType != null &&
                          (trueType instanceof PsiLambdaParameterType || Objects.requireNonNull(trueType).isAssignableFrom(targetType));
     if (!trivialMap) {
-      if (stripped instanceof PsiTypeCastExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
-        PsiTypeCastExpression castExpression = (PsiTypeCastExpression)stripped;
+      if (stripped instanceof PsiTypeCastExpression castExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
         PsiTypeElement castType = castExpression.getCastType();
         // pull cast outside to avoid the .map() step
         if (castType != null && ExpressionUtils.isReferenceTo(castExpression.getOperand(), var)) {
           return "(" + castType.getText() + ")" + qualifier + ".orElse(null)";
         }
       }
-      if (ExpressionUtils.isLiteral(falseExpression, Boolean.FALSE) && PsiType.BOOLEAN.equals(trueType)) {
+      if (ExpressionUtils.isLiteral(falseExpression, Boolean.FALSE) && PsiTypes.booleanType().equals(trueType)) {
         if (ExpressionUtils.isLiteral(trueExpression, Boolean.TRUE)) {
           return qualifier + ".isPresent()";
         }
@@ -53,8 +52,7 @@ public final class OptionalRefactoringUtil {
       if (ExpressionUtils.isLiteral(falseExpression, Boolean.TRUE) && ExpressionUtils.isLiteral(trueExpression, Boolean.FALSE)) {
         return "!" + qualifier + ".isPresent()";
       }
-      if (stripped instanceof PsiConditionalExpression) {
-        PsiConditionalExpression condition = (PsiConditionalExpression)stripped;
+      if (stripped instanceof PsiConditionalExpression condition) {
         PsiExpression thenExpression = condition.getThenExpression();
         PsiExpression elseExpression = condition.getElseExpression();
         if (thenExpression != null && elseExpression != null) {
@@ -138,11 +136,11 @@ public final class OptionalRefactoringUtil {
         Number falseValue = JavaPsiMathUtil.getNumberFromLiteral(falseExpression);
         if (falseValue != null) {
           falseText = falseValue.toString();
-          if (targetType.equals(PsiType.FLOAT)) {
+          if (targetType.equals(PsiTypes.floatType())) {
             falseText += "F";
-          } else if(targetType.equals(PsiType.DOUBLE) && !falseText.contains(".")) {
+          } else if(targetType.equals(PsiTypes.doubleType()) && !falseText.contains(".")) {
             falseText += ".0";
-          } else if(targetType.equals(PsiType.LONG)) {
+          } else if(targetType.equals(PsiTypes.longType())) {
             falseText += "L";
           }
         }
@@ -165,12 +163,12 @@ public final class OptionalRefactoringUtil {
     PsiExpression copy = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(text, expression);
     PsiType exprType = copy.getType();
     if (exprType != null &&
-        !exprType.equals(PsiType.NULL) &&
+        !exprType.equals(PsiTypes.nullType()) &&
         !LambdaUtil.notInferredType(exprType) &&
         TypeConversionUtil.isAssignable(type, exprType)) {
       if (falseExpression == null) return "";
       PsiType falseType = falseExpression.getType();
-      if (falseType != null && (falseType.isAssignableFrom(exprType) || falseType.equals(PsiType.NULL))) return "";
+      if (falseType != null && (falseType.isAssignableFrom(exprType) || falseType.equals(PsiTypes.nullType()))) return "";
     }
     return "<" + type.getCanonicalText() + ">";
   }

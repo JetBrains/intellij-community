@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.common
 
-import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.notification.ThanksForFeedbackNotification
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.feedback.ZenDeskRequests
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ZenDeskForm
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.util.PlatformUtils
@@ -69,8 +69,8 @@ fun submitGeneralFeedback(project: Project?,
   }
 }
 
-fun Row.feedbackAgreement(project: Project?, systemInfo: () -> Unit) {
-  comment(CommonFeedbackBundle.message("dialog.feedback.consent"), maxLineLength = MAX_LINE_LENGTH_NO_WRAP) {
+fun Row.feedbackAgreement(project: Project?, @NlsContexts.DetailedDescription agreementText: String, systemInfo: () -> Unit) {
+  comment(agreementText, maxLineLength = MAX_LINE_LENGTH_NO_WRAP) {
     when (it.description) {
       "systemInfo" -> systemInfo()
       else -> it.url?.let { url ->

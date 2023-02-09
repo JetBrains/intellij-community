@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -245,7 +245,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     final PsiExpression condition = statement.getAssertCondition();
     if (condition != null) {
       condition.accept(this);
-      generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
+      generateBoxingUnboxingInstructionFor(condition, PsiTypes.booleanType());
       addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), DfTypes.TRUE, condition));
       final PsiExpression description = statement.getAssertDescription();
       if (description != null) {
@@ -455,7 +455,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiExpression condition = statement.getCondition();
       if (condition != null) {
         condition.accept(this);
-        generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
+        generateBoxingUnboxingInstructionFor(condition, PsiTypes.booleanType());
         if (statement == myCodeFragment) {
           addInstruction(new PopInstruction());
         } else {
@@ -507,9 +507,18 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return expressions == null ? getFactory().getUnknown() : JavaDfaValueFactory.createCommonValue(getFactory(), expressions, type);
   }
 
-  @Override public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
+  @Override
+  public void visitForeachPatternStatement(@NotNull PsiForeachPatternStatement statement) {
+    processForeach(statement);
+  }
+
+  @Override 
+  public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
+    processForeach(statement);
+  }
+  
+  private void processForeach(@NotNull PsiForeachStatementBase statement) {
     startElement(statement);
-    final PsiParameter parameter = statement.getIterationParameter();
     final PsiExpression iteratedValue = PsiUtil.skipParenthesizedExprDown(statement.getIteratedValue());
 
     ControlFlowOffset loopEndOffset = getEndOffset(statement);
@@ -536,12 +545,29 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     ControlFlowOffset offset = myCurrentFlow.getNextOffset();
-    DfaVariableValue dfaVariable = PlainDescriptor.createVariableValue(myFactory, parameter);
-    DfaValue commonValue = getIteratedElement(parameter.getType(), iteratedValue);
-    if (DfaTypeValue.isUnknown(commonValue)) {
-      addInstruction(new FlushVariableInstruction(dfaVariable));
-    } else {
-      new CFGBuilder(this).pushForWrite(dfaVariable).push(commonValue).assign().pop();
+    if (statement instanceof PsiForeachStatement normalForeach) {
+      PsiParameter parameter = normalForeach.getIterationParameter();
+      DfaVariableValue dfaVariable = PlainDescriptor.createVariableValue(myFactory, parameter);
+      DfaValue commonValue = getIteratedElement(parameter.getType(), iteratedValue);
+      if (DfaTypeValue.isUnknown(commonValue)) {
+        addInstruction(new FlushVariableInstruction(dfaVariable));
+      } else {
+        new CFGBuilder(this).pushForWrite(dfaVariable).push(commonValue).assign().pop();
+      }
+    }
+    else if (statement instanceof PsiForeachPatternStatement patternForeach &&
+             patternForeach.getIterationPattern() instanceof PsiDeconstructionPattern pattern) {
+      PsiType contextType = JavaPsiPatternUtil.getContextType(pattern);
+      if (contextType == null) {
+        contextType = TypeUtils.getObjectType(statement);
+      }
+      DfaValue commonValue = getIteratedElement(contextType, iteratedValue);
+      addInstruction(new PushInstruction(commonValue, null));
+      DeferredOffset endPattern = new DeferredOffset();
+      processPattern(pattern, pattern, contextType,null, endPattern);
+      endPattern.setOffset(getInstructionCount());
+      addInstruction(new EnsureInstruction(null, RelationType.EQ, DfTypes.TRUE, null));
+      addInstruction(new PopInstruction());
     }
 
     if (!hasSizeCheck) {
@@ -562,7 +588,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new GotoInstruction(offset));
 
     finishElement(statement);
-    removeVariable(parameter);
   }
 
   @Override public void visitForStatement(@NotNull PsiForStatement statement) {
@@ -593,7 +618,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression condition = statement.getCondition();
     if (condition != null) {
       condition.accept(this);
-      generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
+      generateBoxingUnboxingInstructionFor(condition, PsiTypes.booleanType());
     }
     else {
       addInstruction(new PushValueInstruction(statement.getRParenth() == null ? DfTypes.BOOLEAN : DfTypes.TRUE));
@@ -648,12 +673,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiLocalVariable counter = loop.getCounter();
     PsiType counterType = counter.getType();
     Long end = asLong(loop.getBound());
-    if (loop.isIncluding() && !(PsiType.LONG.equals(counterType) && PsiType.INT.equals(loop.getBound().getType()))) {
+    if (loop.isIncluding() && !(PsiTypes.longType().equals(counterType) && PsiTypes.intType().equals(loop.getBound().getType()))) {
       // could be for(int i=0; i<=Integer.MAX_VALUE; i++) which will overflow: conservatively skip this
       if (end == null || end == Long.MAX_VALUE || end == Integer.MAX_VALUE) return false;
     }
     PsiExpression initializer = loop.getInitializer();
-    if (!PsiType.INT.equals(counterType) && !PsiType.LONG.equals(counterType)) return false;
+    if (!PsiTypes.intType().equals(counterType) && !PsiTypes.longType().equals(counterType)) return false;
     DfaValue origin = null;
     Object initialValue = ExpressionUtils.computeConstantExpression(initializer);
     if (initialValue instanceof Number) {
@@ -712,7 +737,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (condition != null) {
       condition.accept(this);
-      generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
+      generateBoxingUnboxingInstructionFor(condition, PsiTypes.booleanType());
       addInstruction(new ConditionalGotoInstruction(skipThenOffset, DfTypes.FALSE, condition));
     }
 
@@ -1083,7 +1108,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                           @NotNull PsiType checkType) {
     boolean potentiallyRedundantInstanceOf = pattern instanceof PsiTypeTestPattern ||
                                              JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern) instanceof PsiTypeTestPattern ||
-                                             pattern instanceof PsiDeconstructionPattern dec && JavaPsiPatternUtil.hasTotalComponents(dec);
+                                             pattern instanceof PsiDeconstructionPattern dec && JavaPsiPatternUtil.hasUnconditionalComponents(dec);
     DfaAnchor instanceofAnchor = potentiallyRedundantInstanceOf ? new JavaExpressionAnchor(expression) : null;
     DeferredOffset endPatternOffset = new DeferredOffset();
     processPattern(pattern, pattern, checkType, instanceofAnchor, endPatternOffset);
@@ -1169,8 +1194,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                    @Nullable DfaAnchor instanceofAnchor) {
     boolean java19plus = PsiUtil.getLanguageLevel(myCodeFragment).isAtLeast(LanguageLevel.JDK_19_PREVIEW);
     if (java19plus
-        ? (sourcePattern == innerPattern || !JavaPsiPatternUtil.isTotalForType(innerPattern, checkType))
-        : !JavaPsiPatternUtil.isTotalForType(innerPattern, checkType)) {
+        ? (sourcePattern == innerPattern || !JavaPsiPatternUtil.isUnconditionalForType(innerPattern, checkType))
+        : !JavaPsiPatternUtil.isUnconditionalForType(innerPattern, checkType)) {
       addPatternTypeTest(innerPattern, instanceofAnchor, endPatternOffset, patternDfaVar);
     }
     else {
@@ -1382,7 +1407,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (condition != null) {
       condition.accept(this);
-      generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
+      generateBoxingUnboxingInstructionFor(condition, PsiTypes.booleanType());
     } else {
       pushUnknown();
     }
@@ -1432,7 +1457,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression index = arrayStore.getIndexExpression();
     if (index != null) {
       index.accept(this);
-      generateBoxingUnboxingInstructionFor(index, PsiType.INT);
+      generateBoxingUnboxingInstructionFor(index, PsiTypes.intType());
     } else {
       pushUnknown();
     }
@@ -1561,7 +1586,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void checkZeroDivisor(PsiType resType) {
     DfaControlTransferValue transfer = createTransfer("java.lang.ArithmeticException");
-    addInstruction(new EnsureInstruction(null, RelationType.NE, PsiType.LONG.equals(resType) ? DfTypes.longValue(0) : DfTypes.intValue(0),
+    addInstruction(new EnsureInstruction(null, RelationType.NE, PsiTypes.longType().equals(resType) ? DfTypes.longValue(0) : DfTypes.intValue(0),
                                          transfer, true));
   }
 
@@ -1586,7 +1611,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void generateBinOp(@NotNull DfaAnchor anchor, @NotNull IElementType op, PsiExpression rExpr, PsiType resType) {
-    if ((op == JavaTokenType.DIV || op == JavaTokenType.PERC) && resType != null && PsiType.LONG.isAssignableFrom(resType)) {
+    if ((op == JavaTokenType.DIV || op == JavaTokenType.PERC) && resType != null && PsiTypes.longType().isAssignableFrom(resType)) {
       Object divisorValue = ExpressionUtils.computeConstantExpression(rExpr);
       if (!(divisorValue instanceof Number number) || (number.longValue() == 0)) {
         checkZeroDivisor(resType);
@@ -1596,7 +1621,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (op.equals(JavaTokenType.PLUS) && TypeUtils.isJavaLangString(resType)) {
       inst = new StringConcatInstruction(anchor, TypeConstraints.exact(resType));
     }
-    else if (PsiType.BOOLEAN.equals(resType)) {
+    else if (PsiTypes.booleanType().equals(resType)) {
       if (op.equals(JavaTokenType.AND)) {
         inst = new BooleanAndOrInstruction(false, anchor);
       }
@@ -1639,8 +1664,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       leftCast = rightCast = TypeConversionUtil.isNumericType(lType) ? rType : lType;
     }
     else if (shift) {
-      leftCast = PsiType.LONG.equals(PsiPrimitiveType.getOptionallyUnboxedType(lType)) ? PsiType.LONG : PsiType.INT;
-      rightCast = PsiType.LONG.equals(PsiPrimitiveType.getOptionallyUnboxedType(rType)) ? PsiType.LONG : PsiType.INT;
+      leftCast = PsiTypes.longType().equals(PsiPrimitiveType.getOptionallyUnboxedType(lType)) ? PsiTypes.longType() : PsiTypes.intType();
+      rightCast = PsiTypes.longType().equals(PsiPrimitiveType.getOptionallyUnboxedType(rType)) ? PsiTypes.longType() : PsiTypes.intType();
     }
     else if (!comparingRef) {
       leftCast = rightCast = TypeConversionUtil.unboxAndBalanceTypes(lType, rType);
@@ -1661,7 +1686,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   void generateBoxingUnboxingInstructionFor(@NotNull PsiExpression context, PsiType actualType, PsiType expectedType, boolean explicit) {
-    if (PsiType.VOID.equals(expectedType)) return;
+    if (PsiTypes.voidType().equals(expectedType)) return;
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) &&
         TypeConversionUtil.isAssignableFromPrimitiveWrapper(toBound(actualType))) {
@@ -1738,7 +1763,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiExpression elseExpression = expression.getElseExpression();
       DeferredOffset elseOffset = new DeferredOffset();
       condition.accept(this);
-      generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
+      generateBoxingUnboxingInstructionFor(condition, PsiTypes.booleanType());
       PsiType type = expression.getType();
       addInstruction(new ConditionalGotoInstruction(elseOffset, DfTypes.FALSE, PsiUtil.skipParenthesizedExprDown(condition)));
       thenExpression.accept(this);
@@ -1988,7 +2013,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (dims > 0) {
         for (final PsiExpression dimension : dimensions) {
           dimension.accept(this);
-          generateBoxingUnboxingInstructionFor(dimension, PsiType.INT);
+          generateBoxingUnboxingInstructionFor(dimension, PsiTypes.intType());
         }
         DfaControlTransferValue transfer = createTransfer("java.lang.NegativeArraySizeException");
         for (int i = dims - 1; i >= 0; i--) {
@@ -2177,7 +2202,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       pushUnknown();
     } else {
       generateBoxingUnboxingInstructionFor(operand, unboxedType);
-      PsiType resultType = TypeConversionUtil.binaryNumericPromotion(unboxedType, PsiType.INT);
+      PsiType resultType = TypeConversionUtil.binaryNumericPromotion(unboxedType, PsiTypes.intType());
       Object addend = TypeConversionUtil.computeCastTo(1, resultType);
       addInstruction(new PushValueInstruction(DfTypes.primitiveConstant(addend)));
       addInstruction(new NumericBinaryInstruction(token, null));
@@ -2228,7 +2253,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           if (expression.getOperationTokenType() == JavaTokenType.EXCL) {
             addInstruction(new NotInstruction(new JavaExpressionAnchor(expression)));
           }
-          else if (expression.getOperationTokenType() == JavaTokenType.MINUS && (PsiType.INT.equals(type) || PsiType.LONG.equals(type))) {
+          else if (expression.getOperationTokenType() == JavaTokenType.MINUS && (PsiTypes.intType().equals(type) || PsiTypes.longType()
+            .equals(type))) {
             addInstruction(new PushValueInstruction(DfTypes.defaultValue(type)));
             addInstruction(new SwapInstruction());
             addInstruction(new NumericBinaryInstruction(LongRangeBinOp.MINUS, new JavaExpressionAnchor(expression)));

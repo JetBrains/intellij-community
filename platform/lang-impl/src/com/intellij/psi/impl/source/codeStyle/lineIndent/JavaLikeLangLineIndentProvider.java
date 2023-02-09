@@ -25,7 +25,7 @@ import static com.intellij.psi.impl.source.codeStyle.lineIndent.JavaLikeLangLine
  * A base class for Java-like language line indent provider.
  * If a LineIndentProvider is not provided, {@link FormatterBasedLineIndentProvider} is used.
  * If a registered provider is unable to calculate the indentation,
- * {@link FormatterBasedIndentAdjuster} will be used.
+ * {@link com.intellij.psi.impl.source.codeStyle.FormatterBasedIndentAdjuster} will be used.
  */
 public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvider{
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInspection.RedundantRecordConstructorInspection;
@@ -66,39 +66,86 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
+  protected void doRun() {
+    prepareRenameOfAccessors();
+
+    super.doRun();
+  }
+
+  private void prepareRenameOfAccessors() {
+    List<FieldAccessorCandidate> accessorsToRename = getAccessorsToRename();
+
+    for (var fieldAccessorCandidate : accessorsToRename) {
+      String backingFieldName = fieldAccessorCandidate.getBackingField().getName();
+
+      List<PsiMethod> methods = substituteWithSuperMethodsIfPossible(fieldAccessorCandidate.getAccessor());
+      RenamePsiElementProcessor methodRenameProcessor = RenamePsiElementProcessor.forElement(methods.get(0));
+
+      methods.forEach(method -> {
+        myAllRenames.put(method, backingFieldName);
+        methodRenameProcessor.prepareRenaming(method, backingFieldName, myAllRenames);
+      });
+    }
+  }
+
+  @Override
   protected UsageInfo @NotNull [] findUsages() {
     List<UsageInfo> usages = new SmartList<>();
-    for (var entry : myRecordCandidate.getFieldAccessors().entrySet()) {
-      PsiField psiField = entry.getKey();
+    for (var psiField : myRecordCandidate.getFieldAccessors().keySet()) {
       if (!psiField.hasModifierProperty(PRIVATE)) {
         usages.add(new FieldUsageInfo(psiField));
       }
-      FieldAccessorCandidate fieldAccessorCandidate = entry.getValue();
-      if (fieldAccessorCandidate != null && !fieldAccessorCandidate.isRecordStyleNaming()) {
-        PsiMethod[] superMethods = fieldAccessorCandidate.getAccessor().findSuperMethods();
-        String backingFieldName = fieldAccessorCandidate.getBackingField().getName();
-        List<PsiMethod> methods;
-        if (superMethods.length == 0) {
-          methods = Collections.singletonList(fieldAccessorCandidate.getAccessor());
-        }
-        else {
-          methods = List.of(superMethods);
-        }
-        RenamePsiElementProcessor methodRenameProcessor = RenamePsiElementProcessor.forElement(methods.get(0));
-        methods.forEach(method -> {
-          myAllRenames.put(method, backingFieldName);
-          methodRenameProcessor.prepareRenaming(method, backingFieldName, myAllRenames);
-          UsageInfo[] methodUsages = RenameUtil.findUsages(method, backingFieldName, false, false, myAllRenames);
-          usages.addAll(Arrays.asList(methodUsages));
-        });
-        usages.add(new RenameMethodUsageInfo(fieldAccessorCandidate.getAccessor(), backingFieldName));
-      }
+    }
+
+    List<FieldAccessorCandidate> accessorsToRename = getAccessorsToRename();
+
+    for (var fieldAccessorCandidate : accessorsToRename) {
+      String backingFieldName = fieldAccessorCandidate.getBackingField().getName();
+
+      List<PsiMethod> methods = substituteWithSuperMethodsIfPossible(fieldAccessorCandidate.getAccessor());
+      methods.forEach(method -> {
+        UsageInfo[] methodUsages = RenameUtil.findUsages(method, backingFieldName, false, false, myAllRenames);
+        usages.addAll(Arrays.asList(methodUsages));
+      });
+    }
+
+    for (var fieldAccessorCandidate : accessorsToRename) {
+      String backingFieldName = fieldAccessorCandidate.getBackingField().getName();
+      usages.add(new RenameMethodUsageInfo(fieldAccessorCandidate.getAccessor(), backingFieldName));
     }
 
     if (myShowAffectedMembers) {
       usages.addAll(findAffectedMembersUsages(myRecordCandidate));
     }
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
+  }
+
+  /**
+   * @return list of accessors which have not record-compatible names and need to be renamed separately.
+   */
+  @NotNull
+  private List<@NotNull FieldAccessorCandidate> getAccessorsToRename() {
+    //noinspection UnnecessaryLocalVariable
+    List<FieldAccessorCandidate> list = ContainerUtil.filter(
+      myRecordCandidate.getFieldAccessors().values(),
+      fieldAccessorCandidate -> fieldAccessorCandidate != null && !fieldAccessorCandidate.isRecordStyleNaming()
+    );
+    return list;
+  }
+
+  /**
+   * @param accessor a declaration to find supers methods for
+   * @return a list of direct super methods, or the declaration itself if no super methods are found
+   */
+  @NotNull
+  private static List<@NotNull PsiMethod> substituteWithSuperMethodsIfPossible(@NotNull PsiMethod accessor) {
+    PsiMethod[] superMethods = accessor.findSuperMethods();
+    if (superMethods.length == 0) {
+      return List.of(accessor);
+    }
+    else {
+      return List.of(superMethods);
+    }
   }
 
   @NotNull
@@ -147,8 +194,7 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       else if (usage instanceof FieldUsageInfo) {
         conflictingFields.add(((FieldUsageInfo)usage).myField);
       }
-      else if (usage instanceof RenameMethodUsageInfo) {
-        RenameMethodUsageInfo renameMethodInfo = (RenameMethodUsageInfo)usage;
+      else if (usage instanceof RenameMethodUsageInfo renameMethodInfo) {
         RenamePsiElementProcessor renameMethodProcessor = RenamePsiElementProcessor.forElement(renameMethodInfo.myMethod);
         renameMethodProcessor.findExistingNameConflicts(renameMethodInfo.myMethod, renameMethodInfo.myNewName, conflicts, myAllRenames);
       }
@@ -191,11 +237,10 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
           classIdentifier = null;
         }
       }
-      else if (nextElement instanceof PsiModifierList) {
-        recordBuilder.addModifierList((PsiModifierList)nextElement);
+      else if (nextElement instanceof PsiModifierList modifierList) {
+        recordBuilder.addModifierList(modifierList);
       }
-      else if (nextElement instanceof PsiField) {
-        PsiField psiField = (PsiField)nextElement;
+      else if (nextElement instanceof PsiField psiField) {
         psiField.normalizeDeclaration();
         if (fieldAccessors.containsKey(psiField)) {
           nextElement = PsiTreeUtil.skipWhitespacesForward(nextElement);
@@ -277,11 +322,11 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       PsiField field = ObjectUtils.tryCast(expression.resolve(), PsiField.class);
       if (field == null) return;
       PsiType fieldType = field.getType();
-      if (PsiType.CHAR.equals(fieldType) || PsiType.SHORT.equals(fieldType)) {
+      if (PsiTypes.charType().equals(fieldType) || PsiTypes.shortType().equals(fieldType)) {
         PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
         if (parent instanceof PsiTypeCastExpression) {
           PsiTypeElement castType = ((PsiTypeCastExpression)parent).getCastType();
-          if (castType != null && PsiType.INT.equals(castType.getType())) {
+          if (castType != null && PsiTypes.intType().equals(castType.getType())) {
             myNonVisitedFields.remove(field);
           }
         }
@@ -306,10 +351,10 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
 
       PsiType expectedType = null;
       if (FLOAT_CALL.test(expression)) {
-        expectedType = PsiType.FLOAT;
+        expectedType = PsiTypes.floatType();
       }
       else if (DOUBLE_CALL.test(expression)) {
-        expectedType = PsiType.DOUBLE;
+        expectedType = PsiTypes.doubleType();
       }
       if (expectedType != null) {
         PsiExpression[] expressions = expression.getArgumentList().getExpressions();

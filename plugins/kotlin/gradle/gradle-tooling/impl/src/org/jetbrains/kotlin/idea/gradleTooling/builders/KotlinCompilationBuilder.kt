@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.arguments.buildSerializedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinCompilationOutputReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinCompilationReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinNativeCompileReflection
+import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinExtras
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationOutput
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
@@ -29,7 +30,10 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             ?: return null
 
         val output = origin.compilationOutput?.let { buildCompilationOutput(it, compileKotlinTask) } ?: return null
-        val dependencies = buildCompilationDependencies(importingContext, origin)
+
+        val dependencies = if (!importingContext.useKgpDependencyResolution()) buildCompilationDependencies(importingContext, origin)
+        else emptySet()
+
         val kotlinTaskProperties = getKotlinTaskProperties(compileKotlinTask, classifier)
 
         val nativeExtensions = origin.konanTargetName?.let(::KotlinNativeCompilationExtensionsImpl)
@@ -54,11 +58,13 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             )
         }
 
+        val serializedExtras = importingContext.importReflection?.resolveExtrasSerialized(origin.gradleCompilation)
+
         @Suppress("DEPRECATION_ERROR")
         return KotlinCompilationImpl(
             name = compilationName,
             allSourceSets = allSourceSets,
-            declaredSourceSets = if (platform == KotlinPlatform.ANDROID) allSourceSets else kotlinSourceSets,
+            declaredSourceSets = kotlinSourceSets,
             dependencies = dependencies.map { importingContext.dependencyMapper.getId(it) }.distinct().toTypedArray(),
             output = output,
             arguments = KotlinCompilationArgumentsImpl(emptyArray(), emptyArray()),
@@ -66,7 +72,8 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             cachedArgsInfo = cachedArgsInfo,
             kotlinTaskProperties = kotlinTaskProperties,
             nativeExtensions = nativeExtensions,
-            associateCompilations = associateCompilations.toSet()
+            associateCompilations = associateCompilations.toSet(),
+            extras = IdeaKotlinExtras.from(serializedExtras)
         )
     }
 

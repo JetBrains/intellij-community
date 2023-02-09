@@ -301,7 +301,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         console.waitAllRequests();
         MarkupModel model = DocumentMarkupModel.forDocument(console.getEditor().getDocument(), getProject(), true);
         RangeHighlighter highlighter = assertOneElement(model.getAllHighlighters());
-        assertEquals(new TextRange(0, console.getEditor().getDocument().getTextLength()), TextRange.create(highlighter));
+        assertEquals(new TextRange(0, console.getEditor().getDocument().getTextLength()), highlighter.getTextRange());
       }).assertTiming());
   }
 
@@ -555,7 +555,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     };
     ExtensionTestUtil.maskExtensions(
       ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS,
-      ContainerUtil.newArrayList(filterProvider),
+      List.of(filterProvider),
       getTestRootDisposable());
 
     myConsole = createConsole(true, getProject());
@@ -578,7 +578,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     ConsoleFilterProvider predefinedProvider = project -> new Filter[] { predefinedFilter };
     ExtensionTestUtil.maskExtensions(
       ConsoleFilterProvider.FILTER_PROVIDERS,
-      ContainerUtil.newArrayList(predefinedProvider),
+      List.of(predefinedProvider),
       getTestRootDisposable());
 
     myConsole = createConsole(true, getProject());

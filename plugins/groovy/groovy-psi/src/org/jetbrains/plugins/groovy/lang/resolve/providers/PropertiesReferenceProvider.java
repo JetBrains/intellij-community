@@ -24,9 +24,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
-/**
- * @author ven
- */
 public class PropertiesReferenceProvider extends PsiReferenceProvider {
   public PropertiesReferenceProvider() {
   }
@@ -40,8 +37,7 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     Object value = null;
 
-    if (element instanceof GrLiteral) {
-      GrLiteral literalExpression = (GrLiteral) element;
+    if (element instanceof GrLiteral literalExpression) {
       value = literalExpression.getValue();
     }
 

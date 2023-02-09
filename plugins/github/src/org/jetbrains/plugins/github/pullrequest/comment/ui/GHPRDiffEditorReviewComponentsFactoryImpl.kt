@@ -2,15 +2,18 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.collaboration.ui.codereview.comment.ReviewUIUtil
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
+import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.diff.util.Side
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.util.ui.JBUI
-import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
@@ -25,32 +28,22 @@ internal constructor(private val project: Project,
                      private val avatarIconsProvider: GHAvatarIconsProvider,
                      private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
                      private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
+                     private val ghostUser: GHUser,
                      private val currentUser: GHUser)
   : GHPRDiffEditorReviewComponentsFactory {
 
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent =
-    GHPRReviewThreadComponent.create(project, thread,
-                                     reviewDataProvider, avatarIconsProvider,
-                                     suggestedChangeHelper,
-                                     currentUser).apply {
-      border = JBUI.Borders.empty(8, 8)
-    }.let { ReviewUIUtil.createEditorInlayPanel(it) }
+    GHPRReviewThreadComponent.createForInlay(project, thread, reviewDataProvider,
+                                             avatarIconsProvider, suggestedChangeHelper,
+                                             ghostUser, currentUser).apply {
+      border = JBUI.Borders.empty(CodeReviewCommentUIUtil.getInlayPadding(GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE))
+    }.let { CodeReviewCommentUIUtil.createEditorInlayPanel(it) }
 
   override fun createSingleCommentComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
     val textFieldModel = GHCommentTextFieldModel(project) {
       val filePath = createCommentParametersHelper.filePath
-      if (line == startLine) {
-        val commitSha = createCommentParametersHelper.commitSha
-        val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
-        reviewDataProvider.createReview(EmptyProgressIndicator(), GHPullRequestReviewEvent.COMMENT, null, commitSha,
-                                        listOf(GHPullRequestDraftReviewComment(it, filePath, diffLine))).successOnEdt {
-          hideCallback()
-        }
-      }
-      else {
-        reviewDataProvider.createThread(EmptyProgressIndicator(), null, it, line + 1, side, startLine + 1, filePath).successOnEdt {
-          hideCallback()
-        }
+      reviewDataProvider.createThread(EmptyProgressIndicator(), null, it, line + 1, side, startLine + 1, filePath).successOnEdt {
+        hideCallback()
       }
     }
 
@@ -61,19 +54,15 @@ internal constructor(private val project: Project,
     val textFieldModel = GHCommentTextFieldModel(project) {
       val filePath = createCommentParametersHelper.filePath
       val commitSha = createCommentParametersHelper.commitSha
-      if (line == startLine) {
-        val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
-        reviewDataProvider.createReview(EmptyProgressIndicator(), null, null, commitSha,
-                                        listOf(GHPullRequestDraftReviewComment(it, filePath, diffLine))).successOnEdt {
-          hideCallback()
-        }
+
+      val thread = if (line != startLine) {
+        GHPullRequestDraftReviewThread(it, line + 1, filePath, side, startLine + 1, side)
       }
       else {
-        reviewDataProvider.createReview(EmptyProgressIndicator(), null, null, commitSha, null,
-                                        listOf(GHPullRequestDraftReviewThread(it, line + 1, filePath, side, startLine + 1, side)))
-          .successOnEdt {
-            hideCallback()
-          }
+        GHPullRequestDraftReviewThread(it, line + 1, filePath, side, null, null)
+      }
+      reviewDataProvider.createReview(EmptyProgressIndicator(), null, null, commitSha, null, listOf(thread)).successOnEdt {
+        hideCallback()
       }
     }
 
@@ -83,17 +72,8 @@ internal constructor(private val project: Project,
   override fun createReviewCommentComponent(reviewId: String, side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
     val textFieldModel = GHCommentTextFieldModel(project) {
       val filePath = createCommentParametersHelper.filePath
-      if (line == startLine) {
-        val commitSha = createCommentParametersHelper.commitSha
-        val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
-        reviewDataProvider.addComment(EmptyProgressIndicator(), reviewId, it, commitSha, filePath, diffLine).successOnEdt {
-          hideCallback()
-        }
-      }
-      else {
-        reviewDataProvider.createThread(EmptyProgressIndicator(), reviewId, it, line + 1, side, startLine + 1, filePath).successOnEdt {
-          hideCallback()
-        }
+      reviewDataProvider.createThread(EmptyProgressIndicator(), reviewId, it, line + 1, side, startLine + 1, filePath).successOnEdt {
+        hideCallback()
       }
     }
 
@@ -104,10 +84,30 @@ internal constructor(private val project: Project,
     textFieldModel: GHCommentTextFieldModel,
     @NlsActions.ActionText actionName: String,
     hideCallback: () -> Unit
-  ): JComponent =
-    GHCommentTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser, actionName) {
+  ): JComponent {
+    val submitShortcutText = CommentInputActionsComponentFactory.submitShortcutText
+
+    val cancelAction = swingAction("") {
       hideCallback()
-    }.apply {
+    }
+    val submitAction = swingAction(actionName) {
+      textFieldModel.submit()
+    }
+    textFieldModel.isBusyValue.addAndInvokeListener {
+      submitAction.isEnabled = !it
+    }
+
+    val actions = CommentInputActionsComponentFactory.Config(
+      primaryAction = MutableStateFlow(submitAction),
+      cancelAction = MutableStateFlow(cancelAction),
+      submitHint = MutableStateFlow(GithubBundle.message("pull.request.comment.hint", submitShortcutText))
+    )
+
+    return GHCommentTextFieldFactory(textFieldModel).create(
+      actions,
+      CommentTextFieldFactory.IconConfig.of(CodeReviewChatItemUIUtil.ComponentType.COMPACT, avatarIconsProvider, currentUser.avatarUrl)
+    ).apply {
       border = JBUI.Borders.empty(8)
-    }.let { ReviewUIUtil.createEditorInlayPanel(it) }
+    }.let { CodeReviewCommentUIUtil.createEditorInlayPanel(it) }
+  }
 }

@@ -299,7 +299,7 @@ class KotlinChangeSignatureDialog(
 
     override fun isListTableViewSupported() = true
 
-    override fun createCallerChooser(title: String, treeToReuse: Tree?, callback: Consumer<in Set<PsiElement>>) =
+    override fun createCallerChooser(@NlsContexts.DialogTitle title: String, treeToReuse: Tree?, callback: Consumer<in Set<PsiElement>>) =
         KotlinCallerChooser(myMethod.method, myProject, title, treeToReuse, callback)
 
     // Forbid receiver propagation

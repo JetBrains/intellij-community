@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -317,8 +317,7 @@ public final class PlatformTestUtil {
 
   private static boolean isBusy(@NotNull JTree tree, TreeModel model) {
     UIUtil.dispatchAllInvocationEvents();
-    if (model instanceof AsyncTreeModel) {
-      AsyncTreeModel async = (AsyncTreeModel)model;
+    if (model instanceof AsyncTreeModel async) {
       if (async.isProcessing()) return true;
       UIUtil.dispatchAllInvocationEvents();
       return async.isProcessing();
@@ -469,14 +468,9 @@ public final class PlatformTestUtil {
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
-      try {
-        event = eventQueue.getNextEvent();
-        if (event instanceof InvocationEvent) {
-          eventQueue.dispatchEvent(event);
-        }
-      }
-      catch (InterruptedException e) {
-        throw new RuntimeException(e);
+      event = eventQueue.getNextEvent();
+      if (event instanceof InvocationEvent) {
+        eventQueue.dispatchEvent(event);
       }
     }
   }

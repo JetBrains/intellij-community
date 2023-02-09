@@ -6,6 +6,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
@@ -80,7 +81,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, windowWatcher)
 
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-      override fun projectClosingBeforeSave(project: Project) {
+      override fun projectClosing(project: Project) {
         getFrameHelper(project)?.let {
           releaseFrame(it)
         }
@@ -196,13 +197,14 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   override fun getStatusBar(project: Project) = getFrameHelper(project)?.statusBar
 
   override fun getStatusBar(component: Component, project: Project?): StatusBar? {
-    val parent = ComponentUtil.findUltimateParent(component)
-    if (parent is IdeFrame) {
-      return parent.statusBar!!.findChild(component)
+    var parent: Component? = component
+    while (parent != null) {
+      if (parent is IdeFrame) {
+        return parent.statusBar
+      }
+      parent = parent.parent
     }
-
-    val frame = findFrameFor(project) ?: return null
-    return frame.statusBar!!.findChild(component)
+    return null
   }
 
   override fun findFrameFor(project: Project?): IdeFrame? {
@@ -346,6 +348,10 @@ private fun calcAlphaModelSupported(): Boolean {
   if (device.isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.TRANSLUCENT)) {
     return true
   }
+
+  // GTW-3304 WindowUtils crashes on X11-enabled RD hosts
+  if (AppMode.isRemoteDevHost())
+    return false
 
   return try {
     WindowUtils.isWindowAlphaSupported()

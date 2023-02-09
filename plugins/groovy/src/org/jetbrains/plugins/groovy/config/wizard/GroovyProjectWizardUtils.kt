@@ -8,21 +8,17 @@ import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Groovy.logGroovyLibraryChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Groovy.logGroovyLibraryFinished
 import com.intellij.ide.util.projectWizard.ModuleBuilder
-import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.*
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.validation.AFTER_PROPERTY_CHANGE
+import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.download.DownloadableFileSetVersions
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
@@ -35,7 +31,7 @@ const val GROOVY_SDK_FALLBACK_VERSION = "3.0.9"
 private const val MAIN_FILE = "Main.groovy"
 private const val MAIN_GROOVY_TEMPLATE = "template.groovy"
 
-fun Row.groovySdkComboBox(context: WizardContext, property: ObservableMutableProperty<DistributionInfo?>): Cell<DistributionComboBox> {
+fun <S> S.setupGroovySdkUI(builder: Panel) where S : NewProjectWizardStep, S : BuildSystemGroovyNewProjectWizardData {
   val groovyLibraryDescription = GroovyLibraryDescription()
   val comboBox = DistributionComboBox(context.project, object : FileChooserInfo {
     override val fileChooserTitle = GroovyBundle.message("dialog.title.select.groovy.sdk")
@@ -61,13 +57,15 @@ fun Row.groovySdkComboBox(context: WizardContext, property: ObservableMutablePro
       comboBox.removeLoadingItem()
     }
   })
-  return cell(comboBox)
-    .applyToComponent { bindSelectedDistribution(property) }
-    .validationRequestor(AFTER_PROPERTY_CHANGE(property))
-    .validationOnInput { validateGroovySdk(property.get()) }
-    .validationOnApply { validateGroovySdkWithDialog(property.get()) }
-    .columns(COLUMNS_MEDIUM)
-    .whenItemSelectedFromUi { logGroovySdkChanged(context, property.get()) }
+  builder.row(GroovyBundle.message("label.groovy.sdk")) {
+    cell(comboBox)
+      .applyToComponent { bindSelectedDistribution(groovySdkProperty) }
+      .validationRequestor(WHEN_PROPERTY_CHANGED(groovySdkProperty))
+      .validationOnInput { validateGroovySdk(groovySdk) }
+      .validationOnApply { validateGroovySdkWithDialog(groovySdk) }
+      .columns(COLUMNS_MEDIUM)
+      .whenItemSelectedFromUi { logGroovySdkChanged(groovySdk) }
+  }.bottomGap(BottomGap.SMALL)
 }
 
 private fun ValidationInfoBuilder.validateGroovySdk(distribution: DistributionInfo?): ValidationInfo? {
@@ -133,16 +131,16 @@ fun moveUnstableVersionToTheEnd(left: FrameworkLibraryVersion, right: FrameworkL
   }
 }
 
-fun logGroovySdkChanged(context: WizardContext, sdk: DistributionInfo?) {
+fun NewProjectWizardStep.logGroovySdkChanged(sdk: DistributionInfo?) {
   val type = getGroovySdkType(sdk)
   val version = getGroovySdkVersion(sdk)
-  logGroovyLibraryChanged(context, type, version)
+  logGroovyLibraryChanged(type, version)
 }
 
 fun NewProjectWizardStep.logGroovySdkFinished(sdk: DistributionInfo?) {
   val type = getGroovySdkType(sdk)
   val version = getGroovySdkVersion(sdk)
-  logGroovyLibraryFinished(context, type, version)
+  logGroovyLibraryFinished(type, version)
 }
 
 private fun getGroovySdkType(sdk: DistributionInfo?): String? {
@@ -160,8 +158,7 @@ private fun getGroovySdkVersion(sdk: DistributionInfo?): String? {
       sdk.version.versionString
 
     is LocalDistributionInfo ->
-      GroovyConfigUtils.getInstance().getSDKVersion(sdk.path)
-        .takeIf { it != GroovyConfigUtils.UNDEFINED_VERSION }
+      GroovyConfigUtils.getInstance().getSDKVersionOrNull(sdk.path)
 
     null -> null
 

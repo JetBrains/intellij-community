@@ -69,14 +69,16 @@ final class AssociationsEditor implements Disposable {
     myTree.setCellRenderer(new MyNodeRenderer(myManager));
     new TreeSpeedSearch(myTree);
 
-    SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> {
-      if (oldState == null) {
-        expandTree();
-      }
-      else {
-        oldState.applyTo(myTree);
-      }
-    }));
+    if (!project.isDefault()) {
+      SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> {
+        if (oldState == null) {
+          expandTree();
+        }
+        else {
+          oldState.applyTo(myTree);
+        }
+      }));
+    }
 
     myListModel = new AssociationsModel(myTree, myManager);
     myListModel.addListDataListener(new ListDataListener() {
@@ -163,8 +165,7 @@ final class AssociationsEditor implements Disposable {
 
   @Nullable
   private static Object getObject(Object component) {
-    if (!(component instanceof DefaultMutableTreeNode)) return null;
-    final DefaultMutableTreeNode node = ((DefaultMutableTreeNode)component);
+    if (!(component instanceof DefaultMutableTreeNode node)) return null;
     final Object userObject = node.getUserObject();
     if (!(userObject instanceof ProjectViewNode)) return null;
     return ((ProjectViewNode<?>)userObject).getValue();
@@ -363,8 +364,7 @@ final class AssociationsEditor implements Disposable {
                                       int row,
                                       boolean hasFocus) {
       final Object object = getObject(value);
-      if (object instanceof PsiFile) {
-        final PsiFile file = (PsiFile)object;
+      if (object instanceof PsiFile file) {
         final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
         if (myManager.getAssociationsFor(file).length > 0) {
           //noinspection unchecked

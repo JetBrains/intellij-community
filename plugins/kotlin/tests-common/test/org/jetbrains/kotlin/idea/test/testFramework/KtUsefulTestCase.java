@@ -176,7 +176,7 @@ public abstract class KtUsefulTestCase extends TestCase {
         Disposer.setDebugMode(!isStressTest);
 
         if (isIconRequired()) {
-            // ensure that IconLoader will use dummy empty icon
+            // ensure that IconLoader will use fake empty icon
             IconLoader.deactivate();
             //IconManager.activate();
         }
@@ -669,7 +669,7 @@ public abstract class KtUsefulTestCase extends TestCase {
         if (collection.size() != checkers.length) {
             Assert.fail(toString(collection));
         }
-        Set<Consumer<T>> checkerSet = ContainerUtil.set(checkers);
+        Set<Consumer<T>> checkerSet = ContainerUtil.newHashSet(checkers);
         int i = 0;
         Throwable lastError = null;
         for (final T actual : collection) {

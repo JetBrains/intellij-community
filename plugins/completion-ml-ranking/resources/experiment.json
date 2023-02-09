@@ -43,6 +43,13 @@
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
+    },
+    {
+      "number": 15,
+      "description": "Full Line local model",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
     }
   ],
   "languages": [
@@ -55,8 +62,8 @@
     {
       "id": "python",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 11, 12, 13],
-      "shouldLogElementFeatures": false
+      "includeGroups": [ 7, 8, 11, 12, 13, 15],
+      "shouldLogElementFeatures": true
     },
     {
       "id": "kotlin",
@@ -109,7 +116,7 @@
     {
       "id": "mysql",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 12, 13 ],
+      "includeGroups": [ 7, 8, 12 ],
       "shouldLogElementFeatures": false
     },
     {

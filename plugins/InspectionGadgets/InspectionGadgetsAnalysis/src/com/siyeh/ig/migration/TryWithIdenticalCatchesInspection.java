@@ -4,10 +4,11 @@ package com.siyeh.ig.migration;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -29,17 +30,20 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.function.BiPredicate;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class TryWithIdenticalCatchesInspection extends BaseInspection {
   public boolean ignoreBlocksWithDifferentComments = true;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return InspectionOptionsPanel.singleCheckBox(
-      this, InspectionGadgetsBundle.message("try.with.identical.catches.checkbox.different.comments"), "ignoreBlocksWithDifferentComments");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreBlocksWithDifferentComments",
+               InspectionGadgetsBundle.message("try.with.identical.catches.checkbox.different.comments")));
   }
 
   @Override
@@ -61,8 +65,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
 
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
-    if (element instanceof PsiCatchSection) {
-      final PsiCatchSection catchSection = (PsiCatchSection)element;
+    if (element instanceof PsiCatchSection catchSection) {
       final PsiParameter parameter = catchSection.getParameter();
       if (parameter != null && super.isSuppressedFor(parameter)) {
         return true;
@@ -450,18 +453,26 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       final int collapseIntoIndex = duplicatesIndices[sectionIndex].myCollapseIntoIndex;
       if (collapseIntoIndex < 0) return;
 
-      final CatchSectionWrapper collapseIntoSection = sections[collapseIntoIndex];
+      CatchSectionWrapper collapseIntoSection = sections[collapseIntoIndex];
       if (collapseIntoSection == null) return;
 
       final PsiTypeElement collapseIntoTypeElement = collapseIntoSection.myParameter.getTypeElement();
       if (collapseIntoTypeElement == null) return;
 
-      final Set<String> survivingCommentTexts = new HashSet<>(collectCommentTexts(collapseIntoSection.myCatchSection));
       final List<PsiType> parameterTypes = new ArrayList<>(collapseIntoSection.myTypes);
       parameterTypes.addAll(duplicateSection.myTypes);
 
       final List<PsiType> filteredTypes = PsiDisjunctionType.flattenAndRemoveDuplicates(parameterTypes);
       final PsiType disjunction = PsiDisjunctionType.createDisjunction(filteredTypes, tryStatement.getManager());
+      List<PsiClassType> targetTypes = CatchSectionWrapper.getClassTypes(disjunction);
+      //try to choose catch block, which has target exception types. It helps to preserve names of variables and comments
+      if (targetTypes != null && targetTypes.equals(duplicateSection.myTypes)) {
+        CatchSectionWrapper temp = collapseIntoSection;
+        collapseIntoSection = duplicateSection;
+        duplicateSection = temp;
+      }
+      final Set<String> survivingCommentTexts = new HashSet<>(collectCommentTexts(collapseIntoSection.myCatchSection));
+
       final PsiTypeElement newTypeElement = JavaPsiFacade.getElementFactory(project).createTypeElement(disjunction);
 
       final CommentTracker tracker = new CommentTracker();
@@ -473,8 +484,22 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
         // We can't leave the merged 'catch' section at collapseIntoIndex because it conflicts with other caught exceptions
         final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
         if (insertBeforeIndex < catchSections.length && catchSections[insertBeforeIndex] != null) {
-          tryStatement.addBefore(collapseIntoSection.myCatchSection, catchSections[insertBeforeIndex]);
-          collapseIntoSection.myCatchSection.delete();
+          CatchSectionWrapper finalCollapseIntoSection = collapseIntoSection;
+          CodeStyleManager.getInstance(tryStatement.getProject()).performActionWithFormatterDisabled((Runnable)() -> {
+            PsiCatchSection sectionToMove = finalCollapseIntoSection.myCatchSection;
+            PsiElement toCopy = null;
+            if (sectionToMove.getNextSibling() instanceof PsiWhiteSpace whiteSpace) {
+              toCopy = whiteSpace.copy();
+            }
+            PsiElement element = tryStatement.addBefore(finalCollapseIntoSection.myCatchSection, catchSections[insertBeforeIndex]);
+            if (toCopy != null) {
+              tryStatement.addAfter(toCopy, element);
+            }
+            if (sectionToMove.getNextSibling() instanceof PsiWhiteSpace psiWhiteSpace) {
+              psiWhiteSpace.delete();
+            }
+            sectionToMove.delete();
+          });
         }
       }
 
@@ -487,7 +512,16 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
         }
         return true;
       });
-      tracker.deleteAndRestoreComments(duplicateSection.myCatchSection);
+
+      tracker.grabComments(duplicateSection.myCatchSection);
+      tracker.insertCommentsBefore(duplicateSection.myCatchSection);
+      CatchSectionWrapper finalDuplicateSection = duplicateSection;
+      CodeStyleManager.getInstance(tryStatement.getProject()).performActionWithFormatterDisabled((Runnable)() -> {
+        if (finalDuplicateSection.myCatchSection.getNextSibling() instanceof PsiWhiteSpace whiteSpace) {
+          whiteSpace.delete();
+        }
+        finalDuplicateSection.myCatchSection.delete();
+      });
     }
 
     private static int getSectionIndex(CatchSectionWrapper @NotNull [] sections, @NotNull PsiElement catchSection) {

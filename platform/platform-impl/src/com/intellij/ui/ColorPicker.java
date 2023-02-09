@@ -61,7 +61,6 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @author pegov
  * @author Konstantin Bulenkov
  */
 public class ColorPicker extends JPanel implements ColorListener, DocumentListener {

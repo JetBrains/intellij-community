@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
@@ -25,7 +11,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.MasterDetailsComponent;
-import com.intellij.openapi.ui.NamedConfigurable;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
@@ -87,7 +72,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
   public FacetConfigurable getOrCreateConfigurable(final Facet facet) {
     FacetConfigurable configurable = myConfigurables.get(facet);
     if (configurable == null) {
-      configurable = new FacetConfigurable(facet, myStructureConfigurable.getContext(), myTreeUpdater);
+      configurable = new FacetConfigurable(myConfigurables, facet, myStructureConfigurable.getContext(), myTreeUpdater);
       myConfigurables.put(facet, configurable);
     }
     return configurable;
@@ -101,14 +86,11 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
   private static MasterDetailsComponent.MyNode findFacetNode(final Facet facet, final MasterDetailsComponent.MyNode moduleNode) {
     for (int i = 0; i < moduleNode.getChildCount(); i++) {
       final TreeNode node = moduleNode.getChildAt(i);
-      if (node instanceof MasterDetailsComponent.MyNode) {
-        final MasterDetailsComponent.MyNode configNode = (MasterDetailsComponent.MyNode)node;
-        final NamedConfigurable config = configNode.getConfigurable();
-        if (config instanceof FacetConfigurable) {
-          final Facet existingFacet = ((FacetConfigurable)config).getEditableObject();
-          if (existingFacet != null && existingFacet.equals(facet)) {
-            return configNode;
-          }
+      if (node instanceof MasterDetailsComponent.MyNode configNode &&
+          configNode.getConfigurable() instanceof FacetConfigurable configurable) {
+        final Facet<?> existingFacet = configurable.getEditableObject();
+        if (existingFacet != null && existingFacet.equals(facet)) {
+          return configNode;
         }
       }
     }

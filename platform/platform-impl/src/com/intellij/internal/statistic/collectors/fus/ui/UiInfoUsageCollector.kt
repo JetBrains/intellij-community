@@ -120,6 +120,7 @@ private fun getDeviceScreenInfo(device: GraphicsDevice): String {
 }
 
 private fun addScreenResolutions(set: MutableSet<MetricEvent>) {
+  if (GraphicsEnvironment.isHeadless()) return
   val devices = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
   for (i in devices.indices) {
     val info = getDeviceScreenInfo(devices[i])
@@ -128,6 +129,7 @@ private fun addScreenResolutions(set: MutableSet<MetricEvent>) {
 }
 
 private fun addNumberOfMonitors(set: MutableSet<MetricEvent>) {
+  if (GraphicsEnvironment.isHeadless()) return
   val numberOfMonitors = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices.size
   set.add(NUMBER_OF_MONITORS.metric(numberOfMonitors))
 }

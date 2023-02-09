@@ -24,6 +24,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 
 @State(
     name = "PackageSearchMavenConfiguration",
@@ -51,4 +52,5 @@ internal class PackageSearchMavenConfiguration : BaseState(), PersistentStateCom
     fun determineDefaultMavenScope() = if (!defaultMavenScope.isNullOrEmpty()) defaultMavenScope!! else DEFAULT_MAVEN_SCOPE
 
     fun getMavenScopes() = listOf(DEFAULT_MAVEN_SCOPE, "provided", "runtime", "test", "system", "import")
+        .map { PackageScope.from(it) }
 }

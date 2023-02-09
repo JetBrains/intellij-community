@@ -14,9 +14,6 @@ import org.junit.runner.RunWith;
 
 import javax.swing.*;
 
-/**
- * @author Denis Zhdanov
- */
 @RunWith(JMock.class)
 @SkipInHeadlessEnvironment
 public class RichTextControlBuilderTest {

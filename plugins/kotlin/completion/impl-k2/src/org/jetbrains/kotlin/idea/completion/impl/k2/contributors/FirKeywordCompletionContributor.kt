@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.completion.KeywordCompletion
 import org.jetbrains.kotlin.idea.completion.context.*
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.OverrideKeywordHandler
@@ -20,9 +21,11 @@ import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHan
 import org.jetbrains.kotlin.idea.completion.keywords.createLookups
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.psi.KtContainerNode
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionContext, priority: Int) :
     FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
@@ -35,18 +38,12 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
 
     override fun KtAnalysisSession.complete(positionContext: FirRawPositionCompletionContext) {
         val expression = when (positionContext) {
-            is FirNameReferencePositionContext -> {
-                val reference = positionContext.reference
-                when (reference.expression) {
-                    is KtLabelReferenceExpression -> reference.expression.parent.parent as? KtExpressionWithLabel
-                    else -> reference.expression
-                }
+            is FirNameReferencePositionContext -> positionContext.reference.expression.let {
+                it.parentsWithSelf.match(KtLabelReferenceExpression::class, KtContainerNode::class, last = KtExpressionWithLabel::class)
+                    ?: it
             }
-
-            is FirTypeConstraintNameInWhereClausePositionContext, is FirIncorrectPositionContext, is FirClassifierNamePositionContext -> {
+            is FirTypeConstraintNameInWhereClausePositionContext, is FirIncorrectPositionContext, is FirClassifierNamePositionContext ->
                 error("keyword completion should not be called for ${positionContext::class.simpleName}")
-            }
-
             is FirValueParameterPositionContext,
             is FirMemberDeclarationExpectedPositionContext,
             is FirUnknownPositionContext -> null

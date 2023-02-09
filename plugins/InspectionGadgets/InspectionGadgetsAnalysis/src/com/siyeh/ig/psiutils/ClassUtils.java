@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,19 +45,19 @@ public final class ClassUtils {
   private static final Set<PsiType> integralTypes = new HashSet<>(5);
 
   static {
-    integralTypes.add(PsiType.LONG);
-    integralTypes.add(PsiType.INT);
-    integralTypes.add(PsiType.SHORT);
-    integralTypes.add(PsiType.CHAR);
-    integralTypes.add(PsiType.BYTE);
+    integralTypes.add(PsiTypes.longType());
+    integralTypes.add(PsiTypes.intType());
+    integralTypes.add(PsiTypes.shortType());
+    integralTypes.add(PsiTypes.charType());
+    integralTypes.add(PsiTypes.byteType());
 
-    primitiveNumericTypes.add(PsiType.BYTE);
-    primitiveNumericTypes.add(PsiType.CHAR);
-    primitiveNumericTypes.add(PsiType.SHORT);
-    primitiveNumericTypes.add(PsiType.INT);
-    primitiveNumericTypes.add(PsiType.LONG);
-    primitiveNumericTypes.add(PsiType.FLOAT);
-    primitiveNumericTypes.add(PsiType.DOUBLE);
+    primitiveNumericTypes.add(PsiTypes.byteType());
+    primitiveNumericTypes.add(PsiTypes.charType());
+    primitiveNumericTypes.add(PsiTypes.shortType());
+    primitiveNumericTypes.add(PsiTypes.intType());
+    primitiveNumericTypes.add(PsiTypes.longType());
+    primitiveNumericTypes.add(PsiTypes.floatType());
+    primitiveNumericTypes.add(PsiTypes.doubleType());
 
     immutableTypes.add(CommonClassNames.JAVA_LANG_BOOLEAN);
     immutableTypes.add(CommonClassNames.JAVA_LANG_CHARACTER);
@@ -169,18 +169,14 @@ public final class ClassUtils {
       return false;
     }
     final PsiFile containingFile1 = element1.getContainingFile();
-    if (!(containingFile1 instanceof PsiClassOwner)) {
+    if (!(containingFile1 instanceof PsiClassOwner containingJavaFile1)) {
       return false;
     }
-    final PsiClassOwner containingJavaFile1 =
-      (PsiClassOwner)containingFile1;
     final String packageName1 = containingJavaFile1.getPackageName();
     final PsiFile containingFile2 = element2.getContainingFile();
-    if (!(containingFile2 instanceof PsiClassOwner)) {
+    if (!(containingFile2 instanceof PsiClassOwner containingJavaFile2)) {
       return false;
     }
-    final PsiClassOwner containingJavaFile2 =
-      (PsiClassOwner)containingFile2;
     final String packageName2 = containingJavaFile2.getPackageName();
     return packageName1.equals(packageName2);
   }
@@ -272,10 +268,9 @@ public final class ClassUtils {
     if (parent == null || parent instanceof PsiFile) {
       return false;
     }
-    if (!(parent instanceof PsiClass)) {
+    if (!(parent instanceof PsiClass parentClass)) {
       return true;
     }
-    final PsiClass parentClass = (PsiClass)parent;
     return !parentClass.isInterface();
   }
 
@@ -353,11 +348,12 @@ public final class ClassUtils {
                                                             !m.hasModifierProperty(PsiModifier.PRIVATE) &&
                                                             !m.hasModifierProperty(PsiModifier.STATIC));
     }
-    if (getIfOnlyInvisibleConstructors(aClass).length == 0) {
+    final PsiMethod[] constructors = getIfOnlyInvisibleConstructors(aClass);
+    if (constructors.length != 1) {
       return false;
     }
     final PsiField selfInstance = getIfOneStaticSelfInstance(aClass);
-    return selfInstance != null && newOnlyAssignsToStaticSelfInstance(getIfOnlyInvisibleConstructors(aClass)[0], selfInstance);
+    return selfInstance != null && newOnlyAssignsToStaticSelfInstance(constructors[0], selfInstance);
   }
 
   private static PsiField getIfOneStaticSelfInstance(PsiClass aClass) {
@@ -406,7 +402,7 @@ public final class ClassUtils {
 
   private static boolean newOnlyAssignsToStaticSelfInstance(PsiMethod method, final PsiField field) {
     if (field instanceof LightElement) return true;
-    final Query<PsiReference> search = MethodReferencesSearch.search(method, field.getUseScope(), false);
+    final Query<PsiReference> search = MethodReferencesSearch.search(method, method.getUseScope(), false);
     final NewOnlyAssignedToFieldProcessor processor = new NewOnlyAssignedToFieldProcessor(field);
     search.forEach(processor);
     return processor.isNewOnlyAssignedToField();
@@ -433,17 +429,15 @@ public final class ClassUtils {
       if (field.equals(grandParent)) {
         return true;
       }
-      if (!(grandParent instanceof PsiAssignmentExpression)) {
+      if (!(grandParent instanceof PsiAssignmentExpression assignmentExpression)) {
         newOnlyAssignedToField = false;
         return false;
       }
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)grandParent;
       final PsiExpression lhs = assignmentExpression.getLExpression();
-      if (!(lhs instanceof PsiReferenceExpression)) {
+      if (!(lhs instanceof PsiReferenceExpression referenceExpression)) {
         newOnlyAssignedToField = false;
         return false;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
       final PsiElement target = referenceExpression.resolve();
       if (!field.equals(target)) {
         newOnlyAssignedToField = false;

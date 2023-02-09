@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class ConfigSlurperSupport {
 
   public static final ExtensionPointName<ConfigSlurperSupport> EP_NAME =

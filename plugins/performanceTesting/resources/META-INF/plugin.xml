@@ -58,7 +58,7 @@
 
     <documentationProvider implementation="com.jetbrains.performancePlugin.lang.doc.IJPerfDocumentationProvider"/>
 
-    <startupActivity implementation="com.jetbrains.performancePlugin.ProjectLoaded"/>
+    <initProjectActivity implementation="com.jetbrains.performancePlugin.ProjectLoaded"/>
     <postStartupActivity implementation="com.jetbrains.performancePlugin.PerformanceTestTotalTimeTimer" />
     <applicationInitializedListener implementation="com.jetbrains.performancePlugin.ProjectLoaded"/>
 

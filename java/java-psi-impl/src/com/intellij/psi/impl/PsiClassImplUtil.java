@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -314,7 +315,7 @@ public final class PsiClassImplUtil {
   public static boolean isMainOrPremainMethod(@NotNull PsiMethod method) {
     String name = method.getName();
     if (!("main".equals(name) || "premain".equals(name) || "agentmain".equals(name))) return false;
-    if (!PsiType.VOID.equals(method.getReturnType())) return false;
+    if (!PsiTypes.voidType().equals(method.getReturnType())) return false;
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
@@ -1076,8 +1077,7 @@ public final class PsiClassImplUtil {
     String qName1 = aClass.getQualifiedName();
     String qName2 = ((PsiClass)another).getQualifiedName();
     if (qName1 == null || qName2 == null) {
-      //noinspection StringEquality
-      if (qName1 != qName2) return false;
+      if (!Strings.areSameInstance(qName1, qName2)) return false;
 
       if (aClass instanceof PsiTypeParameter && another instanceof PsiTypeParameter) {
         PsiTypeParameter p1 = (PsiTypeParameter)aClass;

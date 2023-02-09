@@ -5,7 +5,7 @@
       [
         "icons/gradle.svg",
         "icons/gradleFile.svg",
-        "icon/toolWindowGradle.svg"
+        "icons/toolWindowGradle.svg"
       ],
       "gradleLoadChanges.svg": "icons/gradleLoadChanges.svg",
       "gradleNavigate.svg": "icons/gradleNavigate.svg"

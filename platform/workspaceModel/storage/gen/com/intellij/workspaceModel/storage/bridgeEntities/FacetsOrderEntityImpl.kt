@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
@@ -19,6 +20,7 @@ import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -114,12 +116,7 @@ open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : Facets
       dataSource as FacetsOrderEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.orderOfFacets != dataSource.orderOfFacets) this.orderOfFacets = dataSource.orderOfFacets.toMutableList()
-      if (parents != null) {
-        val moduleEntityNew = parents.filterIsInstance<ModuleEntity>().single()
-        if ((this.moduleEntity as WorkspaceEntityBase).id != (moduleEntityNew as WorkspaceEntityBase).id) {
-          this.moduleEntity = moduleEntityNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -234,7 +231,7 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return FacetsOrderEntity(orderOfFacets, entitySource) {
-      this.moduleEntity = parents.filterIsInstance<ModuleEntity>().single()
+      parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.moduleEntity = it }
     }
   }
 

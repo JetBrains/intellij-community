@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.kotlin.idea.k2.inheritorsSearch.AbstractDirectKotlinInheritorsSearcherTest
 import org.jetbrains.kotlin.idea.k2.inheritorsSearch.AbstractKotlinDefinitionsSearchTest
+import org.jetbrains.kotlin.idea.k2.search.AbstractFirAnnotatedMembersSearchTest
 import org.jetbrains.kotlin.testGenerator.model.*
 
 internal fun MutableTWorkspace.generateK2SearchTests() {
@@ -10,12 +11,16 @@ internal fun MutableTWorkspace.generateK2SearchTests() {
         testClass<AbstractDirectKotlinInheritorsSearcherTest> {
             model("inheritorsSearch/kotlinClass", testMethodName = "doTestKotlinClass", pattern = Patterns.KT_WITHOUT_DOTS)
             model("inheritorsSearch/javaClass", testMethodName = "doTestJavaClass", pattern = Patterns.JAVA)
-            model("inheritorsSearch/kotlinFunction", testMethodName = "doTestKotlinFunction", pattern = Patterns.KT_WITHOUT_DOTS)
+            model("inheritorsSearch/kotlinFunction", testMethodName = "doTestCallable", pattern = Patterns.KT_WITHOUT_DOTS)
+            model("inheritorsSearch/allInheritors", testMethodName = "doTestFindAllOverridings", pattern = Patterns.KT_WITHOUT_DOTS)
         }
         testClass<AbstractKotlinDefinitionsSearchTest> {
             model("definitionsSearch/kotlinClass", testMethodName = "doTestKotlinClass", pattern = Patterns.KT_WITHOUT_DOTS)
             model("definitionsSearch/javaClass", testMethodName = "doTestJavaClass", pattern = Patterns.JAVA)
-            model("definitionsSearch/kotlinFunction", testMethodName = "doTestKotlinFunction", pattern = Patterns.KT_WITHOUT_DOTS)
+            model("definitionsSearch/kotlinFunction", testMethodName = "doTestCallable", pattern = Patterns.KT_WITHOUT_DOTS)
+        }
+        testClass<AbstractFirAnnotatedMembersSearchTest> {
+            model("../../idea/tests/testData/search/annotations")
         }
     }
 }

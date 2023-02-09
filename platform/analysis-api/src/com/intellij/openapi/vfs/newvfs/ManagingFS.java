@@ -10,17 +10,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public abstract class ManagingFS implements FileSystemInterface {
-
-  private static ManagingFS ourInstance = CachedSingletonsRegistry.markCachedField(ManagingFS.class);
+  private static final Supplier<ManagingFS> ourInstance = CachedSingletonsRegistry.lazy(() -> {
+    return ApplicationManager.getApplication().getService(ManagingFS.class);
+  });
 
   public static ManagingFS getInstance() {
-    var instance = ourInstance;
-    if (instance == null) {
-      ourInstance = instance = ApplicationManager.getApplication().getService(ManagingFS.class);
-    }
-    return instance;
+    return ourInstance.get();
   }
 
   @Nullable
@@ -31,7 +29,8 @@ public abstract class ManagingFS implements FileSystemInterface {
 
   /**
    * @return a number that's incremented every time something changes for the file: name, size, flags, content.
-   * This number is persisted between IDE sessions and so it'll always increase. This method invocation means disk access, so it's not terribly cheap.
+   * This number has persisted between IDE sessions and so it'll always increase.
+   * This method invocation means disk access, so it's not terribly cheap.
    * @deprecated to be dropped as there is no real use for it
    */
   //FIXME RC: drop this method from API -- the only use is in test code
@@ -40,7 +39,7 @@ public abstract class ManagingFS implements FileSystemInterface {
 
   /**
    * @return a number that's incremented every time something changes in the VFS, i.e. file hierarchy, names, flags, attributes, contents.
-   * This only counts modifications done in current IDE session.
+   * This only counts modifications done in the current IDE session.
    * @see #getStructureModificationCount()
    * @see #getFilesystemModificationCount()
    * @deprecated to be dropped as there is no real use for it 
@@ -51,14 +50,14 @@ public abstract class ManagingFS implements FileSystemInterface {
 
   /**
    * @return a number that's incremented every time something changes in the VFS structure, i.e. file hierarchy or names.
-   * This only counts modifications done in current IDE session.
+   * This only counts modifications done in the current IDE session.
    * @see #getModificationCount()
    */
   public abstract int getStructureModificationCount();
 
   /**
    * @return a number that's incremented every time modification count for some file is advanced, @see {@link #getModificationCount(VirtualFile)}.
-   * This number is persisted between IDE sessions and so it'll always increase.
+   * This number has persisted between IDE sessions and so it'll always increase.
    */
   @TestOnly
   public abstract int getFilesystemModificationCount();

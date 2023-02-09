@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 
 abstract class LinuxDistributionCustomizer {
@@ -20,6 +21,22 @@ abstract class LinuxDistributionCustomizer {
    * Relative paths to files in Linux distribution which should take 'executable' permissions
    */
   var extraExecutables: PersistentList<String> = persistentListOf()
+
+  open fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
+    var executableFilePatterns = persistentListOf(
+      "bin/*.sh",
+      "plugins/**/*.sh",
+      "bin/fsnotifier*",
+      "bin/*.py"
+    )
+    executableFilePatterns.addAll(RepairUtilityBuilder.executableFilesPatterns(context))
+    if (includeRuntime) {
+      executableFilePatterns = executableFilePatterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX, context.productProperties.runtimeDistribution))
+    }
+    return executableFilePatterns
+      .addAll(extraExecutables)
+      .addAll(context.getExtraExecutablePattern(OsFamily.LINUX))
+  }
 
   /**
    * If {@code true} a separate *-no-jbr.tar.gz artifact without runtime will be produced.

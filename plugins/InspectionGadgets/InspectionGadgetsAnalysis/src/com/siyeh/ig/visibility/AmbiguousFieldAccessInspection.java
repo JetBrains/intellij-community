@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.visibility;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -49,10 +51,9 @@ public class AmbiguousFieldAccessInspection extends BaseInspection implements Cl
       if (target == null) {
         return;
       }
-      if (!(target instanceof PsiField)) {
+      if (!(target instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)target;
       final PsiClass fieldClass = field.getContainingClass();
       if (fieldClass == null) {
         return;
@@ -110,10 +111,9 @@ public class AmbiguousFieldAccessInspection extends BaseInspection implements Cl
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiReferenceExpression)) {
+      if (!(element instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
       final String newExpressionText = "super." + referenceExpression.getText();
       PsiReplacementUtil.replaceExpression(referenceExpression, newExpressionText);
     }
@@ -137,17 +137,27 @@ public class AmbiguousFieldAccessInspection extends BaseInspection implements Cl
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      PsiClass containingClass = ClassUtils.getContainingClass(element);
-      if (containingClass == null) {
-        return;
-      }
-      final PsiElement parent = containingClass.getParent();
-      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
-      final String referenceText = element.getText();
-      final PsiVariable variable = resolveHelper.resolveAccessibleReferencedVariable(referenceText, parent);
+      final PsiVariable variable = getApparentlyAccessedVariable(project, element);
       if (variable != null) {
         variable.navigate(true);
       }
+    }
+
+    private static @Nullable PsiVariable getApparentlyAccessedVariable(Project project, PsiElement element) {
+      PsiClass containingClass = ClassUtils.getContainingClass(element);
+      if (containingClass == null) return null;
+      final PsiElement parent = containingClass.getParent();
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
+      final String referenceText = element.getText();
+      return resolveHelper.resolveAccessibleReferencedVariable(referenceText, parent);
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      PsiVariable variable = getApparentlyAccessedVariable(project, previewDescriptor.getPsiElement());
+      NavigatablePsiElement element = ObjectUtils.tryCast(variable, NavigatablePsiElement.class);
+      if (element == null) return IntentionPreviewInfo.EMPTY;
+      return IntentionPreviewInfo.navigate(element);
     }
   }
 }

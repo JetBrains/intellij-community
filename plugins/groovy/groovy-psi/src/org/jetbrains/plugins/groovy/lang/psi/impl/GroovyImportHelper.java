@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -18,18 +19,14 @@ import java.util.LinkedHashSet;
 public final class GroovyImportHelper {
 
   public static boolean isImplicitlyImported(PsiElement element, String expectedName, GroovyFile file) {
-    if (!(element instanceof PsiClass)) return false;
+    if (!(element instanceof PsiClass psiClass)) return false;
 
-    final PsiClass psiClass = (PsiClass)element;
     if (!expectedName.equals(psiClass.getName())) return false;
 
     final String qname = psiClass.getQualifiedName();
     if (qname == null) return false;
-
-    for (String importedClass : GroovyFileBase.IMPLICITLY_IMPORTED_CLASSES) {
-      if (qname.equals(importedClass)) {
-        return true;
-      }
+    if (ArrayUtil.contains(qname, GroovyFileBase.IMPLICITLY_IMPORTED_CLASSES)) {
+      return true;
     }
     for (String pkg : getImplicitlyImportedPackages(file)) {
       if (qname.equals(pkg + "." + expectedName) || pkg.isEmpty() && qname.equals(expectedName)) {

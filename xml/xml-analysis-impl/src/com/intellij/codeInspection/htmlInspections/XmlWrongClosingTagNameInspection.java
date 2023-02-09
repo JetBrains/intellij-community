@@ -25,16 +25,12 @@ import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author spleaner
- */
 public class XmlWrongClosingTagNameInspection implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof XmlToken) {
       PsiElement parent = psiElement.getParent();
-      if (parent instanceof XmlTag) {
-        XmlTag tag = (XmlTag)parent;
+      if (parent instanceof XmlTag tag) {
         XmlToken start = XmlTagUtil.getStartTagNameElement(tag);
         XmlToken endTagName = XmlTagUtil.getEndTagNameElement(tag);
         if (start == psiElement) {
@@ -83,7 +79,7 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(context.getLanguage());
       if (parserDefinition != null) {
         ASTNode contextNode = context.getNode();
-        if (contextNode != null && contextNode.getChildren(parserDefinition.getStringLiteralElements()) != null) {
+        if (contextNode != null) {
           // TODO: we should check for concatenations here
           return;
         }
@@ -110,7 +106,7 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(context.getLanguage());
       if (parserDefinition != null) {
         ASTNode contextNode = context.getNode();
-        if (contextNode != null && contextNode.getChildren(parserDefinition.getStringLiteralElements()) != null) {
+        if (contextNode != null) {
           // TODO: we should check for concatenations here
           return;
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -53,20 +53,17 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author irengrig
- */
 public class VcsStructureChooser extends DialogWrapper {
-  private final static int MAX_FOLDERS = 100;
+  private static final int MAX_FOLDERS = 100;
   public static final Border BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);
-  @NonNls private static final String VCS_STRUCTURE_CHOOSER_KEY = "git4idea.history.wholeTree.VcsStructureChooser";
+  private static final @NonNls String VCS_STRUCTURE_CHOOSER_KEY = "git4idea.history.wholeTree.VcsStructureChooser";
 
-  @NotNull private final Project myProject;
-  @NotNull private final List<VirtualFile> myRoots;
-  @NotNull private final Map<VirtualFile, @Nls String> myModulesSet;
-  @NotNull private final Set<VirtualFile> mySelectedFiles = new HashSet<>();
+  private final @NotNull Project myProject;
+  private final @NotNull List<VirtualFile> myRoots;
+  private final @NotNull Map<VirtualFile, @Nls String> myModulesSet;
+  private final @NotNull Set<VirtualFile> mySelectedFiles = new HashSet<>();
 
-  @NotNull private final SelectionManager mySelectionManager;
+  private final @NotNull SelectionManager mySelectionManager;
 
   private Tree myTree;
 
@@ -88,8 +85,7 @@ public class VcsStructureChooser extends DialogWrapper {
     checkEmpty();
   }
 
-  @NotNull
-  private Map<VirtualFile, @Nls String> calculateModules(@NotNull List<? extends VirtualFile> roots) {
+  private @NotNull Map<VirtualFile, @Nls String> calculateModules(@NotNull List<? extends VirtualFile> roots) {
     Map<VirtualFile, @Nls String> result = new HashMap<>();
 
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
@@ -111,8 +107,7 @@ public class VcsStructureChooser extends DialogWrapper {
     return result;
   }
 
-  @NotNull
-  public Collection<VirtualFile> getSelectedFiles() {
+  public @NotNull Collection<VirtualFile> getSelectedFiles() {
     return mySelectedFiles;
   }
 
@@ -121,14 +116,12 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected String getDimensionServiceKey() {
+  protected @NotNull String getDimensionServiceKey() {
     return VCS_STRUCTURE_CHOOSER_KEY;
   }
 
   @Override
-  @NotNull
-  public JComponent getPreferredFocusedComponent() {
+  public @NotNull JComponent getPreferredFocusedComponent() {
     return myTree;
   }
 
@@ -266,28 +259,25 @@ public class VcsStructureChooser extends DialogWrapper {
     return panel;
   }
 
-  @NotNull
-  private DefaultMutableTreeNode getTreeRoot() {
+  private @NotNull DefaultMutableTreeNode getTreeRoot() {
     return (DefaultMutableTreeNode)myTree.getModel().getRoot();
   }
 
-  @Nullable
-  private static VirtualFile getFile(@NotNull Object node) {
-    if (!(((DefaultMutableTreeNode)node).getUserObject() instanceof FileNodeDescriptor)) return null;
-    FileNodeDescriptor descriptor = (FileNodeDescriptor)((DefaultMutableTreeNode)node).getUserObject();
+  private static @Nullable VirtualFile getFile(@NotNull Object node) {
+    if (!(((DefaultMutableTreeNode)node).getUserObject() instanceof FileNodeDescriptor descriptor)) return null;
     if (descriptor.getElement().getFile() == null) return null;
     return descriptor.getElement().getFile();
   }
 
   private static final class MyCheckboxTreeCellRenderer extends JPanel implements TreeCellRenderer {
-    @NotNull private final WithModulesListCellRenderer myTextRenderer;
-    @NotNull public final JCheckBox myCheckbox;
-    @NotNull private final SelectionManager mySelectionManager;
-    @NotNull private final Map<VirtualFile, @Nls String> myModulesSet;
-    @NotNull private final Collection<VirtualFile> myRoots;
-    @NotNull private final ColoredTreeCellRenderer myColoredRenderer;
-    @NotNull private final JLabel myEmpty;
-    @NotNull private final JList myFictive;
+    private final @NotNull WithModulesListCellRenderer myTextRenderer;
+    public final @NotNull JCheckBox myCheckbox;
+    private final @NotNull SelectionManager mySelectionManager;
+    private final @NotNull Map<VirtualFile, @Nls String> myModulesSet;
+    private final @NotNull Collection<VirtualFile> myRoots;
+    private final @NotNull ColoredTreeCellRenderer myColoredRenderer;
+    private final @NotNull JLabel myEmpty;
+    private final @NotNull JList myFictive;
 
     private MyCheckboxTreeCellRenderer(@NotNull SelectionManager selectionManager,
                                        @NotNull Map<VirtualFile, @Nls String> modulesSet,
@@ -370,10 +360,9 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   private static class MyNodeConverter implements Convertor<DefaultMutableTreeNode, VirtualFile> {
-    @NotNull private final static MyNodeConverter ourInstance = new MyNodeConverter();
+    private static final @NotNull MyNodeConverter ourInstance = new MyNodeConverter();
 
-    @NotNull
-    public static MyNodeConverter getInstance() {
+    public static @NotNull MyNodeConverter getInstance() {
       return ourInstance;
     }
 
@@ -384,7 +373,7 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   private static class WithModulesListCellRenderer extends VirtualFileListCellRenderer {
-    @NotNull private final Map<VirtualFile, @Nls String> myModules;
+    private final @NotNull Map<VirtualFile, @Nls String> myModules;
 
     private WithModulesListCellRenderer(@NotNull Project project, @NotNull Map<VirtualFile, @Nls String> modules) {
       super(project, true);

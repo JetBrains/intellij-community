@@ -16,6 +16,7 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiAssignmentExpression
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
@@ -24,9 +25,9 @@ class JavaUAssignmentExpression(
   override val sourcePsi: PsiAssignmentExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBinaryExpression {
-  override val leftOperand: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.lExpression, this) }
-  override val rightOperand: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.rExpression, this) }
-  override val operator: UastBinaryOperator by lz { sourcePsi.operationTokenType.getOperatorType() }
+  override val leftOperand: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.lExpression, this) }
+  override val rightOperand: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.rExpression, this) }
+  override val operator: UastBinaryOperator by lazyPub { sourcePsi.operationTokenType.getOperatorType() }
 
   override fun resolveOperator(): Nothing? = null
 

@@ -48,9 +48,9 @@ public class DarculaButtonUI extends BasicButtonUI {
   protected static JBValue HORIZONTAL_PADDING = new JBValue.Float(14);
 
   private static final Color GOTIT_BUTTON_COLOR_START =
-    JBColor.namedColor("GotItTooltip.startBackground", JBUI.CurrentTheme.Button.buttonColorStart());
+    JBColor.namedColor("GotItTooltip.Button.startBackground", JBUI.CurrentTheme.Button.buttonColorStart());
   private static final Color GOTIT_BUTTON_COLOR_END =
-    JBColor.namedColor("GotItTooltip.endBackground", JBUI.CurrentTheme.Button.buttonColorEnd());
+    JBColor.namedColor("GotItTooltip.Button.endBackground", JBUI.CurrentTheme.Button.buttonColorEnd());
 
   public static final Key<Boolean> DEFAULT_STYLE_KEY = Key.create("JButton.styleDefault");
 
@@ -69,9 +69,8 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   public static boolean isSmallVariant(Component c) {
-    if (!(c instanceof AbstractButton)) return false;
+    if (!(c instanceof AbstractButton b)) return false;
 
-    AbstractButton b = (AbstractButton)c;
     boolean smallVariant = b.getClientProperty("ActionToolbar.smallVariant") == Boolean.TRUE;
     ComboBoxAction a = (ComboBoxAction)b.getClientProperty("styleCombo");
 
@@ -119,7 +118,7 @@ public class DarculaButtonUI extends BasicButtonUI {
       return SegmentedActionToolbarComponent.Companion.paintButtonDecorations(g, c, getBackground(c, r));
     }
 
-    JBInsets.removeFrom(r, isSmallVariant(c) || isGotItButton(c) ? c.getInsets() : JBUI.insets(1));
+    JBInsets.removeFrom(r, isSmallVariant(c) ? c.getInsets() : JBUI.insets(1));
 
     if (UIUtil.isHelpButton(c)) {
       g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd()));
@@ -153,6 +152,14 @@ public class DarculaButtonUI extends BasicButtonUI {
         }
 
         if (c.isEnabled()) {
+          Color outlineFocusColor = (Color)c.getClientProperty("JButton.outlineFocusColor");
+          Integer outlineFocusSize = (Integer)c.getClientProperty("JButton.outlineFocusSize");
+          if (outlineFocusColor != null && outlineFocusSize != null && c.hasFocus()) {
+            g2.setPaint(outlineFocusColor);
+            g2.fill(new RoundRectangle2D.Float(bw - outlineFocusSize, bw - outlineFocusSize,
+                                               r.width - bw * 2 + outlineFocusSize * 2, r.height - bw * 2 + outlineFocusSize * 2,
+                                               arc + outlineFocusSize, arc + outlineFocusSize));
+          }
           g2.setPaint(getBackground(c, r));
           g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
         }

@@ -34,6 +34,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -52,7 +53,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -138,7 +138,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     List<AccessModifier> modifiers = AccessModifier.getAvailableModifiers(member);
     if (modifiers.isEmpty()) return;
     AccessModifier target = myTarget;
-    if (modifiers.contains(target)) {
+    if (target != null && modifiers.contains(target)) {
       setModifier(member, target);
       return;
     }
@@ -250,10 +250,11 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
 
     void undoChange() {
       Project project = myFile.getProject();
+      VirtualFile virtualFile = myFile.getVirtualFile();
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-      FileEditor fileEditor = fileEditorManager.getSelectedEditor(myFile.getVirtualFile());
+      FileEditor fileEditor = virtualFile != null ? fileEditorManager.getSelectedEditor(virtualFile) : null;
       UndoManager manager = UndoManager.getInstance(project);
-      if (manager.isUndoAvailable(fileEditor)) {
+      if (fileEditor != null && manager.isUndoAvailable(fileEditor)) {
         manager.undo(fileEditor);
       }
       else {
@@ -296,10 +297,10 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   }
 
   @Nullable
-  private static PsiKeyword getAnchorKeyword(PsiModifierList modifierList) {
+  private static PsiKeyword getAnchorKeyword(@NotNull PsiModifierList modifierList) {
     for (PsiElement child = modifierList.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (AccessModifier.ALL_MODIFIERS.contains(AccessModifier.fromKeyword(ObjectUtils.tryCast(child, PsiKeyword.class)))) {
-        return (PsiKeyword)child;
+      if (child instanceof PsiKeyword keyword && AccessModifier.fromKeyword(keyword)!=null) {
+        return keyword;
       }
     }
     return null;
@@ -349,8 +350,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   private static void changeModifier(PsiModifierList modifierList, AccessModifier modifier, boolean hasConflicts) {
     Project project = modifierList.getProject();
     PsiElement parent = modifierList.getParent();
-    if (parent instanceof PsiMethod && hasConflicts) {
-      PsiMethod method = (PsiMethod)parent;
+    if (parent instanceof PsiMethod method && hasConflicts) {
       //no myPrepareSuccessfulSwingThreadCallback means that the conflicts when any, won't be shown again
       var csp = JavaRefactoringFactory.getInstance(project).createChangeSignatureProcessor(
                                                                    method,
@@ -383,13 +383,11 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
 
   @Nullable
   private static MultiMap<PsiElement, String> checkForConflicts(@NotNull PsiMember member, AccessModifier modifier) {
-    if (member instanceof PsiClass && modifier == AccessModifier.PUBLIC) {
-      final PsiClass aClass = (PsiClass)member;
+    if (member instanceof PsiClass aClass && modifier == AccessModifier.PUBLIC) {
       final PsiElement parent = aClass.getParent();
-      if (!(parent instanceof PsiJavaFile)) {
+      if (!(parent instanceof PsiJavaFile javaFile)) {
         return MultiMap.empty();
       }
-      final PsiJavaFile javaFile = (PsiJavaFile)parent;
       final String name = FileUtilRt.getNameWithoutExtension(javaFile.getName());
       final String className = aClass.getName();
       if (name.equals(className)) {

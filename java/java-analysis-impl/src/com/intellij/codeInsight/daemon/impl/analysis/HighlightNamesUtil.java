@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.colors.ScopeAttributesUtil;
@@ -98,7 +98,7 @@ public final class HighlightNamesUtil {
     return TextAttributes.merge(scopeAttributes, regularAttributes);
   }
   
-  private static TextAttributes mergeWithVisibilityAttributes(PsiModifierListOwner listOwner, TextAttributes basedAttributes, @NotNull TextAttributesScheme colorsScheme) {
+  private static TextAttributes mergeWithVisibilityAttributes(@NotNull PsiModifierListOwner listOwner, TextAttributes basedAttributes, @NotNull TextAttributesScheme colorsScheme) {
     TextAttributesKey attributesKey = null;
     if (listOwner.hasModifierProperty(PsiModifier.PUBLIC)) {
       attributesKey = JavaHighlightingColors.PUBLIC_REFERENCE_ATTRIBUTES;
@@ -122,8 +122,7 @@ public final class HighlightNamesUtil {
   @NotNull
   static HighlightInfo highlightClassName(@Nullable PsiClass aClass, @NotNull PsiElement elementToHighlight, @NotNull TextAttributesScheme colorsScheme) {
     TextRange range = elementToHighlight.getTextRange();
-    if (elementToHighlight instanceof PsiJavaCodeReferenceElement) {
-      PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)elementToHighlight;
+    if (elementToHighlight instanceof PsiJavaCodeReferenceElement referenceElement) {
       PsiElement identifier = referenceElement.getReferenceNameElement();
       if (identifier != null) {
         range = identifier.getTextRange();
@@ -132,8 +131,7 @@ public final class HighlightNamesUtil {
 
     // This will highlight @ sign in annotation as well.
     PsiElement parent = elementToHighlight.getParent();
-    if (parent instanceof PsiAnnotation) {
-      PsiAnnotation psiAnnotation = (PsiAnnotation)parent;
+    if (parent instanceof PsiAnnotation psiAnnotation) {
       range = new TextRange(psiAnnotation.getTextRange().getStartOffset(), range.getEndOffset());
     }
 

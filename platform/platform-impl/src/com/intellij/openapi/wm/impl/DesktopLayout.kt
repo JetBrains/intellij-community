@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.wm.impl
@@ -13,12 +13,13 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
 @Internal
-class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = HashMap()) {
+class DesktopLayout(
+  private val idToInfo: MutableMap<String, WindowInfoImpl> = HashMap(),
+  val unifiedWeights: UnifiedToolWindowWeights = UnifiedToolWindowWeights(),
+) {
   companion object {
     @NonNls const val TAG = "layout"
   }
-
-  constructor(descriptors: List<WindowInfoImpl>) : this(descriptors.associateByTo(HashMap()) { it.id!! })
 
   /**
    * @param paneId the ID of the tool window pane that this anchor is attached to
@@ -29,13 +30,10 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
     return idToInfo.values.asSequence().filter { paneId == it.safeToolWindowPaneId && anchor == it.anchor }.maxOfOrNull { it.order } ?: -1
   }
 
-  fun copy(): DesktopLayout {
-    val map = HashMap<String, WindowInfoImpl>(idToInfo.size)
-    for (entry in idToInfo) {
-      map.put(entry.key, entry.value.copy())
-    }
-    return DesktopLayout(map)
-  }
+  fun copy() = DesktopLayout(
+    idToInfo.entries.associateTo(HashMap(idToInfo.size)) { e -> e.key to e.value.copy() },
+    unifiedWeights.copy(),
+  )
 
   internal fun create(task: RegisterToolWindowTask, isNewUi: Boolean): WindowInfoImpl {
     val info = WindowInfoImpl()
@@ -44,9 +42,7 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
     if (isNewUi) {
       info.isShowStripeButton = false
     }
-    else {
-      info.isSplit = task.sideTool
-    }
+    info.isSplit = task.sideTool
 
     info.toolWindowPaneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
     info.anchor = task.anchor
@@ -63,6 +59,12 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
   internal fun addInfo(id: String, info: WindowInfoImpl) {
     val old = idToInfo.put(id, info)
     LOG.assertTrue(old == null)
+  }
+
+  fun getUnifiedAnchorWeight(anchor: ToolWindowAnchor): Float = unifiedWeights[anchor]
+
+  fun setUnifiedAnchorWeight(anchor: ToolWindowAnchor, weight: Float) {
+    unifiedWeights[anchor] = weight
   }
 
   /**
@@ -112,18 +114,21 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
         continue
       }
 
-      if (isNewUi && info.isSplit && info.anchor != ToolWindowAnchor.BOTTOM) {
-        info.isSplit = false
-      }
-
       idToInfo.put(id, info)
       list.add(info)
+    }
+
+    val unifiedWeightsElement = layoutElement.getChild(UnifiedToolWindowWeights.TAG)
+    if (unifiedWeightsElement != null) {
+      val unifiedWeightsBinding = XmlSerializer.getBeanBinding(UnifiedToolWindowWeights::class.java)
+      unifiedWeightsBinding.deserializeInto(unifiedWeights, unifiedWeightsElement)
     }
 
     normalizeOrder(list)
     for (info in list) {
       info.resetModificationCount()
     }
+    unifiedWeights.resetModificationCount()
   }
 
   val stateModificationCount: Long
@@ -151,6 +156,12 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
         state = Element(tagName)
       }
       state.addContent(child)
+    }
+    if (state != null) {
+      val serializedUnifiedWeights = serialize(unifiedWeights)
+      if (serializedUnifiedWeights != null) {
+        state.addContent(serializedUnifiedWeights)
+      }
     }
     return state
   }

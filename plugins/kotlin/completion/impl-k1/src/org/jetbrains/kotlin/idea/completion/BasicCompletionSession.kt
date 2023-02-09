@@ -11,12 +11,9 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.openapi.module.Module
-import com.intellij.patterns.PatternCondition
-import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -737,7 +734,9 @@ class BasicCompletionSession(
 
         override fun doComplete() {
             val declaration = declaration()
-            if (declaration is KtParameter && !shouldCompleteParameterNameAndType()) return // do not complete also keywords and from unresolved references in such case
+            if (declaration is KtParameter && !NameWithTypeCompletion.shouldCompleteParameter(declaration)) {
+                return // do not complete also keywords and from unresolved references in such case
+            }
 
             collector.addLookupElementPostProcessor { lookupElement ->
                 lookupElement.putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit)
@@ -764,10 +763,13 @@ class BasicCompletionSession(
             else -> false
         }
 
-        override fun addWeighers(sorter: CompletionSorter): CompletionSorter = if (shouldCompleteParameterNameAndType())
-            sorter.weighBefore("prefix", VariableOrParameterNameWithTypeCompletion.Weigher)
-        else
-            sorter
+        override fun addWeighers(sorter: CompletionSorter): CompletionSorter {
+            val declaration = declaration()
+            return if (declaration is KtParameter && NameWithTypeCompletion.shouldCompleteParameter(declaration))
+                sorter.weighBefore("prefix", VariableOrParameterNameWithTypeCompletion.Weigher)
+            else
+                sorter
+        }
 
         private fun completeTopLevelClassName() {
             val name = parameters.originalFile.virtualFile.nameWithoutExtension
@@ -778,17 +780,6 @@ class BasicCompletionSession(
         }
 
         private fun declaration() = position.parent as KtNamedDeclaration
-
-        private fun shouldCompleteParameterNameAndType(): Boolean {
-            val parameter = declaration() as? KtParameter ?: return false
-            val list = parameter.parent as? KtParameterList ?: return false
-            return when (val owner = list.parent) {
-                is KtCatchClause, is KtPropertyAccessor, is KtFunctionLiteral -> false
-                is KtNamedFunction -> owner.nameIdentifier != null
-                is KtPrimaryConstructor -> !owner.getContainingClassOrObject().isAnnotation()
-                else -> true
-            }
-        }
     }
 
     private val SUPER_QUALIFIER = object : CompletionKind {
@@ -872,13 +863,7 @@ class BasicCompletionSession(
             withType,
         )
 
-        // if we are typing parameter name, restart completion each time we type an upper case letter
-        // because new suggestions will appear (previous words can be used as user prefix)
-        val prefixPattern = StandardPatterns.string().with(object : PatternCondition<String>("Prefix ends with uppercase letter") {
-            override fun accepts(prefix: String, context: ProcessingContext?) = prefix.isNotEmpty() && prefix.last().isUpperCase()
-        })
-
-        collector.restartCompletionOnPrefixChange(prefixPattern)
+        collector.restartCompletionOnPrefixChange(NameWithTypeCompletion.prefixEndsWithUppercaseLetterPattern)
 
         nameWithTypeCompletion.addFromParametersInFile(position, resolutionFacade, isVisibleFilterCheckAlways)
         flushToResultSet()

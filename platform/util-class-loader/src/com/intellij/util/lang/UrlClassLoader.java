@@ -24,11 +24,12 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * A class loader that allows for various customizations, e.g. not locking jars or using a special cache to speed up class loading.
+ * A class loader which allows for various customizations, e.g. not locking jars or using a special cache to speed up class loading.
  * Should be constructed using {@link #build()} method.
  * <p>
  * This classloader implementation is separate from {@link PathClassLoader} because it's used in runtime modules with JDK 1.8.
  */
+@SuppressWarnings("BlockingMethodInNonBlockingContext")
 public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataConsumer {
   private static final boolean isClassPathIndexEnabledGlobalValue = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
@@ -39,9 +40,8 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   private static final ThreadLocal<Boolean> skipFindingResource = new ThreadLocal<>();
 
-  private final List<Path> files;
   protected final ClassPath classPath;
-  private final ClassLoadingLocks<String> classLoadingLocks;
+  private final ClassLoadingLocks classLoadingLocks;
   private final boolean isBootstrapResourcesAllowed;
   private final boolean isSystemClassLoader;
 
@@ -55,12 +55,12 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
    */
   @SuppressWarnings("unused")
   final void appendToClassPathForInstrumentation(@NotNull String jar) {
-    addFiles(Collections.singletonList(Paths.get(jar)));
+    classPath.addFile(Paths.get(jar));
   }
 
   /**
    * There are two definitions of the `ClassPath` class: one from the app class loader that is used by bootstrap,
-   * and another one from the core class loader produced as a result of creating of plugin class loader.
+   * and another one from the core class loader produced as a result of creating a plugin class loader.
    * The core class loader doesn't use bootstrap class loader as a parent - instead, only platform classloader is used (only JRE classes).
    */
   @ApiStatus.Internal
@@ -108,17 +108,20 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
     if (parent instanceof URLClassLoader) {
       URL[] urls = ((URLClassLoader)parent).getURLs();
-      configuration.files = new ArrayList<>(urls.length);
+      // LinkedHashSet is used to remove duplicates
+      Set<Path> files = new LinkedHashSet<>(urls.length);
       for (URL url : urls) {
-        configuration.files.add(Paths.get(url.getPath()));
+        files.add(Paths.get(url.getPath()));
       }
+      configuration.files = files;
     }
     else {
       String[] parts = System.getProperty("java.class.path").split(System.getProperty("path.separator"));
-      configuration.files = new ArrayList<>(parts.length);
+      Set<Path> files = new LinkedHashSet<>(parts.length);
       for (String s : parts) {
-        configuration.files.add(Paths.get(s));
+        files.add(Paths.get(s));
       }
+      configuration.files = files;
     }
 
     configuration.isSystemClassLoader = true;
@@ -139,39 +142,41 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     super(builder.parent);
 
     isSystemClassLoader = builder.isSystemClassLoader;
-    files = builder.files;
 
-    classPath = new ClassPath(files, builder, resourceFileFactory, mimicJarUrlConnection);
+    classPath = new ClassPath(builder.files, builder, resourceFileFactory, mimicJarUrlConnection);
 
     isBootstrapResourcesAllowed = builder.isBootstrapResourcesAllowed;
-    classLoadingLocks = isParallelCapable ? new ClassLoadingLocks<>() : null;
+    classLoadingLocks = isParallelCapable ? new ClassLoadingLocks() : null;
   }
 
-  protected UrlClassLoader(@NotNull List<Path> files, @NotNull ClassPath classPath) {
+  protected UrlClassLoader(@NotNull ClassPath classPath) {
     super(null);
 
-    this.files = files;
     this.classPath = classPath;
     isBootstrapResourcesAllowed = false;
     isSystemClassLoader = false;
-    classLoadingLocks = new ClassLoadingLocks<>();
+    classLoadingLocks = new ClassLoadingLocks();
   }
 
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
   @Deprecated
   public final void addURL(@NotNull URL url) {
-    addFiles(Collections.singletonList(Paths.get(url.getPath())));
+    classPath.addFile(Paths.get(url.getPath()));
   }
 
+  /**
+   * @deprecated Do not use.
+   * Internal method, used via method handle by `configureUsingIdeaClassloader` (see ClassLoaderConfigurator).
+   */
   @ApiStatus.Internal
-  public final void addFiles(@NotNull List<? extends Path> files) {
+  @Deprecated
+  public final void addFiles(@NotNull List<Path> files) {
     classPath.addFiles(files);
-    this.files.addAll(files);
   }
 
   public final @NotNull List<URL> getUrls() {
     List<URL> result = new ArrayList<>();
-    for (Path file : files) {
+    for (Path file : classPath.getFiles()) {
       try {
         result.add(file.toUri().toURL());
       }
@@ -181,7 +186,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   public final @NotNull List<Path> getFiles() {
-    return Collections.unmodifiableList(files);
+    return classPath.getFiles();
   }
 
   public boolean hasLoadedClass(String name) {
@@ -328,7 +333,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @Override
-  public @NotNull Enumeration<URL> findResources(@NotNull String name) throws IOException {
+  public @NotNull Enumeration<URL> findResources(@NotNull String name) {
     return classPath.getResources(name);
   }
 
@@ -369,7 +374,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   /**
-   * An interface for a pool to store internal caches that can be shared between different class loaders,
+   * An interface for a pool to store internal caches that can be shared between different class loaders
    * if they contain the same URLs in their class paths.
    * <p>
    * The implementation is subject to change; one shouldn't rely on it.
@@ -556,7 +561,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   public static final class Builder {
-    List<Path> files = Collections.emptyList();
+    Collection<Path> files = Collections.emptyList();
     ClassLoader parent;
     boolean lockJars = true;
     boolean useCache = true;
@@ -595,7 +600,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     /**
      * `ZipFile` handles opened in `JarLoader` will be kept in as soft references.
      * Depending on OS, the option significantly speeds up classloading from libraries.
-     * Caveat: on Windows, unclosed handle locks a file, preventing its modification.
+     * Caveat: on Windows, an unclosed handle locks a file, preventing its modification.
      * Thus, the option is recommended when .jar files are not modified or a process that uses this option is transient.
      */
     public @NotNull UrlClassLoader.Builder allowLock(boolean lockJars) {
@@ -604,7 +609,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     }
 
     /**
-     * Build a backward index of packages to class/resource names; allows to reduce I/O during classloading.
+     * Build a backward index of packages to class/resource names; allows reducing I/O during classloading.
      */
     public @NotNull UrlClassLoader.Builder useCache() {
       useCache = true;
@@ -622,7 +627,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
      * Currently, the flag is used for faster unit tests / debug IDE instance, because IDEA's build process (as of 14.1) ensures deletion of
      * such information upon appearing new file for output root.
      * <p>
-     * N.b. IDEA's build process does not ensure deletion of cached information upon deletion of some file under a local root,
+     * IDEA's building process does not ensure deletion of cached information upon deletion of some file under a local root,
      * but false positives are not a logical error, since code is prepared for that and disk access is performed upon class/resource loading.
      */
     public @NotNull UrlClassLoader.Builder usePersistentClasspathIndexForLocalClassDirectories(boolean value) {
@@ -636,7 +641,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     }
 
     /**
-     * Requests the class loader being built to use cache and, if possible, retrieve and store the cached data from a special cache pool
+     * Requests the class loader being built to use a cache and, if possible, retrieve and store the cached data from a special cache pool
      * that can be shared between several loaders.
      *
      * @param pool      cache pool

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
 import org.jetbrains.plugins.terminal.ShellTerminalWidget;
 import org.jetbrains.plugins.terminal.TerminalTabState;
-import org.jetbrains.plugins.terminal.TerminalView;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -74,11 +74,11 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
     TerminalArrangementState arrangementState = new TerminalArrangementState();
     ContentManager contentManager = terminalToolWindow.getContentManager();
     for (Content content : contentManager.getContents()) {
-      AbstractTerminalRunner<?> runner = TerminalView.getRunnerByContent(content);
+      AbstractTerminalRunner<?> runner = TerminalToolWindowManager.getRunnerByContent(content);
       if (runner == null || !runner.isTerminalSessionPersistent()) {
         continue;
       }
-      JBTerminalWidget terminalWidget = TerminalView.getWidgetByContent(content);
+      JBTerminalWidget terminalWidget = TerminalToolWindowManager.getWidgetByContent(content);
       if (terminalWidget == null) continue;
       TerminalTabState tabState = new TerminalTabState();
       tabState.myTabName = content.getTabName();

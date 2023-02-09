@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ExecutionManagerImpl;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -249,8 +250,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     if (consoleView instanceof ConsoleViewImpl) {
       consoleViewImpl = (ConsoleViewImpl)consoleView;
     }
-    else if (consoleView instanceof DuplexConsoleView) {
-      DuplexConsoleView duplexConsoleView = (DuplexConsoleView)consoleView;
+    else if (consoleView instanceof DuplexConsoleView duplexConsoleView) {
       if (duplexConsoleView.getPrimaryConsoleView() instanceof ConsoleViewImpl) {
         consoleViewImpl = (ConsoleViewImpl)duplexConsoleView.getPrimaryConsoleView();
       }
@@ -284,6 +284,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
           }
         });
       });
+    }
+  }
+
+  @Override
+  public void createAdditionalTabComponents(AdditionalTabComponentManager manager, ProcessHandler startedProcess) {
+    RunProfile runProfile = ExecutionManagerImpl.getDelegatedRunProfile(this);
+    if (runProfile instanceof RunConfigurationBase<?>) {
+      ((RunConfigurationBase<?>)runProfile).createAdditionalTabComponents(manager, startedProcess);
     }
   }
 

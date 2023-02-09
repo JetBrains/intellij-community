@@ -18,7 +18,6 @@ class SingleIndexValueApplier<FileIndexMetaData> {
   final long evaluatingIndexValueApplierTime;
   @NotNull final Supplier<Boolean> storageUpdate;
   @NotNull private final String fileInfo;
-  @NotNull private final String filePath;
   private final boolean isMock;
 
   SingleIndexValueApplier(@NotNull FileBasedIndexImpl index,
@@ -36,7 +35,6 @@ class SingleIndexValueApplier<FileIndexMetaData> {
     this.evaluatingIndexValueApplierTime = evaluatingIndexValueApplierTime;
     storageUpdate = update;
     fileInfo = FileBasedIndexImpl.getFileInfoLogString(inputId, file, currentFC);
-    filePath = file.getPath();
     isMock = FileBasedIndexImpl.isMock(currentFC.getFile());
   }
 
@@ -50,7 +48,7 @@ class SingleIndexValueApplier<FileIndexMetaData> {
   }
 
   boolean apply() {
-    FileBasedIndexImpl.markFileWritingIndexes(inputId, filePath);
+    FileBasedIndexImpl.markFileWritingIndexes(inputId);
     try {
       return doApply();
     }

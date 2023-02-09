@@ -35,7 +35,7 @@ public final class SMAPInfo {
     try {
       smapInfo.doParse();
     }
-    catch(Exception e) {
+    catch (Exception e) {
       return null;
     }
     if (smapInfo.myId2Stratum.isEmpty()) {
@@ -138,7 +138,7 @@ public final class SMAPInfo {
 
     final FileInfo info = currentStratum.myFileId2Info.get(fileId);
     for (int i = 0; i < repeatCount; i++) {
-      for (int j = i * increment; j < (i+1) * increment; j++) {
+      for (int j = i * increment; j < (i + 1) * increment; j++) {
         info.myOutput2InputLine.put(outputStartLine + j, inputStartLine + i);
       }
     }

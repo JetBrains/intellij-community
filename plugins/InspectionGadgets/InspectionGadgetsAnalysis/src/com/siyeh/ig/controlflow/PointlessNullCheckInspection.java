@@ -135,9 +135,8 @@ public class PointlessNullCheckInspection extends BaseInspection implements Clea
 
     @Nullable
     private static PsiReferenceExpression getReferenceFromBooleanCall(PsiExpression expression) {
-      if (!(expression instanceof PsiMethodCallExpression)) return null;
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-      if (!PsiType.BOOLEAN.equals(call.getType())) return null;
+      if (!(expression instanceof PsiMethodCallExpression call)) return null;
+      if (!PsiTypes.booleanType().equals(call.getType())) return null;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier != null && SideEffectChecker.mayHaveSideEffects(qualifier)) return null;
       PsiMethod method = call.resolveMethod();
@@ -175,8 +174,7 @@ public class PointlessNullCheckInspection extends BaseInspection implements Clea
 
     @Nullable
     private PsiReferenceExpression getReferenceFromOrChain(PsiExpression expression) {
-      if (!(expression instanceof PsiPolyadicExpression)) return null;
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) return null;
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (JavaTokenType.OROR != tokenType) return null;
       final PsiExpression[] operands = polyadicExpression.getOperands();

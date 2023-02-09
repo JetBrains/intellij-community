@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -117,8 +116,7 @@ public final class PythonSdkType extends SdkType {
    * @return name of builtins skeleton file; for Python 2.x it is '{@code __builtins__.py}'.
    * @deprecated use com.jetbrains.python.sdk.PySdkUtil#getBuiltinsFileName(com.intellij.openapi.projectRoots.Sdk) instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @Deprecated(forRemoval = true)
   @NotNull
   @NonNls
   public static String getBuiltinsFileName(@NotNull Sdk sdk) {
@@ -286,7 +284,6 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, @NotNull final Element additional) {
-    WSLUtil.fixWslPrefix(currentSdk);
     String homePath = currentSdk.getHomePath();
 
     if (homePath != null) {
@@ -487,7 +484,7 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   @Nullable
-  public String getVersionString(@Nullable final String sdkHome) {
+  public String getVersionString(final @NotNull String sdkHome) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
     return flavor != null ? flavor.getVersionString(sdkHome) : null;
   }
@@ -569,8 +566,7 @@ public final class PythonSdkType extends SdkType {
   /**
    * @deprecated use {@link PySdkUtil#getLanguageLevelForSdk(com.intellij.openapi.projectRoots.Sdk)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @Deprecated(forRemoval = true)
   @NotNull
   public static LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
     return PySdkUtil.getLanguageLevelForSdk(sdk);

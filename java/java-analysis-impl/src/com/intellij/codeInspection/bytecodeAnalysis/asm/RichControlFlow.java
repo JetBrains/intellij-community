@@ -7,9 +7,6 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 
-/**
- * @author lambdamix
- */
 public final class RichControlFlow {
   public final ControlFlowGraph controlFlow;
   public final DFSTree dfsTree;

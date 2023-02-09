@@ -1,6 +1,7 @@
 {
   "expui": {
     "actions": {
+      "buildAutoReloadChanges.svg": "actions/buildAutoReloadChanges.svg",
       "deploy.svg": "nodes/deploy.svg",
       "filterdups.svg": "toolbar/filterdups.svg",
       "generated.svg": "actions/generatedFolder.svg",
@@ -13,6 +14,7 @@
       "showWriteAccess.svg": "actions/showWriteAccess.svg",
       "showReadAccess.svg": "actions/showReadAccess.svg",
       "showImportStatements.svg": "actions/showImportStatements.svg",
+      "toggleVisibility.svg": "actions/toggleVisibility.svg",
       "undeploy.svg": "nodes/undeploy.svg"
     },
     "bookmarks": {
@@ -296,16 +298,6 @@
       "moveDown.svg": "actions/moveDown.svg",
       "moveUp.svg": "actions/moveUp.svg",
       "open.svg": "actions/menu-open.svg",
-      "openInToolWindow.svg": [
-        "actions/moveToBottomLeft.svg",
-        "actions/moveToBottomRight.svg",
-        "actions/moveToLeftBottom.svg",
-        "actions/moveToLeftTop.svg",
-        "actions/moveToRightBottom.svg",
-        "actions/moveToRightTop.svg",
-        "actions/moveToTopLeft.svg",
-        "actions/moveToTopRight.svg"
-      ],
       "openNewTab.svg": "actions/openNewTab.svg",
       "paste.svg": "actions/menu-paste.svg",
       "pin.svg": [
@@ -526,6 +518,10 @@
       ],
       "phpWeb.svg": "icons/run_web_app.svg"
     },
+    "profiler": {
+      "collapseNode.svg": "profiler/collapseNode.svg",
+      "expandNode.svg": "profiler/expandNode.svg"
+    },
     "progress": {
       "pause.svg": [
         "process/progressPause.svg",
@@ -588,7 +584,10 @@
       "testIgnored.svg": "runConfigurations/testIgnored.svg",
       "testNotRunYet.svg": "runConfigurations/testNotRan.svg",
       "testPassed.svg": "runConfigurations/testPassed.svg",
-      "testPassedIgnored.svg": "runConfigurations/testPassedIgnored.svg",
+      "testPassedIgnored.svg": [
+        "runConfigurations/testPassedIgnored.svg",
+        "runConfigurations/toolbarPassedIgnored.svg"
+      ],
       "testPaused.svg": "runConfigurations/testPaused.svg",
       "testSkipped.svg": "runConfigurations/testSkipped.svg",
       "testTerminated.svg": "runConfigurations/testTerminated.svg",
@@ -611,6 +610,7 @@
         "ide/fatalError.svg"
       ],
       "errorOutline.svg": "ide/fatalError-read.svg",
+      "failedInProgress.svg": "status/failedInProgress.svg",
       "info.svg": "general/balloonInformation.svg",
       "warning.svg": "general/balloonWarning.svg",
       "warningOutline.svg": "general/showWarning.svg"
@@ -666,6 +666,7 @@
       "currentBranch.svg": "icons/currentBranchLabel.svg",
       "currentBranchFavorite.svg": "icons/currentBranchFavoriteLabel.svg",
       "diff.svg": "actions/diff.svg",
+      "fetch.svg": "vcs/fetch.svg",
       "intelliSort.svg": "icons/IntelliSort.svg",
       "merge.svg": "vcs/merge.svg",
       "patch.svg": "vcs/patch.svg",
@@ -676,7 +677,20 @@
         "vcs/shelveSilent.svg",
         "vcs/Stash.svg"
       ],
-      "update.svg": "actions/checkOut.svg"
+      "unshelve.svg": [
+        "vcs/Unshelve.svg",
+        "vcs/unshelveSilent.svg"
+      ],
+      "update.svg": "actions/checkOut.svg",
+      "vcs.svg": [
+        "vcs/branch.svg",
+        "vcs/branchNode.svg"
+      ]
+    },
+    "welcome": {
+      "createNewProjectTab.svg": "welcome/createNewProjectTab.svg",
+      "fromVCSTab.svg": "welcome/fromVCSTab.svg",
+      "open.svg": "welcome/open.svg"
     }
   }
 }

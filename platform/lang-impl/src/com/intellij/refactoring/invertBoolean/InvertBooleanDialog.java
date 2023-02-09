@@ -12,9 +12,6 @@ import com.intellij.usageView.UsageViewUtil;
 
 import javax.swing.*;
 
-/**
- * @author ven
- */
 public class InvertBooleanDialog extends RefactoringDialog {
   private JTextField myNameField;
   private JPanel myPanel;

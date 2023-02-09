@@ -182,6 +182,7 @@ object KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea-fir",
     "kotlin.fir.fir-low-level-api-ide-impl",
     "kotlin.navigation",
+    "kotlin.code-insight.line-markers-k2",
     "kotlin.refactorings.common",
     "kotlin.refactorings.k2",
     "kotlin.refactorings.rename.k2",
@@ -300,7 +301,7 @@ object KotlinPluginBuilder {
       spec.withProjectLibrary("kotlinc.kotlin-jps-common")
       //noinspection SpellCheckingInspection
       spec.withProjectLibrary("javaslang", LibraryPackMode.STANDALONE_MERGED)
-      spec.withProjectLibrary("kotlinx-collections-immutable-jvm", LibraryPackMode.STANDALONE_MERGED)
+      spec.withProjectLibrary("kotlinx-collections-immutable", LibraryPackMode.STANDALONE_MERGED)
       spec.withProjectLibrary("javax-inject", LibraryPackMode.STANDALONE_MERGED)
 
       spec.withGeneratedResources(BiConsumer { targetDir, context ->

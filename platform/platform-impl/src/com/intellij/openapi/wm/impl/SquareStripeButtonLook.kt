@@ -22,19 +22,17 @@ import javax.swing.UIManager
 internal class SquareStripeButtonLook(private val button: ActionButton) : IdeaActionButtonLook() {
   companion object {
     val ICON_PADDING: Insets
-      get() = JBUI.insets(5)
+      get() = JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding()
   }
 
   override fun paintBackground(g: Graphics, component: JComponent, state: Int) {
-    if (state == ActionButtonComponent.NORMAL && !component.isBackgroundSet) {
-      return
-    }
+    val initialColor = getStateBackground(component, state) ?: return
     val rect = Rectangle(component.size).also {
       JBInsets.removeFrom(it, component.insets)
       JBInsets.removeFrom(it, ICON_PADDING)
     }
 
-    val color = getBackgroundColor(getStateBackground(component, state))
+    val color = getBackgroundColor(initialColor)
     paintLookBackground(g, rect, color)
   }
 

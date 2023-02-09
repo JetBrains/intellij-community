@@ -3,6 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle.message
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OpenMode
 import com.intellij.openapi.keymap.KeymapUtil.getShortcutText
@@ -27,6 +28,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Component
 import javax.swing.JLabel
 import javax.swing.JList
@@ -155,7 +157,9 @@ internal class SwitcherVirtualFile(
     component.append(mainText, SimpleTextAttributes(style, foreground, effectColor))
   }
 
-  override fun getElementBackground(row: Int) = getFileBackgroundColor(project, file)
+  override fun getElementBackground(row: Int) : Color? {
+    return runReadAction { getFileBackgroundColor(project, file) }
+  }
 }
 
 

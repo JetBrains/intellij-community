@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider;
 import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
@@ -35,21 +36,25 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class TextEditorProvider implements DefaultPlatformFileEditorProvider, TextBasedFileEditorProvider, QuickDefinitionProvider, DumbAware {
+public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
+                                           TextBasedFileEditorProvider,
+                                           StructureViewFileEditorProvider,
+                                           QuickDefinitionProvider,
+                                           DumbAware {
   protected static final Logger LOG = Logger.getInstance(TextEditorProvider.class);
 
   private static final Key<TextEditor> TEXT_EDITOR_KEY = Key.create("textEditor");
 
-  private static final @NonNls String TYPE_ID                         = "text-editor";
-  private static final @NonNls String LINE_ATTR                       = "line";
-  private static final @NonNls String COLUMN_ATTR                     = "column";
-  private static final @NonNls String LEAN_FORWARD_ATTR               = "lean-forward";
-  private static final @NonNls String SELECTION_START_LINE_ATTR       = "selection-start-line";
-  private static final @NonNls String SELECTION_START_COLUMN_ATTR     = "selection-start-column";
-  private static final @NonNls String SELECTION_END_LINE_ATTR         = "selection-end-line";
-  private static final @NonNls String SELECTION_END_COLUMN_ATTR       = "selection-end-column";
-  private static final @NonNls String RELATIVE_CARET_POSITION_ATTR    = "relative-caret-position";
-  private static final @NonNls String CARET_ELEMENT                   = "caret";
+  private static final @NonNls String TYPE_ID = "text-editor";
+  private static final @NonNls String LINE_ATTR = "line";
+  private static final @NonNls String COLUMN_ATTR = "column";
+  private static final @NonNls String LEAN_FORWARD_ATTR = "lean-forward";
+  private static final @NonNls String SELECTION_START_LINE_ATTR = "selection-start-line";
+  private static final @NonNls String SELECTION_START_COLUMN_ATTR = "selection-start-column";
+  private static final @NonNls String SELECTION_END_LINE_ATTR = "selection-end-line";
+  private static final @NonNls String SELECTION_END_COLUMN_ATTR = "selection-end-column";
+  private static final @NonNls String RELATIVE_CARET_POSITION_ATTR = "relative-caret-position";
+  private static final @NonNls String CARET_ELEMENT = "caret";
 
   public static @NotNull TextEditorProvider getInstance() {
     return Objects.requireNonNull(FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findFirstAssignableExtension(TextEditorProvider.class));
@@ -75,7 +80,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Te
 
     List<Element> caretElements = element.getChildren(CARET_ELEMENT);
     if (caretElements.isEmpty()) {
-      state.CARETS = new TextEditorState.CaretState[] {readCaretInfo(element)};
+      state.CARETS = new TextEditorState.CaretState[]{readCaretInfo(element)};
     }
     else {
       state.CARETS = new TextEditorState.CaretState[caretElements.size()];
@@ -163,8 +168,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Te
 
   public static Document @NotNull [] getDocuments(@NotNull FileEditor editor) {
     Document[] result;
-    if (editor instanceof DocumentsEditor) {
-      DocumentsEditor documentsEditor = (DocumentsEditor)editor;
+    if (editor instanceof DocumentsEditor documentsEditor) {
       result = documentsEditor.getDocuments();
     }
     else if (editor instanceof TextEditor) {
@@ -181,7 +185,11 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Te
       }
     }
     if (ArrayUtil.contains(null, result)) {
-      LOG.error("FileEditor returned null document for " + editor + " (" + editor.getClass() + "); result='" + Arrays.toString(result) + "'; editor instanceof DocumentsEditor: "+(editor instanceof DocumentsEditor)+"; editor instanceof TextEditor: "+(editor instanceof TextEditor)+"; editor.getFile():"+editor.getFile());
+      LOG.error("FileEditor returned null document for " + editor + " (" + editor.getClass() +
+                "); result='" + Arrays.toString(result) +
+                "'; editor instanceof DocumentsEditor: " + (editor instanceof DocumentsEditor) +
+                "; editor instanceof TextEditor: " + (editor instanceof TextEditor) +
+                "; editor.getFile():" + editor.getFile());
     }
     return result;
   }
@@ -191,7 +199,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Te
     editor.putUserData(TEXT_EDITOR_KEY, textEditor);
   }
 
-  protected @NotNull TextEditorState getStateImpl(final Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level){
+  protected @NotNull TextEditorState getStateImpl(final Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level) {
     TextEditorState state = new TextEditorState();
     CaretModel caretModel = editor.getCaretModel();
     List<CaretState> caretsAndSelections = caretModel.getCaretsAndSelections();
@@ -238,7 +246,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Te
     return pos == null ? 0 : pos.column;
   }
 
-  protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state, boolean exactState){
+  protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state, boolean exactState) {
     TextEditorState.CaretState[] carets = state.CARETS;
     if (carets.length > 0) {
       List<CaretState> states = new ArrayList<>(carets.length);
@@ -270,6 +278,11 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Te
         UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), scrollingRunnable);
       }
     });
+  }
+
+  @Override
+  public @Nullable StructureViewBuilder getStructureViewBuilder(@NotNull Project project, @NotNull VirtualFile file) {
+    return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, project);
   }
 
   protected class EditorWrapper extends UserDataHolderBase implements TextEditor {
@@ -307,7 +320,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Te
 
       final Project project = myEditor.getProject();
       if (project == null) return null;
-      return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, project);
+      return TextEditorProvider.this.getStructureViewBuilder(project, file);
     }
 
     @Override

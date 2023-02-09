@@ -2,7 +2,7 @@
 package com.siyeh.ipp.forloop;
 
 import com.intellij.psi.PsiForeachStatement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,8 +25,8 @@ public class ReplaceForEachLoopWithOptimizedIndexedForLoopIntention extends Repl
                                           final String indexText,
                                           StringBuilder newStatement) {
     final String lengthText = isArray
-                              ? createVariableName(iteratedValueText + "Length", PsiType.INT, statement)
-                              : createVariableName(iteratedValueText + "Size", PsiType.INT, statement);
+                              ? createVariableName(iteratedValueText + "Length", PsiTypes.intType(), statement)
+                              : createVariableName(iteratedValueText + "Size", PsiTypes.intType(), statement);
 
     newStatement.append("for(int ");
     newStatement.append(indexText);

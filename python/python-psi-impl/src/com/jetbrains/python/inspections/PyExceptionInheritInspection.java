@@ -28,9 +28,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyExceptionInheritInspection extends PyInspection {
 
   @NotNull
@@ -57,8 +54,7 @@ public class PyExceptionInheritInspection extends PyInspection {
         if (callee instanceof PyReferenceExpression) {
           final PsiPolyVariantReference reference = ((PyReferenceExpression)callee).getReference(getResolveContext());
           PsiElement psiElement = reference.resolve();
-          if (psiElement instanceof PyClass) {
-            PyClass aClass = (PyClass) psiElement;
+          if (psiElement instanceof PyClass aClass) {
             for (PyClassLikeType type : aClass.getAncestorTypes(myTypeEvalContext)) {
               if (type == null) {
                 return;

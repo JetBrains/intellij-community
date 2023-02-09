@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.migration;
 
 import com.intellij.openapi.application.WriteAction;
@@ -41,11 +41,8 @@ public final class MigrationUtil {
 
     final TextRange range = usage.getRangeInElement();
     for (PsiReference reference : element.getReferences()) {
-      if (reference instanceof JavaClassReference) {
-        final JavaClassReference classReference = (JavaClassReference)reference;
-        if (classReference.getRangeInElement().equals(range)) {
-          return classReference.bindToElement(bindTo);
-        }
+      if (reference instanceof JavaClassReference classReference && classReference.getRangeInElement().equals(range)) {
+        return classReference.bindToElement(bindTo);
       }
     }
     return bindTo;
@@ -83,21 +80,19 @@ public final class MigrationUtil {
       SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(elementToBind.getProject());
       // rename all references
       for (UsageInfo usage : usages) {
-        if (usage instanceof MigrationProcessor.MigrationUsageInfo) {
-          final MigrationProcessor.MigrationUsageInfo usageInfo = (MigrationProcessor.MigrationUsageInfo)usage;
-          if (Objects.equals(newQName, usageInfo.mapEntry.getNewName())) {
-            PsiElement element = usage.getElement();
-            if (element == null || !element.isValid()) continue;
-            UElement uElement = UastContextKt.toUElement(element);
-            PsiElement psiElement = null;
-            if (uElement instanceof UReferenceExpression) {
-              psiElement = UastCodeGenerationPluginKt.bindToElement((UReferenceExpression)uElement, elementToBind);
-            } else {
-              psiElement = bindNonJavaReference(elementToBind, element, usage);
-            }
-            if (psiElement != null) {
-              refsToShorten.add(smartPointerManager.createSmartPsiElementPointer(psiElement));
-            }
+        if (usage instanceof MigrationProcessor.MigrationUsageInfo usageInfo && Objects.equals(newQName, usageInfo.mapEntry.getNewName())) {
+          PsiElement element = usage.getElement();
+          if (element == null || !element.isValid()) continue;
+          UElement uElement = UastContextKt.toUElement(element);
+          PsiElement psiElement;
+          if (uElement instanceof UReferenceExpression) {
+            psiElement = UastCodeGenerationPluginKt.bindToElement((UReferenceExpression)uElement, elementToBind);
+          }
+          else {
+            psiElement = bindNonJavaReference(elementToBind, element, usage);
+          }
+          if (psiElement != null) {
+            refsToShorten.add(smartPointerManager.createSmartPsiElementPointer(psiElement));
           }
         }
       }

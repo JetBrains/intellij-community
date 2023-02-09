@@ -54,8 +54,8 @@ UFile (package = ) [import java.lang.Runnable...]
                         UPolyadicExpression (operator = +) ["Fail: " + y] : PsiType:String
                             ULiteralExpression (value = "Fail: ") ["Fail: "] : PsiType:String
                             USimpleNameReferenceExpression (identifier = y) [y] : PsiType:Object
-                UDeclarationsExpression [var r: java.lang.Object = anonymous object : Runnable {...    }]
-                    ULocalVariable (name = r) [var r: java.lang.Object = anonymous object : Runnable {...    }]
+                UDeclarationsExpression [var r: java.lang.Runnable = anonymous object : Runnable {...    }]
+                    ULocalVariable (name = r) [var r: java.lang.Runnable = anonymous object : Runnable {...    }]
                         UObjectLiteralExpression [anonymous object : Runnable {...    }] : PsiType:Runnable
                             UClass (name = null) [final class null : java.lang.Runnable {...}]
                                 UMethod (name = run) [public fun run() : void {...}]
@@ -66,7 +66,7 @@ UFile (package = ) [import java.lang.Runnable...]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [foo(r, true)] : PsiType:Runnable
                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                             USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : PsiType:Runnable
-                            USimpleNameReferenceExpression (identifier = r) [r] : PsiType:Object
+                            USimpleNameReferenceExpression (identifier = r) [r] : PsiType:Runnable
                             ULiteralExpression (value = true) [true] : PsiType:boolean
                         UBinaryExpression (operator = <other>) [UastEmptyExpression <other> UastEmptyExpression] : PsiType:<ErrorType>
                             UastEmptyExpression [UastEmptyExpression]
@@ -74,13 +74,13 @@ UFile (package = ) [import java.lang.Runnable...]
                     UReturnExpression [return "Fail: " + r] : PsiType:Void
                         UPolyadicExpression (operator = +) ["Fail: " + r] : PsiType:String
                             ULiteralExpression (value = "Fail: ") ["Fail: "] : PsiType:String
-                            USimpleNameReferenceExpression (identifier = r) [r] : PsiType:Object
+                            USimpleNameReferenceExpression (identifier = r) [r] : PsiType:Runnable
                 UIfExpression [if (foo(r, false) !== UastEmptyExpression <other> UastEmptyExpression) return "Fail: " + r] : PsiType:Unit
                     UBinaryExpression (operator = !==) [foo(r, false) !== UastEmptyExpression <other> UastEmptyExpression] : PsiType:boolean
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [foo(r, false)] : PsiType:Runnable
                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                             USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : PsiType:Runnable
-                            USimpleNameReferenceExpression (identifier = r) [r] : PsiType:Object
+                            USimpleNameReferenceExpression (identifier = r) [r] : PsiType:Runnable
                             ULiteralExpression (value = false) [false] : PsiType:boolean
                         UBinaryExpression (operator = <other>) [UastEmptyExpression <other> UastEmptyExpression] : PsiType:<ErrorType>
                             UastEmptyExpression [UastEmptyExpression]
@@ -88,6 +88,6 @@ UFile (package = ) [import java.lang.Runnable...]
                     UReturnExpression [return "Fail: " + r] : PsiType:Void
                         UPolyadicExpression (operator = +) ["Fail: " + r] : PsiType:String
                             ULiteralExpression (value = "Fail: ") ["Fail: "] : PsiType:String
-                            USimpleNameReferenceExpression (identifier = r) [r] : PsiType:Object
+                            USimpleNameReferenceExpression (identifier = r) [r] : PsiType:Runnable
                 UReturnExpression [return "OK"] : PsiType:Void
                     ULiteralExpression (value = "OK") ["OK"] : PsiType:String

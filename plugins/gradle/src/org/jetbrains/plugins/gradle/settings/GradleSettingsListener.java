@@ -10,8 +10,6 @@ import org.jetbrains.annotations.Nullable;
  * Defines callback for the gradle config structure change.
  * <p/>
  * Implementations of this interface are not obliged to be thread-safe.
- *
- * @author Denis Zhdanov
  */
 public interface GradleSettingsListener extends ExternalSystemSettingsListener<GradleProjectSettings> {
   Topic<GradleSettingsListener> TOPIC = new Topic<>(GradleSettingsListener.class, Topic.BroadcastDirection.NONE);

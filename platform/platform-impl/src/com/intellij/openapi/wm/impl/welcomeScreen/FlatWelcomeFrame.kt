@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.icons.AllIcons
@@ -11,7 +11,6 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditServiceListener
 import com.intellij.ide.plugins.PluginDropHandler
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.idea.SplashManager
 import com.intellij.notification.NotificationsManager
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.openapi.Disposable
@@ -45,7 +44,10 @@ import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
 import com.intellij.util.ui.update.UiNotifyConnector
 import com.jetbrains.JBR
@@ -82,8 +84,9 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
 
     private fun saveSizeAndLocation(location: Rectangle) {
       val middle = Point(location.x + location.width / 2, location.y + location.height / 2)
-      WindowStateService.getInstance().putLocation(WelcomeFrame.DIMENSION_KEY, middle)
-      WindowStateService.getInstance().putSize(WelcomeFrame.DIMENSION_KEY, location.size)
+      val windowStateService = WindowStateService.getInstance()
+      windowStateService.putLocation(WelcomeFrame.DIMENSION_KEY, middle)
+      windowStateService.putSize(WelcomeFrame.DIMENSION_KEY, location.size)
     }
 
     @JvmStatic
@@ -99,14 +102,13 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
   }
 
   init {
-    SplashManager.hideBeforeShow(this)
     val rootPane = getRootPane()
     balloonLayout = WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8))
     screen = suggestedScreen ?: FlatWelcomeScreen(frame = this)
     content = Wrapper()
     contentPane = content
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      header = DefaultFrameHeader(this)
+      header = DefaultFrameHeader(this, isForDockContainerProvider = false)
       content.setContent(getCustomContentHolder(this, screen.welcomePanel, header!!))
     }
     else {
@@ -141,9 +143,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       }
     })
     connection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
-      if (balloonLayout != null) {
-        Disposer.dispose(balloonLayout!!)
-      }
+      balloonLayout?.dispose()
       balloonLayout = WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8))
       updateComponentsAndResize()
       repaint()
@@ -229,7 +229,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     super.dispose()
     balloonLayout?.let {
       balloonLayout = null
-      Disposer.dispose(it)
+      it.dispose()
     }
     Disposer.dispose(screen)
     WelcomeFrame.resetInstance()
@@ -406,7 +406,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       val quickStart = ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART) as ActionGroup
       WelcomeScreenActionsUtil.collectAllActions(group, quickStart)
       @Suppress("SpellCheckingInspection")
-      val mainPanel = ActionPanel(MigLayout("ins 0, novisualpadding, gap " + JBUI.scale(5) + ", flowy", "push[pref!, center]push"))
+      val mainPanel = ActionPanel(MigLayout("ins 0, novisualpadding, gap 5, flowy", "push[pref!, center]push"))
       mainPanel.isOpaque = false
       val panel = object : JPanel(VerticalLayout(JBUI.scale(5))) {
         private var firstAction: Component? = null

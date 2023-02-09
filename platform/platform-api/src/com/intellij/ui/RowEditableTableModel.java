@@ -18,7 +18,6 @@ package com.intellij.ui;
 import javax.swing.table.TableModel;
 
 /**
- * @author dsl
  * @author Konstantin Bulenkov
  * @deprecated use {@link com.intellij.util.ui.EditableModel}
  */

@@ -1762,6 +1762,101 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     );
   }
 
+  // PY-42637
+  public void testTypedDictValueAccessWithDoubleQuotes() {
+    final String text = """
+      from typing import TypedDict
+      class VehicleTypedDict(TypedDict):
+          id: int
+          vin: str
+          zip: str
+          make: str
+          trim: str
+      def get_something(vehicle: VehicleTypedDict):
+          return vehicle["<caret>"]""";
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, text);
+        myFixture.completeBasic();
+        myFixture.checkResult(text);
+
+        assertContainsElements(myFixture.getLookupElementStrings(), "\"id\"", "\"vin\"", "\"zip\"", "\"make\"", "\"trim\"");
+      }
+    );
+  }
+
+  // PY-42637
+  public void testTypedDictValueAccessWithoutQuotes() {
+    final String text = """
+      from typing import TypedDict
+      class VehicleTypedDict(TypedDict):
+          id: int
+          vin: str
+          zip: str
+          make: str
+          trim: str
+      def get_something(vehicle: VehicleTypedDict):
+          return vehicle[<caret>]""";
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, text);
+        myFixture.completeBasic();
+        myFixture.checkResult(text);
+
+        assertContainsElements(myFixture.getLookupElementStrings(), "\"id\"", "\"vin\"", "\"zip\"", "\"make\"", "\"trim\"");
+      }
+    );
+  }
+
+  // PY-42637
+  public void testTypedDictValueAccessWithSingleQuotes() {
+    final String text = """
+      from typing import TypedDict
+      class VehicleTypedDict(TypedDict):
+          id: int
+          vin: str
+          zip: str
+          make: str
+          trim: str
+      def get_something(vehicle: VehicleTypedDict):
+          return vehicle['<caret>']""";
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, text);
+        myFixture.completeBasic();
+        myFixture.checkResult(text);
+
+        assertContainsElements(myFixture.getLookupElementStrings(), "'id'", "'vin'", "'zip'", "'make'", "'trim'");
+      }
+    );
+  }
+
+  // PY-42637
+  public void testTypedDictValueAccessHalfTyped() {
+    final String text = """
+      from typing import TypedDict
+      class Point(TypedDict):
+          coordinateX: int
+          coordinateY: int
+          z: int
+      def draw(point: Point):
+          return point["coo<caret>"]""";
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, text);
+        myFixture.completeBasic();
+        myFixture.checkResult(text);
+
+        assertContainsElements(myFixture.getLookupElementStrings(), "\"coordinateX\"", "\"coordinateY\"");
+        assertDoesntContain(myFixture.getLookupElementStrings(), "\"z\"");
+      }
+    );
+  }
+
   // PY-36008
   public void testTypedDictDefinition() {
     final List<String> suggested = doTestByText("""

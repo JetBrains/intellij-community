@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage.createFile;
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.openRMappedFile;
 
 /**
  */
@@ -23,7 +23,7 @@ public class PersistentFSSynchronizedRecordsStorageTest
 
   @Override
   protected @NotNull PersistentFSSynchronizedRecordsStorage openStorage(final Path storagePath) throws IOException {
-    final ResizeableMappedFile resizeableMappedFile = createFile(
+    final ResizeableMappedFile resizeableMappedFile = openRMappedFile(
       storagePath,
       PersistentFSSynchronizedRecordsStorage.RECORD_SIZE
     );

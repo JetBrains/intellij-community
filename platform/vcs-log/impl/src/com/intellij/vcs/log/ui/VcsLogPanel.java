@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -26,8 +26,8 @@ import java.util.Set;
 import static com.intellij.vcs.log.VcsLogDataKeys.*;
 
 public class VcsLogPanel extends JBPanel implements DataProvider {
-  @NotNull private final VcsLogManager myManager;
-  @NotNull private final VcsLogUiEx myUi;
+  private final @NotNull VcsLogManager myManager;
+  private final @NotNull VcsLogUiEx myUi;
 
   public VcsLogPanel(@NotNull VcsLogManager manager, @NotNull VcsLogUiEx logUi) {
     super(new BorderLayout());
@@ -36,14 +36,12 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
     add(myUi.getMainComponent(), BorderLayout.CENTER);
   }
 
-  @NotNull
-  public VcsLogUiEx getUi() {
+  public @NotNull VcsLogUiEx getUi() {
     return myUi;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
+  public @Nullable Object getData(@NotNull @NonNls String dataId) {
     if (VcsLogInternalDataKeys.LOG_MANAGER.is(dataId)) {
       return myManager;
     }

@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.conditional;
 
-import com.intellij.psi.PsiConditionalExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
@@ -38,12 +35,11 @@ public class ReplaceConditionalWithBooleanExpressionIntention extends Intention 
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiConditionalExpression)) {
+        if (!(element instanceof PsiConditionalExpression conditionalExpression)) {
           return false;
         }
-        final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
         final PsiType type = conditionalExpression.getType();
-        return PsiType.BOOLEAN.equals(type) || type != null && type.equalsToText(JAVA_LANG_BOOLEAN);
+        return PsiTypes.booleanType().equals(type) || type != null && type.equalsToText(JAVA_LANG_BOOLEAN);
       }
     };
   }

@@ -12,8 +12,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonPackageCache
-import com.jetbrains.python.packaging.common.RANKING_AWARE_PACKAGE_NAME_COMPARATOR
+import com.jetbrains.python.packaging.common.PythonRankingAwarePackageNameComparator
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @Service
 class CondaPackageCache : PythonPackageCache<String> {
+  @Volatile
   private var cache: Map<String, List<String>> = emptyMap()
 
   override val packages: List<String>
@@ -74,11 +76,10 @@ class CondaPackageCache : PythonPackageCache<String> {
         .filterNot { it.size < 2 }
         .filterNot { it[0].startsWith("r-") } // todo[akniazev]: make sure it's the best way to get rid of R packages
         .groupBy({ it[0] }, { it[1] })
-        .toSortedMap(RANKING_AWARE_PACKAGE_NAME_COMPARATOR)
+        .mapValues { it.value.sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()) }
+        .toSortedMap(PythonRankingAwarePackageNameComparator())
 
-      withContext(Dispatchers.Main) {
-        cache = packages
-      }
+      cache = packages
     }
   }
 

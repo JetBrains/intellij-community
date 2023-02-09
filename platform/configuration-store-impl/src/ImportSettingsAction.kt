@@ -20,7 +20,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.copy
-import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.isDirectory
 import java.io.IOException
@@ -29,6 +28,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
+import kotlin.io.path.exists
 
 // the class is open for Rider purpose
 open class ImportSettingsAction : AnAction(), DumbAware {

@@ -13,10 +13,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Used in {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner} via jps-build-script-dependencies-bootstrap
- */
-@SuppressWarnings("unused")
 public class Log4jFileLoggerFactory implements com.intellij.openapi.diagnostic.Logger.Factory {
   private final RollingFileHandler myAppender;
   private final List<String> myCategoriesWithDebugLevel;

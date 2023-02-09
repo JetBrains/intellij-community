@@ -28,6 +28,8 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectListener
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory.createComponent
+import com.intellij.openapi.wm.impl.welcomeScreen.statistics.WelcomeScreenCounterUsageCollector
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.panels.VerticalLayout
@@ -41,6 +43,7 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.Insets
 import java.io.File
+import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
@@ -84,9 +87,7 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
     })
     connect.subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
       override fun change() {
-        ApplicationManager.getApplication().invokeLater {
-          checkState()
-        }
+        checkState()
       }
     })
   }
@@ -96,7 +97,9 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
       layout = VerticalLayout(0)
       add(notificationPanel)
 
-      val promoPanel = WelcomeScreenComponentFactory.getSinglePromotion(RecentProjectsManagerBase.getInstanceEx().getRecentPaths().isEmpty())
+      val recentPaths = RecentProjectsManagerBase.getInstanceEx().getRecentPaths()
+      WelcomeScreenCounterUsageCollector.reportWelcomeScreenShowed(recentPaths.size)
+      val promoPanel = WelcomeScreenComponentFactory.getSinglePromotion(recentPaths.isEmpty())
       if (promoPanel != null) {
         val borderPanel = JBUI.Panels.simplePanel(promoPanel).andTransparent().apply {
           border = JBUI.Borders.empty(0, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET)
@@ -149,6 +152,9 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
       .withBorder(JBUI.Borders.emptyTop(10))
 
     val projectSearch = recentProjectTree.installSearchField()
+    if (ExperimentalUI.isNewUI()) {
+      projectSearch.textEditor.putClientProperty("JTextField.Search.Icon", ExperimentalUI.Icons.General.Search)
+    }
     val northPanel: JPanel = JBUI.Panels.simplePanel()
       .andTransparent()
       .withBorder(object : CustomLineBorder(WelcomeScreenUIManager.getSeparatorColor(), JBUI.insetsBottom(1)) {
@@ -203,10 +209,10 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
     toolbarActionGroup.addAction(moreActionGroup)
     val toolbar: ActionToolbarImpl = object : ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, toolbarActionGroup, true) {
       override fun createToolbarButton(action: AnAction,
-                                       look: ActionButtonLook,
+                                       look: ActionButtonLook?,
                                        place: String,
                                        presentation: Presentation,
-                                       minimumSize: Dimension): ActionButton {
+                                       minimumSize: Supplier<out Dimension>): ActionButton {
         val toolbarButton = super.createToolbarButton(action, look, place, presentation, minimumSize)
         toolbarButton.isFocusable = true
         return toolbarButton
@@ -239,7 +245,7 @@ private enum class PanelState {
 
 private fun getCurrentState(): PanelState {
   val recentProjects = RecentProjectListActionProvider.getInstance().collectProjects()
-  val collectCloneableProjects = CloneableProjectsService.getInstance().collectCloneableProjects()
+  val collectCloneableProjects = CloneableProjectsService.getInstance().collectCloneableProjects().toList()
   return if (recentProjects.isEmpty() && collectCloneableProjects.isEmpty()) {
     PanelState.EMPTY
   }

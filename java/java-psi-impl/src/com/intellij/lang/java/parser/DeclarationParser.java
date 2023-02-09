@@ -1034,7 +1034,7 @@ public class DeclarationParser {
         builder, JavaElementType.ANNOTATION_ARRAY_INITIALIZER, this::doParseAnnotationValue, "expected.value");
     }
     else {
-      result = myParser.getExpressionParser().parseConditional(builder, 0);
+      result = myParser.getExpressionParser().parseConditional(builder);
     }
 
     return result;

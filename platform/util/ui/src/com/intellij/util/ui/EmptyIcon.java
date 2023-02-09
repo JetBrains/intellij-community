@@ -62,14 +62,6 @@ import java.util.Map;
   }
 
   /**
-   * @deprecated use {@linkplain #create(int)} for caching.
-   */
-  @Deprecated(forRemoval = true)
-  public EmptyIcon(int size) {
-    this(size, size, false);
-  }
-
-  /**
    * @deprecated use {@linkplain #create(int, int)} for caching.
    */
   @Deprecated
@@ -134,9 +126,7 @@ import java.util.Map;
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof EmptyIcon)) return false;
-
-    final EmptyIcon icon = (EmptyIcon)o;
+    if (!(o instanceof EmptyIcon icon)) return false;
 
     if (scaleVal(height, DerivedScaleType.PIX_SCALE) != icon.scaleVal(icon.height, DerivedScaleType.PIX_SCALE)) return false;
     if (scaleVal(width, DerivedScaleType.PIX_SCALE) != icon.scaleVal(icon.width, DerivedScaleType.PIX_SCALE)) return false;

@@ -3,27 +3,25 @@ package com.intellij.toolWindow
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
-import com.intellij.ide.actions.ToolwindowSwitcher
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.ide.actions.ToolWindowsGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
-import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.SquareStripeButtonLook
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.util.PopupImplUtil
+import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.MouseEvent
-import java.util.function.Predicate
 
 internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) :
-  ActionButton(createAction(toolWindowToolbar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
+  ActionButton(createAction(toolWindowToolbar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR,
+               { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
 
   init {
     setLook(SquareStripeButtonLook(this))
@@ -39,35 +37,41 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) 
 
   override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1
 
-  companion object {
-    private val notVisibleOnStripePredicate: Predicate<ToolWindow> = Predicate { !it.isShowStripeButton }
+  override fun updateUI() {
+    super.updateUI()
+    myPresentation.icon = scaleIcon()
+  }
 
+  companion object {
     private fun createPresentation(): Presentation {
       val presentation = Presentation()
-      presentation.icon = IconLoader.loadCustomVersionOrScale(AllIcons.Actions.MoreHorizontal as ScalableIcon, 20)
+      presentation.icon = scaleIcon()
       presentation.isEnabledAndVisible = true
       return presentation
     }
 
+    private fun scaleIcon() = IconLoader.loadCustomVersionOrScale(
+      AllIcons.Actions.MoreHorizontal as ScalableIcon,
+      JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSize()
+    )
+
     private fun createAction(toolWindowToolbar: ToolWindowLeftToolbar): DumbAwareAction {
       return object : DumbAwareAction() {
         override fun actionPerformed(e: AnActionEvent) {
+          val actions = ToolWindowsGroup.getToolWindowActions(e.project ?: return, true)
+          val popup = JBPopupFactory.getInstance().createActionGroupPopup(null, DefaultActionGroup(actions), e.dataContext, null, true)
+          popup.setMinimumSize(Dimension(300, -1))
+
           val moreSquareStripeButton = toolWindowToolbar.moreButton
-          ToolwindowSwitcher.invokePopup(e.project!!, Comparator.comparing { it.stripeTitle },
-                                         e.dataContext, notVisibleOnStripePredicate,
-                                         RelativePoint(toolWindowToolbar, Point(toolWindowToolbar.width, moreSquareStripeButton.y)),
-                                         moreSquareStripeButton,
-          )
+          PopupImplUtil.setPopupToggleButton(popup, moreSquareStripeButton)
+          popup.show(RelativePoint(toolWindowToolbar, Point(toolWindowToolbar.width, moreSquareStripeButton.y)))
         }
 
         override fun update(e: AnActionEvent) {
-          val toolWindowManager = ToolWindowManagerEx.getInstanceEx(e.project ?: return)
-          e.presentation.isEnabledAndVisible = ToolwindowSwitcher.getToolWindows(toolWindowManager, notVisibleOnStripePredicate).isNotEmpty()
+          e.presentation.isEnabledAndVisible = ToolWindowsGroup.getToolWindowActions(e.project ?: return, true).isNotEmpty()
         }
 
-        override fun getActionUpdateThread(): ActionUpdateThread {
-          return ActionUpdateThread.EDT
-        }
+        override fun getActionUpdateThread() = ActionUpdateThread.EDT
       }
     }
   }

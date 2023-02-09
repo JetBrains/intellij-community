@@ -1,5 +1,6 @@
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.ALL_INITIAL_LETTERS_MATCH_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.FILETYPE_USAGE_RATIO_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY
@@ -7,17 +8,32 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereCla
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.FILETYPE_USED_IN_LAST_HOUR_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.FILETYPE_USED_IN_LAST_MONTH_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.IS_OPENED_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.IS_SAME_MODULE_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.PACKAGE_DISTANCE_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.PACKAGE_DISTANCE_NORMALIZED_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.RECENT_INDEX_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.TIME_SINCE_LAST_MODIFICATION_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.WAS_MODIFIED_IN_LAST_DAY_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY
 import com.intellij.internal.statistic.local.FileTypeUsageSummary
+import com.intellij.mock.MockPsiFile
+import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiManager
+import com.intellij.util.Time
+import java.nio.charset.StandardCharsets
 
 
 internal class SearchEverywhereClassOrFileFeaturesProviderTest
-  : SearchEverywhereBaseFileFeaturesProviderTest<SearchEverywhereClassOrFileFeaturesProvider>(SearchEverywhereClassOrFileFeaturesProvider::class.java) {
+  : SearchEverywhereBaseFileFeaturesProviderTest<SearchEverywhereClassOrFileFeaturesProvider>(
+  SearchEverywhereClassOrFileFeaturesProvider::class.java) {
 
   fun `test file type usage ratio for the most popular file type`() {
     mockedFileStatsProvider
@@ -455,5 +471,178 @@ internal class SearchEverywhereClassOrFileFeaturesProviderTest
     checkThatFeatures()
       .ofElement(psiFile)
       .isEqualTo(expected)
+  }
+
+  fun `test modified in last minute`() {
+    val file = createFileWithModTimestamp(lastMinute)
+
+    val expectedValues = listOf(
+      TIME_SINCE_LAST_MODIFICATION_DATA_KEY.with(currentTime - lastMinute),
+
+      WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY.with(true),
+      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY.with(true),
+      WAS_MODIFIED_IN_LAST_DAY_DATA_KEY.with(true),
+      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY.with(true),
+    )
+
+    checkThatFeatures()
+      .ofElement(file)
+      .withCurrentTime(currentTime)
+      .isEqualTo(expectedValues)
+  }
+
+  fun `test modified in last hour`() {
+    val file = createFileWithModTimestamp(lastHour)
+
+    val expectedValues = listOf(
+      TIME_SINCE_LAST_MODIFICATION_DATA_KEY.with(currentTime - lastHour),
+
+      WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY.with(true),
+      WAS_MODIFIED_IN_LAST_DAY_DATA_KEY.with(true),
+      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY.with(true),
+    )
+
+    checkThatFeatures()
+      .ofElement(file)
+      .withCurrentTime(currentTime)
+      .isEqualTo(expectedValues)
+  }
+
+  fun `test modified in last day`() {
+    val file = createFileWithModTimestamp(lastDay)
+
+    val expectedValues = listOf(
+      TIME_SINCE_LAST_MODIFICATION_DATA_KEY.with(currentTime - lastDay),
+
+      WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_DAY_DATA_KEY.with(true),
+      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY.with(true),
+    )
+
+    checkThatFeatures()
+      .ofElement(file)
+      .withCurrentTime(currentTime)
+      .isEqualTo(expectedValues)
+  }
+
+  fun `test modified in last month`() {
+    val file = createFileWithModTimestamp(lastMonth)
+
+    val expectedValues = listOf(
+      TIME_SINCE_LAST_MODIFICATION_DATA_KEY.with(currentTime - lastMonth),
+
+      WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_DAY_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY.with(true),
+    )
+
+    checkThatFeatures()
+      .ofElement(file)
+      .withCurrentTime(currentTime)
+      .isEqualTo(expectedValues)
+  }
+
+  fun `test modified later than month`() {
+    val modTime = lastMonth - Time.DAY
+    val file = createFileWithModTimestamp(modTime)
+
+    val expectedValues = listOf(
+      TIME_SINCE_LAST_MODIFICATION_DATA_KEY.with(currentTime - modTime),
+
+      WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_DAY_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY.with(false),
+    )
+
+    checkThatFeatures()
+      .ofElement(file)
+      .withCurrentTime(currentTime)
+      .isEqualTo(expectedValues)
+  }
+
+  fun `test recent index of never opened file is -1`() {
+    prepareForRecentIndexTest()
+
+    checkThatFeature(RECENT_INDEX_DATA_KEY.name)
+      .ofElement(testFile)
+      .isEqualTo(-1)
+  }
+
+  fun `test most recent file index is 1`() {
+    val openedFiles = prepareForRecentIndexTest()
+
+    checkThatFeature(RECENT_INDEX_DATA_KEY.name)
+      .ofElement(openedFiles.last()) // Last opened file (i.e. the most recent)
+      .isEqualTo(1)
+  }
+
+  fun `test oldest file index is equal to index length`() {
+    val openedFiles = prepareForRecentIndexTest()
+    val expectedIndex = openedFiles.size
+
+    checkThatFeature(RECENT_INDEX_DATA_KEY.name)
+      .ofElement(openedFiles.first()) // First opened file (i.e. the oldest)
+      .isEqualTo(expectedIndex)
+  }
+
+  fun `test is opened`() {
+    checkThatFeature(IS_OPENED_DATA_KEY.name)
+      .ofElement(testFile)
+      .changes(false, true)
+      .after { FileEditorManager.getInstance(project).openFile(it.virtualFile, false) }
+  }
+
+  fun `test all initial letters match is true on PascalCase`() {
+    val file = MockPsiFile(MockVirtualFile("PascalCaseFile.kt"), psiManager)
+    checkThatFeature(ALL_INITIAL_LETTERS_MATCH_DATA_KEY.name)
+      .ofElement(file)
+      .withQuery("PCF")
+      .isEqualTo(true)
+  }
+
+  fun `test all initial letters match is true on camelCase`() {
+    val file = MockPsiFile(MockVirtualFile("camelCaseFile.kt"), psiManager)
+    checkThatFeature(ALL_INITIAL_LETTERS_MATCH_DATA_KEY.name)
+      .ofElement(file)
+      .withQuery("CCF")
+      .isEqualTo(true)
+  }
+
+  fun `test all initial letters match is true on snake_case`() {
+    val file = MockPsiFile(MockVirtualFile("snake_case_file.py"), psiManager)
+    checkThatFeature(ALL_INITIAL_LETTERS_MATCH_DATA_KEY.name)
+      .ofElement(file)
+      .withQuery("SCF")
+      .isEqualTo(true)
+  }
+
+  private fun createFileWithModTimestamp(modificationTimestamp: Long): PsiFileSystemItem {
+    val mockVirtualFile = object : MockVirtualFile("file.txt") {
+      override fun getTimeStamp(): Long {
+        return modificationTimestamp
+      }
+    }
+
+    return MockPsiFile(mockVirtualFile, psiManager)
+  }
+
+  private fun prepareForRecentIndexTest(numberOfFiles: Int = 3): List<PsiFileSystemItem> {
+    closeAllOpenedFiles()
+    EditorHistoryManager.getInstance(project).removeAllFiles()
+
+    val editor = FileEditorManager.getInstance(project)
+    return (1..numberOfFiles).map {
+      val file = createTempVirtualFile("file$it.txt", null, "", StandardCharsets.UTF_8)
+      MockPsiFile(file, PsiManager.getInstance(project))
+    }.onEach { file -> editor.openFile(file.virtualFile, true) }
+  }
+
+  private fun closeAllOpenedFiles() {
+    val editor = FileEditorManager.getInstance(project)
+    editor.openFiles.forEach { editor.closeFile(it) }
   }
 }

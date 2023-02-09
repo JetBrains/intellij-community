@@ -52,7 +52,7 @@ class LookupStorageReader private constructor(
         }
 
         fun hasStorage(project: Project): Boolean = project.buildDataPaths
-            ?.kotlinDataContainer
+            .kotlinDataContainer
             ?.resolve(LOOKUP_STORAGE_NAME)
             ?.exists() == true
 

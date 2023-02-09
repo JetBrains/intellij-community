@@ -35,8 +35,6 @@ public class InvertedFilenameHashBasedIndex {
                                       final @NotNull IntPredicate fileIdProcessor) {
     for (final String name : names) {
       final int hash = hashCodeOf(name);
-      //FIXME RC: hash CAN be 0 -- hence we need to work around Int2IntMultimap not able to deal with 0 keys/values
-      //          value (fileId) indeed can't be 0, because it is used as NULL_ID, but String.hash could
       if (!nameHashToFileId.get(hash, fileIdProcessor)) {
         return false;
       }

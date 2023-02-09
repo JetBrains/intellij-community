@@ -20,9 +20,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class JavaIndenterTest extends AbstractJavaFormatterTest {
 
   private static final String CARET_TOKEN = "<caret>";
@@ -87,7 +84,7 @@ public class JavaIndenterTest extends AbstractJavaFormatterTest {
       return text;
     }
 
-    if (caretIndex < text.length() && text.indexOf(CARET_TOKEN, caretIndex + 1) >= 0) {
+    if (text.indexOf(CARET_TOKEN, caretIndex + 1) >= 0) {
       fail(String.format("Invalid indentation test 'before' text - it contains more than one caret meta-token (%s). Text: %n%s",
                          CARET_TOKEN, text));
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.util.ArrayUtilRt;
@@ -202,6 +202,10 @@ public abstract class Logger {
     error(message, new Throwable(message), ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
+  /**
+   * @deprecated use {@link #error(String)} instead and provide a meaningful error message
+   */
+  @Deprecated
   public void error(Object message) {
     error(String.valueOf(message));
   }
@@ -296,7 +300,7 @@ public abstract class Logger {
   protected static Throwable ensureNotControlFlow(@Nullable Throwable t) {
     return t instanceof ControlFlowException ?
            new Throwable("Control-flow exceptions (e.g. this " + t.getClass() + ") should never be logged. " +
-                         "Instead, these should have been rethrown or, if not possible, caught and ignored", t) :
+                         "Instead, these should have been rethrown if caught.", t) :
            t;
   }
 

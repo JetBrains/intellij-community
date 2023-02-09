@@ -13,10 +13,11 @@ enum class ModuleType(@Nls val projectTypeName: String) {
     js(KotlinNewProjectWizardBundle.message("module.type.js")),
     native(KotlinNewProjectWizardBundle.message("module.type.native")),
     common(KotlinNewProjectWizardBundle.message("module.type.common")),
-    android(KotlinNewProjectWizardBundle.message("module.type.android"));
+    android(KotlinNewProjectWizardBundle.message("module.type.android")),
+    wasm(KotlinNewProjectWizardBundle.message("module.type.wasm"));
 
     companion object {
-        val ALL = setOf(jvm, js, native, common, android)
+        val ALL = setOf(jvm, js, native, common, android, wasm)
     }
 }
 
@@ -24,6 +25,7 @@ enum class ModuleType(@Nls val projectTypeName: String) {
 enum class ModuleSubType(val moduleType: ModuleType) {
     jvm(ModuleType.jvm),
     js(ModuleType.js),
+    wasm(ModuleType.wasm),
     android(ModuleType.android),
     androidNativeArm32(ModuleType.native), androidNativeArm64(ModuleType.native),
     iosArm32(ModuleType.native), iosArm64(ModuleType.native), iosX64(ModuleType.native), iosSimulatorArm64(ModuleType.native),
@@ -39,8 +41,8 @@ enum class ModuleSubType(val moduleType: ModuleType) {
 }
 
 val ModuleSubType.isIOS: Boolean
-    get() = this in EnumSet.of(ModuleSubType.iosX64, ModuleSubType.iosArm32, ModuleSubType.iosArm64, ModuleSubType.ios,
-                               ModuleSubType.iosCocoaPods)
+    get() = this in EnumSet.of(ModuleSubType.iosX64, ModuleSubType.iosArm32, ModuleSubType.iosArm64, ModuleSubType.iosSimulatorArm64,
+                               ModuleSubType.ios, ModuleSubType.iosCocoaPods)
 
 val ModuleSubType.isNativeDesktop: Boolean
     get() = this in EnumSet.of(
@@ -53,6 +55,7 @@ val ModuleSubType.isNativeDesktop: Boolean
 fun ModuleType.correspondingStdlib(): StdlibType? = when (this) {
     ModuleType.jvm -> StdlibType.StdlibJdk8
     ModuleType.js -> StdlibType.StdlibJs
+    ModuleType.wasm -> StdlibType.StdlibWasm
     ModuleType.native -> null
     ModuleType.common -> StdlibType.StdlibCommon
     ModuleType.android -> StdlibType.StdlibJdk7

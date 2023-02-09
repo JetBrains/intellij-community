@@ -9,9 +9,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.StringTokenizer;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public final class Strings {
   @NonNls public static final String WHITESPACE = " \t\n\r\f";
 

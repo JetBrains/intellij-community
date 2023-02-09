@@ -24,7 +24,6 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
-import com.intellij.ui.ExperimentalUI
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
@@ -259,7 +258,7 @@ private fun beanToTask(project: Project,
     id = bean.id,
     icon = findIconFromBean(bean, factory, plugin),
     anchor = getToolWindowAnchor(factory, bean),
-    sideTool = (bean.secondary || (@Suppress("DEPRECATION") bean.side)) && !ExperimentalUI.isNewUI(),
+    sideTool = bean.secondary || (@Suppress("DEPRECATION") bean.side),
     canCloseContent = bean.canCloseContents,
     canWorkInDumbMode = DumbService.isDumbAware(factory),
     shouldBeAvailable = factory.shouldBeAvailable(project),

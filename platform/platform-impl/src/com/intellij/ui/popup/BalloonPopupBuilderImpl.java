@@ -59,6 +59,7 @@ public final class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   private Dimension myPointerSize;
   private int       myCornerToPointerDistance = -1;
+  private int myCornerRadius = -1;
 
   public BalloonPopupBuilderImpl(@Nullable Map<Disposable, List<Balloon>> storage, @NotNull final JComponent content) {
     myStorage = storage;
@@ -266,12 +267,20 @@ public final class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   @NotNull
   @Override
+  public BalloonBuilder setCornerRadius(int radius) {
+    myCornerRadius = radius;
+    return this;
+  }
+
+  @NotNull
+  @Override
   public Balloon createBalloon() {
     final BalloonImpl result = new BalloonImpl(
       myContent, myBorder, myBorderInsets, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myHideOnCloseClick,
       myShowCallout, myCloseButtonEnabled, myFadeoutTime, myHideOnFrameResize, myHideOnLinkClick, myClickHandler, myCloseOnClick,
       myAnimationCycle, myCalloutShift, myPositionChangeXShift, myPositionChangeYShift, myDialogMode, myTitle, myContentInsets, myShadow,
       mySmallVariant, myBlockClicks, myLayer, myRequestFocus, myPointerSize, myCornerToPointerDistance);
+    result.setCornerRadius(myCornerRadius);
 
     if (myStorage != null && myAnchor != null) {
       List<Balloon> balloons = myStorage.get(myAnchor);

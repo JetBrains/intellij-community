@@ -7,9 +7,9 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /** @return T - if successful; null - otherwise */
-suspend fun <T> withRetryAsync(retries: Long = 3,
+suspend fun <T> withRetryAsync(retries: Int = 3,
                                messageOnFailure: String = "",
-                               delay: Duration = 10.seconds,
+                               delayBetweenRetries: Duration = 10.seconds,
                                retryAction: suspend () -> T): T? {
 
   (1..retries).forEach { failureCount ->
@@ -17,14 +17,17 @@ suspend fun <T> withRetryAsync(retries: Long = 3,
       return retryAction()
     }
     catch (t: Throwable) {
-      if (messageOnFailure.isNotBlank())
-        System.err.println(messageOnFailure)
-
-      t.printStackTrace()
+      // print failure details only once for the sake of log cleanliness
+      if (failureCount == 1) {
+        if (messageOnFailure.isNotBlank()) {
+          System.err.println(messageOnFailure)
+        }
+        t.printStackTrace()
+      }
 
       if (failureCount < retries) {
-        System.err.println("Retrying in 10 sec ...")
-        delay(delay)
+        System.err.println("Retrying in $delayBetweenRetries ...")
+        delay(delayBetweenRetries)
       }
     }
   }
@@ -34,9 +37,9 @@ suspend fun <T> withRetryAsync(retries: Long = 3,
 
 
 /** @return T - if successful; null - otherwise */
-fun <T> withRetry(retries: Long = 3,
+fun <T> withRetry(retries: Int = 3,
                   messageOnFailure: String = "",
-                  delay: Duration = 10.seconds,
+                  delayBetweenRetries: Duration = 5.seconds,
                   retryAction: () -> T): T? = runBlocking {
   withRetryAsync(retries, messageOnFailure) { retryAction() }
 }

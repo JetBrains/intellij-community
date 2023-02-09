@@ -9,24 +9,27 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
- * @author Dmitry Avdeev
+ * {@link com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet} uses the providers if
+ * {@link com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet#useIncludingFileAsContext()} is true
+ *
+ * @see com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper
  */
 public abstract class FileContextProvider {
 
   public static final ExtensionPointName<FileContextProvider> EP_NAME = new ExtensionPointName<>("com.intellij.fileContextProvider");
 
-  public static @Nullable FileContextProvider getProvider(final @NotNull PsiFile file) {
-    for (FileContextProvider provider : EP_NAME.getExtensions(file.getProject())) {
-      if (provider.isAvailable(file)) {
+  public static @Nullable FileContextProvider getProvider(final @NotNull PsiFile hostFile) {
+    for (FileContextProvider provider : EP_NAME.getExtensions(hostFile.getProject())) {
+      if (provider.isAvailable(hostFile)) {
         return provider;
       }
     }
     return null;
   }
 
-  protected abstract boolean isAvailable(final PsiFile file);
+  protected abstract boolean isAvailable(final PsiFile hostFile);
 
-  public abstract @NotNull Collection<PsiFileSystemItem> getContextFolders(final PsiFile file);
+  public abstract @NotNull Collection<PsiFileSystemItem> getContextFolders(final PsiFile hostFile);
 
-  public abstract @Nullable PsiFile getContextFile(final PsiFile file);
+  public abstract @Nullable PsiFile getContextFile(final PsiFile hostFile);
 }

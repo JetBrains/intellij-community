@@ -333,7 +333,7 @@ public final class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
       return;
     }
     final PsiElement element = reference.resolve();
-    if (!(element instanceof PsiClass)) {
+    if (!(element instanceof PsiClass innerClass)) {
       return;
     }
     final PsiClass elementParentClass =
@@ -343,7 +343,6 @@ public final class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
         element.equals(parentClass)) {
       return;
     }
-    final PsiClass innerClass = (PsiClass)element;
     if (!innerClass.hasModifierProperty(PsiModifier.PRIVATE)) {
       return;
     }
@@ -372,8 +371,7 @@ public final class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
       getAccessMethodIndex(parentOfParentClass);
       parentOfParentClass = ClassUtils.getContainingClass(parentOfParentClass);
     }
-    if (element instanceof PsiField) {
-      final PsiField field = (PsiField)element;
+    if (element instanceof PsiField field) {
       if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
         boolean isStatic = false;
         final PsiType type = field.getType();
@@ -400,17 +398,14 @@ public final class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
         }
         @NonNls String name = null;
         final PsiElement parent = expression.getParent();
-        if (parent instanceof PsiAssignmentExpression) {
-          final PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+        if (parent instanceof PsiAssignmentExpression assignment) {
           if (assignment.getLExpression().equals(expression)) {
             name = ACCESS_METHOD_NAME_PREFIX + accessMethodIndex +
                    "02";
             signatureBuffer.append(returnTypeSignature);
           }
         }
-        else if (parent instanceof PsiPostfixExpression) {
-          final PsiPostfixExpression postfixExpression =
-            (PsiPostfixExpression)parent;
+        else if (parent instanceof PsiPostfixExpression postfixExpression) {
           final IElementType tokenType = postfixExpression.getOperationTokenType();
           if (tokenType.equals(JavaTokenType.PLUSPLUS)) {
             name = ACCESS_METHOD_NAME_PREFIX + accessMethodIndex +
@@ -421,8 +416,7 @@ public final class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
                    "10";
           }
         }
-        else if (parent instanceof PsiPrefixExpression) {
-          final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parent;
+        else if (parent instanceof PsiPrefixExpression prefixExpression) {
           final IElementType tokenType = prefixExpression.getOperationTokenType();
           if (tokenType.equals(JavaTokenType.PLUSPLUS)) {
             name = ACCESS_METHOD_NAME_PREFIX + accessMethodIndex +
@@ -443,8 +437,7 @@ public final class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
         nonPrivateMethods.add(methodSignature);
       }
     }
-    else if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+    else if (element instanceof PsiMethod method) {
       if (method.hasModifierProperty(PsiModifier.PRIVATE) && clazz.equals(method.getContainingClass())) {
         final String signature;
         if (method.hasModifierProperty(PsiModifier.STATIC)) {

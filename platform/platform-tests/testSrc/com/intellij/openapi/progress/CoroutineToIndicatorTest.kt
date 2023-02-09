@@ -4,6 +4,7 @@ package com.intellij.openapi.progress
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ModalityStateEx
+import com.intellij.openapi.progress.impl.ProgressState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
@@ -67,35 +68,34 @@ class CoroutineToIndicatorTest : CancellationTest() {
   }
 
   @Test
-  fun `delegates reporting to context sink`(): Unit = timeoutRunBlocking {
-    val sink = object : ProgressSink {
-
-      var text: String? = null
-      var details: String? = null
-      var fraction: Double? = null
-
-      override fun update(text: String?, details: String?, fraction: Double?) {
-        if (text != null) {
-          this.text = text
-        }
-        if (details != null) {
-          this.details = details
-        }
-        if (fraction != null) {
-          this.fraction = fraction
+  fun `fails if context reporter is not raw`() {
+    assertLogThrows<IllegalStateException> {
+      progressReporterTest {
+        coroutineToIndicator {
+          fail()
         }
       }
     }
+  }
 
-    withContext(sink.asContextElement()) {
-      coroutineToIndicator {
-        ProgressManager.progress("Hello", "World")
-        ProgressManager.getInstance().progressIndicator.fraction = 0.42
+  @Test
+  fun `delegates reporting to context reporter`() {
+    progressReporterTest(
+      ProgressState(text = "Hello", details = null, fraction = -1.0),
+      ProgressState(text = "Hello", details = "World", fraction = -1.0),
+      ProgressState(text = "Hello", details = "World", fraction = 0.42),
+      ProgressState(text = null, details = "World", fraction = 0.42),
+      ProgressState(text = null, details = "World", fraction = -1.0),
+    ) {
+      withRawProgressReporter {
+        coroutineToIndicator {
+          ProgressManager.progress("Hello", "World")
+          val indicator = ProgressManager.getInstance().progressIndicator
+          indicator.fraction = 0.42
+          indicator.text = null
+          indicator.isIndeterminate = true
+        }
       }
     }
-
-    assertEquals(sink.text, "Hello")
-    assertEquals(sink.details, "World")
-    assertEquals(sink.fraction, 0.42)
   }
 }

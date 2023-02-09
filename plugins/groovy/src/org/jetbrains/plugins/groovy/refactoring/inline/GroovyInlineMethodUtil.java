@@ -48,9 +48,6 @@ import java.util.*;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
-/**
- * @author ilyas
- */
 public final class GroovyInlineMethodUtil {
   private GroovyInlineMethodUtil() {
   }
@@ -71,13 +68,11 @@ public final class GroovyInlineMethodUtil {
 
       PsiElement element = reference.getElement();
 
-      if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) {
+      if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression call)) {
         String message = GroovyRefactoringBundle.message("refactoring.is.available.only.for.method.calls", getRefactoringName());
         showErrorMessage(message, project, editor);
         return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
       }
-
-      GrCallExpression call = (GrCallExpression)element.getParent();
 
       if (PsiTreeUtil.getParentOfType(element, GrParameter.class) != null) {
         String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.in.parameter.initializers", getRefactoringName());
@@ -242,14 +237,12 @@ public final class GroovyInlineMethodUtil {
   }
 
   private static void collectReferenceInfoImpl(Collection<ReferenceExpressionInfo> infos, PsiElement elem, GrMethod method) {
-    if (elem instanceof GrReferenceExpression) {
-      GrReferenceExpression expr = (GrReferenceExpression) elem;
+    if (elem instanceof GrReferenceExpression expr) {
       PsiReference ref = expr.getReference();
       if (ref != null) {
         PsiElement declaration = ref.resolve();
-        if (declaration instanceof GrMember) {
+        if (declaration instanceof GrMember member) {
           int offsetInMethod = expr.getTextRange().getStartOffset() - method.getTextRange().getStartOffset();
-          GrMember member = (GrMember) declaration;
           infos.add(new ReferenceExpressionInfo(expr, offsetInMethod, member, member.getContainingClass()));
         }
       }
@@ -295,8 +288,7 @@ public final class GroovyInlineMethodUtil {
     Set<GrReferenceExpression> exprs = new HashSet<>();
     for (ReferenceExpressionInfo info : infos) {
       PsiReference ref = method.findReferenceAt(info.offsetInMethod);
-      if (ref != null && ref.getElement() instanceof GrReferenceExpression) {
-        GrReferenceExpression refExpr = (GrReferenceExpression) ref.getElement();
+      if (ref != null && ref.getElement() instanceof GrReferenceExpression refExpr) {
         if (refExpr.getQualifierExpression() == null) {
           exprs.add(refExpr);
         }

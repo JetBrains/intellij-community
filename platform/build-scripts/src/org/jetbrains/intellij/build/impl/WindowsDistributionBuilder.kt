@@ -20,7 +20,7 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.TimeUnit
-import java.util.function.BiPredicate
+import kotlin.io.path.extension
 import kotlin.io.path.setLastModifiedTime
 
 internal class WindowsDistributionBuilder(
@@ -49,14 +49,11 @@ internal class WindowsDistributionBuilder(
         .includeAll()
         .copyToDir(distBinDir)
 
-      if (context.includeBreakGenLibraries()) {
-        // There's near zero chance that on x64 hardware arm64 library will be needed, but it's only 70 KiB.
-        // Contrary on arm64 hardware all three library versions could be used, so we copy them all.
-        @Suppress("SpellCheckingInspection")
-        FileSet(sourceBinDir)
-          .include("breakgen*.dll")
-          .copyToDir(distBinDir)
-      }
+      @Suppress("SpellCheckingInspection")
+      FileSet(sourceBinDir)
+        .include("*.*")
+        .also { if (!context.includeBreakGenLibraries()) it.exclude("breakgen*.dll") }
+        .copyToDir(distBinDir)
 
       generateBuildTxt(context, targetPath)
       copyDistFiles(context = context, newDir = targetPath, os = OsFamily.WINDOWS, arch = arch)
@@ -72,30 +69,22 @@ internal class WindowsDistributionBuilder(
       }
       generateVMOptions(distBinDir)
       buildWinLauncher(targetPath, arch)
-      customizer.copyAdditionalFiles(context, targetPath.toString(), arch)
+      customizer.copyAdditionalFiles(context, targetPath, arch)
     }
 
     context.executeStep(spanBuilder = spanBuilder("sign windows"), stepId = BuildOptions.WIN_SIGN_STEP) {
-      val nativeFiles = ArrayList<Path>()
-      withContext(Dispatchers.IO) {
-        Files.find(distBinDir, Integer.MAX_VALUE, BiPredicate { file, attributes ->
-          if (attributes.isRegularFile) {
-            val path = file.toString()
-            path.endsWith(".exe") || path.endsWith(".dll")
-          }
-          else {
-            false
-          }
-        }).use { stream ->
-          stream.forEach(nativeFiles::add)
+      val binFiles = withContext(Dispatchers.IO) {
+        Files.walk(distBinDir, Int.MAX_VALUE).use { stream ->
+          stream.filter { it.extension in setOf("exe", "dll", "ps1") && Files.isRegularFile(it) }.toList()
         }
       }
+      Span.current().setAttribute(AttributeKey.stringArrayKey("files"), binFiles.map(Path::toString))
 
-      Span.current().setAttribute(AttributeKey.stringArrayKey("files"), nativeFiles.map(Path::toString))
-      customizer.getBinariesToSign(context).mapTo(nativeFiles) { targetPath.resolve(it) }
-      if (nativeFiles.isNotEmpty()) {
+      val additionalFiles = customizer.getBinariesToSign(context).map { targetPath.resolve(it) }
+
+      if (binFiles.isNotEmpty() || additionalFiles.isNotEmpty()) {
         withContext(Dispatchers.IO) {
-          context.signFiles(nativeFiles, BuildOptions.WIN_SIGN_OPTIONS)
+          context.signFiles(binFiles + additionalFiles, BuildOptions.WIN_SIGN_OPTIONS)
         }
       }
     }
@@ -117,12 +106,7 @@ internal class WindowsDistributionBuilder(
     copyFileToDir(vcRtDll, osAndArchSpecificDistPath.resolve("bin"))
     var exePath: Path? = null
     val zipWithJbrPath = coroutineScope {
-      Files.walk(osAndArchSpecificDistPath).use { tree ->
-        val fileTime = FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS)
-        tree.forEach {
-          it.setLastModifiedTime(fileTime)
-        }
-      }
+      setLastModifiedTime(osAndArchSpecificDistPath, context)
       val zipWithJbrPathTask = if (customizer.buildZipArchiveWithBundledJre) {
         createBuildWinZipTask(runtimeDir = runtimeDir,
                               zipNameSuffix = suffix + customizer.zipArchiveWithBundledJreSuffix,
@@ -363,12 +347,19 @@ private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path,
   val tempExe = withContext(Dispatchers.IO) { Files.createTempDirectory(tempDir, "exe-${arch.dirName}") }
   try {
     withContext(Dispatchers.IO) {
-      runProcess(args = listOf("7z", "x", "-bd", exePath.toString()), workingDir = tempExe)
-      runProcess(args = listOf("unzip", "-q", zipPath.toString()), workingDir = tempZip)
-      @Suppress("SpellCheckingInspection")
-      NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
+      try {
+        runProcess(args = listOf("7z", "x", "-bd", exePath.toString()), workingDir = tempExe)
+        runProcess(args = listOf("unzip", "-q", zipPath.toString()), workingDir = tempZip)
+        @Suppress("SpellCheckingInspection")
+        NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
 
-      runProcess(args = listOf("diff", "-q", "-r", tempZip.toString(), tempExe.toString()))
+        runProcess(args = listOf("diff", "-q", "-r", tempZip.toString(), tempExe.toString()))
+      }
+      finally {
+        withContext(Dispatchers.IO + NonCancellable) {
+          NioFiles.deleteRecursively(tempZip)
+        }
+      }
     }
     if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
       RepairUtilityBuilder.generateManifest(context, tempExe, OsFamily.WINDOWS, arch)
@@ -376,7 +367,6 @@ private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path,
   }
   finally {
     withContext(Dispatchers.IO + NonCancellable) {
-      NioFiles.deleteRecursively(tempZip)
       NioFiles.deleteRecursively(tempExe)
     }
   }

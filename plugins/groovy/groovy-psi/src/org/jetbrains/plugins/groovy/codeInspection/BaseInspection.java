@@ -19,6 +19,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -29,7 +31,6 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.utils.GrInspectionUIUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
-import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -51,13 +52,20 @@ public abstract class BaseInspection extends LocalInspectionTool {
   }
 
   @Override
-  public final @Nullable JComponent createOptionsPanel() {
-    JComponent actualPanel = createGroovyOptionsPanel();
-    return GrInspectionUIUtil.enhanceInspectionToolPanel(this, explicitlyEnabledFileTypes, actualPanel);
+  public final @NotNull OptPane getOptionsPane() {
+    OptPane pane = getGroovyOptionsPane();
+    return GrInspectionUIUtil.enhanceInspectionToolPanel(this, pane);
   }
 
-  protected @Nullable JComponent createGroovyOptionsPanel() {
-    return null;
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onPrefix(
+      "fileType", GrInspectionUIUtil.getFileTypeController(explicitlyEnabledFileTypes));
+  }
+
+  @NotNull
+  protected OptPane getGroovyOptionsPane() {
+    return OptPane.EMPTY;
   }
 
   @Nullable

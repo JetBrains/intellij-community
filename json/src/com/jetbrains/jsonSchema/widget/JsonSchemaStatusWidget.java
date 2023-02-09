@@ -39,11 +39,14 @@ import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
+import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +61,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
+final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   public static final String ID = "JSONSchemaSelector";
   private final SynchronizedClearableLazy<JsonSchemaService> myServiceLazy;
   private static final AtomicBoolean myIsNotified = new AtomicBoolean(false);
@@ -68,8 +71,9 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private volatile Pair<WidgetState, VirtualFile> myLastWidgetStateAndFilePair;
   private ProgressIndicator myCurrentProgress;
 
-  JsonSchemaStatusWidget(@NotNull Project project) {
-    super(project, false);
+  JsonSchemaStatusWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
+    super(project, false, scope);
+
     myServiceLazy = new SynchronizedClearableLazy<>(() -> {
       if (!project.isDisposed()) {
         JsonSchemaService myService = JsonSchemaService.Impl.get(project);
@@ -82,8 +86,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     JsonWidgetSuppressor.EXTENSION_POINT_NAME.addChangeListener(this::update, this);
   }
 
-  @Nullable
-  private JsonSchemaService getService() {
+  private @Nullable JsonSchemaService getService() {
     return myServiceLazy.getValue();
   }
 
@@ -92,7 +95,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     myIsNotified.set(false);
   };
 
-  private static class MyWidgetState extends WidgetState {
+  private static final class MyWidgetState extends WidgetState {
     boolean warning = false;
     boolean conflict = false;
 
@@ -111,10 +114,6 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
     private void setConflict() {
       this.conflict = true;
-    }
-
-    private @Tooltip String getTooltip() {
-      return this.toolTip;
     }
   }
 
@@ -144,7 +143,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     if (DumbService.getInstance(project).isDumb()) {
       return WidgetStatus.ENABLED;
     }
-    if (JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList().stream().anyMatch(s -> s.isCandidateForSuppress(file, project))) {
+    if (ContainerUtil.exists(JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList(), s -> s.isCandidateForSuppress(file, project))) {
       return WidgetStatus.MAYBE_SUPPRESSED;
     }
     return WidgetStatus.ENABLED;
@@ -169,7 +168,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     if (file == null) {
       return WidgetState.HIDDEN;
     }
-    WidgetStatus status = getWidgetStatus(myProject, file);
+    WidgetStatus status = getWidgetStatus(getProject(), file);
     if (status == WidgetStatus.DISABLED) {
       return WidgetState.HIDDEN;
     }
@@ -178,7 +177,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     Language language = fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
     boolean isJsonFile = language instanceof JsonLanguage;
 
-    if (DumbService.getInstance(myProject).isDumb()) {
+    if (DumbService.getInstance(getProject()).isDumb()) {
       return getDumbModeState(isJsonFile);
     }
 
@@ -209,7 +208,8 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   private @NotNull WidgetState doGetWidgetState(@NotNull VirtualFile file, boolean isJsonFile) {
     JsonSchemaService service = getService();
-    if (service == null) {
+    JsonSchemaMappingsProjectConfiguration userMappingsConfiguration = JsonSchemaMappingsProjectConfiguration.getInstance(myProject);
+    if (service == null || userMappingsConfiguration.isIgnoredFile(file)) {
       return getNoSchemaState();
     }
     Collection<VirtualFile> schemaFiles = service.getSchemaFilesForFile(file);
@@ -274,7 +274,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
     JsonSchemaFileProvider provider = service.getSchemaProvider(schemaFile);
     if (provider != null) {
-      final boolean preferRemoteSchemas = JsonSchemaCatalogProjectConfiguration.getInstance(myProject).isPreferRemoteSchemas();
+      final boolean preferRemoteSchemas = JsonSchemaCatalogProjectConfiguration.getInstance(getProject()).isPreferRemoteSchemas();
       final String remoteSource = provider.getRemoteSource();
       boolean useRemoteSource = preferRemoteSchemas && remoteSource != null
                                 && !JsonFileResolver.isSchemaUrl(remoteSource)
@@ -297,13 +297,13 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   private void scheduleSuppressCheck(@NotNull VirtualFile file, @NotNull ProgressIndicator globalProgress) {
     Runnable update = () -> {
-      if (DumbService.getInstance(myProject).isDumb()) {
+      if (DumbService.getInstance(getProject()).isDumb()) {
         // Suppress check should be rescheduled when dumb mode ends.
         mySuppressInfoRef.set(null);
       }
       else {
-        boolean suppress = JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList().stream()
-          .anyMatch(s -> s.suppressSwitcherWidget(file, myProject));
+        boolean suppress = ContainerUtil.exists(JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList(),
+                                                s -> s.suppressSwitcherWidget(file, getProject()));
         mySuppressInfoRef.set(Pair.create(file, suppress));
       }
       super.update(null);
@@ -354,8 +354,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     return service != null && service.isSchemaFile(schemaFile) && service.isApplicableToFile(schemaFile);
   }
 
-  @Nullable
-  private static @NlsSafe String extractNpmPackageName(@Nullable String path) {
+  private static @Nullable @NlsSafe String extractNpmPackageName(@Nullable String path) {
     if (path == null) return null;
     int idx = path.indexOf("node_modules");
     if (idx != -1) {
@@ -377,8 +376,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     return null;
   }
 
-  @NotNull
-  private static @Nls String getPresentableNameForFile(@NotNull VirtualFile schemaFile) {
+  private static @NotNull @Nls String getPresentableNameForFile(@NotNull VirtualFile schemaFile) {
     if (schemaFile instanceof HttpVirtualFile) {
       return new JsonSchemaInfo(schemaFile.getUrl()).getDescription();
     }
@@ -392,8 +390,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     return npmPackageName != null ? npmPackageName : schemaFile.getName();
   }
 
-  @NotNull
-  private static WidgetState getDownloadErrorState(@Nullable @Nls String message) {
+  private static @NotNull WidgetState getDownloadErrorState(@Nullable @Nls String message) {
     String s = message == null ? "" : (": " + HtmlChunk.br() + message);
     MyWidgetState state = new MyWidgetState(JsonBundle.message("schema.widget.error.cant.download") + s,
                                             JsonBundle.message("schema.widget.error.label"), true);
@@ -401,14 +398,12 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     return state;
   }
 
-  @NotNull
-  private static WidgetState getNoSchemaState() {
+  private static @NotNull WidgetState getNoSchemaState() {
     return new MyWidgetState(JsonBundle.message("schema.widget.no.schema.tooltip"), JsonBundle.message("schema.widget.no.schema.label"),
                              true);
   }
 
-  @NotNull
-  private static @Nls String getSchemaFileDesc(@NotNull VirtualFile schemaFile) {
+  private static @NotNull @Nls String getSchemaFileDesc(@NotNull VirtualFile schemaFile) {
     if (schemaFile instanceof HttpVirtualFile) {
       return schemaFile.getPresentableUrl();
     }
@@ -418,9 +413,8 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
            (npmPackageName == null ? "" : (" " + JsonBundle.message("schema.widget.package.postfix", npmPackageName)));
   }
 
-  @Nullable
   @Override
-  protected ListPopup createPopup(@NotNull DataContext context) {
+  protected @Nullable ListPopup createPopup(@NotNull DataContext context) {
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
     if (file == null) return null;
 
@@ -437,7 +431,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   }
 
   @Override
-  protected void registerCustomListeners() {
+  protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
     class Listener implements DumbService.DumbModeListener {
       volatile boolean isDumbMode;
 
@@ -454,8 +448,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       }
     }
 
-    Listener listener = new Listener();
-    myConnection.subscribe(DumbService.DUMB_MODE, listener);
+    connection.subscribe(DumbService.DUMB_MODE, new Listener());
   }
 
   @Override
@@ -463,15 +456,13 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     myIsNotified.set(false);
   }
 
-  @NotNull
   @Override
-  protected StatusBarWidget createInstance(@NotNull Project project) {
-    return new JsonSchemaStatusWidget(project);
+  protected @NotNull StatusBarWidget createInstance(@NotNull Project project) {
+    return new JsonSchemaStatusWidget(project, getScope());
   }
 
-  @NotNull
   @Override
-  public String ID() {
+  public @NotNull String ID() {
     return ID;
   }
 
@@ -487,7 +478,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   }
 
   @SuppressWarnings("SameParameterValue")
-  private static @Tooltip String createMessage(@NotNull final Collection<? extends VirtualFile> schemaFiles,
+  private static @Tooltip String createMessage(final @NotNull Collection<? extends VirtualFile> schemaFiles,
                                                @NotNull JsonSchemaService jsonSchemaService,
                                                @NotNull String separator,
                                                @NotNull @Nls String prefix,
@@ -541,7 +532,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       String message = new HtmlBuilder()
         .append(HtmlChunk.tag("b").addText(JsonBundle.message("schema.widget.conflict.popup.title")))
         .append(HtmlChunk.br()).append(HtmlChunk.br())
-        .appendRaw(((MyWidgetState)state).getTooltip()).toString();
+        .appendRaw(state.getToolTip()).toString();
       JComponent label = HintUtil.createErrorLabel(message);
       BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(label);
       JComponent statusBarComponent = getComponent();

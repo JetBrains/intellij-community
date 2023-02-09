@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -95,8 +96,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         super.visitReferenceExpression(ref);
 
         final PsiElement resolved = ref.resolve();
-        if (resolved instanceof GrField && ((GrField)resolved).hasModifierProperty(PsiModifier.FINAL)) {
-          final GrField field = (GrField)resolved;
+        if (resolved instanceof GrField field && ((GrField)resolved).hasModifierProperty(PsiModifier.FINAL)) {
           final PsiClass containingClass = field.getContainingClass();
 
           if (PsiUtil.isLValue(ref)) {
@@ -389,9 +389,8 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
 
   @NotNull
   private static List<GrMethod> getChainedConstructors(@NotNull GrMethod constructor) {
-    final HashSet<Object> visited = new HashSet<>();
-
-    final ArrayList<GrMethod> result = ContainerUtil.newArrayList(constructor);
+    Set<Object> visited = new HashSet<>();
+    List<GrMethod> result = new SmartList<>(constructor);
     while (true) {
       final GrConstructorInvocation invocation = PsiUtil.getConstructorInvocation(constructor);
       if (invocation != null && invocation.isThisCall()) {

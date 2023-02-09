@@ -24,11 +24,6 @@ public final class FatalErrorWidgetFactory implements StatusBarWidgetFactory, Li
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project) {
-    return true;
-  }
-
-  @Override
   public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
     return new IdeMessagePanel(WindowManager.getInstance().getIdeFrame(project), MessagePool.getInstance());
   }

@@ -55,9 +55,6 @@ import java.util.function.Consumer;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
-/**
- * @author ilyas
- */
 public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance(GroovyExtractMethodHandler.class);
 
@@ -230,8 +227,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   }
 
   private static boolean isEnclosingDefinition(PsiClass owner, PsiElement startElement) {
-    if (owner instanceof GrTypeDefinition) {
-      GrTypeDefinition definition = (GrTypeDefinition) owner;
+    if (owner instanceof GrTypeDefinition definition) {
       return startElement.getParent() == definition.getBody();
     }
     return false;
@@ -253,8 +249,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
             @Override
             public void visitElement(@NotNull final PsiElement element) {
               super.visitElement(element);
-              if (element instanceof GrReferenceExpression) {
-                GrReferenceExpression expr = (GrReferenceExpression) element;
+              if (element instanceof GrReferenceExpression expr) {
                 if (!expr.isQualified() && oldName.equals(expr.getReferenceName())) {
                   result.add(expr);
                 }

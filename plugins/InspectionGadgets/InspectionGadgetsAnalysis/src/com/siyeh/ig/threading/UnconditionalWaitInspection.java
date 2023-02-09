@@ -73,11 +73,9 @@ public class UnconditionalWaitInspection extends BaseInspection {
         }
         final PsiExpression firstExpression =
           ((PsiExpressionStatement)statement).getExpression();
-        if (!(firstExpression instanceof PsiMethodCallExpression)) {
+        if (!(firstExpression instanceof PsiMethodCallExpression methodCallExpression)) {
           continue;
         }
-        final PsiMethodCallExpression methodCallExpression =
-          (PsiMethodCallExpression)firstExpression;
         final PsiReferenceExpression methodExpression =
           methodCallExpression.getMethodExpression();
         @NonNls final String methodName =
@@ -98,13 +96,13 @@ public class UnconditionalWaitInspection extends BaseInspection {
         final PsiParameter[] parameters = parameterList.getParameters();
         if (numParams > 0) {
           final PsiType parameterType = parameters[0].getType();
-          if (!parameterType.equals(PsiType.LONG)) {
+          if (!parameterType.equals(PsiTypes.longType())) {
             continue;
           }
         }
         if (numParams > 1) {
           final PsiType parameterType = parameters[1].getType();
-          if (!parameterType.equals(PsiType.INT)) {
+          if (!parameterType.equals(PsiTypes.intType())) {
             continue;
           }
         }

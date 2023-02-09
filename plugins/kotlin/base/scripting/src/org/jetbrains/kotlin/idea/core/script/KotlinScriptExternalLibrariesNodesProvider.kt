@@ -10,7 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.virtualFile
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.core.script.ucache.*
 import java.nio.file.Path
@@ -23,10 +24,16 @@ class KotlinScriptExternalLibrariesNodesProvider: ExternalLibrariesWorkspaceMode
     override fun createNode(entity: KotlinScriptEntity, project: Project, settings: ViewSettings?): AbstractTreeNode<*>? {
         if (!scriptsAsEntities) return null
 
-        val dependencies = entity.listDependencies()
-        val scriptFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(entity.path))
-            ?: error("Cannot find file: ${entity.path}")
-        val library = KotlinScriptDependenciesLibrary("Script: ${scriptFile.relativeName(project)}",
+        val dependencies = entity.listDependencies(project)
+        val path = entity.path
+        val scriptFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(path))
+
+        // If there is no local file with such path we don't want to show it in file tree view
+        // One of the cases are injected scripts
+        if (scriptFile == null) return null
+
+        val scriptFileName = scriptFile.relativeName(project)
+        val library = KotlinScriptDependenciesLibrary("Script: $scriptFileName",
                                                       dependencies.compiled, dependencies.sources)
 
         return SyntheticLibraryElementNode(project, library, library, settings)
@@ -46,13 +53,16 @@ private data class KotlinScriptDependenciesLibrary(val name: String, val classes
     override fun getIcon(unused: Boolean): Icon = KotlinIcons.SCRIPT
 }
 
-private fun KotlinScriptEntity.listDependencies(): ScriptDependencies {
+private fun KotlinScriptEntity.listDependencies(project: Project): ScriptDependencies {
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
+
     fun List<KotlinScriptLibraryRoot>.files() = asSequence()
         .mapNotNull { it.url.virtualFile }
         .filter { it.isValid }
         .toList()
 
     val (compiledRoots, sourceRoots) = dependencies.asSequence()
+        .map { storage.resolve(it) ?: error("Unresolvable library: ${it.name}, script=$path") }
         .flatMap { it.roots }
         .partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
 

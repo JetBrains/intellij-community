@@ -20,9 +20,6 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public class PyMultiplePsiFilesVisitorFilter implements PythonVisitorFilter {
   @Override
   public boolean isSupported(@NotNull Class visitorClass, @NotNull PsiFile file) {

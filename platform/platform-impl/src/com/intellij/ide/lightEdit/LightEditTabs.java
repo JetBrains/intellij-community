@@ -33,6 +33,7 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.util.BitUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,6 +45,7 @@ import javax.swing.FocusManager;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -122,6 +124,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
       .findFirst().ifPresent(tabInfo -> select(tabInfo, true));
   }
 
+  // Counterpart of com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
   private final class CloseTabAction extends DumbAwareAction implements LightEditCompatible {
     private final LightEditorInfo myEditorInfo;
 
@@ -133,11 +136,11 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if ((e.getModifiers() & InputEvent.ALT_MASK) == 0) {
-        closeCurrentTab();
+      if (e.getInputEvent() instanceof MouseEvent && BitUtil.isSet(e.getInputEvent().getModifiersEx(), InputEvent.ALT_DOWN_MASK)) {
+        closeAllTabsExceptCurrent();
       }
       else {
-        closeAllTabsExceptCurrent();
+        closeCurrentTab();
       }
     }
 
@@ -151,7 +154,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     private Icon getIcon() {
@@ -301,7 +304,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   private void asyncUpdateTab(@NotNull TabInfo tabInfo) {
-    assert ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LightEditorInfo editorInfo = getEditorInfo(tabInfo);
     if (editorInfo == null) return;
     EditorNotifications.getInstance(myProject).updateNotifications(editorInfo.getFile());

@@ -39,8 +39,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
 
   @Override
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
-    if (userObject instanceof LocalChangeList) {
-      final LocalChangeList list = ((LocalChangeList)userObject);
+    if (userObject instanceof LocalChangeList list) {
       String listName = list.getName();
       if (StringUtil.isEmptyOrSpaces(listName)) listName = VcsBundle.message("changes.nodetitle.empty.changelist.name");
       renderer.appendTextWithIssueLinks(listName, list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
@@ -108,7 +107,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
 
   @Override
   public boolean canAcceptDrop(final ChangeListDragBean dragBean) {
-    final Change[] changes = dragBean.getChanges();
+    final List<Change> changes = dragBean.getChanges();
     for (Change change : getUserObject().getChanges()) {
       for (Change incomingChange : changes) {
         if (change == incomingChange) return false;
@@ -130,7 +129,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
 
     addIfNotNull(toUpdate, dragBean.getUnversionedFiles());
     addIfNotNull(toUpdate, dragBean.getIgnoredFiles());
-    if (! toUpdate.isEmpty()) {
+    if (!toUpdate.isEmpty()) {
       dragOwner.addUnversionedFiles(dropList, ContainerUtil.mapNotNull(toUpdate, FilePath::getVirtualFile));
     }
   }

@@ -76,12 +76,10 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
       "--user=$username"
     )
 
-    val containerName = if (options.containerName != null)
-      "${options.containerName}-${System.nanoTime()}".let {
-        dockerCmd.add("--name=$it")
-        it
-      }
-    else null
+    val containerName = "${options.containerName}-${System.nanoTime()}".let {
+      dockerCmd.add("--name=$it")
+      it
+    }
 
     // **** RW ****
     val writeable = listOf(paths.logFolder,
@@ -194,23 +192,21 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     if (containerId.isEmpty()) error { "Started container ID must not be empty" }
     logger.info("Container ID=$containerId")
 
-    if (containerName != null) {
-      fun isInDockerPs() =
-        runCmd(1, TimeUnit.MINUTES, true, paths.tempFolder, true, "docker", "ps")
-          .count { it.contains(containerName) } > 0
+    fun isInDockerPs() =
+      runCmd(1, TimeUnit.MINUTES, true, paths.tempFolder, true, "docker", "ps")
+        .count { it.contains(containerName) } > 0
 
-      for (i in 1..5) {
-        if (!dockerRun.isAlive) error("docker run exited with code ${dockerRun.exitValue()}")
+    for (i in 1..5) {
+      if (!dockerRun.isAlive) error("docker run exited with code ${dockerRun.exitValue()}")
 
-        if (isInDockerPs()) {
-          logger.info("Container with name $containerName detected in docker ps output")
-          break
-        }
-
-        val sleepMillis = 100L * 2.0.pow(i).toLong()
-        logger.info("No container with name $containerName in docker ps output, sleeping for $sleepMillis")
-        Thread.sleep(sleepMillis)
+      if (isInDockerPs()) {
+        logger.info("Container with name $containerName detected in docker ps output")
+        break
       }
+
+      val sleepMillis = 100L * 2.0.pow(i).toLong()
+      logger.info("No container with name $containerName in docker ps output, sleeping for $sleepMillis")
+      Thread.sleep(sleepMillis)
     }
 
     return dockerRun

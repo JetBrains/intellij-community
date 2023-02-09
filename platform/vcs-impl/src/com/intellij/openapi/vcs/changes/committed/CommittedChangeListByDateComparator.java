@@ -21,9 +21,6 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import java.util.Collections;
 import java.util.Comparator;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CommittedChangeListByDateComparator implements Comparator<CommittedChangeList> {
 
   public static final Comparator<CommittedChangeList> ASCENDING = new CommittedChangeListByDateComparator();

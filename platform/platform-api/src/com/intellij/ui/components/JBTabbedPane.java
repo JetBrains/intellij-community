@@ -65,11 +65,26 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
   }
 
   @Override
+  public void updateUI() {
+    super.updateUI();
+    updateTabComponentLabelsFont();
+  }
+
+  private void updateTabComponentLabelsFont() {
+    int tabsCount = getTabCount();
+    for (int i = 0; i < tabsCount; i++) {
+      Component tabComp = getTabComponentAt(i);
+      if (tabComp instanceof JLabel) {
+        tabComp.setFont(getFont());
+      }
+    }
+  }
+
+  @Override
   public void setTitleAt(int index, @NlsContexts.TabTitle String title) {
     super.setTitleAt(index, title);
     Component tabComponent = getTabComponentAt(index);
-    if (tabComponent instanceof JLabel) {
-      JLabel label = (JLabel) tabComponent;
+    if (tabComponent instanceof JLabel label) {
       if (Boolean.TRUE.equals(label.getClientProperty(LABEL_FROM_TABBED_PANE))) {
         label.setText(title);
       }

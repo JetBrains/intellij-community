@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.actualsForExpected
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isExpectDeclaration
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.actualsForExpected
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isExpectDeclaration
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachImplementation
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
@@ -109,11 +109,10 @@ class KotlinDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSea
             consumer: Processor<PsiElement>
         ): Boolean {
             // workaround for IDEA optimization that uses Java PSI traversal to locate inheritors in local search scope
-            val virtualFiles = runReadAction {
-                searchScope.scope.mapTo(HashSet()) { it.containingFile.virtualFile }
+            val globalScope = runReadAction {
+                val virtualFiles =searchScope.scope.mapTo(HashSet()) { it.containingFile.virtualFile }
+                GlobalSearchScope.filesScope(psiClass.project, virtualFiles)
             }
-
-            val globalScope = GlobalSearchScope.filesScope(psiClass.project, virtualFiles)
             return ContainerUtil.process(ClassInheritorsSearch.search(psiClass, globalScope, true)) { candidate ->
                 val candidateOrigin = candidate.unwrapped ?: candidate
                 val inScope = runReadAction { candidateOrigin in searchScope }

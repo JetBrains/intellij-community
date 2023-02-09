@@ -78,7 +78,6 @@ public final class EDT {
    * @see UIUtil#pump()
    * @see com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()
    */
-  @SuppressWarnings("JavadocReference")
   @TestOnly
   public static void dispatchAllInvocationEvents() {
     assertIsEdt();

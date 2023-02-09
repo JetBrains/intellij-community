@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ProjectTopics;
@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusListener;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.problems.ProblemListener;
@@ -82,10 +81,10 @@ public final class NavBarListener
     }
     panel.putClientProperty(LISTENER, disposable);
     FocusUtil.addFocusOwnerListener(disposable, listener);
-    FileStatusManager.getInstance(project).addFileStatusListener(listener, disposable);
     PsiManager.getInstance(project).addPsiTreeChangeListener(listener, disposable);
 
     MessageBusConnection connection = project.getMessageBus().connect(disposable);
+    connection.subscribe(FileStatusListener.TOPIC, listener);
     connection.subscribe(AnActionListener.TOPIC, listener);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC, listener);

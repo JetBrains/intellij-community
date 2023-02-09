@@ -11,6 +11,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.*;
 
@@ -115,9 +116,7 @@ public final class FileColorManagerImpl extends FileColorManager {
 
   @Override
   public Collection<@NonNls String> getColorIDs() {
-    List<String> sorted = new ArrayList<>(ourDefaultColors.keySet());
-    Collections.sort(sorted);
-    return sorted;
+    return ContainerUtil.sorted(ourDefaultColors.keySet());
   }
 
   @Override

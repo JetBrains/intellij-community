@@ -308,18 +308,6 @@ public final class GitHistoryUtils {
    * @deprecated use {@link GitHistoryUtils#collectTimedCommits(Project, VirtualFile, String...)} or methods from {@link GitFileHistory}
    */
   @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused")
-  @NotNull
-  public static List<Pair<SHAHash, Date>> onlyHashesHistory(@NotNull Project project, @NotNull FilePath path, String... parameters)
-    throws VcsException {
-    final VirtualFile root = GitUtil.getRootForFile(project, path);
-    return onlyHashesHistory(project, path, root, parameters);
-  }
-
-  /**
-   * @deprecated use {@link GitHistoryUtils#collectTimedCommits(Project, VirtualFile, String...)} or methods from {@link GitFileHistory}
-   */
-  @Deprecated(forRemoval = true)
   @NotNull
   public static List<Pair<SHAHash, Date>> onlyHashesHistory(@NotNull Project project,
                                                             @NotNull FilePath path,

@@ -19,7 +19,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.Nls
 
-class JsonSortPropertiesIntention : PsiElementBaseIntentionAction(), LowPriorityAction, LightEditCompatible, DumbAware {
+open class JsonSortPropertiesIntention : PsiElementBaseIntentionAction(), LowPriorityAction, LightEditCompatible, DumbAware {
   override fun getText(): @Nls(capitalization = Nls.Capitalization.Sentence) String = JsonBundle.message("json.intention.sort.properties")
 
   override fun getFamilyName(): @Nls(capitalization = Nls.Capitalization.Sentence) String =

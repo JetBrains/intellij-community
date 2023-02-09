@@ -15,6 +15,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi.Companion.SAVED_PATCHES_UI_PLACE
 import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.allUnder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchSupply
@@ -79,9 +80,7 @@ class SavedPatchesTree(project: Project,
   }
 
   override fun installGroupingSupport(): ChangesGroupingSupport {
-    return object : ChangesGroupingSupport(myProject, this, false) {
-      override fun isAvailable(groupingKey: String): Boolean = false
-    }
+    return ChangesGroupingSupport.Disabled(myProject, this)
   }
 
   override fun getData(dataId: String): Any? {
@@ -103,7 +102,7 @@ class SavedPatchesTree(project: Project,
   class TagWithCounterChangesBrowserNode(text: @Nls String, expandByDefault: Boolean = true, private val sortWeight: Int? = null) :
     TagChangesBrowserNode(TagImpl(text), SimpleTextAttributes.REGULAR_ATTRIBUTES, expandByDefault) {
     private val stashCount = ClearableLazyValue.create {
-      VcsTreeModelData.children(this).userObjects(SavedPatchesProvider.PatchObject::class.java).size
+      allUnder(this).userObjects(SavedPatchesProvider.PatchObject::class.java).size
     }
 
     init {

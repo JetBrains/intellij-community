@@ -8,7 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class ResultsToFileProcessor {
+public final class ResultsToFileProcessor {
   private static final Logger LOG = Logger.getInstance(ResultsToFileProcessor.class);
 
   /**

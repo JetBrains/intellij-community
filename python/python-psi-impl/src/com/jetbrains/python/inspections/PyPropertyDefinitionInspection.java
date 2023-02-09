@@ -36,7 +36,6 @@ import java.util.function.Predicate;
 /**
  * Checks that arguments to property() and @property and friends are ok.
  * <br/>
- * User: dcheryasov
  */
 public class PyPropertyDefinitionInspection extends PyInspection {
 
@@ -274,8 +273,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
                                          @NotNull PsiElement beingChecked,
                                          boolean allowed,
                                          @NotNull @InspectionMessage String message) {
-      if (callable instanceof PyFunction) {
-        final PyFunction function = (PyFunction)callable;
+      if (callable instanceof PyFunction function) {
 
         if (PyKnownDecoratorUtil.hasAbstractDecorator(function, myTypeEvalContext)) {
           return;

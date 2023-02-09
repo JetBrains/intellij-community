@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Pair;
@@ -22,14 +21,15 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 
 public class EncodingPanel extends EditorBasedStatusBarPopup {
-  public EncodingPanel(@NotNull Project project) {
-    super(project, false);
+  public EncodingPanel(@NotNull Project project, @NotNull CoroutineScope scope) {
+    super(project, false, scope);
   }
 
   @Override
@@ -54,8 +54,7 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
   }
 
   @Override
-  protected void registerCustomListeners() {
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
+  protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
     // should update to reflect encoding-from-content
     connection.subscribe(EncodingManagerListener.ENCODING_MANAGER_CHANGES, (document, propertyName, oldValue, newValue) -> {
       if (propertyName.equals(EncodingManagerImpl.PROP_CACHED_ENCODING_CHANGED)) {
@@ -75,7 +74,7 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
 
   @Override
   protected @NotNull StatusBarWidget createInstance(@NotNull Project project) {
-    return new EncodingPanel(project);
+    return new EncodingPanel(project, getScope());
   }
 
   @Override

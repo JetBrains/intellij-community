@@ -24,7 +24,6 @@ import java.util.NoSuchElementException;
  * Useful when null must be a defined value.
  * Instances are immutable.
  * <br/>
- * User: dcheryasov
  */
 public class Maybe<T> {
   private final boolean myIsDefined;

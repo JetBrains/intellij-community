@@ -196,7 +196,7 @@ private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(pr
         }
       }
       catch (e: VcsException) {
-        logger<GitUserNameCheckinHandler>().error("Couldn't set user.name and user.email", e)
+        logger<GitUserNameCheckinHandler>().warn("Couldn't set user.name and user.email", e)
         error.set(GitBundle.message("error.cant.set.user.name.email"))
       }
     }
@@ -286,7 +286,7 @@ private class GitDetachedRootCheckinHandler(project: Project) : GitCheckinHandle
       }
     }
 
-    override val showDetailsLink: String?
+    override val showDetailsLink: String
       get() = GitBundle.message("commit.check.warning.title.commit.during.rebase.details")
 
     override val showDetailsAction: String
@@ -323,7 +323,7 @@ private class GitDetachedRootCheckinHandler(project: Project) : GitCheckinHandle
       }
     }
 
-    override val showDetailsLink: String?
+    override val showDetailsLink: String
       get() = GitBundle.message("commit.check.warning.title.commit.with.detached.head.details")
 
     override val showDetailsAction: String

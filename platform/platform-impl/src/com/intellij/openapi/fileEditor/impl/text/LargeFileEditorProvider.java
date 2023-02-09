@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -13,7 +12,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,7 +40,9 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
   public static class LargeTextFileEditor extends TextEditorImpl {
     LargeTextFileEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider) {
       super(project, file, provider);
-      ObjectUtils.consumeIfCast(getEditor(), EditorEx.class, editorEx -> editorEx.setViewer(true));
+      if (getEditor() instanceof EditorEx editor) {
+        editor.setViewer(true);
+      }
     }
   }
 
@@ -93,11 +93,6 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
 
     @Override
     public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
-
-    @Override
-    public StructureViewBuilder getStructureViewBuilder() {
-      return null;
-    }
 
     @Override
     public @NotNull VirtualFile getFile() {

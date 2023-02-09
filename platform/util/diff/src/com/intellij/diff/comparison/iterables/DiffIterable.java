@@ -8,9 +8,9 @@ import java.util.Iterator;
 
 /**
  * Represents computed differences between two sequences.
- * <p>
+ * <p/>
  * All {@link Range} are not empty (have at least one element in one of the sides). Ranges do not overlap.
- * <p>
+ * <p/>
  * Differences are guaranteed to be 'squashed': there are no two changed or two unchanged {@link Range} with
  * <code>(range1.end1 == range2.start1 && range1.end2 == range2.start2)</code>.
  *

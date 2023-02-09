@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.application.options.CodeStyle;
@@ -7,11 +7,16 @@ import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.formatting.MockCodeStyleSettingsModifier;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.scratch.ScratchRootType;
+import com.intellij.lang.ImportOptimizer;
+import com.intellij.lang.LanguageImportStatements;
+import com.intellij.lang.java.JavaImportOptimizer;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
@@ -19,6 +24,8 @@ import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.PathUtil;
+
+import java.util.Set;
 
 public class OptimizeImportsTest extends OptimizeImportsTestCase {
   static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/optimizeImports";
@@ -178,6 +185,24 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       });
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), CodeStyleSettingsModifier.EP_NAME, modifier, getTestRootDisposable());
     doTest();
+  }
+
+  public void testOptimizeImportMessage() {
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      String fileName = getTestName(false) + ".java";
+      PsiFile file = myFixture.configureByFile(fileName);
+      Set<ImportOptimizer> optimizers = LanguageImportStatements.INSTANCE.forFile(file);
+      for (ImportOptimizer optimizer : optimizers) {
+        if (optimizer instanceof JavaImportOptimizer) {
+          Runnable runnable = optimizer.processFile(file);
+          assertTrue(runnable instanceof ImportOptimizer.CollectingInfoRunnable);
+          runnable.run();
+          ImportOptimizer.CollectingInfoRunnable infoRunnable = (ImportOptimizer.CollectingInfoRunnable)runnable;
+          String info = infoRunnable.getUserNotificationInfo();
+          assertEquals("Removed 2 imports", info);
+        }
+      }
+    });
   }
 
   private void doTest() {

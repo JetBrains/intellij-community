@@ -3,11 +3,14 @@ package org.jetbrains.kotlin.idea.core.util
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
-@Deprecated("Use 'textRange' instead", ReplaceWith("textRange"))
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated("Use 'textRange' instead", ReplaceWith("textRange"))
 val PsiElement.range: TextRange
     get() = textRange!!
 
-@Deprecated("Use 'startOffset' instead", ReplaceWith("startOffset"))
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated("Use 'startOffset' instead", ReplaceWith("startOffset"))
 val TextRange.start: Int
     get() = startOffset

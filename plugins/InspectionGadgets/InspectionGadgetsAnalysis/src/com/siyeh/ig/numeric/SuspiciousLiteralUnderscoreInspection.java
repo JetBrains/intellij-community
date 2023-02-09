@@ -4,6 +4,7 @@ package com.siyeh.ig.numeric;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,8 +32,8 @@ public class SuspiciousLiteralUnderscoreInspection extends BaseInspection {
     public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
-      if (!PsiType.SHORT.equals(type) && !PsiType.INT.equals(type) && !PsiType.LONG.equals(type) &&
-          !PsiType.FLOAT.equals(type) && !PsiType.DOUBLE.equals(type)) {
+      if (!PsiTypes.shortType().equals(type) && !PsiTypes.intType().equals(type) && !PsiTypes.longType().equals(type) &&
+          !PsiTypes.floatType().equals(type) && !PsiTypes.doubleType().equals(type)) {
         return;
       }
       final String text = expression.getText();

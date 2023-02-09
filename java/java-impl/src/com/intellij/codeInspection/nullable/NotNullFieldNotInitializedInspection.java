@@ -14,6 +14,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
@@ -25,19 +26,19 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final String IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME = "IGNORE_IMPLICITLY_WRITTEN_FIELDS";
   private static final String IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME = "IGNORE_FIELDS_WRITTEN_IN_SETUP";
   public boolean IGNORE_IMPLICITLY_WRITTEN_FIELDS = true;
   public boolean IGNORE_FIELDS_WRITTEN_IN_SETUP = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit"), IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME);
-    panel.addCheckbox(JavaBundle.message("inspection.notnull.field.not.initialized.option.setup"), IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox(IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME, JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit")),
+      checkbox(IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME, JavaBundle.message("inspection.notnull.field.not.initialized.option.setup")));
   }
 
   @NotNull

@@ -37,8 +37,8 @@ internal class CreateMethodAction(
 
   override fun getActionGroup(): JvmActionGroup = if (abstract) CreateAbstractMethodActionGroup else CreateMethodActionGroup
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    return super.isAvailable(project, editor, file) && PsiNameHelper.getInstance(project).isIdentifier(request.methodName)
+  override fun isAvailable(project: Project, file: PsiFile, target: PsiClass): Boolean {
+    return super.isAvailable(project, file, target) && PsiNameHelper.getInstance(project).isIdentifier(request.methodName)
   }
 
   override fun getRenderData() = JvmActionGroup.RenderData { request.methodName }
@@ -54,16 +54,15 @@ internal class CreateMethodAction(
 
   override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
     val copyClass = PsiTreeUtil.findSameElementInCopy(target, file)
-    val previewRequest = if (request is CreateMethodFromJavaUsageRequest) {
-      val physicalRequest = request as? CreateMethodFromJavaUsageRequest ?: return IntentionPreviewInfo.EMPTY
-      val copyCall = PsiTreeUtil.findSameElementInCopy(physicalRequest.call, file)
-      CreateMethodFromJavaUsageRequest(copyCall, physicalRequest.modifiers)
+    val previewRequest = if (request is CreateMethodFromJavaUsageRequest && request.call.containingFile == file.originalFile) {
+      val copyCall = PsiTreeUtil.findSameElementInCopy(request.call, file) // copy call when possible to get proper anchor
+      CreateMethodFromJavaUsageRequest(copyCall, request.modifiers)
     } else request
     JavaMethodRenderer(project, abstract, copyClass, previewRequest).doMagic()
     return IntentionPreviewInfo.DIFF
   }
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, file: PsiFile, target: PsiClass) {
     JavaMethodRenderer(project, abstract, target, request).doMagic()
   }
 }
@@ -91,7 +90,7 @@ private class JavaMethodRenderer(
   }
 
   fun renderMethod(): PsiMethod {
-    val method = factory.createMethod(request.methodName, PsiType.VOID)
+    val method = factory.createMethod(request.methodName, PsiTypes.voidType())
 
     val modifiersToRender = requestedModifiers.toMutableList()
     if (targetClass.isInterface) {

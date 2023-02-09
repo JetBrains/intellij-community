@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -26,12 +26,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
-public class CoreCodeStyleUtil {
+public final class CoreCodeStyleUtil {
   private final static Logger LOG = Logger.getInstance(CoreCodeStyleUtil.class);
 
   private static final ThreadLocal<ProcessingUnderProgressInfo> SEQUENTIAL_PROCESSING_ALLOWED
@@ -40,30 +41,49 @@ public class CoreCodeStyleUtil {
   private CoreCodeStyleUtil() {
   }
 
-  public static PsiElement postProcessElement(@NotNull PsiFile file, @NotNull final PsiElement formatted, boolean isWhitespaceOnly) {
-    PsiElement result = formatted;
+  public static PsiElement postProcessElement(@NotNull PsiFile file, @NotNull final PsiElement element, boolean isWhitespaceOnly) {
     CodeStyleSettings settingsForFile = CodeStyle.getSettings(file);
-    if (settingsForFile.FORMATTER_TAGS_ENABLED && formatted instanceof PsiFile) {
-      postProcessEnabledRanges((PsiFile)formatted, formatted.getTextRange(), settingsForFile, isWhitespaceOnly);
+    List<TextRange> textRanges;
+    if (settingsForFile.FORMATTER_TAGS_ENABLED) {
+      FormatterTagHandler tagHandler = new FormatterTagHandler(settingsForFile);
+      textRanges = tagHandler.getEnabledRanges(file.getNode(), file.getTextRange());
     }
     else {
-      boolean brokenProcFound = false;
-      for (PostFormatProcessor postFormatProcessor : getPostProcessors(isWhitespaceOnly)) {
-        try {
-          result = postFormatProcessor.processElement(result, settingsForFile);
-          if (!result.isValid() && !brokenProcFound) {
-            LOG.error(new RuntimeExceptionWithAttachments(String.format("PSI crash detected: processor=%s, result=%s", postFormatProcessor,
-                                                                        result), new Attachment("text", result.getText())));
-            brokenProcFound = true;
-          }
+      textRanges = Collections.singletonList(element.getTextRange());
+    }
+    for (TextRange range : textRanges) {
+      if (range.contains(element.getTextRange())) {
+        PsiElement currElement = element;
+        for (PostFormatProcessor postFormatProcessor : getPostProcessors(isWhitespaceOnly)) {
+          if (currElement == null) break;
+          currElement = processElementOrFail(postFormatProcessor, currElement, settingsForFile);
         }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.error(PluginException.createByClass(e, postFormatProcessor.getClass()));
-        }
+        return currElement;
       }
+      else if (range.intersects(element.getTextRange())) {
+        postProcessRange(file, element.getTextRange().intersection(range), settingsForFile, isWhitespaceOnly);
+      }
+    }
+    return element;
+  }
+
+  private static @Nullable PsiElement processElementOrFail(@NotNull PostFormatProcessor processor,
+                                                           @NotNull PsiElement element,
+                                                           @NotNull CodeStyleSettings settings) {
+    PsiElement result = element;
+    try {
+      result = processor.processElement(result, settings);
+      if (!result.isValid()) {
+        LOG.error(new RuntimeExceptionWithAttachments(String.format("PSI crash detected: processor=%s, result=%s", processor,
+                                                                    result), new Attachment("text", result.getText())));
+        return null;
+      }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(PluginException.createByClass(e, processor.getClass()));
     }
     return result;
   }
@@ -98,14 +118,12 @@ public class CoreCodeStyleUtil {
   }
 
   public static void postProcessText(@NotNull final PsiFile file, @NotNull final TextRange textRange, boolean isWhitespaceOnly) {
+    CodeStyleSettings settings = CodeStyle.getSettings(file);
     if (!getSettings(file).FORMATTER_TAGS_ENABLED) {
-      TextRange currentRange = textRange;
-      for (final PostFormatProcessor myPostFormatProcessor : getPostProcessors(isWhitespaceOnly)) {
-        currentRange = myPostFormatProcessor.processText(file, currentRange, getSettings(file));
-      }
+      postProcessRange(file, textRange, settings, isWhitespaceOnly);
     }
     else {
-      postProcessEnabledRanges(file, textRange, getSettings(file), isWhitespaceOnly);
+      postProcessEnabledRanges(file, textRange, settings, isWhitespaceOnly);
     }
   }
 
@@ -117,11 +135,18 @@ public class CoreCodeStyleUtil {
     int delta = 0;
     for (TextRange enabledRange : enabledRanges) {
       enabledRange = enabledRange.shiftRight(delta);
-      for (PostFormatProcessor processor : getPostProcessors(isWhitespaceOnly)) {
-        TextRange processedRange = processor.processText(file, enabledRange, settings);
-        delta += processedRange.getLength() - enabledRange.getLength();
-      }
+      TextRange processedRange = postProcessRange(file, enabledRange, settings, isWhitespaceOnly);
+      delta += processedRange.getLength() - enabledRange.getLength();
     }
+  }
+
+  private static TextRange postProcessRange(@NotNull PsiFile file, @NotNull TextRange textRange,
+                                            @NotNull CodeStyleSettings settings, boolean isWhitespaceOnly) {
+    TextRange currentRange = textRange;
+    for (final PostFormatProcessor myPostFormatProcessor : getPostProcessors(isWhitespaceOnly)) {
+      currentRange = myPostFormatProcessor.processText(file, currentRange, settings);
+    }
+    return currentRange;
   }
 
   public static class RangeFormatInfo {

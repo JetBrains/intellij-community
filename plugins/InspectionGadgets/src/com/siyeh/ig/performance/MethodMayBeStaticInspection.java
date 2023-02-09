@@ -19,7 +19,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.WriteExternalException;
@@ -38,7 +38,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class MethodMayBeStaticInspection extends BaseInspection {
   @NonNls protected static final String IGNORE_DEFAULT_METHODS_ATTR_NAME = "m_ignoreDefaultMethods";
@@ -90,13 +91,13 @@ public class MethodMayBeStaticInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.only.option"), ONLY_PRIVATE_OR_FINAL_ATTR_NAME);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.empty.option"), IGNORE_EMPTY_METHODS_ATTR_NAME);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.ignore.default.methods.option"), IGNORE_DEFAULT_METHODS_ATTR_NAME);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.replaces.qualifiers.with.class.references.option"), REPLACE_QUALIFIER_ATTR_NAME);
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox(ONLY_PRIVATE_OR_FINAL_ATTR_NAME, InspectionGadgetsBundle.message("method.may.be.static.only.option")),
+      checkbox(IGNORE_EMPTY_METHODS_ATTR_NAME, InspectionGadgetsBundle.message("method.may.be.static.empty.option")),
+      checkbox(IGNORE_DEFAULT_METHODS_ATTR_NAME, InspectionGadgetsBundle.message("method.may.be.static.ignore.default.methods.option")),
+      checkbox(REPLACE_QUALIFIER_ATTR_NAME,
+               InspectionGadgetsBundle.message("method.may.be.static.replaces.qualifiers.with.class.references.option")));
   }
 
   @Override

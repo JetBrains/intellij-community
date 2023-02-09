@@ -2,6 +2,7 @@
 package org.editorconfig.language.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveBracesQuickFix
 import org.editorconfig.language.messages.EditorConfigBundle
@@ -13,7 +14,7 @@ class EditorConfigPatternEnumerationRedundancyInspection : LocalInspectionTool()
     override fun visitPatternEnumeration(patternEnumeration: EditorConfigPatternEnumeration) {
       if (!containsIssue(patternEnumeration)) return
       val message = EditorConfigBundle.get("inspection.pattern-enumeration.redundant.message")
-      holder.registerProblem(patternEnumeration, message, EditorConfigRemoveBracesQuickFix())
+      holder.registerProblem(patternEnumeration, message, ProblemHighlightType.WARNING, EditorConfigRemoveBracesQuickFix())
     }
   }
 

@@ -20,9 +20,6 @@ import com.intellij.openapi.editor.FoldingModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Denis Zhdanov
- */
 class TextComponentFoldingModel implements FoldingModel {
 
   @Override
@@ -61,10 +58,5 @@ class TextComponentFoldingModel implements FoldingModel {
 
   @Override
   public void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaretFromCollapsedRegion) {
-  }
-
-  @Override
-  public boolean isInBatchFoldingOperation() {
-    return false;
   }
 }

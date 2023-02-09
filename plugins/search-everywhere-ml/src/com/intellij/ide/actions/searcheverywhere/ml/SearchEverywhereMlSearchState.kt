@@ -2,8 +2,10 @@
 package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderCache
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContributorFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereStateFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider
@@ -16,9 +18,11 @@ internal class SearchEverywhereMlSearchState(
   val tabId: String, val experimentGroup: Int, val orderByMl: Boolean,
   val keysTyped: Int, val backspacesTyped: Int, private val searchQuery: String,
   private val modelProvider: SearchEverywhereModelProvider,
-  private val providersCache: FeaturesProviderCache?
+  private val providersCache: FeaturesProviderCache?,
+  projectIsDumb: Boolean?
 ) {
-  val searchStateFeatures = SearchEverywhereStateFeaturesProvider().getSearchStateFeatures(tabId, searchQuery)
+  val searchStateFeatures = SearchEverywhereStateFeaturesProvider().getSearchStateFeatures(tabId, searchQuery, projectIsDumb)
+  private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
 
   private val model: SearchEverywhereRankingModel by lazy {
     SearchEverywhereRankingModel(modelProvider.getModel(tabId))
@@ -27,24 +31,30 @@ internal class SearchEverywhereMlSearchState(
   fun getElementFeatures(elementId: Int?,
                          element: Any,
                          contributor: SearchEverywhereContributor<*>,
-                         priority: Int): SearchEverywhereMLItemInfo {
+                         priority: Int,
+                         mixedListInfo: SearchEverywhereMixedListInfo): SearchEverywhereMLItemInfo {
     val features = arrayListOf<EventPair<*>>()
     val contributorId = contributor.searchProviderId
+    val contributorFeatures = contributorFeaturesProvider.getFeatures(contributor, mixedListInfo)
     SearchEverywhereElementFeaturesProvider.getFeatureProvidersForContributor(contributorId).forEach { provider ->
       features.addAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, providersCache))
     }
 
-    return SearchEverywhereMLItemInfo(elementId, contributorId, features)
+    return SearchEverywhereMLItemInfo(elementId, contributorId, features, contributorFeatures)
   }
 
   fun getMLWeight(context: SearchEverywhereMLContextInfo,
-                  elementFeatures: List<EventPair<*>>): Double {
-    val features = (context.features + elementFeatures + searchStateFeatures).associate { it.field.name to it.data }
+                  itemInfo: SearchEverywhereMLItemInfo): Double {
+    val features = (context.features + itemInfo.features + searchStateFeatures + itemInfo.contributorFeatures)
+      .associate { it.field.name to it.data }
     return model.predict(features)
   }
 }
 
-internal data class SearchEverywhereMLItemInfo(val id: Int?, val contributorId: String, val features: List<EventPair<*>>) {
+internal data class SearchEverywhereMLItemInfo(val id: Int?,
+                                               val contributorId: String,
+                                               val features: List<EventPair<*>>,
+                                               val contributorFeatures: List<EventPair<*>>) {
   fun featuresAsMap(): Map<String, Any> = features.mapNotNull {
     val data = it.data
     if (data == null) null else it.field.name to data

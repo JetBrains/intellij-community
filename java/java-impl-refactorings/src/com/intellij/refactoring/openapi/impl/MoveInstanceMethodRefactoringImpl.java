@@ -24,9 +24,6 @@ import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodProcessor;
 
-/**
- * @author ven
- */
 public class MoveInstanceMethodRefactoringImpl extends RefactoringImpl<MoveInstanceMethodProcessor> implements MoveInstanceMethodRefactoring {
   MoveInstanceMethodRefactoringImpl(Project project, PsiMethod method, PsiVariable targetVariable) {
     super(new MoveInstanceMethodProcessor(project, method, targetVariable, null, MoveInstanceMethodHandler.suggestParameterNames (method, targetVariable)));

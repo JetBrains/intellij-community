@@ -17,7 +17,7 @@ import java.lang.reflect.Method;
 import java.util.ServiceLoader;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public class JUnit5TeamCityRunnerForTestsOnClasspath {
+public final class JUnit5TeamCityRunnerForTestsOnClasspath {
 
   public static void main(String[] args) {
     try {

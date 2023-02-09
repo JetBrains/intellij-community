@@ -4,6 +4,7 @@ package com.intellij.ui.treeStructure.treetable;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -43,8 +44,7 @@ public class TreeTableTree extends Tree {
   public void updateUI() {
     super.updateUI();
     TreeCellRenderer tcr = super.getCellRenderer();
-    if (tcr instanceof DefaultTreeCellRenderer) {
-      DefaultTreeCellRenderer dtcr = (DefaultTreeCellRenderer)tcr;
+    if (tcr instanceof DefaultTreeCellRenderer dtcr) {
       dtcr.setTextSelectionColor(UIUtil.getTableSelectionForeground());
       dtcr.setBackgroundSelectionColor(UIUtil.getTableSelectionBackground(true));
     }
@@ -77,7 +77,7 @@ public class TreeTableTree extends Tree {
     g1.translate(0, -myVisibleRow * getRowHeight());
     super.paint(g1);
     g1.dispose();
-    if (myBorder != null){
+    if (myBorder != null) {
       myBorder.paintBorder(this, g, 0, 0, myTreeTable.getWidth(), getRowHeight());
     }
   }
@@ -93,13 +93,13 @@ public class TreeTableTree extends Tree {
   }
 
   public void setVisibleRow(int row) {
-    myVisibleRow  = row;
+    myVisibleRow = row;
     final Rectangle rowBounds = getRowBounds(myVisibleRow);
     final int indent = rowBounds.x - getVisibleRect().x - getTreeColumnOffsetX();
     setPreferredSize(new Dimension(getRowBounds(myVisibleRow).width + indent, getPreferredSize().height));
   }
 
-  public void _processKeyEvent(KeyEvent e){
+  public void _processKeyEvent(KeyEvent e) {
     super.processKeyEvent(e);
   }
 
@@ -108,17 +108,19 @@ public class TreeTableTree extends Tree {
   }
 
   @Override
-  public void setCellRenderer(final TreeCellRenderer x) {
-    super.setCellRenderer(
-        new TreeCellRenderer() {
-          @Override
-          public Component getTreeCellRendererComponent(JTree tree, Object value,
-                                                        boolean selected, boolean expanded,
-                                                        boolean leaf, int row, boolean hasFocus) {
-            return x.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, myCellFocused);
-          }
-        }
-    );
+  public void setCellRenderer(final TreeCellRenderer renderer) {
+    TreeTableTreeCellRendererWrapper wrapper = renderer instanceof TreeTableTreeCellRendererWrapper
+                                               ? ((TreeTableTreeCellRendererWrapper)renderer)
+                                               : new TreeTableTreeCellRendererWrapper(renderer);
+    super.setCellRenderer(wrapper);
+  }
+
+  public TreeCellRenderer getOriginalCellRenderer() {
+    TreeCellRenderer renderer = super.getCellRenderer();
+    if (renderer instanceof TreeTableTreeCellRendererWrapper) {
+      return ((TreeTableTreeCellRendererWrapper)renderer).myDelegate;
+    }
+    return renderer;
   }
 
   @Nullable
@@ -141,5 +143,20 @@ public class TreeTableTree extends Tree {
       offsetX += myTreeTable.getColumnModel().getColumn(i).getWidth();
     }
     return offsetX;
+  }
+
+  private class TreeTableTreeCellRendererWrapper implements TreeCellRenderer {
+    private final TreeCellRenderer myDelegate;
+
+    TreeTableTreeCellRendererWrapper(@NotNull TreeCellRenderer delegate) {
+      myDelegate = delegate;
+    }
+
+    @Override
+    public Component getTreeCellRendererComponent(JTree tree, Object value,
+                                                  boolean selected, boolean expanded,
+                                                  boolean leaf, int row, boolean hasFocus) {
+      return myDelegate.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, myCellFocused);
+    }
   }
 }

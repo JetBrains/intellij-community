@@ -75,7 +75,8 @@ public class DefaultTreeUI extends BasicTreeUI {
     return Control.Painter.DEFAULT;
   }
 
-  private static @Nullable Color getBackground(@NotNull JTree tree, @NotNull TreePath path, int row, boolean selected) {
+  @ApiStatus.Internal
+  public static @Nullable Color getBackground(@NotNull JTree tree, @NotNull TreePath path, int row, boolean selected) {
     // to be consistent with com.intellij.ui.components.WideSelectionListUI#getBackground
     if (selected) {
       return RenderingUtil.getSelectionBackground(tree);
@@ -261,7 +262,11 @@ public class DefaultTreeUI extends BasicTreeUI {
           Color background = isSeparator(value) ? null : getBackground(tree, path, row, selected);
           if (background != null) {
             g.setColor(background);
-            if (g instanceof Graphics2D && ExperimentalUI.isNewUI() && is("ide.experimental.ui.tree.selection") && (selected || row == TreeHoverListener.getHoveredRow(tree))) {
+            if (g instanceof Graphics2D &&
+                ExperimentalUI.isNewUI() &&
+                is("ide.experimental.ui.tree.selection") &&
+                !(tree instanceof PlainSelectionTree) &&
+                (selected || row == TreeHoverListener.getHoveredRow(tree))) {
               int borderOffset = JBUI.scale(12);
               Control control = getControl(c, path);
               int rendererOffset = painter.getRendererOffset(control, depth, leaf);
@@ -283,7 +288,7 @@ public class DefaultTreeUI extends BasicTreeUI {
               if (shouldPaintTop && shouldPaintBottom) {
                 g.fillRect(left, bounds.y, right - left, bounds.height);
               } else {
-                int arc = JBUI.scale(8);
+                int arc = JBUI.CurrentTheme.Tree.ARC.get();
                 FILL.paint((Graphics2D)g, left, bounds.y, right - left, bounds.height, arc);
                 if (shouldPaintTop) {
                   g.fillRect(left, bounds.y, right - left, arc);

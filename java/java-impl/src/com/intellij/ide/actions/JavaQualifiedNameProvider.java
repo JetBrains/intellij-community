@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -46,20 +46,20 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
   @Override
   @Nullable
   public String getQualifiedName(@NotNull PsiElement element) {
-    if (element instanceof PsiPackage) {
-      return ((PsiPackage)element).getQualifiedName();
+    if (element instanceof PsiPackage pkg) {
+      return pkg.getQualifiedName();
     }
 
-    if (element instanceof PsiJavaModule) {
-      return ((PsiJavaModule)element).getName();
+    if (element instanceof PsiJavaModule module) {
+      return module.getName();
     }
 
-    if (element instanceof PsiJavaModuleReferenceElement) {
-      PsiReference reference = element.getReference();
+    if (element instanceof PsiJavaModuleReferenceElement ref) {
+      PsiJavaModuleReference reference = ref.getReference();
       if (reference != null) {
-        PsiElement target = reference.resolve();
-        if (target instanceof PsiJavaModule) {
-          return ((PsiJavaModule)target).getName();
+        PsiJavaModule target = reference.resolve();
+        if (target != null) {
+          return target.getName();
         }
       }
     }
@@ -68,12 +68,11 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     if (element instanceof PsiClass) {
       return ((PsiClass)element).getQualifiedName();
     }
-    else if (element instanceof PsiMember) {
-      final PsiMember member = (PsiMember)element;
+    else if (element instanceof PsiMember member) {
       String memberFqn = getMethodOrFieldQualifiedName(member);
       if (memberFqn == null) return null;
-      if (member instanceof PsiMethod && MethodSignatureUtil.hasOverloads((PsiMethod)member)) {
-        return memberFqn + getParameterString((PsiMethod)member);
+      if (member instanceof PsiMethod method && MethodSignatureUtil.hasOverloads(method)) {
+        return memberFqn + getParameterString(method);
       }
       return memberFqn;
     }

@@ -6,94 +6,77 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.FilterModulesTestFeature
+import org.jetbrains.kotlin.idea.base.facet.isTestModule
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.kotlin.utils.Printer
-
-object WorkspaceModelPrinters {
-    val moduleNamesPrinter: WorkspaceModelPrinter
-        get() = ProjectPrinter {
-            addContributor(NoopModulePrinterContributor())
-        }
-
-    val moduleDependenciesPrinter get() = ProjectPrinter {
-        addContributor(SanitizingOrderEntryPrinterContributor())
-    }
-
-    val moduleKotlinFacetSettingsPrinter get() = ProjectPrinter {
-        addContributor(KotlinFacetSettingsPrinterContributor())
-    }
-
-    val libraryNamesPrinter get() = ProjectPrinter {
-        addContributor(SanitizingLibraryPrinterContributor())
-    }
-
-    val sdkNamesPrinter get() = ProjectPrinter {
-        addContributor(NoopSdkPrinterContributor())
-    }
-
-    val fullWorkspacePrinter get() = ProjectPrinter {
-        addContributor(KotlinFacetSettingsPrinterContributor())
-        addContributor(SanitizingOrderEntryPrinterContributor())
-        addContributor(SanitizingLibraryPrinterContributor())
-        addContributor(NoopSdkPrinterContributor())
-    }
-}
+import java.io.File
 
 class WorkspaceModelPrinter(
-    private val moduleContributor: WorkspaceModelPrinterContributor<ModulePrinterEntity>? = null,
-    private val libraryContributor: WorkspaceModelPrinterContributor<LibraryPrinterEntity>? = null,
-    private val sdkContributor: WorkspaceModelPrinterContributor<SdkPrinterEntity>? = null,
+    private val moduleContributors: List<ModulePrinterContributor>
 ) {
-    private val printer = Printer(StringBuilder())
+    fun print(
+        project: Project,
+        projectRoot: File,
+        testConfiguration: TestConfiguration,
+        kotlinGradlePluginVersion: KotlinToolingVersion
+    ): String {
+        val printer = Printer(StringBuilder())
+        val context = PrinterContext(printer, project, projectRoot, testConfiguration, kotlinGradlePluginVersion)
+        context.processModules()
 
-    fun print(project: Project): String {
-        processModules(project)
-        processLibraries(project)
-        processSdks()
+        printer.printTestConfiguration(testConfiguration)
 
         return printer.toString()
     }
 
-    private fun processModules(project: Project) = processEntities(
-        title = "MODULES",
-        contributor = moduleContributor,
-        entities = runReadAction { ModuleManager.getInstance(project).modules }.map(Module::toPrinterEntity),
-    )
-
-    private fun processLibraries(project: Project) = processEntities(
-        title = "LIBRARIES",
-        contributor = libraryContributor,
-        entities = runReadAction { LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries }.map(Library::toPrinterEntity),
-    )
-
-    private fun processSdks() = processEntities(
-        title = "SDK",
-        contributor = sdkContributor,
-        entities = runReadAction { ProjectJdkTable.getInstance().allJdks }.map(Sdk::toPrinterEntity),
-    )
-
-    private fun <EntityType : ContributableEntity> processEntities(
-        title: String,
-        contributor: WorkspaceModelPrinterContributor<EntityType>?,
-        entities: List<EntityType>,
+    private fun Printer.printTestConfiguration(
+        testConfiguration: TestConfiguration
     ) {
-        if (contributor == null) return
-
-        val preprocessedEntities = contributor.preprocess(entities)
-        if (preprocessedEntities.isEmpty()) return
-
-        printer.println(title)
-        printer.indented {
-            for (entity in preprocessedEntities.sortedBy { it.presentableName }) {
-                printer.println(entity.presentableName)
-                contributor.process(entity, printer)
-            }
+        val testConfigurationDescription = testConfiguration.renderHumanReadableFeaturesConfigurations()
+        if (testConfigurationDescription.isNotBlank()) {
+            println()
+            println("Test configuration:")
+            println(testConfigurationDescription)
         }
     }
+
+    private fun PrinterContext.processModules() {
+        if (moduleContributors.isEmpty()) return
+
+        printer.println("MODULES")
+        val modules = runReadAction { ModuleManager.getInstance(project).modules }.toList()
+        val modulesFiltered = filterModules(modules)
+
+        for (module in modulesFiltered.sortedBy { it.name }) {
+            printer.println(module.name)
+            moduleContributors.forEach { with(it) { process(module) } }
+            printer.println()
+        }
+    }
+
+    private fun PrinterContext.filterModules(modules: List<Module>): List<Module> {
+        val config = testConfiguration.getConfiguration(FilterModulesTestFeature)
+
+        fun Module.shouldRemoveModule(): Boolean {
+            return config.includedModuleNames != null && !config.includedModuleNames!!.matches(name) ||
+                    config.excludedModuleNames != null && config.excludedModuleNames!!.matches(name) ||
+                    config.hideTestModules && isTestModule ||
+                    config.hideProductionModules && !isTestModule
+        }
+
+        return modules.filterNot { it.shouldRemoveModule() }
+    }
 }
+
+data class PrinterContext(
+    val printer: Printer,
+    val project: Project,
+    val projectRoot: File,
+    val testConfiguration: TestConfiguration,
+    val kotlinGradlePluginVersion: KotlinToolingVersion,
+)
 
 internal fun Printer.indented(block: () -> Unit) {
     pushIndent()

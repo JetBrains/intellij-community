@@ -267,14 +267,16 @@ public final class IdeKeyEventDispatcher {
     }
 
     if (window instanceof IdeFrameImpl) {
-      Component pane = ((JFrame)window).getGlassPane();
-      if (pane instanceof IdeGlassPaneEx) {
-        return ((IdeGlassPaneEx) pane).isInModalContext();
+      JRootPane rootPane = ((JFrame)window).getRootPane();
+      if (rootPane != null) {
+        Component pane = rootPane.getGlassPane();
+        if (pane instanceof IdeGlassPaneEx) {
+          return ((IdeGlassPaneEx) pane).isInModalContext();
+        }
       }
     }
 
-    if (window instanceof JDialog) {
-      final JDialog dialog = (JDialog)window;
+    if (window instanceof JDialog dialog) {
       if (!dialog.isModal()) {
         final Window owner = dialog.getOwner();
         return owner != null && isModalContext(owner);
@@ -508,8 +510,7 @@ public final class IdeKeyEventDispatcher {
   private static @Nullable KeyStroke getSecondKeystroke(@NotNull AnAction action, @NotNull KeyStroke firstKeyStroke) {
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
     for (Shortcut shortcut : shortcuts) {
-      if (shortcut instanceof KeyboardShortcut) {
-        KeyboardShortcut keyShortcut = (KeyboardShortcut)shortcut;
+      if (shortcut instanceof KeyboardShortcut keyShortcut) {
         if (firstKeyStroke.equals(keyShortcut.getFirstKeyStroke())) {
           KeyStroke secondKeyStroke = keyShortcut.getSecondKeyStroke();
           if (secondKeyStroke != null) return secondKeyStroke;
@@ -780,11 +781,10 @@ public final class IdeKeyEventDispatcher {
 
     addActionsFromActiveKeymap(sc);
 
-    if (myContext.getSecondStrokeActions().isEmpty() && sc instanceof KeyboardShortcut) {
+    if (myContext.getSecondStrokeActions().isEmpty() && sc instanceof KeyboardShortcut keyboardShortcut) {
       // little trick to invoke action which second stroke is a key w/o modifiers, but user still
       // holds the modifier key(s) of the first stroke
 
-      final KeyboardShortcut keyboardShortcut = (KeyboardShortcut)sc;
       final KeyStroke firstKeyStroke = keyboardShortcut.getFirstKeyStroke();
       final KeyStroke secondKeyStroke = keyboardShortcut.getSecondKeyStroke();
 
@@ -932,9 +932,8 @@ public final class IdeKeyEventDispatcher {
   }
 
   private static JRootPane getMenuActionsHolder(Component component) {
-    if (component instanceof JPopupMenu) {
+    if (component instanceof JPopupMenu menu) {
       // BasicPopupMenuUI.MenuKeyboardHelper#stateChanged
-      JPopupMenu menu = (JPopupMenu)component;
       return SwingUtilities.getRootPane(menu.getInvoker());
     }
     return SwingUtilities.getRootPane(component);

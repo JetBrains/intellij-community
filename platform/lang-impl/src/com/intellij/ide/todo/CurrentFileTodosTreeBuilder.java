@@ -36,10 +36,10 @@ public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
   }
 
   @Override
-  protected void collectFiles(@NotNull Consumer<? super PsiFile> consumer) {
+  protected void collectFiles(@NotNull Consumer<? super @NotNull PsiFile> consumer) {
     CurrentFileTodosTreeStructure treeStructure = (CurrentFileTodosTreeStructure)getTodoTreeStructure();
     PsiFile psiFile = treeStructure.getFile();
-    if (treeStructure.accept(psiFile)) {
+    if (psiFile != null && treeStructure.accept(psiFile)) {
       consumer.accept(psiFile);
     }
   }

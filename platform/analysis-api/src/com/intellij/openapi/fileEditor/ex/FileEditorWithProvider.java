@@ -29,9 +29,7 @@ public final class FileEditorWithProvider {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof FileEditorWithProvider)) return false;
-
-    FileEditorWithProvider provider = (FileEditorWithProvider)o;
+    if (!(o instanceof FileEditorWithProvider provider)) return false;
 
     if (!myFileEditor.equals(provider.myFileEditor)) return false;
     if (!myProvider.equals(provider.myProvider)) return false;

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.openapi.components.service
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.util.ProcessingContext
@@ -42,6 +41,8 @@ class KotlinFirCompletionContributor : CompletionContributor() {
         }
 
         context.dummyIdentifier = identifierProviderService.provideDummyIdentifier(context)
+
+        identifierProviderService.correctPositionForParameter(context)
     }
 }
 
@@ -81,15 +82,13 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
     }
 
     private fun createResultSet(parameters: KotlinFirCompletionParameters, result: CompletionResultSet): CompletionResultSet {
-        @Suppress("NAME_SHADOWING") var result = result.withRelevanceSorter(createSorter(parameters.ijParameters, result))
-        if (parameters is KotlinFirCompletionParameters.Corrected) {
-            val replaced = parameters.ijParameters
-
-            @Suppress("DEPRECATION")
-            val originalPrefix = CompletionData.findPrefixStatic(replaced.position, replaced.offset)
-            result = result.withPrefixMatcher(originalPrefix)
-        }
-        return result
+        val prefix = CompletionUtil.findIdentifierPrefix(
+            parameters.ijParameters.position.containingFile,
+            parameters.ijParameters.offset,
+            kotlinIdentifierPartPattern(),
+            kotlinIdentifierStartPattern()
+        )
+        return result.withRelevanceSorter(createSorter(parameters.ijParameters, result)).withPrefixMatcher(prefix)
     }
 
     private fun createSorter(parameters: CompletionParameters, result: CompletionResultSet): CompletionSorter =

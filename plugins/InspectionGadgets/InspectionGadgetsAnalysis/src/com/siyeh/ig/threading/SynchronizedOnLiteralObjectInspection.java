@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -13,6 +14,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
 
@@ -41,11 +44,10 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
     };
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("synchronized.on.literal.object.warn.on.all.option"),
-                                          this, "warnOnAllPossiblyLiterals");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("warnOnAllPossiblyLiterals", InspectionGadgetsBundle.message("synchronized.on.literal.object.warn.on.all.option")));
   }
 
   @Override
@@ -69,7 +71,7 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
       if (!LITERAL_TYPES.contains(type.getCanonicalText())) {
           return;
       }
-      if (!(lockExpression instanceof PsiReferenceExpression)) {
+      if (!(lockExpression instanceof PsiReferenceExpression referenceExpression)) {
         if (ExpressionUtils.isLiteral(lockExpression)) {
           registerError(lockExpression, type, Integer.valueOf(2));
         }
@@ -78,15 +80,13 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
         }
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lockExpression;
       final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiVariable)) {
+      if (!(target instanceof PsiVariable variable)) {
         if (warnOnAllPossiblyLiterals) {
           registerError(lockExpression, type, Integer.valueOf(3));
         }
         return;
       }
-      final PsiVariable variable = (PsiVariable)target;
       final PsiExpression initializer = variable.getInitializer();
       if (!ExpressionUtils.isLiteral(initializer)) {
         if (warnOnAllPossiblyLiterals) {

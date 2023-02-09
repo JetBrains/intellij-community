@@ -18,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author irengrig
- */
 public class VcsFileWatchRequestManagementTest extends LightPlatformTestCase {
   private static final String ourVcsName = "vcs";
 

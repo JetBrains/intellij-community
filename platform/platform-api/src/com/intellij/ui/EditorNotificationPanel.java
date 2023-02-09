@@ -147,7 +147,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     add(BorderLayout.CENTER, panel);
     add(BorderLayout.EAST, gearWrapper);
     JBInsets defaultInsets = ExperimentalUI.isNewUI() ? JBInsets.create(9, 16) : JBInsets.create(5, 10);
-    setBorder(JBUI.Borders.empty(JBUI.insets("Editor.Notification.borderInsets", defaultInsets)));
+    setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.Notification.borderInsets(defaultInsets)));
     setOpaque(true);
 
     myLabel.setForeground(mySchemeSupplier.get().getDefaultForeground());
@@ -200,7 +200,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     myLabel.setForeground(JBUI.CurrentTheme.Banner.FOREGROUND);
     myLabel.setBorder(JBUI.Borders.emptyRight(20));
 
-    setBorder(JBUI.Borders.empty(JBUI.insets("Editor.Notification.borderInsets", JBInsets.create(10, 12))));
+    setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.Notification.borderInsets()));
 
     putClientProperty(FileEditorManager.SEPARATOR_BORDER, new SideBorder(status.border, SideBorder.TOP | SideBorder.BOTTOM));
 

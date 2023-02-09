@@ -2,11 +2,11 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UClass;
 
 /**
  * Parser for single exception line
@@ -24,7 +24,7 @@ public interface ExceptionLineParser {
 
   Filter.Result getResult();
 
-  PsiClass getPsiClass();
+  @Nullable UClass getUClass();
 
   String getMethod();
 

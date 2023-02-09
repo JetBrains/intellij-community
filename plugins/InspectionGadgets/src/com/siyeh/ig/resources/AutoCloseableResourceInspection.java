@@ -1,13 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.resources;
 
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.resources.ImplicitResourceCloser;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -15,10 +14,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.CheckBox;
-import com.intellij.util.ui.UI;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -26,19 +23,17 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
@@ -87,38 +82,25 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
   /**
    * Warning! This class has to manually save settings to xml using its {@code readSettings()} and {@code writeSettings()} methods
    */
-  @NotNull
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final ListTable table =
-      new ListTable(new ListWrappingTableModel(ignoredTypes, InspectionGadgetsBundle.message("ignored.autocloseable.types.column.label")));
-    final JPanel tablePanel =
-      UiUtils.createAddRemoveTreeClassChooserPanel(
-        InspectionGadgetsBundle.message("choose.autocloseable.type.to.ignore.title"),
-        InspectionGadgetsBundle.message("ignored.autocloseable.types.label"),
-        table,
-        true,
-        "java.lang.AutoCloseable");
-    final ListTable table2 = new ListTable(
-      new ListWrappingTableModel(Arrays.asList(myMethodMatcher.getClassNames(), myMethodMatcher.getMethodNamePatterns()),
-                                 InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
-                                 InspectionGadgetsBundle.message("method.name.regex")));
-    table2.setEnabled(!ignoreFromMethodCall);
-    final JPanel tablePanel2 =
-      UI.PanelFactory.panel(UiUtils.createAddRemoveTreeClassChooserPanel(table2, JavaBundle.message("dialog.title.choose.class")))
-        .withLabel(InspectionGadgetsBundle.message("inspection.autocloseable.resource.ignored.methods.title")).moveLabelOnTop()
-        .resizeY(true).createPanel();
-    panel.add(tablePanel, "growx, wrap");
-    panel.add(tablePanel2, "growx, wrap");
-    final CheckBox checkBox =
-      new CheckBox(InspectionGadgetsBundle.message("auto.closeable.resource.returned.option"), this, "ignoreFromMethodCall");
-    checkBox.addItemListener(e -> table2.setEnabled(e.getStateChange() == ItemEvent.DESELECTED));
-    panel.add(checkBox, "growx, wrap");
-    panel.addCheckbox(InspectionGadgetsBundle.message("any.method.may.close.resource.argument"), "anyMethodMayClose");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.constructor.method.references"), "ignoreConstructorMethodReferences");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.getters.returning.resource"), "ignoreGettersReturningResource");
-    return ScrollPaneFactory.createScrollPane(panel);
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("ignoredTypes", InspectionGadgetsBundle.message("ignored.autocloseable.types.label"),
+                 new JavaClassValidator().withSuperClass("java.lang.AutoCloseable")
+                   .withTitle(InspectionGadgetsBundle.message("choose.autocloseable.type.to.ignore.title"))),
+      myMethodMatcher.getTable(InspectionGadgetsBundle.message("inspection.autocloseable.resource.ignored.methods.title"))
+        .prefix("myMethodMatcher"),
+      checkbox("ignoreFromMethodCall", InspectionGadgetsBundle.message("auto.closeable.resource.returned.option")),
+      checkbox("anyMethodMayClose", InspectionGadgetsBundle.message("any.method.may.close.resource.argument")),
+      checkbox("ignoreConstructorMethodReferences", InspectionGadgetsBundle.message("ignore.constructor.method.references")),
+      checkbox("ignoreGettersReturningResource", InspectionGadgetsBundle.message("ignore.getters.returning.resource"))
+    );
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController()
+      .onPrefix("myMethodMatcher", myMethodMatcher.getOptionController());
   }
 
   @NotNull
@@ -259,12 +241,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       PsiExpression[] arguments = expression.getArgumentList().getExpressions();
       PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
       if (returnedValue != null && qualifier == returnedValue) return true;
-      for (PsiExpression argument : arguments) {
-        if (returnedValue == argument) {
-          return true;
-        }
-      }
-      return false;
+      return ArrayUtil.indexOfIdentity(arguments, returnedValue) != -1;
     }
 
     @Override

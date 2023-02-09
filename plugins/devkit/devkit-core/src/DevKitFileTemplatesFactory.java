@@ -18,6 +18,7 @@ public final class DevKitFileTemplatesFactory implements FileTemplateGroupDescri
   public static final String BUILD_GRADLE_KTS = "devkit-build.gradle.kts";
   public static final String SETTINGS_GRADLE_KTS = "devkit-settings.gradle.kts";
   public static final String GRADLE_WRAPPER_PROPERTIES = "devkit-gradle-wrapper.properties";
+  public static final String GRADLE_PROPERTIES = "devkit-gradle.properties";
 
   @Override
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
@@ -44,6 +45,7 @@ public final class DevKitFileTemplatesFactory implements FileTemplateGroupDescri
     newProjectRoot.addTemplate(BUILD_GRADLE_KTS);
     newProjectRoot.addTemplate(SETTINGS_GRADLE_KTS);
     newProjectRoot.addTemplate(GRADLE_WRAPPER_PROPERTIES);
+    newProjectRoot.addTemplate(GRADLE_PROPERTIES);
 
     root.addTemplate(templatesRoot);
     root.addTemplate(newProjectRoot);

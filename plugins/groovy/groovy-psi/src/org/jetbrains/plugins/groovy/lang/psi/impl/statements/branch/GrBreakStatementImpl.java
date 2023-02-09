@@ -11,9 +11,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-/**
- * @author ilyas
- */
 public class GrBreakStatementImpl extends GrFlowInterruptingStatementImpl implements GrBreakStatement {
   public GrBreakStatementImpl(@NotNull ASTNode node) {
     super(node);

@@ -283,7 +283,6 @@ final class ComponentPanelTestAction extends DumbAwareAction {
 
       try {
         new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).
-          andShowCloseShortcut().
           withShowCount(3).
           withHeader(GOT_IT_HEADER).
           withIcon(AllIcons.General.BalloonInformation).

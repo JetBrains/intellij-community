@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.diagnostic.LoadingState;
@@ -24,7 +24,7 @@ import java.util.Collections;
 //
 // Public API for assigning touchbar actions to ui-component
 //
-public class Touchbar {
+public final class Touchbar {
   public static @Nullable ActionGroup getActions(@NotNull JComponent component) {
     return ComponentUtil.getClientProperty(component, ACTION_GROUP_KEY);
   }
@@ -119,8 +119,7 @@ public class Touchbar {
     if (EXPAND_OPTION_BUTTONS) {
       DefaultActionGroup options = null;
       for (JButton jb : buttons) {
-        if (jb instanceof JBOptionButton) {
-          final JBOptionButton ob = (JBOptionButton)jb;
+        if (jb instanceof JBOptionButton ob) {
           final Action[] opts = ob.getOptions();
           if (opts != null) {
             for (Action a : opts) {

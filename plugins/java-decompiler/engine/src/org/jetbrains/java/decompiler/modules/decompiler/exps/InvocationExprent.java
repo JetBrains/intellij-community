@@ -515,9 +515,8 @@ public class InvocationExprent extends Exprent {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (!(o instanceof InvocationExprent)) return false;
+    if (!(o instanceof InvocationExprent it)) return false;
 
-    InvocationExprent it = (InvocationExprent)o;
     return Objects.equals(name, it.name) &&
            Objects.equals(className, it.className) &&
            isStatic == it.isStatic &&

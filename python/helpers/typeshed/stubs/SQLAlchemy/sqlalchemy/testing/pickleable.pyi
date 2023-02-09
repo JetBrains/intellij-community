@@ -21,14 +21,14 @@ class Foo:
     stuff: Any
     moredata: Any
     def __init__(self, moredata, stuff: str = ...) -> None: ...
-    __hash__: Any
+    __hash__ = object.__hash__
     def __eq__(self, other): ...
 
 class Bar:
     x: Any
     y: Any
     def __init__(self, x, y) -> None: ...
-    __hash__: Any
+    __hash__ = object.__hash__
     def __eq__(self, other): ...
 
 class OldSchool:

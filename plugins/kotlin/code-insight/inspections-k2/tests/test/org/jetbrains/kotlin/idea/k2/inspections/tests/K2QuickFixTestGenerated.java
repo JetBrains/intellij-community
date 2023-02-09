@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.inspections.tests;
 
@@ -40,6 +40,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/redundantIf/assignmentFake.kt");
         }
 
+        @TestMetadata("comment.kt")
+        public void testComment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantIf/comment.kt");
+        }
+
         @TestMetadata("expression.kt")
         public void testExpression() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/redundantIf/expression.kt");
@@ -78,6 +83,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         @TestMetadata("returnWithoutElse2.kt")
         public void testReturnWithoutElse2() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/redundantIf/returnWithoutElse2.kt");
+        }
+
+        @TestMetadata("returnWithoutElse3.kt")
+        public void testReturnWithoutElse3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantIf/returnWithoutElse3.kt");
         }
 
         @TestMetadata("simple.kt")

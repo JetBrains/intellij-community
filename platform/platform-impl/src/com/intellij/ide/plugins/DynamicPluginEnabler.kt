@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.feedback.kotlinRejecters.state.KotlinRejectersInfoService
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -31,7 +30,7 @@ internal class DynamicPluginEnabler : PluginEnabler {
     PluginEnabler.HEADLESS.enable(descriptors)
     val installedDescriptors = findInstalledPlugins(descriptors)
     return installedDescriptors != null
-           && DynamicPlugins.loadPlugins(installedDescriptors)
+           && DynamicPlugins.loadPlugins(installedDescriptors, project)
   }
 
   override fun disable(descriptors: Collection<IdeaPluginDescriptor>): Boolean =
@@ -44,20 +43,10 @@ internal class DynamicPluginEnabler : PluginEnabler {
   ): Boolean {
     PluginManagerUsageCollector.pluginsStateChanged(descriptors, enable = false, project)
 
-    recordKotlinPluginDisabling(descriptors)
-
     PluginEnabler.HEADLESS.disable(descriptors)
     val installedDescriptors = findInstalledPlugins(descriptors)
     return installedDescriptors != null
            && DynamicPlugins.unloadPlugins(installedDescriptors, project, parentComponent)
-  }
-
-  private fun recordKotlinPluginDisabling(descriptors: Collection<IdeaPluginDescriptor>) {
-    // Kotlin Plugin + 4 plugin dependency
-    if (descriptors.size <= 5
-        && descriptors.any { it.pluginId.idString == "org.jetbrains.kotlin" }) {
-      KotlinRejectersInfoService.getInstance().state.showNotificationAfterRestart = true
-    }
   }
 }
 

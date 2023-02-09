@@ -18,7 +18,8 @@ import java.time.Duration
 private val grazieProfessionalPluginId
   get() = PluginId.getId("com.intellij.grazie.pro")
 
-private val isGrazieProfessionalInstalled by lazy { PluginManager.isPluginInstalled(grazieProfessionalPluginId) }
+private val isGrazieProfessionalInstalled
+  get() = PluginManager.isPluginInstalled(grazieProfessionalPluginId)
 
 private const val NOTIFICATION_SHOWN = "Grazie.Professional.Advertisement.Shown"
 private val IGNORE_DELAY = Duration.ofDays(14).toMillis()
@@ -27,7 +28,7 @@ private const val INVOCATION_COUNT = "Grazie.Professional.Advertisement.Invoked"
 private const val SHOW_AFTER_INVOCATIONS = 3
 
 private fun shouldShow(): Boolean {
-  val timestamp = PropertiesComponent.getInstance().getInt(NOTIFICATION_SHOWN, 0)
+  val timestamp = PropertiesComponent.getInstance().getLong(NOTIFICATION_SHOWN, 0)
   if (timestamp < 0) {
     return false
   }

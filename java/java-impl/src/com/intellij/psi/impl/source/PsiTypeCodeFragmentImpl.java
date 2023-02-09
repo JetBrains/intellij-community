@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.BitUtil.isSet;
 
-/**
- * @author dsl
- */
 public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiTypeCodeFragment {
   private final static Logger LOG = Logger.getInstance(PsiTypeCodeFragmentImpl.class);
 

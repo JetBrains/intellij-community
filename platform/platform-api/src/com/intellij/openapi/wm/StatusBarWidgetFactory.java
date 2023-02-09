@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,13 +21,14 @@ public interface StatusBarWidgetFactory {
 
   /**
    * @return Widget identifier. Used to store visibility settings.
+   *
+   * Must match extension id.
    */
   @NotNull @NonNls String getId();
 
   /**
    * @return Widget's display name. Used to refer a widget in UI,
-   * e.g. for "Enable/disable &lt;display name>" action names
-   * or for checkbox texts in settings.
+   * e.g. for "Enable/disable &lt;display name>" action names or for checkbox texts in settings.
    */
   @NotNull @NlsContexts.ConfigurableName String getDisplayName();
 
@@ -46,7 +48,9 @@ public interface StatusBarWidgetFactory {
    * you need to call {@link com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager#updateWidget(StatusBarWidgetFactory)}
    * explicitly to get the status bar updated.
    */
-  boolean isAvailable(@NotNull Project project);
+  default boolean isAvailable(@NotNull Project project) {
+    return true;
+  }
 
   /**
    * Creates a widget to be added to the status bar.
@@ -63,7 +67,13 @@ public interface StatusBarWidgetFactory {
    * {@link com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager#updateWidget(StatusBarWidgetFactory)}
    * to recreate the widget and re-add it to the status bar.
    */
-  @NotNull StatusBarWidget createWidget(@NotNull Project project);
+  default @NotNull StatusBarWidget createWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
+    return createWidget(project);
+  }
+
+  default @NotNull StatusBarWidget createWidget(@NotNull Project project) {
+    throw new AbstractMethodError("createWidget is not implemented");
+  }
 
   default void disposeWidget(@NotNull StatusBarWidget widget) {
     Disposer.dispose(widget);
@@ -81,7 +91,9 @@ public interface StatusBarWidgetFactory {
    * in a frame that the given status bar is attached to.
    * For creating editor-based widgets, see also {@link com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory}
    */
-  boolean canBeEnabledOn(@NotNull StatusBar statusBar);
+  default boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
+    return true;
+  }
 
   /**
    * Returns {@code true} if the widget should be created by default.

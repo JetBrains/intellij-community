@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.TreeUIHelper
@@ -30,38 +30,22 @@ import com.intellij.util.asSafely
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.findPathWithData
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
-import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
-internal class ModulesTree(
-    project: Project
-) : Tree(DefaultMutableTreeNode(TargetModules.None)), DataProvider, CopyProvider {
-
-    private val targetModulesChannel = Channel<TargetModules>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    val targetModulesStateFlow = targetModulesChannel.consumeAsFlow()
-        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, TargetModules.None)
+internal class ModulesTree(private val project: Project) : Tree(DefaultMutableTreeNode(TargetModules.None)), DataProvider, CopyProvider {
 
     init {
         addTreeSelectionListener {
@@ -98,35 +82,30 @@ internal class ModulesTree(
 
         TreeUIHelper.getInstance().installTreeSpeedSearch(this)
         TreeUtil.installActions(this)
-        project.uiStateSource.targetModulesFlow
-            .mapNotNull { selectedTargetModule ->
-                val queue = mutableListOf(model.root as DefaultMutableTreeNode)
-                while (queue.isNotEmpty()) {
-                    val elem = queue.removeAt(0)
-                    if (elem.userObject as TargetModules == selectedTargetModule) {
-                        return@mapNotNull TreePath(elem.path)
-                    } else {
-                        queue.addAll(elem.children().asSequence().filterIsInstance<DefaultMutableTreeNode>())
-                    }
-                }
-                null
-            }
-            .flowOn(project.lifecycleScope.coroutineDispatcher)
-            .onEach { selectionModel.selectionPath = it }
-            .flowOn(Dispatchers.EDT)
-            .launchIn(project.lifecycleScope)
     }
 
     fun display(treeModel: TreeModel) {
         if (treeModel == model) return
         setPaintBusy(true)
         val wasEmpty = model.root == null || model.getChildCount(model.root) == 0
-        val lastSelected = selectionPath?.lastPathComponent?.asSafely<DefaultMutableTreeNode>()
-            ?.userObject?.asSafely<TargetModules>()
+        val lastSelected = selectionPath
+            ?.path
+            ?.filterIsInstance<DefaultMutableTreeNode>()
+            ?.mapNotNull { it.userObject as? TargetModules }
+            ?.map {
+                when(it) {
+                    is TargetModules.All -> "root"
+                    is TargetModules.One -> it.module.name
+                    TargetModules.None -> ""
+                }
+            }
+            ?: emptyList()
+
+
         // Swapping model resets the selection — but, we set the right selection just afterwards
         model = treeModel
-        if (wasEmpty) TreeUtil.expandAll(this)
-        selectionPath = lastSelected?.let { model.root.asSafely<DefaultMutableTreeNode>()?.findPathWithData(it) } ?: TreePath(model.root)
+        expandAll()
+        selectionPath = model.root.asSafely<DefaultMutableTreeNode>()!!.findPathWithData(lastSelected)
         updateUI()
         setPaintBusy(false)
     }
@@ -138,7 +117,7 @@ internal class ModulesTree(
 
     private fun setTargetModules(targetModules: TargetModules, traceInfo: TraceInfo?) {
         logDebug(traceInfo, "ModulesTree#setTargetModules()") { "Target module changed, now it's $targetModules" }
-        targetModulesChannel.trySend(targetModules)
+        project.lifecycleScope.launch { project.service<PackageManagementPanel.UIState>().modulesTree.targetModulesStateFlow.emit(targetModules) }
     }
 
     override fun getData(dataId: String): Any? = when {
@@ -147,7 +126,13 @@ internal class ModulesTree(
     }
 
     override fun performCopy(dataContext: DataContext) {
-        val dataToCopy = targetModulesStateFlow.value.takeIf { it !is TargetModules.None }?.joinToString { it.projectModule.getFullName() }
+        val dataToCopy = project.service<PackageManagementPanel.UIState>()
+            .modulesTree
+            .targetModulesStateFlow
+            .value
+            .takeIf { it !is TargetModules.None }
+            ?.modules
+            ?.joinToString { it.getFullName() }
             ?: return
 
         CopyPasteManager.getInstance().setContents(StringSelection(dataToCopy))
@@ -158,37 +143,8 @@ internal class ModulesTree(
     override fun isCopyEnabled(dataContext: DataContext) = true
 
     override fun isCopyVisible(dataContext: DataContext) = true
+
+    private fun expandAll() = TreeUtil.expandAll(this)
 }
 
-private fun TreeModel.pathTo(selection: DefaultMutableTreeNode): TreePath? {
-    val rootNode = root as? DefaultMutableTreeNode ?: return null
-    val path = recursiveSearch(rootNode, selection)
-    return path?.takeIf { it.isNotEmpty() }?.let { TreePath(it.toTypedArray()) }
-}
 
-private operator fun <T> T.plus(elements: List<T>): List<T> = buildList {
-    add(this@plus)
-    addAll(elements)
-}
-
-private fun recursiveSearch(currentElement: DefaultMutableTreeNode, selection: DefaultMutableTreeNode): MutableList<DefaultMutableTreeNode>? {
-    if (currentElement.userObject == selection.userObject) return mutableListOf(currentElement)
-    else for (child: TreeNode in currentElement.children()) {
-        if (child !is DefaultMutableTreeNode) continue
-        val path = recursiveSearch(child, selection)
-        if (path != null) return path.also { it.add(0, currentElement) }
-    }
-    return null
-}
-
-private operator fun TreeModel.contains(treeNode: DefaultMutableTreeNode) =
-    treeNode in treeNodesSequence().map { it.userObject }
-
-fun TreeModel.treeNodesSequence() = sequence {
-    val queue = mutableListOf(root.asSafely<DefaultMutableTreeNode>() ?: return@sequence)
-    while (queue.isNotEmpty()) {
-        val next = queue.removeAt(0)
-        yield(next)
-        queue.addAll(next.children().toList().mapNotNull { it.asSafely<DefaultMutableTreeNode>() })
-    }
-}

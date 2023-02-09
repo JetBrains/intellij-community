@@ -20,9 +20,6 @@ import java.util.List;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.XML_ATTRIBUTE;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.XML_TAG;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XmlArrangementVisitor extends XmlElementVisitor {
 
   private final Stack<XmlElementArrangementEntry> myStack = new Stack<>();

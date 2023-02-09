@@ -21,6 +21,7 @@ import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -221,6 +222,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   }
 
   @NotNull
+  @Unmodifiable
   public final List<E> toList() {
     return Collections.unmodifiableList(ContainerUtil.newArrayList(JBIterable.once(this)));
   }
@@ -245,7 +247,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   static String toShortString(@NotNull Object o) {
     String name = o.getClass().getName();
     int idx = name.lastIndexOf('$');
-    if (idx > 0 && idx < name.length() && StringUtil.isJavaIdentifierStart(name.charAt(idx + 1))) {
+    if (idx > 0 && idx + 1 < name.length() && StringUtil.isJavaIdentifierStart(name.charAt(idx + 1))) {
       return name.substring(idx + 1);
     }
     return name.substring(name.lastIndexOf('.') + 1);
@@ -285,7 +287,9 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
     @Override
     public boolean value(A a) {
-      return cur > 0 && cur-- != 0;
+      if (cur <= 0) return false;
+      cur--;
+      return true;
     }
   }
 

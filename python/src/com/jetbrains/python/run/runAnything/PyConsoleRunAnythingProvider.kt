@@ -9,9 +9,6 @@ import com.jetbrains.python.console.RunPythonOrDebugConsoleAction
 import icons.PythonIcons
 import javax.swing.Icon
 
-/**
- * @author vlan
- */
 class PyConsoleRunAnythingProvider : RunAnythingAnActionProvider<RunPythonOrDebugConsoleAction>() {
   override fun getCommand(value: RunPythonOrDebugConsoleAction) = helpCommand
 

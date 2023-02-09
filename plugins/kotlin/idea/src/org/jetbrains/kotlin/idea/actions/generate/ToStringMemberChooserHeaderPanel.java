@@ -40,7 +40,12 @@ public class ToStringMemberChooserHeaderPanel extends JPanel {
         comboBox.setSelectedItem(ToStringTemplatesManager.getInstance().getDefaultTemplate());
 
         JLabel templatesLabel = new JLabel(KotlinBundle.message("action.generate.tostring.choose.implementation"));
-        templatesLabel.setDisplayedMnemonic('i');
+        {
+            String mnemonic = KotlinBundle.message("action.generate.tostring.choose.implementation.mnemonic");
+            if (mnemonic.length() == 1) {
+                templatesLabel.setDisplayedMnemonic(mnemonic.charAt(0));
+            }
+        }
         templatesLabel.setLabelFor(comboBox);
 
         GridBagConstraints constraints = new GridBagConstraints();
@@ -55,7 +60,10 @@ public class ToStringMemberChooserHeaderPanel extends JPanel {
 
         if (allowSuperCall) {
             generateSuperCheckBox = new JCheckBox(KotlinBundle.message("action.generate.tostring.generate.super.call"));
-            generateSuperCheckBox.setMnemonic('s');
+            String mnemonic = KotlinBundle.message("action.generate.tostring.generate.super.call.mnemonic");
+            if (mnemonic.length() == 1) {
+                generateSuperCheckBox.setMnemonic(mnemonic.charAt(0));
+            }
             constraints.gridx = 2;
             constraints.weightx = 0.0;
             add(generateSuperCheckBox, constraints);

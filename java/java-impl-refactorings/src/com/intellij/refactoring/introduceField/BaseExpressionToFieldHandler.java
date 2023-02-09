@@ -93,7 +93,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return false;
     }
 
-    if (PsiType.VOID.equals(tempType)) {
+    if (PsiTypes.voidType().equals(tempType)) {
       String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("selected.expression.has.void.type"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return false;
@@ -162,7 +162,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         return true;
       }
       else {
-        LOG.error(file);
+        LOG.error("Unexpected file: " + file);
         return true;
       }
     }

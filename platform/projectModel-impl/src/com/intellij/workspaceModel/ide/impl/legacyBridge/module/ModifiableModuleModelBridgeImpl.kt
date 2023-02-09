@@ -82,7 +82,6 @@ internal class ModifiableModuleModelBridgeImpl(
     if (findModuleByName(moduleName) != null) {
       throw ModuleWithNameAlreadyExists("Module already exists: $moduleName", moduleName)
     }
-    removeUnloadedModule(moduleName)
 
     val entitySource = JpsEntitySourceFactory.createEntitySourceForModule(project, virtualFileManager.fromPath(PathUtil.getParentPath(canonicalPath)), null)
 
@@ -135,20 +134,6 @@ internal class ModifiableModuleModelBridgeImpl(
     return null
   }
 
-  private fun removeUnloadedModule(moduleName: String) {
-    // If module name equals to already unloaded module, the previous should be removed from store
-    val unloadedModuleDescription = moduleManager.getUnloadedModuleDescription(moduleName)
-    if (unloadedModuleDescription != null) {
-      val moduleEntity = entityStorageOnDiff.current.resolve(ModuleId(unloadedModuleDescription.name))
-      if (moduleEntity != null) {
-        diff.removeEntity(moduleEntity)
-      }
-      else {
-        LOG.error("Could not find module to remove by id: ${unloadedModuleDescription.name}")
-      }
-    }
-  }
-
   override fun loadModule(file: Path) = loadModule(file.systemIndependentPath)
 
   override fun loadModule(filePath: String): Module {
@@ -156,8 +141,6 @@ internal class ModifiableModuleModelBridgeImpl(
     if (findModuleByName(moduleName) != null) {
       error("Module name '$moduleName' already exists. Trying to load module: $filePath")
     }
-
-    removeUnloadedModule(moduleName)
 
     val moduleEntity = moduleManager.loadModuleToBuilder(moduleName, filePath, diff)
     return createModuleInstance(moduleEntity, false)
@@ -263,7 +246,6 @@ internal class ModifiableModuleModelBridgeImpl(
     myNewNameToModule.removeValue(module)
     myNewNameToModule.remove(newName)
 
-    removeUnloadedModule(newName)
     val oldName = uncommittedOldName ?: module.name
     if (oldName != newName) { // if renaming to itself, forget it altogether
       val moduleToAdd = myModulesToAdd.remove(oldName)

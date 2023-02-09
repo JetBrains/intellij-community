@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -221,8 +221,7 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
   }
 
   private static boolean hasNullCase(@NotNull List<SwitchStatementBranch> allBranches) {
-    return ContainerUtil.or(allBranches, br -> ContainerUtil.or(br.getCaseElements(), element -> element instanceof PsiExpression expr &&
-                                                                                                 ExpressionUtils.isNullLiteral(expr)));
+    return ContainerUtil.or(allBranches, br -> ContainerUtil.or(br.getCaseElements(), ExpressionUtils::isNullLiteral));
   }
 
   @NotNull
@@ -315,7 +314,7 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
   }
 
   private static void dumpCaseValues(String expressionText,
-                                     List<PsiElement> caseElements,
+                                     List<PsiCaseLabelElement> caseElements,
                                      boolean firstBranch,
                                      boolean useEquals,
                                      boolean useRequireNonNullMethod,
@@ -433,16 +432,14 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     if (value == null) {
       return "";
     }
-    if (!(value instanceof PsiReferenceExpression)) {
+    if (!(value instanceof PsiReferenceExpression referenceExpression)) {
       return commentTracker.text(value);
     }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)value;
     final PsiElement target = referenceExpression.resolve();
 
-    if (!(target instanceof PsiEnumConstant)) {
+    if (!(target instanceof PsiEnumConstant enumConstant)) {
       return commentTracker.text(value);
     }
-    final PsiEnumConstant enumConstant = (PsiEnumConstant)target;
     final PsiClass aClass = enumConstant.getContainingClass();
     if (aClass == null) {
       return commentTracker.text(value);

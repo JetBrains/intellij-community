@@ -4,12 +4,12 @@ package org.jetbrains.idea.maven.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
-import org.jetbrains.idea.maven.server.security.MavenToken;
 
 public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer {
 
@@ -21,8 +21,11 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
-    catch (RemoteException e) {
-      throw rethrowException(e);
+    catch (MavenCoreInitializationException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -39,8 +42,8 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
-    catch (RemoteException e) {
-      throw rethrowException(e);
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -51,8 +54,8 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
     try {
       return Maven3XServerEmbedder.interpolateAndAlignModel(model, basedir);
     }
-    catch (Exception e) {
-      throw rethrowException(e);
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -62,8 +65,8 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
     try {
       return Maven3XServerEmbedder.assembleInheritance(model, parentModel);
     }
-    catch (Exception e) {
-      throw rethrowException(e);
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -76,8 +79,8 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
     try {
       return Maven3XServerEmbedder.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
-    catch (Exception e) {
-      throw rethrowException(e);
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -90,8 +93,8 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
-    catch (RemoteException e) {
-      throw rethrowException(e);
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -103,8 +106,8 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
-    catch (RemoteException e) {
-      throw rethrowException(e);
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
   @Override

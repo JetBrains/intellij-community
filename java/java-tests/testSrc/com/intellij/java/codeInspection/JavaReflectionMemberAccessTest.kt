@@ -20,9 +20,6 @@ import com.intellij.codeInspection.reflectiveAccess.JavaReflectionMemberAccessIn
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class JavaReflectionMemberAccessTest : LightJavaCodeInsightFixtureTestCase() {
 
   private val inspection = JavaReflectionMemberAccessInspection()

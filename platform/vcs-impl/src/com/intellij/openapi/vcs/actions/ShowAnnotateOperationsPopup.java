@@ -129,6 +129,18 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
    */
   @CalledInAny
   public static int getAnnotationLineNumber(@NonNls DataContext dataContext) {
+    return getAnnotationLineNumber(dataContext, false);
+  }
+
+  /**
+   * @param approximate true if approximate location is acceptable (ex: when line was modified locally),
+   *                    false if {@link LineNumberConstants#ABSENT_LINE_NUMBER} should be returned.
+   * @return Annotation line number (ex: to be passed into {@link FileAnnotation#getLineRevisionNumber(int)}).
+   * <p>
+   * Not to be confused with 'editor line'.
+   */
+  @CalledInAny
+  public static int getAnnotationLineNumber(@NonNls DataContext dataContext, boolean approximate) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     if (editor == null) return LineNumberConstants.ABSENT_LINE_NUMBER;
 
@@ -138,6 +150,6 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
     Integer gutterLine = dataContext.getData(EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR);
     int editorLine = gutterLine != null ? gutterLine : editor.getCaretModel().getLogicalPosition().line;
 
-    return annotationPresentation.getAnnotationLine(editorLine);
+    return annotationPresentation.getAnnotationLine(editorLine, approximate);
   }
 }

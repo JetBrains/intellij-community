@@ -34,9 +34,6 @@ import java.util.stream.Stream;
 
 import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
 
-/**
- * @author Irina.Chernushina on 8/28/2015.
- */
 public final class JsonSchemaObject {
   private static final Logger LOG = Logger.getInstance(JsonSchemaObject.class);
 

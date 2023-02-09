@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -83,11 +83,9 @@ final class LambdaIndy {
   static LambdaIndy from(InvokeDynamicInsnNode indyNode) {
     Handle bsm = indyNode.bsm;
     if (LAMBDA_METAFACTORY_CLASS.equals(bsm.getOwner()) &&
-       LAMBDA_METAFACTORY_METHOD.equals(bsm.getName()) &&
-       LAMBDA_METAFACTORY_DESCRIPTOR.equals(bsm.getDesc()) &&
-       indyNode.bsmArgs.length >= 3 && indyNode.bsmArgs[1] instanceof Handle && indyNode.bsmArgs[2] instanceof Type) {
-      Handle lambdaBody = (Handle)indyNode.bsmArgs[1];
-      Type targetType = (Type)indyNode.bsmArgs[2];
+        LAMBDA_METAFACTORY_METHOD.equals(bsm.getName()) &&
+        LAMBDA_METAFACTORY_DESCRIPTOR.equals(bsm.getDesc()) &&
+       indyNode.bsmArgs.length >= 3 && indyNode.bsmArgs[1] instanceof Handle lambdaBody && indyNode.bsmArgs[2] instanceof Type targetType) {
       Member targetMethod = new Member(lambdaBody.getOwner(), lambdaBody.getName(), lambdaBody.getDesc());
       Type retType = Type.getReturnType(indyNode.desc);
       return new LambdaIndy(lambdaBody.getTag(), targetType, targetMethod, retType);

@@ -6,9 +6,6 @@ import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
 
-/**
- * @author Denis Zhdanov
- */
 public class MarkupWrapTest extends AbstractWrapTest {
 
 

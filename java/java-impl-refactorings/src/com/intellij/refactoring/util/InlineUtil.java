@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -37,9 +37,6 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author ven
- */
 public final class InlineUtil implements CommonJavaInlineUtil {
   private static final Logger LOG = Logger.getInstance(InlineUtil.class);
 
@@ -304,8 +301,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
   public static void solveVariableNameConflicts(final PsiElement scope,
                                                 final PsiElement placeToInsert,
                                                 final PsiElement renameScope) throws IncorrectOperationException {
-    if (scope instanceof PsiVariable) {
-      PsiVariable var = (PsiVariable)scope;
+    if (scope instanceof PsiVariable var) {
       String name = var.getName();
       String oldName = name;
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(scope.getProject());
@@ -438,24 +434,21 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     CommonJavaRefactoringUtil.tryToInlineArrayCreationForVarargs(expr);
 
     //Q: move the following code to some util? (addition to inline?)
-    if (expr instanceof PsiThisExpression) {
-      if (expr.getParent() instanceof PsiReferenceExpression) {
-        PsiReferenceExpression refExpr = (PsiReferenceExpression)expr.getParent();
-        PsiElement refElement = refExpr.resolve();
-        PsiExpression exprCopy = (PsiExpression)refExpr.copy();
-        refExpr = (PsiReferenceExpression)refExpr.replace(factory.createExpressionFromText(
-          Objects.requireNonNull(refExpr.getReferenceName()), null));
-        if (refElement != null) {
-          PsiElement newRefElement = refExpr.resolve();
-          if (!refElement.equals(newRefElement)) {
-            // change back
-            refExpr.replace(exprCopy);
-          }
+    if (expr instanceof PsiThisExpression && expr.getParent() instanceof PsiReferenceExpression refExpr) {
+      PsiElement refElement = refExpr.resolve();
+      PsiExpression exprCopy = (PsiExpression)refExpr.copy();
+      refExpr = (PsiReferenceExpression)refExpr.replace(factory.createExpressionFromText(
+        Objects.requireNonNull(refExpr.getReferenceName()), null));
+      if (refElement != null) {
+        PsiElement newRefElement = refExpr.resolve();
+        if (!refElement.equals(newRefElement)) {
+          // change back
+          refExpr.replace(exprCopy);
         }
       }
     }
 
-    if (expr instanceof PsiLiteralExpression && PsiType.BOOLEAN.equals(expr.getType())) {
+    if (expr instanceof PsiLiteralExpression && PsiTypes.booleanType().equals(expr.getType())) {
       Boolean value = tryCast(((PsiLiteralExpression)expr).getValue(), Boolean.class);
       if (value != null) {
         SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expr, value);
@@ -671,8 +664,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
       PsiExpression operand = ((PsiTypeCastExpression)initializer).getOperand();
       return operand != null && canInlineParameterOrThisVariable(project, operand, shouldBeFinal, strictlyFinal, accessCount, false);
     }
-    else if (initializer instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression binExpr = (PsiPolyadicExpression)initializer;
+    else if (initializer instanceof PsiPolyadicExpression binExpr) {
       for (PsiExpression op : binExpr.getOperands()) {
         if (!canInlineParameterOrThisVariable(project, op, shouldBeFinal, strictlyFinal, accessCount, false)) return false;
       }

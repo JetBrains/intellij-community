@@ -31,7 +31,7 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class Xsd2InstanceUtils {
+public final class Xsd2InstanceUtils {
     public static String generate(String[] args) {
         Set flags = new HashSet();
         Set opts = new HashSet();
@@ -125,8 +125,7 @@ public class Xsd2InstanceUtils {
   public static XmlElementDescriptor getDescriptor(XmlTag tag, String elementName) {
     final PsiMetaData metaData = tag.getMetaData();
 
-    if (metaData instanceof XmlNSDescriptorImpl) {
-      final XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl) metaData;
+    if (metaData instanceof XmlNSDescriptorImpl nsDescriptor) {
       return nsDescriptor.getElementDescriptor(elementName, nsDescriptor.getDefaultNamespace());
     }
 
@@ -135,8 +134,7 @@ public class Xsd2InstanceUtils {
 
   public static List<String> addVariantsFromRootTag(XmlTag rootTag) {
     PsiMetaData metaData = rootTag.getMetaData();
-    if (metaData instanceof XmlNSDescriptorImpl) {
-      XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl) metaData;
+    if (metaData instanceof XmlNSDescriptorImpl nsDescriptor) {
 
       List<String> elementDescriptors = new ArrayList<>();
       XmlElementDescriptor[] rootElementsDescriptors = nsDescriptor.getRootElementsDescriptors(PsiTreeUtil.getParentOfType(rootTag, XmlDocument.class));

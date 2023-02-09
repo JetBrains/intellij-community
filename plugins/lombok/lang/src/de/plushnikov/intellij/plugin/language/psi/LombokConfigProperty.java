@@ -10,12 +10,10 @@ public interface LombokConfigProperty extends PsiElement {
   @NotNull
   LombokConfigOperation getOperation();
 
-  //WARNING: getKey(...) is skipped
-  //matching getKey(LombokConfigProperty, ...)
-  //methods are not found in LombokConfigPsiUtil
+  String getKey();
 
-  //WARNING: getValue(...) is skipped
-  //matching getValue(LombokConfigProperty, ...)
-  //methods are not found in LombokConfigPsiUtil
+  String getValue();
+
+  String getSign();
 
 }

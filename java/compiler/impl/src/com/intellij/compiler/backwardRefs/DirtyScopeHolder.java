@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -40,7 +40,6 @@ import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
-import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -141,14 +140,6 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     }
   }
 
-  /**
-   * @deprecated use {@link DirtyScopeHolder#upToDateCheckFinished(Collection, Collection)}
-   */
-  @Deprecated(forRemoval = true)
-  public void upToDateCheckFinished(Module @NotNull [] modules) {
-    upToDateCheckFinished(ArraysKt.asList(modules), Collections.emptyList());
-  }
-
   public void upToDateCheckFinished(@Nullable Collection<@NotNull Module> allModules, @Nullable Collection<@NotNull Module> compiledModules) {
     compilationFinished(() -> {
       if (allModules != null) myVFSChangedModules.addAll(allModules);
@@ -227,9 +218,9 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       }
     }
 
-    PsiDocumentManager psiDocumentMananger = PsiDocumentManager.getInstance(myProject);
-    for (Document document : psiDocumentMananger.getUncommittedDocuments()) {
-      final PsiFile psiFile = psiDocumentMananger.getPsiFile(document);
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
+    for (Document document : psiDocumentManager.getUncommittedDocuments()) {
+      final PsiFile psiFile = psiDocumentManager.getPsiFile(document);
       if (psiFile == null) continue;
       final VirtualFile file = psiFile.getVirtualFile();
       if (file == null) continue;
@@ -276,13 +267,11 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       }
       else if (event instanceof VFileCopyEvent || event instanceof VFileMoveEvent) {
         VirtualFile file = event.getFile();
-        if (file != null) {
-          fileChanged(file);
-        }
+        assert file != null;
+        fileChanged(file);
       }
       else {
-        if (event instanceof VFilePropertyChangeEvent) {
-          VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
+        if (event instanceof VFilePropertyChangeEvent pce) {
           String propertyName = pce.getPropertyName();
           if (VirtualFile.PROP_NAME.equals(propertyName) || VirtualFile.PROP_SYMLINK_TARGET.equals(propertyName)) {
             fileChanged(pce.getFile());
@@ -302,13 +291,11 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
 
       if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || event instanceof VFileContentChangeEvent) {
         VirtualFile file = event.getFile();
-        if (file != null) {
-          final Module module = getModuleForSourceContentFile(file);
-          ContainerUtil.addIfNotNull(modulesToBeMarkedDirty, module);
-        }
+        assert file != null;
+        final Module module = getModuleForSourceContentFile(file);
+        ContainerUtil.addIfNotNull(modulesToBeMarkedDirty, module);
       }
-      else if (event instanceof VFilePropertyChangeEvent) {
-        VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
+      else if (event instanceof VFilePropertyChangeEvent pce) {
         String propertyName = pce.getPropertyName();
         if (VirtualFile.PROP_NAME.equals(propertyName) || VirtualFile.PROP_SYMLINK_TARGET.equals(propertyName)) {
           final String path = pce.getFile().getPath();

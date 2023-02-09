@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.documentation.actions
 
@@ -7,11 +7,11 @@ import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enab
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.featureStatistics.FeatureUsageTracker
-import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS
 import com.intellij.lang.documentation.ide.impl.DocumentationManager.Companion.instance
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.EditorGutter
 import com.intellij.openapi.project.DumbAware
+import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilBase
 

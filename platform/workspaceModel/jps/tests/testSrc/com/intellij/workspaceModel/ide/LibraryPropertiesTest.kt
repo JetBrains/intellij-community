@@ -65,7 +65,7 @@ class LibraryPropertiesTest {
         projectLibTableModel.commit()
       }
 
-      WorkspaceModel.getInstance(project).entityStorage.current.entities(LibraryPropertiesEntity::class.java).forEach {
+      WorkspaceModel.getInstance(project).currentSnapshot.entities(LibraryPropertiesEntity::class.java).forEach {
         assertEquals(kindId, it.libraryType)
         assertEquals(elementAsString, it.propertiesXmlTag)
       }
@@ -97,7 +97,7 @@ class LibraryPropertiesTest {
       rootModel.commit()
     }
 
-    WorkspaceModel.getInstance(project).entityStorage.current.entities(LibraryPropertiesEntity::class.java).forEach {
+    WorkspaceModel.getInstance(project).currentSnapshot.entities(LibraryPropertiesEntity::class.java).forEach {
       assertEquals(antLibraryName, it.library.name)
       assertEquals(kindId, it.libraryType)
       assertEquals(elementAsString, it.propertiesXmlTag)

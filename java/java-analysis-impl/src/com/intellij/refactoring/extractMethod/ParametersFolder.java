@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.extractMethod;
 
@@ -198,7 +198,7 @@ public class ParametersFolder {
             break;
           }
           final PsiType expressionType = ((PsiExpression)expression).getType();
-          if (expressionType == null || PsiType.VOID.equals(expressionType)) {
+          if (expressionType == null || PsiTypes.voidType().equals(expressionType)) {
             break;
           }
           if (isTooLongExpressionChain(expression)) {
@@ -317,8 +317,7 @@ public class ParametersFolder {
       @Override
       public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         final PsiElement resolved = expression.resolve();
-        if (resolved instanceof PsiVariable) {
-          final PsiVariable variable = (PsiVariable)resolved;
+        if (resolved instanceof PsiVariable variable) {
           if (!(variable instanceof PsiField) && !inputVariables.contains(variable)) {
             localVarsUsed[0] = true;
             return;

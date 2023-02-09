@@ -15,18 +15,17 @@ import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomFacetRelatedEntitySerializer
-import com.intellij.workspaceModel.ide.legacyBridge.FacetBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import com.intellij.workspaceModel.ide.toExternalSource
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
 import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import org.jetbrains.jps.model.serialization.facet.FacetState
 
@@ -48,8 +47,8 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
   override fun facetConfigurationChanged(facet: Facet<*>) {
     if (facet is FacetBridge<*>) {
       runWriteAction {
-        val mutableEntityStorage = module.diff ?: WorkspaceModel.getInstance(module.project).entityStorage.current.toBuilder()
-        facet.applyChangesToStorage(mutableEntityStorage, module)
+        val mutableEntityStorage = module.diff ?: WorkspaceModel.getInstance(module.project).currentSnapshot.toBuilder()
+        facet.updateInStorage(mutableEntityStorage)
         if (module.diff == null) {
           WorkspaceModel.getInstance(module.project).updateProjectModel("Update facet configuration") { it.addDiff(mutableEntityStorage) }
         }
@@ -136,7 +135,7 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     val facetTypeToSerializer = CustomFacetRelatedEntitySerializer.EP_NAME.extensionList.associateBy { it.supportedFacetType }
     WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetContributor ->
       if (facetContributor.rootEntityType != FacetEntity::class.java) {
-        facetContributor.getRootEntityByModuleEntity(moduleEntity)?.let {
+        facetContributor.getRootEntitiesByModuleEntity(moduleEntity).forEach {
           updateDiffOrStorage{ this.getOrPutDataByEntity(it) { facetContributor.createFacetFromEntity(it, moduleBridge) }}
         }
       } else {
@@ -166,7 +165,7 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     facetEntities.addAll(moduleEntity.facets)
     WorkspaceFacetContributor.EP_NAME.extensions.forEach {
       if (it.rootEntityType != FacetEntity::class.java) {
-        facetEntities.addIfNotNull(it.getRootEntityByModuleEntity(moduleEntity))
+        facetEntities.addAll(it.getRootEntitiesByModuleEntity(moduleEntity))
       }
     }
     return facetEntities.mapNotNull { facetMapping().getDataByEntity(it) }.toList().toTypedArray()
@@ -216,13 +215,12 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     super.facetsChanged()
   }
 
-  fun checkConsistency(facetRelatedEntities: List<WorkspaceEntity>,
-                       entityTypeToFacetContributor: Map<Class<WorkspaceEntity>, WorkspaceFacetContributor<WorkspaceEntity>>) {
+  fun checkConsistency(facetRelatedEntities: List<ModuleSettingsBase>,
+                       entityTypeToFacetContributor: Map<Class<ModuleSettingsBase>, WorkspaceFacetContributor<ModuleSettingsBase>>) {
     val facetEntitiesSet = facetRelatedEntities.toSet()
     for (entity in facetRelatedEntities) {
-      val facetContributor = entityTypeToFacetContributor[entity.getEntityInterface()]!!
       val facet = facetMapping().getDataByEntity(entity)
-      val facetName = facetContributor.getFacetName(entity)
+      val facetName = entity.name
       if (facet == null) {
         throw IllegalStateException("No facet registered for $entity (name = $facetName)")
       }
@@ -232,7 +230,7 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
       val entityFromMapping = facetMapping().getEntities(facet).single() as FacetEntity
       val moduleEntity = entityFromMapping.module
       val facetsFromStorage = entityTypeToFacetContributor.values.filter { it.rootEntityType != FacetEntity::class.java }
-        .mapNotNull { it.getRootEntityByModuleEntity(moduleEntity) }
+        .flatMap { it.getRootEntitiesByModuleEntity(moduleEntity) }
         .toMutableSet()
       facetsFromStorage.addAll(moduleEntity.facets.toSet())
       if (facetsFromStorage != facetEntitiesSet) {
@@ -242,13 +240,12 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     val usedStore = moduleBridge.diff ?: moduleBridge.entityStorage.current
     val resolvedModuleEntity = usedStore.resolve(moduleBridge.moduleEntityId)!!
     val mappedFacets = entityTypeToFacetContributor.values.filter { it.rootEntityType != FacetEntity::class.java }
-      .mapNotNull { it.getRootEntityByModuleEntity(resolvedModuleEntity) }
+      .flatMap { it.getRootEntitiesByModuleEntity(resolvedModuleEntity) }
       .toMutableSet()
     mappedFacets.addAll(resolvedModuleEntity.facets.toSet())
     val staleEntity = (mappedFacets - facetRelatedEntities).firstOrNull()
     if (staleEntity != null) {
-      val facetContributor = entityTypeToFacetContributor[staleEntity.getEntityInterface()]!!
-      val facetName = facetContributor.getFacetName(staleEntity)
+      val facetName = staleEntity.name
       throw IllegalStateException("Stale entity $staleEntity (name = $facetName) in the mapping")
     }
   }
@@ -257,11 +254,7 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     return moduleBridge.diff?.facetMapping() ?: moduleBridge.entityStorage.current.facetMapping()
   }
 
-  private inline fun <reified R> updateBuilder(builder: MutableEntityStorage, crossinline updater: MutableExternalEntityMapping<Facet<*>>.() -> R): R {
-    return builder.mutableFacetMapping().updater()
-  }
-
-  private inline fun <reified R> updateDiffOrStorage(crossinline updater: MutableExternalEntityMapping<Facet<*>>.() -> R): R {
+  private inline fun updateDiffOrStorage(crossinline updater: MutableExternalEntityMapping<Facet<*>>.() -> Unit) {
     val diff = moduleBridge.diff
 
     return if (diff != null) {

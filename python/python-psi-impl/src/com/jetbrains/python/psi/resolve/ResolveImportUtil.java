@@ -36,9 +36,6 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
 
-/**
- * @author dcheryasov
- */
 public final class ResolveImportUtil {
 
   private ResolveImportUtil() {
@@ -47,8 +44,7 @@ public final class ResolveImportUtil {
   public static boolean isAbsoluteImportEnabledFor(PsiElement foothold) {
     if (foothold != null) {
       PsiFile file = foothold.getContainingFile();
-      if (file instanceof PyFile) {
-        final PyFile pyFile = (PyFile)file;
+      if (file instanceof PyFile pyFile) {
         if (pyFile.getLanguageLevel().isPy3K()) {
           PsiElement originalFoothold = CompletionUtilCoreImpl.getOriginalOrSelf(foothold);
           if (foothold.getManager().isInProject(originalFoothold) && Registry.is("python.explicit.namespace.packages")) {

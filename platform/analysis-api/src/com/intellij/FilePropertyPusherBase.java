@@ -14,7 +14,7 @@ import java.io.IOException;
 public abstract class FilePropertyPusherBase<T> implements FilePropertyPusher<T> {
   @Override
   public void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull T actualValue) throws IOException {
-    boolean changed = getFileDataKey().setPersistentValue(fileOrDir, actualValue);
+    boolean changed = getFilePropertyKey().setPersistentValue(fileOrDir, actualValue);
     if (changed) {
       propertyChanged(project, fileOrDir, actualValue);
     }

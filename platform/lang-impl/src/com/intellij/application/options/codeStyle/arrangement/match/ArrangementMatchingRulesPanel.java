@@ -39,9 +39,6 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementMatchingRulesPanel extends JPanel implements DataProvider {
 
   @NotNull protected final ArrangementSectionRulesControl myControl;

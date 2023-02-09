@@ -1,4 +1,4 @@
-// "Import extension function 'A.getValue'" "true"
+// "Import operator 'A.getValue'" "true"
 // ERROR: Property delegate must have a 'getValue(Some, KProperty<*>)' method. None of the following functions is suitable: <br>public final fun getValue(): Unit defined in kotlinpackage.one.A
 // WITH_STDLIB
 package kotlinpackage.two

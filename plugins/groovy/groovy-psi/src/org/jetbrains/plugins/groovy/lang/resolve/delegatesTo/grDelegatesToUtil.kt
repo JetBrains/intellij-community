@@ -71,8 +71,8 @@ fun getFromValue(delegatesTo: PsiAnnotation): PsiType? {
     return ResolveUtil.unwrapClassType(value.type)
   }
   else if (value == null ||
-           value is PsiLiteralExpression && value.type === PsiType.NULL ||
-           value is GrLiteral && value.type === PsiType.NULL) {
+           value is PsiLiteralExpression && value.type === PsiTypes.nullType() ||
+           value is GrLiteral && value.type === PsiTypes.nullType()) {
     return null
   }
   else if (value is PsiExpression) {

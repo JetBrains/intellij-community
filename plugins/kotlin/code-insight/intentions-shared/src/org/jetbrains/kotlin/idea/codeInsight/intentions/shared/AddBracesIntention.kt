@@ -84,7 +84,13 @@ internal class AddBracesIntention : SelfTargetingIntention<KtElement>(KtElement:
 
             val allChildren = element.allChildren
             val (first, last) = when (element) {
-                is KtIfExpression -> element.rightParenthesis to allChildren.last
+                is KtIfExpression -> {
+                    val containerNode = expression.parent
+                    val first = containerNode.getPrevSiblingIgnoringWhitespaceAndComments()
+                    val last = containerNode.siblings(withItself = false)
+                        .takeWhile { it is PsiWhiteSpace || it is PsiComment }.lastOrNull() ?: containerNode
+                    first to last
+                }
                 is KtForExpression -> element.rightParenthesis to allChildren.last
                 is KtWhileExpression -> element.rightParenthesis to allChildren.last
                 is KtWhenEntry -> element.arrow to allChildren.last

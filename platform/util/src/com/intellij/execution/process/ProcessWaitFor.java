@@ -56,6 +56,7 @@ public class ProcessWaitFor {
   public void detach() {
     myDetached = true;
     myWaitForThreadFuture.cancel(true);
+    setTerminationCallback(ignored -> {});  // in case the process has already finished
   }
 
   public void setTerminationCallback(@NotNull Consumer<? super Integer> r) {

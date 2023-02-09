@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
+import com.intellij.codeInsight.hints.declarative.InlayPayload
 import com.intellij.codeInsight.hints.declarative.InlayPosition
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
@@ -25,6 +26,7 @@ class InlayTreeSinkImpl(
   private val activeOptions = HashMap<String, Boolean>()
 
   override fun addPresentation(position: InlayPosition,
+                               payloads: List<InlayPayload>?,
                                tooltip: String?,
                                hasBackground: Boolean,
                                builder: PresentationTreeBuilder.() -> Unit) {
@@ -37,7 +39,7 @@ class InlayTreeSinkImpl(
     else {
       false
     }
-    inlayDataToPresentation.add(InlayData(position, tooltip, hasBackground, tree, providerId, disabled))
+    inlayDataToPresentation.add(InlayData(position, tooltip, hasBackground, tree, providerId, disabled, payloads))
   }
 
   override fun whenOptionEnabled(optionId: String, block: () -> Unit) {
@@ -71,4 +73,5 @@ data class InlayData(
   val tree: TinyTree<Any?>,
   val providerId: String,
   val disabled: Boolean,
+  val payloads: List<InlayPayload>?,
 )

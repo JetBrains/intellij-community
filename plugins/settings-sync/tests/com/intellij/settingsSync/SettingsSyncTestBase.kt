@@ -9,7 +9,6 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import org.junit.After
@@ -20,6 +19,7 @@ import org.junit.rules.RuleChain
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.exists
 
 internal val TIMEOUT_UNIT = TimeUnit.SECONDS
 
@@ -65,7 +65,7 @@ internal abstract class SettingsSyncTestBase {
     val serverState = remoteCommunicator.checkServerState()
     if (serverState != ServerState.FileNotExists) {
       LOG.warn("Server state: $serverState")
-      remoteCommunicator.delete()
+      remoteCommunicator.deleteAllFiles()
     }
   }
 
@@ -75,15 +75,7 @@ internal abstract class SettingsSyncTestBase {
       bridge.waitForAllExecuted()
     }
 
-    remoteCommunicator.delete()
-  }
-
-  protected fun assertSettingsPushed(build: SettingsSnapshotBuilder.() -> Unit) {
-    waitForSettingsPush { pushedSnap ->
-      pushedSnap.assertSettingsSnapshot {
-        build()
-      }
-    }
+    remoteCommunicator.deleteAllFiles()
   }
 
   protected fun writeToConfig(build: SettingsSnapshotBuilder.() -> Unit) {
@@ -108,10 +100,8 @@ internal abstract class SettingsSyncTestBase {
     }
   }
 
-  private fun waitForSettingsPush(assertSnapshot: (SettingsSnapshot) -> Unit) {
-    val pushedSnap = remoteCommunicator.awaitForPush()
-    assertNotNull("Changes were not pushed", pushedSnap)
-    assertSnapshot(pushedSnap!!)
+  protected fun executeAndWaitUntilPushed(testExecution: () -> Unit): SettingsSnapshot {
+    return remoteCommunicator.awaitForPush(testExecution)
   }
 }
 

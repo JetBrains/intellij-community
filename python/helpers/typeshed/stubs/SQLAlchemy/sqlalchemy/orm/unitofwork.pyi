@@ -49,7 +49,10 @@ class Preprocess(IterateMappersMixin):
 
 class PostSortRec:
     disabled: Any
-    def __new__(cls, uow, *args): ...
+    # At runtime __new__ is defined, not __init__,
+    # But if we define __new__ here then all subclasses are identified by pyright
+    # as having __init__ methods that are inconsistent with their __new__ methods
+    def __init__(self, uow, *args) -> None: ...
     def execute_aggregate(self, uow, recs) -> None: ...
 
 class ProcessAll(IterateMappersMixin, PostSortRec):

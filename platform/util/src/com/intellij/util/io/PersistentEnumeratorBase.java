@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -127,10 +112,12 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       if (file.getFileSystem().isReadOnly()) {
         throw new IOException(file + " in " + file.getFileSystem() + " is not exist");
       }
-      FileUtil.delete(keyStreamFile());
-      if (!FileUtil.createIfDoesntExist(file.toFile())) {
-        throw new IOException("Cannot create empty file: " + file);
+
+      Path parent = file.getParent();
+      if (parent != null) {
+        Files.createDirectories(parent);
       }
+      Files.createFile(file);
     }
 
     myStorage = storage;
@@ -197,7 +184,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         myKeyStorage = new AppendableStorageBackedByResizableMappedFile<>(keyStreamFile(),
                                                                           initialSize,
                                                                           myStorage.getStorageLockContext(),
-                                                                          PagedFileStorage.MB,
+                                                                          IOUtil.MiB,
                                                                           false,
                                                                           dataDescriptor);
       }
@@ -208,7 +195,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       }
     }
 
-    if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+    if (IndexDebugProperties.IS_UNIT_TEST_MODE && LOG.isTraceEnabled()) {
       LOG.debug("PersistentEnumeratorBase at " + myFile + " has been open (new = " + created + ")");
     }
   }
@@ -479,7 +466,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         if (!myClosed) {
           myClosed = true;
           doClose();
-          if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+          if (IndexDebugProperties.IS_UNIT_TEST_MODE && LOG.isTraceEnabled()) {
             LOG.info("PersistentEnumeratorBase at " + myFile + " has been closed");
           }
         }
@@ -592,7 +579,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   protected void markCorrupted() {
-    if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+    if (IndexDebugProperties.IS_UNIT_TEST_MODE && LOG.isTraceEnabled()) {
       dumpKeysOnCorruption();
     }
 
@@ -644,6 +631,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
     catch (NoDataException e) {
       return null;
+    }
+    catch (ClosedStorageException e) {
+      throw e;
     }
     catch (IOException io) {
       LOG.error(io);

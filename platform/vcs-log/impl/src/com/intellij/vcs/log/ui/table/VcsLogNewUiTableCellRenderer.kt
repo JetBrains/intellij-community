@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table
 
+import com.intellij.ui.dualView.TableCellRendererWrapper
 import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.popup.list.SelectablePanel.Companion.wrap
@@ -18,7 +19,12 @@ import javax.swing.JTable
 import javax.swing.table.TableCellRenderer
 
 @ApiStatus.Internal
-internal class VcsLogNewUiTableCellRenderer(val delegate: TableCellRenderer) : TableCellRenderer, VcsLogCellRenderer {
+internal class VcsLogNewUiTableCellRenderer(
+  val delegate: TableCellRenderer
+) : TableCellRenderer,
+    VcsLogCellRenderer,
+    TableCellRendererWrapper {
+
   private var isRight = false
   private var isLeft = false
   private var cachedRenderer: JComponent? = null
@@ -39,21 +45,26 @@ internal class VcsLogNewUiTableCellRenderer(val delegate: TableCellRenderer) : T
 
     updateSelectablePanelIfNeeded(isRightColumn, isLeftColumn, columnRenderer)
 
+    val isHovered = TableHoverListener.getHoveredRow(table) == row
+
     selectablePanel.apply {
-      background = getUnselectedBackground(table, row, column, isSelected, hasFocus)
-      selectionColor = if (isSelected) VcsLogGraphTable.getSelectionBackground(table.hasFocus()) else null
+      background = getUnselectedBackground(table, row, column, hasFocus)
+      selectionColor = getSelectionColor(table, row, column, isSelected, hasFocus, isHovered)
       selectionArc = 0
       selectionArcCorners = SelectionArcCorners.ALL
 
-      if (isSelected && (isLeft || isRight)) {
-        getSelectedRowType(table, row).tune(selectablePanel, isLeft, isRight)
+      if ((isLeft || isRight)) {
+        when {
+          isSelected -> getSelectedRowType(table, row).tune(selectablePanel, isLeft, isRight)
+          isHovered -> SelectedRowType.SINGLE.tune(selectablePanel, isLeft, isRight)
+        }
       }
     }
 
     return selectablePanel
   }
 
-
+  override fun getBaseRenderer(): TableCellRenderer = delegate
 
   private fun updateSelectablePanelIfNeeded(isRightColumn: Boolean, isLeftColumn: Boolean, columnRenderer: JComponent) {
     if (isRight != isRightColumn || isLeft != isLeftColumn || cachedRenderer !== columnRenderer) {
@@ -83,11 +94,22 @@ internal class VcsLogNewUiTableCellRenderer(val delegate: TableCellRenderer) : T
     return null
   }
 
-  private fun getUnselectedBackground(table: JTable, row: Int, column: Int, isSelected: Boolean, hasFocus: Boolean): Color? {
-    val hovered = if (isSelected) false else row == TableHoverListener.getHoveredRow(table)
+  private fun getUnselectedBackground(table: JTable, row: Int, column: Int, hasFocus: Boolean): Color? {
     return (table as VcsLogGraphTable)
-      .getStyle(row, column, hasFocus, false, hovered)
+      .getStyle(row, column, hasFocus, false, false)
       .background
+  }
+
+  private fun getSelectionColor(table: JTable, row: Int, column: Int, isSelected: Boolean, hasFocus: Boolean, isHovered: Boolean): Color? {
+    return when {
+      isSelected -> VcsLogGraphTable.getSelectionBackground(table.hasFocus())
+
+      isHovered -> (table as VcsLogGraphTable)
+        .getStyle(row, column, hasFocus, false, true)
+        .background
+
+      else -> null
+    }
   }
 
   private fun getSelectedRowType(table: JTable, row: Int): SelectedRowType {

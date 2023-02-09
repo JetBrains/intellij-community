@@ -379,8 +379,8 @@ public final class MethodSignatureUtil {
    */
   public static boolean isReturnTypeSubstitutable(MethodSignature d1, MethodSignature d2, PsiType r1, PsiType r2) {
     //If R1 is void then R2 is void.
-    if (PsiType.VOID.equals(r1)) {
-      return PsiType.VOID.equals(r2);
+    if (PsiTypes.voidType().equals(r1)) {
+      return PsiTypes.voidType().equals(r2);
     }
 
     //If R1 is a primitive type then R2 is identical to R1.

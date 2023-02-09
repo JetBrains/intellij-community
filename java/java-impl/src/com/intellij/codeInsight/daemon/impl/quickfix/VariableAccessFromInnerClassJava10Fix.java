@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -81,10 +81,9 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!(myContext instanceof PsiReferenceExpression) || !myContext.isValid()) return;
+    if (!(myContext instanceof PsiReferenceExpression referenceExpression) || !myContext.isValid()) return;
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(myContext)) return;
 
-    PsiReferenceExpression referenceExpression = (PsiReferenceExpression)myContext;
     PsiLocalVariable variable = tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
     if (variable == null) return;
     final String variableText = getFieldText(variable);

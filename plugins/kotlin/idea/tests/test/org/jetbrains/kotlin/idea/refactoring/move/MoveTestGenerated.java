@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move;
 
@@ -221,6 +221,16 @@ public class MoveTestGenerated extends AbstractMoveTest {
     @TestMetadata("kotlin/changePackage/longName/longName.test")
     public void testKotlin_changePackage_longName_LongName() throws Exception {
         runTest("testData/refactoring/move/kotlin/changePackage/longName/longName.test");
+    }
+
+    @TestMetadata("kotlin/changePackage/updateAllUsagesByDefault/updateAllUsagesByDefault.test")
+    public void testKotlin_changePackage_updateAllUsagesByDefault_UpdateAllUsagesByDefault() throws Exception {
+        runTest("testData/refactoring/move/kotlin/changePackage/updateAllUsagesByDefault/updateAllUsagesByDefault.test");
+    }
+
+    @TestMetadata("kotlin/changePackage/updateOnlyRealReferences/updateOnlyRealReferences.test")
+    public void testKotlin_changePackage_updateOnlyRealReferences_UpdateOnlyRealReferences() throws Exception {
+        runTest("testData/refactoring/move/kotlin/changePackage/updateOnlyRealReferences/updateOnlyRealReferences.test");
     }
 
     @TestMetadata("kotlin/moveDirectoryWithQuotation/moveDirectoryWithQuotation.test")

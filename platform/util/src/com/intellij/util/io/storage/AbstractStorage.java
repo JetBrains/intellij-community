@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.storage;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -29,7 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 
-public abstract class AbstractStorage implements Disposable, Forceable {
+public abstract class AbstractStorage implements IStorage {
   public static final StorageLockContext SHARED = new StorageLockContext(true, true);
   public static final int PAGE_SIZE = SystemProperties.getIntProperty("idea.io.page.size", 8 * 1024);
 
@@ -205,12 +203,14 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     Files.newByteChannel(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE).close();
   }
 
+  @Override
   public int getVersion() throws IOException {
     return withReadLock(() -> {
       return myRecordsTable.getVersion();
     });
   }
 
+  @Override
   public void setVersion(int expectedVersion) throws IOException {
     withWriteLock(() -> {
       myRecordsTable.setVersion(expectedVersion);
@@ -230,11 +230,13 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     return myDataTable.isDirty() || myRecordsTable.isDirty();
   }
 
+  @Override
   @TestOnly
   public int getLiveRecordsCount() throws IOException {
     return withReadLock(() -> myRecordsTable.getLiveRecordsCount());
   }
 
+  @Override
   @TestOnly
   public RecordIdIterator createRecordIdIterator() throws IOException {
     myRecordsTable.myStorage.lockWrite();
@@ -246,17 +248,21 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     }
   }
 
+  @Override
   public StorageDataOutput writeStream(final int record) {
     return writeStream(record, false);
   }
+  @Override
   public StorageDataOutput writeStream(final int record, boolean fixedSize) {
     return new StorageDataOutput(this, record, fixedSize);
   }
 
+  @Override
   public AppenderStream appendStream(int record) {
     return new AppenderStream(record);
   }
 
+  @Override
   public DataInputStream readStream(int record) throws IOException {
     final byte[] bytes = readBytes(record);
     return new DataInputStream(new UnsyncByteArrayInputStream(bytes));
@@ -301,7 +307,8 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     });
   }
 
-  public void writeBytes(int record, ByteArraySequence bytes, boolean fixedSize) throws IOException {
+  @Override
+  public void writeBytes(int record, @NotNull ByteArraySequence bytes, boolean fixedSize) throws IOException {
     withWriteLock(() -> {
       final int requiredLength = bytes.getLength();
       final int currentCapacity = myRecordsTable.getCapacity(record);
@@ -318,7 +325,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       else {
         myDataTable.reclaimSpace(currentCapacity);
 
-        int newCapacity = fixedSize ? requiredLength:myCapacityAllocationPolicy.calculateCapacity(requiredLength);
+        int newCapacity = fixedSize ? requiredLength : myCapacityAllocationPolicy.calculateCapacity(requiredLength);
         if (newCapacity < requiredLength) newCapacity = requiredLength;
         address = myDataTable.allocateSpace(newCapacity);
         myRecordsTable.setAddress(record, address);
@@ -343,17 +350,23 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     });
   }
 
+  @Override
   public void checkSanity(final int record) throws IOException {
     withReadLock(() -> {
       final int size = myRecordsTable.getSize(record);
       assert size >= 0;
+      final int capacity = myRecordsTable.getCapacity(record);
+      assert capacity >= 0;
+      assert size <= capacity;
       final long address = myRecordsTable.getAddress(record);
       assert address >= 0;
       assert address + size < myDataTable.getFileSize();
+      assert address + capacity < myDataTable.getFileSize();
     });
   }
 
-  public void replaceBytes(int record, int offset, ByteArraySequence bytes) throws IOException {
+  @Override
+  public void replaceBytes(int record, int offset, @NotNull ByteArraySequence bytes) throws IOException {
     withWriteLock(() -> {
       final int changedBytesLength = bytes.getLength();
 
@@ -369,7 +382,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     });
   }
 
-  public static final class StorageDataOutput extends DataOutputStream implements RecordDataOutput {
+  public static final class StorageDataOutput extends DataOutputStream implements IStorageDataOutput {
     private final AbstractStorage myStorage;
     private final int myRecordId;
     private final boolean myFixedSize;
@@ -396,9 +409,15 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     public int getRecordId() {
       return myRecordId;
     }
+
+    @NotNull
+    @Override
+    public ByteArraySequence asByteArraySequence() {
+      return getByteStream().asByteArraySequence();
+    }
   }
 
-  public final class AppenderStream extends DataOutputStream {
+  public final class AppenderStream extends DataOutputStream implements IAppenderStream {
     private final int myRecordId;
 
     private AppenderStream(int recordId) {
@@ -411,6 +430,16 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       super.close();
       final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
       appendBytes(myRecordId, _out.toByteArraySequence());
+    }
+
+    private BufferExposingByteArrayOutputStream getByteStream() {
+      return ((BufferExposingByteArrayOutputStream)out);
+    }
+
+    @NotNull
+    @Override
+    public ByteArraySequence asByteArraySequence() {
+      return getByteStream().asByteArraySequence();
     }
   }
 

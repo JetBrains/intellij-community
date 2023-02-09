@@ -67,20 +67,27 @@ data class FilePageCacheStatistics(val cachedChannelsStatistics: CachedChannelsS
                                    val uncachedFileAccess: Int,
                                    val maxRegisteredFiles: Int,
                                    val maxCacheSizeInBytes: Long,
-                                   val pageHit: Int,
-                                   val pageFastCacheHit: Int,
-                                   val pageMiss: Int,
-                                   val pageLoad: Int,
+                                   val totalCachedSizeInBytes: Long,
+                                   val pageHits: Int,
+                                   val pageFastCacheHits: Int,
+                                   val pageLoadsAboveSizeThreshold: Int,
+                                   val regularPageLoads: Int,
                                    val disposedBuffers: Int,
+                                   val totalPageDisposalUs: Long,
+                                   val totalPageLoadUs: Long,
+                                   val totalPagesLoaded: Long,
                                    val capacityInBytes: Long) {
   fun dumpInfoImportantForBuildProcess() : String {
-    return "pageHits=$pageHit, " +
-           "pageFastCacheHits=$pageFastCacheHit, " +
-           "pageMisses=$pageMiss, " +
-           "pageLoad=$pageLoad, " +
+    return "pageHits=$pageHits, " +
+           "pageFastCacheHits=$pageFastCacheHits, " +
+           "regularPageLoads=$regularPageLoads, " +
+           "pageLoadsAboveSizeThreshold=$pageLoadsAboveSizeThreshold, " +
+           "pageLoadUs=$totalPageLoadUs, " +
+           "pageDisposalUs=$totalPageDisposalUs, " +
            "capacityInBytes=$capacityInBytes, " +
            "disposedBuffers=$disposedBuffers " +
            "maxRegisteredFiles=$maxRegisteredFiles " +
-           "maxCacheSizeInBytes=$maxCacheSizeInBytes"
+           "maxCacheSizeInBytes=$maxCacheSizeInBytes" +
+           "totalSizeCachedBytes=$totalCachedSizeInBytes"
   }
 }

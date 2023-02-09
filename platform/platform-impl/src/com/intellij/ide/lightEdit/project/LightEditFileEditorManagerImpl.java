@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.project;
 
 import com.intellij.ide.lightEdit.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorComposite;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
@@ -17,6 +16,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,8 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl {
-  LightEditFileEditorManagerImpl(@NotNull Project project) {
-    super(project);
+  LightEditFileEditorManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
+    super(project, coroutineScope);
   }
 
   @Override
@@ -116,25 +116,6 @@ public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl 
     return LightEditService.getInstance().getSelectedFile();
   }
 
-  @Override
-  public VirtualFile getFile(@NotNull FileEditor editor) {
-    VirtualFile file = editor.getFile();
-    if (file != null) {
-      return file;
-    }
-    FileEditorLocation location = editor.getCurrentLocation();
-    if (location != null) {
-      return location.getEditor().getFile();
-    }
-    LightEditorManagerImpl editorManager = (LightEditorManagerImpl)LightEditService.getInstance().getEditorManager();
-    for (VirtualFile openFile : editorManager.getOpenFiles()) {
-      LightEditorInfo editorInfo = editorManager.findOpen(openFile);
-      if (editorInfo != null && editorInfo.getFileEditor().equals(editor)) {
-        return openFile;
-      }
-    }
-    return null;
-  }
 
   @Override
   public boolean hasOpenFiles() {

@@ -21,9 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public class InheritanceToDelegationViewDescriptor extends UsageViewDescriptorAdapter {
   private final PsiClass myClass;
 

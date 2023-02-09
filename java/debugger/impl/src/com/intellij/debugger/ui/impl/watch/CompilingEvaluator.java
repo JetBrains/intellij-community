@@ -137,5 +137,4 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
   @NotNull
   protected abstract Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException;
-
 }

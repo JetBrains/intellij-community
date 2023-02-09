@@ -4,7 +4,6 @@ package org.intellij.plugins.markdown.editor.tables
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
@@ -19,7 +18,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.lang.psi.util.hasType
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -170,10 +169,8 @@ object TableUtils {
     return false
   }
 
-  internal fun isFormattingEnabledForTables(file: PsiFile): Boolean {
-    return isTableSupportEnabled() &&
-           MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled &&
-           file !in CodeStyle.getSettings(file).excludedFiles
+  internal fun isFormattingOnTypeEnabledForTables(file: PsiFile): Boolean {
+    return MarkdownCodeInsightSettings.getInstance().state.reformatTablesOnType && file !in CodeStyle.getSettings(file).excludedFiles
   }
 
   /**
@@ -190,9 +187,5 @@ object TableUtils {
       else -> last + 1
     }
     return TextRange(first.coerceAtLeast(0), end).shiftRight(startOffset)
-  }
-
-  internal fun isTableSupportEnabled(): Boolean {
-    return Registry.`is`("markdown.tables.editing.support.enable", true)
   }
 }

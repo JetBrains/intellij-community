@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -63,7 +63,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-public class SwingHelper {
+public final class SwingHelper {
 
   private static final Logger LOG = Logger.getInstance(SwingHelper.class);
   private static final String DIALOG_RESIZED_TO_FIT_TEXT = "INTELLIJ_DIALOG_RESIZED_TO_FIT_TEXT";
@@ -117,8 +117,7 @@ public class SwingHelper {
     panel.setLayout(new BoxLayout(panel, axis));
     for (Component child : children) {
       panel.add(child, childAlignment);
-      if (child instanceof JComponent) {
-        JComponent jChild = (JComponent)child;
+      if (child instanceof JComponent jChild) {
         if (verticalOrientation) {
           jChild.setAlignmentX(childAlignment);
         }
@@ -256,8 +255,8 @@ public class SwingHelper {
     Object itemToSelect = comboBox.getSelectedItem();
     boolean preserveSelection = true;
     //noinspection SuspiciousMethodCalls
-    if (!newItems.contains(itemToSelect)) {
-      if (newItems.contains(newSelectedItemIfSelectionCannotBePreserved)) {
+    if (itemToSelect == null || !newItems.contains(itemToSelect)) {
+      if (newSelectedItemIfSelectionCannotBePreserved != null && newItems.contains(newSelectedItemIfSelectionCannotBePreserved)) {
         itemToSelect = newSelectedItemIfSelectionCannotBePreserved;
       }
       else {
@@ -809,15 +808,13 @@ public class SwingHelper {
   @Nullable
   public static Component getComponentFromRecentMouseEvent() {
     AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
-    if (event instanceof MouseEvent) {
-      MouseEvent mouseEvent = (MouseEvent)event;
+    if (event instanceof MouseEvent mouseEvent) {
       Component component = mouseEvent.getComponent();
       if (component != null) {
         component = SwingUtilities.getDeepestComponentAt(component, mouseEvent.getX(), mouseEvent.getY());
         if (component != null) {
-          if (component instanceof JTabbedPane) {
+          if (component instanceof JTabbedPane tabbedPane) {
             mouseEvent = SwingUtilities.convertMouseEvent(mouseEvent.getComponent(), mouseEvent, component);
-            JTabbedPane tabbedPane = (JTabbedPane)component;
             int index = tabbedPane.getUI().tabForCoordinate(tabbedPane, mouseEvent.getX(), mouseEvent.getY());
             if (index != -1) return tabbedPane.getComponentAt(index);
           }

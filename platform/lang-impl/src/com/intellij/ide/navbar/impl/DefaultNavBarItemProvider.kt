@@ -1,17 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.impl
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemProvider
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.PsiUtilCore.getVirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -32,15 +36,14 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
 
     // TODO: cache all roots? (like passing through NavBarModelBuilder.traverseToRoot)
     // TODO: hash all roots? (Set instead of Sequence)
-    val projectRootManager = ProjectRootManager.getInstance(item.data.project)
-    val projectFileIndex = projectRootManager.fileIndex
-    val defaultRoots = projectRootManager.contentRoots.asSequence()
-    val oldEpRoots = iterateOldExtensions { it.additionalRoots(item.data.project) }
+    val projectFileIndex = ProjectRootManager.getInstance(item.data.project).fileIndex
+    val defaultRoots = item.data.project.getBaseDirectories()
+    val oldEpRoots = additionalRoots(item.data.project)
     val allRoots = (defaultRoots + oldEpRoots).filter { it.parent == null || !projectFileIndex.isInContent(it.parent) }
 
     if (getVirtualFile(item.data) in allRoots) return null
 
-    val parent = fromOldExtensions { ext ->
+    val parent = fromOldExtensions({ ext ->
       try {
         ext.getParent(item.data)
       }
@@ -49,21 +52,44 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
         ProgressManager.checkCanceled()
         null
       }
-    }
+    }, { parent ->
+      parent != item.data
+    })
     if (parent == null || !parent.isValid) return null
 
     val containingFile = parent.containingFile
     if (containingFile != null && containingFile.virtualFile == null) return null
 
-    val originalParent: PsiElement = parent.originalElement
-                                       .takeIf { it !is PsiCompiledElement || parent is PsiCompiledElement }
-                                     ?: parent
+    val adjustedParent = adjustedParent(parent, item.ownerExtension)
 
-    val adjustedParent: PsiElement = item.ownerExtension?.adjustElement(originalParent)
-                                     ?: adjustWithAllExtensions(originalParent)
-                                     ?: return null
+    if (adjustedParent != null) {
+      return PsiNavBarItem(adjustedParent, item.ownerExtension)
+    }
+    else {
+      return null
+    }
+  }
 
-    return PsiNavBarItem(adjustedParent, item.ownerExtension)
+  private fun originalParent(parent: PsiElement): PsiElement {
+    val originalElement = parent.originalElement
+    if (originalElement !is PsiCompiledElement || parent is PsiCompiledElement) {
+      ensurePsiFromExtensionIsValid(originalElement, "Original parent is invalid", parent.javaClass)
+      return originalElement
+    }
+    else {
+      return parent
+    }
+  }
+
+  private fun adjustedParent(parent: PsiElement, ownerExtension: NavBarModelExtension?): PsiElement? {
+    val originalParent = originalParent(parent)
+    val adjustedByOwner = ownerExtension?.adjustElement(originalParent)
+    if (adjustedByOwner != null) {
+      ensurePsiFromExtensionIsValid(adjustedByOwner, "Owner extension returned invalid psi after adjustment", ownerExtension.javaClass)
+      return adjustedByOwner
+    } else {
+      return adjustWithAllExtensions(originalParent)
+    }
   }
 
   @RequiresReadLock
@@ -87,9 +113,13 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
           is Project -> ProjectNavBarItem(child)
           is Module -> ModuleNavBarItem(child)
           is PsiElement -> {
-            child
-              .let { if (ext.normalizeChildren()) adjustWithAllExtensions(it) else it }
-              ?.let { PsiNavBarItem(it, ownerExtension = null) }
+            if (ext.normalizeChildren()) {
+              val adjusted = adjustWithAllExtensions(child)
+              adjusted?.let { PsiNavBarItem(it, ownerExtension = null) }
+            }
+            else {
+              PsiNavBarItem(child, ownerExtension = null)
+            }
           }
           is OrderEntry -> OrderEntryNavBarItem(child)
           else -> DefaultNavBarItem(child)
@@ -100,20 +130,54 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
 }
 
 
-fun <T> fromOldExtensions(selector: (ext: NavBarModelExtension) -> T?): T? =
-  NavBarModelExtension.EP_NAME
-    .extensionList
-    .firstNotNullOfOrNull(selector)
-
-
-fun adjustWithAllExtensions(element: PsiElement?): PsiElement? =
-  NavBarModelExtension.EP_NAME
-    .extensionList
-    .foldRight(element) { ext, el ->
-      el?.let { ext.adjustElement(it) }
+fun <T> fromOldExtensions(selector: (ext: NavBarModelExtension) -> T?): T? {
+  for (ext in NavBarModelExtension.EP_NAME.extensionList) {
+    val selected = selector(ext)
+    if (selected != null) {
+      return selected
     }
+  }
+  return null
+}
 
-private fun <T> iterateOldExtensions(selector: (ext: NavBarModelExtension) -> Iterable<T>): Iterable<T> =
-  NavBarModelExtension.EP_NAME
-    .extensionList
-    .flatMap(selector)
+fun <T> fromOldExtensions(selector: (ext: NavBarModelExtension) -> T?, predicate: (T) -> Boolean): T? {
+  for (ext in NavBarModelExtension.EP_NAME.extensionList) {
+    val selected = selector(ext)
+    if (selected != null && predicate(selected)) {
+      return selected
+    }
+  }
+  return null
+}
+
+fun adjustWithAllExtensions(element: PsiElement): PsiElement? {
+  var result = element
+
+  for (ext in NavBarModelExtension.EP_NAME.extensionList.asReversed()) {
+    result = ext.adjustElement(result) ?: return null
+    ensurePsiFromExtensionIsValid(result, "Invalid psi returned from ${ext.javaClass} while adjusting", ext.javaClass)
+  }
+  return result
+}
+
+private fun additionalRoots(project: Project): Iterable<VirtualFile> {
+  val resultRoots = ArrayList<VirtualFile>()
+  for (ext in NavBarModelExtension.EP_NAME.extensionList) {
+    resultRoots.addAll(ext.additionalRoots(project))
+  }
+  return resultRoots
+}
+
+internal fun ensurePsiFromExtensionIsValid(psi: PsiElement, message: String, clazz: Class<*>? = null) {
+  try {
+    PsiUtilCore.ensureValid(psi)
+  }
+  catch (t: Throwable) {
+    if (clazz != null) {
+      throw PluginException.createByClass(message, t, clazz)
+    }
+    else {
+      throw IllegalStateException(message, t)
+    }
+  }
+}

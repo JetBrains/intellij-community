@@ -1,14 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
-import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.model.BranchableSyntheticPsiElement;
 import com.intellij.model.ModelBranch;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
@@ -20,10 +16,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 
 public final class LightRecordMethod extends LightMethod implements LightRecordMember, BranchableSyntheticPsiElement {
   private final @NotNull PsiRecordComponent myRecordComponent;
+  private final @NotNull LightRecordComponentModifierList myModifierList;
 
   public LightRecordMethod(@NotNull PsiManager manager,
                            @NotNull PsiMethod method,
@@ -31,6 +27,7 @@ public final class LightRecordMethod extends LightMethod implements LightRecordM
                            @NotNull PsiRecordComponent component) {
     super(manager, method, containingClass);
     myRecordComponent = component;
+    myModifierList = new LightRecordComponentModifierList(this, method, component);
   }
 
   @Override
@@ -63,35 +60,12 @@ public final class LightRecordMethod extends LightMethod implements LightRecordM
 
   @Override
   public PsiType getReturnType() {
-    if (DumbService.isDumb(myRecordComponent.getProject())) return myRecordComponent.getType();
-    return CachedValuesManager.getCachedValue(this, () -> {
-      PsiType type = myRecordComponent.getType()
-        .annotate(() -> Arrays.stream(myRecordComponent.getAnnotations())
-          .filter(LightRecordMethod::hasTargetApplicableForMethod)
-          .toArray(PsiAnnotation[]::new)
-        );
-      return CachedValueProvider.Result.create(type, this);
-    });
+    return myRecordComponent.getType();
   }
 
   @Override
-  public PsiAnnotation @NotNull [] getAnnotations() {
-    PsiType returnType = getReturnType();
-    if (returnType == null) return PsiAnnotation.EMPTY_ARRAY;
-    return returnType.getAnnotations();
-  }
-
-  @Override
-  public boolean hasAnnotation(@NotNull String fqn) {
-    PsiType returnType = getReturnType();
-    return returnType != null && returnType.hasAnnotation(fqn);
-  }
-
-  @Override
-  public @Nullable PsiAnnotation getAnnotation(@NotNull String fqn) {
-    PsiType returnType = getReturnType();
-    if (returnType == null) return null;
-    return returnType.findAnnotation(fqn);
+  public @NotNull PsiModifierList getModifierList() {
+    return myModifierList;
   }
 
   @Override
@@ -116,10 +90,6 @@ public final class LightRecordMethod extends LightMethod implements LightRecordM
   @Override
   public @Nullable ModelBranch getModelBranch() {
     return ModelBranch.getPsiBranch(myRecordComponent);
-  }
-
-  private static boolean hasTargetApplicableForMethod(PsiAnnotation annotation) {
-    return AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE_USE, PsiAnnotation.TargetType.METHOD) != null;
   }
 
   @Override

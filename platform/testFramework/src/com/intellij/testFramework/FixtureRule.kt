@@ -5,9 +5,11 @@ import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
@@ -16,13 +18,14 @@ import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -190,7 +193,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
     fun withRunningStartUpActivities() = ProjectRule(runPostStartUpActivities = true)
 
     /**
-     * Think twice before use. And then do not use. To support old code.
+     * Think twice before use. And then do not use it. To support the old code.
      */
     @ApiStatus.Internal
     fun createStandalone(): ProjectRule {
@@ -216,7 +219,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
   }
 
   /**
-   * Think twice before use. And then do not use. To support old code.
+   * Think twice before use. And then do not use it. To support the old code.
    */
   @ApiStatus.Internal
   fun close() {
@@ -232,7 +235,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
 }
 
 /**
- * Encouraged using on static fields to avoid project creating for each test.
+ * Encouraged using on static fields to avoid a project creating for each test.
  * Project created on request, so, could be used as a bare (only application).
  */
 @Suppress("DEPRECATION")
@@ -325,7 +328,8 @@ class ActiveStoreRule(private val projectRule: ProjectRule) : TestRule {
 }
 
 /**
- * In test mode component state is not loaded. Project or module store will load component state if project/module file exists.
+ * In a test mode component state is not loaded.
+ * Project or module store will load component state if project/module file exists.
  * So must be a strong reason to explicitly use this method.
  */
 inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
@@ -345,7 +349,7 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
 }
 
 /**
- * Closes project after [action].
+ * Closes a project after [action].
  */
 fun <T> Project.useProject(save: Boolean = false, action: (Project) -> T): T {
   try {
@@ -357,7 +361,7 @@ fun <T> Project.useProject(save: Boolean = false, action: (Project) -> T): T {
 }
 
 /**
- * Closes project asynchronously after [action].
+ * Closes a project asynchronously after [action].
  */
 suspend fun <T> Project.useProjectAsync(save: Boolean = false, action: suspend (Project) -> T): T {
   try {
@@ -369,7 +373,7 @@ suspend fun <T> Project.useProjectAsync(save: Boolean = false, action: suspend (
 }
 
 /**
- * Closes project asynchronously only if [action] is failed.
+ * Closes a project asynchronously only if [action] is failed.
  */
 suspend fun Project.withProjectAsync(action: suspend (Project) -> Unit): Project {
   try {
@@ -387,11 +391,13 @@ suspend fun Project.withProjectAsync(action: suspend (Project) -> Unit): Project
   return this
 }
 
-fun <R> closeOpenedProjectsIfFail(action: () -> R): R =
-  closeOpenedProjectsIfFailImpl({ closeProject() }, action)
+suspend fun <R> closeOpenedProjectsIfFailAsync(action: suspend () -> R): R {
+  return closeOpenedProjectsIfFailImpl({ closeProjectAsync() }, { action() })
+}
 
-suspend fun <R> closeOpenedProjectsIfFailAsync(action: suspend () -> R): R =
-  closeOpenedProjectsIfFailImpl({ closeProjectAsync() }, { action() })
+fun <R> closeOpenedProjectsIfFail(action: () -> R): R {
+  return closeOpenedProjectsIfFailImpl({ closeProject() }, { action() })
+}
 
 private inline fun <R> closeOpenedProjectsIfFailImpl(closeProject: Project.() -> Unit, action: () -> R): R {
   val projectManager = ProjectManager.getInstance()
@@ -422,7 +428,7 @@ private fun Project.closeProject(save: Boolean = false) {
 
 suspend fun Project.closeProjectAsync(save: Boolean = false) {
   if (ApplicationManager.getApplication().isDispatchThread) {
-    runBlockingUnderModalProgress {
+    runBlockingModal(this, "") {
       ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this@closeProjectAsync, save = save)
     }
   }
@@ -431,14 +437,16 @@ suspend fun Project.closeProjectAsync(save: Boolean = false) {
   }
 }
 
-suspend fun openProjectAsync(virtualFile: VirtualFile, vararg activities: ProjectPostStartupActivity): Project {
-  return ProjectUtil.openOrImportAsync(virtualFile.toNioPath())!!
+suspend fun openProjectAsync(path: Path, vararg activities: ProjectActivity): Project {
+  return ProjectUtil.openOrImportAsync(path)!!
     .withProjectAsync { project ->
       for (activity in activities) {
-        activity.runActivity(project)
         activity.execute(project)
       }
     }
+}
+suspend fun openProjectAsync(virtualFile: VirtualFile, vararg activities: ProjectActivity): Project {
+  return openProjectAsync(virtualFile.toNioPath(), *activities)
 }
 
 class DisposeNonLightProjectsRule : ExternalResource() {
@@ -571,7 +579,7 @@ suspend fun loadProject(projectPath: Path, task: suspend (Project) -> Unit) {
 }
 
 /**
- * Copy files from [projectPaths] directories to a temp directory, load project from it and pass it to [checkProject].
+ * Copy files from [projectPaths] directories to a temp directory, load a project from it and pass it to [checkProject].
  */
 suspend fun loadProjectAndCheckResults(projectPaths: List<Path>,
                                        tempDirectory: TemporaryDirectory,

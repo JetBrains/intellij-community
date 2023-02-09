@@ -53,6 +53,12 @@ internal class FirCompletionContributorFactory(private val basicContext: FirBasi
     fun declarationFromUnresolvedNameContributor(priority: Int) =
         FirDeclarationFromUnresolvedNameContributor(basicContext, priority)
 
+    fun declarationFromOverridableMembersContributor(priority: Int) =
+        FirDeclarationFromOverridableMembersContributor(basicContext, priority)
+
     fun namedArgumentContributor(priority: Int = 0) =
         FirNamedArgumentCompletionContributor(basicContext, priority)
+
+    fun variableOrParameterNameWithTypeContributor(priority: Int) =
+        FirVariableOrParameterNameWithTypeCompletionContributor(basicContext, priority)
 }

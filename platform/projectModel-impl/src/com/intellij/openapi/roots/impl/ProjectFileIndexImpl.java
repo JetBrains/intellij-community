@@ -65,8 +65,8 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
       for (Iterator<VirtualFile> iterator = result.iterator(); iterator.hasNext(); ) {
         VirtualFile root = iterator.next();
-        DirectoryInfo info = getInfoForFileOrDirectory(root);
-        if (!module.equals(info.getModule())) { // maybe 2 modules have the same content root?
+        Module moduleForFile = getModuleForFile(root, false);
+        if (!module.equals(moduleForFile)) { // maybe 2 modules have the same content root?
           iterator.remove();
           continue;
         }
@@ -105,8 +105,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public boolean isInProject(@NotNull VirtualFile file) {
     if (myWorkspaceFileIndex != null) {
-      WorkspaceFileSet fileSet = myWorkspaceFileIndex.findFileSet(file, true, true, true, true);
-      return fileSet != null;
+      return myWorkspaceFileIndex.isInWorkspace(file);
     }
     return getInfoForFileOrDirectory(file).isInProject(file);
   }
@@ -148,7 +147,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   @NotNull
   public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
-    return myDirectoryIndex.getOrderEntries(getInfoForFileOrDirectory(file));
+    return myDirectoryIndex.getOrderEntries(file);
   }
 
   @Override
@@ -219,7 +218,15 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     if (myWorkspaceFileIndex != null) {
       WorkspaceFileSetWithCustomData<ModuleContentOrSourceRootData> fileSet = myWorkspaceFileIndex.findFileSetWithCustomData(file, honorExclusion, true, false, false,
                                                                                 ModuleContentOrSourceRootData.class);
-      if (fileSet == null) return null;
+      if (fileSet == null) {
+        if (!honorExclusion) {
+          WorkspaceFileSetWithCustomData<UnloadedModuleContentRootData> unloadedFileSet = 
+            myWorkspaceFileIndex.findFileSetWithCustomData(file, false, true, false, false, 
+                                                           UnloadedModuleContentRootData.class);
+          if (unloadedFileSet != null) return unloadedFileSet.getRoot();
+        }
+        return null;
+      }
       VirtualFile contentRoot = fileSet.getData().getCustomContentRoot();
       if (contentRoot != null) {
         return contentRoot;
@@ -304,14 +311,29 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
     if (myWorkspaceFileIndex != null) {
-      WorkspaceFileSet fileSet = myWorkspaceFileIndex.findFileSet(fileOrDir, true, true, false, false);
-      return fileSet != null;
+      return myWorkspaceFileIndex.isInContent(fileOrDir);
     }
     return isFileInContent(fileOrDir, getInfoForFileOrDirectory(fileOrDir));
   }
 
   public static boolean isFileInContent(@NotNull VirtualFile fileOrDir, @NotNull DirectoryInfo info) {
     return info.isInProject(fileOrDir) && info.getModule() != null;
+  }
+
+  public @Nullable VirtualFile getModuleSourceOrLibraryClassesRoot(@NotNull VirtualFile file) {
+    if (myWorkspaceFileIndex != null) {
+      WorkspaceFileInternalInfo info = myWorkspaceFileIndex.getFileInfo(file, true, true, true, false);
+      WorkspaceFileSetWithCustomData<?> fileSet = info.findFileSet(it -> {
+        WorkspaceFileKind kind = it.getKind();
+        return kind.isContent() && it.getData() instanceof ModuleOrLibrarySourceRootData || kind == WorkspaceFileKind.EXTERNAL;
+      });
+      return fileSet != null ? fileSet.getRoot() : null;
+    }
+    DirectoryInfo info = getInfoForFileOrDirectory(file);
+    if (isFileInContent(file, info)) {
+      return getSourceRootForFile(file, info);
+    }
+    return getClassRootForFile(file, info);
   }
 
   @Override
@@ -353,6 +375,16 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
     return myDirectoryIndex.getSourceRootFolder(getInfoForFileOrDirectory(fileOrDir));
+  }
+
+  @Override
+  public @Nullable String getUnloadedModuleNameForFile(@NotNull VirtualFile fileOrDir) {
+    if (myWorkspaceFileIndex != null) {
+      WorkspaceFileSetWithCustomData<UnloadedModuleContentRootData> fileSet =
+        myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, false, true, false, false, UnloadedModuleContentRootData.class);
+      return fileSet != null ? fileSet.getData().getModuleName() : null;
+    }
+    return getInfoForFileOrDirectory(fileOrDir).getUnloadedModuleName();
   }
 
   @Override

@@ -54,4 +54,55 @@ public class KotlinBlockingCallDetectionTest extends JavaCodeInsightFixtureTestC
 
     myFixture.checkHighlighting(true, false, true);
   }
+
+  public void testDelegatingConstructor() {
+    myFixture.addClass("package org.jetbrains.annotations;\n" +
+                       "public @interface Blocking {}");
+    myFixture.addClass("package org.jetbrains.annotations;\n" +
+                       "public @interface NonBlocking {}");
+
+    myFixture.addClass("""
+                        import org.jetbrains.annotations.*;
+                        
+                        public class BlockingCtrClass {
+                           @Blocking
+                           BlockingCtrClass() {
+                           }
+                           
+                           public static class Intermediate extends BlockingCtrClass {}
+                        }
+                      """
+    );
+
+    myFixture.configureByText("file.kt",
+                              """
+                                import org.jetbrains.annotations.*
+                                
+                                class NonBlockingCtrClass : BlockingCtrClass {
+                                  @NonBlocking
+                                  <warning descr="Possibly blocking call from implicit constructor call in non-blocking context could lead to thread starvation">constructor</warning>() {}
+                                }
+                                
+                                class NonBlockingCtrClassWithIntermediate : BlockingCtrClass.Intermediate {
+                                  @NonBlocking
+                                  <warning descr="Possibly blocking call from implicit constructor call in non-blocking context could lead to thread starvation">constructor</warning>() {}
+                                }
+                                
+                                class NonBlockingCtrClassExplicit @NonBlocking constructor() : <warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">BlockingCtrClass</warning>()
+                                
+                                class NonBlockingCtrClassExplicit2 : BlockingCtrClass {
+                                  @NonBlocking
+                                  constructor() : <warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">super</warning>()
+                                }
+                                
+                                open class KotlinBlockingCtr @Blocking constructor()
+                                
+                                class NonBlockingCtr : KotlinBlockingCtr {
+                                  @NonBlocking
+                                  <warning descr="Possibly blocking call from implicit constructor call in non-blocking context could lead to thread starvation">constructor</warning>() {}
+                                }
+                              """);
+
+    myFixture.testHighlighting(true, false, true, "file.kt");
+  }
 }

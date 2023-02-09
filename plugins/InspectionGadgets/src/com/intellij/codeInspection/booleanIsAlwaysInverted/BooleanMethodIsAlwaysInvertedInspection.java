@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -68,8 +69,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
                                                 @NotNull AnalysisScope scope,
                                                 @NotNull InspectionManager manager,
                                                 @NotNull GlobalInspectionContext globalContext) {
-    if (!(refEntity instanceof RefMethod)) return null;
-    RefMethod refMethod = (RefMethod)refEntity;
+    if (!(refEntity instanceof RefMethod refMethod)) return null;
     if (!refMethod.isReferenced() ||
         refMethod.isConstructor() ||
         hasNonInvertedCalls(refMethod) ||
@@ -78,6 +78,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
     if (uMethod == null) return null;
     PsiElement anchor = UDeclarationKt.getAnchorPsi(uMethod);
     if (anchor != null) {
+      if (anchor.getLanguage() != JavaLanguage.INSTANCE) return null;
       final Collection<RefElement> inReferences = refMethod.getInReferences();
       if (inReferences.size() == 1) {
         final RefElement refElement = inReferences.iterator().next();
@@ -161,8 +162,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
     if (refWhat.getUserData(ALWAYS_INVERTED) != Boolean.TRUE) return;
     final RefMethod refMethod = (RefMethod)refWhat;
     final PsiElement psiElement = refMethod.getPsiElement();
-    if (!(psiElement instanceof PsiMethod)) return;
-    final PsiMethod psiMethod = (PsiMethod)psiElement;
+    if (!(psiElement instanceof PsiMethod psiMethod)) return;
     final PsiElement psiFrom = refFrom.getPsiElement();
     psiFrom.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
@@ -199,7 +199,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
     public void onInitialize(RefElement refElement) {
       if (!(refElement instanceof RefMethod) || ((RefMethod)refElement).isConstructor()) return;
       final UMethod method = (UMethod)((RefMethod)refElement).getUastElement();
-      if (!PsiType.BOOLEAN.equals(method.getReturnType())) return;
+      if (!PsiTypes.booleanType().equals(method.getReturnType())) return;
       refElement.putUserData(ALWAYS_INVERTED, Boolean.TRUE); //initial mark boolean methods
     }
 

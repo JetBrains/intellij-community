@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.tabs.TabInfo;
@@ -19,6 +22,8 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 class ActionButton implements ActionListener {
+  private static final Logger LOG = Logger.getInstance(ActionButton.class);
+
   private final IconButton myIconButton;
   private final InplaceButton myInplaceButton;
   private Presentation myPrevPresentation;
@@ -28,7 +33,18 @@ class ActionButton implements ActionListener {
   private boolean myAutoHide;
   private boolean myToShow;
 
-  ActionButton(TabInfo tabInfo, AnAction action, String place, Consumer<? super MouseEvent> pass, Consumer<? super Boolean> hover, TimedDeadzone.Length deadzone) {
+  ActionButton(@NotNull TabInfo tabInfo,
+               @NotNull AnAction action,
+               String place,
+               Consumer<? super MouseEvent> pass,
+               Consumer<? super Boolean> hover,
+               TimedDeadzone.Length deadzone) {
+    if (action.getActionUpdateThread() == ActionUpdateThread.BGT) {
+      String name = action.getClass().getName();
+      LOG.error(PluginException.createByClass(
+        action.getActionUpdateThread() + " action " + StringUtil.getShortName(name) + " (" + name + ") is not allowed. " +
+        "Only EDT actions are allowed.", null, action.getClass()));
+    }
     myIconButton = new IconButton(null, action.getTemplatePresentation().getIcon());
     myTabInfo = tabInfo;
     myAction = action;

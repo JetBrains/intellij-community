@@ -7,6 +7,7 @@ import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContribut
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.util.registry.Registry
 import java.util.*
 
@@ -32,11 +33,15 @@ internal class SearchEverywhereMlExperiment {
     ),
 
     SearchEverywhereTabWithMl.FILES to Experiment(
-      2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
       3 to ExperimentType.NO_ML
     ),
 
     SearchEverywhereTabWithMl.CLASSES to Experiment(
+      2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
+      3 to ExperimentType.NO_ML
+    ),
+
+    SearchEverywhereTabWithMl.ALL to Experiment(
       2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
     )
   )
@@ -92,5 +97,7 @@ internal class FeaturesLoggingRandomisation {
 
   private val seed: Double = Random().nextDouble()
 
-  fun shouldLogFeatures(tabId: String): Boolean = seed < (thresholdsByTab[tabId] ?: 1.0)
+  private fun isInTestMode(): Boolean = ApplicationManagerEx.isInIntegrationTest() || ApplicationManagerEx.getApplication().isUnitTestMode
+
+  fun shouldLogFeatures(tabId: String): Boolean = isInTestMode() || (seed < (thresholdsByTab[tabId] ?: 1.0))
 }

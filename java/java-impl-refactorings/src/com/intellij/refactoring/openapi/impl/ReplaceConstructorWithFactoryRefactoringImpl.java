@@ -22,9 +22,6 @@ import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.ReplaceConstructorWithFactoryRefactoring;
 import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryProcessor;
 
-/**
- * @author dsl
- */
 public class ReplaceConstructorWithFactoryRefactoringImpl extends RefactoringImpl<ReplaceConstructorWithFactoryProcessor> implements ReplaceConstructorWithFactoryRefactoring {
   ReplaceConstructorWithFactoryRefactoringImpl(Project project, PsiMethod method, PsiClass targetClass, String factoryName) {
     super(new ReplaceConstructorWithFactoryProcessor(project, method, null, targetClass, factoryName));

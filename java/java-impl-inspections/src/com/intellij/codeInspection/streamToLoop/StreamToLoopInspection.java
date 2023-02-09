@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
@@ -26,8 +26,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 
 public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -46,10 +48,10 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   @SuppressWarnings("PublicField")
   public boolean SUPPORT_UNKNOWN_SOURCES = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("checkbox.iterate.unknown.stream.sources.via.stream.iterator"), this, "SUPPORT_UNKNOWN_SOURCES");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("SUPPORT_UNKNOWN_SOURCES", JavaBundle.message("checkbox.iterate.unknown.stream.sources.via.stream.iterator")));
   }
 
   @NotNull
@@ -263,8 +265,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getStartElement();
-      if(!(element instanceof PsiMethodCallExpression)) return;
-      PsiMethodCallExpression terminalCall = (PsiMethodCallExpression)element;
+      if(!(element instanceof PsiMethodCallExpression terminalCall)) return;
       CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(terminalCall);
       if (surrounder == null) return;
       CodeBlockSurrounder.SurroundResult surroundResult = surrounder.surround();

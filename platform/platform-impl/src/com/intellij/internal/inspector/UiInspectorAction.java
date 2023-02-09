@@ -7,26 +7,34 @@ import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.internal.inspector.components.HierarchyTree;
 import com.intellij.internal.inspector.components.InspectorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ExpandedItemListCellRendererWrapper;
 import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ContainerEvent;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,7 +47,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
   private static final String ACTION_ID = "UiInspector";
   public static final String RENDERER_BOUNDS = "clicked renderer";
 
-  public static final Key<Pair<List<PropertyBean>, Component>> CLICK_INFO = Key.create("CLICK_INFO");
+  public static final Key<DefaultMutableTreeNode> CLICK_INFO = Key.create("CLICK_INFO");
   public static final Key<Point> CLICK_INFO_POINT = Key.create("CLICK_INFO_POINT");
   public static final Key<Throwable> ADDED_AT_STACKTRACE = Key.create("uiInspector.addedAt");
 
@@ -59,29 +67,17 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    InputEvent event = e.getInputEvent();
-    if (event != null) event.consume();
-    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-
-    Project project = e.getProject();
+  protected void handleClick(@NotNull Component component, @Nullable MouseEvent event) {
+    IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, component);
+    Project project = frame != null ? frame.getProject() : null;
     closeAllInspectorWindows();
 
-    if (event instanceof MouseEvent && event.getComponent() != null) {
-      new UiInspector(project).processMouseEvent(project, (MouseEvent)event);
-      return;
+    if (event != null) {
+      new UiInspector(project).processMouseEvent(project, event);
     }
-    if (component == null) {
-      component = IdeFocusManager.getInstance(project).getFocusOwner();
+    else {
+      new UiInspector(project).showInspector(project, component);
     }
-
-    assert component != null;
-    new UiInspector(project).showInspector(project, component);
   }
 
   @Override
@@ -142,9 +138,8 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
         component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       }
       if (component != null) {
-        if (component instanceof JComponent) {
-          JComponent jComp = (JComponent)component;
-          jComp.putClientProperty(CLICK_INFO, getClickInfo(me, component));
+        if (component instanceof JComponent jComp) {
+          jComp.putClientProperty(CLICK_INFO, getClickInfoNode(me, jComp));
           jComp.putClientProperty(CLICK_INFO_POINT, me.getPoint());
         }
 
@@ -152,7 +147,32 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
       }
     }
 
-    private static Pair<List<PropertyBean>, Component> getClickInfo(MouseEvent me, Component component) {
+    private static DefaultMutableTreeNode getClickInfoNode(MouseEvent me, JComponent component) {
+      if (component instanceof UiInspectorPreciseContextProvider contextProvider) {
+        Point targetPoint = SwingUtilities.convertPoint(me.getComponent(), me.getPoint(), component);
+        MouseEvent componentEvent = MouseEventAdapter.convert(me, component);
+        UiInspectorPreciseContextProvider.UiInspectorInfo inspectorInfo = contextProvider.getUiInspectorContext(componentEvent);
+        if (inspectorInfo != null) {
+          String name = ObjectUtils.chooseNotNull(inspectorInfo.name(), "Click Info");
+          HierarchyTree.ComponentNode node = HierarchyTree.ComponentNode.createNamedNode(name, inspectorInfo.component());
+          if (inspectorInfo.component() != null) inspectorInfo.component().doLayout();
+          node.setUserObject(inspectorInfo.values());
+          return node;
+        }
+      }
+
+      Pair<List<PropertyBean>, @NotNull Component> clickInfo = getClickInfo(me, component);
+      if (clickInfo != null) {
+        //We present clicked renderer as ComponentNode instead of ClickInfoNode to see inner structure of renderer
+        HierarchyTree.ComponentNode node = HierarchyTree.ComponentNode.createComponentNode(clickInfo.second);
+        clickInfo.second.doLayout();
+        node.setUserObject(clickInfo.first);
+        return node;
+      }
+      return null;
+    }
+
+    private static Pair<List<PropertyBean>, @NotNull Component> getClickInfo(MouseEvent me, Component component) {
       if (me.getComponent() == null) return null;
       me = SwingUtilities.convertMouseEvent(me.getComponent(), me, component);
       List<PropertyBean> clickInfo = new ArrayList<>();
@@ -162,23 +182,60 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
         JList<Object> list = (JList<Object>)component;
         int row = list.getUI().locationToIndex(list, me.getPoint());
         if (row != -1) {
-          Component rendererComponent = list.getCellRenderer()
-            .getListCellRendererComponent(list, list.getModel().getElementAt(row), row, list.getSelectionModel().isSelectedIndex(row),
+          Object value = list.getModel().getElementAt(row);
+          ListCellRenderer<? super Object> renderer = ExpandedItemListCellRendererWrapper.unwrap(list.getCellRenderer());
+
+          if (renderer instanceof UiInspectorListRendererContextProvider contextProvider) {
+            clickInfo.addAll(contextProvider.getUiInspectorContext(list, value, row));
+          }
+          if (value instanceof UiInspectorContextProvider contextProvider) {
+            clickInfo.addAll(contextProvider.getUiInspectorContext());
+          }
+          clickInfo.addAll(findActionsFor(value));
+
+          Component rendererComponent = renderer
+            .getListCellRendererComponent(list, value, row, list.getSelectionModel().isSelectedIndex(row),
                                           list.hasFocus());
           rendererComponent.setBounds(list.getCellBounds(row, row));
-          clickInfo.addAll(findActionsFor(list.getModel().getElementAt(row)));
           clickInfo.add(new PropertyBean(RENDERER_BOUNDS, list.getUI().getCellBounds(list, row, row)));
           clickInfo.addAll(ComponentPropertiesCollector.collect(rendererComponent));
           return Pair.create(clickInfo, rendererComponent);
         }
       }
-      if (component instanceof JTable) {
-        JTable table = (JTable)component;
+      if (component instanceof JTable table) {
         int row = table.rowAtPoint(me.getPoint());
         int column = table.columnAtPoint(me.getPoint());
         if (row != -1 && column != -1) {
-          Component rendererComponent = table.getCellRenderer(row, column)
-            .getTableCellRendererComponent(table, table.getValueAt(row, column), table.getSelectionModel().isSelectedIndex(row),
+          Object value = table.getValueAt(row, column);
+          TableCellRenderer renderer = table.getCellRenderer(row, column);
+
+          if (renderer instanceof UiInspectorTableRendererContextProvider contextProvider) {
+            clickInfo.addAll(contextProvider.getUiInspectorContext(table, value, row, column));
+          }
+          if (value instanceof UiInspectorContextProvider contextProvider) {
+            clickInfo.addAll(contextProvider.getUiInspectorContext());
+          }
+
+          if (component instanceof TreeTable treeTable) {
+            TreeTableTree tree = treeTable.getTree();
+            TreeCellRenderer treeRenderer = tree.getOriginalCellRenderer();
+
+            int treeRow = treeTable.convertRowIndexToModel(row);
+            Object treeValue = tree.getPathForRow(treeRow).getLastPathComponent();
+            if (treeRenderer instanceof UiInspectorTreeRendererContextProvider contextProvider) {
+              clickInfo.addAll(contextProvider.getUiInspectorContext(tree, treeValue, treeRow));
+            }
+            if (treeValue instanceof UiInspectorContextProvider contextProvider) {
+              clickInfo.addAll(contextProvider.getUiInspectorContext());
+            }
+            if (treeValue instanceof DefaultMutableTreeNode mutableTreeNode &&
+                mutableTreeNode.getUserObject() instanceof UiInspectorContextProvider contextProvider) {
+              clickInfo.addAll(contextProvider.getUiInspectorContext());
+            }
+          }
+
+          Component rendererComponent = renderer
+            .getTableCellRendererComponent(table, value, table.getSelectionModel().isSelectedIndex(row),
                                            table.hasFocus(), row, column);
           rendererComponent.setBounds(table.getCellRect(row, column, false));
           clickInfo.add(new PropertyBean(RENDERER_BOUNDS, table.getCellRect(row, column, true)));
@@ -190,12 +247,26 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
         JTree tree = (JTree)component;
         TreePath path = tree.getClosestPathForLocation(me.getX(), me.getY());
         if (path != null) {
-          Object object = path.getLastPathComponent();
-          Component rendererComponent = tree.getCellRenderer().getTreeCellRendererComponent(
-            tree, object, tree.getSelectionModel().isPathSelected(path),
+          int row = tree.getRowForPath(path);
+          Object value = path.getLastPathComponent();
+          TreeCellRenderer renderer = tree.getCellRenderer();
+
+          if (renderer instanceof UiInspectorTreeRendererContextProvider contextProvider) {
+            clickInfo.addAll(contextProvider.getUiInspectorContext(tree, value, row));
+          }
+          if (value instanceof UiInspectorContextProvider contextProvider) {
+            clickInfo.addAll(contextProvider.getUiInspectorContext());
+          }
+          if (value instanceof DefaultMutableTreeNode mutableTreeNode &&
+              mutableTreeNode.getUserObject() instanceof UiInspectorContextProvider contextProvider) {
+            clickInfo.addAll(contextProvider.getUiInspectorContext());
+          }
+
+          Component rendererComponent = renderer.getTreeCellRendererComponent(
+            tree, value, tree.getSelectionModel().isPathSelected(path),
             tree.isExpanded(path),
-            tree.getModel().isLeaf(object),
-            tree.getRowForPath(path), tree.hasFocus());
+            tree.getModel().isLeaf(value),
+            row, tree.hasFocus());
           rendererComponent.setBounds(tree.getPathBounds(path));
           clickInfo.add(new PropertyBean(RENDERER_BOUNDS, tree.getPathBounds(path)));
           clickInfo.addAll(ComponentPropertiesCollector.collect(rendererComponent));
@@ -212,7 +283,8 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
       }
       if (object instanceof QuickFixWrapper) {
         return findActionsFor(((QuickFixWrapper)object).getFix());
-      } else if (object instanceof IntentionActionDelegate) {
+      }
+      else if (object instanceof IntentionActionDelegate) {
         IntentionAction delegate = ((IntentionActionDelegate)object).getDelegate();
         if (delegate != object) {
           return findActionsFor(delegate);

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
+import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.findUsages.similarity.MostCommonUsagePatternsComponent;
@@ -25,12 +26,15 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageContextPanel;
@@ -66,7 +70,8 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private int myLineHeight;
   private List<? extends UsageInfo> myCachedSelectedUsageInfos;
   private Pattern myCachedSearchPattern;
-  private Pattern myCachedReplacePattern;
+  private String myCachedReplaceString;
+  private boolean myCachedCaseSensitive;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private @NotNull Set<GroupNode> myPreviousSelectedGroupNodes = new HashSet<>();
   private @Nullable UsagePreviewToolbarWithSimilarUsagesLink myToolbarWithSimilarUsagesLink;
@@ -154,13 +159,15 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       validate();
     }
 
-    if (!Comparing.equal(infos, myCachedSelectedUsageInfos) // avoid moving viewport
+    if (!Objects.equals(infos, myCachedSelectedUsageInfos) // avoid moving viewport
         || !UsageViewPresentation.arePatternsEqual(myCachedSearchPattern, myPresentation.getSearchPattern())
-        || !UsageViewPresentation.arePatternsEqual(myCachedReplacePattern, myPresentation.getReplacePattern())) {
+        || !Objects.equals(myCachedReplaceString, myPresentation.getReplaceString())
+        || myCachedCaseSensitive != myPresentation.isCaseSensitive()) {
       highlight(infos, myEditor, myProject, true, HighlighterLayer.ADDITIONAL_SYNTAX);
       myCachedSelectedUsageInfos = infos;
       myCachedSearchPattern = myPresentation.getSearchPattern();
-      myCachedReplacePattern = myPresentation.getReplacePattern();
+      myCachedCaseSensitive = myPresentation.isCaseSensitive();
+      myCachedReplaceString = myPresentation.getReplaceString();
     }
   }
 
@@ -254,7 +261,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
    * @param psiElement an element to highlight
    * @return range to highlight for named element
    */
-  private static @NotNull TextRange getNameElementTextRange(@NotNull PsiElement psiElement) {
+  public static @NotNull TextRange getNameElementTextRange(@NotNull PsiElement psiElement) {
     PsiFile psiFile = psiElement.getContainingFile();
     PsiElement nameElement = psiFile.findElementAt(psiElement.getTextOffset());
     if (nameElement != null) {
@@ -285,21 +292,15 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       String replacementPreviewText = FindManager.getInstance(project)
         .getStringToReplace(editor.getDocument().getText(range), findModel, range.getStartOffset(),
                             editor.getDocument().getText());
+      if (replacementPreviewText == null) {
+        return;
+      }
       if (!Registry.is("ide.find.show.replacement.hint.for.simple.regexp")
           && Objects.equals(replacementPreviewText, findModel.getStringToReplace())) {
         return;
       }
-      ReplacementView replacementView = new ReplacementView(replacementPreviewText);
 
-      BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(replacementView);
-      balloonBuilder.setFadeoutTime(0);
-      balloonBuilder.setFillColor(IdeTooltipManager.GRAPHITE_COLOR);
-      balloonBuilder.setAnimationCycle(0);
-      balloonBuilder.setHideOnClickOutside(false);
-      balloonBuilder.setHideOnKeyOutside(false);
-      balloonBuilder.setHideOnAction(false);
-      balloonBuilder.setCloseButtonEnabled(true);
-      Balloon balloon = balloonBuilder.createBalloon();
+      Balloon balloon = buildReplacementPreviewBalloon(replacementPreviewText);
       EditorUtil.disposeWithEditor(editor, balloon);
 
       balloon.show(new ReplacementBalloonPositionTracker(project, editor, range, findModel), Balloon.Position.below);
@@ -314,21 +315,23 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private static FindModel getReplacementModel(@NotNull Editor editor) {
     UsagePreviewPanel panel = editor.getUserData(PREVIEW_EDITOR_FLAG);
     Pattern searchPattern = null;
-    Pattern replacePattern = null;
+    String replaceString = null;
     if (panel != null) {
       searchPattern = panel.myPresentation.getSearchPattern();
-      replacePattern = panel.myPresentation.getReplacePattern();
+      replaceString = panel.myPresentation.getReplaceString();
     }
 
-    if (searchPattern == null || replacePattern == null) {
+    if (searchPattern == null || replaceString == null) {
       return null;
     }
     FindModel stub = new FindModel();
+    stub.setCaseSensitive(panel.myPresentation.isCaseSensitive());
+    stub.setPreserveCase(panel.myPresentation.isPreserveCase());
     stub.setMultiline(true);
     stub.setRegularExpressions(true);
     stub.setReplaceAll(true);
     stub.setStringToFind(searchPattern.pattern());
-    stub.setStringToReplace(replacePattern.pattern());
+    stub.setStringToReplace(replaceString);
     return stub;
   }
 
@@ -387,7 +390,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       myEditor = null;
       myCachedSelectedUsageInfos = null;
       myCachedSearchPattern = null;
-      myCachedReplacePattern = null;
+      myCachedReplaceString = null;
     }
   }
 
@@ -499,19 +502,47 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     }
   }
 
+  public static Balloon buildReplacementPreviewBalloon(@NotNull @NlsSafe String replacement) {
+    ReplacementView replacementView = new ReplacementView(replacement);
+
+    BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(replacementView);
+    balloonBuilder.setFadeoutTime(0);
+    balloonBuilder.setFillColor(IdeTooltipManager.GRAPHITE_COLOR);
+    balloonBuilder.setAnimationCycle(0);
+    balloonBuilder.setHideOnClickOutside(false);
+    balloonBuilder.setHideOnKeyOutside(false);
+    balloonBuilder.setHideOnAction(false);
+    balloonBuilder.setCloseButtonEnabled(true);
+    return balloonBuilder.createBalloon();
+  }
+
+  private static JLabel buildReplacementPreviewLabel(@NotNull @NlsSafe String replacement) {
+    String htmlToShow;
+    if (replacement.isEmpty()) {
+      htmlToShow = new HtmlBuilder()
+        .append("<" + FindBundle.message("live.preview.empty.string") + ">")
+        .wrapWithHtmlBody()
+        .toString();
+    }
+    else {
+      replacement = StringUtil.shortenTextWithEllipsis(replacement, 500, 0, true);
+      htmlToShow = new HtmlBuilder()
+        .append(replacement)
+        .wrapWith("code").wrapWith("pre").wrapWith("body").wrapWith("html")
+        .toString();
+    }
+    JLabel label = new JBLabel(htmlToShow).setAllowAutoWrapping(true);
+    label.setForeground(new JBColor(Gray._240, Gray._200));
+    return label;
+  }
+
   private static class ReplacementView extends JPanel {
     @Override
     protected void paintComponent(@NotNull Graphics graphics) {
     }
 
-    ReplacementView(@Nullable @NlsSafe String replacement) {
-      String textToShow = replacement;
-      if (replacement == null) {
-        textToShow = UsageViewBundle.message("label.malformed.replacement.string");
-      }
-      JLabel jLabel = new JLabel(textToShow);
-      jLabel.setForeground(replacement != null ? new JBColor(Gray._240, Gray._200) : JBColor.RED);
-      add(jLabel);
+    ReplacementView(@NotNull @NlsSafe String replacement) {
+      add(buildReplacementPreviewLabel(replacement));
     }
   }
 

@@ -9,12 +9,9 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.FList;
-import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class ActionUpdateEdtExecutor {
   /**
    * Compute the supplied value on Swing thread, but try to avoid deadlocks by periodically performing {@link ProgressManager#checkCanceled()} in the current thread.
@@ -40,13 +38,11 @@ public final class ActionUpdateEdtExecutor {
       return supplier.get();
     }
 
-    FList<Throwable> initialTraces = FList.<Throwable>emptyList().prepend(EMPTY_THROWABLE); // unique!
     Semaphore semaphore = new Semaphore(1);
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     AtomicReference<Pair<T, Throwable>> result = new AtomicReference<>(Pair.empty());
     Runnable runnable = () -> {
       try {
-        ourEDTExecTraces.set(initialTraces);
         if (indicator == null || !indicator.isCanceled()) {
           result.set(Pair.create(supplier.get(), null));
         }
@@ -56,7 +52,6 @@ public final class ActionUpdateEdtExecutor {
       }
       finally {
         semaphore.up();
-        ourEDTExecTraces.set(null);
       }
     };
     if (laterInvocator != null) {
@@ -65,39 +60,12 @@ public final class ActionUpdateEdtExecutor {
     else {
       ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
     }
-    FList<Throwable> curTraces = FList.emptyList();
-    boolean started = false;
-    long start = System.nanoTime();
-    while (!semaphore.waitFor(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)) {
-      ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(indicator);
-      if (!started && ourEDTExecTraces.compareAndSet(initialTraces, curTraces)) {
-        started = true;
-        start = System.nanoTime();
-      }
-      else if (started) {
-        long elapsed = TimeoutUtil.getDurationMillis(start);
-        int size = curTraces.size();
-        if (size < MAX_TRACES && elapsed > (size + 1) * TRACE_DELTA_MS) {
-          Throwable throwable = new Throwable("EDT-trace-at-" + elapsed + "-ms");
-          throwable.setStackTrace(EDT.getEventDispatchThread().getStackTrace());
-          FList<Throwable> nextTraces = curTraces.prepend(throwable);
-          ourEDTExecTraces.compareAndSet(curTraces, nextTraces);
-          curTraces = nextTraces;
-        }
-      }
-    }
+
+    ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, indicator);
     ExceptionUtil.rethrowAllAsUnchecked(result.get().second);
 
     // check cancellation one last time, to ensure the EDT action wasn't no-op due to cancellation
     ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(indicator);
     return result.get().first;
-  }
-
-  private static final int MAX_TRACES = 5;
-  private static final int TRACE_DELTA_MS = 100;
-  private static final Throwable EMPTY_THROWABLE = new Throwable("EDT-trace-unknown");
-  static final AtomicReference<FList<Throwable>> ourEDTExecTraces = new AtomicReference<>();
-  static {
-    EMPTY_THROWABLE.setStackTrace(new StackTraceElement[0]);
   }
 }

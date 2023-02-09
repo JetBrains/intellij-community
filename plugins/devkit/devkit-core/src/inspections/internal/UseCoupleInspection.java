@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -29,7 +30,7 @@ import java.util.Objects;
 /**
  * @author Konstantin Bulenkov
  */
-public class UseCoupleInspection extends DevKitUastInspectionBase {
+public class UseCoupleInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
   private static final String PAIR_CLASS_NAME = Pair.class.getName();
   private static final String COUPLE_CLASS_NAME = Couple.class.getName();
 
@@ -178,8 +179,7 @@ public class UseCoupleInspection extends DevKitUastInspectionBase {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-      if (element instanceof PsiTypeElement) {
-        PsiTypeElement typeElement = (PsiTypeElement)element;
+      if (element instanceof PsiTypeElement typeElement) {
         PsiClassType type1 = (PsiClassType)typeElement.getType();
         PsiType[] parameters = type1.getParameters();
         if (parameters.length != 2) {

@@ -3,6 +3,7 @@ package com.intellij.tool
 
 import com.intellij.TestCaseLoader
 import org.apache.http.HttpResponse
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.impl.client.LaxRedirectStrategy
@@ -14,13 +15,21 @@ import java.util.concurrent.Semaphore
 import kotlin.io.path.createDirectories
 import kotlin.io.path.outputStream
 
+
 object HttpClient {
   private val locks = ConcurrentHashMap<String, Semaphore>()
+
+  private var requestConfig = RequestConfig.custom()
+    .setConnectTimeout(30 * 1000)
+    .setConnectionRequestTimeout(30 * 1000)
+    .setSocketTimeout(30 * 1000).build()
 
   fun <Y> sendRequest(request: HttpUriRequest, processor: (HttpResponse) -> Y): Y {
     HttpClientBuilder.create()
       .setRedirectStrategy(LaxRedirectStrategy())
-      .build().use { client ->
+      .setDefaultRequestConfig(requestConfig)
+      .build()
+      .use { client ->
         client.execute(request).use { response ->
           if (response.statusLine.statusCode != 200) {
             System.err.println(
@@ -31,10 +40,10 @@ object HttpClient {
       }
   }
 
-  fun download(request: HttpUriRequest, outFile: File, retries: Long = 3): Boolean =
+  fun download(request: HttpUriRequest, outFile: File, retries: Int = 3): Boolean =
     download(request, outFile.toPath(), retries)
 
-  fun download(request: HttpUriRequest, outStream: OutputStream, retries: Long = 3): Boolean {
+  fun download(request: HttpUriRequest, outStream: OutputStream, retries: Int = 3): Boolean {
     val tempFile = File.createTempFile("downloaded_", ".txt")
 
     val result = download(request, tempFile, retries)
@@ -56,7 +65,7 @@ object HttpClient {
    * Downloading file from [url] to [outPath] with [retries].
    * @return true - if successful, false - otherwise
    */
-  fun download(request: HttpUriRequest, outPath: Path, retries: Long = 3): Boolean {
+  fun download(request: HttpUriRequest, outPath: Path, retries: Int = 3): Boolean {
     val lock = locks.getOrPut(outPath.toAbsolutePath().toString()) { Semaphore(1) }
     lock.acquire()
     var isSuccessful = false

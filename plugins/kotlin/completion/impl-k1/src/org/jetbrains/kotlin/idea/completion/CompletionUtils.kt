@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.lookup.LookupElementDecorator
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.util.Key
-import com.intellij.patterns.ElementPattern
-import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
@@ -24,7 +25,10 @@ import org.jetbrains.kotlin.idea.util.getImplicitReceiversWithInstanceToExpressi
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
@@ -33,22 +37,6 @@ import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-
-tailrec fun <T : Any> LookupElement.putUserDataDeep(key: Key<T>, value: T?) {
-    if (this is LookupElementDecorator<*>) {
-        getDelegate().putUserDataDeep(key, value)
-    } else {
-        putUserData(key, value)
-    }
-}
-
-tailrec fun <T : Any> LookupElement.getUserDataDeep(key: Key<T>): T? {
-    return if (this is LookupElementDecorator<*>) {
-        getDelegate().getUserDataDeep(key)
-    } else {
-        getUserData(key)
-    }
-}
 
 var LookupElement.isDslMember: Boolean? by UserDataProperty(Key.create("DSL_LOOKUP_ITEM"))
 
@@ -73,10 +61,6 @@ fun LookupElement.keepOldArgumentListOnTab(): LookupElement {
     return this
 }
 
-fun PrefixMatcher.asNameFilter(): (Name) -> Boolean {
-    return { name -> !name.isSpecial && prefixMatches(name.identifier) }
-}
-
 fun PrefixMatcher.asStringNameFilter() = { name: String -> prefixMatches(name) }
 
 fun ((String) -> Boolean).toNameFilter(): (Name) -> Boolean {
@@ -85,21 +69,14 @@ fun ((String) -> Boolean).toNameFilter(): (Name) -> Boolean {
 
 infix fun <T> ((T) -> Boolean).or(otherFilter: (T) -> Boolean): (T) -> Boolean = { this(it) || otherFilter(it) }
 
-fun LookupElementPresentation.prependTailText(text: String, grayed: Boolean) {
-    val tails = tailFragments
-    clearTail()
-    appendTailText(text, grayed)
-    tails.forEach { appendTailText(it.text, it.isGrayed) }
-}
-
 enum class CallableWeightEnum {
     local, // local non-extension
     thisClassMember,
     baseClassMember,
     thisTypeExtension,
     baseTypeExtension,
-    globalOrStatic, // global non-extension
     typeParameterExtension,
+    globalOrStatic, // global non-extension
     receiverCastRequired
 }
 
@@ -278,12 +255,6 @@ fun shortenReferences(
     else
         shortenReferences.process(file, startOffset, endOffset)
 }
-
-infix fun <T> ElementPattern<T>.and(rhs: ElementPattern<T>) = StandardPatterns.and(this, rhs)
-fun <T> ElementPattern<T>.andNot(rhs: ElementPattern<T>) = StandardPatterns.and(this, StandardPatterns.not(rhs))
-infix fun <T> ElementPattern<T>.or(rhs: ElementPattern<T>) = StandardPatterns.or(this, rhs)
-
-fun singleCharPattern(char: Char) = StandardPatterns.character().equalTo(char)
 
 fun LookupElement.decorateAsStaticMember(
     memberDescriptor: DeclarationDescriptor,

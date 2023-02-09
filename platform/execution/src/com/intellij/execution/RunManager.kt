@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution
 
 import com.intellij.execution.configurations.*
@@ -20,7 +20,7 @@ abstract class RunManager {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): RunManager {
-      if (IS_RUN_MANAGER_INITIALIZED.get(project) != true) {
+      if (IS_RUN_MANAGER_INITIALIZED.get(project) != true && !project.isDefault) {
         // https://gist.github.com/develar/5bcf39b3f0ec08f507ec112d73375f2b
         LOG.warn("Must be not called before project components initialized")
       }
@@ -133,7 +133,7 @@ abstract class RunManager {
    */
   abstract fun shouldSetRunConfigurationFromContext(): Boolean
 
-  abstract fun isRunWidgetActive(): Boolean
+  abstract fun isRiderRunWidgetActive(): Boolean
 
   /**
    * Creates a configuration of the specified type with the specified name. Note that you need to call

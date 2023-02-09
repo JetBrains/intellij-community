@@ -3,11 +3,14 @@
 
 package com.intellij.ide.wizard
 
+import com.intellij.ide.util.projectWizard.ProjectBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
@@ -17,73 +20,48 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.DslComponentProperty
-import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.util.minimumWidth
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.JComponent
 import javax.swing.JLabel
 
 
 val WizardContext.projectOrDefault get() = project ?: ProjectManager.getInstance().defaultProject
 
-fun <T1, T2> T1.chain(f1: (T1) -> T2): NewProjectWizardStep
-  where T1 : NewProjectWizardStep, T2 : NewProjectWizardStep {
-
-  val s1 = f1(this)
-  return stepSequence(this, s1)
-}
-
+@Deprecated(
+  message = "Use NewProjectWizardChainStep.nextStep instead",
+  replaceWith = ReplaceWith(
+    "nextStep(f1).nextStep(f2)",
+    "com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep"
+  )
+)
 fun <T1, T2, T3> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3): NewProjectWizardStep
   where T1 : NewProjectWizardStep, T2 : NewProjectWizardStep, T3 : NewProjectWizardStep {
-
-  val s1 = f1(this)
-  val s2 = f2(s1)
-  return stepSequence(this, s1, s2)
+  return nextStep(f1)
+    .nextStep(f2)
 }
 
+@Deprecated(
+  message = "Use NewProjectWizardChainStep.nextStep instead",
+  replaceWith = ReplaceWith(
+    "nextStep(f1).nextStep(f2).nextStep(f3)",
+    "com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep"
+  )
+)
 fun <T1, T2, T3, T4> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3, f3: (T3) -> T4): NewProjectWizardStep
   where T1 : NewProjectWizardStep, T2 : NewProjectWizardStep, T3 : NewProjectWizardStep, T4 : NewProjectWizardStep {
-
-  val s1 = f1(this)
-  val s2 = f2(s1)
-  val s3 = f3(s2)
-  return stepSequence(this, s1, s2, s3)
-}
-
-fun <T1, T2, T3, T4, T5> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3, f3: (T3) -> T4, f4: (T4) -> T5): NewProjectWizardStep
-  where T1 : NewProjectWizardStep, T2 : NewProjectWizardStep, T3 : NewProjectWizardStep, T4 : NewProjectWizardStep, T5 : NewProjectWizardStep {
-
-  val s1 = f1(this)
-  val s2 = f2(s1)
-  val s3 = f3(s2)
-  val s4 = f4(s3)
-  return stepSequence(this, s1, s2, s3, s4)
-}
-
-fun stepSequence(first: NewProjectWizardStep, vararg rest: NewProjectWizardStep): NewProjectWizardStep {
-  val steps = listOf(first) + rest
-  return object : AbstractNewProjectWizardStep(first) {
-    override fun setupUI(builder: Panel) {
-      for (step in steps) {
-        step.setupUI(builder)
-      }
-    }
-
-    override fun setupProject(project: Project) {
-      for (step in steps) {
-        step.setupProject(project)
-      }
-    }
-  }
+  return nextStep(f1)
+    .nextStep(f2)
+    .nextStep(f3)
 }
 
 fun DialogPanel.setMinimumWidthForAllRowLabels(width: Int) {
   UIUtil.uiTraverser(this).asSequence()
     .filterIsInstance<JLabel>()
     .filter { isRowLabel(it) }
-    .forEach { it.setMinimumWidth(width) }
+    .forEach { it.minimumWidth = width }
 }
 
 private fun isRowLabel(label: JLabel): Boolean {
@@ -93,10 +71,6 @@ private fun isRowLabel(label: JLabel): Boolean {
   }
   val constraints = layout.getConstraints(label)
   return label.getClientProperty(DslComponentProperty.ROW_LABEL) == true && constraints != null && constraints.gaps.left == 0
-}
-
-private fun JComponent.setMinimumWidth(width: Int) {
-  minimumSize = minimumSize.apply { this.width = width }
 }
 
 fun DialogPanel.withVisualPadding(topField: Boolean = false): DialogPanel {
@@ -148,3 +122,13 @@ fun whenProjectCreated(project: Project, action: () -> Unit) {
     }
   }
 }
+
+/**
+ * This is a workaround for https://youtrack.jetbrains.com/issue/IDEA-286690
+ */
+@ApiStatus.Internal
+fun NewProjectWizardStep.setupProjectFromBuilder(project: Project, builder: ProjectBuilder): Module? {
+  val model = context.getUserData(NewProjectWizardStep.MODIFIABLE_MODULE_MODEL_KEY)
+  return builder.commit(project, model).firstOrNull()
+}
+

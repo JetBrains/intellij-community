@@ -25,9 +25,6 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenIdeaPluginImporter extends MavenImporter {
   public MavenIdeaPluginImporter() {
     super("com.googlecode", "maven-idea-plugin");

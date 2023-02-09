@@ -625,8 +625,7 @@ public final class ScopeEditorPanel implements Disposable {
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      if (value instanceof PackageDependenciesNode) {
-        PackageDependenciesNode node = (PackageDependenciesNode)value;
+      if (value instanceof PackageDependenciesNode node) {
         setIcon(node.getIcon());
 
         setForeground(UIUtil.getTreeForeground(selected, hasFocus));

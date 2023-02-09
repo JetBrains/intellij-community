@@ -15,9 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class InheritanceToDelegationTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {

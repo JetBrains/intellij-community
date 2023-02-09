@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 
@@ -14,6 +15,7 @@ interface LibraryDependenciesCache {
         fun getInstance(project: Project): LibraryDependenciesCache = project.service()
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(
         "Use 'getLibraryDependencies()' instead.",
         ReplaceWith("getLibraryDependencies(libraryInfo).let { it.libraries to it.sdk }")
@@ -24,7 +26,19 @@ interface LibraryDependenciesCache {
 
     fun getLibraryDependencies(library: LibraryInfo): LibraryDependencies
 
-    class LibraryDependencies(val library: LibraryInfo, val libraries: List<LibraryInfo>, val sdk: List<SdkInfo>) {
+    class LibraryDependencies(
+        val library: LibraryInfo,
+        val libraries: List<LibraryInfo>,
+        val sdk: List<SdkInfo>,
+        val sourcesOnlyDependencies: List<LibraryInfo>,
+    ) {
         val librariesWithoutSelf: List<LibraryInfo> by lazy { libraries - library }
+
+        fun checkValidity() {
+            library.checkValidity()
+            libraries.forEach { it.checkValidity() }
+            sdk.forEach { it.checkValidity() }
+            sourcesOnlyDependencies.forEach { it.checkValidity() }
+        }
     }
 }

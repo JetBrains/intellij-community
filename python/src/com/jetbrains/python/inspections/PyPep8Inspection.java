@@ -2,13 +2,14 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection;
-import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.codeInspection.options.OptPane;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * Dummy inspection for configuring the PEP8 checker. The checking itself is performed by
@@ -19,9 +20,8 @@ public class PyPep8Inspection extends PyInspection implements ExternalAnnotatorB
   public static final String INSPECTION_SHORT_NAME = "PyPep8Inspection";
 
   @Override
-  public JComponent createOptionsPanel() {
-    ListEditForm form = new ListEditForm(PyBundle.message("INSP.settings.pep8.ignore.errors"), PyBundle.message("INSP.settings.pep8.ignore.errors.label"), ignoredErrors);
-    return form.getContentPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return pane(OptPane.stringList("ignoredErrors", PyBundle.message("INSP.settings.pep8.ignore.errors.label")));
   }
 
   @NotNull

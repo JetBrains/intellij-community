@@ -27,9 +27,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.function.Function;
 
@@ -41,12 +39,6 @@ public final class IncompletePropertyInspection extends LocalInspectionTool impl
   public static final String TOOL_KEY = "IncompleteProperty";
 
   private final SortedSet<String> mySuffixes = new TreeSet<>();
-
-  @Nullable
-  @Override
-  public JComponent createOptionsPanel() {
-    return new IncompletePropertyInspectionOptionsPanel(mySuffixes).buildPanel();
-  }
 
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {

@@ -2,10 +2,12 @@
 
 package org.jetbrains.kotlin.idea.core
 
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -13,10 +15,8 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.psi.canDropCurlyBrackets
-import org.jetbrains.kotlin.idea.base.psi.copied
-import org.jetbrains.kotlin.idea.base.psi.dropCurlyBrackets
-import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.KotlinBaseFe10CodeInsightBundle
+import org.jetbrains.kotlin.idea.base.psi.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.imports.getImportableTargets
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.runAction
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.psi.*
@@ -107,7 +108,17 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
         elementFilter: (PsiElement) -> FilterResult = { FilterResult.PROCESS },
         runImmediately: Boolean = true
     ): KtElement {
-        return process(listOf(element), elementFilter, runImmediately).single()
+        return if (isDispatchThread()) {
+            val ref = Ref<KtElement>()
+            ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(
+                KotlinBaseFe10CodeInsightBundle.message("progress.title.shortening.references"), element.project, null
+            ) {
+                ref.set(process(listOf(element), elementFilter, runImmediately).single())
+            }
+            ref.get()
+        } else {
+            process(listOf(element), elementFilter, runImmediately).single()
+        }
     }
 
     @JvmOverloads
@@ -780,7 +791,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
             // TODO: More generic solution may be possible
             if (selectorsSelectorTarget is PropertyDescriptor) {
                 val source = selectorsSelectorTarget.source.getPsi() as? KtProperty
-                if (source != null && isEnumCompanionPropertyWithEntryConflict(source, source.name ?: "")) {
+                if (source != null && KotlinPsiHeuristics.isEnumCompanionPropertyWithEntryConflict(source, source.name ?: "")) {
                     return AnalyzeQualifiedElementResult.Skip
                 }
             }

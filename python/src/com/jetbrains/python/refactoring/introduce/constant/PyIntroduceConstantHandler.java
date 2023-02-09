@@ -41,9 +41,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyIntroduceConstantHandler extends IntroduceHandler {
   public PyIntroduceConstantHandler() {
     super(new ConstantValidator(), PyPsiBundle.message("refactoring.introduce.constant.dialog.title"));

@@ -27,9 +27,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author ilyas
- */
 @SuppressWarnings({"UnusedDeclaration"})
 public class PsiExpressionCategory implements PsiEnhancerCategory{
 

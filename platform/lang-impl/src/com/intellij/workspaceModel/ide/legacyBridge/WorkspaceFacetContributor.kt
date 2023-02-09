@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
  *  the changes of your custom entity this extension point should be implemented.
  *
  * If you want to use your custom module setting entity under the hood of your facet you also need to implement
- * [com.intellij.workspaceModel.ide.legacyBridge.FacetBridge] to be properly updated.
+ * [com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetBridge] to be properly updated.
  *
  * **N.B. Most of the time you need to implement them all to have a correct support all functionality relying on Facets.**
  *
@@ -28,16 +29,11 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 @ApiStatus.OverrideOnly
-interface WorkspaceFacetContributor<T: WorkspaceEntity> {
+interface WorkspaceFacetContributor<T: ModuleSettingsBase> {
   /**
    * Declare class for the main entity associated with [com.intellij.facet.Facet].
    */
   val rootEntityType: Class<T>
-
-  /**
-   * Get the name for the associated with entity [com.intellij.facet.Facet]
-   */
-  fun getFacetName(entity: T): String
 
   /**
    * Method return the module to which this entity belongs
@@ -45,9 +41,9 @@ interface WorkspaceFacetContributor<T: WorkspaceEntity> {
   fun getParentModuleEntity(entity: T): ModuleEntity
 
   /**
-   * Method return the entity of type declared in [rootEntityType], associated with this module if any
+   * Method return the list of entities of type declared in [rootEntityType], associated with this module if any
    */
-  fun getRootEntityByModuleEntity(moduleEntity: ModuleEntity): T?
+  fun getRootEntitiesByModuleEntity(moduleEntity: ModuleEntity): List<T>
 
   /**
    * Method for creating [com.intellij.facet.Facet] from the given entity of root type
@@ -72,6 +68,6 @@ interface WorkspaceFacetContributor<T: WorkspaceEntity> {
   }
 
   companion object {
-    val EP_NAME: ExtensionPointName<WorkspaceFacetContributor<WorkspaceEntity>> = ExtensionPointName.create("com.intellij.workspaceModel.facetContributor")
+    val EP_NAME: ExtensionPointName<WorkspaceFacetContributor<ModuleSettingsBase>> = ExtensionPointName.create("com.intellij.workspaceModel.facetContributor")
   }
 }

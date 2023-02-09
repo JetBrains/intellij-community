@@ -16,7 +16,7 @@ class TransientChangeTrackingValueContainer<Value> extends ChangeTrackingValueCo
 
   // Resets diff of index value for particular fileId
   void dropAssociatedValue(int inputId) {
-    myMerged = null;
+    dropMergedData();
 
     removeFromAdded(inputId);
     if (myInvalidated != null) myInvalidated.remove(inputId);

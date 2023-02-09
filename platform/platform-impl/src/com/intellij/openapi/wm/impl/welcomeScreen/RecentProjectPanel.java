@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.CommonBundle;
@@ -35,6 +35,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
@@ -59,9 +60,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-/**
- * @author max
- */
 public class RecentProjectPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance(RecentProjectPanel.class);
 
@@ -88,8 +86,7 @@ public class RecentProjectPanel extends JPanel {
     myPathShortener = new UniqueNameBuilder<>(SystemProperties.getUserHome(), File.separator);
     Collection<String> pathsToCheck = new HashSet<>();
     for (AnAction action : recentProjectActions) {
-      if (action instanceof ReopenProjectAction) {
-        ReopenProjectAction item = (ReopenProjectAction)action;
+      if (action instanceof ReopenProjectAction item) {
         myPathShortener.addPath(item, item.getProjectPath());
         pathsToCheck.add(item.getProjectPath());
       }
@@ -118,7 +115,7 @@ public class RecentProjectPanel extends JPanel {
             AnAction selection = myList.getSelectedValue();
             if (selection != null) {
               AnAction selectedAction = performSelectedAction(event, selection);
-              // remove action from list if needed
+              // remove action from a list if needed
               if (selectedAction instanceof ReopenProjectAction) {
                 if (((ReopenProjectAction)selectedAction).isRemoved()) {
                   ListUtil.removeSelectedItems(myList);
@@ -196,8 +193,7 @@ public class RecentProjectPanel extends JPanel {
     };
   }
 
-  @NotNull
-  static String getProjectName(@NotNull ReopenProjectAction projectItem) {
+  static @NotNull String getProjectName(@NotNull ReopenProjectAction projectItem) {
     String home = SystemProperties.getUserHome();
     String path = projectItem.getProjectPath();
     if (FileUtil.startsWith(path, home)) {
@@ -206,8 +202,7 @@ public class RecentProjectPanel extends JPanel {
     return projectItem.getProjectNameToDisplay() + " " + path;
   }
 
-  @NotNull
-  private AnAction performSelectedAction(@NotNull InputEvent event, AnAction selection) {
+  private @NotNull AnAction performSelectedAction(@NotNull InputEvent event, AnAction selection) {
     String actionPlace = UIUtil.uiParents(myList, true).filter(FlatWelcomeFrame.class).isEmpty() ? ActionPlaces.POPUP : ActionPlaces.WELCOME_SCREEN;
     AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(
       event, actionPlace, selection.getTemplatePresentation(),
@@ -312,8 +307,7 @@ public class RecentProjectPanel extends JPanel {
     return new RecentProjectItemRenderer();
   }
 
-  @Nullable
-  protected JPanel createTitle() {
+  protected @Nullable JPanel createTitle() {
     JPanel title = new JPanel() {
       @Override
       public Dimension getPreferredSize() {
@@ -488,13 +482,11 @@ public class RecentProjectPanel extends JPanel {
 
       setBackground(back);
 
-      if (value instanceof ReopenProjectAction) {
-        ReopenProjectAction item = (ReopenProjectAction)value;
+      if (value instanceof ReopenProjectAction item) {
         myName.setText(item.getTemplatePresentation().getText());
         myPath.setText(getTitle2Text(item, myPath, JBUIScale.scale(40)));
       }
-      else if (value instanceof ProjectGroupActionGroup) {
-        final ProjectGroupActionGroup group = (ProjectGroupActionGroup)value;
+      else if (value instanceof ProjectGroupActionGroup group) {
         myName.setText(group.getGroup().getName());
         myPath.setText("");
       }
@@ -525,7 +517,7 @@ public class RecentProjectPanel extends JPanel {
       return fullText;
     }
 
-    private boolean isTutorial(ReopenProjectAction action) {
+    private static boolean isTutorial(ReopenProjectAction action) {
       List<ProjectGroup> groups = RecentProjectsManager.getInstance().getGroups();
       for (ProjectGroup group : groups) {
         if (!group.isTutorials()) {
@@ -541,8 +533,7 @@ public class RecentProjectPanel extends JPanel {
       return false;
     }
 
-    @NotNull
-    private String truncateDescription(String fullText, FontMetrics fm, int maxWidth, boolean isTutorial) {
+    private static @NotNull String truncateDescription(String fullText, FontMetrics fm, int maxWidth, boolean isTutorial) {
       if (isTutorial) {
         String tutorialTruncated = fullText;
         while (fm.stringWidth(tutorialTruncated) > maxWidth) {
@@ -577,9 +568,8 @@ public class RecentProjectPanel extends JPanel {
       return new Dimension(Math.min(size.width, JBUIScale.scale(245)), size.height);
     }
 
-    @NotNull
     @Override
-    public Dimension getSize() {
+    public @NotNull Dimension getSize() {
       return getPreferredSize();
     }
   }
@@ -680,14 +670,10 @@ public class RecentProjectPanel extends JPanel {
     Path path = Paths.get(pathStr), pathRoot = path.getRoot();
     if (pathRoot == null) return false;
     if (SystemInfo.isWindows && pathRoot.toString().startsWith("\\\\")) return true;
-    for (Path fsRoot : pathRoot.getFileSystem().getRootDirectories()) {
-      if (pathRoot.equals(fsRoot)) return Files.exists(path);
-    }
-    return false;
+    return ContainerUtil.find(pathRoot.getFileSystem().getRootDirectories(), pathRoot) != null && Files.exists(path);
   }
 
-  @NotNull
-  private static Icon toSize(@NotNull Icon icon) {
+  private static @NotNull Icon toSize(@NotNull Icon icon) {
     return IconUtil.toSize(icon,
                            (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth(),
                            (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight());

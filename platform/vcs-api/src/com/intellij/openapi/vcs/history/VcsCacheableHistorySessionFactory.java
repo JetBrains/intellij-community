@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * @author irengrig
- */
 public interface VcsCacheableHistorySessionFactory<Cacheable extends Serializable, T extends VcsAbstractHistorySession> {
 
   T createFromCachedData(@Nullable Cacheable cacheable,

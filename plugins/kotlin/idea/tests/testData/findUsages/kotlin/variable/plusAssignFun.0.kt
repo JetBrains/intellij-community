@@ -8,3 +8,5 @@ fun foo() {
     val <caret>c = C()
     c += 10
 }
+
+

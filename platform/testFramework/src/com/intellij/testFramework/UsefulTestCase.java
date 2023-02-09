@@ -223,7 +223,7 @@ public abstract class UsefulTestCase extends TestCase {
     Disposer.setDebugMode(!isStressTest);
 
     if (isIconRequired()) {
-      // ensure that IconLoader will not use dummy empty icon
+      // ensure that IconLoader will not use fake empty icon
       try {
         IconManager.activate(new CoreIconManager());
       }
@@ -326,15 +326,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   private boolean shouldKeepTmpFile(@NotNull Path file) {
-    if (myPathsToKeep == null || myPathsToKeep.isEmpty()) {
-      return false;
-    }
-    for (Path pathToKeep : myPathsToKeep) {
-      if (file.equals(pathToKeep)) {
-        return true;
-      }
-    }
-    return false;
+    return myPathsToKeep != null && myPathsToKeep.contains(file);
   }
 
   static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
@@ -546,6 +538,10 @@ public abstract class UsefulTestCase extends TestCase {
         builder.append(o);
       }
       builder.append('\n');
+      if (builder.length() > 1_000_000) {
+        builder.append("...\n");
+        break;
+      }
     }
     return builder.toString();
   }
@@ -707,8 +703,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static @NotNull String toString(@NotNull Collection<?> collection, @NotNull String separator) {
-    List<String> list = ContainerUtil.map2List(collection, String::valueOf);
-    Collections.sort(list);
+    List<String> list = ContainerUtil.sorted(ContainerUtil.map2List(collection, String::valueOf));
     StringBuilder builder = new StringBuilder();
     boolean flag = false;
     for (String o : list) {
@@ -1063,7 +1058,7 @@ public abstract class UsefulTestCase extends TestCase {
       }
 
       if (expectedErrorMsgPart != null) {
-        assertTrue(cause.getMessage(), cause.getMessage().contains(expectedErrorMsgPart));
+        assertTrue(cause.getClass()+" message was expected to contain '"+expectedErrorMsgPart+"', but got: '"+cause.getMessage()+"'", cause.getMessage().contains(expectedErrorMsgPart));
       }
     }
     finally {

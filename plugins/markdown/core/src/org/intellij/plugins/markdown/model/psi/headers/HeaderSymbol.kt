@@ -7,6 +7,7 @@ import com.intellij.navigation.NavigatableSymbol
 import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -29,8 +30,8 @@ import org.jetbrains.annotations.ApiStatus
 data class HeaderSymbol(
   override val file: PsiFile,
   override val range: TextRange,
-  val text: String,
-  val anchorText: String
+  val text: @NlsSafe String,
+  val anchorText: @NlsSafe String
 ): MarkdownSymbolWithUsages, SearchTarget, RenameTarget, NavigatableSymbol {
   override fun createPointer(): Pointer<out HeaderSymbol> {
     val project = file.project

@@ -5,6 +5,8 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/pkgs-api-models/2.2.8/pkgs-api-models-2.2.8.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/pkgs-api-models/2.2.8/pkgs-api-models-2.2.8-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

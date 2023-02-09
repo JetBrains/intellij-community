@@ -24,9 +24,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GroovyGoToSuperTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override

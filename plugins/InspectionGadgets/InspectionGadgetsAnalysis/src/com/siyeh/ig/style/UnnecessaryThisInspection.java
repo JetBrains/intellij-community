@@ -18,6 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -35,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class UnnecessaryThisInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
@@ -46,11 +49,10 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
     return InspectionGadgetsBundle.message("unnecessary.this.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.this.ignore.assignments.option"), this,
-                                          "ignoreAssignments");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreAssignments", InspectionGadgetsBundle.message("unnecessary.this.ignore.assignments.option")));
   }
 
   @Override
@@ -114,10 +116,9 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
         return;
       }
       final PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(expression.getQualifierExpression());
-      if (!(qualifierExpression instanceof PsiThisExpression)) {
+      if (!(qualifierExpression instanceof PsiThisExpression thisExpression)) {
         return;
       }
-      final PsiThisExpression thisExpression = (PsiThisExpression)qualifierExpression;
       final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
       final String referenceName = expression.getReferenceName();
       if (referenceName == null) {
@@ -138,10 +139,9 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
           return;
         }
         final PsiElement target = expression.resolve();
-        if (!(target instanceof PsiVariable)) {
+        if (!(target instanceof PsiVariable variable)) {
           return;
         }
-        final PsiVariable variable = (PsiVariable)target;
         if (!DeclarationSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
           return;
         }
@@ -155,8 +155,7 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
         if (qualifierName == null) {
           return;
         }
-        if (parent instanceof PsiCallExpression) {
-          final PsiCallExpression callExpression = (PsiCallExpression)parent;
+        if (parent instanceof PsiCallExpression callExpression) {
           final PsiMethod calledMethod = callExpression.resolveMethod();
           if (calledMethod == null) {
             return;
@@ -185,10 +184,9 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
         }
         else {
           final PsiElement target = expression.resolve();
-          if (!(target instanceof PsiVariable)) {
+          if (!(target instanceof PsiVariable variable)) {
             return;
           }
-          final PsiVariable variable = (PsiVariable)target;
           if (!DeclarationSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
             return;
           }

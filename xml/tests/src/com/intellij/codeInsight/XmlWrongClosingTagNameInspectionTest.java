@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * @author spleaner
- */
 public class XmlWrongClosingTagNameInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected String getBasePath() {

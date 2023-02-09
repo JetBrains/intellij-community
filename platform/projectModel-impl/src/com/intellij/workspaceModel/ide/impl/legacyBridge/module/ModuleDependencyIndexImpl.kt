@@ -51,7 +51,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
   }
 
   override fun setupTrackedLibrariesAndJdks() {
-    val currentStorage = WorkspaceModel.getInstance(project).entityStorage.current
+    val currentStorage = WorkspaceModel.getInstance(project).currentSnapshot
     for (moduleEntity in currentStorage.entities(ModuleEntity::class.java)) {
       addTrackedLibraryAndJdkFromEntity(moduleEntity)
     }
@@ -195,8 +195,14 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       val libraryTable = library.table
       val newName = library.name
       if (libraryTable != null && oldName != null && newName != null) {
-        val affectedModules = librariesPerModuleMap.getKeys(getLibraryIdentifier(libraryTable, oldName))
+        val oldLibraryIdentifier = getLibraryIdentifier(libraryTable, oldName)
+        val affectedModules = librariesPerModuleMap.getKeys(oldLibraryIdentifier)
         if (affectedModules.isNotEmpty()) {
+          // Update collection in advance to avoid redundant handling on `addTrackedLibrary`
+          val newLibraryIdentifier = getLibraryIdentifier(libraryTable, newName)
+          affectedModules.forEach { affectedModule -> librariesPerModuleMap.put(affectedModule, newLibraryIdentifier) }
+          librariesPerModuleMap.removeValue(oldLibraryIdentifier)
+
           val libraryTableId = LibraryNameGenerator.getLibraryTableId(libraryTable.tableLevel)
           WorkspaceModel.getInstance(project).updateProjectModel("Module dependency index: after library renamed") { builder ->
             //maybe it makes sense to simplify this code by reusing code from PEntityStorageBuilder.updateSoftReferences

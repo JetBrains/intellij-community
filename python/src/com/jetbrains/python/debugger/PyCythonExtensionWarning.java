@@ -39,10 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class PyCythonExtensionWarning {
+public final class PyCythonExtensionWarning {
   private static final Logger LOG = Logger.getInstance(PyCythonExtensionWarning.class);
 
   private static final String CYTHON_WARNING_GROUP_ID = "CythonWarning";
@@ -92,10 +90,9 @@ public class PyCythonExtensionWarning {
       return true;
     }
     final RunConfiguration configuration = selectedConfiguration.getConfiguration();
-    if (!(configuration instanceof AbstractPythonRunConfiguration)) {
+    if (!(configuration instanceof AbstractPythonRunConfiguration runConfiguration)) {
       return true;
     }
-    AbstractPythonRunConfiguration runConfiguration = (AbstractPythonRunConfiguration)configuration;
     // Temporarily disable notification for Remote interpreters
     return PythonSdkUtil.isRemote(runConfiguration.getSdk());
   }
@@ -112,10 +109,9 @@ public class PyCythonExtensionWarning {
         throw new ExecutionException(PyBundle.message("debugger.cython.python.run.configuration.should.be.selected"));
       }
       final RunConfiguration configuration = selectedConfiguration.getConfiguration();
-      if (!(configuration instanceof AbstractPythonRunConfiguration)) {
+      if (!(configuration instanceof AbstractPythonRunConfiguration runConfiguration)) {
         throw new ExecutionException(PyBundle.message("debugger.cython.python.run.configuration.should.be.selected"));
       }
-      AbstractPythonRunConfiguration runConfiguration = (AbstractPythonRunConfiguration)configuration;
       final String interpreterPath = runConfiguration.getInterpreterPath();
       final String helpersPath = PythonHelpersLocator.getHelpersRoot().getPath();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +14,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -44,6 +45,8 @@ import java.util.function.Consumer;
  * @see #applyTo(JTree, Object)
  */
 public final class TreeState implements JDOMExternalizable {
+  private static final Interner<String> INTERNER = Interner.createStringInterner();
+
   private static final Logger LOG = Logger.getInstance(TreeState.class);
 
   public static final Key<WeakReference<ActionCallback>> CALLBACK = Key.create("Callback");
@@ -57,13 +60,8 @@ public final class TreeState implements JDOMExternalizable {
 
   @Tag("item")
   static final class PathElement {
-    @Attribute("name")
-    public String id;
-    @Attribute("type")
-    public String type;
-    @Attribute("user")
-    public String userStr;
-
+    String id;
+    String type;
     transient Object userObject;
     transient final int index;
 
@@ -73,12 +71,11 @@ public final class TreeState implements JDOMExternalizable {
     }
 
     PathElement(String itemId, String itemType, int itemIndex, Object userObject) {
-      id = itemId;
-      type = itemType;
+      setId(itemId);
+      setType(itemType);
 
       index = itemIndex;
-      userStr = userObject instanceof String ? (String)userObject : null;
-      this.userObject = userObject;
+      this.userObject = userObject instanceof String stringObject ? INTERNER.intern(stringObject) : userObject;
     }
 
     @Override
@@ -97,6 +94,26 @@ public final class TreeState implements JDOMExternalizable {
       }
       return Objects.equals(id, calcId(userObject)) &&
              Objects.equals(type, calcType(userObject)) ? Match.ID_TYPE : null;
+    }
+
+    @Attribute("name")
+    public void setId(String id) {
+      this.id = id == null ? null : INTERNER.intern(id);
+    }
+
+    @Attribute("name")
+    public String getId() {
+      return id;
+    }
+
+    @Attribute("type")
+    public void setType(String type) {
+      this.type = type == null ? null : INTERNER.intern(type);
+    }
+
+    @Attribute("type")
+    public String getType() {
+      return type;
     }
   }
 
@@ -224,10 +241,13 @@ public final class TreeState implements JDOMExternalizable {
     if (userObject == null) return "";
     // There used to be a lot of code here that all started in 2005 with IDEA-29734 (back then IDEADEV-2150),
     // which later was modified many times, but in the end all it did was to invoke some slow operations on EDT
-    // (IDEA-270843, IDEA-305055), and IDEA-29734 was still broken. It's a very edge case anyway (two folders
-    // with the same name under the same parent) and should be fixed in a better way. For now just stick to
-    // the good old way of doing this which should be fast enough for EDT unless the tree model is too slow by
-    // itself, in which case we've got much bigger problems to worry about anyway!
+    // (IDEA-270843, IDEA-305055), and IDEA-29734 was still broken.
+    // Now it's being slowly rewritten as something more sensible and efficient.
+    if (userObject instanceof PresentableNodeDescriptor<?> nodeDescriptor) {
+      var name = StringUtil.notNullize(nodeDescriptor.getName());
+      var locationString = nodeDescriptor.getPresentation().getLocationString();
+      return locationString == null ? name : name + "@" + locationString;
+    }
     return StringUtil.notNullize(userObject.toString());
   }
 

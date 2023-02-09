@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "BlockingMethodInNonBlockingContext")
 
 package org.jetbrains.intellij.build
@@ -29,6 +29,7 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
   // JAR contains class files for Java 1.8 and 11 (several modules packed into it)
   "lib/util.jar!/com/intellij/serialization/" to "1.8",
   "lib/util_rt.jar" to "1.7",
+  "lib/util-8.jar" to "1.8",
   "lib/external-system-rt.jar" to "1.7",
   "plugins/java-coverage/lib/java-coverage-rt.jar" to "1.7",
   "plugins/junit/lib/junit-rt.jar" to "1.7",
@@ -49,10 +50,10 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
 
 /**
  * Default bundled plugins for all editions of IntelliJ IDEA.
- * See also [JB_BUNDLED_PLUGINS] and [DEFAULT_BUNDLED_PLUGINS].
+ * See also [DEFAULT_BUNDLED_PLUGINS].
  */
 @Suppress("SpellCheckingInspection")
-val IDEA_BUNDLED_PLUGINS: PersistentList<String> = JB_BUNDLED_PLUGINS + persistentListOf(
+val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + persistentListOf(
   "intellij.java.plugin",
   "intellij.java.ide.customization",
   "intellij.copyright",
@@ -64,6 +65,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = JB_BUNDLED_PLUGINS + persiste
   "intellij.settingsSync",
   "intellij.configurationScript",
   "intellij.yaml",
+  "intellij.html.tools",
   "intellij.tasks.core",
   "intellij.repository.search",
   "intellij.maven",
@@ -75,6 +77,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = JB_BUNDLED_PLUGINS + persiste
   "intellij.android.gradle.dsl",
   "intellij.gradle.java",
   "intellij.gradle.java.maven",
+  "intellij.gradle.analysis",
   "intellij.vcs.git",
   "intellij.vcs.svn",
   "intellij.vcs.hg",
@@ -136,7 +139,7 @@ abstract class BaseIdeaProperties : ProductProperties() {
 
     productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.java.ide.resources")
 
-    productLayout.addPlatformCustomizer { layout, _ ->
+    productLayout.addPlatformSpec { layout, _ ->
       for (name in JAVA_IDE_API_MODULES) {
         if (!productLayout.productApiModules.contains(name)) {
           layout.withModule(name)
@@ -166,7 +169,6 @@ abstract class BaseIdeaProperties : ProductProperties() {
       layout.withProjectLibrary("jetbrains-annotations", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
       // for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
       layout.withProjectLibrary("JUnit3", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
-      layout.withProjectLibrary("commons-net")
 
       layout.withoutProjectLibrary("Ant")
       // there is a patched version of the org.gradle.api.JavaVersion class placed into the Gradle plugin classpath as "rt" jar
@@ -174,10 +176,11 @@ abstract class BaseIdeaProperties : ProductProperties() {
       // TODO should be used as regular project library when the issue will be fixed at the Gradle tooling api side https://github.com/gradle/gradle/issues/8431 and the patched class will be removed
       layout.withoutProjectLibrary("Gradle")
 
-      // this library is placed into subdirectory of 'lib' directory in Android plugin layout, so we need to exclude it from the platform layout explicitly
+      // this library is placed into subdirectory of the 'lib' directory in Android plugin layout, so we need to exclude it from the platform layout explicitly
       layout.withoutProjectLibrary("layoutlib")
 
       layout.withoutProjectLibrary("qodana-sarif")
+      layout.withoutProjectLibrary("jetbrains.qodana.publisher")
       // todo it is a quick fix - fix the root cause
       layout.withoutProjectLibrary("assertJ")
       layout.withoutProjectLibrary("hamcrest")
@@ -194,7 +197,7 @@ abstract class BaseIdeaProperties : ProductProperties() {
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
     val targetDir = Path.of(targetDirectory)
-    // for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
+    // for compatibility with user projects which refer to IDEA_HOME/lib/annotations.jar
     Files.move(targetDir.resolve("lib/annotations-java5.jar"), targetDir.resolve("lib/annotations.jar"),
                StandardCopyOption.REPLACE_EXISTING)
   }

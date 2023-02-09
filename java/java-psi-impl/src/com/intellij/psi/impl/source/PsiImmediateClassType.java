@@ -25,9 +25,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- *  @author dsl
- */
 public class PsiImmediateClassType extends PsiClassType.Stub {
   private final PsiClass myClass;
   private final PsiSubstitutor mySubstitutor;

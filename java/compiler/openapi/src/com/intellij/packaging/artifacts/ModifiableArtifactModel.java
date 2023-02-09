@@ -24,10 +24,14 @@ import org.jetbrains.annotations.Nullable;
 public interface ModifiableArtifactModel extends ArtifactModel {
 
   @NotNull
-  ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType);
+  default ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType) {
+    return addArtifact(name, artifactType, artifactType.createRootElement(name));
+  }
 
   @NotNull
-  ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType, CompositePackagingElement<?> rootElement);
+  default ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType, CompositePackagingElement<?> rootElement) {
+    return addArtifact(name, artifactType, rootElement, null);
+  }
 
   @NotNull
   ModifiableArtifact addArtifact(@NotNull String name, @NotNull ArtifactType artifactType, CompositePackagingElement<?> rootElement,

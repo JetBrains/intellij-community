@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
 import com.intellij.ide.navbar.NavBarItem
@@ -10,39 +10,39 @@ import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.ui.StaticNavBarPanel
 import com.intellij.ide.navbar.ui.showHint
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.PROJECT
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.util.childScope
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
+import java.awt.Window
 import javax.swing.JComponent
 
 @Service(PROJECT)
-internal class NavBarService(private val project: Project) : Disposable {
-
+internal class NavBarService(private val project: Project, cs: CoroutineScope) {
   companion object {
-
     @JvmStatic
     fun getInstance(project: Project): NavBarService = project.service()
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val cs: CoroutineScope = CoroutineScope(
-    SupervisorJob() +
-    Dispatchers.Default.limitedParallelism(1) // allows to reason about the ordering
+  private val cs: CoroutineScope = cs.childScope(
+    Dispatchers.Default.limitedParallelism(1) // allows reasoning about the ordering
   )
 
-  override fun dispose() {
-    cs.cancel()
-  }
-
-  private val staticNavBarVm = StaticNavBarVmImpl(cs, project, UISettings.getInstance().isNavbarShown())
+  private val staticNavBarVm = StaticNavBarVmImpl(coroutineScope = cs,
+                                                  project = project,
+                                                  initiallyVisible = UISettings.getInstance().isNavbarShown())
   private var floatingBarJob: Job? = null
 
   fun uiSettingsChanged(uiSettings: UISettings) {
@@ -73,6 +73,10 @@ internal class NavBarService(private val project: Project) : Disposable {
   }
 
   private fun showFloatingNavbar(dataContext: DataContext) {
+    if (floatingBarJob != null) {
+      return
+    }
+
     val job = cs.launch(ModalityState.current().asContextElement()) {
       val model = contextModel(dataContext, project).ifEmpty {
         defaultModel(project)
@@ -105,7 +109,22 @@ internal suspend fun focusModel(project: Project): List<NavBarVmItem> {
     // ignore updates while nav bar has focus
     return emptyList()
   }
+  val window: Window? = WindowManager.getInstance().getFrame(project)
+  if (window != null && !window.isFocused) {
+    // IDEA-307406, IDEA-304798 Skip event when window is out of focus (user is in a popup)
+    return emptyList()
+  }
   return contextModel(ctx, project)
+}
+
+/**
+ * Use this API to dump current state of navigation bar in tests
+ * Currently used in Rider
+ */
+@TestOnly
+@Internal
+suspend fun dumpContextModel(ctx: DataContext, project: Project) : List<String> {
+  return contextModel(ctx, project).map { it.presentation.text }
 }
 
 private suspend fun contextModel(ctx: DataContext, project: Project): List<NavBarVmItem> {
@@ -119,6 +138,9 @@ private suspend fun contextModel(ctx: DataContext, project: Project): List<NavBa
   }
   catch (ce: CancellationException) {
     throw ce
+  }
+  catch (pce: ProcessCanceledException) {
+    throw pce
   }
   catch (t: Throwable) {
     LOG.error(t)

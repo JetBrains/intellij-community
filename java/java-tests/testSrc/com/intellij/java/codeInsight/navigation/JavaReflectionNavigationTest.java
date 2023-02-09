@@ -8,9 +8,6 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaReflectionNavigationTest extends LightJavaCodeInsightFixtureTestCase {
 
   private static final String FIELD = "Field";

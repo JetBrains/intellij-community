@@ -278,7 +278,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return super.getActionUpdateThread();
   }
 
   /**

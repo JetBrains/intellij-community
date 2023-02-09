@@ -2,8 +2,6 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow
 
 import com.intellij.dependencytoolwindow.DependenciesToolWindowTabProvider
 import com.intellij.dependencytoolwindow.DependenciesToolWindowTabProvider.Subscription
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.content.Content
@@ -18,20 +16,20 @@ internal class PackagesListPanelProvider : DependenciesToolWindowTabProvider {
 
     companion object : DependenciesToolWindowTabProvider.Id
 
-    @Service(Level.PROJECT)
-    private class PanelContainer(private val project: Project) {
-        val packageManagementPanel by lazy { PackageManagementPanel(project).initialize(ContentFactory.getInstance()) }
+    internal class PanelContainer(private val project: Project) {
+        internal val panel by lazy { PackageManagementPanel(project) }
+        internal val content by lazy { panel.initialize(ContentFactory.getInstance()) }
     }
 
     override val id: DependenciesToolWindowTabProvider.Id = Companion
 
-    override fun provideTab(project: Project): Content = project.service<PanelContainer>().packageManagementPanel
+    override fun provideTab(project: Project): Content = project.service<PanelContainer>().content
 
     override fun isAvailable(project: Project) = project.packageSearchProjectService.isAvailable
 
     override fun addIsAvailableChangesListener(project: Project, callback: (Boolean) -> Unit): Subscription {
         val job = project.packageSearchProjectService
-            .projectModulesStateFlow
+            .packageSearchModulesStateFlow
             .onEach { callback(it.isNotEmpty()) }
             .launchIn(project.lifecycleScope)
         return Subscription { job.cancel() }

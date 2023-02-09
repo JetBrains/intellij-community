@@ -3,35 +3,29 @@ package com.intellij.codeEditor;
 
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorFileSwapper;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.util.PsiTreeUtil;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class JavaEditorFileSwapper extends EditorFileSwapper {
-  @Deprecated
+public final class JavaEditorFileSwapper implements EditorFileSwapper {
   @Override
-  public @Nullable Pair<VirtualFile, Integer> getFileToSwapTo(Project project,
-                                                              EditorWithProviderComposite editorWithProviderComposite) {
-    return getFileToSwapTo(project, (EditorComposite) editorWithProviderComposite);
-  }
-
-  @Override
-  public Pair<VirtualFile, Integer> getFileToSwapTo(Project project, EditorComposite composite) {
+  public Pair<VirtualFile, @Nullable Integer> getFileToSwapTo(Project project, EditorComposite composite) {
     VirtualFile file = composite.getFile();
     VirtualFile sourceFile = findSourceFile(project, file);
-    if (sourceFile == null) return null;
+    if (sourceFile == null) {
+      return null;
+    }
 
     Integer position = null;
 
-    TextEditorImpl oldEditor = findSinglePsiAwareEditor(composite.getAllEditors());
+    TextEditorImpl oldEditor = EditorFileSwapper.findSinglePsiAwareEditor(composite.getAllEditors());
     if (oldEditor != null) {
       PsiCompiledFile clsFile = (PsiCompiledFile)PsiManager.getInstance(project).findFile(file);
       assert clsFile != null;

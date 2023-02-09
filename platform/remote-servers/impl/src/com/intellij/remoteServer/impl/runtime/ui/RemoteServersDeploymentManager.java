@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServerListener;
@@ -75,7 +76,7 @@ public final class RemoteServersDeploymentManager {
           updateServerContent(myServerToContent.get(server), connection);
           if (connection.getStatus() == ConnectionStatus.CONNECTED) {
             // connectionStatusChanged is also called for errors, don't initiate polling once again, IDEA-259400
-            if (connection.getStatusText() == connection.getStatus().getPresentableText()) { // effectively, checks for no error
+            if (Strings.areSameInstance(connection.getStatusText(), connection.getStatus().getPresentableText())) { // effectively, checks for no error
               myConnectionsToExpand.add(connection);
               pollDeployments(connection);
             }

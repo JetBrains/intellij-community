@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -10,7 +10,6 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -100,8 +99,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     }
 
     final String newQName;
-    if (myTargetContainer instanceof PsiDirectory) {
-      final PsiDirectory targetDirectory = (PsiDirectory)myTargetContainer;
+    if (myTargetContainer instanceof PsiDirectory targetDirectory) {
       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(targetDirectory);
       LOG.assertTrue(aPackage != null);
       newQName = aPackage.getQualifiedName() + "." + myNewClassName;
@@ -197,8 +195,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       // replace references in a new class to old inner class with references to itself
       for (PsiReference ref : ReferencesSearch.search(myInnerClass, new LocalSearchScope(newClass.getContainingFile()), true)) {
         PsiElement element = ref.getElement();
-        if (element.getParent() instanceof PsiJavaCodeReferenceElement) {
-          PsiJavaCodeReferenceElement parentRef = (PsiJavaCodeReferenceElement)element.getParent();
+        if (element.getParent() instanceof PsiJavaCodeReferenceElement parentRef) {
           PsiElement parentRefElement = parentRef.resolve();
           if (parentRefElement instanceof PsiClass) { // reference to inner class inside our inner
             PsiImportStatementBase insertedImport = PsiTreeUtil.getParentOfType(parentRef, PsiImportStatementBase.class);
@@ -399,16 +396,10 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     }
     if (!containerSet.contains(resolved)) {
       containerSet.add(resolved);
-      String placesDescription;
-      if (containerSet.size() == 1) {
-        placesDescription = RefactoringUIUtil.getDescription(resolved, true);
-      } else {
-        placesDescription = "<ol><li>" + StringUtil.join(containerSet, element -> RefactoringUIUtil.getDescription(element, true), "</li><li>") + "</li></ol>";
-      }
       String message = JavaRefactoringBundle.message("0.will.become.inaccessible.from.1",
-                                                 placesDescription,
+                                                 RefactoringUIUtil.getDescription(resolved, true),
                                                  RefactoringUIUtil.getDescription(container, true));
-      conflicts.put(container, Collections.singletonList(message));
+      conflicts.putValue(reference, message);
     }
   }
 

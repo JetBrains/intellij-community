@@ -18,9 +18,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
   private final XmlTag myXmlTag;
 

@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,7 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * ExecutorService which limits the number of tasks running simultaneously.
+ * ExecutorService, which limits the number of tasks running simultaneously.
  * The number of submitted tasks is unrestricted.
  *
  * @see AppExecutorUtil#createBoundedApplicationPoolExecutor(String, Executor, int) instead
@@ -32,7 +31,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   private final String myName;
   private final Executor myBackendExecutor;
   private final int myMaxThreads;
-  // low  32 bits: number of tasks running (or trying to run)
+  // low 32 bits: number of tasks running (or trying to run)
   // high 32 bits: myTaskQueue modification stamp
   private final AtomicLong myStatus = new AtomicLong();
   private final BlockingQueue<Runnable> myTaskQueue;
@@ -74,10 +73,16 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     String extra = null;
     if (task instanceof FutureTask) {
       extra = ((FutureTask<?>)task).isCancelled() ? " (future cancelled)" : ((FutureTask<?>)task).isDone() ? " (future done)" : null;
-      task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Callable.class, "callable"), task);
+      Object t1 = ReflectionUtil.getField(task.getClass(), task, Callable.class, "callable");
+      if (t1 != null) {
+        task = t1;
+      }
     }
     if (task instanceof Callable && task.getClass().getName().equals("java.util.concurrent.Executors$RunnableAdapter")) {
-      task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Runnable.class, "task"), task);
+      Object t1 = ReflectionUtil.getField(task.getClass(), task, Runnable.class, "task");
+      if (t1 != null) {
+        task = t1;
+      }
     }
     return extra == null ? task : task.getClass() + extra;
   }
@@ -168,7 +173,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   }
 
   private long incrementCounterAndTimestamp() {
-    // avoid "tasks number" bits to be garbled on overflow
+    // avoid "task number" bits to be garbled on overflow
     return myStatus.updateAndGet(status -> status + 1 + (1L << 32) & 0x7fffffffffffffffL);
   }
 
@@ -281,7 +286,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     };
     // Submit 'myMaxTasks' runnables and wait for them all to start.
     // They will spread to all executor threads and ensure the previously submitted tasks are completed.
-    // Wait for all empty runnables to finish to free up the threads.
+    // Wait for all empty runnables to finish freeing up the threads.
     List<Future<?>> futures = ContainerUtil.map(Collections.nCopies(myMaxThreads, null), __ -> {
       LastTask wait = new LastTask(runnable);
       execute(wait);
@@ -299,9 +304,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     finally {
       readyToFinish.countDown();
     }
-    for (Future<?> future : futures) {
-      future.get(Math.max(0, deadline-System.nanoTime()), TimeUnit.NANOSECONDS);
-    }
+    ConcurrencyUtil.getAll(Math.max(0, deadline-System.nanoTime()), TimeUnit.NANOSECONDS, futures);
   }
 
   public boolean isEmpty() {

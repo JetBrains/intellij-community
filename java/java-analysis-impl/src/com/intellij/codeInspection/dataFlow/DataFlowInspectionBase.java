@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -43,7 +43,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -57,11 +56,6 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   public boolean REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = true;
   public boolean REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true;
   public boolean REPORT_UNSOUND_WARNINGS = true;
-
-  @Override
-  public JComponent createOptionsPanel() {
-    throw new RuntimeException("no UI in headless mode");
-  }
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
@@ -395,9 +389,9 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (selector == null) return false;
     PsiType selectorType = selector.getType();
     if (selectorType == null) return false;
-    if (!JavaPsiPatternUtil.isTotalForType(label, selectorType)) return true;
+    if (!JavaPsiPatternUtil.isUnconditionalForType(label, selectorType)) return true;
     int branchCount = SwitchUtils.calculateBranchCount(switchBlock);
-    // it's a compilation error if switch contains both default and total pattern, so no additional suggestion is needed
+    // it's a compilation error if switch contains both default and an unconditional pattern, so no additional suggestion is needed
     return branchCount > 1;
   }
 
@@ -439,21 +433,17 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       if (context instanceof PsiForStatement && PsiTreeUtil.isAncestor(((PsiForStatement)context).getInitialization(), expr, true)) {
         return;
       }
-      if (expr instanceof PsiReferenceExpression) {
-        PsiReferenceExpression ref = (PsiReferenceExpression)expr;
-        PsiField field = tryCast(ref.resolve(), PsiField.class);
-        if (field != null) {
-          // Final field assignment: even if redundant according to DFA model (e.g. this.field = null),
-          // it's necessary due to language semantics
-          if (field.hasModifierProperty(PsiModifier.FINAL)) return;
-          if (context instanceof PsiClassInitializer) {
-            if (assignment != null) {
-              Object constValue = ExpressionUtils.computeConstantExpression(assignment.getRExpression());
-              if (constValue == PsiTypesUtil.getDefaultValue(expr.getType())) {
-                if ((field.hasModifierProperty(PsiModifier.STATIC) || ExpressionUtil.isEffectivelyUnqualified(ref)) &&
-                    field.getContainingClass() == ((PsiClassInitializer)context).getContainingClass()) {
-                  return;
-                }
+      if (expr instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiField field) {
+        // Final field assignment: even if redundant according to DFA model (e.g. this.field = null),
+        // it's necessary due to language semantics
+        if (field.hasModifierProperty(PsiModifier.FINAL)) return;
+        if (context instanceof PsiClassInitializer) {
+          if (assignment != null) {
+            Object constValue = ExpressionUtils.computeConstantExpression(assignment.getRExpression());
+            if (constValue == PsiTypesUtil.getDefaultValue(expr.getType())) {
+              if ((field.hasModifierProperty(PsiModifier.STATIC) || ExpressionUtil.isEffectivelyUnqualified(ref)) &&
+                  field.getContainingClass() == ((PsiClassInitializer)context).getContainingClass()) {
+                return;
               }
             }
           }
@@ -482,12 +472,12 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   protected void reportNullabilityProblems(ProblemReporter reporter, List<NullabilityProblem<?>> problems) {
     for (NullabilityProblem<?> problem : problems) {
       PsiExpression expression = problem.getDereferencedExpression();
-      boolean nullLiteral = ExpressionUtils.isNullLiteral(PsiUtil.skipParenthesizedExprDown(expression));
+      boolean nullLiteral = ExpressionUtils.isNullLiteral(expression);
       if (!REPORT_UNSOUND_WARNINGS) {
         if (expression == null || !nullLiteral && CommonDataflow.getDfType(expression, IGNORE_ASSERT_STATEMENTS) != DfTypes.NULL) continue;
       }
       // Expression of null type: could be failed LVTI, skip it to avoid confusion
-      if (expression != null && !nullLiteral && PsiType.NULL.equals(expression.getType())) continue;
+      if (expression != null && !nullLiteral && PsiTypes.nullType().equals(expression.getType())) continue;
       boolean alwaysNull = problem.isAlwaysNull(IGNORE_ASSERT_STATEMENTS);
       NullabilityProblemKind.innerClassNPE.ifMyProblem(problem, newExpression -> {
         List<LocalQuickFix> fixes = createNPEFixes(newExpression.getQualifier(), newExpression, reporter.isOnTheFly(), alwaysNull);
@@ -587,10 +577,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   private void reportAlwaysReturnsNotNull(ProblemsHolder holder, PsiElement scope) {
-    if (!(scope.getParent() instanceof PsiMethod)) return;
-
-    PsiMethod method = (PsiMethod)scope.getParent();
-    if (PsiUtil.canBeOverridden(method)) return;
+    if (!(scope.getParent() instanceof PsiMethod method) || PsiUtil.canBeOverridden(method)) return;
 
     NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(scope.getProject()).findOwnNullabilityInfo(method);
     if (info == null || info.getNullability() != Nullability.NULLABLE) return;
@@ -755,7 +742,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (anchor instanceof PsiInstanceOfExpression) {
       PsiType type = ((PsiInstanceOfExpression)anchor).getOperand().getType();
       if (type == null || !TypeConstraints.instanceOf(type).isResolved()) return true;
-      // 5.20.2 Removed restriction on pattern instanceof for total patterns (JEP 427)
+      // 5.20.2 Removed restriction on pattern instanceof for unconditional patterns (JEP 427)
       if (HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(anchor)) return false;
       PsiPattern pattern = ((PsiInstanceOfExpression)anchor).getPattern();
       if (pattern instanceof PsiTypeTestPattern && ((PsiTypeTestPattern)pattern).getPatternVariable() != null) {
@@ -794,7 +781,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (nullability != Nullability.NOT_NULL && (!SUGGEST_NULLABLE_ANNOTATIONS || block.getParent() instanceof PsiLambdaExpression)) return;
 
     // no warnings in void lambdas, where the expression is not returned anyway
-    if (block instanceof PsiExpression && block.getParent() instanceof PsiLambdaExpression && PsiType.VOID.equals(returnType)) return;
+    if (block instanceof PsiExpression && block.getParent() instanceof PsiLambdaExpression && PsiTypes.voidType().equals(returnType)) return;
 
     // no warnings for Void methods, where only null can be possibly returned
     if (returnType == null || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID)) return;

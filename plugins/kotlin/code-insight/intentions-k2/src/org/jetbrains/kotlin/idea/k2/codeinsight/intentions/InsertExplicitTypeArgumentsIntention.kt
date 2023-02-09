@@ -36,6 +36,10 @@ class InsertExplicitTypeArgumentsIntention :
         val renderedTypeParameters = buildList {
             for (symbol in typeParameterSymbols) {
                 val type = resolvedCall.typeArgumentsMapping[symbol]
+
+                /** Can't use definitely-non-nullable type as reified type argument */
+                if (type is KtDefinitelyNotNullType && symbol.isReified) return null
+
                 if (type == null || type.containsErrorType() || !type.isDenotable) return null
                 add(type.render(position = Variance.OUT_VARIANCE))
             }

@@ -3,10 +3,7 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -111,13 +108,10 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
     final LocalSearchScope scope = new LocalSearchScope(boundClassFile);
     ReferencesSearch.search(boundField, scope).forEach(ref -> {
       final PsiElement element = ref.getElement();
-      if (element.getParent() instanceof PsiReferenceExpression) {
-        PsiReferenceExpression refExpr = (PsiReferenceExpression) element.getParent();
-        if (refExpr.getParent() instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression methodCall = (PsiMethodCallExpression) refExpr.getParent();
+      if (element.getParent() instanceof PsiReferenceExpression refExpr) {
+        if (refExpr.getParent() instanceof PsiMethodCallExpression methodCall) {
           final PsiElement psiElement = refExpr.resolve();
-          if (psiElement instanceof PsiMethod) {
-            PsiMethod method = (PsiMethod) psiElement;
+          if (psiElement instanceof PsiMethod method) {
             for(EventSetDescriptor eventSetDescriptor: eventSetDescriptors) {
               if (Objects.equals(eventSetDescriptor.getAddListenerMethod().getName(), method.getName())) {
                 final String eventName = eventSetDescriptor.getName();
@@ -153,15 +147,13 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
             final PsiElement[] defs = DefUseUtil.getDefs(codeBlock, (PsiVariable)psiElement, listenerArg);
             if (defs.length == 1) {
               final PsiElement def = defs[0];
-              if (def instanceof PsiVariable) {
-                PsiVariable var = (PsiVariable) def;
+              if (def instanceof PsiVariable var) {
                 if (var.getInitializer() != listenerArg) {
                   addListenerRef(actionGroup, eventName, var.getInitializer());
                   return;
                 }
               }
-              else if (def.getParent() instanceof PsiAssignmentExpression) {
-                final PsiAssignmentExpression assignmentExpr = (PsiAssignmentExpression)def.getParent();
+              else if (def.getParent() instanceof PsiAssignmentExpression assignmentExpr) {
                 if (def.equals(assignmentExpr.getLExpression())) {
                   addListenerRef(actionGroup, eventName, assignmentExpr.getRExpression());
                   return;
@@ -193,6 +185,11 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
       if (myElement instanceof Navigatable) {
         ((Navigatable) myElement).navigate(true);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override public void update(@NotNull AnActionEvent e) {

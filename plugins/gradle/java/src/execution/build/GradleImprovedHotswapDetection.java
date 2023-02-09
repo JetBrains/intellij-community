@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -43,6 +43,7 @@ public final class GradleImprovedHotswapDetection {
       .forEach(output -> context.fileGenerated(output.getRoot(), output.getPath()));
 
     Set<String> dirtyRoots = outputs.stream()
+      .filter(output -> StringUtil.isEmpty(output.getPath()))
       .map(GradleImprovedHotswapOutput::getRoot)
       .collect(Collectors.toSet());
 
@@ -54,7 +55,7 @@ public final class GradleImprovedHotswapDetection {
   }
 
   // Utility class to lazily load the GradleImprovedHotswapDetectionInitScript.groovy resource
-  private static class InitScriptResourceHolder {
+  private static final class InitScriptResourceHolder {
     private static final String PATH_SIMPLE = "/org/jetbrains/plugins/gradle/GradleImprovedHotswapDetectionInitScript.groovy";
     private static final String PATH_USING_SERVICE = "/org/jetbrains/plugins/gradle/GradleImprovedHotswapDetectionInitScriptUsingService.groovy";
     private static final String COMMON_HASH_UTILS = "/org/jetbrains/plugins/gradle/GradleImprovedHotswapDetectionUtils.groovy";

@@ -18,7 +18,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -35,13 +35,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
 public class PointlessBooleanExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
-  private enum BooleanExpressionKind {
+  public enum BooleanExpressionKind {
     USELESS, USELESS_WITH_SIDE_EFFECTS, UNKNOWN
   }
 
@@ -52,10 +56,9 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
   public boolean m_ignoreExpressionsContainingConstants = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("pointless.boolean.expression.ignore.option"), this, "m_ignoreExpressionsContainingConstants"
-    );
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreExpressionsContainingConstants", InspectionGadgetsBundle.message("pointless.boolean.expression.ignore.option")));
   }
 
   @Override
@@ -84,8 +87,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
     else if (expression instanceof PsiPrefixExpression) {
       buildSimplifiedPrefixExpression((PsiPrefixExpression)expression, out, tracker);
     }
-    else if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+    else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
       final PsiExpression expression1 = parenthesizedExpression.getExpression();
       out.append('(');
       buildSimplifiedExpression(expression1, out, tracker);
@@ -313,10 +315,9 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiAssignmentExpression)) {
+      if (!(element instanceof PsiAssignmentExpression assignmentExpression)) {
         return;
       }
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
       final PsiElement parent = assignmentExpression.getParent();
       assert parent instanceof PsiStatement;
       final List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(assignmentExpression.getLExpression());
@@ -357,10 +358,9 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
     @Override
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiExpression)) {
+      if (!(element instanceof PsiExpression expression)) {
         return;
       }
-      PsiExpression expression = (PsiExpression)element;
       CommentTracker tracker = new CommentTracker();
       String simplifiedExpression = buildSimplifiedExpression(expression, new StringBuilder(), tracker).toString();
       boolean isConstant = simplifiedExpression.equals("true") || simplifiedExpression.equals("false");
@@ -389,10 +389,9 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
     }
 
     private List<PsiExpression> extractSideEffects(PsiExpression expression) {
-      if (!(expression instanceof PsiPolyadicExpression)) {
+      if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) {
         return Collections.emptyList();
       }
-      PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       IElementType sign = polyadicExpression.getOperationTokenType();
       Boolean stopper = (sign == JavaTokenType.ANDAND) ? Boolean.FALSE : sign == JavaTokenType.OROR ? Boolean.TRUE : null;
       PsiExpression[] operands = polyadicExpression.getOperands();
@@ -441,9 +440,6 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
       if (parent instanceof PsiExpression && getExpressionKind((PsiExpression)parent) != BooleanExpressionKind.UNKNOWN) {
         return;
       }
-      if (containsEscapingPatternVariable(expression)) {
-        return;
-      }
 
       final String replacement = buildSimplifiedExpression(expression, new StringBuilder(), new CommentTracker()).toString();
       final Supplier<PsiElement> newBodySupplier =
@@ -457,52 +453,62 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
   }
 
   @NotNull
-  private BooleanExpressionKind getExpressionKind(PsiExpression expression) {
+  public BooleanExpressionKind getExpressionKind(PsiExpression expression) {
+    if ((expression instanceof PsiPrefixExpression || expression instanceof PsiPolyadicExpression) 
+        && containsEscapingPatternVariable(expression)) {
+      return BooleanExpressionKind.UNKNOWN;
+    }
     if (expression instanceof PsiPrefixExpression || expression instanceof PsiAssignmentExpression) {
       return evaluate(expression) != null ? BooleanExpressionKind.USELESS : BooleanExpressionKind.UNKNOWN;
     }
     if (expression instanceof PsiPolyadicExpression polyadicExpression) {
-      final IElementType sign = polyadicExpression.getOperationTokenType();
-      if (!booleanTokens.contains(sign)) {
+      return getPolyadicKind(polyadicExpression);
+    }
+    return BooleanExpressionKind.UNKNOWN;
+  }
+
+  @NotNull
+  private BooleanExpressionKind getPolyadicKind(PsiPolyadicExpression expression) {
+    final IElementType sign = expression.getOperationTokenType();
+    if (!booleanTokens.contains(sign)) {
+      return BooleanExpressionKind.UNKNOWN;
+    }
+    final PsiExpression[] operands = expression.getOperands();
+    boolean containsConstant = false;
+    boolean stopCheckingSideEffects = false;
+    boolean sideEffectMayBeRemoved = false;
+    boolean reducedToConstant = false;
+    for (PsiExpression operand : operands) {
+      if (operand == null) {
         return BooleanExpressionKind.UNKNOWN;
       }
-      final PsiExpression[] operands = polyadicExpression.getOperands();
-      boolean containsConstant = false;
-      boolean stopCheckingSideEffects = false;
-      boolean sideEffectMayBeRemoved = false;
-      boolean reducedToConstant = false;
-      for (PsiExpression operand : operands) {
-        if (operand == null) {
-          return BooleanExpressionKind.UNKNOWN;
+      final PsiType type = operand.getType();
+      if (type == null || !type.equals(PsiTypes.booleanType()) && !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
+        return BooleanExpressionKind.UNKNOWN;
+      }
+      if (!stopCheckingSideEffects && SideEffectChecker.mayHaveSideEffects(operand)) {
+        sideEffectMayBeRemoved = true;
+        continue;
+      }
+      Boolean value = evaluate(operand);
+      if (value != null) {
+        containsConstant = true;
+        if ((JavaTokenType.ANDAND.equals(sign) && !value) || (JavaTokenType.OROR.equals(sign) && value)) {
+          stopCheckingSideEffects = true;
+          reducedToConstant = true;
         }
-        final PsiType type = operand.getType();
-        if (type == null || !type.equals(PsiType.BOOLEAN) && !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
-          return BooleanExpressionKind.UNKNOWN;
-        }
-        if (!stopCheckingSideEffects && SideEffectChecker.mayHaveSideEffects(operand)) {
-          sideEffectMayBeRemoved = true;
-          continue;
-        }
-        Boolean value = evaluate(operand);
-        if (value != null) {
-          containsConstant = true;
-          if ((JavaTokenType.ANDAND.equals(sign) && !value) || (JavaTokenType.OROR.equals(sign) && value)) {
-            stopCheckingSideEffects = true;
-            reducedToConstant = true;
-          }
-          if ((JavaTokenType.AND.equals(sign) && !value) || (JavaTokenType.OR.equals(sign) && value)) {
-            reducedToConstant = true;
-          }
+        if ((JavaTokenType.AND.equals(sign) && !value) || (JavaTokenType.OR.equals(sign) && value)) {
+          reducedToConstant = true;
         }
       }
-      if (containsConstant) {
-        if (sideEffectMayBeRemoved && reducedToConstant) {
-          return CodeBlockSurrounder.canSurround(expression)
-                 ? BooleanExpressionKind.USELESS_WITH_SIDE_EFFECTS
-                 : BooleanExpressionKind.UNKNOWN;
-        }
-        return BooleanExpressionKind.USELESS;
+    }
+    if (containsConstant) {
+      if (sideEffectMayBeRemoved && reducedToConstant) {
+        return CodeBlockSurrounder.canSurround(expression)
+               ? BooleanExpressionKind.USELESS_WITH_SIDE_EFFECTS
+               : BooleanExpressionKind.UNKNOWN;
       }
+      return BooleanExpressionKind.USELESS;
     }
     return BooleanExpressionKind.UNKNOWN;
   }
@@ -556,7 +562,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
         return evaluate(assignmentExpression.getRExpression());
       }
     }
-    return (Boolean)ConstantExpressionUtil.computeCastTo(expression, PsiType.BOOLEAN);
+    return (Boolean)ConstantExpressionUtil.computeCastTo(expression, PsiTypes.booleanType());
   }
 
   private static boolean containsReference(@Nullable PsiExpression expression) {

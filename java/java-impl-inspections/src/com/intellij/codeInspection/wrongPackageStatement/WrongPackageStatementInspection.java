@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.wrongPackageStatement;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -29,11 +29,10 @@ public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspec
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     // does not work in tests since CodeInsightTestCase copies file into temporary location
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
-    if (!(file instanceof PsiJavaFile)) {
+    if (!(file instanceof PsiJavaFile javaFile)) {
       return null;
     }
     if (FileTypeUtils.isInServerPageFile(file)) return null;
-    PsiJavaFile javaFile = (PsiJavaFile)file;
 
     if (JavaHighlightUtil.isJavaHashBangScript(javaFile)) return null;
 

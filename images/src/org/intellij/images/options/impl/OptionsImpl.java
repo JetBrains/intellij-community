@@ -89,10 +89,9 @@ final class OptionsImpl implements Options, JDOMExternalizable {
     if (obj == this) {
       return true;
     }
-    if (!(obj instanceof Options)) {
+    if (!(obj instanceof Options otherOptions)) {
       return false;
     }
-    Options otherOptions = (Options)obj;
     EditorOptions editorOptions = otherOptions.getEditorOptions();
     ExternalEditorOptions externalEditorOptions = otherOptions.getExternalEditorOptions();
     return editorOptions.equals(getEditorOptions()) && externalEditorOptions.equals(getExternalEditorOptions());

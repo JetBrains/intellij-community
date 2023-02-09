@@ -95,17 +95,6 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
                                                     body))
     }.logError(LOG, "Error occurred while adding review thread reply")
 
-  override fun addComment(progressIndicator: ProgressIndicator, reviewId: String,
-                          body: String, commitSha: String, fileName: String, diffLine: Int)
-    : CompletableFuture<GHPullRequestReviewCommentWithPendingReview> =
-    progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(progressIndicator,
-                              GHGQLRequests.PullRequest.Review.addComment(repository.serverPath,
-                                                                          reviewId,
-                                                                          body, commitSha, fileName,
-                                                                          diffLine))
-    }.logError(LOG, "Error occurred while adding review comment")
-
   override fun deleteComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String) =
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(it, GHGQLRequests.PullRequest.Review.deleteComment(repository.serverPath, commentId))
@@ -119,7 +108,8 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
   override fun addThread(progressIndicator: ProgressIndicator, reviewId: String, body: String,
                          line: Int, side: Side, startLine: Int, fileName: String): CompletableFuture<GHPullRequestReviewThread> =
     progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(it, GHGQLRequests.PullRequest.Review.addThread(repository.serverPath, reviewId, body, line, side, startLine, fileName))
+      requestExecutor.execute(it, GHGQLRequests.PullRequest.Review.addThread(repository.serverPath, reviewId, body, line, side, startLine,
+                                                                             fileName))
     }.logError(LOG, "Error occurred while adding review thread")
 
   override fun resolveThread(progressIndicator: ProgressIndicator,

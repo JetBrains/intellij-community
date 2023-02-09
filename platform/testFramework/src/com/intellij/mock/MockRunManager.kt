@@ -40,7 +40,7 @@ class MockRunManager : RunManagerEx() {
     return true
   }
 
-  override fun isRunWidgetActive(): Boolean {
+  override fun isRiderRunWidgetActive(): Boolean {
     return false
   }
 

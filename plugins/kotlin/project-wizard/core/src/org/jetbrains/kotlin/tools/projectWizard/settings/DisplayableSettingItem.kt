@@ -7,7 +7,6 @@ interface DisplayableSettingItem {
     @get:Nls
     val text: String
 
-    @get:Nls
-    val greyText: String?
+    val greyText:@Nls String?
         get() = null
 }

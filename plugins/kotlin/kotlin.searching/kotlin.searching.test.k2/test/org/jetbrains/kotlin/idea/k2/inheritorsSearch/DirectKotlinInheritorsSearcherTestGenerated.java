@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.inheritorsSearch;
 
@@ -30,6 +30,11 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
             runTest("../testData/inheritorsSearch/kotlinClass/simple.kt");
         }
 
+        @TestMetadata("withEnum.kt")
+        public void testWithEnum() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinClass/withEnum.kt");
+        }
+
         @TestMetadata("withJavaInheritor.kt")
         public void testWithJavaInheritor() throws Exception {
             runTest("../testData/inheritorsSearch/kotlinClass/withJavaInheritor.kt");
@@ -53,12 +58,27 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
     @TestMetadata("../testData/inheritorsSearch/kotlinFunction")
     public static class KotlinFunction extends AbstractDirectKotlinInheritorsSearcherTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestKotlinFunction, this, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTestCallable, this, testDataFilePath);
+        }
+
+        @TestMetadata("hierarchyWithMissedLevel.kt")
+        public void testHierarchyWithMissedLevel() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinFunction/hierarchyWithMissedLevel.kt");
+        }
+
+        @TestMetadata("objectLiteralInheritor.kt")
+        public void testObjectLiteralInheritor() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinFunction/objectLiteralInheritor.kt");
         }
 
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("../testData/inheritorsSearch/kotlinFunction/simple.kt");
+        }
+
+        @TestMetadata("withGeneratedProperty.kt")
+        public void testWithGeneratedProperty() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinFunction/withGeneratedProperty.kt");
         }
 
         @TestMetadata("withJavaInheritor.kt")
@@ -69,6 +89,19 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
         @TestMetadata("withJavaInheritorTypeParameters.kt")
         public void testWithJavaInheritorTypeParameters() throws Exception {
             runTest("../testData/inheritorsSearch/kotlinFunction/withJavaInheritorTypeParameters.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inheritorsSearch/allInheritors")
+    public static class AllInheritors extends AbstractDirectKotlinInheritorsSearcherTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestFindAllOverridings, this, testDataFilePath);
+        }
+
+        @TestMetadata("withJavaInheritorLocalScope.kt")
+        public void testWithJavaInheritorLocalScope() throws Exception {
+            runTest("../testData/inheritorsSearch/allInheritors/withJavaInheritorLocalScope.kt");
         }
     }
 }

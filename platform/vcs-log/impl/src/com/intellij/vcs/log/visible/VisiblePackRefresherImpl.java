@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible;
 
 import com.intellij.openapi.Disposable;
@@ -38,14 +38,14 @@ import static com.intellij.vcs.log.visible.VcsLogFiltererImplKt.areFiltersAffect
 public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposable {
   private static final Logger LOG = Logger.getInstance(VisiblePackRefresherImpl.class);
 
-  @NotNull private final String myLogId;
-  @NotNull private final SingleTaskController<Request, State> myTaskController;
-  @NotNull private final VcsLogFilterer myVcsLogFilterer;
-  @NotNull private final VcsLogData myLogData;
-  @NotNull private final VcsLogIndex.IndexingFinishedListener myIndexingFinishedListener;
-  @NotNull private final List<VisiblePackChangeListener> myVisiblePackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final @NotNull String myLogId;
+  private final @NotNull SingleTaskController<Request, State> myTaskController;
+  private final @NotNull VcsLogFilterer myVcsLogFilterer;
+  private final @NotNull VcsLogData myLogData;
+  private final @NotNull VcsLogIndex.IndexingFinishedListener myIndexingFinishedListener;
+  private final @NotNull List<VisiblePackChangeListener> myVisiblePackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NotNull private volatile State myState;
+  private volatile @NotNull State myState;
 
   public VisiblePackRefresherImpl(@NotNull Project project,
                                   @NotNull VcsLogData logData,
@@ -67,9 +67,8 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
         }
       }
     }, this) {
-      @NotNull
       @Override
-      protected SingleTask startNewBackgroundTask() {
+      protected @NotNull SingleTask startNewBackgroundTask() {
         ProgressIndicator indicator = myLogData.getProgress().createProgressIndicator(new VisiblePackProgressKey(myLogId, false));
         MyTask task = new MyTask(project, VcsLogBundle.message("vcs.log.applying.filters.process"));
         Future<?> future = ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task, indicator, null);
@@ -187,8 +186,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
       }
     }
 
-    @NotNull
-    private State computeState(@NotNull State state, @NotNull List<? extends Request> requests) {
+    private @NotNull State computeState(@NotNull State state, @NotNull List<? extends Request> requests) {
       ValidateRequest validateRequest = ContainerUtil.findLastInstance(requests, ValidateRequest.class);
       FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
       SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);
@@ -245,10 +243,9 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
       }
     }
 
-    @NotNull
-    private State refresh(@NotNull State state,
-                          boolean resetCommitCount,
-                          @NotNull List<MoreCommitsRequest> moreCommitsRequests) {
+    private @NotNull State refresh(@NotNull State state,
+                                   boolean resetCommitCount,
+                                   @NotNull List<MoreCommitsRequest> moreCommitsRequests) {
       DataPack dataPack = myLogData.getDataPack();
 
       if (dataPack == DataPack.EMPTY && !myVcsLogFilterer.canFilterEmptyPack(state.getFilters())) {
@@ -286,11 +283,11 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   }
 
   private static class State {
-    @NotNull private final VcsLogFilterCollection myFilters;
-    @NotNull private final PermanentGraph.SortType mySortType;
-    @NotNull private final CommitCountStage myCommitCount;
-    @NotNull private final List<MoreCommitsRequest> myRequestsToRun;
-    @NotNull private final VisiblePack myVisiblePack;
+    private final @NotNull VcsLogFilterCollection myFilters;
+    private final @NotNull PermanentGraph.SortType mySortType;
+    private final @NotNull CommitCountStage myCommitCount;
+    private final @NotNull List<MoreCommitsRequest> myRequestsToRun;
+    private final @NotNull VisiblePack myVisiblePack;
     private final boolean myIsValid;
 
     State(@NotNull VcsLogFilterCollection filters, @NotNull PermanentGraph.SortType sortType) {
@@ -315,64 +312,52 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
       return myIsValid;
     }
 
-    @NotNull
-    public VisiblePack getVisiblePack() {
+    public @NotNull VisiblePack getVisiblePack() {
       return myVisiblePack;
     }
 
-    @NotNull
-    public List<MoreCommitsRequest> getRequestsToRun() {
+    public @NotNull List<MoreCommitsRequest> getRequestsToRun() {
       return myRequestsToRun;
     }
 
-    @NotNull
-    public VcsLogFilterCollection getFilters() {
+    public @NotNull VcsLogFilterCollection getFilters() {
       return myFilters;
     }
 
-    @NotNull
-    public PermanentGraph.SortType getSortType() {
+    public @NotNull PermanentGraph.SortType getSortType() {
       return mySortType;
     }
 
-    @NotNull
-    public CommitCountStage getCommitCount() {
+    public @NotNull CommitCountStage getCommitCount() {
       return myCommitCount;
     }
 
-    @NotNull
-    public State withValid(boolean valid) {
+    public @NotNull State withValid(boolean valid) {
       return new State(myFilters, mySortType, myCommitCount, myRequestsToRun, myVisiblePack, valid);
     }
 
-    @NotNull
-    public State withVisiblePack(@NotNull VisiblePack visiblePack) {
+    public @NotNull State withVisiblePack(@NotNull VisiblePack visiblePack) {
       return new State(myFilters, mySortType, myCommitCount, myRequestsToRun, visiblePack, myIsValid);
     }
 
-    @NotNull
-    public State withCommitCount(@NotNull CommitCountStage commitCount) {
+    public @NotNull State withCommitCount(@NotNull CommitCountStage commitCount) {
       return new State(myFilters, mySortType, commitCount, myRequestsToRun, myVisiblePack, myIsValid);
     }
 
-    @NotNull
-    public State withRequests(@NotNull List<MoreCommitsRequest> requests) {
+    public @NotNull State withRequests(@NotNull List<MoreCommitsRequest> requests) {
       return new State(myFilters, mySortType, myCommitCount, requests, myVisiblePack, myIsValid);
     }
 
-    @NotNull
-    public State withFilters(@NotNull VcsLogFilterCollection filters) {
+    public @NotNull State withFilters(@NotNull VcsLogFilterCollection filters) {
       return new State(filters, mySortType, myCommitCount, myRequestsToRun, myVisiblePack, myIsValid);
     }
 
-    @NotNull
-    public State withSortType(@NotNull PermanentGraph.SortType type) {
+    public @NotNull State withSortType(@NotNull PermanentGraph.SortType type) {
       return new State(myFilters, type, myCommitCount, myRequestsToRun, myVisiblePack, myIsValid);
     }
 
     @Override
-    @NonNls
-    public String toString() {
+    public @NonNls String toString() {
       return "State{" +
              "myFilters=" + myFilters +
              ", mySortType=" + mySortType +
@@ -434,7 +419,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   }
 
   private static final class MoreCommitsRequest implements Request {
-    @NotNull private final Runnable onLoaded;
+    private final @NotNull Runnable onLoaded;
 
     MoreCommitsRequest(@NotNull Runnable onLoaded) {
       this.onLoaded = onLoaded;
@@ -442,14 +427,13 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   }
 
   private static final class IndexingFinishedRequest implements Request {
-    @NotNull private final VirtualFile root;
+    private final @NotNull VirtualFile root;
 
     IndexingFinishedRequest(@NotNull VirtualFile root) {
       this.root = root;
     }
 
-    @NotNull
-    public VirtualFile getRoot() {
+    public @NotNull VirtualFile getRoot() {
       return root;
     }
 
@@ -460,7 +444,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   }
 
   public static class VisiblePackProgressKey extends VcsLogProgress.ProgressKey {
-    @NotNull private final String myLogId;
+    private final @NotNull String myLogId;
     private final boolean myVisible;
 
     public VisiblePackProgressKey(@NotNull String logId, boolean visible) {
@@ -473,8 +457,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
       return myVisible;
     }
 
-    @NotNull
-    public String getLogId() {
+    public @NotNull String getLogId() {
       return myLogId;
     }
 
@@ -495,8 +478,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   }
 
   public static boolean isVisibleKeyFor(@NotNull VcsLogProgress.ProgressKey key, @NotNull String logId) {
-    if (key instanceof VisiblePackProgressKey) {
-      VisiblePackProgressKey visiblePackProgressKey = (VisiblePackProgressKey)key;
+    if (key instanceof VisiblePackProgressKey visiblePackProgressKey) {
       return visiblePackProgressKey.getLogId().equals(logId) && visiblePackProgressKey.isVisible();
     }
     return false;

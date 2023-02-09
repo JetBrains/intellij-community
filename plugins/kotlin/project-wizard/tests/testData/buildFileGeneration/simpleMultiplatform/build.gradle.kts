@@ -14,7 +14,7 @@ repositories {
 
 kotlin {
     jvm {
-        jvmToolchain(9)
+        jvmToolchain(11)
         withJava()
         testRuns["test"].executionTask.configure {
             useJUnit()

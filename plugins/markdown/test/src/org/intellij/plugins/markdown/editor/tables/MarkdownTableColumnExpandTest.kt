@@ -2,8 +2,6 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.RegistryKeyRule
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -11,9 +9,6 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 @Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownTableColumnExpandTest: LightPlatformCodeInsightTestCase() {
-  @get:Rule
-  val rule = RegistryKeyRule("markdown.tables.editing.support.enable", true)
-
   @Test
   fun `test right after cell content`() {
     // language=Markdown
@@ -218,11 +213,43 @@ class MarkdownTableColumnExpandTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, string = "ssome ")
   }
 
+  @Test
+  fun `test typing in empty cell`() {
+    // language=Markdown
+    val before = """
+    ||
+    |-|
+    |<caret>|
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    |      |
+    |------|
+    | some<caret> |
+    """.trimIndent()
+    doTest(before, after, string = "some")
+  }
+
+  @Test
+  fun `test typing space in cell with two spaces`() {
+    // language=Markdown
+    val before = """
+    |  |
+    |--|
+    | <caret> |
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    |   |
+    |---|
+    |  <caret> |
+    """.trimIndent()
+    doTest(before, after, string = " ")
+  }
+
   private fun doTest(content: String, expected: String, count: Int = 1, string: String = " ") {
-    TableTestUtils.runWithChangedSettings(project) {
-      configureFromFileText("some.md", content)
-      type(string.repeat(count))
-      checkResultByText(expected)
-    }
+    configureFromFileText("some.md", content)
+    type(string.repeat(count))
+    checkResultByText(expected)
   }
 }

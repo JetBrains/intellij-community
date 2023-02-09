@@ -49,8 +49,7 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor imple
   @NonNls
   public String getName(final PsiElement context) {
     final String name = getDefaultName();
-    if (context instanceof XmlTag) {
-      XmlTag tag = (XmlTag)context;
+    if (context instanceof XmlTag tag) {
       final PsiFile file = tag.getContainingFile();
       DomElement element = myManager.getDomElement(tag);
       if (element == null && tag.getParentTag() != null) {

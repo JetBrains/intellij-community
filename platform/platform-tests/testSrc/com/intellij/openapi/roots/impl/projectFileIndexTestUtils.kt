@@ -2,13 +2,19 @@
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.FileIndex
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.UsefulTestCase
+import junit.framework.TestCase
 import org.intellij.lang.annotations.MagicConstant
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.fail
 
-internal object ProjectFileIndexScopes {
+object ProjectFileIndexScopes {
   const val NOT_IN_PROJECT = 0
   const val IN_CONTENT = 1 shl 0 
   const val IN_LIBRARY = 1 shl 1
@@ -19,6 +25,7 @@ internal object ProjectFileIndexScopes {
   private const val IN_LIBRARY_SOURCE_AND_CLASSES_FLAG = 1 shl 6
   private const val IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE_FLAG = 1 shl 7
   const val EXCLUDED_FROM_MODULE_ONLY = 1 shl 8
+  const val IN_LIBRARY_SOURCE_ONLY = 1 shl 9
   const val IN_LIBRARY_SOURCE_AND_CLASSES = IN_LIBRARY or IN_SOURCE or IN_LIBRARY_SOURCE_AND_CLASSES_FLAG
   const val IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE = IN_CONTENT or IN_SOURCE or IN_LIBRARY or IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE_FLAG
 
@@ -33,6 +40,11 @@ internal object ProjectFileIndexScopes {
     assertScope(file, scope, null, null)
   }
   
+  fun ProjectFileIndex.assertInUnloadedModule(file: VirtualFile, moduleName: String, contentRoot: VirtualFile) {
+    assertScope(file, EXCLUDED, null, contentRoot)
+    assertEquals(moduleName, getUnloadedModuleNameForFile(file))
+  }
+  
   private fun ProjectFileIndex.assertScope(file: VirtualFile, @MagicConstant(flagsFromClass = ProjectFileIndexPerformanceTest::class) scope: Int = IN_CONTENT,
                                            module: Module?, contentRoot: VirtualFile?) {
     val inContent = scope and IN_CONTENT != 0
@@ -42,7 +54,7 @@ internal object ProjectFileIndexScopes {
     val isIgnored = scope and UNDER_IGNORED != 0
     checkScope(inContent, isInContent(file), "content", file)
     checkScope(inSource, isInSource(file), "source", file)
-    checkScope(inContent && inSource, isInSourceContent(file), "source content", file)
+    checkScope(inContent && inSource && scope and IN_LIBRARY_SOURCE_ONLY == 0, isInSourceContent(file), "source content", file)
     checkScope(scope and IN_TEST_SOURCE != 0, isInTestSourceContent(file), "test source", file)
     checkScope(inContent || inLibrary, isInProject(file), "project", file)
     checkScope(inContent || inLibrary || isExcluded, isInProjectOrExcluded(file), "project or excluded", file)
@@ -71,4 +83,36 @@ internal object ProjectFileIndexScopes {
       fail("${file.presentableUrl} expected to be ${if (expected) "in" else "not in"} $description, but it is ${if (actual) "in" else "not in"} $description")
     }
   }
+}
+
+internal fun assertIteratedContent(module: Module, mustContain: List<VirtualFile>?, mustNotContain: List<VirtualFile>?) {
+  assertIteratedContent(ModuleRootManager.getInstance(module).fileIndex, mustContain, mustNotContain)
+  assertIteratedContent(ProjectFileIndex.getInstance(module.project), mustContain, mustNotContain)
+}
+
+private fun assertIteratedContent(fileIndex: FileIndex, mustContain: List<VirtualFile>?, mustNotContain: List<VirtualFile>?) {
+  val collected = HashSet<VirtualFile>()
+  fileIndex.iterateContent { fileOrDir: VirtualFile ->
+    if (!collected.add(fileOrDir)) {
+      fail("$fileOrDir visited twice")
+    }
+    true
+  }
+  if (mustContain != null) UsefulTestCase.assertContainsElements(collected, mustContain)
+  if (mustNotContain != null) UsefulTestCase.assertDoesntContain(collected, mustNotContain)
+}
+
+internal fun assertIteratedContent(fileIndex: FileIndex,
+                          root: VirtualFile,
+                          mustContain: List<VirtualFile>?,
+                          mustNotContain: List<VirtualFile>?) {
+  val collected = HashSet<VirtualFile>()
+  fileIndex.iterateContentUnderDirectory(root) { fileOrDir: VirtualFile ->
+    if (!collected.add(fileOrDir)) {
+      fail("$fileOrDir visited twice")
+    }
+    true
+  }
+  if (mustContain != null) UsefulTestCase.assertContainsElements(collected, mustContain)
+  if (mustNotContain != null) UsefulTestCase.assertDoesntContain(collected, mustNotContain)
 }

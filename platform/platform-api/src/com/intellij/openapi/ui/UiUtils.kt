@@ -18,10 +18,10 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.ComponentWithEmptyText
+import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
-import java.awt.Component
-import java.awt.MouseInfo
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.*
 import java.io.File
 import javax.swing.*
@@ -29,6 +29,7 @@ import javax.swing.text.JTextComponent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
+
 
 val PREFERRED_FOCUSED_COMPONENT = Key.create<JComponent>("JComponent.preferredFocusedComponent")
 
@@ -51,17 +52,28 @@ inline fun <reified T> JComponent.getUserData(key: Key<T>): T? {
   return getClientProperty(key) as? T
 }
 
+inline fun <reified T> JComponent.getOrPutUserData(key: Key<T>, block: () -> T): T {
+  return getUserData(key) ?: block().also { putUserData(key, it) }
+}
+
 fun JTextComponent.isTextUnderMouse(e: MouseEvent): Boolean {
   val position = viewToModel2D(e.point)
   return position in 1 until text.length
 }
 
 fun Component.isComponentUnderMouse(): Boolean {
+  if (mousePosition != null) {
+    return true
+  }
   val pointerInfo = MouseInfo.getPointerInfo() ?: return false
   val location = pointerInfo.location
   SwingUtilities.convertPointFromScreen(location, this)
   val bounds = Rectangle(0, 0, width, height)
   return bounds.contains(location)
+}
+
+fun Component.isFocusAncestor(): Boolean {
+  return UIUtil.isFocusAncestor(this)
 }
 
 fun getActionShortcutText(actionId: String): String {
@@ -135,14 +147,25 @@ fun TreeModel.getTreePath(userObject: Any?): TreePath? =
     .firstOrNull()
     ?.let { TreePath(it.path) }
 
-val TextFieldWithBrowseButton.emptyText
-  get() = (textField as JBTextField).emptyText
+val TextFieldWithBrowseButton.jbTextField: JBTextField
+  get() = textField as JBTextField
+
+val TextFieldWithBrowseButton.emptyText: StatusText
+  get() = jbTextField.emptyText
+
+fun <C : TextFieldWithBrowseButton> C.setEmptyState(
+  text: @NlsContexts.StatusText String
+): C {
+  jbTextField.setEmptyState(text)
+  return this
+}
 
 fun <C> C.setEmptyState(
   text: @NlsContexts.StatusText String
-): C where C : Component, C : ComponentWithEmptyText = apply {
-  getAccessibleContext().accessibleName = text
+): C where C : Component, C : ComponentWithEmptyText {
+  accessibleContext.accessibleName = text
   emptyText.text = text
+  return this
 }
 
 val <E> ComboBox<E>.collectionModel: CollectionComboBoxModel<E>
@@ -157,10 +180,6 @@ fun getPresentablePath(path: @NonNls String): @NlsSafe String {
 @JvmOverloads
 fun getCanonicalPath(path: @NlsSafe String, removeLastSlash: Boolean = true): @NonNls String {
   return FileUtil.toCanonicalPath(FileUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
-}
-
-fun JComponent.getTextWidth(text: @NlsSafe String): Int {
-  return getFontMetrics(font).stringWidth(text)
 }
 
 /**

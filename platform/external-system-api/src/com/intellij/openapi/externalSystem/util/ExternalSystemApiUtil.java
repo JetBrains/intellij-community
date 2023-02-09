@@ -42,7 +42,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.PathsList;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -215,39 +214,82 @@ public final class ExternalSystemApiUtil {
     return result == null ? Collections.emptyList() : result;
   }
 
-  @SuppressWarnings("unchecked")
   public static @Nullable <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key) {
-    for (DataNode<?> child : node.getChildren()) {
-      if (key.equals(child.getKey())) {
-        return (DataNode<T>)child;
-      }
-    }
-    return null;
+    return findChild(node, key, null);
   }
 
-  @SuppressWarnings("unchecked")
-  public static @Nullable <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key, BooleanFunction<? super DataNode<T>> predicate) {
+  public static @Nullable <T> DataNode<T> findChild(
+    @NotNull DataNode<?> node,
+    @NotNull Key<T> key,
+    @Nullable Predicate<? super DataNode<T>> predicate
+  ) {
     for (DataNode<?> child : node.getChildren()) {
-      if (key.equals(child.getKey()) && predicate.fun((DataNode<T>)child)) {
-        return (DataNode<T>)child;
+      if (key.equals(child.getKey())) {
+        //noinspection unchecked
+        var childNode = (DataNode<T>)child;
+        if (predicate == null || predicate.test(childNode)) {
+          return childNode;
+        }
       }
     }
     return null;
   }
 
   public static @Nullable <T> DataNode<T> findParent(@NotNull DataNode<?> node, @NotNull Key<T> key) {
-    return findParent(node, key, null);
+    return findParentRecursively(node, key, null);
   }
 
+  public static @Nullable <T> DataNode<T> findParentRecursively(
+    @NotNull DataNode<?> node,
+    @NotNull Key<T> key,
+    @Nullable Predicate<? super DataNode<T>> predicate
+  ) {
+    var parent = node.getParent();
+    if (parent == null) {
+      return null;
+    }
+    if (key.equals(parent.getKey())) {
+      //noinspection unchecked
+      var parentNode = (DataNode<T>)parent;
+      if (predicate == null || predicate.test(parentNode)) {
+        return parentNode;
+      }
+    }
+    return findParentRecursively(parent, key, predicate);
+  }
 
-  @SuppressWarnings("unchecked")
-  public static @Nullable <T> DataNode<T> findParent(@NotNull DataNode<?> node,
-                                                     @NotNull Key<T> key,
-                                                     @Nullable BooleanFunction<? super DataNode<T>> predicate) {
-    DataNode<?> parent = node.getParent();
-    if (parent == null) return null;
-    return key.equals(parent.getKey()) && (predicate == null || predicate.fun((DataNode<T>)parent))
-           ? (DataNode<T>)parent : findParent(parent, key, predicate);
+  /**
+   * @deprecated Use findChild instead
+   */
+  @Deprecated
+  public static @Nullable <T> DataNode<T> find(
+    @NotNull DataNode<?> node,
+    @NotNull Key<T> key,
+    @Nullable BooleanFunction<? super DataNode<T>> predicate
+  ) {
+    if (predicate == null) {
+      return findChild(node, key, null);
+    }
+    else {
+      return findChild(node, key, it -> predicate.fun(it));
+    }
+  }
+
+  /**
+   * @deprecated Use findParentRecursively instead
+   */
+  @Deprecated
+  public static @Nullable <T> DataNode<T> findParent(
+    @NotNull DataNode<?> node,
+    @NotNull Key<T> key,
+    @Nullable BooleanFunction<? super DataNode<T>> predicate
+  ) {
+    if (predicate == null) {
+      return findParentRecursively(node, key, null);
+    }
+    else {
+      return findParentRecursively(node, key, it -> predicate.fun(it));
+    }
   }
 
   public static @NotNull <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
@@ -718,8 +760,7 @@ public final class ExternalSystemApiUtil {
 
   public static @NotNull FileChooserDescriptor getExternalProjectConfigDescriptor(@NotNull ProjectSystemId systemId) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(systemId);
-    if (manager instanceof ExternalSystemUiAware) {
-      ExternalSystemUiAware uiAware = ((ExternalSystemUiAware)manager);
+    if (manager instanceof ExternalSystemUiAware uiAware) {
       FileChooserDescriptor descriptor = uiAware.getExternalProjectConfigDescriptor();
       if (descriptor != null) {
         return descriptor;

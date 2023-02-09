@@ -121,8 +121,7 @@ public final class CustomAntElementsRegistry {
         if (declaringElement instanceof AntDomMacroDef || declaringElement instanceof AntDomScriptDef || declaringElement instanceof AntDomTaskdef) {
           continue;
         }
-        if (declaringElement instanceof AntDomTypeDef) {
-          AntDomTypeDef typedef = (AntDomTypeDef)declaringElement;
+        if (declaringElement instanceof AntDomTypeDef typedef) {
           Class<?> clazz = lookupClass(xmlName);
           if (clazz != null && typedef.isTask(clazz)) {
             continue;

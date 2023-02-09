@@ -7,7 +7,6 @@ import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
-import com.intellij.ide.structureView.StructureViewBundle
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
 import com.intellij.navigation.NavigationRequest
@@ -33,6 +32,7 @@ import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDirectoryContainer
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.*
@@ -40,6 +40,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -54,9 +55,8 @@ open class DefaultNavBarItem<out T>(val data: T) : NavBarItem {
 
     val icon: Icon? = fromOldExtensions { ext -> ext.getIcon(data) } ?: getIcon()
 
-    val invalidText = StructureViewBundle.message("node.structureview.invalid")
-    val text: String = fromOldExtensions { ext -> ext.getPresentableText(data, false) } ?: invalidText
-    val popupText: String = fromOldExtensions { ext -> ext.getPresentableText(data, true) } ?: invalidText
+    val text: String = fromOldExtensions { ext -> ext.getPresentableText(data, false) } ?: getText(false)
+    val popupText: String = fromOldExtensions { ext -> ext.getPresentableText(data, true) } ?: getText(true)
 
     val textAttributes = getTextAttributes(selected = false)
     val selectedTextAttributes = getTextAttributes(selected = true)
@@ -95,7 +95,7 @@ internal class ProjectNavBarItem(data: Project) : DefaultNavBarItem<Project>(dat
     val hasProblems = ModuleManager.getInstance(data)
       .modules
       .any(problemSolver::hasProblemFilesBeneath)
-    return if (hasProblems) errorAttributes else REGULAR_ATTRIBUTES
+    return if (hasProblems) navBarErrorAttributes else REGULAR_ATTRIBUTES
   }
 }
 
@@ -126,7 +126,7 @@ internal class ModuleNavBarItem(data: Module) : DefaultNavBarItem<Module>(data),
     val problemSolver = WolfTheProblemSolver.getInstance(data.project)
     val hasProblems = problemSolver.hasProblemFilesBeneath(data)
 
-    return if (hasProblems) errorAttributes else REGULAR_ATTRIBUTES
+    return if (hasProblems) navBarErrorAttributes else REGULAR_ATTRIBUTES
   }
 
 }
@@ -162,11 +162,11 @@ internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelEx
     val psiFile = data.containingFile
 
     if (psiFile != null) {
-      val virtualFile = psiFile.virtualFile ?: return SimpleTextAttributes(null, null, errorAttributes.waveColor, STYLE_PLAIN)
+      val virtualFile = psiFile.virtualFile ?: return SimpleTextAttributes(null, null, navBarErrorAttributes.waveColor, STYLE_PLAIN)
       val problemSolver = WolfTheProblemSolver.getInstance(data.project)
-      val style = if (problemSolver.isProblemFile(virtualFile)) errorAttributes.style else STYLE_PLAIN
+      val style = if (problemSolver.isProblemFile(virtualFile)) navBarErrorAttributes.style else STYLE_PLAIN
       val color = if (!selected) FileStatusManager.getInstance(data.project).getStatus(virtualFile).color else null
-      return SimpleTextAttributes(null, color, errorAttributes.waveColor, style)
+      return SimpleTextAttributes(null, color, navBarErrorAttributes.waveColor, style)
     }
     else {
       if (data is PsiDirectory) {
@@ -177,7 +177,7 @@ internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelEx
       }
 
       if (wolfHasProblemFilesBeneath(data)) {
-        return errorAttributes
+        return navBarErrorAttributes
       }
     }
     return REGULAR_ATTRIBUTES
@@ -206,8 +206,8 @@ internal class OrderEntryNavBarItem(data: OrderEntry) : DefaultNavBarItem<OrderE
   }
 }
 
-
-private val errorAttributes =
+@Internal
+val navBarErrorAttributes =
   EditorColorsManager.getInstance()
     .schemeForCurrentUITheme
     .getAttributes(ERRORS_ATTRIBUTES)
@@ -219,6 +219,14 @@ private val errorAttributes =
       )
     }
 
+fun createDefaultNavBarItem(project: Project, virtualFile: VirtualFile): NavBarItem? {
+  val psiManager = PsiManager.getInstance(project)
+  val psiElement =
+    if (virtualFile.isDirectory) psiManager.findDirectory(virtualFile)
+    else psiManager.findFile(virtualFile)
+  if (psiElement == null) return null
+  return PsiNavBarItem(psiElement, null)
+}
 
 private fun wolfHasProblemFilesBeneath(scope: PsiElement): Boolean =
   WolfTheProblemSolver

@@ -25,9 +25,9 @@ import com.intellij.refactoring.suggested.startOffset
 import com.intellij.ui.LightweightHint
 import com.intellij.util.ui.GraphicsUtil
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.isSoftWrapping
-import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.selectColumn
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionPlaces
+import org.intellij.plugins.markdown.editor.tables.selectColumn
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.clearOvalOverEditor
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable

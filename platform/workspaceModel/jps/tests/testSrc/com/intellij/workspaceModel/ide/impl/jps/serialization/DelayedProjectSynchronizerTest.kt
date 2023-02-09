@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.facet.mock.AnotherMockFacetType
@@ -22,6 +22,7 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.readText
 import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
 import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -36,14 +37,12 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.apache.commons.lang.RandomStringUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.*
 import org.junit.Assert.*
 import java.io.File
 import java.nio.file.Files
 import java.util.stream.Collectors
-import kotlin.io.path.name
 
 class DelayedProjectSynchronizerTest {
   @Rule
@@ -65,7 +64,7 @@ class DelayedProjectSynchronizerTest {
   fun setUp() {
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
-    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager)
+    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver, virtualFileManager)
     registerFacetType(MockFacetType(), disposableRule.disposable)
     registerFacetType(AnotherMockFacetType(), disposableRule.disposable)
   }
@@ -89,9 +88,10 @@ class DelayedProjectSynchronizerTest {
   }
 
   private fun checkSerializersConsistency(project: Project) {
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val serializers = JpsProjectModelSynchronizer.getInstance(project).getSerializers()
-    serializers.checkConsistency(getJpsProjectConfigLocation(project)!!, storage, VirtualFileUrlManager.getInstance(project))
+    val unloadedEntitiesStorage = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities
+    serializers.checkConsistency(getJpsProjectConfigLocation(project)!!, storage, unloadedEntitiesStorage, VirtualFileUrlManager.getInstance(project))
   }
 
   @Test
@@ -132,13 +132,13 @@ class DelayedProjectSynchronizerTest {
           LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary("foo")
         }
       }
-      val storage = WorkspaceModel.getInstance(project).entityStorage.current
+      val storage = WorkspaceModel.getInstance(project).currentSnapshot
       JpsProjectModelSynchronizer.getInstance(project).getSerializers().saveAllEntities(storage, projectData.configLocation)
     }
     val librariesFolder = projectData.projectDir.toPath().resolve(".idea/libraries/")
     val librariesPaths = Files.list(librariesFolder).use { it.collect(Collectors.toList()).sorted() }
     assertEquals(4, librariesPaths.size)
-    assertThat(librariesPaths.map { it.name }).containsAll(listOf("foo.xml", "jarDir.xml", "junit.xml", "log4j.xml"))
+    assertThat(librariesPaths.map { it.fileName.toString() }).containsAll(listOf("foo.xml", "jarDir.xml", "junit.xml", "log4j.xml"))
     assertTrue(librariesPaths[0].readText().contains("library name=\"foo\""))
     assertTrue(librariesPaths[1].readText().contains("library name=\"jarDir\""))
     assertTrue(librariesPaths[2].readText().contains("library name=\"junit\""))
@@ -152,10 +152,15 @@ class DelayedProjectSynchronizerTest {
     val fileInDirectorySourceNames = FileInDirectorySourceNames.from(projectData.storage)
 
     val originalBuilder = MutableEntityStorage.create()
+    val unloadedEntitiesBuilder = MutableEntityStorage.create()
+    val orphanage = MutableEntityStorage.create()
     val configLocation = toConfigLocation(projectData.projectDir.toPath(), virtualFileManager)
-    val serializers = loadProject(configLocation, originalBuilder, virtualFileManager, fileInDirectorySourceNames) as JpsProjectSerializersImpl
-    val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), serializers, configLocation, projectFile)
-    serializers.checkConsistency(configLocation, loadedProjectData.storage, virtualFileManager)
+    val serializers = loadProject(configLocation, originalBuilder, orphanage, virtualFileManager, emptySet(), unloadedEntitiesBuilder,
+                                  fileInDirectorySourceNames) as JpsProjectSerializersImpl
+    val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), orphanage.toSnapshot(), unloadedEntitiesBuilder.toSnapshot(),
+                                              serializers,
+                                              configLocation, projectFile)
+    serializers.checkConsistency(configLocation, loadedProjectData.storage, loadedProjectData.unloadedEntitiesStorage, virtualFileManager)
 
     assertThat(projectData.storage.entities(ModuleEntity::class.java).map {
       assertTrue(it.entitySource is JpsFileEntitySource.FileInDirectory)
@@ -182,11 +187,11 @@ class DelayedProjectSynchronizerTest {
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(projectModel.project)
     externalStorageConfigurationManager.isEnabled = true
     val originalBuilder = MutableEntityStorage.create()
-    loadProject(toConfigLocation(projectDir.toPath(), virtualFileManager), originalBuilder, virtualFileManager, externalStorageConfigurationManager = externalStorageConfigurationManager)
+    loadProject(toConfigLocation(projectDir.toPath(), virtualFileManager), originalBuilder, originalBuilder, virtualFileManager, externalStorageConfigurationManager = externalStorageConfigurationManager)
 
     val fileInDirectorySourceNames = FileInDirectorySourceNames.from(originalBuilder)
     val builderForAnotherProject = MutableEntityStorage.create()
-    loadProject(toConfigLocation(projectDir.toPath(), virtualFileManager), builderForAnotherProject, virtualFileManager,
+    loadProject(toConfigLocation(projectDir.toPath(), virtualFileManager), builderForAnotherProject, builderForAnotherProject, virtualFileManager,
                 externalStorageConfigurationManager = externalStorageConfigurationManager,
                 fileInDirectorySourceNames = fileInDirectorySourceNames)
 
@@ -209,13 +214,9 @@ class DelayedProjectSynchronizerTest {
 
 
   private fun saveToCache(storage: EntityStorageSnapshot) {
-    val cacheFile = tempDirectory.newFile("cache.data")
+    val cacheFile = tempDirectory.newFile("cache.data").toPath()
     WorkspaceModelCacheImpl.testCacheFile = cacheFile
-
-
-    cacheFile.outputStream().use {
-      serializer.serializeCache(it, storage)
-    }
+    serializer.serializeCache(cacheFile, storage)
   }
 
   private suspend fun loadProject(projectDir: File): Project {
@@ -245,10 +246,6 @@ class DelayedProjectSynchronizerTest {
 
     private fun projectFile(path: String): File {
       return File(PathManagerEx.getCommunityHomePath(), "$dirBasedProject/$path")
-    }
-
-    private fun cacheFileName(): String {
-      return "test_caching_" + RandomStringUtils.randomAlphabetic(5) + ".data"
     }
   }
 }

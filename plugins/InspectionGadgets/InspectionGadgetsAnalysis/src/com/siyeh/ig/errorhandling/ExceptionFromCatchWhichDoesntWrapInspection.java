@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,11 +27,12 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection {
 
@@ -54,12 +55,10 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("exception.from.catch.which.doesntwrap.ignore.option"), "ignoreGetMessage");
-    panel.addCheckbox(InspectionGadgetsBundle.message("exception.from.catch.which.doesntwrap.ignore.cant.wrap.option"), "ignoreCantWrap");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreGetMessage", InspectionGadgetsBundle.message("exception.from.catch.which.doesntwrap.ignore.option")),
+      checkbox("ignoreCantWrap", InspectionGadgetsBundle.message("exception.from.catch.which.doesntwrap.ignore.cant.wrap.option")));
   }
 
   @Override
@@ -90,8 +89,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
       }
       if (ignoreCantWrap) {
         final PsiType thrownType = exception.getType();
-        if (thrownType instanceof PsiClassType) {
-          final PsiClassType classType = (PsiClassType)thrownType;
+        if (thrownType instanceof PsiClassType classType) {
           final PsiClass exceptionClass = classType.resolve();
           if (exceptionClass != null) {
             final PsiMethod[] constructors = exceptionClass.getConstructors();
@@ -163,10 +161,9 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
               return true;
             }
             final PsiElement grandParent = parent.getParent();
-            if (!(grandParent instanceof PsiMethodCallExpression)) {
+            if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
               return true;
             }
-            final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
             final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
             final PsiExpression[] arguments = argumentList.getExpressions();
             for (PsiExpression argument : arguments) {

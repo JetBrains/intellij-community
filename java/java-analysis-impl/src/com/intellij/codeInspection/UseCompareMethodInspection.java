@@ -1,8 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -23,21 +23,22 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean suggestFloatingCompare = true;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return InspectionOptionsPanel.singleCheckBox(
-      this, JavaAnalysisBundle.message("inspection.use.compare.method.option.double"), "suggestFloatingCompare");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("suggestFloatingCompare", JavaAnalysisBundle.message("inspection.use.compare.method.option.double")));
   }
 
   @NotNull
@@ -159,7 +160,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
   }
 
   private static CompareInfo fromTernary(PsiConditionalExpression ternary) {
-    if (!PsiType.INT.equals(ternary.getType())) return null;
+    if (!PsiTypes.intType().equals(ternary.getType())) return null;
     Map<Integer, PsiExpression> map = extractConditions(ternary);
     return fromMap(map, ternary, ternary);
   }
@@ -207,8 +208,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
 
   private static Pair<PsiExpression, PsiExpression> getOperands(PsiExpression expression, IElementType expectedToken) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(expression instanceof PsiBinaryExpression)) return null;
-    PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
+    if (!(expression instanceof PsiBinaryExpression binOp)) return null;
     PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
     PsiExpression right = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
     if (left == null || right == null) return null;
@@ -261,8 +261,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     if (primitiveType.equals(expression.getType())) {
       return expression;
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression call) {
       if (!"valueOf".equals(call.getMethodExpression().getReferenceName())) return null;
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (args.length != 1) return null;
@@ -270,13 +269,11 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       if (method == null || type.resolve() != method.getContainingClass()) return null;
       return checkPrimitive(args[0]);
     }
-    if (expression instanceof PsiTypeCastExpression) {
-      PsiTypeCastExpression cast = (PsiTypeCastExpression)expression;
+    if (expression instanceof PsiTypeCastExpression cast) {
       if (!type.equals(cast.getType())) return null;
       return checkPrimitive(cast.getOperand());
     }
-    if (expression instanceof PsiNewExpression) {
-      PsiNewExpression newExpression = (PsiNewExpression)expression;
+    if (expression instanceof PsiNewExpression newExpression) {
       if (!type.equals(newExpression.getType())) return null;
       PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null) return null;
@@ -295,8 +292,8 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
   @Contract("null, _ -> false")
   private static boolean isTypeConvertible(PsiType type, PsiElement context) {
     type = PsiPrimitiveType.getOptionallyUnboxedType(type);
-    return type != null && (PsiType.DOUBLE.equals(type) ||
-                            PsiType.FLOAT.equals(type) ||
+    return type != null && (PsiTypes.doubleType().equals(type) ||
+                            PsiTypes.floatType().equals(type) ||
                             PsiUtil.isLanguageLevel7OrHigher(context));
   }
 

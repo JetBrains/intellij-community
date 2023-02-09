@@ -14,6 +14,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
@@ -40,7 +41,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -159,33 +160,32 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
       private InspectionToolWrapper<?, ?> myUpdatedSettingsToolWrapper;
 
       @Override
-      protected @NotNull JComponent getAdditionalActionSettings(Project project) {
+      protected @NotNull JComponent getAdditionalActionSettings(@NotNull Project project) {
         final JPanel panel = new JPanel(new GridBagLayout());
-        final boolean hasOptionsPanel = toolWrapper.getTool().createOptionsPanel() != null;
-        var constraints = new GridBagConstraints(0, 0, 1, 1, 1, hasOptionsPanel ? 0 : 1,
-                                                 GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                                                 JBInsets.emptyInsets(),
-                                                 0, 0);
+        final boolean hasOptionsPanel = InspectionOptionPaneRenderer.hasSettings(toolWrapper.getTool());
+        final GridBag constraints = new GridBag()
+          .setDefaultWeightX(1)
+          .setDefaultWeightY(hasOptionsPanel ? 0 : 1)
+          .setDefaultFill(GridBagConstraints.HORIZONTAL);
 
-        panel.add(fileFilterPanel.getPanel(), constraints);
+        panel.add(fileFilterPanel.getPanel(), constraints.nextLine());
 
         if (hasOptionsPanel) {
           myUpdatedSettingsToolWrapper = copyToolWithSettings(toolWrapper);
-          final JComponent optionsPanel = myUpdatedSettingsToolWrapper.getTool().createOptionsPanel();
+          final JComponent optionsPanel = InspectionOptionPaneRenderer.createOptionsPanel(myUpdatedSettingsToolWrapper.getTool(), myDisposable, project);
           LOGGER.assertTrue(optionsPanel != null);
 
           final var separator = new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from"));
           separator.setBorder(JBUI.Borders.empty());
-          constraints.gridy++;
-          constraints.insets.top = JBUI.scale(20);
-          panel.add(separator, constraints);
+          panel.add(separator, constraints.nextLine().insetTop(20));
 
           optionsPanel.setBorder(InspectionUiUtilKt.getBordersForOptions(optionsPanel));
-          constraints.gridy++;
-          constraints.weighty = 1;
-          constraints.insets.top = 0;
-          panel.add(InspectionUiUtilKt.addScrollPaneIfNecessary(optionsPanel), constraints);
+          final var scrollPane = InspectionUiUtilKt.addScrollPaneIfNecessary(optionsPanel);
+          final var preferredSize = scrollPane.getPreferredSize();
+          scrollPane.setPreferredSize(new Dimension(preferredSize.width, Math.min(preferredSize.height, 400)));
+          panel.add(scrollPane, constraints.nextLine());
         }
+
         return panel;
       }
 

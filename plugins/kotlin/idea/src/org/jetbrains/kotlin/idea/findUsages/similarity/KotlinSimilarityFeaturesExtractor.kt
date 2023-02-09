@@ -73,6 +73,14 @@ class KotlinSimilarityFeaturesExtractor(element: PsiElement, private val context
         super.visitReferenceExpression(expression)
     }
 
+    override fun visitBlockExpression(expression: KtBlockExpression) {
+        if (expression.parent is KtContainerNodeForControlStructureBody && expression.statements.size > 1) {
+            usageSimilarityFeaturesRecorder.addAllFeatures(expression, "COMPLEX_BODY")
+        } else {
+            super.visitBlockExpression(expression)
+        }
+    }
+
     private fun fieldOrMethodReference(expression: KtReferenceExpression) =
         expression is KtNameReferenceExpression && expression.getReferencedName() !in variableNames
 

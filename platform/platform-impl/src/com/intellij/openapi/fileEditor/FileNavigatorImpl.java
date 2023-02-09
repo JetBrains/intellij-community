@@ -22,22 +22,22 @@ import java.util.List;
 
 import static com.intellij.openapi.fileEditor.OpenFileDescriptor.unfoldCurrentLine;
 
-public class FileNavigatorImpl implements FileNavigator {
+public final class FileNavigatorImpl implements FileNavigator {
   private final ThreadLocal<Boolean> myIgnoreContextEditor = new ThreadLocal<>();
 
   @Override
   public boolean canNavigate(@NotNull OpenFileDescriptor descriptor) {
-    VirtualFile file = descriptor.getFile();
-    return file.isValid();
+    return FileNavigator.super.canNavigate(descriptor);
   }
 
   @Override
   public boolean canNavigateToSource(@NotNull OpenFileDescriptor descriptor) {
     VirtualFile file = descriptor.getFile();
-    if (!file.isValid()) return false;
+    if (!file.isValid()) {
+      return false;
+    }
 
-    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(descriptor.getProject());
-    return fileEditorManager.canOpenFile(file) || file.getFileType() instanceof INativeFileType;
+    return FileEditorManagerEx.getInstanceEx(descriptor.getProject()).canOpenFile(file) || file.getFileType() instanceof INativeFileType;
   }
 
   @Override
@@ -71,7 +71,7 @@ public class FileNavigatorImpl implements FileNavigator {
     return navigateInEditor(descriptor, requestFocus);
   }
 
-  private boolean navigateInProjectView(@NotNull Project project, @NotNull VirtualFile file, boolean requestFocus) {
+  private static boolean navigateInProjectView(@NotNull Project project, @NotNull VirtualFile file, boolean requestFocus) {
     SelectInContext context = new FileSelectInContext(project, file, null);
     for (SelectInTarget target : SelectInManager.getInstance(project).getTargetList()) {
       if (context.selectIn(target, requestFocus)) {
@@ -90,18 +90,22 @@ public class FileNavigatorImpl implements FileNavigator {
     if (myIgnoreContextEditor.get() == Boolean.TRUE) return false;
     @SuppressWarnings("deprecation") DataContext ctx = DataManager.getInstance().getDataContext();
     Editor e = OpenFileDescriptor.NAVIGATE_IN_EDITOR.getData(ctx);
-    if (e == null) return false;
-    if (e.isDisposed()) {
-      Logger.getInstance(OpenFileDescriptor.class).error("Disposed editor returned for NAVIGATE_IN_EDITOR from " + ctx);
+    if (e == null) {
       return false;
     }
-    if (!Comparing.equal(FileDocumentManager.getInstance().getFile(e.getDocument()), descriptor.getFile())) return false;
+    if (e.isDisposed()) {
+      Logger.getInstance(FileNavigatorImpl.class).error("Disposed editor returned for NAVIGATE_IN_EDITOR from " + ctx);
+      return false;
+    }
+    if (!Comparing.equal(FileDocumentManager.getInstance().getFile(e.getDocument()), descriptor.getFile())) {
+      return false;
+    }
 
     OpenFileDescriptor.navigateInEditor(descriptor, e);
     return true;
   }
 
-  protected boolean navigateInAnyFileEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
+  private static boolean navigateInAnyFileEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(descriptor.getProject());
     List<FileEditor> editors = fileEditorManager.openEditor(descriptor, focusEditor);
     for (FileEditor editor : editors) {

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class ProfilerHandlerUtils {
+public final class ProfilerHandlerUtils {
   public static final Logger LOG = Logger.getInstance(ProfilerHandlerUtils.class);
   private static final NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("PerformancePlugin");
 

@@ -39,10 +39,9 @@ public class SmartPsiPointer {
   }
 
   public boolean equals(Object o) {
-    if (!(o instanceof SmartPsiPointer)) {
+    if (!(o instanceof SmartPsiPointer ref)) {
       return false;
     }
-    final SmartPsiPointer ref = (SmartPsiPointer)o;
     return ref.pointer.equals(pointer);
   }
 

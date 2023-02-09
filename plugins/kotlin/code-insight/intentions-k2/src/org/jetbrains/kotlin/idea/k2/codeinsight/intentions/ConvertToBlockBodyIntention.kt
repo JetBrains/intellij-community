@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -16,6 +18,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.Applicabilit
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.Variance
 
@@ -52,12 +55,21 @@ internal class ConvertToBlockBodyIntention :
     override fun apply(element: KtDeclarationWithBody, context: Context, project: Project, editor: Editor?) {
         val body = element.bodyExpression ?: return
 
+        val prevComments = body.comments(next = false)
+        val nextComments = body.comments(next = true)
+
         val newBody = when (element) {
             is KtNamedFunction -> {
                 if (!element.hasDeclaredReturnType() && !context.returnTypeIsUnit) {
                     element.setType(context.returnTypeString, context.returnTypeClassId)
                 }
-                generateBody(body, context, returnsValue = !context.returnTypeIsUnit && !context.returnTypeIsNothing)
+                generateBody(
+                    body,
+                    prevComments,
+                    nextComments,
+                    context,
+                    returnsValue = !context.returnTypeIsUnit && !context.returnTypeIsNothing
+                )
             }
 
             is KtPropertyAccessor -> {
@@ -66,13 +78,15 @@ internal class ConvertToBlockBodyIntention :
                     parent.setType(context.returnTypeString, context.returnTypeClassId)
                 }
 
-                generateBody(body, context, element.isGetter)
+                generateBody(body, prevComments, nextComments, context, element.isGetter)
             }
 
             else -> throw RuntimeException("Unknown declaration type: $element")
         }
 
         element.equalsToken?.delete()
+        prevComments.filterIsInstance<PsiComment>().forEach { it.delete() }
+        nextComments.forEach { it.delete() }
         val replaced = body.replace(newBody)
         if (context.reformat) element.containingKtFile.adjustLineIndent(replaced.startOffset, replaced.endOffset)
     }
@@ -99,11 +113,17 @@ private fun KtAnalysisSession.createContextForDeclaration(
     )
 }
 
-private fun generateBody(body: KtExpression, context: ConvertToBlockBodyIntention.Context, returnsValue: Boolean): KtExpression {
+private fun generateBody(
+    body: KtExpression,
+    prevComments: List<PsiElement>,
+    nextComments: List<PsiElement>,
+    context: ConvertToBlockBodyIntention.Context,
+    returnsValue: Boolean,
+): KtExpression {
     val factory = KtPsiFactory(body.project)
     if (context.bodyTypeIsUnit && body is KtNameReferenceExpression) return factory.createEmptyBody()
     val needReturn = returnsValue && (!context.bodyTypeIsUnit && !context.bodyTypeIsNothing)
-    return if (needReturn) {
+    val newBody = if (needReturn) {
         val annotatedExpr = body as? KtAnnotatedExpression
         val returnedExpr = annotatedExpr?.baseExpression ?: body
         val block = factory.createSingleStatementBlock(factory.createExpressionByPattern("return $0", returnedExpr))
@@ -116,6 +136,13 @@ private fun generateBody(body: KtExpression, context: ConvertToBlockBodyIntentio
     } else {
         factory.createSingleStatementBlock(body)
     }
+    prevComments
+        .dropWhile { it is PsiWhiteSpace }
+        .forEach { newBody.addAfter(it, newBody.lBrace) }
+    nextComments
+        .reversed()
+        .forEach { newBody.addAfter(it, newBody.firstStatement) }
+    return newBody
 }
 
 private fun KtCallableDeclaration.setType(typeString: String, classId: ClassId?) {
@@ -124,3 +151,11 @@ private fun KtCallableDeclaration.setType(typeString: String, classId: ClassId?)
         shortenReferences(addedTypeReference)
     }
 }
+
+private fun KtExpression.comments(next: Boolean): List<PsiElement> = siblings(forward = next, withItself = false)
+    .takeWhile { it is PsiWhiteSpace || it is PsiComment }
+    .takeIf { it.hasComment() }
+    .orEmpty()
+    .toList()
+
+private fun Sequence<PsiElement>.hasComment(): Boolean = any { it is PsiComment }

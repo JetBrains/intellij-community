@@ -2,8 +2,14 @@
 package training.ui.welcomeScreen
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.InteractiveCourseFactory
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.InteractiveCoursePanel
+import com.intellij.ui.HyperlinkAdapter
+import com.intellij.util.ui.HTMLEditorKitBuilder
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import training.FeaturesTrainerIcons
 import training.lang.LangManager
 import training.learn.CourseManager
@@ -11,17 +17,42 @@ import training.learn.LearnBundle
 import training.learn.OpenLessonActivities
 import training.learn.course.IftModule
 import training.ui.views.NewContentLabel
+import training.util.enableLessonsAndPromoters
 import training.util.iftPluginIsUsing
 import training.util.learningPanelWasOpenedInCurrentVersion
+import java.awt.Component
 import java.awt.event.ActionEvent
-import javax.swing.AbstractAction
-import javax.swing.Action
-import javax.swing.Icon
-import javax.swing.JComponent
+import javax.swing.*
+import javax.swing.event.HyperlinkEvent
 
 internal class IFTInteractiveCourse : InteractiveCourseFactory {
-  override fun getInteractiveCourseData(): InteractiveCourseData? =
-    if (LangManager.getInstance().getLangSupport()?.useUserProjects == false) IFTInteractiveCourseData() else null
+
+  override val isActive: Boolean get() = LangManager.getInstance().getLangSupport()?.useUserProjects == false
+
+  override fun getInteractiveCourseComponent(): JComponent = IFTInteractiveCoursePanel()
+}
+
+private class IFTInteractiveCoursePanel : InteractiveCoursePanel(IFTInteractiveCourseData(), enableLessonsAndPromoters) {
+  init {
+    if (!enableLessonsAndPromoters) {
+      add(JTextPane().apply {
+        contentType = "text/html"
+        addHyperlinkListener(object : HyperlinkAdapter() {
+          override fun hyperlinkActivated(e: HyperlinkEvent) {
+            Registry.get("ide.experimental.ui").setValue(true)
+          }
+        })
+        editorKit = HTMLEditorKitBuilder.simple()
+        text = LearnBundle.message("welcome.tab.toggle.new.ui.hint")
+        isEditable = false
+        isOpaque = false
+        highlighter = null
+        foreground = UIUtil.getLabelInfoForeground()
+        border = JBUI.Borders.empty(14, leftMargin, 0, 0)
+        alignmentX = Component.LEFT_ALIGNMENT
+      })
+    }
+  }
 }
 
 private class IFTInteractiveCourseData : InteractiveCourseData {

@@ -61,8 +61,9 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     myTypeChooser = new ComboBox<>();
     CommandLinePanel.setMinimumWidth(component(), 500);
     component().add(myTypeChooser, new GridBagConstraints());
-    myModel.reloadTestKindModel(myTypeChooser, myModuleSelector.getModule());
-    myTypeChooser.addActionListener(e -> myModel.setType(myTypeChooser.getItem()));
+    myModel.reloadTestKindModel(myTypeChooser, myModuleSelector.getModule(), () -> {
+      myTypeChooser.addActionListener(e -> myModel.setType(myTypeChooser.getItem()));
+    });
     myTypeChooser.setRenderer(SimpleListCellRenderer.create("", value -> getKindName(value)));
 
     EditorTextFieldWithBrowseButton packageField = new EditorTextFieldWithBrowseButton(project, false);

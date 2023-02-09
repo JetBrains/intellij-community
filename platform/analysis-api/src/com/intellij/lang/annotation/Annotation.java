@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +65,7 @@ public final class Annotation implements Segment {
   @Nullable
   private ProblemGroup myProblemGroup;
   private List<QuickFixInfo> myBatchFixes;
+  private PsiReference unresolvedReference;
 
   public static class QuickFixInfo {
     @NotNull
@@ -97,7 +99,7 @@ public final class Annotation implements Segment {
    * @deprecated use {@link AnnotationHolder#newAnnotation} instead
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Annotation(int startOffset,
                     int endOffset,
                     @NotNull HighlightSeverity severity,
@@ -477,5 +479,22 @@ public final class Annotation implements Segment {
            ", severity='" + mySeverity + "'" +
            ", toolTip='" + myTooltip + "'" +
            ")";
+  }
+
+  /**
+   * @deprecated use {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, AnnotationBuilder)}
+   */
+  @ApiStatus.Internal
+  @Deprecated
+  public void setUnresolvedReference(PsiReference reference) {
+    unresolvedReference = reference;
+  }
+  /**
+   * @deprecated use {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, AnnotationBuilder)}
+   */
+  @ApiStatus.Internal
+  @Deprecated
+  public PsiReference getUnresolvedReference() {
+    return unresolvedReference;
   }
 }

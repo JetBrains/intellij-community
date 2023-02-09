@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.progress;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.util.containers.hash.LinkedHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +17,8 @@ public final class ConcurrentTasksProgressManager {
   private final int myTotalWeight;
   private final AtomicLong myTotalFraction;
   private final Object myLock = new Object();
-  private final LinkedHashMap<SubTaskProgressIndicator, @NlsContexts.ProgressDetails String> myText2Stack = new LinkedHashMap<>();
+  @SuppressWarnings("SSBasedInspection")
+  private final Object2ObjectLinkedOpenHashMap<SubTaskProgressIndicator, @NlsContexts.ProgressDetails String> myText2Stack = new Object2ObjectLinkedOpenHashMap<>();
   private final AtomicInteger myRemainingTotalWeight;
 
   public ConcurrentTasksProgressManager(ProgressIndicator parent, int totalWeight) {
@@ -75,7 +76,7 @@ public final class ConcurrentTasksProgressManager {
       String prev;
       synchronized (myLock) {
         myText2Stack.remove(subTask);
-        prev = myText2Stack.getLastValue();
+        prev = myText2Stack.isEmpty() ? null : myText2Stack.get(myText2Stack.lastKey());
       }
       if (prev != null) {
         myParent.setText2(prev);

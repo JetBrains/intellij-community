@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.ASTBlock;
@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.impl.PsiImplUtil.isTypeAnnotation;
 
-/**
- * @author Denis Zhdanov
- */
 public final class JavaFormatterUtil {
   /**
    * Holds type of AST elements that are considered to be assignments.
@@ -60,12 +57,9 @@ public final class JavaFormatterUtil {
       return false;
     }
 
-    if (!(node1 instanceof PsiPolyadicExpression) || !(node2 instanceof PsiPolyadicExpression)) {
-      return false;
-    }
-    PsiPolyadicExpression expression1 = (PsiPolyadicExpression)node1;
-    PsiPolyadicExpression expression2 = (PsiPolyadicExpression)node2;
-    return expression1.getOperationTokenType() == expression2.getOperationTokenType();
+    return node1 instanceof PsiPolyadicExpression expression1 &&
+           node2 instanceof PsiPolyadicExpression expression2 &&
+           expression1.getOperationTokenType() == expression2.getOperationTokenType();
   }
 
   @NotNull

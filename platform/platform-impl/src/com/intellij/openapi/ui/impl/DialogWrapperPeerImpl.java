@@ -87,7 +87,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     Window window = null;
     if (windowManager != null) {
-      if (project == null) {
+      if (project == null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
         //noinspection deprecation
         project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
       }
@@ -104,7 +104,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       if (window == null) {
         for (ProjectFrameHelper frameHelper : windowManager.getProjectFrameHelpers()) {
           IdeFrameImpl frame = frameHelper.getFrame();
-          if (frame != null && frame.isActive()) {
+          if (frame.isActive()) {
             window = frameHelper.getFrame();
             break;
           }
@@ -198,6 +198,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     return myDialog instanceof HeadlessDialog;
   }
 
+  @Override
   public void setOnDeactivationAction(@NotNull Disposable disposable, @NotNull Runnable onDialogDeactivated) {
     WindowDeactivationManager.getInstance().addWindowDeactivationListener(getWindow(), myProject, disposable, onDialogDeactivated);
   }
@@ -385,10 +386,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   @Override
   public CompletableFuture<?> show() {
     LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
-    final CompletableFuture<Void> result = new CompletableFuture<Void>();
+    CompletableFuture<Void> result = new CompletableFuture<>();
 
-    final AnCancelAction anCancelAction = new AnCancelAction();
-    final JRootPane rootPane = getRootPane();
+    AnCancelAction anCancelAction = new AnCancelAction();
+    JRootPane rootPane = getRootPane();
     UIUtil.decorateWindowHeader(rootPane);
 
     Window window = getWindow();
@@ -459,7 +460,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     try (
-      AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RESET);
+      AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET);
       AccessToken ignore2 = ThreadContext.resetThreadContext()
     ) {
       myDialog.show();
@@ -525,7 +526,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return true;
     }
 
-    private boolean isEditingTreeOrTable(Component comp) {
+    private static boolean isEditingTreeOrTable(Component comp) {
       if (comp instanceof JTree) {
         return ((JTree)comp).isEditing();
       }
@@ -682,7 +683,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         if (initial == null) initial = new Dimension();
         if (initial.width <= 0 || initial.height <= 0) {
           maximize(initial, getSize()); // cannot be less than packed size
-          if (!SystemInfo.isLinux && Registry.is("ide.dialog.wrapper.resize.by.tables")) {
+          if (!SystemInfo.isLinux && Registry.is("ide.dialog.wrapper.resize.by.tables", false)) {
             // [kb] temporary workaround for IDEA-253643
             maximize(initial, getSizeForTableContainer(getContentPane()));
           }
@@ -992,8 +993,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   private static void setupSelectionOnPreferredComponent(final JComponent component) {
-    if (component instanceof JTextField) {
-      JTextField field = (JTextField)component;
+    if (component instanceof JTextField field) {
       String text = field.getText();
       if (text != null && field.getClientProperty(HAVE_INITIAL_SELECTION) == null) {
         field.setSelectionStart(0);
@@ -1001,19 +1001,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
     else if (component instanceof JComboBox) {
-      JComboBox combobox = (JComboBox)component;
-      combobox.getEditor().selectAll();
+      ((JComboBox<?>)component).getEditor().selectAll();
     }
   }
 
   @Override
   public void setContentPane(JComponent content) {
-    JComponent wrappedContent =
-      IdeFrameDecorator.isCustomDecorationActive() && !isHeadlessEnv()
-      ? CustomFrameDialogContent.getCustomContentHolder(getWindow(), content)
-      : content;
-
-    myDialog.setContentPane(wrappedContent);
+    myDialog.setContentPane(IdeFrameDecorator.isCustomDecorationActive() && !isHeadlessEnv()
+                                ? CustomFrameDialogContent.Companion.getCustomContentHolder(getWindow(), content, false)
+                                : content);
   }
 
   @Override

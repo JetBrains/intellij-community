@@ -18,7 +18,7 @@ package com.intellij.java.propertyBased;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.propertyBased.FilePsiMutation;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +34,6 @@ class MakeAllMethodsVoid extends FilePsiMutation {
     PsiTreeUtil.findChildrenOfType(getFile(), PsiMethod.class).stream()
       .filter(method -> method.getReturnTypeElement() != null)
       .forEach(method -> method.getReturnTypeElement().replace(JavaPsiFacade.getElementFactory(
-        getFile().getProject()).createTypeElement(PsiType.VOID)));
+        getFile().getProject()).createTypeElement(PsiTypes.voidType())));
   }
 }

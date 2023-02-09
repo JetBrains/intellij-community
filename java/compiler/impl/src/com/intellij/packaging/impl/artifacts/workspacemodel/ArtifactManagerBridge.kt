@@ -22,8 +22,8 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.xmlb.XmlSerializer
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import com.intellij.workspaceModel.ide.workspaceModel
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactId
@@ -47,10 +47,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   override fun getArtifacts(): Array<ArtifactBridge> {
     initBridges()
 
-    val workspaceModel = WorkspaceModel.getInstance(project)
-    val entityStorage = workspaceModel.entityStorage
-
-    val store = entityStorage.current
+    val store = project.workspaceModel.currentSnapshot
 
     return store
       .entities(ArtifactEntity::class.java)
@@ -63,9 +60,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   override fun findArtifact(name: String): Artifact? {
     initBridges()
 
-    val workspaceModel = WorkspaceModel.getInstance(project)
-    val entityStorage = workspaceModel.entityStorage
-    val store = entityStorage.current
+    val store = project.workspaceModel.currentSnapshot
 
     val artifactEntity = store.resolve(ArtifactId(name)) ?: return null
 
@@ -83,9 +78,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     ApplicationManager.getApplication().assertReadAccessAllowed()
     initBridges()
 
-    val workspaceModel = WorkspaceModel.getInstance(project)
-    val entityStorage = workspaceModel.entityStorage
-    val store = entityStorage.current
+    val store = project.workspaceModel.currentSnapshot
     val typeId = type.id
 
     return store
@@ -101,8 +94,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     ApplicationManager.getApplication().assertReadAccessAllowed()
     initBridges()
 
-    val entityStorage = WorkspaceModel.getInstance(project).entityStorage
-    val storage = entityStorage.current
+    val storage = project.workspaceModel.currentSnapshot
 
     return storage
       .entities(ArtifactEntity::class.java)
@@ -122,8 +114,12 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   }
 
   override fun createModifiableModel(): ModifiableArtifactModel {
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
-    return ArtifactModifiableModelBridge(project, MutableEntityStorage.from(storage), this)
+    val storage = project.workspaceModel.currentSnapshot
+    return createModifiableModel(MutableEntityStorage.from(storage))
+  }
+
+  private fun createModifiableModel(mutableEntityStorage: MutableEntityStorage): ModifiableArtifactModel {
+    return ArtifactModifiableModelBridge(project, mutableEntityStorage, this)
   }
 
   override fun getResolvingContext(): PackagingElementResolvingContext = resolvingContext
@@ -162,7 +158,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     LOG.trace { "Committing artifact manager bridge. diff: ${artifactModel.diff}" }
     updateCustomElements(artifactModel.diff)
 
-    val current = WorkspaceModel.getInstance(project).entityStorage.current
+    val current = project.workspaceModel.currentSnapshot
     val changes = artifactModel.diff.collectChanges(current)[ArtifactEntity::class.java] ?: emptyList()
 
     val removed = mutableSetOf<ArtifactBridge>()
@@ -203,7 +199,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
     (ArtifactPointerManager.getInstance(project) as ArtifactPointerManagerImpl).disposePointers(changedArtifacts)
 
-    WorkspaceModel.getInstance(project).updateProjectModel("Commit artifact manager") {
+    project.workspaceModel.updateProjectModel("Commit artifact manager") {
       it.addDiff(artifactModel.diff)
     }
 
@@ -226,7 +222,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     artifactWithDiffs.forEach { it.setActualStorage() }
     artifactWithDiffs.clear()
 
-    val entityStorage = WorkspaceModel.getInstance(project).entityStorage
+    val entityStorage = project.workspaceModel.entityStorage
     added.forEach { bridge ->
       bridge.elementsWithDiff.forEach { it.setStorage(entityStorage, project, HashSet(), PackagingElementInitializer) }
       bridge.elementsWithDiff.clear()
@@ -272,12 +268,12 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   private fun initBridges() {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertReadAccessAllowed()
-    val workspaceModel = WorkspaceModel.getInstance(project)
-    val current = workspaceModel.entityStorage.current
+    val workspaceModel = project.workspaceModel
+    val current = workspaceModel.currentSnapshot
     if (current.entitiesAmount(ArtifactEntity::class.java) != current.artifactsMap.size()) {
 
       synchronized(lock) {
-        val currentInSync = workspaceModel.entityStorage.current
+        val currentInSync = workspaceModel.currentSnapshot
         val artifactsMap = currentInSync.artifactsMap
 
         // Double check
@@ -323,7 +319,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   fun dropMappings(selector: (ArtifactEntity) -> Boolean) {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Drop artifact mappings") {
+    (project.workspaceModel as WorkspaceModelImpl).updateProjectModelSilent("Drop artifact mappings") {
       val map = it.mutableArtifactsMap
       it.entities(ArtifactEntity::class.java).filter(selector).forEach { artifact ->
         map.removeMapping(artifact)

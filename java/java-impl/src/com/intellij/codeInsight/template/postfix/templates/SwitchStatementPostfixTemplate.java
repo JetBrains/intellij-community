@@ -38,7 +38,7 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
     final PsiType type = getType((PsiExpression)expression);
 
     if (type == null) return false;
-    if (PsiType.INT.isAssignableFrom(type)) return true;
+    if (PsiTypes.intType().isAssignableFrom(type)) return true;
     if (type instanceof PsiClassType) {
       if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) return true;
 

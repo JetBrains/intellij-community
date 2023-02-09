@@ -10,10 +10,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.psi.impl.PsiManagerImpl
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.ArrayUtil
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
@@ -87,7 +87,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         def e = new Exception()
         for (StackTraceElement element : e.stackTrace) {
-          if (element.toString().contains(DumbServiceGuiTaskQueue.class.simpleName)) {
+          if (element.toString().contains(DumbServiceGuiExecutor.class.simpleName)) {
             semaphore.up()
             return
           }
@@ -115,7 +115,8 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     dumbService.queueTask(new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
-        assert !ApplicationManager.application.dispatchThread
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
+
         edt {
           dumbService.runWhenSmart {
             invocations++
@@ -163,11 +164,11 @@ class DumbServiceImplTest extends BasePlatformTestCase {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         started.set(true)
-        assert !ApplicationManager.application.dispatchThread
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
         try {
           ProgressIndicatorUtils.withTimeout(20_000) {
             def index = FileBasedIndex.getInstance() as FileBasedIndexImpl
-            new IndexUpdateRunner(index, ConcurrencyUtil.newSameThreadExecutorService(), 1)
+            new IndexUpdateRunner(index, 1)
               .indexFiles(project, Collections.singletonList(new IndexUpdateRunner.FileSet(project, "child", [child])),
                           indicator, new ProjectIndexingHistoryImpl(getProject(), "Testing", ScanningType.PARTIAL))
           }
@@ -205,6 +206,42 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     }
     Arrays.sort(delays)
     int avg = ArrayUtil.averageAmongMedians(delays, 3)
-    assert avg == 0 : "Seems there's is a significant delay between becoming smart and waitForSmartMode() return. Delays in ms:\n"+Arrays.toString(delays)+"\n"
+    assert avg == 0: "Seems there's is a significant delay between becoming smart and waitForSmartMode() return. Delays in ms:\n" +
+                     Arrays.toString(delays) + "\n"
+  }
+
+  void "test cancelAllTasksAndWait cancels all the tasks submitted via queueTask from other threads with no race"() {
+    DumbServiceImpl dumbService = getDumbService()
+    AtomicBoolean queuedTaskInvoked = new AtomicBoolean(false)
+    AtomicBoolean dumbTaskFinished = new AtomicBoolean(false)
+
+    Thread t1 = new Thread({
+                             dumbService.queueTask(
+                               new DumbModeTask() {
+                                 @Override
+                                 void performInDumbMode(@NotNull ProgressIndicator indicator) {
+                                   queuedTaskInvoked.set(true)
+                                 }
+
+                                 @Override
+                                 void dispose() {
+                                   dumbTaskFinished.set(true)
+                                 }
+                               }
+                             )
+                           }, "Test thread 1")
+
+    // we are on Write thread without write action
+    t1.start()
+    PlatformTestUtil.waitWithEventsDispatching("dumbService.queueTask didn't complete in 5 seconds", { !t1.isAlive() }, 5)
+    assertFalse("Thread should have completed", t1.isAlive())
+
+    // this should also cancel the task submitted by t1. There is no race: t1 definitely submitted this task and the thread itself finished.
+    dumbService.cancelAllTasksAndWait()
+
+    PlatformTestUtil.waitWithEventsDispatching("DumbModeTask didn't complete in 5 seconds", dumbTaskFinished::get, 5)
+
+    assertTrue(dumbTaskFinished.get())
+    assertFalse(queuedTaskInvoked.get())
   }
 }

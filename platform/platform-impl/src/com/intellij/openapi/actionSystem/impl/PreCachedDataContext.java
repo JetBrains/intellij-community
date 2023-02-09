@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
@@ -96,7 +97,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       else {
         DataKey<?>[] keys = DataKey.allKeys();
         myDataKeysCount = updateDataKeyIndices(keys);
-        try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FORCE_ASSERT)) {
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.FORCE_ASSERT)) {
           myCachedData = cacheComponentsData(components, initial, myDataManager, keys);
         }
         ourInstances.add(this);
@@ -240,17 +241,19 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
 
   private static void reportValueProvidedByRulesUsage(@NotNull String dataId, boolean error) {
     if (!Registry.is("actionSystem.update.actions.warn.dataRules.on.edt")) return;
-    if (EDT.isCurrentThreadEdt() && SlowOperations.isInsideActivity(SlowOperations.ACTION_UPDATE) &&
+    if (EDT.isCurrentThreadEdt() && SlowOperations.isInSection(SlowOperations.ACTION_UPDATE) &&
         ActionUpdater.currentInEDTOperationName() != null && !SlowOperations.isAlwaysAllowed()) {
       String message = "'" + dataId + "' is requested on EDT by " + ActionUpdater.currentInEDTOperationName() + ". See ActionUpdateThread javadoc.";
-      //noinspection StringEquality
-      if (message != ourEDTWarnsInterner.intern(message)) return;
-      if (error) {
-        LOG.error(message);
-      }
-      else {
-        LOG.warn(message);
-      }
+      if (!Strings.areSameInstance(message, ourEDTWarnsInterner.intern(message))) return;
+      Throwable th = error ? new Throwable(message) : null;
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
+        if (error) {
+          LOG.error(th);
+        }
+        else {
+          LOG.warn(message);
+        }
+      });
     }
   }
 

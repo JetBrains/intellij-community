@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.ide.ui.AntialiasingType;
@@ -7,8 +7,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
@@ -16,6 +15,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.JBValue.JBValueGroup;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.UpdateScaleHelper;
 import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,21 +37,22 @@ public class LabelPainter {
   public static final JBValue LEFT_PADDING = JBVG.value(4);
   public static final JBValue COMPACT_MIDDLE_PADDING = JBVG.value(2);
   public static final JBValue MIDDLE_PADDING = JBVG.value(12);
+  public static final JBValue ICON_TEXT_PADDING = JBVG.value(1);
   public static final JBValue LABEL_ARC = JBVG.value(6);
   private static final int MAX_LENGTH = 22;
   private static final String TWO_DOTS = "..";
   private static final String SEPARATOR = "/";
-  private static final JBColor TEXT_COLOR = CurrentBranchComponent.TEXT_COLOR;
 
-  @NotNull private final JComponent myComponent;
-  @NotNull private final LabelIconCache myIconCache;
+  private final @NotNull JComponent myComponent;
+  private final @NotNull LabelIconCache myIconCache;
 
-  @NotNull protected List<Pair<String, LabelIcon>> myLabels = new ArrayList<>();
+  protected @NotNull List<Pair<String, LabelIcon>> myLabels = new ArrayList<>();
   private int myHeight = JBUIScale.scale(22);
   private int myWidth = 0;
-  @NotNull protected Color myBackground = UIUtil.getTableBackground();
-  @Nullable private Color myGreyBackground = null;
-  @NotNull private Color myForeground = UIUtil.getTableForeground();
+  protected @NotNull Color myBackground = UIUtil.getTableBackground();
+  private @Nullable Color myGreyBackground = null;
+  private @NotNull Color myForeground = UIUtil.getTableForeground();
+  private UpdateScaleHelper myUpdateScaleHelper = new UpdateScaleHelper();
 
   private boolean myCompact;
   private boolean myLeftAligned;
@@ -62,18 +63,22 @@ public class LabelPainter {
     myIconCache = iconCache;
   }
 
+  public void updateHeight() {
+    FontMetrics metrics = myComponent.getFontMetrics(getReferenceFont());
+    myHeight = metrics.getHeight() + TOP_TEXT_PADDING.get() + BOTTOM_TEXT_PADDING.get();
+  }
+
   public void customizePainter(@NotNull Color background,
                                @NotNull Color foreground,
                                boolean isSelected,
                                int availableWidth,
                                @NotNull List<? extends RefGroup> refGroups) {
     myBackground = background;
-    myForeground = isSelected ? foreground : TEXT_COLOR;
+    myForeground = foreground;
 
+    updateHeight();
     FontMetrics metrics = myComponent.getFontMetrics(getReferenceFont());
-    myHeight = metrics.getHeight() + TOP_TEXT_PADDING.get() + BOTTOM_TEXT_PADDING.get();
-
-    myGreyBackground = calculateGreyBackground(refGroups, background, isSelected, myCompact);
+    myGreyBackground = ExperimentalUI.isNewUI() ? null : calculateGreyBackground(refGroups, background, isSelected, myCompact);
     Pair<List<Pair<String, LabelIcon>>, Integer> presentation =
       calculatePresentation(refGroups, metrics, myGreyBackground != null ? myGreyBackground : myBackground,
                             availableWidth, myCompact);
@@ -82,12 +87,11 @@ public class LabelPainter {
     myWidth = presentation.second;
   }
 
-  @NotNull
-  private Pair<List<Pair<String, LabelIcon>>, Integer> calculatePresentation(@NotNull List<? extends RefGroup> refGroups,
-                                                                             @NotNull FontMetrics fontMetrics,
-                                                                             @NotNull Color background,
-                                                                             int availableWidth,
-                                                                             boolean compact) {
+  private @NotNull Pair<List<Pair<String, LabelIcon>>, Integer> calculatePresentation(@NotNull List<? extends RefGroup> refGroups,
+                                                                                      @NotNull FontMetrics fontMetrics,
+                                                                                      @NotNull Color background,
+                                                                                      int availableWidth,
+                                                                                      boolean compact) {
     int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
 
     List<Pair<String, LabelIcon>> labels = new ArrayList<>();
@@ -98,11 +102,10 @@ public class LabelPainter {
   }
 
 
-  @NotNull
-  private Pair<List<Pair<String, LabelIcon>>, Integer> calculateCompactPresentation(@NotNull List<? extends RefGroup> refGroups,
-                                                                                    @NotNull FontMetrics fontMetrics,
-                                                                                    @NotNull Color background,
-                                                                                    int availableWidth) {
+  private @NotNull Pair<List<Pair<String, LabelIcon>>, Integer> calculateCompactPresentation(@NotNull List<? extends RefGroup> refGroups,
+                                                                                             @NotNull FontMetrics fontMetrics,
+                                                                                             @NotNull Color background,
+                                                                                             int availableWidth) {
     int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
 
     List<Pair<String, LabelIcon>> labels = new ArrayList<>();
@@ -115,6 +118,7 @@ public class LabelPainter {
 
       String text = shortenRefName(group.getName(), fontMetrics, availableWidth - newWidth);
       newWidth += fontMetrics.stringWidth(text);
+      newWidth += getIconTextPadding();
 
       labels.add(Pair.create(text, labelIcon));
       width = newWidth;
@@ -123,11 +127,10 @@ public class LabelPainter {
     return Pair.create(labels, width);
   }
 
-  @NotNull
-  private Pair<List<Pair<String, LabelIcon>>, Integer> calculateLongPresentation(@NotNull List<? extends RefGroup> refGroups,
-                                                                                 @NotNull FontMetrics fontMetrics,
-                                                                                 @NotNull Color background,
-                                                                                 int availableWidth) {
+  private @NotNull Pair<List<Pair<String, LabelIcon>>, Integer> calculateLongPresentation(@NotNull List<? extends RefGroup> refGroups,
+                                                                                          @NotNull FontMetrics fontMetrics,
+                                                                                          @NotNull Color background,
+                                                                                          int availableWidth) {
     int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
 
     List<Pair<String, LabelIcon>> labels = new ArrayList<>();
@@ -149,6 +152,7 @@ public class LabelPainter {
 
       String text = getGroupText(group, fontMetrics, availableWidth - newWidth - doNotFitWidth);
       newWidth += fontMetrics.stringWidth(text);
+      newWidth += getIconTextPadding();
 
       if (availableWidth - newWidth - doNotFitWidth < 0) {
         LabelIcon lastIcon = getIcon(height, background, getColors(refGroups.subList(i, refGroups.size())));
@@ -166,13 +170,11 @@ public class LabelPainter {
     return Pair.create(labels, width);
   }
 
-  @NotNull
-  private LabelIcon getIcon(int height, @NotNull Color background, @NotNull List<? extends Color> colors) {
+  private @NotNull LabelIcon getIcon(int height, @NotNull Color background, @NotNull List<? extends Color> colors) {
     return myIconCache.getIcon(myComponent, height, background, colors);
   }
 
-  @NotNull
-  private static List<Color> getColors(@NotNull Collection<? extends RefGroup> groups) {
+  private static @NotNull List<Color> getColors(@NotNull Collection<? extends RefGroup> groups) {
     LinkedHashMap<Color, Integer> usedColors = new LinkedHashMap<>();
 
     for (RefGroup group : groups) {
@@ -195,8 +197,7 @@ public class LabelPainter {
     return result;
   }
 
-  @NotNull
-  private static String getGroupText(@NotNull RefGroup group, @NotNull FontMetrics fontMetrics, int availableWidth) {
+  private static @NotNull String getGroupText(@NotNull RefGroup group, @NotNull FontMetrics fontMetrics, int availableWidth) {
     if (!group.isExpanded()) {
       return shortenRefName(group.getName(), fontMetrics, availableWidth);
     }
@@ -224,11 +225,10 @@ public class LabelPainter {
     return text.toString();
   }
 
-  @Nullable
-  private static Color calculateGreyBackground(@NotNull List<? extends RefGroup> refGroups,
-                                               @NotNull Color background,
-                                               boolean isSelected,
-                                               boolean isCompact) {
+  private static @Nullable Color calculateGreyBackground(@NotNull List<? extends RefGroup> refGroups,
+                                                         @NotNull Color background,
+                                                         boolean isSelected,
+                                                         boolean isCompact) {
     if (isSelected) return null;
     if (!isCompact) return getBranchPresentationBackground(background);
 
@@ -247,8 +247,7 @@ public class LabelPainter {
     return null;
   }
 
-  @NotNull
-  private static String shortenRefName(@NotNull @NlsSafe String refName, @NotNull FontMetrics fontMetrics, int availableWidth) {
+  private static @NotNull String shortenRefName(@NotNull @NlsSafe String refName, @NotNull FontMetrics fontMetrics, int availableWidth) {
     if (fontMetrics.stringWidth(refName) > availableWidth && refName.length() > MAX_LENGTH) {
       int separatorIndex = refName.indexOf(SEPARATOR);
       if (separatorIndex > TWO_DOTS.length()) {
@@ -301,13 +300,17 @@ public class LabelPainter {
 
       icon.paintIcon(null, g2, x, y + (height - icon.getIconHeight()) / 2);
       x += icon.getIconWidth();
-
+      x += getIconTextPadding();
       g2.setColor(myForeground);
       g2.drawString(text, x, y + baseLine);
       x += fontMetrics.stringWidth(text) + (myCompact ? COMPACT_MIDDLE_PADDING.get() : MIDDLE_PADDING.get());
     }
 
     config.restore();
+  }
+
+  private static int getIconTextPadding() {
+    return ExperimentalUI.isNewUI() ? ICON_TEXT_PADDING.get() : 0;
   }
 
   private Object getTextAntiAliasingValue() {
@@ -322,6 +325,7 @@ public class LabelPainter {
 
   public Dimension getSize() {
     if (myLabels.isEmpty()) return new Dimension();
+    myUpdateScaleHelper.saveScaleAndRunIfChanged(this::updateHeight);
     return new Dimension(myWidth, myHeight);
   }
 

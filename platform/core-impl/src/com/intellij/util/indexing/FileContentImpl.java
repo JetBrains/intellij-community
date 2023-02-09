@@ -5,13 +5,13 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.TreeBackedLighterAST;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullComputable;
@@ -73,9 +73,6 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
 
   private PsiFile createFileFromText(@NotNull CharSequence text) {
     Project project = getProject();
-    if (project == null) {
-      project = DefaultProjectFactory.getInstance().getDefaultProject();
-    }
     FileType fileType = getFileTypeWithoutSubstitution(this);
     if (!(fileType instanceof LanguageFileType)) {
       throw new AssertionError("PSI can be created only for a file with LanguageFileType but actual is " + fileType.getClass() + "." +
@@ -192,7 +189,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
         return content;
       }
       if (myContentAsText == null) {
-        myContentAsText = LoadTextUtil.getTextByBinaryPresentation(getContent(), myFile);
+        myContentAsText = LoadTextUtil.getTextByBinaryPresentation(getContent(), myFile, false, false);
       }
       return myContentAsText;
     } finally {
@@ -228,23 +225,30 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
         if (psiDocumentManager.isUncommited(document)) {
           PsiFile existingPsi = psiDocumentManager.getPsiFile(document);
           if (existingPsi != null) {
-            return existingPsi;
+            return checkPsiProjectConsistency(existingPsi);
           }
         }
       }
     }
     PsiFile explicitPsi = getUserData(IndexingDataKeys.PSI_FILE);
     if (explicitPsi != null) {
-      return explicitPsi;
+      return checkPsiProjectConsistency(explicitPsi);
     }
     PsiFile cachedPsi = getUserData(CACHED_PSI);
     if (cachedPsi != null) {
-      return cachedPsi;
+      return checkPsiProjectConsistency(cachedPsi);
     }
     PsiFile createdPsi = createFileFromText(getContentAsText());
     createdPsi.putUserData(IndexingDataKeys.VIRTUAL_FILE, getFile());
     putUserData(CACHED_PSI, createdPsi);
-    return createdPsi;
+    return checkPsiProjectConsistency(createdPsi);
+  }
+
+  private @NotNull PsiFile checkPsiProjectConsistency(@NotNull PsiFile file) {
+    if (!file.getProject().equals(getProject())) {
+      Logger.getInstance(FileContentImpl.class).error("psi file's project is not equal to file content's project");
+    }
+    return file;
   }
 
   @ApiStatus.Internal

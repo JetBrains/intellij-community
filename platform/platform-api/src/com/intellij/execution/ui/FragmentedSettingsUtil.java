@@ -7,7 +7,7 @@ import com.intellij.ui.components.TextComponentEmptyText;
 
 import java.util.function.Predicate;
 
-public class FragmentedSettingsUtil {
+public final class FragmentedSettingsUtil {
   public static void setupPlaceholderVisibility(JBTextField textField) {
     textField.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, (Predicate<JBTextField>)f -> StringUtil.isEmpty(f.getText()));
   }

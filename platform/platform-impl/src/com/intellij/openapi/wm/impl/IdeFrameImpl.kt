@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.LoadingState
@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
 import com.intellij.ui.BalloonLayout
+import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
@@ -19,7 +20,6 @@ import java.awt.Graphics
 import java.awt.Insets
 import java.awt.Rectangle
 import java.awt.Window
-import java.util.*
 import javax.accessibility.AccessibleContext
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -54,20 +54,14 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
 
   interface FrameDecorator {
     val isInFullScreen: Boolean
-    fun frameInit() {}
-    fun frameShow() {}
     fun appClosing() {}
   }
 
-  override fun addNotify() {
-    super.addNotify()
-    frameHelper?.frameDecorator?.frameInit()
-  }
-
-  override fun createRootPane(): JRootPane? = null
-
   internal fun doSetRootPane(rootPane: JRootPane?) {
     super.setRootPane(rootPane)
+    if (rootPane != null && isVisible && SystemInfoRt.isMac) {
+      MacUtil.updateRootPane(this, rootPane)
+    }
   }
 
   // NB!: the root pane must be set before decorator,
@@ -102,10 +96,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   override fun show() {
     @Suppress("DEPRECATION")
     super.show()
-    SwingUtilities.invokeLater {
-      focusableWindowState = true
-      frameHelper?.frameDecorator?.frameShow()
-    }
+    SwingUtilities.invokeLater { focusableWindowState = true }
   }
 
   override fun getInsets(): Insets {
@@ -125,7 +116,11 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   }
 
   fun doDispose() {
-    EdtInvocationManager.invokeLaterIfNeeded { super.dispose() }
+    EdtInvocationManager.invokeLaterIfNeeded {
+      // must be called in addition to the `dispose`, otherwise not removed from `Window.allWindows` list.
+      isVisible = false
+      super.dispose()
+    }
   }
 
   private inner class AccessibleIdeFrameImpl : AccessibleJFrame() {

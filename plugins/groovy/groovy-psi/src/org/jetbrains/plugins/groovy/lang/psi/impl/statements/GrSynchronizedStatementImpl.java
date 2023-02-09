@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
-/**
- * @author ilyas
- */
 public class GrSynchronizedStatementImpl extends GroovyPsiElementImpl implements GrSynchronizedStatement {
 
   public GrSynchronizedStatementImpl(@NotNull ASTNode node) {

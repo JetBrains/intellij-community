@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add.target
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.ui.dsl.builder.Panel
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Allows to extend the target configuration with additional synchronization options.
@@ -10,6 +11,7 @@ import com.intellij.ui.dsl.builder.Panel
  * The class is stateful.
  */
 interface ProjectSync {
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use extendDialogPanelWithOptionalFields(Panel, TargetEnvironmentConfiguration)")
   fun extendDialogPanelWithOptionalFields(panel: Panel): Unit = throw UnsupportedOperationException()
   fun extendDialogPanelWithOptionalFields(panel: Panel, targetEnvConf: TargetEnvironmentConfiguration): Unit =

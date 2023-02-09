@@ -190,8 +190,7 @@ public final class DfaBinOpValue extends DfaValue {
           return doCreate((DfaVariableValue)left, right, resultType, LongRangeBinOp.PLUS);
         }
       }
-      if (left instanceof DfaBinOpValue) {
-        DfaBinOpValue sumValue = (DfaBinOpValue)left;
+      if (left instanceof DfaBinOpValue sumValue) {
         if (sumValue.getOperation() != LongRangeBinOp.PLUS && sumValue.getOperation() != LongRangeBinOp.MINUS) return null;
         if (rightConst != null) {
           if (sumValue.getRight() instanceof DfaTypeValue) {
@@ -232,7 +231,7 @@ public final class DfaBinOpValue extends DfaValue {
                                               @NotNull LongRangeSet divisorRange) {
       if (divisorRange.min() > 0) {
         // a % b where 0 <= a < b
-        if (dividendRange.min() > -divisorRange.max() &&
+        if (dividendRange.min() > -divisorRange.max() && dividendRange.max() >= 0 && 
             (dividendRange.max() < divisorRange.min() || state.getRelation(dividend, divisor) == RelationType.LT)) {
           return true;
         }

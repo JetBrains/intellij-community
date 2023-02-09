@@ -4,11 +4,14 @@ package com.intellij.refactoring.typeMigration.intentions;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.AllowedApiFilterExtension;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -22,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionAction implements LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(ConvertFieldToThreadLocalIntention.class);
@@ -47,7 +51,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
     if (psiField.getTypeElement() == null) return false;
     final PsiType fieldType = psiField.getType();
     final PsiClass fieldTypeClass = PsiUtil.resolveClassInType(fieldType);
-    if (fieldType instanceof PsiPrimitiveType && !PsiType.VOID.equals(fieldType) || fieldType instanceof PsiArrayType) return true;
+    if (fieldType instanceof PsiPrimitiveType && !PsiTypes.voidType().equals(fieldType) || fieldType instanceof PsiArrayType) return true;
     return fieldTypeClass != null && !Comparing.strEqual(fieldTypeClass.getQualifiedName(), ThreadLocal.class.getName())
            && AllowedApiFilterExtension.isClassAllowed(ThreadLocal.class.getName(), element);
   }
@@ -72,6 +76,23 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    final PsiField psiField = PsiTreeUtil.getParentOfType(getElement(editor, file), PsiField.class);
+    if (psiField == null) return IntentionPreviewInfo.EMPTY;
+    PsiType type = psiField.getType();
+    if (type == PsiTypes.nullType()) return IntentionPreviewInfo.EMPTY;
+    String fieldName = psiField.getName();
+    String presentableText = type.getPresentableText();
+    String genericArg = presentableText;
+    if (type instanceof PsiPrimitiveType) {
+      genericArg = StringUtil.getShortName(Objects.requireNonNull(((PsiPrimitiveType)type).getBoxedTypeName()));
+    }
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, null,
+                                               presentableText + " " + fieldName,
+                                               "ThreadLocal<" + genericArg + "> " + fieldName + " = ThreadLocal.withInitial(...)");
   }
 
   @Nullable

@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.HelpID;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.PositionManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -37,7 +37,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Base class for java line-connected exceptions (line, method, field)
+ * Base class for java line-connected breakpoints (line, method, field)
+ *
  * @author egor
  */
 public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineBreakpointProperties> {
@@ -189,7 +190,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     @Override
     public String getText() {
       return myElement != null
-             ? StringUtil.shortenTextWithEllipsis(myElement.getText(), 100, 0)
+             ? StringUtil.shortenTextWithEllipsis(ReadAction.compute(() -> myElement.getText()), 100, 0)
              : JavaDebuggerBundle.message("breakpoint.variant.text.line");
     }
 
@@ -298,7 +299,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     return canPutAtElement(file, line, project, (element, document) -> {
       if (element instanceof PsiField) {
         PsiExpression initializer = ((PsiField)element).getInitializer();
-        if (initializer != null && !PsiType.NULL.equals(initializer.getType())) {
+        if (initializer != null && !PsiTypes.nullType().equals(initializer.getType())) {
           if (DumbService.isDumb(project)) {
             return true;
           }

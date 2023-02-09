@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.core.CoreBundle;
@@ -484,6 +484,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   protected static byte @NotNull [] loadFileContent(@NotNull File ioFile, int length) throws IOException {
+    if (0 == length) return new byte[0];
     try (InputStream stream = new FileInputStream(ioFile)) {
       // io_util.c#readBytes allocates custom native stack buffer for io operation with malloc if io request > 8K
       // so let's do buffered requests with buffer size 8192 that will use stack allocated buffer
@@ -687,7 +688,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @NotNull String getCanonicallyCasedName(@NotNull VirtualFile file) {
-    if (file.getParent().isCaseSensitive()) {
+    var parent = file.getParent();
+    if (parent == null || parent.isCaseSensitive()) {
       return super.getCanonicallyCasedName(file);
     }
 

@@ -749,17 +749,7 @@ public class WhiteSpace {
     return "WhiteSpace(" + myStart + "-" + myEnd + " spaces=" + mySpaces + " LFs=" + getLineFeeds() + ")";
   }
 
-  private static class WhiteSpaceInfo {
-
-    public final int spaces;
-    public final int indentSpaces;
-    public final int lineFeeds;
-
-    WhiteSpaceInfo(int lineFeeds, int indentSpaces, int spaces) {
-      this.lineFeeds = lineFeeds;
-      this.indentSpaces = indentSpaces;
-      this.spaces = spaces;
-    }
+  private record WhiteSpaceInfo(int lineFeeds, int indentSpaces, int spaces) {
   }
 }
 

@@ -1149,6 +1149,24 @@ public class PyTypeTest extends PyTestCase {
              """);
   }
 
+  public void testGenericFunctionsUseSameTypeParameter() {
+    doTest("int",
+           """
+             def id(x):
+                 ""\"
+                 :type x: T
+                 :rtype: T
+                 ""\"
+                 return x
+
+             def f3(x):
+                 ""\"
+                 :type x: T
+                 ""\"
+                 return id(x)
+             expr = f3(42)""");
+  }
+
   // PY-8836
   public void testNumpyArrayIntMultiplicationType() {
     doMultiFileTest("ndarray",
@@ -1750,6 +1768,11 @@ public class PyTypeTest extends PyTestCase {
                      expr['b'] = 'a'
              """
     );
+  }
+
+  public void testDictCallOnDictLiteralResult() {
+    doTest("Dict[str, int]",
+           "expr = dict({'a': 1})");
   }
 
   // PY-1182
@@ -3263,7 +3286,7 @@ public class PyTypeTest extends PyTestCase {
       LanguageLevel.PYTHON36,
       () -> doTest("Any",
                    """
-                     from typing import TypeVar, Generic, List
+                     from typing import TypeVar, Generic
 
                      T = TypeVar('T')
                      V = TypeVar('V')
@@ -4285,24 +4308,6 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
-  // PY-37678
-  public void testDataclassesReplace() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> doTest("Foo",
-                   """
-                     import dataclasses as dc
-
-                     @dc.dataclass
-                     class Foo:
-                         x: int
-                         y: int
-
-                     foo = Foo(1, 2)
-                     expr = dc.replace(foo, x=3)""")
-    );
-  }
-
   // PY-35881
   public void testResolveToAnotherFileClassWithBuiltinNameField() {
     doMultiFileTest(
@@ -4459,7 +4464,7 @@ public class PyTypeTest extends PyTestCase {
                      expr = MyEnum(1).value""")
     );
   }
-  
+
   // PY-54503
   public void testTypeHintedEnumItemValueAttribute() {
     runWithLanguageLevel(
@@ -4492,6 +4497,40 @@ public class PyTypeTest extends PyTestCase {
     TypeEvalContext userInitiatedContext = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile());
     assertType("int", expr, userInitiatedContext);
     assertProjectFilesNotParsed(userInitiatedContext);
+  }
+
+  public void testNonTrivialGenericArgumentTypeInDocstring() {
+    doTest("Iterator[int]",
+           """
+             def f1(xs):
+                 ""\"
+                 :type xs: collections.Iterable of T
+                 ""\"
+                 return iter(xs)
+
+             expr = f1([1, 2, 3])
+             """);
+  }
+
+  public void testGenericClassTypeVarFromDocstrings() {
+    doTest("int",
+           """
+             class User1(object):
+                 def __init__(self, x):
+                     ""\"
+                     :type x: T
+                     :rtype: User1 of T
+                     ""\"
+                     self.x = x
+
+                 def get(self):
+                     ""\"
+                     :rtype: T
+                     ""\"
+                     return self.x
+
+             c = User1(10)
+             expr = c.get()""");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

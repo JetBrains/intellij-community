@@ -22,12 +22,9 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.precomputeExtensionModel
 import com.intellij.util.graph.*
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridgeImpl
@@ -81,14 +78,12 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
   val entityStore = WorkspaceModel.getInstance(project).entityStorage
 
-  suspend fun loadModules(entities: Sequence<ModuleEntity>, targetBuilder: MutableEntityStorage?, initializeFacets: Boolean) {
+  suspend fun loadModules(loadedEntities: List<ModuleEntity>, unloadedEntities: List<ModuleEntity>, targetBuilder: MutableEntityStorage?, initializeFacets: Boolean) {
     val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
     val corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID }
     val result = coroutineScope {
       val precomputedExtensionModel = precomputeExtensionModel()
 
-      val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames
-      val (unloadedEntities, loadedEntities) = entities.partition { it.name in unloadedModuleNames }
       LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
 
       val result = loadedEntities.map { moduleEntity ->
@@ -154,9 +149,12 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     }
   }
 
-  override fun unloadNewlyAddedModulesIfPossible(storage: EntityStorage) {
-    val currentModuleNames = storage.entities(ModuleEntity::class.java).mapTo(HashSet()) { it.name }
-    AutomaticModuleUnloader.getInstance(project).processNewModules(currentModuleNames, storage)
+  override fun unloadNewlyAddedModulesIfPossible(builder: MutableEntityStorage,
+                                                 unloadedEntityBuilder: MutableEntityStorage) {
+    val currentModuleNames = HashSet<String>()
+    builder.entities(ModuleEntity::class.java).mapTo(currentModuleNames) { it.name }
+    unloadedEntityBuilder.entities(ModuleEntity::class.java).mapTo(currentModuleNames) { it.name }
+    AutomaticModuleUnloader.getInstance(project).processNewModules(currentModuleNames, builder, unloadedEntityBuilder)
   }
 
   override fun getModifiableModel(): ModifiableModuleModel {
@@ -250,15 +248,13 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     UnloadedModulesListStorage.getInstance(project).setUnloadedModuleNames(unloadedModuleNames)
 
     val unloadedModuleNamesSet = unloadedModuleNames.toHashSet()
-    val moduleMap = entityStore.current.moduleMap
-    val modulesToUnload = entityStore.current.entities(ModuleEntity::class.java)
+    val mainStorage = entityStore.current
+    val moduleEntitiesToUnload = mainStorage.entities(ModuleEntity::class.java)
       .filter { it.name in unloadedModuleNamesSet }
-      .mapNotNull { moduleEntity ->
-        val module = moduleMap.getDataByEntity(moduleEntity)
-        module?.let { Pair(moduleEntity, module) }
-      }.toList()
-    val moduleEntitiesToLoad = entityStore.current.entities(ModuleEntity::class.java)
-      .filter { moduleMap.getDataByEntity(it) == null && it.name !in unloadedModuleNamesSet }
+      .toList()
+    val unloadedEntityStorage = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities
+    val moduleEntitiesToLoad = unloadedEntityStorage.entities(ModuleEntity::class.java)
+      .filter { it.name !in unloadedModuleNamesSet }
       .toList()
 
     if (unloadedModuleNames.isNotEmpty()) {
@@ -273,7 +269,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     unloadedModules.keys.removeAll { it !in unloadedModuleNamesSet }
 
     // we need to save module configurations before unloading, otherwise their settings will be lost
-    if (modulesToUnload.isNotEmpty()) {
+    if (moduleEntitiesToUnload.isNotEmpty()) {
       blockingContext {
         project.save()
       }
@@ -282,42 +278,28 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     withContext(Dispatchers.EDT) {
       ApplicationManager.getApplication().runWriteAction {
         ProjectRootManagerEx.getInstanceEx(project).withRootsChange(RootsChangeRescanningInfo.NO_RESCAN_NEEDED).use {
-          val workspaceFileIndex = if (WorkspaceFileIndexEx.IS_ENABLED) WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx else null
-          workspaceFileIndex?.unloadModules(modulesToUnload.map { it.first })
-          for ((moduleEntity, module) in modulesToUnload) {
-            fireBeforeModuleRemoved(module)
-
-            val description = LoadedModuleDescriptionImpl(module)
-            val modulePath = getModulePath(module, entityStore)
-            val pointerManager = VirtualFilePointerManager.getInstance()
-            val contentRoots = ModuleRootManager.getInstance(
-              module).contentRootUrls.map { url ->
-              pointerManager.create(url, this@ModuleManagerBridgeImpl, null)
-            }
-            val unloadedModuleDescription = UnloadedModuleDescriptionImpl(
-              modulePath, description.dependencyModuleNames, contentRoots)
-            unloadedModules[module.name] = unloadedModuleDescription
-            (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Remove mapping of the unloaded module") {
-              it.mutableModuleMap.removeMapping(moduleEntity)
-            }
-            fireEventAndDisposeModule(module)
+          WorkspaceModel.getInstance(project).updateProjectModel("Update unloaded modules") { builder ->
+            addAndRemoveModules(builder, moduleEntitiesToLoad, moduleEntitiesToUnload, unloadedEntityStorage)
           }
-
-          // Remove Facet bridges to recreate them. String constant is taken from
-          // com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.FACET_BRIDGE_MAPPING_ID
-          (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Remove facet mapping of the unloaded module") { builder ->
-            // TODO:: Fix fo external entities associated with facets
-            moduleEntitiesToLoad.flatMap { it.facets }.forEach {
-              builder.getMutableExternalMapping<Any>(
-                "intellij.facets.bridge").removeMapping(it)
-            }
-          }
-          // todo why we load modules in a write action
-          runBlocking {
-            loadModules(moduleEntitiesToLoad.asSequence(), null, true)
-            workspaceFileIndex?.loadModules(moduleEntitiesToLoad)
+          WorkspaceModel.getInstance(project).updateUnloadedEntities("Update unloaded modules") { builder ->
+            addAndRemoveModules(builder, moduleEntitiesToUnload, moduleEntitiesToLoad, mainStorage)
           }
         }
+      }
+    }
+  }
+
+  private fun addAndRemoveModules(builder: MutableEntityStorage,
+                                  entitiesToAdd: List<ModuleEntity>,
+                                  entitiesToRemove: List<ModuleEntity>,
+                                  storageContainingEntitiesToAdd: EntityStorage) {
+    for (entity in entitiesToRemove) {
+      builder.removeEntity(entity)
+    }
+    for (entity in entitiesToAdd) {
+      builder.addEntity(entity)
+      entity.getModuleLevelLibraries(storageContainingEntitiesToAdd).forEach { libraryEntity ->
+        builder.addEntity(libraryEntity)
       }
     }
   }
@@ -341,6 +323,13 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     unloadedModules.forEach { this.unloadedModules.remove(it.name) }
 
     UnloadedModulesListStorage.getInstance(project).setUnloadedModuleNames(this.unloadedModules.keys)
+    WorkspaceModel.getInstance(project).updateUnloadedEntities("Remove unloaded modules") { builder ->
+      val namesToRemove = unloadedModules.mapTo(HashSet()) { it.name }
+      val entitiesToRemove = builder.entities(ModuleEntity::class.java).filter { it.name in namesToRemove }.toList()
+      for (moduleEntity in entitiesToRemove) {
+        builder.removeEntity(moduleEntity)
+      }
+    }
   }
 
   protected fun getModuleVirtualFileUrl(moduleEntity: ModuleEntity): VirtualFileUrl? {
@@ -448,6 +437,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       get() = getMutableExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use ModuleBridgeUtils#findModuleEntity instead")
     fun EntityStorage.findModuleEntity(module: ModuleBridge) = moduleMap.getFirstEntity(module) as ModuleEntity?
 

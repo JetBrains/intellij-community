@@ -29,10 +29,9 @@ public class CountFilter extends FilterAction {
 
   @Override
   public @NotNull String getShortText(NamedScriptableDefinition variable) {
-    if (!(variable instanceof MatchVariableConstraint)) {
+    if (!(variable instanceof MatchVariableConstraint constraint)) {
       return "";
     }
-    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
     final int minCount = constraint.getMinCount();
     final int maxCount = constraint.getMaxCount();
     if (minCount == 1 && maxCount == 1) {

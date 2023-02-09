@@ -1,6 +1,7 @@
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.core.Language
+import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
@@ -11,10 +12,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.io.exists
-import com.intellij.cce.workspace.EvaluationWorkspace
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import java.nio.file.Paths
+import kotlin.io.path.exists
 
 class SetupJDKStep(private val project: Project) : SetupSdkStep() {
   override val name: String = "Set up JDK step"

@@ -1305,6 +1305,9 @@
       "key": "Toolbar.Floating.background"
     },
     {
+      "key": "Toolbar.Floating.borderColor"
+    },
+    {
       "key": "ToolBar.background"
     },
     {

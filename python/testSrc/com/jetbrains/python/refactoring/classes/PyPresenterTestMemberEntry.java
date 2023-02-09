@@ -51,9 +51,7 @@ public final class PyPresenterTestMemberEntry {
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof PyPresenterTestMemberEntry)) return false;
-
-    final PyPresenterTestMemberEntry entry = (PyPresenterTestMemberEntry)o;
+    if (!(o instanceof PyPresenterTestMemberEntry entry)) return false;
 
     if (myEnabled != entry.myEnabled) return false;
     if (myMayBeAbstract != entry.myMayBeAbstract) return false;

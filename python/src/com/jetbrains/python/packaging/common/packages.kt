@@ -27,7 +27,10 @@ data class PythonSimplePackageDetails(
   override val summary: String? = null,
   @Nls override val description: String? = null,
   override val descriptionContentType: String? = null,
-  override val documentationUrl: String? = null) : PythonPackageDetails {
+  override val documentationUrl: String? = null,
+  val author: String? = null,
+  val authorEmail: String? = null,
+  val homepageUrl: String? = null) : PythonPackageDetails {
 
   override fun toPackageSpecification(version: String?): PythonSimplePackageSpecification {
     return PythonSimplePackageSpecification(name, version, repository)

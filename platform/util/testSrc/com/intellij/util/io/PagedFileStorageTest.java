@@ -18,6 +18,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import static com.intellij.util.io.PageCacheUtils.DEFAULT_PAGE_SIZE;
 import static org.junit.Assert.*;
 
 public class PagedFileStorageTest {
@@ -32,7 +33,7 @@ public class PagedFileStorageTest {
   public void setUp() throws IOException {
     withLock(lock, () -> {
       f = tempDir.newFile("storage").toPath();
-      s = new PagedFileStorage(f, lock, PagedFileStorage.DEFAULT_PAGE_SIZE, false, false);
+      s = new PagedFileStorage(f, lock, DEFAULT_PAGE_SIZE, false, false);
     });
   }
 
@@ -109,7 +110,7 @@ public class PagedFileStorageTest {
   public void testResizeableMappedFile2() throws IOException {
     withLock(lock, () -> {
       int initialSize = 4096;
-      ResizeableMappedFile file = new ResizeableMappedFile(f, initialSize, lock, PagedFileStorage.MB, false);
+      ResizeableMappedFile file = new ResizeableMappedFile(f, initialSize, lock, IOUtil.MiB, false);
       byte[] bytes = StringUtil.repeat("1", initialSize + 2).getBytes(StandardCharsets.UTF_8);
       assertTrue(bytes.length > initialSize);
 

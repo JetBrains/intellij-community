@@ -1,32 +1,42 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
-import org.junit.*
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
+@TestApplication
 class JpsProjectSaveAfterChangesTest {
-  @Rule
   @JvmField
-  val projectModel = ProjectModelRule()
+  @RegisterExtension
+  val projectModel: ProjectModelExtension = ProjectModelExtension()
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
-  @Before
+  @BeforeEach
   fun setUp() {
     virtualFileManager = IdeVirtualFileUrlManagerImpl()
   }
 
-  @Test
-  fun `modify module`() {
-    checkSaveProjectAfterChange("common/modifyIml", "common/modifyIml") { builder, configLocation ->
+  @ParameterizedTest(name = "unloaded = {0}")
+  @ValueSource(strings = ["", "util", "util,main", "main"])
+  fun `modify module`(unloaded: String) {
+    val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
+    checkSaveProjectAfterChange("common/modifyIml", "common/modifyIml", unloadedModuleNames) { 
+      mainBuilder, _, unloadedEntitiesBuilder, configLocation ->
+      val builder = if ("util" in unloadedModuleNames) unloadedEntitiesBuilder else mainBuilder
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
       val sourceRoot = utilModule.sourceRoots.first()
       builder.modifyEntity(sourceRoot) {
@@ -58,7 +68,7 @@ class JpsProjectSaveAfterChangesTest {
 
   @Test
   fun `rename module`() {
-    checkSaveProjectAfterChange("directoryBased/renameModule", "fileBased/renameModule") { builder, _ ->
+    checkSaveProjectAfterChange("directoryBased/renameModule", "fileBased/renameModule") { builder, _, _, _ ->
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
       builder.modifyEntity(utilModule) {
         name = "util2"
@@ -69,21 +79,25 @@ class JpsProjectSaveAfterChangesTest {
 
   @Test
   fun `add library and check vfu index not empty`() {
-    checkSaveProjectAfterChange("directoryBased/addLibrary", "fileBased/addLibrary") { builder, configLocation ->
+    checkSaveProjectAfterChange("directoryBased/addLibrary", "fileBased/addLibrary") { builder, _, _, configLocation ->
       val root = LibraryRoot(virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"), LibraryRootTypeId.COMPILED)
       val source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(configLocation)
       builder.addLibraryEntity("junit2", LibraryTableId.ProjectLibraryTableId, listOf(root), emptyList(), source)
       builder.entities(LibraryEntity::class.java).forEach { libraryEntity ->
         val virtualFileUrl = libraryEntity.roots.first().url
         val entitiesByUrl = builder.getMutableVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl)
-        Assert.assertTrue(entitiesByUrl.toList().isNotEmpty())
+        assertTrue(entitiesByUrl.toList().isNotEmpty())
       }
     }
   }
 
-  @Test
-  fun `add module`() {
-    checkSaveProjectAfterChange("directoryBased/addModule", "fileBased/addModule") { builder, configLocation ->
+  @ParameterizedTest(name = "unloaded = {0}")
+  @ValueSource(strings = ["", "newModule", "newModule,main", "main"])
+  fun `add module`(unloaded: String) {
+    val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
+    checkSaveProjectAfterChange("directoryBased/addModule", "fileBased/addModule", unloadedModuleNames) { 
+      mainBuilder, _, unloadedEntitiesBuilder, configLocation ->
+      val builder = if ("newModule" in unloadedModuleNames) unloadedEntitiesBuilder else mainBuilder
       val source = JpsFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
       val dependencies = listOf(ModuleDependencyItem.InheritedSdkDependency, ModuleDependencyItem.ModuleSourceDependency)
       val module = builder.addModuleEntity("newModule", dependencies, source)
@@ -99,9 +113,13 @@ class JpsProjectSaveAfterChangesTest {
     }
   }
 
-  @Test
-  fun `remove module`() {
-    checkSaveProjectAfterChange("directoryBased/removeModule", "fileBased/removeModule") { builder, _ ->
+  @ParameterizedTest(name = "unloaded = {0}")
+  @ValueSource(strings = ["", "util", "util,main", "main"])
+  fun `remove module`(unloaded: String) {
+    val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
+    checkSaveProjectAfterChange("directoryBased/removeModule", "fileBased/removeModule", unloadedModuleNames) { 
+      mainBuilder, _, unloadedEntitiesBuilder, _ ->
+      val builder = if ("util" in unloadedModuleNames) unloadedEntitiesBuilder else mainBuilder
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
       //todo now we need to remove module libraries by hand, maybe we should somehow modify the model instead
       val moduleLibraries = utilModule.getModuleLibraries(builder).toList()
@@ -114,7 +132,7 @@ class JpsProjectSaveAfterChangesTest {
 
   @Test
   fun `modify library`() {
-    checkSaveProjectAfterChange("directoryBased/modifyLibrary", "fileBased/modifyLibrary") { builder, configLocation ->
+    checkSaveProjectAfterChange("directoryBased/modifyLibrary", "fileBased/modifyLibrary") { builder, _, _, configLocation ->
       val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
       val root = LibraryRoot(virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
                              LibraryRootTypeId.COMPILED)
@@ -126,7 +144,7 @@ class JpsProjectSaveAfterChangesTest {
 
   @Test
   fun `rename library`() {
-    checkSaveProjectAfterChange("directoryBased/renameLibrary", "fileBased/renameLibrary") { builder, _ ->
+    checkSaveProjectAfterChange("directoryBased/renameLibrary", "fileBased/renameLibrary") { builder, _, _, _ ->
       val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
       builder.modifyEntity(junitLibrary) {
         name = "junit2"
@@ -136,7 +154,7 @@ class JpsProjectSaveAfterChangesTest {
 
   @Test
   fun `remove library`() {
-    checkSaveProjectAfterChange("directoryBased/removeLibrary", "fileBased/removeLibrary") { builder, _ ->
+    checkSaveProjectAfterChange("directoryBased/removeLibrary", "fileBased/removeLibrary") { builder, _, _, _ ->
       val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
       builder.removeEntity(junitLibrary)
     }
@@ -144,14 +162,9 @@ class JpsProjectSaveAfterChangesTest {
 
   private fun checkSaveProjectAfterChange(directoryNameForDirectoryBased: String,
                                           directoryNameForFileBased: String,
-                                          change: (MutableEntityStorage, JpsProjectConfigLocation) -> Unit) {
-    checkSaveProjectAfterChange(sampleDirBasedProjectFile, directoryNameForDirectoryBased, change, virtualFileManager, "serialization/reload")
-    checkSaveProjectAfterChange(sampleFileBasedProjectFile, directoryNameForFileBased, change, virtualFileManager, "serialization/reload")
-  }
-
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
+                                          unloadedModuleNames: Set<String> = emptySet(),
+                                          change: (MutableEntityStorage, MutableEntityStorage, MutableEntityStorage, JpsProjectConfigLocation) -> Unit) {
+    checkSaveProjectAfterChange(sampleDirBasedProjectFile, directoryNameForDirectoryBased, change, unloadedModuleNames, virtualFileManager, "serialization/reload")
+    checkSaveProjectAfterChange(sampleFileBasedProjectFile, directoryNameForFileBased, change, unloadedModuleNames, virtualFileManager, "serialization/reload")
   }
 }

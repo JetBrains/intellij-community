@@ -5,6 +5,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter.Companion.NPW_PREFIX
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.MODIFIABLE_MODULE_MODEL_KEY
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
@@ -38,7 +39,8 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
 
   override fun commitModule(project: Project, model: ModifiableModuleModel?): Module? {
     val step = panel!!.step
-    return detectCreatedModule(project) {
+    step.context.putUserData(MODIFIABLE_MODULE_MODEL_KEY, model)
+    return detectCreatedModule(project, model) {
       step.setupProject(project)
     }
   }
@@ -61,11 +63,28 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
   }
 
   companion object {
+    private fun detectCreatedModule(project: Project, model: ModifiableModuleModel?, action: () -> Unit): Module? {
+      if (model == null) {
+        return detectCreatedModule(project, action)
+      }
+      var createdModuleLocal: Module? = null
+      val createdModuleGlobal = detectCreatedModule(project) {
+        createdModuleLocal = detectCreatedModule(model, action)
+      }
+      return createdModuleLocal ?: createdModuleGlobal
+    }
+
     private fun detectCreatedModule(project: Project, action: () -> Unit): Module? {
       val manager = ModuleManager.getInstance(project)
       val modules = manager.modules
       action()
       return manager.modules.find { it !in modules }
+    }
+
+    private fun detectCreatedModule(model: ModifiableModuleModel, action: () -> Unit): Module? {
+      val modules = model.modules
+      action()
+      return model.modules.find { it !in modules }
     }
   }
 }

@@ -29,9 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class TrimZenCodingFilter extends ZenCodingFilter {
   private static final Pattern PATTERN = Pattern.compile("^([\\s|\u00a0])?[\\d|#|\\-|\\*|\u2022]+\\.?\\s*");
 

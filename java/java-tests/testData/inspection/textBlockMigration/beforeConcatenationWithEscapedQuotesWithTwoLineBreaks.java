@@ -1,4 +1,4 @@
-// "Replace with text block" "false"
+// "Replace with text block" "true-preview"
 
 class TextBlockMigration {
 

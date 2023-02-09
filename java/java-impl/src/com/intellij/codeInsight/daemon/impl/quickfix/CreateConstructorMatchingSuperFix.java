@@ -28,9 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-/**
- * @author ven
- */
 public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance(CreateConstructorMatchingSuperFix.class);
 

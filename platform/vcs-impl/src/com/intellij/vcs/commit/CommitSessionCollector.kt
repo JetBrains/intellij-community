@@ -45,14 +45,14 @@ class CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
     val UNVERSIONED_TOTAL = EventFields.RoundedInt("unversioned_total")
     val UNVERSIONED_INCLUDED = EventFields.RoundedInt("unversioned_included")
     val COMMIT_CHECK_CLASS = EventFields.Class("commit_check_class")
-    val COMMIT_PROBLEM_CLASS = EventFields.Class("commit_problem_class")
+    private val COMMIT_PROBLEM_CLASS = EventFields.Class("commit_problem_class")
     val EXECUTION_ORDER = EventFields.Enum("execution_order", CommitCheck.ExecutionOrder::class.java)
-    val COMMIT_OPTION = EventFields.Enum("commit_option", CommitOption::class.java)
-    val COMMIT_PROBLEM_PLACE = EventFields.Enum("commit_problem_place", CommitProblemPlace::class.java)
-    val IS_FROM_SETTINGS = EventFields.Boolean("is_from_settings")
+    private val COMMIT_OPTION = EventFields.Enum("commit_option", CommitOption::class.java)
+    private val COMMIT_PROBLEM_PLACE = EventFields.Enum("commit_problem_place", CommitProblemPlace::class.java)
+    private val IS_FROM_SETTINGS = EventFields.Boolean("is_from_settings")
     val IS_SUCCESS = EventFields.Boolean("is_success")
-    val WARNINGS_COUNT = EventFields.RoundedInt("warnings_count")
-    val ERRORS_COUNT = EventFields.RoundedInt("errors_count")
+    private val WARNINGS_COUNT = EventFields.RoundedInt("warnings_count")
+    private val ERRORS_COUNT = EventFields.RoundedInt("errors_count")
 
     val SESSION = GROUP.registerIdeActivity("session",
                                             startEventAdditionalFields = arrayOf(FILES_TOTAL, FILES_INCLUDED,

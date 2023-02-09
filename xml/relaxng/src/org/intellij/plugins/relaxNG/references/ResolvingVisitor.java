@@ -50,11 +50,9 @@ class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor 
 
   @Override
   public void visitXmlDocument(@NotNull XmlDocument document) {
-    if (document != null) {
-      final XmlTag rootTag = document.getRootTag();
-      if (rootTag != null) {
-        visitXmlTag(rootTag);
-      }
+    final XmlTag rootTag = document.getRootTag();
+    if (rootTag != null) {
+      visitXmlTag(rootTag);
     }
   }
 

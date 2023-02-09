@@ -1,15 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector
 
+import com.intellij.ide.IdeEventQueue
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.MouseShortcut
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl.Companion.isKeymapManagerInitialized
 import com.intellij.openapi.keymap.impl.ui.MouseShortcutPanel
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.util.ui.UIUtil
 import java.awt.AWTEvent
-import java.awt.Toolkit
+import java.awt.Component
 import java.awt.event.MouseEvent
 
 abstract class UiMouseAction(val uiActionId: String) : DumbAwareAction() {
@@ -30,21 +37,50 @@ abstract class UiMouseAction(val uiActionId: String) : DumbAwareAction() {
         }
       }
     })
-    Toolkit.getDefaultToolkit().addAWTEventListener(
-      { event ->
-        if (event is MouseEvent && event.clickCount > 0 && !myMouseShortcuts.isEmpty()) {
-          if (event.component is MouseShortcutPanel) return@addAWTEventListener
 
-          val mouseShortcut = MouseShortcut(event.button, event.modifiersEx, event.clickCount)
-          if (myMouseShortcuts.contains(mouseShortcut)) {
-            event.consume()
-          }
-        }
-      }, AWTEvent.MOUSE_EVENT_MASK)
+    IdeEventQueue.getInstance().addDispatcher(::handleEvent, ApplicationManager.getApplication())
   }
 
+  private fun handleEvent(event: AWTEvent): Boolean {
+    if (event is MouseEvent && event.clickCount > 0 && !myMouseShortcuts.isEmpty()) {
+      if (event.component is MouseShortcutPanel) return false
+
+      val mouseShortcut = MouseShortcut(event.button, event.modifiersEx, event.clickCount)
+      if (myMouseShortcuts.contains(mouseShortcut)) {
+        if (event.id == MouseEvent.MOUSE_PRESSED) {
+          val component = UIUtil.getDeepestComponentAt(event.component, event.x, event.y)
+                          ?: event.component
+          handleClick(component, event)
+        }
+        return true
+      }
+    }
+    return false
+  }
+
+  final override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  final override fun update(e: AnActionEvent) = Unit
+
+  final override fun actionPerformed(e: AnActionEvent) {
+    val event = e.inputEvent
+    if (event is MouseEvent) {
+      val component = UIUtil.getDeepestComponentAt(event.component, event.x, event.y)
+                      ?: event.component
+      handleClick(component, event)
+    }
+    else {
+      val component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
+                      ?: IdeFocusManager.getInstance(e.project).focusOwner
+                      ?: return
+      handleClick(component, null)
+    }
+  }
+
+  protected abstract fun handleClick(component: Component, event: MouseEvent?)
+
   private fun updateMouseShortcuts() {
-    if (isKeymapManagerInitialized) {
+    if (isKeymapManagerInitialized && ApplicationManager.getApplication().isInternal) {
       val keymap = KeymapManagerEx.getInstanceEx().activeKeymap
       myMouseShortcuts.clear()
       myMouseShortcuts += keymap.getShortcuts(uiActionId)

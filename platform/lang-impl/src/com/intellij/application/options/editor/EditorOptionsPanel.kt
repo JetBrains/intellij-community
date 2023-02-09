@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.actions.CaretStopBoundary
 import com.intellij.openapi.editor.actions.CaretStopOptionsTransposed
 import com.intellij.openapi.editor.actions.CaretStopOptionsTransposed.Companion.fromCaretStopOptions
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable.TOOLTIPS_DELAY_RANGE
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings
@@ -35,7 +34,6 @@ import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
@@ -45,23 +43,21 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.layout.PropertyBinding
-import com.intellij.ui.layout.asRange
 import com.intellij.ui.layout.selected
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JCheckBox
 
-private val codeInsightSettings
+private val codeInsightSettings: CodeInsightSettings
   get() = CodeInsightSettings.getInstance()
-private val editorSettings
+private val editorSettings: EditorSettingsExternalizable
   get() = EditorSettingsExternalizable.getInstance()
 private val stripTrailingSpacesProxy get() = StripTrailingSpacesProxy()
 
-private val richCopySettings
+private val richCopySettings: RichCopySettings
   get() = RichCopySettings.getInstance()
-private val codeAnalyzerSettings
+private val codeAnalyzerSettings: DaemonCodeAnalyzerSettings
   get() = DaemonCodeAnalyzerSettings.getInstance()
 
 @Contract(pure = true)
@@ -70,22 +66,22 @@ private fun String.capitalizeWords(): String = StringUtil.capitalizeWords(this, 
 private val enableWheelFontChange
   get() = CheckboxDescriptor(if (SystemInfo.isMac) message("checkbox.enable.ctrl.mousewheel.changes.font.size.macos")
                              else message("checkbox.enable.ctrl.mousewheel.changes.font.size"),
-                             PropertyBinding(editorSettings::isWheelFontChangeEnabled, editorSettings::setWheelFontChangeEnabled))
+                             editorSettings::isWheelFontChangeEnabled, editorSettings::setWheelFontChangeEnabled)
 
 private val enableDnD
   get() = CheckboxDescriptor(message("checkbox.enable.drag.n.drop.functionality.in.editor"),
-                             PropertyBinding(editorSettings::isDndEnabled, editorSettings::setDndEnabled))
+                             editorSettings::isDndEnabled, editorSettings::setDndEnabled)
 private val virtualSpace
   get() = CheckboxDescriptor(message("checkbox.allow.placement.of.caret.after.end.of.line"),
-                             PropertyBinding(editorSettings::isVirtualSpace, editorSettings::setVirtualSpace),
+                             editorSettings::isVirtualSpace, editorSettings::setVirtualSpace,
                              groupName = message("checkbox.allow.placement.of.caret.label").capitalizeWords())
 private val caretInsideTabs
-  get() = CheckboxDescriptor(message("checkbox.allow.placement.of.caret.inside.tabs"), PropertyBinding(editorSettings::isCaretInsideTabs,
-                                                                                                       editorSettings::setCaretInsideTabs),
+  get() = CheckboxDescriptor(message("checkbox.allow.placement.of.caret.inside.tabs"),
+                             editorSettings::isCaretInsideTabs, editorSettings::setCaretInsideTabs,
                              groupName = message("checkbox.allow.placement.of.caret.label").capitalizeWords())
 private val virtualPageAtBottom
   get() = CheckboxDescriptor(message("checkbox.show.virtual.space.at.file.bottom"),
-                             PropertyBinding(editorSettings::isAdditionalPageAtBottom, editorSettings::setAdditionalPageAtBottom))
+                             editorSettings::isAdditionalPageAtBottom, editorSettings::setAdditionalPageAtBottom)
 
 private val highlightBraces
   get() = CheckboxDescriptor(message("checkbox.highlight.matched.brace"), codeInsightSettings::HIGHLIGHT_BRACES,
@@ -99,46 +95,41 @@ private val highlightIdentifierUnderCaret
 
 private val renameLocalVariablesInplace
   get() = CheckboxDescriptor(message("radiobutton.rename.local.variables.inplace"),
-                             PropertyBinding(editorSettings::isVariableInplaceRenameEnabled,
-                                             editorSettings::setVariableInplaceRenameEnabled), groupName = message(
-    "radiogroup.rename.local.variables").capitalizeWords())
+                             editorSettings::isVariableInplaceRenameEnabled, editorSettings::setVariableInplaceRenameEnabled,
+                             groupName = message(
+                               "radiogroup.rename.local.variables").capitalizeWords())
 private val preselectCheckBox
-  get() = CheckboxDescriptor(message("checkbox.rename.local.variables.preselect"), PropertyBinding(editorSettings::isPreselectRename,
-                                                                                                   editorSettings::setPreselectRename),
+  get() = CheckboxDescriptor(message("checkbox.rename.local.variables.preselect"),
+                             editorSettings::isPreselectRename, editorSettings::setPreselectRename,
                              groupName = message("group.refactorings"))
 private val showInlineDialogForCheckBox
   get() = CheckboxDescriptor(message("checkbox.show.inline.dialog.on.local.variable.references"),
-                             PropertyBinding(editorSettings::isShowInlineLocalDialog, editorSettings::setShowInlineLocalDialog))
+                             editorSettings::isShowInlineLocalDialog, editorSettings::setShowInlineLocalDialog)
 
 private val cdSmoothScrolling
-  get() = CheckboxDescriptor(message("checkbox.smooth.scrolling"), PropertyBinding(editorSettings::isSmoothScrolling,
-                                                                                   editorSettings::setSmoothScrolling))
+  get() = CheckboxDescriptor(message("checkbox.smooth.scrolling"), editorSettings::isSmoothScrolling, editorSettings::setSmoothScrolling)
 private val cdUseSoftWrapsAtEditor
-  get() = CheckboxDescriptor(message("checkbox.use.soft.wraps.at.editor"), PropertyBinding(editorSettings::isUseSoftWraps,
-                                                                                           editorSettings::setUseSoftWraps))
+  get() = CheckboxDescriptor(message("checkbox.use.soft.wraps.at.editor"), editorSettings::isUseSoftWraps, editorSettings::setUseSoftWraps)
 private val cdUseCustomSoftWrapIndent
-  get() = CheckboxDescriptor(message("checkbox.use.custom.soft.wraps.indent"), PropertyBinding(editorSettings::isUseCustomSoftWrapIndent,
-                                                                                               editorSettings::setUseCustomSoftWrapIndent))
+  get() = CheckboxDescriptor(message("checkbox.use.custom.soft.wraps.indent"),
+                             editorSettings::isUseCustomSoftWrapIndent, editorSettings::setUseCustomSoftWrapIndent)
 private val cdShowSoftWrapsOnlyOnCaretLine
   get() = CheckboxDescriptor(message("checkbox.show.softwraps.only.for.caret.line"),
-                             PropertyBinding({ !editorSettings.isAllSoftWrapsShown }, { editorSettings.setAllSoftwrapsShown(!it) }))
+                             { !editorSettings.isAllSoftWrapsShown }, { editorSettings.setAllSoftwrapsShown(!it) })
 private val cdRemoveTrailingBlankLines
   get() = CheckboxDescriptor(message("editor.options.remove.trailing.blank.lines"),
-                             PropertyBinding(editorSettings::isRemoveTrailingBlankLines, editorSettings::setRemoveTrailingBlankLines))
+                             editorSettings::isRemoveTrailingBlankLines, editorSettings::setRemoveTrailingBlankLines)
 private val cdEnsureBlankLineBeforeCheckBox
-  get() = CheckboxDescriptor(message("editor.options.line.feed"), PropertyBinding(editorSettings::isEnsureNewLineAtEOF,
-                                                                                  editorSettings::setEnsureNewLineAtEOF))
+  get() = CheckboxDescriptor(message("editor.options.line.feed"),
+                             editorSettings::isEnsureNewLineAtEOF, editorSettings::setEnsureNewLineAtEOF)
 private val cdShowQuickDocOnMouseMove
   get() = CheckboxDescriptor(message("editor.options.quick.doc.on.mouse.hover"),
-                             PropertyBinding(editorSettings::isShowQuickDocOnMouseOverElement,
-                                             editorSettings::setShowQuickDocOnMouseOverElement))
+                             editorSettings::isShowQuickDocOnMouseOverElement, editorSettings::setShowQuickDocOnMouseOverElement)
 private val cdKeepTrailingSpacesOnCaretLine
   get() = CheckboxDescriptor(message("editor.settings.keep.trailing.spaces.on.caret.line"),
-                             PropertyBinding(editorSettings::isKeepTrailingSpacesOnCaretLine,
-                                             editorSettings::setKeepTrailingSpacesOnCaretLine))
+                             editorSettings::isKeepTrailingSpacesOnCaretLine, editorSettings::setKeepTrailingSpacesOnCaretLine)
 private val cdStripTrailingSpacesEnabled
-  get() = CheckboxDescriptor(message("combobox.strip.trailing.spaces.on.save"), PropertyBinding(stripTrailingSpacesProxy::isEnabled,
-                                                                                                stripTrailingSpacesProxy::setEnabled))
+  get() = CheckboxDescriptor(message("combobox.strip.trailing.spaces.on.save"), stripTrailingSpacesProxy::isEnabled, stripTrailingSpacesProxy::setEnabled)
 
 internal val optionDescriptors: List<OptionDescription>
   get() {
@@ -353,7 +344,7 @@ private class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOp
         row { checkBox(highlightScope) }
         row { checkBox(highlightIdentifierUnderCaret) }
       }
-      if (!GeneralSettings.getInstance().isSupportScreenReaders()) {
+      if (!GeneralSettings.getInstance().isSupportScreenReaders) {
         group(message("group.quick.documentation")) {
           row { checkBox(cdShowQuickDocOnMouseMove) }
         }
@@ -426,8 +417,7 @@ private fun <E : EditorCaretStopPolicyItem> Panel.caretStopRow(@Nls label: Strin
       model.insertElementAt(item, insertionIndex)
     }
 
-    cell(ComboBox(model))
-      .applyToComponent { renderer = SeparatorAwareListItemRenderer() }
+    comboBox(model, SeparatorAwareListItemRenderer())
       .align(AlignX.FILL)
       .bind(
         {

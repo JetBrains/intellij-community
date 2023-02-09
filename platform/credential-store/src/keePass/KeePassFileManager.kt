@@ -12,12 +12,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import java.awt.Component
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.security.SecureRandom
+import kotlin.io.path.exists
 
 open class KeePassFileManager(private val file: Path,
                               masterKeyFile: Path,

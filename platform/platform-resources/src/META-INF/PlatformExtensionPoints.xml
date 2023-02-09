@@ -119,6 +119,9 @@
                     dynamic="true"/>
     <extensionPoint name="projectSetProcessor"
                     interface="com.intellij.projectImport.ProjectSetProcessor"/>
+    <extensionPoint name="lowLevelProjectOpenProcessor"
+                    interface="com.intellij.openapi.project.ex.LowLevelProjectOpenProcessor"
+                    dynamic="true"/>
 
     <extensionPoint name="codeInsight.linkHandler"
                     beanClass="com.intellij.codeInsight.hint.TooltipLinkHandlerEP" dynamic="true">
@@ -203,6 +206,8 @@
     <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher" dynamic="true"/>
 
     <extensionPoint name="customizableActionGroupProvider" interface="com.intellij.ide.ui.customization.CustomizableActionGroupProvider" dynamic="true"/>
+
+    <extensionPoint name="backedVirtualFileProvider" interface="com.intellij.notebook.editor.BackedVirtualFileProvider" dynamic="true"/>
 
     <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.SearchableConfigurable"/>
@@ -449,10 +454,14 @@
 
     <extensionPoint name="newProjectWizard.language" interface="com.intellij.ide.wizard.LanguageNewProjectWizard" dynamic="true"/>
 
+    <extensionPoint name="newProject.onboarding.tips" interface="com.intellij.ide.wizard.NewProjectOnboardingTips" dynamic="true"/>
+
     <extensionPoint name="projectOriginInfoProvider" interface="com.intellij.ide.impl.ProjectOriginInfoProvider" dynamic="true"/>
     <extensionPoint name="trustedHostsConfigurablePanelProvider" interface="com.intellij.ide.impl.TrustedHostsConfigurablePanelProvider"
                     dynamic="true"/>
     <extensionPoint name="trustedHostsConfigurableProvider" interface="com.intellij.ide.impl.TrustedHostsConfigurableProvider"
+                    dynamic="true"/>
+    <extensionPoint name="trustedProjectsLocator" interface="com.intellij.ide.trustedProjects.TrustedProjectsLocator"
                     dynamic="true"/>
     <extensionPoint name="settingsEntryPointActionProvider" interface="com.intellij.ide.actions.SettingsEntryPointAction$ActionProvider" dynamic="true"/>
     <extensionPoint name="settingsEntryPointIconCustomizer" interface="com.intellij.ide.actions.SettingsEntryPointAction$IconCustomizer" dynamic="true"/>
@@ -486,9 +495,13 @@
 
     <extensionPoint name="projectIndexesWarmupSupport" interface="com.intellij.warmup.ProjectIndexesWarmupSupport" area="IDEA_PROJECT" />
     <extensionPoint name="projectBuildWarmupSupport" interface="com.intellij.warmup.ProjectBuildWarmupSupport" area="IDEA_PROJECT" />
+    <extensionPoint name="warmupConfigurator" interface="com.intellij.ide.warmup.WarmupConfigurator" dynamic="true" />
 
     <extensionPoint name="internal.ml.featureProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.internal.ml.MLFeatureProvider"/>
     </extensionPoint>
+
+    <extensionPoint name="defender.config" interface="com.intellij.diagnostic.WindowsDefenderChecker$Extension" dynamic="true" />
+    <extensionPoint name="authorizationProvider" interface="com.intellij.ide.impl.AuthorizationProvider" dynamic="true" />
   </extensionPoints>
 </idea-plugin>

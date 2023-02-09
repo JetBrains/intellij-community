@@ -45,7 +45,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Does the actual job of adding an import statement into a file.
- * User: dcheryasov
  */
 public final class AddImportHelper {
   private static final Logger LOG = Logger.getInstance(AddImportHelper.class);
@@ -204,8 +203,7 @@ public final class AddImportHelper {
     final boolean isInjected = InjectedLanguageManager.getInstance(feeler.getProject()).isInjectedFragment(feeler.getContainingFile());
     PyImportStatementBase importAbove = null, importBelow = null;
     do {
-      if (feeler instanceof PyImportStatementBase && !isInjected) {
-        final PyImportStatementBase existingImport = (PyImportStatementBase)feeler;
+      if (feeler instanceof PyImportStatementBase existingImport && !isInjected) {
         if (priority != null && newImport != null) {
           if (shouldInsertBefore(newImport, existingImport, priority)) {
             importBelow = existingImport;
@@ -336,8 +334,7 @@ public final class AddImportHelper {
   static ImportPriorityChoice getImportPriorityWithReason(@NotNull PyImportStatementBase importStatement) {
     final PsiElement resolved;
     final PsiElement resolveAnchor;
-    if (importStatement instanceof PyFromImportStatement) {
-      final PyFromImportStatement fromImportStatement = (PyFromImportStatement)importStatement;
+    if (importStatement instanceof PyFromImportStatement fromImportStatement) {
       if (fromImportStatement.isFromFuture()) {
         return new ImportPriorityChoice(ImportPriority.FUTURE, "import from __future__");
       }
@@ -824,8 +821,7 @@ public final class AddImportHelper {
   }
 
   public static boolean isAssignmentToModuleLevelDunderName(@Nullable PsiElement element) {
-    if (element instanceof PyAssignmentStatement && PyUtil.isTopLevel(element)) {
-      PyAssignmentStatement statement = (PyAssignmentStatement)element;
+    if (element instanceof PyAssignmentStatement statement && PyUtil.isTopLevel(element)) {
       PyExpression[] targets = statement.getTargets();
       if (targets.length == 1) {
         String name = targets[0].getName();

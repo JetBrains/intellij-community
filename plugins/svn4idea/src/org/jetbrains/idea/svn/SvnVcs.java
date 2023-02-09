@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -235,7 +236,7 @@ public final class SvnVcs extends AbstractVcs {
     mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(this);
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      checkCommandLineVersion();
+      BackgroundTaskUtil.executeOnPooledThread(disposable, () -> checkCommandLineVersion());
     }
 
     RootsToWorkingCopies.getInstance(myProject);

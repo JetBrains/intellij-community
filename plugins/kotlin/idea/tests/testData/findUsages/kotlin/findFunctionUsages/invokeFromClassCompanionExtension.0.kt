@@ -7,4 +7,3 @@ class Foo(n: Int) {
 
 operator fun Foo.Companion.invo<caret>ke() = 1
 
-// FIR_COMPARISON

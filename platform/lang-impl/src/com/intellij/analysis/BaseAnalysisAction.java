@@ -87,7 +87,7 @@ public abstract class BaseAnalysisAction extends AnAction {
                                                     List<? extends ModelScopeItem> items) {
     return new BaseAnalysisActionDialog(title, scopeTitle, project, items, uiOptions, rememberScope) {
       @Override
-      protected JComponent getAdditionalActionSettings(Project project) {
+      protected JComponent getAdditionalActionSettings(@NotNull Project project) {
         return BaseAnalysisAction.this.getAdditionalActionSettings(project, this);
       }
 
@@ -120,7 +120,7 @@ public abstract class BaseAnalysisAction extends AnAction {
   }
 
   @Nullable
-  protected JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
+  protected JComponent getAdditionalActionSettings(@NotNull Project project, BaseAnalysisActionDialog dialog) {
     return null;
   }
 

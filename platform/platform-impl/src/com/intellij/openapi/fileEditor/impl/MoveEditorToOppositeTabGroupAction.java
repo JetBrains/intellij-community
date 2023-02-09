@@ -45,7 +45,7 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
       if (myCloseSource) {
         window.closeFile(vFile, true, false);
       }
-      ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project)).openFileImpl3$intellij_platform_ide_impl(siblings.get(0), vFile, true, entry);
+      ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project)).openMaybeInvalidFile$intellij_platform_ide_impl(siblings.get(0), vFile, entry);
       vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
     }
   }

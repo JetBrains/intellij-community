@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 
@@ -22,7 +22,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public class LanguageLevelUtil {
+public final class LanguageLevelUtil {
   /**
    * Returns explicitly specified custom language level for {@code module}, or {@code null} if the module uses 'Project default' language level
    */
@@ -174,8 +174,7 @@ public class LanguageLevelUtil {
       String containingClass = getSignature(member.getContainingClass());
       return containingClass == null ? null : containingClass + "#" + member.getName();
     }
-    if (member instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)member;
+    if (member instanceof PsiMethod method) {
       String containingClass = getSignature(member.getContainingClass());
       if (containingClass == null) return null;
 

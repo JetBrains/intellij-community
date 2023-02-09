@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public final class WitherFieldProcessor extends AbstractFieldProcessor {
@@ -30,6 +31,15 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
 
   private static RequiredArgsConstructorProcessor getRequiredArgsConstructorProcessor() {
     return ApplicationManager.getApplication().getService(RequiredArgsConstructorProcessor.class);
+  }
+
+  @Override
+  protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass,
+                                                                   @NotNull PsiAnnotation psiAnnotation,
+                                                                   @NotNull PsiField psiField) {
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
+    final String generatedElementName = LombokUtils.getWitherName(psiField, accessorsInfo);
+    return Collections.singletonList(generatedElementName);
   }
 
   @Override
@@ -99,14 +109,14 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
 
   private boolean validIsWitherUnique(@NotNull PsiField psiField, @NotNull final ProblemSink builder) {
     final PsiClass fieldContainingClass = psiField.getContainingClass();
-    final String psiFieldName = psiField.getName();
     if (fieldContainingClass != null) {
       final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(fieldContainingClass);
       filterToleratedElements(classMethods);
 
       final AccessorsInfo accessorsInfo = buildAccessorsInfo(psiField);
+      final String psiFieldName = psiField.getName();
       final Collection<String> possibleWitherNames =
-        LombokUtils.toAllWitherNames(accessorsInfo, psiFieldName, PsiType.BOOLEAN.equals(psiField.getType()));
+        LombokUtils.toAllWitherNames(accessorsInfo, psiFieldName, PsiTypes.booleanType().equals(psiField.getType()));
       for (String witherName : possibleWitherNames) {
         if (PsiMethodUtil.hasSimilarMethod(classMethods, witherName, 1)) {
           builder.addWarningMessage("inspection.message.not.generating.s.method.with.that.name.already.exists", witherName);
@@ -178,10 +188,8 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
     final PsiClass psiFieldContainingClass = psiField.getContainingClass();
     if (psiFieldContainingClass != null) {
       final PsiType returnType = PsiClassUtil.getTypeWithGenerics(psiFieldContainingClass);
-      final String psiFieldName = psiField.getName();
-      final PsiType psiFieldType = psiField.getType();
 
-      methodBuilder = new LombokLightMethodBuilder(psiField.getManager(), getWitherName(accessorsInfo, psiFieldName, psiFieldType))
+      methodBuilder = new LombokLightMethodBuilder(psiField.getManager(), LombokUtils.getWitherName(psiField, accessorsInfo))
         .withMethodReturnType(returnType)
         .withContainingClass(psiFieldContainingClass)
         .withNavigationElement(psiField)
@@ -195,6 +203,8 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
       PsiAnnotation witherAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.WITHER, LombokClassNames.WITH);
       LombokCopyableAnnotations.copyOnXAnnotations(witherAnnotation, methodBuilder.getModifierList(), "onMethod");
 
+      final String psiFieldName = psiField.getName();
+      final PsiType psiFieldType = psiField.getType();
       final LombokLightParameter methodParameter = new LombokLightParameter(psiFieldName, psiFieldType, methodBuilder);
       methodBuilder.withParameter(methodParameter);
 
@@ -218,10 +228,6 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
 
   private static AccessorsInfo buildAccessorsInfo(@NotNull PsiField psiField) {
     return AccessorsInfo.buildFor(psiField).withFluent(false);
-  }
-
-  private static String getWitherName(@NotNull AccessorsInfo accessorsInfo, String psiFieldName, PsiType psiFieldType) {
-    return LombokUtils.toWitherName(accessorsInfo, psiFieldName, PsiType.BOOLEAN.equals(psiFieldType));
   }
 
   private static String getConstructorCall(@NotNull PsiField psiField, @NotNull PsiClass psiClass) {

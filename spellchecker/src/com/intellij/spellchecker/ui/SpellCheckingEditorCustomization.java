@@ -32,8 +32,6 @@ import java.util.function.Function;
  * Allows enforcing editors to use/not use spell checking, ignoring user-defined spelling inspection settings.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class SpellCheckingEditorCustomization extends SimpleEditorCustomization {
   private static final Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashMap<>();

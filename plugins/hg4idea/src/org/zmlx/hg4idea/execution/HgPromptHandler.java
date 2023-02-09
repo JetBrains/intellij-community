@@ -23,8 +23,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * HgPromptHandler is used by {@link HgPromptCommandExecutor, when you want to change the behavior of
  * standard commands execution in the Mercurial.
- *
- * @author Nadya Zabrodina
  */
 public interface HgPromptHandler {
 

@@ -56,9 +56,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isRVal
 import static org.jetbrains.plugins.groovy.lang.resolve.impl.IncompleteKt.resolveIncomplete;
 import static org.jetbrains.plugins.groovy.lang.typing.DefaultMethodCallTypeCalculatorKt.getTypeFromCandidate;
 
-/**
- * @author ilyas
- */
 public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpression> implements GrReferenceExpression {
   private static final Logger LOG = Logger.getInstance(GrReferenceExpressionImpl.class);
 
@@ -221,8 +218,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return ((PsiVariable)resolved).getType();
     }
 
-    if (resolved instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)resolved;
+    if (resolved instanceof PsiMethod method) {
       if (PropertyUtilBase.isSimplePropertySetter(method) && !method.getName().equals(getReferenceName())) {
         return method.getParameterList().getParameters()[0].getType();
       }
@@ -292,7 +288,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
     if (nominal == null) {
-      if (inferred.equals(PsiType.NULL) && CompileStaticUtil.isCompileStatic(refExpr)) {
+      if (inferred.equals(PsiTypes.nullType()) && CompileStaticUtil.isCompileStatic(refExpr)) {
         return TypesUtil.getJavaLangObject(refExpr);
       }
       else {

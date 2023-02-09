@@ -221,4 +221,38 @@ public class MavenModuleReferenceSearcherTest extends MavenDomTestCase {
     var tag = findTag(parentFile, "project.modules.module");
     assertEquals(newModulePath, tag.getValue().getText());
   }
+
+
+  @Test
+  public void testIncorrectModuleNameWithNewLineRenameModuleReferenceChanged() {
+    var parentFile = createProjectPom("""
+                  <groupId>group</groupId>
+                  <artifactId>parent</artifactId>
+                  <version>1</version>
+                  <packaging>pom</packaging>
+                  <modules>
+                    <module>m1
+                    </module>
+                  </modules>
+                  """);
+    var m1File = createModulePom("m1", """
+                  <artifactId>m1</artifactId>
+                  <version>1</version>
+                  <parent>
+                    <groupId>group</groupId>
+                    <artifactId>parent</artifactId>
+                  </parent>
+                  """);
+    importProject();
+
+    var newModulePath = "m1new";
+
+    var m1Parent = m1File.getParent();
+    var directory = PsiDirectoryFactory.getInstance(myProject).createDirectory(m1Parent);
+
+    renameDirectory(directory, newModulePath.trim());
+
+    var tag = findTag(parentFile, "project.modules.module");
+    assertEquals(newModulePath, tag.getValue().getTrimmedText());
+  }
 }

@@ -25,9 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import javax.swing.*;
 
-/**
- * @author ilyas
- */
 public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrClassInitializer {
 
   public GrClassInitializerImpl(@NotNull ASTNode node) {

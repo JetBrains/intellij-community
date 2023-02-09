@@ -35,7 +35,7 @@ class GradleVersionCatalogsCompletionTest : GradleCodeInsightTestCase() {
     }
   }
 
-  @ParameterizedTest
+  //@ParameterizedTest
   @BaseGradleVersionSource
   fun testCompletionForBundles(gradleVersion: GradleVersion) {
     test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {

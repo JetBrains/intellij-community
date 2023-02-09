@@ -9,6 +9,7 @@ import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
+import com.intellij.execution.ui.RunToolbarWidgetKt;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -21,6 +22,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +41,7 @@ public class StopAction extends DumbAwareAction {
 
   private static boolean isPlaceGlobal(@NotNull AnActionEvent e) {
     return ActionPlaces.isMainMenuOrActionSearch(e.getPlace())
+           || ActionPlaces.NEW_UI_RUN_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace());
@@ -59,9 +62,16 @@ public class StopAction extends DumbAwareAction {
       List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(e.getProject());
       int stopCount = stoppableDescriptors.size();
       enable = stopCount >= 1;
+
+      if (!enable && e.getPlace().equals(ActionPlaces.NEW_UI_RUN_TOOLBAR)) {
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
+
       if (stopCount > 1) {
         presentation.setText(getTemplatePresentation().getText() + "...");
-        icon = IconUtil.addText(icon, String.valueOf(stopCount));
+        String text = RunToolbarWidgetKt.runCounterToString(e, stopCount);
+        icon = IconUtil.addText(icon, text);
       }
       else if (stopCount == 1) {
           presentation.setText(ExecutionBundle.messagePointer("stop.configuration.action.name",
@@ -113,6 +123,12 @@ public class StopAction extends DumbAwareAction {
     if (isPlaceGlobal(e)) {
       if (stopCount == 1) {
         ExecutionManagerImpl.stopProcess(stoppableDescriptors.get(0));
+        return;
+      }
+
+      if (ActionPlaces.NEW_UI_RUN_TOOLBAR.equals(e.getPlace()) && project != null) {
+        JBPopup popup = RunToolbarWidgetKt.createStopPopup(dataContext, project);
+        showStopPopup(e, dataContext, project, popup);
         return;
       }
 
@@ -184,21 +200,26 @@ public class StopAction extends DumbAwareAction {
         .createPopup();
 
       myActivePopupRef = new WeakReference<>(popup);
-      InputEvent inputEvent = e.getInputEvent();
-      Component component = inputEvent != null ? inputEvent.getComponent() : null;
-      if (component != null && (ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
-                                || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace()))) {
-        popup.showUnderneathOf(component);
-      }
-      else if (project == null) {
-        popup.showInBestPositionFor(dataContext);
-      }
-      else {
-        popup.showCenteredInCurrentWindow(project);
-      }
+      showStopPopup(e, dataContext, project, popup);
     }
     else {
       ExecutionManagerImpl.stopProcess(getRecentlyStartedContentDescriptor(dataContext));
+    }
+  }
+
+  private void showStopPopup(@NotNull AnActionEvent e, DataContext dataContext, Project project, JBPopup popup) {
+    InputEvent inputEvent = e.getInputEvent();
+    Component component = inputEvent != null ? inputEvent.getComponent() : null;
+    if (component != null && (ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
+                              || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace()))
+                              || ActionPlaces.NEW_UI_RUN_TOOLBAR.equals(e.getPlace())) {
+      popup.showUnderneathOf(component);
+    }
+    else if (project == null) {
+      popup.showInBestPositionFor(dataContext);
+    }
+    else {
+      popup.showCenteredInCurrentWindow(project);
     }
   }
 
@@ -247,7 +268,8 @@ public class StopAction extends DumbAwareAction {
     }
   }
 
-  private static @NotNull List<RunContentDescriptor> getActiveStoppableDescriptors(@Nullable Project project) {
+  @ApiStatus.Internal
+  public static @NotNull List<RunContentDescriptor> getActiveStoppableDescriptors(@Nullable Project project) {
     List<RunContentDescriptor> runningProcesses = project != null ?
                                                   ExecutionManagerImpl.getAllDescriptors(project) :
                                                   Collections.emptyList();

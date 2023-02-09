@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.encapsulation;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,7 +28,8 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class UseOfAnotherObjectsPrivateFieldInspection
   extends BaseInspection {
@@ -60,12 +61,11 @@ public class UseOfAnotherObjectsPrivateFieldInspection
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JCheckBox box = panel.addCheckboxEx(InspectionGadgetsBundle.message("ignore.accesses.from.the.same.class"), "ignoreSameClass");
-    panel.addDependentCheckBox(InspectionGadgetsBundle.message("inspection.use.of.private.field.inner.classes.option"), "ignoreInnerClasses", box);
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.accesses.from.equals.method"), "ignoreEquals");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreSameClass", InspectionGadgetsBundle.message("ignore.accesses.from.the.same.class"),
+               checkbox("ignoreInnerClasses", InspectionGadgetsBundle.message("inspection.use.of.private.field.inner.classes.option"))),
+      checkbox("ignoreEquals", InspectionGadgetsBundle.message("ignore.accesses.from.equals.method")));
   }
 
   @Override
@@ -96,10 +96,9 @@ public class UseOfAnotherObjectsPrivateFieldInspection
         }
       }
       final PsiElement referent = expression.resolve();
-      if (!(referent instanceof PsiField)) {
+      if (!(referent instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)referent;
       if (ignoreSameClass) {
         final PsiClass parent = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
         final PsiClass containingClass = field.getContainingClass();

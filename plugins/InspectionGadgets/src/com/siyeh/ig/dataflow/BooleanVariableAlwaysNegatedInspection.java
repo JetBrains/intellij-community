@@ -87,7 +87,7 @@ public class BooleanVariableAlwaysNegatedInspection extends BaseInspection {
         return false;
       }
       final PsiType type = field.getType();
-      if (!PsiType.BOOLEAN.equals(type)) {
+      if (!PsiTypes.booleanType().equals(type)) {
         return false;
       }
       final AlwaysNegatedVisitor visitor = new AlwaysNegatedVisitor(field);
@@ -132,12 +132,10 @@ public class BooleanVariableAlwaysNegatedInspection extends BaseInspection {
       while (parent instanceof PsiParenthesizedExpression) {
         parent = parent.getParent();
       }
-      if (!(parent instanceof PsiPrefixExpression)) {
+      if (!(parent instanceof PsiPrefixExpression prefixExpression)) {
         alwaysNegated = false;
         return;
       }
-      final PsiPrefixExpression prefixExpression =
-        (PsiPrefixExpression)parent;
       final IElementType tokenType =
         prefixExpression.getOperationTokenType();
       if (!JavaTokenType.EXCL.equals(tokenType)) {

@@ -7,5 +7,5 @@ import EnumClass.values
 private enum class EnumClass
 
 fun foo() {
-    EnumClass.entries.toTypedArray()
+    EnumClass.entries
 }

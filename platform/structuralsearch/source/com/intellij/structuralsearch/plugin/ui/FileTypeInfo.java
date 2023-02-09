@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author Pavel.Dolgov
- */
 class FileTypeInfo {
   public static final FileTypeInfo[] EMPTY_ARRAY = new FileTypeInfo[0];
 
@@ -71,8 +68,7 @@ class FileTypeInfo {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof FileTypeInfo)) return false;
-    final FileTypeInfo info = (FileTypeInfo)o;
+    if (!(o instanceof FileTypeInfo info)) return false;
     return myFileType == info.myFileType
            && myDialect == info.myDialect
            && myContext == info.myContext;

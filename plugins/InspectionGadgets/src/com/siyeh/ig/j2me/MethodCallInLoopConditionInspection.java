@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -26,7 +26,8 @@ import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class MethodCallInLoopConditionInspection extends BaseInspection {
 
@@ -56,10 +57,10 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
     return true;
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("inspection.method.call.in.loop.ignore.known.methods.option"), this, "ignoreIterationMethods");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreIterationMethods", InspectionGadgetsBundle.message("inspection.method.call.in.loop.ignore.known.methods.option")));
   }
 
   @Override
@@ -108,10 +109,10 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
           }
 
         private boolean isIterationMethod(@NotNull PsiMethodCallExpression expression) {
-          return MethodCallUtils.isCallToMethod(expression, CommonClassNames.JAVA_UTIL_ITERATOR, PsiType.BOOLEAN, "hasNext") ||
-                 MethodCallUtils.isCallToMethod(expression, "java.util.ListIterator", PsiType.BOOLEAN, "hasPrevious") ||
-                 MethodCallUtils.isCallToMethod(expression, "java.sql.ResultSet", PsiType.BOOLEAN, "next") ||
-                 MethodCallUtils.isCallToMethod(expression, "java.util.Enumeration", PsiType.BOOLEAN, "hasMoreElements") ||
+          return MethodCallUtils.isCallToMethod(expression, CommonClassNames.JAVA_UTIL_ITERATOR, PsiTypes.booleanType(), "hasNext") ||
+                 MethodCallUtils.isCallToMethod(expression, "java.util.ListIterator", PsiTypes.booleanType(), "hasPrevious") ||
+                 MethodCallUtils.isCallToMethod(expression, "java.sql.ResultSet", PsiTypes.booleanType(), "next") ||
+                 MethodCallUtils.isCallToMethod(expression, "java.util.Enumeration", PsiTypes.booleanType(), "hasMoreElements") ||
                  MethodCallUtils.isCallToMethod(expression, CommonClassNames.JAVA_UTIL_QUEUE, null, "poll") ||
                  MethodCallUtils.isCallToMethod(expression, "java.lang.ref.ReferenceQueue", null, "poll");
         }

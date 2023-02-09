@@ -11,7 +11,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.WelcomeWizardUtil
-import com.intellij.ide.actions.IdeScaleTransformer.currentScale
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -19,8 +18,6 @@ import com.intellij.ide.ui.*
 import com.intellij.ide.ui.UISettings.Companion.getPreferredFractionalMetricsValue
 import com.intellij.ide.ui.UISettings.Companion.shadowInstance
 import com.intellij.ide.ui.laf.SystemDarkThemeDetector.Companion.createDetector
-import com.intellij.ide.ui.laf.UiThemeProviderListManager.Companion.excludedThemes
-import com.intellij.ide.ui.laf.UiThemeProviderListManager.Companion.sortThemes
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo
@@ -87,6 +84,8 @@ import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.UIResource
 import javax.swing.plaf.metal.DefaultMetalTheme
 import javax.swing.plaf.metal.MetalLookAndFeel
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 // A constant from Mac OS X implementation. See CPlatformWindow.WINDOW_ALPHA
 private const val WINDOW_ALPHA = "Window.alpha"
@@ -112,11 +111,14 @@ private const val INTER_SIZE = 13
        reportStatistic = false)
 class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposable {
   private val eventDispatcher = EventDispatcher.create(LafManagerListener::class.java)
-  private val lafList = SynchronizedClearableLazy {
+  private val lafMap = SynchronizedClearableLazy {
     runActivity("compute LaF list") {
-      computeLafList()
+      computeLafMap()
     }
   }
+  private val lafList
+    get() = lafMap.value.keys
+
   private val defaultDarkLaf = SynchronizedClearableLazy {
     val lafInfoFQN = ApplicationInfoEx.getInstanceEx().defaultDarkLaf
     (if (lafInfoFQN == null) null else createLafInfo(lafInfoFQN)) ?: DarculaLookAndFeelInfo()
@@ -152,7 +154,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     get() {
       val result = when {
         useInterFont() -> defaultInterFont
-        UISettings.getInstance().overrideLafFonts -> storedLafFont
+        UISettings.getInstance().overrideLafFonts || UISettingsUtils.instance.currentIdeScale != 1f -> storedLafFont
         else -> null
       }
       return result ?: JBFont.label()
@@ -209,9 +211,9 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     }
   }
 
-  private fun computeLafList(): List<LookAndFeelInfo> {
-    val lafList = ArrayList<LookAndFeelInfo>()
-    lafList.add(defaultDarkLaf.value)
+  private fun computeLafMap(): SortedMap<LookAndFeelInfo, TargetUIType> {
+    val map = TreeMap<LookAndFeelInfo, TargetUIType>(UiThemeProviderListManager.themesSortingComparator)
+    map.put(defaultDarkLaf.value, TargetUIType.CLASSIC)
     if (!SystemInfoRt.isMac) {
       for (laf in UIManager.getInstalledLookAndFeels()) {
         val name = laf.name
@@ -221,14 +223,13 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
             && !name.startsWith("Windows")
             && !"GTK+".equals(name, ignoreCase = true)
             && !name.startsWith("JGoodies")) {
-          lafList.add(laf)
+          map.put(laf, TargetUIType.CLASSIC)
         }
       }
     }
-    LafProvider.EP_NAME.forEachExtensionSafe { provider -> lafList.add(provider.lookAndFeelInfo) }
-    lafList.addAll(UiThemeProviderListManager.getInstance().getLaFs())
-    sortThemes(lafList)
-    return lafList
+    LafProvider.EP_NAME.forEachExtensionSafe { provider -> map.put(provider.lookAndFeelInfo, provider.targetUI) }
+    map.putAll(UiThemeProviderListManager.getInstance().getLaFsWithUITypes())
+    return map
   }
 
   @Suppress("removal")
@@ -384,7 +385,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     }
 
     if (themeId != null) {
-      for (l in lafList.value) {
+      for (l in lafList) {
         if (l is UIThemeBasedLookAndFeelInfo && l.theme.id == themeId) {
           return l
         }
@@ -423,30 +424,20 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     return element
   }
 
-  override fun getInstalledLookAndFeels(): Array<LookAndFeelInfo> = lafList.value.toTypedArray()
+  override fun getInstalledLookAndFeels(): Array<LookAndFeelInfo> = lafList.toTypedArray()
 
   override fun getLafComboBoxModel(): CollectionComboBoxModel<LafReference> = myLafComboBoxModel.value
 
-  private fun lafListWithoutExcluded(): List<LookAndFeelInfo> {
-    val excludedThemes = excludedThemes
-    return lafList.value.filter { !excludedThemes.contains(it.name) }
+  fun getLafListForTargetUI(targetUI: TargetUIType): List<LookAndFeelInfo> {
+    return lafMap.value.filterValues { it == targetUI }.keys.toList()
   }
 
   private val allReferences: List<LafReference>
     get() {
       val result = ArrayList<LafReference>()
-      var addSeparator = false
-      val lafNameOrder = UiThemeProviderListManager.lafNameOrder
-      val maxNameOrder = lafNameOrder.values.max()
-      for (info in lafListWithoutExcluded()) {
-        if (addSeparator) {
-          result.add(SEPARATOR)
-          addSeparator = false
-        }
-        result.add(createLafReference(info))
-        if (lafNameOrder.get(info.name) == maxNameOrder) {
-          addSeparator = true
-        }
+      for (group in ThemesListProvider.getInstance().getShownThemes()) {
+        if (!result.isEmpty()) result.add(SEPARATOR)
+        for (info in group) result.add(createLafReference(info))
       }
       return result
     }
@@ -491,7 +482,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
     // Use HighContrast theme for IDE in Windows if HighContrast desktop mode is set.
     if (SystemInfoRt.isWindows && Toolkit.getDefaultToolkit().getDesktopProperty("win.highContrast.on") == true) {
-      for (laf in lafList.value) {
+      for (laf in lafList) {
         if (laf is UIThemeBasedLookAndFeelInfo && HIGH_CONTRAST_THEME_ID == laf.theme.id) {
           return laf
         }
@@ -510,7 +501,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       defaultLightLaf!!.className == className -> defaultLightLaf
       defaultDarkLaf.value.className == className -> defaultDarkLaf.value
       else -> {
-        for (l in lafList.value) {
+        for (l in lafList) {
           if (l !is UIThemeBasedLookAndFeelInfo && className == l.className) {
             return l
           }
@@ -597,7 +588,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
           // avoid loading MetalLookAndFeel class here - check for UIThemeBasedLookAndFeelInfo first
           if (lookAndFeelInfo is UIThemeBasedLookAndFeelInfo) {
             if (laf is UserDataHolder) {
-              (laf as UserDataHolder).putUserData(UIUtil.LAF_WITH_THEME_KEY, java.lang.Boolean.TRUE)
+              (laf as UserDataHolder).putUserData(UIUtil.LAF_WITH_THEME_KEY, true)
             }
             //if (lafNameOrder.containsKey(lookAndFeelInfo.getName()) && lookAndFeelInfo.getName().endsWith("Light")) {
             //  updateIconsUnderSelection(false);
@@ -648,6 +639,79 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     return false
   }
 
+  override fun applyDensity() {
+    val settingsUtils = UISettingsUtils.instance
+    val ideScale = settingsUtils.currentIdeScale
+
+    settingsUtils.setCurrentIdeScale(1f) // need to temporarily reset this to correctly apply new size values
+    UISettings.getInstance().fireUISettingsChanged()
+    setCurrentLookAndFeel(currentLookAndFeel!!)
+    updateUI()
+    settingsUtils.setCurrentIdeScale(ideScale)
+    UISettings.getInstance().fireUISettingsChanged()
+  }
+
+  private fun applyDensity(defaults: UIDefaults) {
+    val densityKey = "ui.density"
+    val oldDensityName = defaults.get(densityKey) as? String
+    val newDensity = UISettings.getInstance().uiDensity
+    if (oldDensityName == newDensity.name) {
+      return // re-applying the same density would break HiDPI-scalable values like Tree.rowHeight
+    }
+    defaults.put(densityKey, newDensity.name)
+    if (newDensity == UIDensity.DEFAULT) {
+      // Special case: we need to set this one to its default value even in non-compact mode, UNLESS it was already set by the theme.
+      // If it's null, it can't be properly patched in patchRowHeight, which looks ugly with larger UI fonts.
+      val vcsLogHeight = defaults.get(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey())
+      // don't want to rely on putIfAbsent here, as UIDefaults is a rather messy combination of multiple hash tables
+      if (vcsLogHeight == null) {
+        defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), JBUI.CurrentTheme.VersionControl.Log.defaultRowHeight())
+      }
+    }
+    if (newDensity == UIDensity.COMPACT) {
+      // main toolbar
+      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), cmSize(34, 34))
+      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), 16)
+      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarFontKey(), Supplier { JBFont.medium() })
+      defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), cmSize(44, 34))
+      // tool window stripes
+      defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), cmSize(32, 32))
+      defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSizeKey(), 16)
+      defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPaddingKey(), cmInsets(4))
+      // Run Widget
+      defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), 26)
+      defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 4)
+      defaults.put(JBUI.CurrentTheme.RunWidget.configurationSelectorFontKey(), Supplier { JBFont.medium() })
+      // trees
+      defaults.put(JBUI.CurrentTheme.Tree.rowHeightKey(), 22)
+      // lists
+      defaults.put("List.rowHeight", 24)
+      // status bar
+      defaults.put(JBUI.CurrentTheme.StatusBar.Widget.insetsKey(), cmInsets(4, 8, 3, 8))
+      defaults.put(JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsetsKey(), cmInsets(1, 0, 1, 4))
+      defaults.put(JBUI.CurrentTheme.StatusBar.fontKey(), Supplier { JBFont.medium() })
+      // separate navbar
+      defaults.put(JBUI.CurrentTheme.NavBar.itemInsetsKey(), cmInsets(2))
+      // editor tabs
+      defaults.put("EditorTabs.tabInsets", cmInsets(1, 12, 1, 8))
+      defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), Supplier { JBFont.medium() })
+      // toolwindows
+      defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), 32)
+      defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontKey(), Supplier { JBFont.medium() })
+      // VCS log
+      defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), 24)
+      defaults.put(JBUI.CurrentTheme.VersionControl.Log.verticalPaddingKey(), 4)
+    }
+  }
+  
+  private fun cmSize(width: Int, height: Int): Dimension = Dimension(width, height)
+
+  @Suppress("UseDPIAwareInsets")
+  private fun cmInsets(all: Int): Insets = Insets(all, all, all, all)
+
+  @Suppress("UseDPIAwareInsets")
+  private fun cmInsets(top: Int, left: Int, bottom: Int, right: Int): Insets = Insets(top, left, bottom, right)
+
   private fun updateEditorSchemeIfNecessary(oldLaf: LookAndFeelInfo?, processChangeSynchronously: Boolean) {
     if (oldLaf is TempUIThemeBasedLookAndFeelInfo || myCurrentLaf is TempUIThemeBasedLookAndFeelInfo) {
       return
@@ -692,12 +756,20 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     fixPopupWeight()
     fixMenuIssues(uiDefaults)
     StartupUiUtil.initInputMapDefaults(uiDefaults)
-    uiDefaults.put("Button.defaultButtonFollowsFocus", java.lang.Boolean.FALSE)
+    uiDefaults.put("Button.defaultButtonFollowsFocus", false)
     uiDefaults.put("Balloon.error.textInsets", JBInsets(3, 8, 3, 8).asUIResource())
     patchFileChooserStrings(uiDefaults)
     patchLafFonts(uiDefaults)
     patchTreeUI(uiDefaults)
+    if (ExperimentalUI.isNewUI()) {
+      applyDensity(uiDefaults)
+    }
+
+    //should be called last because this method modifies uiDefault values
     patchHiDPI(uiDefaults)
+    // required for MigLayout logical pixels to work
+    // super-huge DPI causes issues like IDEA-170295 if `laf.scaleFactor` property is missing
+    uiDefaults.put("laf.scaleFactor", scale(1f))
     uiDefaults.put(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
     uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue())
     uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS, AppUIUtil.adjustFractionalMetrics(getPreferredFractionalMetricsValue()))
@@ -722,10 +794,14 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
   private fun patchLafFonts(uiDefaults: UIDefaults) {
     val uiSettings = UISettings.getInstance()
+    val currentScale = UISettingsUtils.with(uiSettings).currentIdeScale
     if (uiSettings.overrideLafFonts || currentScale != 1f) {
       storeOriginalFontDefaults(uiDefaults)
-      val fontSize = uiSettings.fontSize2D * currentScale
-      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(uiSettings.fontFace, Font.PLAIN, fontSize))
+      val fontFace = if (uiSettings.overrideLafFonts) uiSettings.fontFace else defaultFont.family
+      val fontSize = (if (uiSettings.overrideLafFonts) uiSettings.fontSize2D else defaultFont.size2D).let{
+        it * currentScale
+      }
+      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(fontFace, Font.PLAIN, fontSize))
       val userScaleFactor = if (useInterFont()) fontSize / INTER_SIZE else getFontScale(fontSize)
       setUserScaleFactor(userScaleFactor)
     }
@@ -822,6 +898,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
         result = createDetector { systemIsDark: Boolean -> syncLaf(systemIsDark) }
         lafDetector = result
       }
+
       return result
     }
 
@@ -836,12 +913,10 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private inner class UiThemeEpListener : ExtensionPointListener<UIThemeProvider> {
     override fun extensionAdded(extension: UIThemeProvider, pluginDescriptor: PluginDescriptor) {
       val newLaF = UiThemeProviderListManager.getInstance().themeProviderAdded(extension) ?: return
-      val oldLaFs = lafList.value
-      val newLaFs: MutableList<LookAndFeelInfo> = ArrayList(oldLaFs.size + 1)
-      newLaFs.addAll(oldLaFs)
-      newLaFs.add(newLaF)
-      sortThemes(newLaFs)
-      lafList.value = newLaFs
+      val oldLaFsMap = lafMap.value
+      val newLaFsMap = TreeMap(oldLaFsMap)
+      newLaFsMap.put(newLaF, extension.targetUI)
+      lafMap.value = newLaFsMap
       updateLafComboboxModel()
 
       // when updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
@@ -868,13 +943,13 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       else {
         null
       }
-      val newLaFs: MutableList<LookAndFeelInfo> = ArrayList()
-      for (laf in lafList.value) {
-        if (laf !== oldLaF) {
-          newLaFs.add(laf)
+      val newLaFs = TreeMap<LookAndFeelInfo, TargetUIType>(lafMap.value.comparator())
+      for (laf in lafMap.value) {
+        if (laf.key !== oldLaF) {
+          newLaFs.put(laf.key, laf.value)
         }
       }
-      lafList.value = newLaFs
+      lafMap.value = newLaFs
       updateLafComboboxModel()
       if (defaultLaF != null) {
         setLookAndFeelImpl(defaultLaF, true, true)
@@ -941,9 +1016,13 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
     private val lafGroups: ActionGroup
       get() {
+        val allLaFs =
+          if (ExperimentalUI.isNewUI()) getLafListForTargetUI(TargetUIType.NEW) + getLafListForTargetUI(TargetUIType.CLASSIC)
+          else getLafListForTargetUI(TargetUIType.CLASSIC)
+
         val lightLaFs = ArrayList<LookAndFeelInfo>()
         val darkLaFs = ArrayList<LookAndFeelInfo>()
-        for (lafInfo in lafListWithoutExcluded()) {
+        for (lafInfo in allLaFs) {
           if (lafInfo is UIThemeBasedLookAndFeelInfo && lafInfo.theme.isDark || lafInfo.name == DarculaLaf.NAME) {
             darkLaFs.add(lafInfo)
           }
@@ -1105,7 +1184,7 @@ private class OurPopupFactory(private val delegate: PopupFactory) : PopupFactory
         }
       })
       if (IdeaPopupMenuUI.isUnderPopup(contents) && WindowRoundedCornersManager.isAvailable()) {
-        if (SystemInfoRt.isMac && UIUtil.isUnderDarcula()) {
+        if ((SystemInfoRt.isMac && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
           WindowRoundedCornersManager.setRoundedCorners(window, JBUI.CurrentTheme.Popup.borderColor(true))
         }
         else {
@@ -1223,7 +1302,8 @@ private fun patchHiDPI(defaults: UIDefaults) {
   val prevRowHeightScale = if (prevScaleVal != null || SystemInfoRt.isMac || SystemInfoRt.isWindows) prevScale else getFontScale(12f)
   patchRowHeight(defaults, "List.rowHeight", prevRowHeightScale)
   patchRowHeight(defaults, "Table.rowHeight", prevRowHeightScale)
-  patchRowHeight(defaults, "Tree.rowHeight", prevRowHeightScale)
+  patchRowHeight(defaults, JBUI.CurrentTheme.Tree.rowHeightKey(), prevRowHeightScale)
+  patchRowHeight(defaults, JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), prevRowHeightScale)
   if (prevScale == scale(1f) && prevScaleVal != null) {
     return
   }

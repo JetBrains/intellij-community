@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerContext;
@@ -76,16 +76,15 @@ public abstract class DebuggerUtils {
       if (value instanceof CharValue) {
         return String.valueOf(((PrimitiveValue)value).charValue());
       }
-      if (value instanceof ObjectReference) {
-        if (value instanceof ArrayReference) {
+      if (value instanceof ObjectReference objRef) {
+        if (value instanceof ArrayReference arrayRef) {
           final StringJoiner joiner = new StringJoiner(",", "[", "]");
-          for (final Value element : ((ArrayReference)value).getValues()) {
+          for (final Value element : arrayRef.getValues()) {
             joiner.add(getValueAsString(evaluationContext, element));
           }
           return joiner.toString();
         }
 
-        final ObjectReference objRef = (ObjectReference)value;
         final DebugProcess debugProcess = evaluationContext.getDebugProcess();
         Method toStringMethod = debugProcess.getUserData(TO_STRING_METHOD_KEY);
         if (toStringMethod == null || !toStringMethod.virtualMachine().equals(objRef.virtualMachine())) {
@@ -199,7 +198,7 @@ public abstract class DebuggerUtils {
    * It does not gather all visible methods before checking so can return early
    */
   @Nullable
-  private static Method concreteMethodByName(@NotNull ClassType type, @NotNull String name, @Nullable String signature)  {
+  private static Method concreteMethodByName(@NotNull ClassType type, @NotNull String name, @Nullable String signature) {
     Processor<Method> signatureChecker = signature != null ? m -> m.signature().equals(signature) : CommonProcessors.alwaysTrue();
     LinkedList<ReferenceType> types = new LinkedList<>();
     // first check classes
@@ -260,7 +259,7 @@ public abstract class DebuggerUtils {
     int dims = 0;
     int pos;
 
-    for(pos = className.lastIndexOf(']'); pos >= 0; pos--){
+    for (pos = className.lastIndexOf(']'); pos >= 0; pos--) {
       char c = className.charAt(pos);
 
       if (searchBracket) {
@@ -280,13 +279,13 @@ public abstract class DebuggerUtils {
 
     if (searchBracket) return null;
 
-    if(dims == 0) return null;
+    if (dims == 0) return null;
 
     return new ArrayClass(className.substring(0, pos + 1), dims);
   }
 
-  public static boolean instanceOf(@NotNull String subType ,@NotNull String superType, @Nullable Project project) {
-    if(project == null) {
+  public static boolean instanceOf(@NotNull String subType, @NotNull String superType, @Nullable Project project) {
+    if (project == null) {
       return subType.equals(superType);
     }
 
@@ -476,11 +475,14 @@ public abstract class DebuggerUtils {
   public static void checkSyntax(PsiCodeFragment codeFragment) throws EvaluateException {
     PsiElement[] children = codeFragment.getChildren();
 
-    if(children.length == 0) throw EvaluateExceptionUtil.createEvaluateException(
-      JavaDebuggerBundle.message("evaluation.error.empty.code.fragment"));
+    if (children.length == 0) {
+      throw EvaluateExceptionUtil.createEvaluateException(
+        JavaDebuggerBundle.message("evaluation.error.empty.code.fragment"));
+    }
     for (PsiElement child : children) {
       if (child instanceof PsiErrorElement) {
-        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.invalid.expression", child.getText()));
+        throw EvaluateExceptionUtil.createEvaluateException(
+          JavaDebuggerBundle.message("evaluation.error.invalid.expression", child.getText()));
       }
     }
   }
@@ -489,7 +491,8 @@ public abstract class DebuggerUtils {
     return hasSideEffectsOrReferencesMissingVars(element, null);
   }
 
-  public static boolean hasSideEffectsOrReferencesMissingVars(@Nullable PsiElement element, @Nullable final Set<String> visibleLocalVariables) {
+  public static boolean hasSideEffectsOrReferencesMissingVars(@Nullable PsiElement element,
+                                                              @Nullable final Set<String> visibleLocalVariables) {
     if (element == null) {
       return false;
     }
@@ -582,15 +585,20 @@ public abstract class DebuggerUtils {
     return ApplicationManager.getApplication().getService(DebuggerUtils.class);
   }
 
-  public abstract PsiExpression substituteThis(PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue, StackFrameContext context) throws EvaluateException;
+  public abstract PsiExpression substituteThis(PsiExpression expressionWithThis,
+                                               PsiExpression howToEvaluateThis,
+                                               Value howToEvaluateThisValue,
+                                               StackFrameContext context) throws EvaluateException;
 
-  public abstract DebuggerContext getDebuggerContext (DataContext context);
+  public abstract DebuggerContext getDebuggerContext(DataContext context);
 
   public abstract Element writeTextWithImports(TextWithImports text);
-  public abstract TextWithImports readTextWithImports (Element element);
+
+  public abstract TextWithImports readTextWithImports(Element element);
 
   public abstract void writeTextWithImports(Element root, @NonNls String name, TextWithImports value);
-  public abstract TextWithImports readTextWithImports (Element root, @NonNls String name);
+
+  public abstract TextWithImports readTextWithImports(Element root, @NonNls String name);
 
   public abstract TextWithImports createExpressionWithImports(@NonNls String expression);
 

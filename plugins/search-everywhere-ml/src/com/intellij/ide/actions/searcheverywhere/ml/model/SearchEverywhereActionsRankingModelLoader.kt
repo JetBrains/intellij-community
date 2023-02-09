@@ -6,14 +6,14 @@ import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeaturesInfo
 import com.intellij.internal.ml.ResourcesModelMetadataReader
 import com.intellij.searchEverywhere.model.actions.PredictionModel
-import com.intellij.searchEverywhere.model.actions.exp.PredictionModel as ExperimentalPredictionModel
-
 
 internal class SearchEverywhereActionsRankingModelLoader : SearchEverywhereMLRankingModelLoader() {
   private val standardResourceDirectory = "actions_features"
-  private val experimentalResourceDirectory = "actions_features_exp"
 
-  override val supportedContributor = ActionSearchEverywhereContributor::class.java
+  private val expResourceDirectory = "actions_features_exp"
+  private val expModelDirectory = "actions_model_exp"
+
+  override val supportedContributorName: String = ActionSearchEverywhereContributor::class.java.simpleName
 
   override fun getBundledModel(): DecisionFunction {
     return if (shouldProvideExperimentalModel()) {
@@ -31,10 +31,7 @@ internal class SearchEverywhereActionsRankingModelLoader : SearchEverywhereMLRan
     }
   }
 
-  private fun getExperimentalModel(): SearchEverywhereMLRankingDecisionFunction {
-    val metadata = FeaturesInfo.buildInfo(ResourcesModelMetadataReader(this::class.java, experimentalResourceDirectory))
-    return object : SearchEverywhereMLRankingDecisionFunction(metadata) {
-      override fun predict(features: DoubleArray?): Double = ExperimentalPredictionModel.makePredict(features)
-    }
+  private fun getExperimentalModel(): DecisionFunction {
+    return getCatBoostModel(expResourceDirectory, expModelDirectory)
   }
 }

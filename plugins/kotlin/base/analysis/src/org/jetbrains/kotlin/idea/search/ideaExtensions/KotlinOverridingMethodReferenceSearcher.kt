@@ -105,19 +105,16 @@ class KotlinOverridingMethodReferenceSearcher : MethodUsagesSearcher() {
                 return true
             }
 
-            fun countNonFinalLightMethods() = refElement.toLightMethods().filterNot { it.hasModifierProperty(PsiModifier.FINAL) }
-
             val lightMethods = when (refElement) {
                 is KtProperty, is KtParameter -> {
                     if (isWrongAccessorReference()) return true
                     val isGetter = JvmAbi.isGetterName(method.name)
-                    countNonFinalLightMethods().filter { JvmAbi.isGetterName(it.name) == isGetter }
+                    refElement.toLightMethods().filter { JvmAbi.isGetterName(it.name) == isGetter }
                 }
 
-                is KtNamedFunction -> countNonFinalLightMethods().filter { it.name == method.name }
-                else -> countNonFinalLightMethods()
+                is KtNamedFunction -> refElement.toLightMethods().filter { it.name == method.name }
+                else -> refElement.toLightMethods()
             }
-
 
             return lightMethods.all { super.processInexactReference(ref, it, method, consumer) }
         }

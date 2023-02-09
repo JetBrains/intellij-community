@@ -54,10 +54,9 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiNewExpression)) {
+      if (!(element instanceof PsiNewExpression newExpression)) {
         return;
       }
-      final PsiNewExpression newExpression = (PsiNewExpression)element;
       final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
       if (arrayInitializer == null) {
         return;
@@ -85,10 +84,9 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
         return;
       }
       final PsiElement grandParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
-      if (!(grandParent instanceof PsiVariable)) {
+      if (!(grandParent instanceof PsiVariable variable)) {
         return;
       }
-      final PsiVariable variable = (PsiVariable)grandParent;
       final PsiType expressionType = expression.getType();
       if (!variable.getType().equals(expressionType)) {
         return;
@@ -107,10 +105,9 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
     private static boolean hasGenericTypeParameters(PsiVariable variable) {
       final PsiType type = variable.getType();
       final PsiType componentType = type.getDeepComponentType();
-      if (!(componentType instanceof PsiClassType)) {
+      if (!(componentType instanceof PsiClassType classType)) {
         return false;
       }
-      final PsiClassType classType = (PsiClassType)componentType;
       final PsiType[] parameterTypes = classType.getParameters();
       for (PsiType parameterType : parameterTypes) {
         if (parameterType != null) {

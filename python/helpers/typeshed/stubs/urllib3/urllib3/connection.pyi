@@ -17,7 +17,6 @@ BaseSSLError = ssl.SSLError
 
 ConnectTimeoutError = exceptions.ConnectTimeoutError
 SystemTimeWarning = exceptions.SystemTimeWarning
-SecurityWarning = exceptions.SecurityWarning
 match_hostname = ssl_match_hostname.match_hostname
 resolve_cert_reqs = ssl_.resolve_cert_reqs
 resolve_ssl_version = ssl_.resolve_ssl_version
@@ -58,5 +57,3 @@ class VerifiedHTTPSConnection(HTTPSConnection):
     auto_open: Any
     is_verified: Any
     def connect(self): ...
-
-UnverifiedHTTPSConnection = HTTPSConnection

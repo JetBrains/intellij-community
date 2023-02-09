@@ -65,8 +65,9 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
                                    fileEditor.getComponent();
                                    fileEditor.setState(state);
                                  });
-    ObjectUtils.consumeIfCast(LightEditorInfoImpl.getEditor(editorInfo), EditorImpl.class,
-                              editorImpl -> editorImpl.setDropHandler(new LightEditDropHandler()));
+    if (LightEditorInfoImpl.getEditor(editorInfo) instanceof EditorImpl editor) {
+      editor.setDropHandler(new LightEditDropHandler());
+    }
     myEditors.add(editorInfo);
     installListener(editorInfo);
     project.getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(

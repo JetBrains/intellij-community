@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.labels.DropDownLink;
@@ -34,7 +34,7 @@ public class DarculaLabelUI extends BasicLabelUI {
   }
 
   protected int getMnemonicIndex(JLabel l) {
-    return DarculaLaf.isAltPressed() ? l.getDisplayedMnemonicIndex() : -1;
+    return !SystemInfo.isMac ? l.getDisplayedMnemonicIndex() : -1;
   }
 
   @Override

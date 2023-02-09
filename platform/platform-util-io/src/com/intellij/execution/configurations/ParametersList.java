@@ -94,7 +94,7 @@ public final class ParametersList implements Cloneable {
   @NotNull
   public List<String> getList() {
     if (myGroups.isEmpty()) {
-      return Collections.unmodifiableList(getLocalParameters());
+      return getLocalParameters();
     }
 
     List<String> params = new ArrayList<>(getLocalParameters());
@@ -196,7 +196,7 @@ public final class ParametersList implements Cloneable {
 
   @NotNull
   public List<String> getParameters() {
-    return Collections.unmodifiableList(getLocalParameters());
+    return getLocalParameters();
   }
 
   @NotNull

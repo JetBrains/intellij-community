@@ -5,7 +5,7 @@ import kotlinx.collections.immutable.PersistentMap
 import java.nio.file.Path
 
 /**
- * Implement this interfaces and pass the implementation to {@link ProprietaryBuildTools} constructor to sign the product's files.
+ * Implement this interface and pass the implementation to [ProprietaryBuildTools] constructor to sign the product's files.
  */
 interface SignTool {
   companion object {

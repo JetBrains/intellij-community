@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -11,9 +11,12 @@ import com.intellij.find.FindResult;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -24,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 
 /**
  * @author Bas Leijdekkers
@@ -81,6 +86,7 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
 
   @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    if (myConfigurations.isEmpty()) return null;
     final Document document = file.getViewProvider().getDocument();
     final CharSequence text = document.getCharsSequence();
     final FindManager findManager = FindManager.getInstance(file.getProject());
@@ -98,7 +104,8 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
       register(configuration);
 
       for (RegExpInspectionConfiguration.InspectionPattern pattern : configuration.getPatterns()) {
-        if (file.getFileType() != pattern.fileType()) continue;
+        FileType fileType = pattern.fileType();
+        if (UnknownFileType.INSTANCE != fileType && file.getFileType() != fileType) continue;
         final FindModel model = new FindModel();
         model.setRegularExpressions(true);
         model.setStringToFind(pattern.regExp());
@@ -107,7 +114,8 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
           model.setStringToReplace(replacement);
         }
         model.setSearchContext(pattern.searchContext());
-        FindResult result = findManager.findString(text, 0, model);
+        VirtualFile vFile = file.getVirtualFile();
+        FindResult result = findManager.findString(text, 0, model, vFile);
         while (result.isStringFound()) {
           final TextRange range = new TextRange(result.getStartOffset(), result.getEndOffset());
           PsiElement element = file.findElementAt(result.getStartOffset());
@@ -119,12 +127,11 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
           final int start = result.getStartOffset() - elementRange.getStartOffset();
           final TextRange warningRange = new TextRange(start, result.getEndOffset() - result.getStartOffset() + start);
           final String problemDescriptor = StringUtil.defaultIfEmpty(configuration.getProblemDescriptor(), configuration.getName());
+          final CustomRegExpQuickFix fix = replacement == null ? null : new CustomRegExpQuickFix(findManager, model, text, result);
           final ProblemDescriptor descriptor =
-            manager.createProblemDescriptor(element, warningRange, problemDescriptor,
-                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly,
-                                            new CustomRegExpQuickFix(findManager, model, text, result));
+            manager.createProblemDescriptor(element, warningRange, problemDescriptor, GENERIC_ERROR_OR_WARNING, isOnTheFly, fix);
           descriptors.add(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, uuid));
-          result = findManager.findString(text, result.getEndOffset(), model);
+          result = findManager.findString(text, result.getEndOffset(), model, vFile);
         }
       }
     }
@@ -180,7 +187,9 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
   }
 
   public void addConfiguration(RegExpInspectionConfiguration configuration) {
-    myConfigurations.add(configuration);
+    if (!myConfigurations.contains(configuration)) {
+      myConfigurations.add(configuration);
+    }
   }
 
   public void updateConfiguration(RegExpInspectionConfiguration configuration) {

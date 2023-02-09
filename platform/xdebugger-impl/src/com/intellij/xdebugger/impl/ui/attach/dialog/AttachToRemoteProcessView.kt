@@ -18,6 +18,7 @@ import com.intellij.xdebugger.attach.XAttachHost
 import com.intellij.xdebugger.attach.XAttachHostProvider
 import com.intellij.xdebugger.impl.actions.AttachToProcessAction
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachHostSettingsProvider
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.miginfocom.swing.MigLayout
@@ -30,9 +31,12 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 internal class AttachToRemoteProcessView(private val project: Project,
-                                state: AttachDialogState,
-                                private val attachHostProviders: List<XAttachHostProvider<out XAttachHost>>,
-                                debuggerProviders: List<XAttachDebuggerProvider>) : AttachToProcessView(project, state, debuggerProviders) {
+                                         state: AttachDialogState,
+                                         columnsLayout: AttachDialogColumnsLayout,
+                                         private val attachHostProviders: List<XAttachHostProvider<out XAttachHost>>,
+                                         debuggerProviders: List<XAttachDebuggerProvider>) : AttachToProcessView(project, state,
+                                                                                                                 columnsLayout,
+                                                                                                                 debuggerProviders) {
 
   companion object {
     private val logger = Logger.getInstance(AttachToProcessAction::class.java)
@@ -169,7 +173,7 @@ internal class AttachToRemoteProcessView(private val project: Project,
 
       for (providerAndHosts in hosts.groupBy { it.provider }.toList().sortedBy { it.first.presentationGroup.order }) {
         for (host in providerAndHosts.second) {
-          actions.add(object : AnAction({ host.toString() }, host.getIcon()) {
+          actions.add(object : AnAction({ host.getPresentation() }, host.getIcon()) {
             override fun actionPerformed(e: AnActionEvent) {
               selectedHost = host
               updateProcesses()
@@ -187,7 +191,7 @@ internal class AttachToRemoteProcessView(private val project: Project,
 
     override fun update(e: AnActionEvent) {
       e.presentation.icon = selectedHost?.getIcon()
-      e.presentation.text = StringUtil.trimMiddle(selectedHost?.toString() ?: "", 30)
+      e.presentation.text = StringUtil.trimMiddle(selectedHost?.getPresentation() ?: "", 30)
       e.presentation.isEnabledAndVisible = hosts.any()
     }
 
@@ -256,7 +260,8 @@ internal class AttachToRemoteProcessView(private val project: Project,
     }
   }
 
-  private inner class ManageConnectionsAction : AnAction(XDebuggerBundle.message("xdebugger.attach.manage.connections.message")), DumbAware {
+  private inner class ManageConnectionsAction : AnAction(
+    XDebuggerBundle.message("xdebugger.attach.manage.connections.message")), DumbAware {
     override fun actionPerformed(e: AnActionEvent) {
       openSettings()
     }

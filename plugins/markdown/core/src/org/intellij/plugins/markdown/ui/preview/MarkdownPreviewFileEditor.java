@@ -104,6 +104,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
       () -> ObjectUtils.tryCast(myPanel, MarkdownHtmlPanelEx.class)
     );
     scrollPane.addMouseWheelListener(helper);
+    Disposer.register(this, () -> scrollPane.removeMouseWheelListener(helper));
   }
 
   public void setMainEditor(Editor editor) {
@@ -198,9 +199,10 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
   @Override
   public void dispose() {
     if (myPanel != null) {
-      this.isDisposed = true;
-      Disposer.dispose(myPanel);
+      detachHtmlPanel();
     }
+    myLastRenderedHtml = "";
+    isDisposed = true;
   }
 
   @Nullable
@@ -278,8 +280,8 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
       myHtmlPanelWrapper.remove(myPanel.getComponent());
       Disposer.dispose(myPanel);
       myPanel = null;
-      this.putUserData(PREVIEW_BROWSER, null);
     }
+    putUserData(PREVIEW_BROWSER, null);
   }
 
   private void attachHtmlPanel() {
@@ -289,7 +291,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     if (myHtmlPanelWrapper.isShowing()) myHtmlPanelWrapper.validate();
     myHtmlPanelWrapper.repaint();
     myLastRenderedHtml = "";
-    this.putUserData(PREVIEW_BROWSER, new WeakReference<>(myPanel));
+    putUserData(PREVIEW_BROWSER, new WeakReference<>(myPanel));
     updateHtmlPooled();
   }
 

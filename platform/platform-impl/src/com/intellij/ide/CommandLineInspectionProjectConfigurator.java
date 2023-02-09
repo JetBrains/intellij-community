@@ -52,15 +52,6 @@ public interface CommandLineInspectionProjectConfigurator {
         return path != null && filesPredicate.test(path);
       };
     }
-
-    /**
-     * Allows to grab additional information from the context about the current inspections running,
-     * if available
-     */
-    @Nullable
-    default AnalysisScope getAnalyzerScope() {
-      return null;
-    }
   }
 
   /**

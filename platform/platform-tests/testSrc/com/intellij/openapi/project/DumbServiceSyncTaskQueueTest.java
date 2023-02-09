@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.util.ArrayList;
@@ -25,10 +26,10 @@ public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
     final AtomicBoolean secondTaskCompleted = new AtomicBoolean(false);
 
     // Run two tasks one after another. Then terminate the first (parent) task and check that the second (child) task complete successfully
-    service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("parent") {
+    service().runTaskSynchronously(new DumbModeTask() {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-        service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("child") {
+        service().runTaskSynchronously(new DumbModeTask() {
           @Override
           public void performInDumbMode(@NotNull ProgressIndicator indicator) {
             secondTaskCompleted.set(true);
@@ -44,14 +45,14 @@ public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
 
   public void testRecursionIsBlocked() {
     final Ref<Boolean> myInnerRunning = new Ref<>(null);
-    service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("parent") {
+    service().runTaskSynchronously(new DumbModeTask() {
       boolean myIsRunning = false;
 
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         myIsRunning = true;
         try {
-          service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("child") {
+          service().runTaskSynchronously(new DumbModeTask() {
             @Override
             public void performInDumbMode(@NotNull ProgressIndicator indicator) {
               //the task execution must be postponed, so the captured closure will evaluate to `false`
@@ -70,12 +71,12 @@ public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
   public void testEquivalentTasksAreMerged() {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
-    service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("parent") {
+    service().runTaskSynchronously(new DumbModeTaskWithEquivalentObject("parent") {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         for (int i = 0; i < 100; i++) {
           int taskId = i;
-          service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("child") {
+          service().runTaskSynchronously(new DumbModeTaskWithEquivalentObject("child") {
             @Override
             public void performInDumbMode(@NotNull ProgressIndicator indicator) {
               childLog.add(taskId);
@@ -96,18 +97,18 @@ public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
 
   public void testDifferentClassesWithSameEquivalentAreNotMerged() {
     List<Integer> childLog = new ArrayList<>();
-    service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("parent") {
+    service().runTaskSynchronously(new DumbModeTaskWithEquivalentObject("parent") {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         final String commonEquivalence = "child";
-        DumbModeTask taskA = new DumbServiceMergingTaskQueueTest.MyDumbModeTask(commonEquivalence) {
+        DumbModeTask taskA = new DumbModeTaskWithEquivalentObject(commonEquivalence) {
           @Override
           public void performInDumbMode(@NotNull ProgressIndicator indicator) {
             childLog.add(1);
           }
         };
 
-        DumbModeTask taskB = new DumbServiceMergingTaskQueueTest.MyDumbModeTask(commonEquivalence) {
+        DumbModeTask taskB = new DumbModeTaskWithEquivalentObject(commonEquivalence) {
           @Override
           public void performInDumbMode(@NotNull ProgressIndicator indicator) {
             childLog.add(-1);
@@ -125,12 +126,12 @@ public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
 
   public void testNonEquivalentTasksAreNotMerged() {
     List<Integer> childLog = new ArrayList<>();
-    service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("parent") {
+    service().runTaskSynchronously(new DumbModeTask() {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         for (int i = 0; i < 100; i++) {
           int taskId = i;
-          service().runTaskSynchronously(new DumbServiceMergingTaskQueueTest.MyDumbModeTask("child" + i) {
+          service().runTaskSynchronously(new DumbModeTask() {
             @Override
             public void performInDumbMode(@NotNull ProgressIndicator indicator) {
               childLog.add(taskId);
@@ -141,5 +142,19 @@ public class DumbServiceSyncTaskQueueTest extends BasePlatformTestCase {
     });
 
     Assert.assertEquals("Every child task are not unique, all must be executed: " + childLog, 100, childLog.size());
+  }
+
+  static abstract class DumbModeTaskWithEquivalentObject extends DumbModeTask {
+    private final @NotNull Object myEquivalenceObject;
+
+    DumbModeTaskWithEquivalentObject(@NotNull Object object) { myEquivalenceObject = object; }
+
+    @Override
+    public @Nullable DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
+      if (taskFromQueue.getClass().equals(getClass()) && ((DumbModeTaskWithEquivalentObject)taskFromQueue).myEquivalenceObject.equals(myEquivalenceObject)) {
+        return this;
+      }
+      return null;
+    }
   }
 }

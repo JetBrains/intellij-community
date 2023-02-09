@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-/**
- * @author Danila Ponomarenko
- */
 public final class RemoveRedundantArgumentsFix implements IntentionAction {
   private final PsiMethod myTargetMethod;
   private final PsiExpression[] myArguments;

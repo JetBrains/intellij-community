@@ -21,6 +21,7 @@ import java.util.concurrent.Callable;
  *
  * @param <T> Result type.
  * @see WriteAction
+ * @see CoroutinesKt#readAction
  */
 public abstract class ReadAction<T> extends BaseActionRunnable<T> {
 
@@ -89,6 +90,8 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
 
   /**
    * Create an {@link NonBlockingReadAction} builder to run the given Callable in a non-blocking read action on a background thread.
+   *
+   * @see CoroutinesKt#readAction
    */
   @NotNull
   @Contract(pure = true)

@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.base.psi.singleExpressionBody
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.utils.fqname.fqName
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Companion.asKtClass
@@ -28,20 +27,20 @@ import org.jetbrains.kotlin.idea.inspections.VirtualFunction.*
 import org.jetbrains.kotlin.idea.inspections.VirtualFunction.Function
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.*
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.resolve.descriptorUtil.getAllSuperClassifiers
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
-import org.jetbrains.kotlin.types.typeUtil.isAnyOrNullableAny
 import org.jetbrains.kotlin.types.typeUtil.isNothing
+
+private typealias CallChain = List<CallChainElement>
 
 /**
  * Tests:
@@ -56,27 +55,21 @@ class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
         override fun visitObjectDeclaration(ktObject: KtObjectDeclaration) {
             if (ktObject.isData() || ktObject.isCompanion() || ktObject.isObjectLiteral()) return
             val fqName = lazy { ktObject.descriptor?.fqNameSafe ?: FqName.ROOT }
-            val isSerializable = isSerializable(ktObject)
             val toString = ktObject.findToString()
-            val isSerializableCase = toString == TrivialSuper && isSerializable
             val isSealedSubClassCase by lazy { toString == TrivialSuper && ktObject.isSubclassOfSealed() }
             val isToStringCase by lazy { toString is Function && isCompatibleToString(ktObject, fqName, toString.function) }
-            if ((isSerializableCase || isSealedSubClassCase || isToStringCase) &&
-                isCompatibleHashCode(ktObject) &&
-                isCompatibleEquals(ktObject, fqName) &&
-                isCompatibleReadResolve(ktObject, fqName, isSerializable)
-            ) {
+            if ((isSealedSubClassCase || isToStringCase) && isCompatibleHashCode(ktObject, fqName) && isCompatibleEquals(ktObject, fqName)) {
                 holder.registerProblem(
                     ktObject.getObjectKeyword() ?: return,
                     KotlinBundle.message(
-                        when {
-                            isSerializableCase -> "serializable.object.must.be.marked.with.data"
-                            isSealedSubClassCase -> "inspection.message.sealed.object.can.be.converted.to.data.object"
-                            else -> "inspection.message.object.with.manual.tostring.can.be.converted.to.data.object"
-                        }
+                        if (isSealedSubClassCase) "inspection.message.sealed.object.can.be.converted.to.data.object"
+                        else "inspection.message.object.with.manual.tostring.can.be.converted.to.data.object"
                     ),
-                    ConvertToDataObjectQuickFix(isSerializable),
+                    ConvertToDataObjectQuickFix(),
                 )
+                ktObject.containingFile.virtualFile?.let { file ->
+                    KotlinLanguageFeaturesFUSCollector.DataObject.logObjectToDataObjectQuickFixIsSuggested(file)
+                }
             }
         }
     }
@@ -84,21 +77,6 @@ class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
 
 private fun KtObjectDeclaration.isSubclassOfSealed(): Boolean =
     superTypeListEntries.asSequence().mapNotNull { it.asKtClass() }.any { it.isSealed() }
-
-private fun isSerializable(ktObject: KtObjectDeclaration): Boolean =
-    ktObject.resolveToDescriptorIfAny()
-        ?.getAllSuperClassifiers()
-        ?.any { it.fqNameSafe == FqName("java.io.Serializable") } == true
-
-private fun isCompatibleReadResolve(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<FqName>, isSerializable: Boolean): Boolean =
-    !isSerializable || when (val readResolve = ktObject.findReadResolve()) {
-        is Function -> ktObjectFqn.value == readResolve.function.takeIf(KtNamedFunction::isPrivate)?.singleExpressionBody()
-            ?.asSafely<KtNameReferenceExpression>()
-            ?.resolveType()
-            ?.fqName
-        NonTrivialSuper -> false
-        TrivialSuper -> true
-    }
 
 private fun isCompatibleToString(
     ktObject: KtObjectDeclaration,
@@ -108,13 +86,10 @@ private fun isCompatibleToString(
     val body = toStringFunction.singleExpressionBody() ?: return false
     if ((body as? KtStringTemplateExpression)?.entries?.singleOrNull()?.text == ktObject.name) return true
     val context = lazy { body.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL) }
-    val callChain = body.tryUnwrapElvisOrDoubleBang(context).getCallChain().takeIf { it.size in 2..3 } ?: return false
-    val classLiteralReceiver = callChain.firstOrNull()?.asSafely<KtClassLiteralExpression>()?.receiverExpression
-    val fqn = classLiteralReceiver?.asSafely<KtNameReferenceExpression>()?.resolveType(context.value)?.fqName
-    val methods = callChain.drop(1).map { it.asSafely<KtNameReferenceExpression>()?.text ?: return false }
-    return (classLiteralReceiver is KtThisExpression || fqn == ktObjectFqn.value) &&
-            (methods == listOf("java", "simpleName") || methods == listOf("simpleName")) ||
-            callChain.firstOrNull() is KtThisExpression && methods == listOf("javaClass", "simpleName")
+    val callChain = body.tryUnwrapElvisOrDoubleBang(context).getCallChain().mapToCallChainElements(context, ktObjectFqn) ?: return false
+    return callChain in
+            kotlinOrJavaSelfClassLiteral(CallChainElement.NameReference("simpleName")) +
+            optionalThis(CallChainElement.NameReference("javaClass"), CallChainElement.NameReference("simpleName"))
 }
 
 private fun KtExpression.tryUnwrapElvisOrDoubleBang(context: Lazy<BindingContext>): KtExpression = when {
@@ -126,21 +101,29 @@ private fun KtExpression.tryUnwrapElvisOrDoubleBang(context: Lazy<BindingContext
 private fun isCompatibleEquals(ktObject: KtObjectDeclaration, ktObjectFqn: Lazy<FqName>): Boolean =
     when (val equals = ktObject.findEquals()) {
         is Function -> ktObjectFqn.value == equals.function.singleExpressionBody()
-            ?.asSafely<KtIsExpression>()?.typeReference?.let { typeReference ->
+            ?.asSafely<KtIsExpression>()?.takeUnless(KtIsExpression::isNegated)?.typeReference?.let { typeReference ->
                 typeReference.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)[BindingContext.TYPE, typeReference]?.fqName
             }
         NonTrivialSuper -> false
         TrivialSuper -> true
     }
 
-private fun isCompatibleHashCode(ktObject: KtObjectDeclaration): Boolean =
+private fun isCompatibleHashCode(ktObject: KtObjectDeclaration, thisObjectFqn: Lazy<FqName>): Boolean =
     when (val hashCode = ktObject.findHashCode()) {
-        is Function -> hashCode.function.singleExpressionBody() is KtConstantExpression
+        is Function -> {
+            val body = hashCode.function.singleExpressionBody()
+            body is KtConstantExpression || body
+                ?.getCallChain()
+                ?.mapToCallChainElements(lazy { body.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL) }, thisObjectFqn) in
+                    kotlinOrJavaSelfClassLiteral(CallChainElement.CallWithZeroArgs("hashCode")) +
+                    optionalThis(CallChainElement.NameReference("javaClass"), CallChainElement.CallWithZeroArgs("hashCode")) +
+                    optionalThis(CallChainElement.CallWithZeroArgs("toString"), CallChainElement.CallWithZeroArgs("hashCode"))
+        }
         NonTrivialSuper -> false
         TrivialSuper -> true
     }
 
-private class ConvertToDataObjectQuickFix(private val isSerializable: Boolean) : LocalQuickFix {
+private class ConvertToDataObjectQuickFix : LocalQuickFix {
     override fun getFamilyName(): String = KotlinBundle.message("convert.to.data.object")
 
     override fun startInWriteAction(): Boolean = false
@@ -152,13 +135,15 @@ private class ConvertToDataObjectQuickFix(private val isSerializable: Boolean) :
                 ktObject.findToString().function,
                 ktObject.findEquals().function,
                 ktObject.findHashCode().function,
-                if (isSerializable) ktObject.findReadResolve().function else null,
             )
         })
         runWriteAction {
             functions.forEach { it.delete() }
             if (ktObject.body?.declarations?.isEmpty() == true) ktObject.body?.delete()
             ktObject.addModifier(KtTokens.DATA_KEYWORD)
+        }
+        ktObject.containingFile.virtualFile?.let { file ->
+            KotlinLanguageFeaturesFUSCollector.DataObject.logObjectToDataObjectQuickFixIsApplied(file)
         }
     }
 
@@ -173,9 +158,6 @@ private class ConvertToDataObjectQuickFix(private val isSerializable: Boolean) :
 private fun KtObjectDeclaration.findToString() = findMemberFunction(TO_STRING, KOTLIN_TO_STRING_FQN, FunctionDescriptor::isAnyToString)
 private fun KtObjectDeclaration.findEquals() = findMemberFunction(EQUALS, KOTLIN_ANY_EQUALS_FQN, FunctionDescriptor::isAnyEquals)
 private fun KtObjectDeclaration.findHashCode() = findMemberFunction(HASH_CODE, KOTLIN_ANY_HASH_CODE_FQN, FunctionDescriptor::isAnyHashCode)
-private fun KtObjectDeclaration.findReadResolve(): VirtualFunction = findMemberFunction("readResolve", trivialSuperFqn = null) {
-    it.valueParameters.isEmpty() && it.returnType?.isAnyOrNullableAny() == true
-}
 
 private fun KtObjectDeclaration.findMemberFunction(
     name: String,
@@ -206,3 +188,41 @@ private sealed interface VirtualFunction {
     object NonTrivialSuper : VirtualFunction
     object TrivialSuper : VirtualFunction
 }
+
+private sealed interface CallChainElement {
+    data class NameReference(val callReferenceName: String) : CallChainElement
+    data class CallWithZeroArgs(val callReferenceName: String) : CallChainElement
+    /**
+     * Either `this::class` or `Foo::class` but checks that `this` is `Foo`
+     */
+    object SelfClassLiteral : CallChainElement
+    object This : CallChainElement
+}
+
+private fun List<KtExpression>.mapToCallChainElements(
+    context: Lazy<BindingContext>,
+    thisObjectFqn: Lazy<FqName>,
+): CallChain? =
+    map {
+        when {
+            it is KtThisExpression -> CallChainElement.This
+            it is KtCallExpression && it.valueArguments.isEmpty() && it.lambdaArguments.isEmpty() ->
+                CallChainElement.CallWithZeroArgs(it.calleeExpression?.text ?: return null)
+            it is KtNameReferenceExpression -> CallChainElement.NameReference(it.text ?: return null)
+            it is KtClassLiteralExpression -> {
+                val classLiteralReceiver = it.receiverExpression
+                if (classLiteralReceiver is KtThisExpression ||
+                    thisObjectFqn.value == classLiteralReceiver?.asSafely<KtNameReferenceExpression>()?.resolveType(context.value)?.fqName
+                ) CallChainElement.SelfClassLiteral else return null
+            }
+            else -> return null
+        }
+    }
+
+private fun kotlinOrJavaSelfClassLiteral(vararg suffix: CallChainElement): List<CallChain> =
+    listOf(
+        listOf(CallChainElement.SelfClassLiteral, CallChainElement.NameReference("java")) + suffix,
+        listOf(CallChainElement.SelfClassLiteral) + suffix,
+    )
+
+private fun optionalThis(vararg suffix: CallChainElement): List<CallChain> = listOf(suffix.toList(), listOf(CallChainElement.This) + suffix)

@@ -32,6 +32,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.TreeNodeProcessingResult;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.*;
@@ -295,7 +296,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   private static <T> T findNewPusherValueFromParent(Project project, VirtualFile fileOrDir, FilePropertyPusher<? extends T> pusher) {
     final VirtualFile parent = fileOrDir.getParent();
     if (parent != null && ProjectFileIndex.getInstance(project).isInContent(parent)) {
-      final T userValue = pusher.getFileDataKey().getPersistentValue(parent);
+      final T userValue = pusher.getFilePropertyKey().getPersistentValue(parent);
       if (userValue != null) return userValue;
       return findNewPusherValue(project, parent, pusher, null);
     }
@@ -313,7 +314,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       final Object[] moduleValues = getModuleImmediateValues(pushers, module);
       return fileOrDir -> {
         applyPushersToFile(fileOrDir, pushers, moduleValues);
-        return ContentIteratorEx.Status.CONTINUE;
+        return TreeNodeProcessingResult.CONTINUE;
       };
     });
   }
@@ -343,14 +344,13 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     Stream<Runnable> tasksStream;
     if (StandardContributorsKt.shouldIndexProjectBasedOnIndexableEntityProviders()) {
       Sequence<ModuleEntity> modulesSequence = ReadAction.compute(() ->
-                                                                    WorkspaceModel.getInstance(project).getEntityStorage().
-                                                                      getCurrent().entities(ModuleEntity.class));
+                                                                    WorkspaceModel.getInstance(project).getCurrentSnapshot().entities(ModuleEntity.class));
       List<ModuleEntity> moduleEntities = SequencesKt.toList(modulesSequence);
       IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
       tasksStream = moduleEntities.stream()
         .flatMap(moduleEntity -> {
           return ReadAction.compute(() -> {
-            EntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+            EntityStorage storage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
             Module module = ModuleEntityUtils.findModule(moduleEntity, storage);
             if (module == null) {
               return Stream.empty();
@@ -500,6 +500,11 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     public @Nullable DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
       if (taskFromQueue instanceof MyDumbModeTask && ((MyDumbModeTask)taskFromQueue).myUpdater == myUpdater) return this;
       return null;
+    }
+
+    @Override
+    public String toString() {
+      return super.toString() + " (reason: " + myReason + ")";
     }
   }
 }

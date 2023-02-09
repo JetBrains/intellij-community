@@ -19,9 +19,6 @@ import com.intellij.codeInsight.codeFragment.CodeFragment;
 
 import java.util.Set;
 
-/**
- * @author vlan
- */
 public class PyCodeFragment extends CodeFragment {
   private final Set<String> myGlobalWrites;
   private final Set<String> myNonlocalWrites;

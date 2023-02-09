@@ -39,7 +39,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNamespaceHelper;
@@ -133,8 +132,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   @NotNull
   private IntentionPreviewInfo doPreview(@NotNull Project project, PsiElement element, @Nullable Editor editor) {
     PsiFile file = element.getContainingFile();
-    if (!(file instanceof XmlFile)) return IntentionPreviewInfo.EMPTY;
-    XmlFile xmlFile = (XmlFile)file;
+    if (!(file instanceof XmlFile xmlFile)) return IntentionPreviewInfo.EMPTY;
     List<String> namespaces = getNamespaces(element, xmlFile);
     String namespace = namespaces.isEmpty() ? "" : namespaces.get(0);
     new MyStringToAttributeProcessor(element, project, editor, xmlFile)
@@ -299,7 +297,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
     if (namespacesToChooseFrom.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
       JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(ContainerUtil.newArrayList(namespacesToChooseFrom))
+        .createPopupChooserBuilder(List.of(namespacesToChooseFrom))
         .setRenderer(new XmlNSRenderer())
         .setTitle(title)
         .setItemChosenCallback(selectedValue -> {
@@ -358,8 +356,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
     @Override
     public boolean isAcceptableMetaData(final PsiMetaData metaData, final String url) {
-      if (metaData instanceof XmlNSDescriptorImpl) {
-        final XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)metaData;
+      if (metaData instanceof XmlNSDescriptorImpl nsDescriptor) {
 
         final XmlElementDescriptor descriptor = nsDescriptor.getElementDescriptor(searchFor(), url);
         return descriptor != null && !(descriptor instanceof AnyXmlElementDescriptor);

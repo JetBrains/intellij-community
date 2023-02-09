@@ -9,7 +9,7 @@ import java.lang.instrument.Instrumentation;
 import java.util.jar.JarFile;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
-public class AddToClasspathJavaAgent {
+public final class AddToClasspathJavaAgent {
   public static void agentmain(String agentArgs, Instrumentation instrumentation) throws Exception {
     System.err.println("AGENTMAIN " + ProcessHandle.current().pid() + " " + agentArgs);
 

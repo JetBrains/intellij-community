@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-/**
- * @author ven
- */
 public class PsiConstantEvaluationHelperImpl extends PsiConstantEvaluationHelper {
 
   @Override

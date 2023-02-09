@@ -104,7 +104,11 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
   private fun findCurrentFile(): VirtualFile? {
     if (project.isDisposed) return null
     val fileEditor = FileEditorManager.getInstance(project)?.selectedEditor ?: return null
-    val file = fileEditor.file
+    val file = if (fileEditor is TextEditor) {
+      fileEditor.editor.virtualFile
+    } else {
+      fileEditor.file
+    }
     if (file != null) return file
     val textEditor = fileEditor as? TextEditor ?: return null
     return FileDocumentManager.getInstance().getFile(textEditor.editor.document)

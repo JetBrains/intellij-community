@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.resolve;
 
@@ -489,6 +489,11 @@ public abstract class FirReferenceResolveTestGenerated extends AbstractFirRefere
         @TestMetadata("AnnotationTypeParameter.kt")
         public void testAnnotationTypeParameter() throws Exception {
             runTest("../idea/tests/testData/resolve/references/AnnotationTypeParameter.kt");
+        }
+
+        @TestMetadata("AnnotationWithSingleArgument.kt")
+        public void testAnnotationWithSingleArgument() throws Exception {
+            runTest("../idea/tests/testData/resolve/references/AnnotationWithSingleArgument.kt");
         }
 
         @TestMetadata("ClassInTypeConstraint.kt")

@@ -8,3 +8,4 @@ interface FullReportGenerator : ReportGenerator {
   fun generateErrorReports(errors: List<FileErrorInfo>)
   fun generateGlobalReport(globalMetrics: List<MetricInfo>): Path
 }
+

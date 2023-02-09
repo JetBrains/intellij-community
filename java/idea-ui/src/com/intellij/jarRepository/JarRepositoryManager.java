@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
@@ -35,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.transfer.RepositoryOfflineException;
@@ -229,7 +231,7 @@ public final class JarRepositoryManager {
                                                             final Set<ArtifactKind> artifactKinds,
                                                             @Nullable Collection<RemoteRepositoryDescription> repositories,
                                                             @Nullable String copyTo) {
-    Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repositories);
+    Collection<RemoteRepositoryDescription> effectiveRepos = selectRemoteRepositories(project, desc, repositories);
     return submitModalJob(
       project, JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 1), newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo)
     );
@@ -255,7 +257,7 @@ public final class JarRepositoryManager {
                                                                final Set<ArtifactKind> artifactKinds,
                                                                @Nullable List<RemoteRepositoryDescription> repos,
                                                                @Nullable String copyTo) {
-    Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repos);
+    Collection<RemoteRepositoryDescription> effectiveRepos = selectRemoteRepositories(project, desc, repos);
     return submitBackgroundJob(newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo));
   }
 
@@ -265,7 +267,7 @@ public final class JarRepositoryManager {
                                                                final Set<ArtifactKind> artifactKinds,
                                                                @Nullable List<RemoteRepositoryDescription> repos,
                                                                @Nullable String copyTo) {
-    Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repos);
+    Collection<RemoteRepositoryDescription> effectiveRepos = selectRemoteRepositories(project, desc, repos);
     return submitSyncJob(newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo));
   }
 
@@ -285,24 +287,67 @@ public final class JarRepositoryManager {
     final JpsMavenRepositoryLibraryDescriptor libDescriptor = libraryProps.getRepositoryLibraryDescriptor();
     if (libDescriptor.getMavenId() != null) {
       EnumSet<ArtifactKind> kinds = ArtifactKind.kindsOf(loadSources, loadJavadoc, libraryProps.getPackaging());
-      Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repositories);
+      Collection<RemoteRepositoryDescription> effectiveRepos = selectRemoteRepositories(project, libDescriptor, repositories);
       return newOrderRootResolveJob(libDescriptor, kinds, effectiveRepos, copyTo).apply(progressIndicator);
     }
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static Collection<RemoteRepositoryDescription> addDefaultsIfEmpty(@NotNull Project project,
-                                                                            @Nullable Collection<RemoteRepositoryDescription> repositories) {
-    if (repositories == null || repositories.isEmpty()) {
-      repositories = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
+  /**
+   * Get list of remote repositories meeting the priority:
+   * <ol>
+   * <li>from {@code repositories} param if not null and not empty</li>
+   * <li>from {@code desc} library descriptor found by {@link JpsMavenRepositoryLibraryDescriptor#getJarRepositoryId} if present</li>
+   * <li>from {@link RemoteRepositoriesConfiguration#getRepositories()}</li>
+   * </ol>
+   *
+   * @param project      Project instance
+   * @param desc         Library descriptor
+   * @param repositories Repositories to override any other values
+   * @return Collection of remote repositories chosen from params.
+   */
+  static List<RemoteRepositoryDescription> selectRemoteRepositories(@NotNull Project project,
+                                                                    @Nullable JpsMavenRepositoryLibraryDescriptor desc,
+                                                                    @Nullable Collection<RemoteRepositoryDescription> repositories) {
+    if (repositories != null && !repositories.isEmpty()) {
+      return repositories.stream().toList();
     }
-    return repositories;
+
+    RemoteRepositoryDescription repositoryFromDescriptor = getRemoteRepositoryFromLibrary(project, desc);
+    if (repositoryFromDescriptor != null) {
+      return List.of(repositoryFromDescriptor);
+    }
+
+    return RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
+  }
+
+  @Nullable
+  private static RemoteRepositoryDescription getRemoteRepositoryFromLibrary(@NotNull Project project,
+                                                                            @Nullable JpsMavenRepositoryLibraryDescriptor desc) {
+    if (desc == null) {
+      return null;
+    }
+
+    String repositoryId = desc.getJarRepositoryId();
+    if (repositoryId == null) {
+      return null;
+    }
+
+    return ContainerUtil.find(RemoteRepositoriesConfiguration.getInstance(project).getRepositories(),
+                              it -> it.getId().equals(repositoryId));
   }
 
   @NotNull
-  public static Promise<Collection<String>> getAvailableVersions(@NotNull Project project, @NotNull RepositoryLibraryDescription libraryDescription) {
-    List<RemoteRepositoryDescription> repos = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
+  public static Promise<Collection<String>> getAvailableVersions(@NotNull Project project,
+                                                                 @NotNull RepositoryLibraryDescription libraryDescription) {
+    return getAvailableVersions(project, libraryDescription, Collections.emptyList());
+  }
+
+  @NotNull
+  public static Promise<Collection<String>> getAvailableVersions(@NotNull Project project,
+                                                                 @NotNull RepositoryLibraryDescription libraryDescription,
+                                                                 @NotNull List<RemoteRepositoryDescription> repositories) {
+    List<RemoteRepositoryDescription> repos = selectRemoteRepositories(project, null, repositories).stream().toList();
     return submitBackgroundJob(new VersionResolveJob(libraryDescription, repos));
   }
 
@@ -433,7 +478,9 @@ public final class JarRepositoryManager {
   private static <T> T submitSyncJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
     try {
       ourTasksInProgress.incrementAndGet();
-      ProgressIndicator indicator = new EmptyProgressIndicator(ModalityState.defaultModalityState());
+      ProgressIndicator parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+      ProgressIndicator indicator = parentIndicator == null ? new EmptyProgressIndicator(ModalityState.defaultModalityState())
+                                                            : ProgressWrapper.wrap(parentIndicator);
       return ProgressManager.getInstance().runProcess(() -> job.apply(indicator), indicator);
     }
     finally {
@@ -464,6 +511,10 @@ public final class JarRepositoryManager {
     ModalityState startModality = ModalityState.defaultModalityState();
     AsyncPromise<T> promise = new AsyncPromise<>();
     DOWNLOADER_EXECUTOR.execute(() -> {
+      if (promise.isCancelled()) {
+        return;
+      }
+
       try {
         ourTasksInProgress.incrementAndGet();
         final ProgressIndicator indicator = new EmptyProgressIndicator(startModality);

@@ -25,8 +25,6 @@ import java.util.WeakHashMap;
 
 /**
  * Encapsulates logic for processing {@link EditorSettings#isWrapWhenTypingReachesRightMargin(Project)} option.
- *
- * @author Denis Zhdanov
  */
 public class AutoHardWrapHandler {
 

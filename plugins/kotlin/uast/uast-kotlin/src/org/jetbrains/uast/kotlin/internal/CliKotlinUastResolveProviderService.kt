@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.context.ProjectContext
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTrace
@@ -33,7 +32,11 @@ class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
         @Suppress("DEPRECATION")
         return element.project.analysisCompletedHandler?.getTypeMapper()
     }
-
+    @Deprecated(
+        "Do not use the old frontend, retroactively named as FE1.0, since K2 with the new frontend is coming.\n" +
+                "Please use analysis API: https://github.com/JetBrains/kotlin/blob/master/docs/analysis/analysis-api/analysis-api.md",
+        replaceWith = ReplaceWith("analyze(element) { }", "org.jetbrains.kotlin.analysis.api.analyze")
+    )
     override fun getBindingContext(element: KtElement): BindingContext {
         return element.project.analysisCompletedHandler?.getBindingContext() ?: BindingContext.EMPTY
     }
@@ -43,9 +46,6 @@ class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
     override fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings {
         return element.project.analysisCompletedHandler?.getLanguageVersionSettings() ?: LanguageVersionSettingsImpl.DEFAULT
     }
-
-    override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> =
-        emptySequence() // Not supported
 }
 
 class UastAnalysisHandlerExtension : AnalysisHandlerExtension {

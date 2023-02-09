@@ -2,7 +2,7 @@
 package com.jetbrains.python.psi;
 
 
-public interface PyWithStatement extends PyStatement, PyNamedElementContainer, PyStatementListContainer {
+public interface PyWithStatement extends PyCompoundStatement, PyNamedElementContainer, PyStatementListContainer {
   PyWithItem[] getWithItems();
 
   boolean isAsync();

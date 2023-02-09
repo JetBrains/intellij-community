@@ -6,17 +6,17 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
-interface SingleEventDispatcher<Listener> {
+interface SingleEventDispatcher<T> {
 
   /**
    * Subscribes listener on event. This listener will be automatically unsubscribed
    * when [parentDisposable] is disposed.
    *
    * @param listener is a listener function that will be called every time when event happens.
-   * @param parentDisposable is used for early unsubscription when listener isn't called.
+   * @param parentDisposable is used for early unsubscription when the listener isn't called.
    */
-  fun whenEventHappened(parentDisposable: Disposable?, listener: Listener)
-  fun whenEventHappened(listener: Listener) = whenEventHappened(null, listener)
+  fun whenEventHappened(parentDisposable: Disposable?, listener: (T) -> Unit)
+  fun whenEventHappened(listener: (T) -> Unit) = whenEventHappened(null, listener)
 
   /**
    * Subscribes listener with TTL on event. This listener will be automatically unsubscribed
@@ -27,60 +27,45 @@ interface SingleEventDispatcher<Listener> {
    * @param listener is a listener function that will be called [ttl] times.
    * @param parentDisposable is a subscription disposable.
    */
-  fun whenEventHappened(ttl: Int, parentDisposable: Disposable?, listener: Listener)
-  fun whenEventHappened(ttl: Int, listener: Listener) = whenEventHappened(ttl, null, listener)
+  fun whenEventHappened(ttl: Int, parentDisposable: Disposable?, listener: (T) -> Unit)
+  fun whenEventHappened(ttl: Int, listener: (T) -> Unit) = whenEventHappened(ttl, null, listener)
 
   /**
    * Subscribes listener on event. This listener will be unsubscribed immediately after execution.
    *
    * @param listener is a listener function that will be called only once.
-   * @param parentDisposable is used for early unsubscription when listener isn't called.
+   * @param parentDisposable is used for early unsubscription when the listener isn't called.
    */
-  fun onceWhenEventHappened(parentDisposable: Disposable?, listener: Listener)
-  fun onceWhenEventHappened(listener: Listener) = onceWhenEventHappened(null, listener)
+  fun onceWhenEventHappened(parentDisposable: Disposable?, listener: (T) -> Unit)
+  fun onceWhenEventHappened(listener: (T) -> Unit) = onceWhenEventHappened(null, listener)
+
+  fun filterEvents(filter: (T) -> Boolean): SingleEventDispatcher<T>
+
+  fun ignoreParameters(): SingleEventDispatcher0
+
+  fun <R> mapParameters(map: (T) -> R): SingleEventDispatcher<R>
 
   @ApiStatus.NonExtendable
-  interface Observable : SingleEventDispatcher<() -> Unit>
+  interface Multicaster<T> : SingleEventDispatcher<T> {
 
-  @ApiStatus.NonExtendable
-  interface Observable1<A1> : SingleEventDispatcher<(A1) -> Unit>
-
-  @ApiStatus.NonExtendable
-  interface Observable2<A1, A2> : SingleEventDispatcher<(A1, A2) -> Unit>
-
-  @ApiStatus.NonExtendable
-  interface Observable3<A1, A2, A3> : SingleEventDispatcher<(A1, A2, A3) -> Unit>
-
-  @ApiStatus.NonExtendable
-  interface Multicaster : Observable {
-
-    fun fireEvent()
-  }
-
-  @ApiStatus.NonExtendable
-  interface Multicaster1<A1> : Observable1<A1> {
-
-    fun fireEvent(argument1: A1)
-  }
-
-  @ApiStatus.NonExtendable
-  interface Multicaster2<A1, A2> : Observable2<A1, A2> {
-
-    fun fireEvent(argument1: A1, argument2: A2)
+    fun fireEvent(parameter: T)
   }
 
   companion object {
 
     @JvmStatic
-    fun create(): Multicaster =
-      SingleEventDispatcherImpl.Multicaster()
+    fun <T> create(): Multicaster<T> {
+      return AbstractSingleEventDispatcher.RootDispatcher()
+    }
 
     @JvmStatic
-    fun <A1> create(): Multicaster1<A1> =
-      SingleEventDispatcherImpl.Multicaster1()
+    fun create(): SingleEventDispatcher0.Multicaster {
+      return AbstractSingleEventDispatcher0.RootDispatcher()
+    }
 
     @JvmStatic
-    fun <A1, A2> create2(): Multicaster2<A1, A2> =
-      SingleEventDispatcherImpl.Multicaster2()
+    fun <T1, T2> create2(): SingleEventDispatcher2.Multicaster<T1, T2> {
+      return AbstractSingleEventDispatcher2.RootDispatcher()
+    }
   }
 }

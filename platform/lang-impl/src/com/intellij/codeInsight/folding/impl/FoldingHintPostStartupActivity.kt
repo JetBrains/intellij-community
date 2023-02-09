@@ -3,9 +3,9 @@ package com.intellij.codeInsight.folding.impl
 
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 
-private class FoldingHintPostStartupActivity : ProjectPostStartupActivity {
+private class FoldingHintPostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     EditorFactory.getInstance().eventMulticaster.addEditorMouseMotionListener(FoldingHintMouseMotionListener(project), project)
   }

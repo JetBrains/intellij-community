@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -6,6 +6,7 @@ import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
@@ -21,6 +22,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
@@ -70,7 +72,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         PsiMethod resolved = (PsiMethod)collidingRef.resolve();
         outerHides.add(new MemberHidesOuterMemberUsageInfo(element, resolved));
       }
-      else if (!(element instanceof PsiMethod)) {
+      else if (!(element instanceof PsiMethod overrider)) {
         final PsiReference ref;
         if (usage instanceof MoveRenameUsageInfo) {
           ref = usage.getReference();
@@ -89,7 +91,6 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         }
       }
       else {
-        PsiMethod overrider = (PsiMethod)element;
         methodAndOverriders.add(overrider);
         containingClasses.add(overrider.getContainingClass());
       }
@@ -136,8 +137,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     if (!(element instanceof PsiReferenceExpression) || ((PsiReferenceExpression)element).getQualifierExpression() != null) return;
     PsiElement elem = ((PsiReferenceExpression)element).resolve();
 
-    if (elem instanceof PsiMethod) {
-      PsiMethod actualMethod = (PsiMethod) elem;
+    if (elem instanceof PsiMethod actualMethod) {
       if (actualMethod instanceof LightRecordMethod || actualMethod instanceof LightRecordCanonicalConstructor) return;
       if (!methodAndOverriders.contains(actualMethod)) {
         PsiClass outerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
@@ -278,7 +278,14 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         allRenames.put(sibling, newName);
       }
 
-      OverridingMethodsSearch.search(sibling, scope, true).forEach(overrider -> {
+      Collection<PsiMethod> allOverriders = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> OverridingMethodsSearch.search(sibling, scope, true).findAll(),
+        RefactoringBundle.message("searching.for.overrides"),
+        true,
+        element.getProject()
+      );
+
+      for (PsiMethod overrider : allOverriders) {
         if (overrider instanceof PsiMirrorElement) {
           final PsiElement prototype = ((PsiMirrorElement)overrider).getPrototype();
           if (prototype instanceof PsiMethod) {
@@ -286,7 +293,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
           }
         }
 
-        if (overrider instanceof SyntheticElement) return true;
+        if (overrider instanceof SyntheticElement) continue;
 
         final String overriderName = overrider.getName();
         final String baseName = sibling.getName();
@@ -295,8 +302,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
           RenameUtil.assertNonCompileElement(overrider);
           allRenames.put(overrider, newOverriderName);
         }
-        return true;
-      });
+      }
     }
   }
 

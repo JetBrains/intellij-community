@@ -78,7 +78,11 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
       }
       else if (elementType == XmlTokenType.XML_CHAR_ENTITY_REF) {
         String text = child.getText();
-        buffer.append(XmlUtil.getCharFromEntityRef(text));
+        char ref = XmlUtil.getCharFromEntityRef(text);
+        if (ref == ' ' && text.charAt(1) != '#') {
+          LOG.error("Can't resolve entity ref from " + getParent().getText());
+        }
+        buffer.append(ref);
       }
       else if (elementType == XmlTokenType.XML_WHITE_SPACE ||
                elementType == XmlTokenType.XML_DATA_CHARACTERS ||

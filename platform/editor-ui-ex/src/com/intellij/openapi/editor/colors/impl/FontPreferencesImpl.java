@@ -31,8 +31,6 @@ import java.util.Objects;
  * The basic idea is to allow end-user to configure not a single font but fonts list instead - every time particular font is unable
  * to display particular char, next font is tried. This is an improvement over an old approach when it was possible to configure
  * only a single font family. Fallback fonts were chosen randomly when that font family was unable to display particular char then.
- *
- * @author Denis Zhdanov
  */
 public class FontPreferencesImpl extends ModifiableFontPreferences {
   @NotNull private final Object2FloatMap<String> myFontSizes = new Object2FloatOpenHashMap<>();
@@ -201,8 +199,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void copyTo(@NotNull final FontPreferences preferences) {
-    if (preferences instanceof ModifiableFontPreferences) {
-      ModifiableFontPreferences modifiablePreferences = (ModifiableFontPreferences)preferences;
+    if (preferences instanceof ModifiableFontPreferences modifiablePreferences) {
       modifiablePreferences.setEffectiveFontFamilies(myEffectiveFontFamilies);
       modifiablePreferences.setRealFontFamilies(myRealFontFamilies);
       modifiablePreferences.setTemplateFontSize(myTemplateFontSize);

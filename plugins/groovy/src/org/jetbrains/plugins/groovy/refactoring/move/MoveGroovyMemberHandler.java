@@ -54,8 +54,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
     final PsiElement element = usage.getElement();
     if (element == null || !element.isValid()) return true;
 
-    if (usage.reference instanceof GrReferenceExpression) {
-      GrReferenceExpression refExpr = (GrReferenceExpression)usage.reference;
+    if (usage.reference instanceof GrReferenceExpression refExpr) {
       GrExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier != null) {
         if (usage.qualifierClass != null) {
@@ -224,8 +223,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
           public void visitReferenceExpression(@NotNull final GrReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             final PsiElement psiElement = expression.resolve();
-            if (psiElement instanceof GrField) {
-              final GrField grField = (GrField)psiElement;
+            if (psiElement instanceof GrField grField) {
               if (grField.getContainingClass() == targetClass && !referencedFields.contains(grField)) {
                 referencedFields.add(grField);
               }
@@ -249,8 +247,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
   }
 
   private static PsiElement addEnumConstant(PsiClass targetClass, GrEnumConstant constant, @Nullable PsiElement anchor) {
-    if (targetClass instanceof GrEnumTypeDefinition) {
-      final GrEnumTypeDefinition enumeration = (GrEnumTypeDefinition)targetClass;
+    if (targetClass instanceof GrEnumTypeDefinition enumeration) {
       final GrEnumConstantList constantList = enumeration.getEnumConstantList();
       if (constantList != null) {
         ASTNode node = constantList.getNode();
@@ -273,8 +270,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
                                                             @NotNull Set<PsiMember> membersToMove,
                                                             @NotNull PsiClass targetClass) {
     PsiElement ref = psiReference.getElement();
-    if (ref instanceof GrReferenceExpression) {
-      GrReferenceExpression refExpr = (GrReferenceExpression)ref;
+    if (ref instanceof GrReferenceExpression refExpr) {
       GrExpression qualifier = refExpr.getQualifier();
       if (RefactoringHierarchyUtil.willBeInTargetClass(refExpr, membersToMove, targetClass, true)) {
         // both member and the reference to it will be in target class

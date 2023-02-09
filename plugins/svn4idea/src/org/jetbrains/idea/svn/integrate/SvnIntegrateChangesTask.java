@@ -264,7 +264,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
         ContainerUtil.addIfNotNull(changes, changeListManager.getChange(file));
       }
 
-      CommitChangeListDialog.commitChanges(getProject(), changes, null, null, myMerger.getComment());
+      CommitChangeListDialog.commitVcsChanges(getProject(), changes, null, myMerger.getComment(), null);
       prepareAndShowResults();
     });
   }

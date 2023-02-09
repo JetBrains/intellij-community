@@ -154,8 +154,7 @@ public final class PyStringLiteralUtil extends PyStringLiteralCoreUtil {
     if (o == null) {
       return null;
     }
-    if (o instanceof PyStringLiteralExpression) {
-      PyStringLiteralExpression literalExpression = (PyStringLiteralExpression)o;
+    if (o instanceof PyStringLiteralExpression literalExpression) {
       return literalExpression.getStringValue();
     }
     else {

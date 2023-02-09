@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightPlatformTestCase;
+import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,8 @@ public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTest
     super.setUp();
     CodeStyle.dropTemporarySettings(getProject());
     myOriginalSettings = CodeStyle.createTestSettings(CodeStyle.getSettings(getProject()));
-    EditorConfigCodeStyleSettingsModifier.setEnabledInTests(true);
+    EditorConfigCodeStyleSettingsModifier.Handler.setEnabledInTests(true);
+    Utils.setEnabledInTests(true);
 
     // move test data to temp dir to ensure that IJ Project .editorConfig files don't affect tests
     Path testDataDir = Paths.get(PathManagerEx.getHomePath(EditorConfigFileSettingsTestCase.class), getRelativePath(), getTestName(true));
@@ -37,7 +39,8 @@ public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTest
   @Override
   protected void tearDown() throws Exception {
     try {
-      EditorConfigCodeStyleSettingsModifier.setEnabledInTests(false);
+      Utils.setEnabledInTests(false);
+      EditorConfigCodeStyleSettingsModifier.Handler.setEnabledInTests(false);
       CodeStyle.getSettings(getProject()).copyFrom(myOriginalSettings);
     }
     catch (Throwable e) {

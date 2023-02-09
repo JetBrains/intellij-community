@@ -3,6 +3,7 @@ package com.intellij.codeInsight.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
@@ -10,6 +11,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 
 /**
@@ -30,15 +33,22 @@ public interface UnresolvedReferenceQuickFixUpdater {
   /**
    * Tell highlighting subsystem that this {@code info} was generated to highlight unresolved reference {@code ref}.
    * This call triggers background calculation of quick fixes supplied by {@link UnresolvedReferenceQuickFixProvider}
-   * You can only call it from the highlighting (e.g. your {@link com.intellij.lang.annotation.Annotator} or {@link com.intellij.codeInspection.LocalInspectionTool})
+   * You can only call it from the highlighting (e.g. your {@link com.intellij.codeInsight.daemon.impl.HighlightVisitor})
    */
   void registerQuickFixesLater(@NotNull PsiReference ref, @NotNull HighlightInfo.Builder info);
+
+  /**
+   * Tell highlighting subsystem that this {@link com.intellij.lang.annotation.Annotation} will be created to highlight unresolved reference {@code ref}.
+   * This call triggers background calculation of quick fixes supplied by {@link UnresolvedReferenceQuickFixProvider}
+   * You can only call it from the highlighting (e.g., your {@link com.intellij.lang.annotation.Annotator})
+   */
+  void registerQuickFixesLater(@NotNull PsiReference ref, @NotNull AnnotationBuilder builder);
 
   /**
    * Wait until the background calculation of unresolved reference quickfixes for {@code info} is completed.
    * This method might be needed when that information is required synchronously, e.g., when user pressed Alt-Enter.
    */
-  void waitQuickFixesSynchronously(@NotNull HighlightInfo info, @NotNull PsiFile file, @NotNull Editor editor);
+  void waitQuickFixesSynchronously(@NotNull PsiFile file, @NotNull Editor editor, @NotNull List<? extends HighlightInfo> infos);
 
   /**
    * Start background computation of quick fixes for unresolved references in the {code file} at the current caret offset

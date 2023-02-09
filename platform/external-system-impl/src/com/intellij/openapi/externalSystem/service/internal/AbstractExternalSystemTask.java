@@ -29,8 +29,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * Encapsulates particular task performed by external system integration.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public abstract class AbstractExternalSystemTask extends UserDataHolderBase implements ExternalSystemTask {
 

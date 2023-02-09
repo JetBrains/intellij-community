@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.psi.*;
@@ -46,8 +46,7 @@ class BooleanReturnModel {
         break;
       }
     }
-    if (parent instanceof PsiIfStatement) {
-      PsiIfStatement ifStatement = (PsiIfStatement)parent;
+    if (parent instanceof PsiIfStatement ifStatement) {
       PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
       PsiStatement elseStatement = ControlFlowUtils.stripBraces(ifStatement.getElseBranch());
       if (elseStatement == null && wantedValue == myEarlyReturnValue) {
@@ -85,8 +84,7 @@ class BooleanReturnModel {
     if (!myHasReturnInLoopOrSwitch && (statement instanceof PsiBreakStatement || statement instanceof PsiContinueStatement)) {
       return true;
     }
-    if (statement instanceof PsiReturnStatement) {
-      PsiReturnStatement thenReturn = (PsiReturnStatement)statement;
+    if (statement instanceof PsiReturnStatement thenReturn) {
       return thenReturn.getReturnValue() == null ||
              ExpressionUtils.isSafelyRecomputableExpression(thenReturn.getReturnValue());
     }
@@ -132,7 +130,7 @@ class BooleanReturnModel {
         hasReturnInLoopOrSwitch = isInLoopOrSwitch(body, returnStatement);
       }
       PsiExpression returnValue = returnStatement.getReturnValue();
-      if (returnValue == null || !PsiType.BOOLEAN.equals(returnValue.getType())) return null;
+      if (returnValue == null || !PsiTypes.booleanType().equals(returnValue.getType())) return null;
       if (ControlFlowUtils.blockCompletesWithStatement(body, returnStatement)) {
         terminal.add(returnValue);
       }

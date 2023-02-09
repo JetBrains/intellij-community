@@ -4,7 +4,8 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.idea.intentions.isFlexibleRecursive
@@ -13,7 +14,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.types.TypeUtils
-import javax.swing.JComponent
 
 class HasPlatformTypeInspection(
     @JvmField var publicAPIOnly: Boolean = true,
@@ -51,10 +51,7 @@ class HasPlatformTypeInspection(
         return null
     }
 
-    override fun createOptionsPanel(): JComponent {
-        val panel = MultipleCheckboxOptionsPanel(this)
-        panel.addCheckbox(KotlinBundle.message("apply.only.to.public.or.protected.members"), "publicAPIOnly")
-        panel.addCheckbox(KotlinBundle.message("report.for.types.with.platform.arguments"), "reportPlatformArguments")
-        return panel
-    }
+  override fun getOptionsPane() = pane(
+    checkbox("publicAPIOnly", KotlinBundle.message("apply.only.to.public.or.protected.members")),
+    checkbox("reportPlatformArguments", KotlinBundle.message("report.for.types.with.platform.arguments")))
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.openapi.module.Module;
@@ -15,7 +15,7 @@ import java.util.Objects;
  */
 public final class ScratchesSearchScope extends GlobalSearchScope {
 
-  private static final NotNullLazyKey<GlobalSearchScope, Project> SCRATCHES_SCOPE_KEY = NotNullLazyKey.create(
+  private static final NotNullLazyKey<GlobalSearchScope, Project> SCRATCHES_SCOPE_KEY = NotNullLazyKey.createLazyKey(
     "SCRATCHES_SCOPE_KEY",
     project -> new ScratchesSearchScope(project));
 

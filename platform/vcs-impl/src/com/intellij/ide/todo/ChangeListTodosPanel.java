@@ -50,7 +50,7 @@ public abstract class ChangeListTodosPanel extends TodoPanel {
     }
 
     private void updateTabName() {
-      AppUIUtil.invokeOnEdt(() -> {
+      AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
         setDisplayName(getTabName(myProject));
       });
     }

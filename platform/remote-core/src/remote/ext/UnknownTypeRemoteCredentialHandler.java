@@ -5,9 +5,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Irina.Chernushina on 7/29/2016.
- */
 public class UnknownTypeRemoteCredentialHandler extends RemoteCredentialsHandlerBase<UnknownCredentialsHolder> {
   public UnknownTypeRemoteCredentialHandler(UnknownCredentialsHolder credentials) {
     super(credentials);

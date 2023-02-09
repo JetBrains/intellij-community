@@ -26,6 +26,7 @@ import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.Set;
 
 public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
@@ -51,7 +52,7 @@ public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
             final String argList = annotationFromHierarchy[annotationFromHierarchy.length - 1].getParameterList().getText();
             holder.registerProblem(psiIdentifier,
                                    IntelliLangBundle.message("inspection.pattern.overridden.by.non.annotated.method.description"),
-                                   new AnnotateFix(annotationClassname, argList));
+                                   AnnotateFix.create(method, Objects.requireNonNull(annotationClassname), argList));
           }
         }
       }

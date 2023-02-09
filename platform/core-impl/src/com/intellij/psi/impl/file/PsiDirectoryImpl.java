@@ -322,7 +322,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       return psiFile;
     }
     catch (IOException e) {
-      throw new IncorrectOperationException(e.toString());
+      throw new IncorrectOperationException(e);
     }
   }
 

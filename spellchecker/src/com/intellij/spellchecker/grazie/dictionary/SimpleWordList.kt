@@ -5,7 +5,7 @@ import ai.grazie.nlp.similarity.Levenshtein
 import ai.grazie.spell.lists.WordList
 import com.intellij.util.containers.CollectionFactory
 
-class SimpleWordList(private val container: Set<String>) : WordList {
+internal class SimpleWordList(private val container: Set<String>) : WordList {
   companion object {
     const val MAX_LEVENSHTEIN_DISTANCE = 3
   }

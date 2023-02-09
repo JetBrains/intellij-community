@@ -2,10 +2,10 @@
 package git4idea.ignore
 
 import com.intellij.configurationStore.saveSettings
-import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.VfsTestUtil
@@ -21,8 +21,7 @@ class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
   override fun setUpProject() {
     super.setUpProject()
     // will create .idea directory
-    // setUpProject is executed in EDT
-    runBlockingUnderModalProgress {
+    runBlockingMaybeCancellable {
       saveSettings(project)
     }
   }

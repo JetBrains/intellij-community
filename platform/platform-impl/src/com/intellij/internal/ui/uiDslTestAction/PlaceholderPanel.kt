@@ -8,7 +8,6 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.util.Alarm
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
-import java.awt.event.ItemEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.SwingUtilities
@@ -63,7 +62,7 @@ internal class PlaceholderPanel(parentDisposable: Disposable) {
     panel = panel {
       row {
         text("Validation of placeholder. Select component and change values. Reset, Apply and isModified should work " +
-              "as expected. Check also validation for int text field")
+             "as expected. Check also validation for int text field")
       }.bottomGap(BottomGap.MEDIUM)
 
       row {
@@ -72,29 +71,23 @@ internal class PlaceholderPanel(parentDisposable: Disposable) {
       }
       row("Select Placeholder:") {
         comboBox(PlaceholderComponent.values().toList())
-          .applyToComponent {
-            addItemListener {
-              if (it.stateChange == ItemEvent.SELECTED) {
-                val type = it?.item as? PlaceholderComponent
-                if (type == null) {
-                  placeholder.component = null
-                }
-                else {
-                  placeholder.component = createPlaceholderComponent(type)
-                }
-              }
+          .onChanged {
+            val type = it.item
+            if (type == null) {
+              placeholder.component = null
+            }
+            else {
+              placeholder.component = createPlaceholderComponent(type)
             }
           }
         checkBox("enabled")
           .applyToComponent {
             isSelected = true
-            addItemListener { placeholder.enabled(this.isSelected) }
-          }
+          }.onChanged { placeholder.enabled(it.isSelected) }
         checkBox("visible")
           .applyToComponent {
             isSelected = true
-            addItemListener { placeholder.visible(this.isSelected) }
-          }
+          }.onChanged { placeholder.visible(it.isSelected) }
       }
       row("Placeholder:") {
         placeholder = placeholder()

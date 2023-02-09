@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInsight.Nullability;
@@ -213,13 +199,13 @@ public class OptionalChainInliner implements CallInliner {
     if (type == null) return null;
     String rawName = type.rawType().getCanonicalText();
     if (rawName.equals(OPTIONAL_INT)) {
-      return box ? PsiType.INT.getBoxedType(expression) : PsiType.INT;
+      return box ? PsiTypes.intType().getBoxedType(expression) : PsiTypes.intType();
     }
     if (rawName.equals(OPTIONAL_LONG)) {
-      return box ? PsiType.LONG.getBoxedType(expression) : PsiType.LONG;
+      return box ? PsiTypes.longType().getBoxedType(expression) : PsiTypes.longType();
     }
     if (rawName.equals(OPTIONAL_DOUBLE)) {
-      return box ? PsiType.DOUBLE.getBoxedType(expression) : PsiType.DOUBLE;
+      return box ? PsiTypes.doubleType().getBoxedType(expression) : PsiTypes.doubleType();
     }
     if (!rawName.equals(JAVA_UTIL_OPTIONAL) && !rawName.equals(GUAVA_OPTIONAL)) return null;
     PsiType[] parameters = type.getParameters();
@@ -231,8 +217,7 @@ public class OptionalChainInliner implements CallInliner {
                                            NullabilityProblemKind<? super PsiExpression> problem) {
     PsiType optionalElementType = getOptionalElementType(expression, true);
     if (optionalElementType == null) return false;
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression qualifierCall = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression qualifierCall) {
       if (OPTIONAL_EMPTY.test(qualifierCall)) {
         builder.pushNull();
         return true;

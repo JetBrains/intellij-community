@@ -15,9 +15,6 @@
  */
 package com.intellij.diagnostic.logging;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public interface LogConsoleListener {
   void loggingWillBeStopped();
 }

@@ -2,6 +2,7 @@
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
@@ -21,8 +22,6 @@ import java.util.function.Supplier;
  * Base class for particular scoped bundles (e.g. {@code 'vcs'} bundles, {@code 'aop'} bundles etc).
  * <br/>
  * <b>This class is not supposed to be extended directly. Extend your bundle from {@link com.intellij.DynamicBundle} or {@link org.jetbrains.jps.api.JpsDynamicBundle}</b>
- *
- * @author Denis Zhdanov
  */
 public class AbstractBundle {
   private static final Logger LOG = Logger.getInstance(AbstractBundle.class);
@@ -78,7 +77,8 @@ public class AbstractBundle {
   }
 
   public @NotNull Supplier<@Nls String> getLazyMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
-    return () -> getMessage(key, params);
+    Object[] actualParams = params.length == 0 ? ArrayUtil.EMPTY_OBJECT_ARRAY : params; // do not capture new empty Object[] arrays here
+    return () -> getMessage(key, actualParams);
   }
 
   public @Nullable @Nls String messageOrNull(@NotNull @NonNls String key, Object @NotNull ... params) {

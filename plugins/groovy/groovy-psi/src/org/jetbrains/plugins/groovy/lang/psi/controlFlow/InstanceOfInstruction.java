@@ -85,14 +85,14 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
       GrExpression left = ((GrBinaryExpression)element).getLeftOperand();
       GrExpression right = ((GrBinaryExpression)element).getRightOperand();
       if (isNullLiteral(right)) {
-        return Pair.create(left, PsiType.NULL);
+        return Pair.create(left, PsiTypes.nullType());
       }
       else if (right != null && isNullLiteral(left)) {
-        return Pair.create(right, PsiType.NULL);
+        return Pair.create(right, PsiTypes.nullType());
       }
-    } else if (element instanceof GrExpressionList && element.getParent() instanceof GrCaseSection && element.getParent().getParent() instanceof GrSwitchElement) {
+    } else if (element instanceof GrExpressionList && element.getParent() instanceof GrCaseSection &&
+               element.getParent().getParent() instanceof GrSwitchElement switchElement) {
       // this branch corresponds to an arm of switch expression that is of a kind 'case Integer, String, Foo -> ...'
-      var switchElement = (GrSwitchElement)element.getParent().getParent();
       GrCondition condition = switchElement.getCondition();
       if (condition instanceof GrReferenceExpression) {
         List<GrExpression> expressions = PsiUtil.getAllPatternsForCaseSection((GrCaseSection)element.getParent());

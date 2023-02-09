@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -35,8 +35,7 @@ public final class AddExceptionFromFieldInitializerToConstructorThrowsFix extend
     if (!myWrongElement.isValid()) return false;
     final NavigatablePsiElement maybeField =
       PsiTreeUtil.getParentOfType(myWrongElement, PsiMethod.class, PsiFunctionalExpression.class, PsiField.class);
-    if (!(maybeField instanceof PsiField)) return false;
-    final PsiField field = (PsiField)maybeField;
+    if (!(maybeField instanceof PsiField field)) return false;
     if (field.hasModifierProperty(PsiModifier.STATIC)) return false;
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass == null ||

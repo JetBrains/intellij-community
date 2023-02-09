@@ -17,21 +17,45 @@ package org.jetbrains.yaml;
 
 import com.intellij.json.JsonSchemaSpellcheckerClient;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
+import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
+import com.intellij.spellchecker.tokenizer.TokenizerBase;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLQuotedText;
 import org.jetbrains.yaml.psi.YAMLScalar;
 
-public class YAMLSpellcheckerStrategy extends SpellcheckingStrategy {
+final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy {
+
+  private final Tokenizer<PsiElement> myQuotedTextTokenizer = new TokenizerBase<>(PlainTextSplitter.getInstance()) {
+    @Override
+    public void tokenize(@NotNull PsiElement leafElement, @NotNull TokenConsumer consumer) {
+      if (leafElement instanceof LeafPsiElement && leafElement.getParent() instanceof YAMLQuotedText quotedText) {
+
+        TextRange range = ElementManipulators.getValueTextRange(quotedText);
+        if (!range.isEmpty()) {
+          String text = ElementManipulators.getValueText(quotedText);
+          consumer.consumeToken(leafElement, text, false, range.getStartOffset(), TextRange.allOf(text), PlainTextSplitter.getInstance());
+        }
+      } else {
+        super.tokenize(leafElement, consumer);
+      }
+    }
+  };
+
   @NotNull
   @Override
-  public Tokenizer getTokenizer(final PsiElement element) {
+  public Tokenizer<?> getTokenizer(final PsiElement element) {
     final ASTNode node = element.getNode();
     if (node != null){
       final IElementType type = node.getElementType();
@@ -42,12 +66,20 @@ public class YAMLSpellcheckerStrategy extends SpellcheckingStrategy {
           type == YAMLTokenTypes.SCALAR_STRING ||
           type == YAMLTokenTypes.SCALAR_DSTRING ||
           type == YAMLTokenTypes.COMMENT) {
+
+        if (isInjectedLanguageFragment(element.getParent())) {
+          return EMPTY_TOKENIZER;
+        }
+
         if (new JsonSchemaSpellcheckerClientForYaml(element).matchesNameFromSchema()) {
           return EMPTY_TOKENIZER;
         }
-        else {
-          return TEXT_TOKENIZER;
+
+        if (type == YAMLTokenTypes.SCALAR_STRING || type == YAMLTokenTypes.SCALAR_DSTRING) {
+          return myQuotedTextTokenizer;
         }
+
+        return TEXT_TOKENIZER;
       }
     }
     return super.getTokenizer(element);

@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.analysisApiProviders
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -40,6 +41,7 @@ private class IdeKotlinDeclarationProvider(
     ): Psi? {
         var result: Psi? = null
         stubIndex.processElements(stubKey, key, project, scope, Psi::class.java) { candidate ->
+            ProgressManager.checkCanceled()
             if (filter(candidate)) {
                 result = candidate
                 return@processElements false // do not continue searching over PSI
@@ -55,11 +57,12 @@ private class IdeKotlinDeclarationProvider(
         } ?: getTypeAliasByClassId(classId)
     }
 
-    override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> {
-        return KotlinFullClassNameIndex
-            .get(classId.asStringForIndexes(), project, scope)
-            .filter { candidate -> candidate.getClassId() == classId }
-    }
+    override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> =
+        KotlinFullClassNameIndex.getAllElements(
+            classId.asStringForIndexes(),
+            project,
+            scope
+        ) { it.getClassId() == classId }
 
     override fun getAllTypeAliasesByClassId(classId: ClassId): Collection<KtTypeAlias> {
         return listOfNotNull(getTypeAliasByClassId(classId)) //todo
@@ -86,6 +89,10 @@ private class IdeKotlinDeclarationProvider(
         ) //TODO original LC has platformSourcesFirst()
     }
 
+    override fun findInternalFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
+        return KotlinMultiFileClassPartIndex[facadeFqName.asString(), project, scope]
+    }
+
     private fun getTypeAliasByClassId(classId: ClassId): KtTypeAlias? {
         return firstMatchingOrNull(
             stubKey = KotlinTopLevelTypeAliasFqNameIndex.KEY,
@@ -100,15 +107,14 @@ private class IdeKotlinDeclarationProvider(
     override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> =
         KotlinTopLevelFunctionFqnNameIndex.get(callableId.asTopLevelStringForIndexes(), project, scope)
 
-
     override fun getTopLevelCallableFiles(callableId: CallableId): Collection<KtFile> {
         val callableIdString = callableId.asTopLevelStringForIndexes()
 
         return buildSet {
-            stubIndex.getContainingFilesIterator(KotlinTopLevelPropertyFqnNameIndex.key, callableIdString, project, scope).forEach {file ->
+            stubIndex.getContainingFilesIterator(KotlinTopLevelPropertyFqnNameIndex.key, callableIdString, project, scope).forEach { file ->
                 psiManager.findFile(file)?.safeAs<KtFile>()?.let { add(it) }
             }
-            stubIndex.getContainingFilesIterator(KotlinTopLevelFunctionFqnNameIndex.key, callableIdString, project, scope).forEach {file ->
+            stubIndex.getContainingFilesIterator(KotlinTopLevelFunctionFqnNameIndex.key, callableIdString, project, scope).forEach { file ->
                 psiManager.findFile(file)?.safeAs<KtFile>()?.let { add(it) }
             }
         }

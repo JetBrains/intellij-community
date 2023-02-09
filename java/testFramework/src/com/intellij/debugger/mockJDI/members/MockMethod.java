@@ -12,7 +12,7 @@ public class MockMethod extends AbstractMockMethod {
   }
 
   public java.lang.reflect.Method getMethod() {
-    return (java.lang.reflect.Method) myMember;
+    return (java.lang.reflect.Method)myMember;
   }
 
   @Override
@@ -24,5 +24,4 @@ public class MockMethod extends AbstractMockMethod {
   protected Class<?>[] getParameterTypes() {
     return getMethod().getParameterTypes();
   }
-
 }

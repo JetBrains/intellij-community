@@ -10,7 +10,10 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
@@ -19,6 +22,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil.resolveMavenHomeDirectory
+import java.io.File
 
 class MavenWslTargetConfigurator : MavenImporter("", ""),
                                    MavenWorkspaceConfigurator {
@@ -27,9 +31,13 @@ class MavenWslTargetConfigurator : MavenImporter("", ""),
     return true
   }
 
+  override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
+    prepareMavenData(context.project, context)
+  }
+
   override fun afterModelApplied(context: MavenWorkspaceConfigurator.AppliedModelContext) {
     if (!SystemInfo.isWindows) return
-    configureForProject(context.project)
+    configureForProject(context.project, context)
   }
 
   override fun isApplicable(mavenProject: MavenProject): Boolean {
@@ -40,11 +48,30 @@ class MavenWslTargetConfigurator : MavenImporter("", ""),
                            mavenProject: MavenProject,
                            changes: MavenProjectChanges,
                            modifiableModelsProvider: IdeModifiableModelsProvider?) {
-    configureForProject(module.project)
+    val dataHolder = UserDataHolderBase()
+    prepareMavenData(module.project, dataHolder)
+    configureForProject(module.project, dataHolder)
   }
 
-  private fun configureForProject(project: Project) {
+  private fun prepareMavenData(project: Project, dataHolder: UserDataHolder) {
     val wslDistribution = project.basePath?.let { MavenWslUtil.tryGetWslDistribution(project) }
+    if (wslDistribution == null) {
+      return
+    }
+    dataHolder.putUserData(WSL_DISTRIBUTION, wslDistribution)
+    val mavenPath = wslDistribution.resolveMavenHomeDirectory(null);
+    dataHolder.putUserData(MAVEN_HOME_DIR, mavenPath)
+    val targetMavenPath = mavenPath?.let { wslDistribution.getWslPath(it.path) }
+    dataHolder.putUserData(MAVEN_TARGET_PATH, targetMavenPath);
+    val mavenVersion = MavenUtil.getMavenVersion(mavenPath)
+    dataHolder.putUserData(MAVEN_HOME_VERSION, mavenVersion);
+    val jdkPath = getJdkPath(project, wslDistribution)
+    dataHolder.putUserData(JDK_PATH, jdkPath)
+
+  }
+
+  private fun configureForProject(project: Project, dataHolder: UserDataHolder) {
+    val wslDistribution = dataHolder.getUserData(WSL_DISTRIBUTION)
     if (wslDistribution == null) {
       return
     }
@@ -56,16 +83,16 @@ class MavenWslTargetConfigurator : MavenImporter("", ""),
 
     val mavenConfiguration = configuration?.runtimes?.findByType(MavenRuntimeTargetConfiguration::class.java)
     val targetConfiguration = configuration ?: createWslTarget(project, wslDistribution)
-    javaConfiguration ?: createJavaConfiguration(targetConfiguration, project, wslDistribution)
-    mavenConfiguration ?: createMavenConfiguration(targetConfiguration, project, wslDistribution)
+    javaConfiguration ?: createJavaConfiguration(targetConfiguration, project, dataHolder, wslDistribution)
+    mavenConfiguration ?: createMavenConfiguration(targetConfiguration, project, dataHolder, wslDistribution)
   }
 
   private fun createMavenConfiguration(configuration: WslTargetEnvironmentConfiguration,
                                        project: Project,
+                                       dataHolder: UserDataHolder,
                                        wslDistribution: WSLDistribution): MavenRuntimeTargetConfiguration? {
     val mavenConfig = MavenRuntimeTargetConfiguration()
-    val mavenPath = wslDistribution.resolveMavenHomeDirectory(null)
-    val targetMavenPath = mavenPath?.let { wslDistribution.getWslPath(it.path) }
+    val targetMavenPath = dataHolder.getUserData(MAVEN_TARGET_PATH);
 
     if (targetMavenPath == null) {
       MavenProjectsManager.getInstance(project).syncConsole.addWarning(MavenProjectBundle.message("wsl.misconfigured.title"),
@@ -74,7 +101,7 @@ class MavenWslTargetConfigurator : MavenImporter("", ""),
       return null
     }
 
-    val mavenVersion = MavenUtil.getMavenVersion(mavenPath)
+    val mavenVersion = dataHolder.getUserData(MAVEN_HOME_VERSION);
     mavenConfig.homePath = targetMavenPath
     mavenConfig.versionString = mavenVersion ?: ""
     configuration.addLanguageRuntime(mavenConfig)
@@ -83,9 +110,11 @@ class MavenWslTargetConfigurator : MavenImporter("", ""),
 
   private fun createJavaConfiguration(configuration: WslTargetEnvironmentConfiguration,
                                       project: Project,
+                                      dataHolder: UserDataHolder,
                                       wslDistribution: WSLDistribution): JavaLanguageRuntimeConfiguration? {
     val javaConfig = JavaLanguageRuntimeConfiguration()
-    val jdkPath = getJdkPath(project, wslDistribution)
+    val jdkPath = dataHolder.getUserData(JDK_PATH);
+
     if (jdkPath == null) {
       MavenProjectsManager.getInstance(project).syncConsole.addWarning(MavenProjectBundle.message("wsl.misconfigured.title"),
                                                                        MavenProjectBundle.message("wsl.does.not.have.configured.jdk",
@@ -113,4 +142,12 @@ class MavenWslTargetConfigurator : MavenImporter("", ""),
     return configuration
   }
 
+
+  companion object {
+    private val MAVEN_HOME_DIR = Key.create<File>("MAVEN_HOME_DIR")
+    private val MAVEN_HOME_VERSION = Key.create<String>("MAVEN_WSL_HOME_VERSION")
+    private val MAVEN_TARGET_PATH = Key.create<String>("MAVEN_TARGET_PATH")
+    private val WSL_DISTRIBUTION = Key.create<WSLDistribution>("WSL_DISTRIBUTION")
+    private val JDK_PATH = Key.create<String>("JDK_PATH")
+  }
 }

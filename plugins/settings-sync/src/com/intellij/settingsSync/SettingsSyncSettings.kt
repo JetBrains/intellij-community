@@ -82,6 +82,7 @@ class SettingsSyncSettings :
         }
       }
     }
+    state.intIncrementModificationCount()
   }
 
   class SettingsSyncSettingsState : BaseState() {

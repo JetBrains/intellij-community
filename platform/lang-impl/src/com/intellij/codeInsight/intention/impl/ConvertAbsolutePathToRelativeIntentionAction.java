@@ -10,9 +10,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
 public class ConvertAbsolutePathToRelativeIntentionAction extends BaseIntentionAction {
 
   protected boolean isConvertToRelative() {

@@ -22,9 +22,6 @@ import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.*
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
-/**
- * @author vlan
- */
 public class PyRequirementTest extends PyTestCase {
 
   // ARCHIVE URL

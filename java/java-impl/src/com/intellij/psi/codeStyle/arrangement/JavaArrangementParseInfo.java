@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author Denis Zhdanov
- */
 public class JavaArrangementParseInfo {
 
   private final List<JavaElementArrangementEntry> myEntries = new ArrayList<>();
@@ -210,13 +207,6 @@ public class JavaArrangementParseInfo {
     return myFields.values();
   }
 
-  private static final class OverriddenMethodPair {
-    final @NotNull PsiMethod overridden;
-    final @NotNull PsiMethod overriding;
-
-    private OverriddenMethodPair(@NotNull PsiMethod overridden, @NotNull PsiMethod overriding) {
-      this.overridden = overridden;
-      this.overriding = overriding;
-    }
+  private record OverriddenMethodPair(@NotNull PsiMethod overridden, @NotNull PsiMethod overriding) {
   }
 }

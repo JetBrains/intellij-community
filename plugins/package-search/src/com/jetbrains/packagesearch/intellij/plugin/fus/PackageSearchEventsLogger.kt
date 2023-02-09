@@ -17,6 +17,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.fus
 
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
+import com.intellij.externalSystem.ExternalDependencyModificator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.BaseEventId
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -25,8 +26,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.diagnostic.thisLogger
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
@@ -129,9 +129,9 @@ class PackageSearchEventsLogger : CounterUsagesCollector() {
         fun logPackageInstalled(
             packageIdentifier: PackageIdentifier,
             packageVersion: PackageVersion,
-            targetModule: ProjectModule
+            targetModule: PackageSearchModule
         ) = runSafelyIfEnabled(packageInstalledEvent) {
-            val moduleOperationProvider = CoroutineProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
+            val moduleOperationProvider = targetModule.getModificator()
             if (moduleOperationProvider != null) {
                 log(packageIdentifier.rawValue, packageVersion.versionName, moduleOperationProvider::class.java)
             } else {
@@ -142,9 +142,9 @@ class PackageSearchEventsLogger : CounterUsagesCollector() {
         fun logPackageRemoved(
             packageIdentifier: PackageIdentifier,
             packageVersion: PackageVersion,
-            targetModule: ProjectModule
+            targetModule: PackageSearchModule
         ) = runSafelyIfEnabled(packageRemovedEvent) {
-            val moduleOperationProvider = CoroutineProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
+            val moduleOperationProvider = targetModule.getModificator()
             if (moduleOperationProvider != null) {
                 log(packageIdentifier.rawValue, packageVersion.versionName, moduleOperationProvider::class.java)
             } else {
@@ -156,9 +156,9 @@ class PackageSearchEventsLogger : CounterUsagesCollector() {
             packageIdentifier: PackageIdentifier,
             packageFromVersion: PackageVersion,
             packageVersion: PackageVersion,
-            targetModule: ProjectModule
+            targetModule: PackageSearchModule
         ) = runSafelyIfEnabled(packageUpdatedEvent) {
-            val moduleOperationProvider = CoroutineProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
+            val moduleOperationProvider = targetModule.getModificator()
             if (moduleOperationProvider != null) {
                 log(
                     packageIdField.with(packageIdentifier.rawValue),
@@ -237,3 +237,7 @@ class PackageSearchEventsLogger : CounterUsagesCollector() {
         }
     }
 }
+
+private fun PackageSearchModule.getModificator() =
+    ExternalDependencyModificator.EP_NAME.getExtensions(nativeModule.project)
+        .find { it.supports(nativeModule) }

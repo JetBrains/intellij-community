@@ -1,13 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 
 @State(name = "DeclarativeInlayHintsSettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
-class DeclarativeInlayHintsSettings(private val project: Project) : SimplePersistentStateComponent<DeclarativeInlayHintsSettings.HintsState>(
+class DeclarativeInlayHintsSettings : SimplePersistentStateComponent<DeclarativeInlayHintsSettings.HintsState>(
   HintsState()) {
 
   class HintsState : BaseState() {
@@ -18,8 +18,8 @@ class DeclarativeInlayHintsSettings(private val project: Project) : SimplePersis
 
 
   companion object {
-    fun getInstance(project: Project): DeclarativeInlayHintsSettings {
-      return project.service()
+    fun getInstance(): DeclarativeInlayHintsSettings {
+      return ApplicationManager.getApplication().service()
     }
   }
 
@@ -38,6 +38,8 @@ class DeclarativeInlayHintsSettings(private val project: Project) : SimplePersis
   fun setOptionEnabled(optionId: String, providerId: String, value: Boolean) {
     if (!value) {
       state.disabledOptions.add(getSerializedId(providerId, optionId))
+    } else {
+      state.disabledOptions.remove(getSerializedId(providerId, optionId))
     }
   }
 

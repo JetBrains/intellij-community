@@ -37,7 +37,7 @@ internal class JKSymbolRenderer(private val importStorage: JKImportStorage, proj
         val name = symbol.name.escaped()
         if (!symbol.isFqNameExpected(owner)) return name
         val fqName = symbol.getDisplayFqName().escapedAsQualifiedName()
-        if (owner is JKClassAccessExpression && symbol.isFromJavaLangPackage()) return fqName
+        if (symbol.isFromJavaLangPackage()) return fqName
 
         return when {
             symbol is JKClassSymbol && canBeShortenedClassNameCache.canBeShortened(symbol) -> {

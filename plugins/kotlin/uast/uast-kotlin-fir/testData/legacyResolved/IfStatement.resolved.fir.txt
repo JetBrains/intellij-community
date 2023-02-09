@@ -1,1 +1,1 @@
-UBinaryExpression (operator = !=) -> USimpleNameReferenceExpression (identifier = !=) -> null: null
+UBinaryExpression (operator = !=) -> USimpleNameReferenceExpression (identifier = !=) -> FUN: equals

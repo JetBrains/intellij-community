@@ -27,9 +27,6 @@ import com.intellij.psi.PsiNameValuePair;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class AddAnnotationFix extends AddAnnotationPsiFix implements IntentionAction {
   public AddAnnotationFix(@NotNull String fqn, @NotNull PsiModifierListOwner modifierListOwner, String @NotNull ... annotationsToRemove) {
     this(fqn, modifierListOwner, PsiNameValuePair.EMPTY_ARRAY, annotationsToRemove);

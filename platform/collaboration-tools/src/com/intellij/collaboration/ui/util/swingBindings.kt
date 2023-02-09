@@ -2,20 +2,22 @@
 package com.intellij.collaboration.ui.util
 
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.awaitCancellation
+import com.intellij.collaboration.ui.setHtmlBody
+import com.intellij.openapi.util.Disposer
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.Nls
-import javax.swing.Action
-import javax.swing.ComboBoxModel
-import javax.swing.JComponent
+import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.text.JTextComponent
+import kotlin.coroutines.CoroutineContext
 
 //TODO: generalise
 fun <T : Any> ComboBoxWithActionsModel<T>.bind(scope: CoroutineScope,
@@ -67,7 +69,8 @@ private fun <T> ComboBoxModel<T>.addSelectionChangeListener(scope: CoroutineScop
     try {
       addListDataListener(dataListener)
       awaitCancellation()
-    } finally {
+    }
+    finally {
       removeListDataListener(dataListener)
     }
   }
@@ -94,5 +97,164 @@ fun JTextComponent.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) 
     textFlow.collect {
       text = it
     }
+  }
+}
+
+fun JEditorPane.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    textFlow.collect {
+      text = it
+      setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
+    }
+  }
+}
+
+fun JEditorPane.bindTextHtml(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    textFlow.collect {
+      setHtmlBody(it)
+      setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
+    }
+  }
+}
+
+fun JLabel.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    textFlow.collect {
+      text = it
+    }
+  }
+}
+
+fun JLabel.bindIcon(scope: CoroutineScope, iconFlow: Flow<Icon?>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    iconFlow.collect {
+      icon = it
+    }
+  }
+}
+
+fun JButton.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    textFlow.collect {
+      text = it
+    }
+  }
+}
+
+fun Action.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    textFlow.collect {
+      putValue(Action.NAME, it)
+    }
+  }
+}
+
+fun Action.bindEnabled(scope: CoroutineScope, enabledFlow: Flow<Boolean>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    enabledFlow.collect {
+      isEnabled = it
+    }
+  }
+}
+
+fun Wrapper.bindContent(scope: CoroutineScope, contentFlow: Flow<JComponent?>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    contentFlow.collect {
+      setContent(it)
+      repaint()
+    }
+  }
+}
+
+fun <D> Wrapper.bindContent(scope: CoroutineScope, dataFlow: Flow<D>,
+                            componentFactory: (CoroutineScope, D) -> JComponent?) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    dataFlow.collectLatest {
+      coroutineScope {
+        val component = componentFactory(this, it) ?: return@coroutineScope
+        setContent(component)
+        repaint()
+
+        try {
+          awaitCancellation()
+        }
+        finally {
+          setContent(null)
+          repaint()
+        }
+      }
+    }
+  }
+}
+
+fun <D> JPanel.bindChild(scope: CoroutineScope, dataFlow: Flow<D>,
+                         constraints: Any? = null, index: Int? = null,
+                         componentFactory: (CoroutineScope, D) -> JComponent?) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    dataFlow.collectLatest {
+      coroutineScope {
+        val component = componentFactory(this, it) ?: return@coroutineScope
+        if (index != null) {
+          add(component, constraints, index)
+        }
+        else {
+          add(component, constraints)
+        }
+        validate()
+        repaint()
+
+        try {
+          awaitCancellation()
+        }
+        finally {
+          remove(component)
+          revalidate()
+          repaint()
+        }
+      }
+    }
+  }
+}
+
+private typealias Block = CoroutineScope.() -> Unit
+
+class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { SupervisorJob() + Dispatchers.Main })
+  : Activatable {
+
+  private var scope: CoroutineScope? = null
+  private var blocks = mutableListOf<Block>()
+
+  private var currentConnection: UiNotifyConnector? = null
+
+  fun launchInScope(block: suspend CoroutineScope.() -> Unit) = doInScope {
+    launch { block() }
+  }
+
+  fun doInScope(block: Block) {
+    blocks.add(block)
+    scope?.run {
+      block()
+    }
+  }
+
+  override fun showNotify() {
+    scope = CoroutineScope(context()).apply {
+      for (block in blocks) {
+        launch { block() }
+      }
+    }
+  }
+
+  override fun hideNotify() {
+    scope?.cancel()
+    scope = null
+  }
+
+  fun activateWith(component: JComponent) {
+    currentConnection?.let {
+      Disposer.dispose(it)
+    }
+    currentConnection = UiNotifyConnector(component, this, false)
   }
 }

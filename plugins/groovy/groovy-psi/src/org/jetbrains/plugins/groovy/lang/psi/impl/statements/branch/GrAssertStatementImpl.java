@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
-/**
- * @author ilyas
- */
 public class GrAssertStatementImpl extends GroovyPsiElementImpl implements GrAssertStatement {
   public GrAssertStatementImpl(@NotNull ASTNode node) {
     super(node);

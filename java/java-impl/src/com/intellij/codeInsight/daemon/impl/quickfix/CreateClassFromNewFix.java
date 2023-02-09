@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -147,8 +147,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
     for (ExpectedTypeInfo expectedType : expectedTypes) {
       PsiType type = expectedType.getType();
-      if (!(type instanceof PsiClassType)) continue;
-      final PsiClassType classType = (PsiClassType)type;
+      if (!(type instanceof PsiClassType classType)) continue;
       PsiClass aClass = classType.resolve();
       if (aClass == null) continue;
       if (aClass.equals(targetClass) || aClass.hasModifierProperty(PsiModifier.FINAL)) continue;
@@ -173,13 +172,8 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     PsiJavaCodeReferenceElement referenceElement = getReferenceElement((PsiNewExpression)element);
 
     PsiElement q = referenceElement.getQualifier();
-    if (q instanceof PsiJavaCodeReferenceElement) {
-      PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)q;
-      PsiElement psiElement = qualifier.resolve();
-      if (psiElement instanceof PsiClass) {
-        PsiClass psiClass = (PsiClass)psiElement;
-        return psiClass.getContainingFile();
-      }
+    if (q instanceof PsiJavaCodeReferenceElement qualifier && qualifier.resolve() instanceof PsiClass psiClass) {
+      return psiClass.getContainingFile();
     }
 
     return null;

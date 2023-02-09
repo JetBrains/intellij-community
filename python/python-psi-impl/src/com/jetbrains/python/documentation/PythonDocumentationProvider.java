@@ -5,6 +5,8 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -12,10 +14,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.PythonRuntimeService;
+import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -27,7 +26,6 @@ import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
-import com.jetbrains.python.toolbox.ChainIterable;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +36,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.jetbrains.python.documentation.DocumentationBuilderKit.ESCAPE_ONLY;
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.TO_ONE_LINE_AND_ESCAPE;
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -50,7 +47,6 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   public static final String DOCUMENTATION_CONFIGURABLE_ID = "com.jetbrains.python.documentation.PythonDocumentationConfigurable";
 
   private static final int RETURN_TYPE_WRAPPING_THRESHOLD = 80;
-  private static final String BULLET_POINT = "\u2022";  // &bull;
 
   // provides ctrl+hover info
   @Override
@@ -65,57 +61,57 @@ public class PythonDocumentationProvider implements DocumentationProvider {
 
     final TypeEvalContext context = TypeEvalContext.userInitiated(originalElement.getProject(), originalElement.getContainingFile());
 
-    if (element instanceof PyFunction) {
-      final PyFunction function = (PyFunction)element;
-      final ChainIterable<String> result = new ChainIterable<>();
+    if (element instanceof PyFunction function) {
+      final HtmlBuilder result = new HtmlBuilder();
 
       final PyClass cls = function.getContainingClass();
       if (cls != null) {
         final String clsName = cls.getName();
         if (clsName != null) {
-          result.addItem("class ").addItem(clsName).addItem("\n");
+          result.appendRaw(PyPsiBundle.message("QDOC.class.name", clsName)).appendRaw("\n");
           // It would be nice to have class import info here, but we don't know the ctrl+hovered reference and context
         }
       }
 
       result
-        .add(describeDecorators(function, Function.identity(), TO_ONE_LINE_AND_ESCAPE, ", ", "\n"))
-        .add(describeFunction(function, context, true));
+        .append(describeDecorators(function, Function.identity(), TO_ONE_LINE_AND_ESCAPE, ", ", "\n"))
+        .append(describeFunction(function, context, true));
 
       final String docStringSummary = getDocStringSummary(function);
       if (docStringSummary != null) {
-        result.addItem("\n").addItem(escaped(docStringSummary));
+        result.appendRaw("\n").append(docStringSummary);
       }
 
       return result.toString();
     }
     else if (element instanceof PyClass) {
       final PyClass cls = (PyClass)element;
-      final ChainIterable<String> result = new ChainIterable<>();
+      final HtmlBuilder result = new HtmlBuilder();
 
       result
-        .add(describeDecorators(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, ", ", "\n"))
-        .add(describeClass(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, false, false, context));
+        .append(describeDecorators(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, ", ", "\n"))
+        .append(describeClass(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, false, context));
 
       final String docStringSummary = getDocStringSummary(cls);
       if (docStringSummary != null) {
-        result.addItem("\n").addItem(escaped(docStringSummary));
+        result.appendRaw("\n").append(docStringSummary);
       }
       else {
         Optional
           .ofNullable(cls.findInitOrNew(false, context))
           .map(PythonDocumentationProvider::getDocStringSummary)
-          .ifPresent(summary -> result.addItem("\n").addItem(escaped(summary)));
+          .ifPresent((@NlsSafe var summary) -> result.appendRaw("\n").append(summary));
       }
 
       return result.toString();
     }
     else if (element instanceof PyExpression) {
-      return describeExpression((PyExpression)element, originalElement, ESCAPE_ONLY, context);
+      return describeExpression((PyExpression)element, originalElement, context);
     }
     return null;
   }
 
+  @NlsSafe
   @Nullable
   private static String getDocStringSummary(@NotNull PyDocStringOwner owner) {
     final PyStringLiteralExpression docStringExpression = PyDocumentationBuilder.getEffectiveDocStringExpression(owner);
@@ -127,43 +123,45 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   }
 
   @NotNull
-  static ChainIterable<String> describeFunction(@NotNull PyFunction function,
-                                                @NotNull TypeEvalContext context,
-                                                boolean forTooltip) {
-    return new ChainIterable<>(describeFunctionWithTypes(function, context, forTooltip));
+  static HtmlChunk describeFunction(@NotNull PyFunction function,
+                                    @NotNull TypeEvalContext context,
+                                    boolean forTooltip) {
+    return HtmlChunk.raw(describeFunctionWithTypes(function, context, forTooltip));
   }
 
   @NotNull
-  static ChainIterable<String> describeTarget(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
-    final ChainIterable<String> result = new ChainIterable<>();
-    result.addItem(StringUtil.escapeXmlEntities(StringUtil.notNullize(target.getName())));
-    result.addItem(": ");
+  static HtmlChunk describeTarget(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+    final HtmlBuilder result = new HtmlBuilder();
+    result.append(StringUtil.notNullize(target.getName()));
+    result.appendRaw(": ");
     describeTypeWithLinks(context.getType(target), target, context, target, result);
     // Can return not physical elements such as foo()[0] for assignments like x, _ = foo()
     final PyExpression value = target.findAssignedValue();
     if (value != null) {
-      result.addItem(" = ");
+      result.appendRaw(" = ");
       final String initializerText = value.getText();
       final int index = initializerText.indexOf("\n");
       if (index < 0) {
-        result.addItem(StringUtil.escapeXmlEntities(initializerText));
+        result.append(initializerText);
       }
       else {
-        result.addItem(StringUtil.escapeXmlEntities(initializerText.substring(0, index))).addItem("...");
+        result.append(initializerText.substring(0, index)).appendRaw("...");
       }
     }
-    return result;
+    return result.toFragment();
   }
 
   @NotNull
-  static ChainIterable<String> describeParameter(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
-    final ChainIterable<String> result = new ChainIterable<>();
-    result.addItem(StringUtil.escapeXmlEntities(StringUtil.notNullize(parameter.getName())));
-    result.addItem(": ");
+  static HtmlChunk describeParameter(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
+    final HtmlBuilder result = new HtmlBuilder();
+    result
+      .append(StringUtil.notNullize(parameter.getName()))
+      .appendRaw(": ");
     describeTypeWithLinks(context.getType(parameter), parameter, context, parameter, result);
-    return result;
+    return result.toFragment();
   }
 
+  @NlsSafe
   @NotNull
   private static String describeFunctionWithTypes(@NotNull PyFunction function,
                                                   @NotNull TypeEvalContext context,
@@ -255,14 +253,14 @@ public class PythonDocumentationProvider implements DocumentationProvider {
       result.append("\n ");
     }
     result.append(escaped(" -> "))
-      .append(formatTypeWithLinks(context.getReturnType(function), function, function, context));
+          .append(formatTypeWithLinks(context.getReturnType(function), function, function, context));
     return result.toString();
   }
 
+  @NlsSafe
   @Nullable
   private static String describeExpression(@NotNull PyExpression expression,
                                            @NotNull PsiElement originalElement,
-                                           @NotNull Function<String, String> escaper,
                                            @NotNull TypeEvalContext context) {
     final String name = expression.getName();
     if (name != null) {
@@ -286,7 +284,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
           .append(String.format("Inferred type: %s", typeName));
       }
 
-      return escaper.apply(result.toString());
+      return DocumentationBuilderKit.ESCAPE_ONLY.apply(result.toString());
     }
     return null;
   }
@@ -323,12 +321,12 @@ public class PythonDocumentationProvider implements DocumentationProvider {
                                            @Nullable PyTypedElement typeOwner,
                                            @NotNull TypeEvalContext context,
                                            @NotNull PsiElement anchor,
-                                           @NotNull ChainIterable<String> body) {
+                                           @NotNull HtmlBuilder body) {
     // Variable annotated with "typing.TypeAlias" marker is deliberately treated as having "Any" type
     if (typeOwner instanceof PyTargetExpression && type == null) {
       PyAssignmentStatement assignment = as(typeOwner.getParent(), PyAssignmentStatement.class);
       if (assignment != null && PyTypingTypeProvider.isExplicitTypeAlias(assignment, context)) {
-        body.addItem("TypeAlias");
+        body.append("TypeAlias");
         return;
       }
     }
@@ -352,12 +350,12 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   }
 
   @NotNull
-  static ChainIterable<String> describeDecorators(@NotNull PyDecoratable decoratable,
-                                                  @NotNull Function<String, String> escapedCalleeMapper,
-                                                  @NotNull Function<@NotNull String, @NotNull String> escaper,
-                                                  @NotNull String separator,
-                                                  @NotNull String suffix) {
-    final ChainIterable<String> result = new ChainIterable<>();
+  static HtmlChunk describeDecorators(@NotNull PyDecoratable decoratable,
+                                        @NotNull Function<String, String> escapedCalleeMapper,
+                                        @NotNull Function<@NotNull String, @NotNull String> escaper,
+                                        @NotNull @NlsSafe String separator,
+                                        @NotNull @NlsSafe String suffix) {
+    final HtmlBuilder result = new HtmlBuilder();
 
     final PyDecoratorList decoratorList = decoratable.getDecoratorList();
     if (decoratorList != null) {
@@ -365,63 +363,62 @@ public class PythonDocumentationProvider implements DocumentationProvider {
 
       for (PyDecorator decorator : decoratorList.getDecorators()) {
         if (!first) {
-          result.addItem(separator);
+          result.appendRaw(separator);
         }
-        result.add(describeDecorator(decorator, escapedCalleeMapper, escaper));
+        result.append(describeDecorator(decorator, escapedCalleeMapper, escaper));
         first = false;
       }
     }
 
     if (!result.isEmpty()) {
-      result.addItem(suffix);
+      result.appendRaw(suffix);
     }
 
-    return result;
+    return result.toFragment();
   }
 
   @NotNull
-  static ChainIterable<String> describeClass(@NotNull PyClass cls,
-                                             @NotNull Function<? super String, String> escapedNameMapper,
-                                             @NotNull Function<? super @NotNull String, @NotNull String> escaper,
-                                             boolean link,
-                                             boolean linkAncestors,
-                                             @NotNull TypeEvalContext context) {
-    final ChainIterable<String> result = new ChainIterable<>();
+  static HtmlChunk describeClass(@NotNull PyClass cls,
+                                   @NotNull Function<? super String, String> escapedNameMapper,
+                                   @NotNull Function<? super @NotNull String, @NlsSafe @NotNull String> escaper,
+                                   boolean linkAncestors,
+                                   @NotNull TypeEvalContext context) {
+    final HtmlBuilder result = new HtmlBuilder();
 
-    final String name = escapedNameMapper.apply(escaper.apply(StringUtil.notNullize(cls.getName(), PyNames.UNNAMED_ELEMENT)));
-    result.addItem(escaper.apply("class "));
-    result.addItem(link ? PyDocumentationLink.toContainingClass(name) : name);
+    @NlsSafe final String name = escapedNameMapper.apply(escaper.apply(StringUtil.notNullize(cls.getName(), PyNames.UNNAMED_ELEMENT)));
+    result.appendRaw(escaper.apply("class "));
+    result.appendRaw(name);
 
     final PyExpression[] superClasses = cls.getSuperClassExpressions();
     if (superClasses.length > 0) {
-      result.addItem(escaper.apply("("));
+      result.appendRaw(escaper.apply("("));
       boolean isNotFirst = false;
 
       for (PyExpression superClass : superClasses) {
         if (isNotFirst) {
-          result.addItem(escaper.apply(", "));
+          result.appendRaw(escaper.apply(", "));
         }
         else {
           isNotFirst = true;
         }
 
-        result.addItem(describeSuperClass(superClass, escaper, linkAncestors, context));
+        result.appendRaw(describeSuperClass(superClass, escaper, linkAncestors, context));
       }
 
-      result.addItem(escaper.apply(")"));
+      result.appendRaw(escaper.apply(")"));
     }
 
-    return result;
+    return result.toFragment();
   }
 
+  @NlsSafe
   @NotNull
   private static String describeSuperClass(@NotNull PyExpression expression,
                                            @NotNull Function<? super String, String> escaper,
                                            boolean link,
                                            @NotNull TypeEvalContext context) {
     if (link) {
-      if (expression instanceof PyReferenceExpression) {
-        final PyReferenceExpression referenceExpression = (PyReferenceExpression)expression;
+      if (expression instanceof PyReferenceExpression referenceExpression) {
         if (!referenceExpression.isQualified()) {
           final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
@@ -472,21 +469,19 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   }
 
   @NotNull
-  private static Iterable<String> describeDecorator(@NotNull PyDecorator decorator,
-                                                    @NotNull Function<String, String> escapedCalleeMapper,
-                                                    @NotNull Function<@NotNull String, @NotNull String> escaper) {
-    final ChainIterable<String> result = new ChainIterable<>();
-
-    result
-      .addItem(escaper.apply("@"))
-      .addItem(escapedCalleeMapper.apply(escaper.apply(PyUtil.getReadableRepr(decorator.getCallee(), false))));
+  private static HtmlChunk describeDecorator(@NotNull PyDecorator decorator,
+                                               @NotNull Function<String, @NlsSafe String> escapedCalleeMapper,
+                                               @NotNull Function<@NotNull String, @NotNull @NlsSafe String> escaper) {
+    final HtmlBuilder result = new HtmlBuilder();
+    result.appendRaw(escaper.apply("@"))
+          .appendRaw(escapedCalleeMapper.apply(escaper.apply(PyUtil.getReadableRepr(decorator.getCallee(), false))));
 
     final PyArgumentList argumentList = decorator.getArgumentList();
     if (argumentList != null) {
-      result.addItem(escaper.apply(PyUtil.getReadableRepr(argumentList, false)));
+      result.appendRaw(escaper.apply(PyUtil.getReadableRepr(argumentList, false)));
     }
 
-    return result;
+    return result.toFragment();
   }
 
   // provides ctrl+Q doc
@@ -565,9 +560,9 @@ public class PythonDocumentationProvider implements DocumentationProvider {
                                             @Nullable PyTypedElement typeOwner,
                                             @NotNull PsiElement anchor,
                                             @NotNull TypeEvalContext context) {
-    final ChainIterable<String> holder = new ChainIterable<>();
-    describeTypeWithLinks(type, typeOwner, context, anchor, holder);
-    return holder.toString();
+    final HtmlBuilder builder = new HtmlBuilder();
+    describeTypeWithLinks(type, typeOwner, context, anchor, builder);
+    return builder.toString();
   }
 
   @Nullable
@@ -585,9 +580,9 @@ public class PythonDocumentationProvider implements DocumentationProvider {
       }
       else if (PyUtil.isInitOrNewMethod(owner)) {
         final QualifiedName importQName = QualifiedNameFinder.findCanonicalImportPath(owner, element);
-        if (importQName != null) {
-          return QualifiedName
-            .fromDottedString(importQName.toString() + "." + ((PyFunction)owner).getContainingClass().getName() + "." + name);
+        final PyClass containingClass = ((PyFunction)owner).getContainingClass();
+        if (importQName != null && containingClass != null) {
+          return QualifiedName.fromDottedString(importQName + "." + containingClass.getName() + "." + name);
         }
       }
       else if (owner instanceof PyFile) {
@@ -599,7 +594,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
           if (virtualFile != null) {
             final QualifiedName fileQName = QualifiedNameFinder.findCanonicalImportPath(element, element);
             if (fileQName != null) {
-              return QualifiedName.fromDottedString(fileQName.toString() + "." + name);
+              return QualifiedName.fromDottedString(fileQName + "." + name);
             }
           }
         }

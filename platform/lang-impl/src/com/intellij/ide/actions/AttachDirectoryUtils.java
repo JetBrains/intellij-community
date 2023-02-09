@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
@@ -23,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.Consumer;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +35,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class AttachDirectoryUtils {
+public final class AttachDirectoryUtils {
   public static void chooseAndAddDirectoriesWithUndo(@NotNull Project project, @Nullable Consumer<? super List<VirtualFile>> callback) {
     Module module = getAttachTargetModule(project);
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor();
@@ -53,7 +55,9 @@ public class AttachDirectoryUtils {
     addRemoveEntriesWithUndo(project, module, roots, true);
     VirtualFile file = ContainerUtil.getFirstItem(roots);
     if (file != null) {
-      ProjectViewSelectInTarget.select(project, file, ProjectViewPane.ID, null, file, true);
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () ->
+        ProjectViewSelectInTarget.select(project, file, ProjectViewPane.ID, null, file, true)
+      );
     }
   }
 

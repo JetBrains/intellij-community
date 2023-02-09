@@ -46,7 +46,6 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Processor;
 import com.intellij.util.TextWithIcon;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +96,7 @@ public final class NavigationUtil {
                                                                   @Nullable T initialSelection) {
     assert elements.length > 0 : "Attempted to show a navigation popup with zero elements";
     IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(ContainerUtil.newArrayList(elements))
+      .createPopupChooserBuilder(List.of(elements))
       .setRenderer(renderer)
       .setFont(EditorUtil.getEditorFont())
       .withHintUpdateSupply();
@@ -350,10 +349,9 @@ public final class NavigationUtil {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component psiComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (!hasMnemonic.get() || !(psiComponent instanceof JPanel)) {
+        if (!hasMnemonic.get() || !(psiComponent instanceof JPanel component)) {
           return psiComponent;
         }
-        JPanel component = (JPanel)psiComponent;
 
         final JPanel panelWithMnemonic = new JPanel(new BorderLayout());
         final int mnemonic = getMnemonic(value, itemsMap);

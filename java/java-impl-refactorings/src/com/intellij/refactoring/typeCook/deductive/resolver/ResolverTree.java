@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook.deductive.resolver;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -156,10 +156,7 @@ public final class ResolverTree {
       final PsiType left = constraint.getLeft();
       final PsiType right = constraint.getRight();
 
-      if (left instanceof PsiTypeVariable && right instanceof PsiTypeVariable) {
-        final PsiTypeVariable leftVar = (PsiTypeVariable)left;
-        final PsiTypeVariable rightVar = (PsiTypeVariable)right;
-
+      if (left instanceof PsiTypeVariable leftVar && right instanceof PsiTypeVariable rightVar) {
         candidates.add(constraint);
 
         nodes.add(leftVar);

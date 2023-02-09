@@ -7,6 +7,7 @@ import com.intellij.navigation.NavigatableSymbol
 import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.ApiStatus
 data class LinkLabelSymbol(
   override val file: PsiFile,
   override val range: TextRange,
-  val text: String
+  val text: @NlsSafe String
 ): MarkdownSymbolWithUsages, SearchTarget, RenameTarget, NavigatableSymbol {
   override fun createPointer(): Pointer<out LinkLabelSymbol> {
     val project = file.project
@@ -49,7 +50,7 @@ data class LinkLabelSymbol(
   override val targetName: String
     get() = text
 
-  override val maximalSearchScope: SearchScope?
+  override val maximalSearchScope: SearchScope
     get() = GlobalSearchScope.fileScope(file)
 
   override val usageHandler: UsageHandler
@@ -75,7 +76,7 @@ data class LinkLabelSymbol(
   }
 
   companion object {
-    fun createPointer(label: MarkdownLinkLabel): Pointer<LinkLabelSymbol>? {
+    fun createPointer(label: MarkdownLinkLabel): Pointer<LinkLabelSymbol> {
       val text = label.text
       val rangeInElement = TextRange(0, text.length)
       val absoluteRange = rangeInElement.shiftRight(label.startOffset)

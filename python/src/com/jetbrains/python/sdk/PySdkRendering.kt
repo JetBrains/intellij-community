@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleColoredComponent
@@ -26,7 +27,7 @@ fun name(sdk: Sdk, name: String): Triple<String?, String, String?> {
   val modifier = when {
     !sdk.sdkSeemsValid || PythonSdkType.hasInvalidRemoteCredentials(sdk) -> "invalid"
     PythonSdkType.isIncompleteRemote(sdk) -> "incomplete"
-    !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(sdk)) -> "unsupported"
+    !LanguageLevel.SUPPORTED_LEVELS.contains(PySdkUtil.getLanguageLevelForSdk(sdk)) -> "unsupported"
     else -> null
   }
   val providedForSdk = PySdkProvider.EP_NAME.extensions.firstNotNullOfOrNull { it.getSdkAdditionalText(sdk) }
@@ -46,7 +47,7 @@ fun name(sdk: Sdk, name: String): Triple<String?, String, String?> {
  *
  * @see FileUtil.getLocationRelativeToUserHome
  */
-fun path(sdk: Sdk): String? {
+fun path(sdk: Sdk): @NlsSafe String? {
   val name = sdk.name
   val homePath = sdk.homePath ?: return null
 
@@ -67,7 +68,7 @@ fun path(sdk: Sdk): String? {
  * Result is wrapped with [AllIcons.Actions.Cancel]
  * if the sdk is local and does not exist, or remote and incomplete or has invalid credentials, or is not supported.
  *
- * @see com.jetbrains.python.sdk.PySdkExtKt.isValid
+ * @see sdkSeemsValid
  * @see PythonSdkType.isIncompleteRemote
  * @see PythonSdkType.hasInvalidRemoteCredentials
  * @see LanguageLevel.SUPPORTED_LEVELS
@@ -83,7 +84,7 @@ fun icon(sdk: Sdk): Icon {
     (!sdk.sdkSeemsValid) ||
     PythonSdkType.isIncompleteRemote(sdk) ||
     PythonSdkType.hasInvalidRemoteCredentials(sdk) ||
-    !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(sdk)) ->
+    !LanguageLevel.SUPPORTED_LEVELS.contains(PySdkUtil.getLanguageLevelForSdk(sdk)) ->
       wrapIconWithWarningDecorator(icon)
     sdk is PyDetectedSdk -> IconLoader.getTransparentIcon(icon)
     providedIcon != null -> providedIcon

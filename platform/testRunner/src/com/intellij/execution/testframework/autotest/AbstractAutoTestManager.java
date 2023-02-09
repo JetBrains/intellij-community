@@ -53,9 +53,6 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
 
   private static @Nullable ExecutionEnvironment getCurrentEnvironment(@NotNull Content content) {
     JComponent component = content.getComponent();
-    if (component == null) {
-      return null;
-    }
     return ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(component));
   }
 

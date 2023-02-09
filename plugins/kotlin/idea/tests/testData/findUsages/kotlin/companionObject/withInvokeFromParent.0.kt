@@ -8,3 +8,4 @@ open class ClassWithInvoke {
 class SimpleClass(i: Int) {
     companion obj<caret>ect : ClassWithInvoke()
 }
+

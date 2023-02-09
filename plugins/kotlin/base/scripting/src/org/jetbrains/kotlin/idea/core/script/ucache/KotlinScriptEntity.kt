@@ -2,13 +2,19 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.SymbolicEntityId
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
-import org.jetbrains.deft.annotations.Child
 
 
 // Use "Generate Workspace Model Implementation" action once interface is updated.
@@ -16,33 +22,38 @@ interface KotlinScriptEntity: WorkspaceEntityWithSymbolicId {
 
     val path: String
 
-    // Direct link resulting in cascade removal: no script no dependencies.
-    val dependencies: List<@Child KotlinScriptLibraryEntity>
+    val dependencies: Set<KotlinScriptLibraryId>
 
-    override val symbolicId: ScriptId
-        get() = ScriptId(path)
+    override val symbolicId: KotlinScriptId
+        get() = KotlinScriptId(path)
 
     //region generated code
     @GeneratedCodeApiVersion(1)
     interface Builder : KotlinScriptEntity, WorkspaceEntity.Builder<KotlinScriptEntity>, ObjBuilder<KotlinScriptEntity> {
         override var entitySource: EntitySource
         override var path: String
-        override var dependencies: List<KotlinScriptLibraryEntity>
+        override var dependencies: MutableSet<KotlinScriptLibraryId>
     }
 
     companion object : Type<KotlinScriptEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(path: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): KotlinScriptEntity {
-      val builder = builder()
-      builder.path = path
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
+        @JvmOverloads
+        @JvmStatic
+        @JvmName("create")
+        operator fun invoke(
+            path: String,
+            dependencies: Set<KotlinScriptLibraryId>,
+            entitySource: EntitySource,
+            init: (Builder.() -> Unit)? = null
+        ): KotlinScriptEntity {
+            val builder = builder()
+            builder.path = path
+            builder.dependencies = dependencies.toMutableWorkspaceSet()
+            builder.entitySource = entitySource
+            init?.invoke(builder)
+            return builder
+        }
     }
-  }
-  //endregion
+    //endregion
 
 }
 
@@ -53,7 +64,7 @@ fun MutableEntityStorage.modifyEntity(entity: KotlinScriptEntity, modification: 
 
 data class KotlinScriptEntitySource(override val virtualFileUrl: VirtualFileUrl?): EntitySource
 
-data class ScriptId(val path: String) : SymbolicEntityId<KotlinScriptEntity> {
+data class KotlinScriptId(val path: String) : SymbolicEntityId<KotlinScriptEntity> {
     override val presentableName: String
         get() = path
 }

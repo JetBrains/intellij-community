@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce;
 
@@ -748,6 +748,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         public static class Basic extends AbstractExtractionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("callWithLambdaArgument.kt")
+            public void testCallWithLambdaArgument() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/callWithLambdaArgument.kt");
             }
 
             @TestMetadata("callWithPlatformTypeReceiver.kt")

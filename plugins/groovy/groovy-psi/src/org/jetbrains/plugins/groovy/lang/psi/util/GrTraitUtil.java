@@ -107,8 +107,7 @@ public final class GrTraitUtil {
   }
 
   public static GrMethod[] getDefaultMethods(@Nullable PsiClass aClass) {
-    if (!(aClass instanceof GrTypeDefinition) || !aClass.isInterface()) return GrMethod.EMPTY_ARRAY;
-    GrTypeDefinition grTypeDefinition = (GrTypeDefinition)aClass;
+    if (!(aClass instanceof GrTypeDefinition grTypeDefinition) || !aClass.isInterface()) return GrMethod.EMPTY_ARRAY;
     return Arrays.stream(grTypeDefinition.getCodeMethods())
       .filter(m -> m.getModifierList().hasExplicitModifier(PsiModifier.DEFAULT))
       .toArray(GrMethod[]::new);

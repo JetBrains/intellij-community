@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -17,27 +16,29 @@ import org.jetbrains.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 
-public class PagedFileStorage implements Forceable {
+import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
+
+public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
   static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
 
-  static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(SystemProperties.getIntProperty("paged.file.storage.open.channel.cache.capacity", 400));
-
-  public static final int MB = 1024 * 1024;
-  public static final int DEFAULT_PAGE_SIZE = FilePageCache.DEFAULT_PAGE_SIZE;
+  private static final int DEFAULT_PAGE_SIZE = PageCacheUtils.DEFAULT_PAGE_SIZE;
 
   @NotNull
   private static final ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
-  private static final StorageLockContext ourDefaultContext = new StorageLockContext(false);
+
+  private static final EnumSet<StandardOpenOption> WRITE_OPTION = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
   @NotNull
   public static final ThreadLocal<StorageLockContext> THREAD_LOCAL_STORAGE_LOCK_CONTEXT = new ThreadLocal<>();
@@ -62,10 +63,8 @@ public class PagedFileStorage implements Forceable {
   private final boolean myReadOnly;
   private final Object myInputStreamLock = new Object();
 
-  //TODO RC: pageSize could be != FilePageCache.PAGE_SIZE, and I don't understand how do they both interact, i.e. how could Storage
-  //         use pages of size != FilePageCache.PAGE_SIZE, if pages are managed by FilePageCache?
-  protected final int myPageSize;
-  protected final boolean myValuesAreBufferAligned;
+  private final int myPageSize;
+  private final boolean myValuesAreBufferAligned;
 
   private volatile boolean isDirty;
   private volatile long mySize = -1;
@@ -87,7 +86,7 @@ public class PagedFileStorage implements Forceable {
       storageLockContext = context;
     }
 
-    myStorageLockContext = storageLockContext != null ? storageLockContext : ourDefaultContext;
+    myStorageLockContext = storageLockContext != null ? storageLockContext : StorageLockContext.ourDefaultContext;
     myPageSize = Math.max(pageSize > 0 ? pageSize : DEFAULT_PAGE_SIZE, AbstractStorage.PAGE_SIZE);
     myValuesAreBufferAligned = valuesAreBufferAligned;
     myStorageIndex = myStorageLockContext.getBufferCache().registerPagedFileStorage(this);
@@ -362,6 +361,7 @@ public class PagedFileStorage implements Forceable {
 
   public void resize(long newSize) throws IOException {
     long oldSize;
+
     if (Files.exists(myFile)) {
       oldSize = Files.size(myFile);
     }
@@ -369,21 +369,30 @@ public class PagedFileStorage implements Forceable {
       Files.createDirectories(myFile.getParent());
       oldSize = 0;
     }
-    if (oldSize == newSize && oldSize == length()) return;
-    resizeFile(newSize);
-
-    // it is not guaranteed that new partition will consist of null
-    // after resize, so we should fill it manually
-    long delta = newSize - oldSize;
-    if (delta > 0) fillWithZeros(oldSize, delta);
-  }
-
-  private void resizeFile(long newSize) throws IOException {
-    mySize = -1;
-    try (RandomAccessFile raf = new RandomAccessFile(myFile.toFile(), "rw")) {
-      raf.setLength(newSize);
+    if (oldSize == newSize && oldSize == length()) {
+      return;
     }
-    mySize = newSize;
+
+    // FileChannel.truncate doesn't modify file if the given size is greater than or equal to the file's current size,
+    // and it is not guaranteed that new partition will consist of null after truncate, so we should fill it manually
+    long delta = newSize - oldSize;
+    mySize = -1;
+    if (delta > 0) {
+      //CHANNELS_CACHE.useChannel(myFile, channel -> {
+      //  channel.write(ByteBuffer.allocate(1), newSize - 1);
+      //});
+      try (FileChannel channel = new UnInterruptibleFileChannel(myFile, WRITE_OPTION)) {
+        channel.write(ByteBuffer.allocate(1), newSize - 1);
+      }
+      mySize = newSize;
+      fillWithZeros(oldSize, delta);
+    }
+    else {
+      try (FileChannel channel = new UnInterruptibleFileChannel(myFile, WRITE_OPTION)) {
+        channel.truncate(newSize);
+      }
+      mySize = newSize;
+    }
   }
 
   private static final int MAX_FILLER_SIZE = 8192;
@@ -454,7 +463,7 @@ public class PagedFileStorage implements Forceable {
     }
 
     if (myStorageIndex == -1) {
-      throw new IOException("storage is already closed; path " + myFile);
+      throw new ClosedStorageException("storage is already closed; path " + myFile);
     }
     DirectBufferWrapper byteBufferWrapper =
       myStorageLockContext.getBufferCache().get(myStorageIndex | page, !modify, checkAccess); // TODO: long page
@@ -478,10 +487,6 @@ public class PagedFileStorage implements Forceable {
     return myReadOnly;
   }
 
-  boolean useNativeByteOrder() {
-    return myNativeBytesOrder;
-  }
-
   private static byte[] getThreadLocalTypedIOBuffer() {
     return ourTypedIOBuffer.get();
   }
@@ -497,7 +502,7 @@ public class PagedFileStorage implements Forceable {
 
     if (IOStatistics.DEBUG) {
       long finished = System.currentTimeMillis();
-      if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
+      if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT_MS) {
         IOStatistics.dump("Flushed " + myFile + " for " + (finished - started));
       }
     }

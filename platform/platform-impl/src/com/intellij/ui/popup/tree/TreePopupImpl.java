@@ -19,6 +19,7 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.FilteringTreeModel;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
+import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -53,8 +54,8 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
   protected JComponent createContent() {
     myWizardTree = new MyTree();
     myWizardTree.getAccessibleContext().setAccessibleName("WizardTree");
-    myModel = FilteringTreeModel.createModel(getTreeStep().getStructure(), this, this);
-    myWizardTree.setModel(new AsyncTreeModel(myModel, this));
+    myModel = FilteringTreeModel.createModel(getTreeStep().getStructure(), this, Invoker.forEventDispatchThread(this), this);
+    myWizardTree.setModel(myModel);
     myModel.updateTree(myWizardTree, false, null);
     myWizardTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
@@ -161,11 +162,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
   @Override
   protected boolean beforeShow() {
     addListeners();
-
     expandAll();
-
-    collapseAll();
-
     return super.beforeShow();
   }
 

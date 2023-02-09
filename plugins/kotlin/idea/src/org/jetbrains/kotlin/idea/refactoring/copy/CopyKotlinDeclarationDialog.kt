@@ -6,6 +6,8 @@ import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.Pass
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
@@ -26,7 +28,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.getPackage
-import org.jetbrains.kotlin.idea.refactoring.Pass
 import org.jetbrains.kotlin.idea.refactoring.hasIdentifiersOnly
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinDestinationFolderComboBox
 import org.jetbrains.kotlin.idea.roots.getSuitableDestinationSourceRoots
@@ -78,7 +79,7 @@ class CopyKotlinDeclarationDialog(
         destinationComboBox.setData(
             project,
             defaultTargetDirectory,
-            Pass { setErrorText(it, destinationComboBox) },
+            Pass.create { setErrorText(it, destinationComboBox) },
             packageNameField.childComponent
         )
         classNameField.text = UsageViewUtil.getShortName(declaration)
@@ -124,6 +125,7 @@ class CopyKotlinDeclarationDialog(
         get() = openInEditorCheckBox.isSelected
 
     @Nls
+    @NlsContexts.DialogMessage
     private fun checkForErrors(): String? {
         val packageName = packageNameField.text
         val newName = newName
@@ -157,9 +159,10 @@ class CopyKotlinDeclarationDialog(
     override fun doOKAction() {
         val packageName = packageNameField.text
 
-        checkForErrors()?.let { errorString ->
-            if (errorString.isNotEmpty()) {
-                Messages.showMessageDialog(project, errorString, RefactoringBundle.message("error.title"), Messages.getErrorIcon())
+        @NlsContexts.DialogMessage val checkForErrors = checkForErrors()
+        if (checkForErrors != null) {
+            if (checkForErrors.isNotEmpty()) {
+                Messages.showMessageDialog(project, checkForErrors, RefactoringBundle.message("error.title"), Messages.getErrorIcon())
             }
             classNameField.requestFocusInWindow()
             return

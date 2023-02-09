@@ -18,6 +18,7 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiImportStatementBase
 import com.intellij.psi.ResolveResult
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UImportStatement
@@ -30,7 +31,7 @@ class JavaUImportStatement(
 ) : JavaAbstractUElement(uastParent), UImportStatement, UMultiResolvable {
   override val isOnDemand: Boolean
     get() = sourcePsi.isOnDemand
-  override val importReference: UElement? by lz { sourcePsi.importReference?.let { JavaDumbUElement(it, this, it.qualifiedName) } }
+  override val importReference: UElement? by lazyPub { sourcePsi.importReference?.let { JavaDumbUElement(it, this, it.qualifiedName) } }
   override fun resolve(): PsiElement? = sourcePsi.resolve()
   override fun multiResolve(): Iterable<ResolveResult> =
     sourcePsi.importReference?.multiResolve(false)?.asIterable() ?: emptyList()

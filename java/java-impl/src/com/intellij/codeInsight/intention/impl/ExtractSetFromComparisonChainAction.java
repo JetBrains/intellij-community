@@ -10,7 +10,6 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -67,7 +66,7 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiElement element = getElement(editor, file);
     if (element == null) return IntentionPreviewInfo.EMPTY;
     extract(project, editor, element);
     return IntentionPreviewInfo.DIFF;

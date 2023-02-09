@@ -6,7 +6,8 @@ import java.util.stream.Collectors
 
 class RecallMetric : Metric {
   private val sample = Sample()
-
+  override val name = NAME
+  override val valueType = MetricValueType.DOUBLE
   override val value: Double
     get() = sample.mean()
 
@@ -26,7 +27,7 @@ class RecallMetric : Metric {
     return fileSample.mean()
   }
 
-  override val name: String = "Recall"
-
-  override val valueType = MetricValueType.DOUBLE
+  companion object {
+    const val NAME = "Recall"
+  }
 }

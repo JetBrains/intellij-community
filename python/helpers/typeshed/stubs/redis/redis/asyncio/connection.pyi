@@ -5,6 +5,7 @@ from collections.abc import Callable, Iterable, Mapping
 from typing import Any, Protocol
 from typing_extensions import TypeAlias, TypedDict
 
+from redis import RedisError
 from redis.asyncio.retry import Retry
 from redis.exceptions import ResponseError
 from redis.typing import EncodableT, EncodedT
@@ -108,12 +109,13 @@ class Connection:
     socket_keepalive_options: Any
     socket_type: Any
     retry_on_timeout: Any
-    retry: Any
+    retry_on_error: list[type[RedisError]]
+    retry: Retry
     health_check_interval: Any
     next_health_check: int
     ssl_context: Any
     encoder: Any
-    redis_connect_func: Any
+    redis_connect_func: ConnectCallbackT | None
     def __init__(
         self,
         *,
@@ -127,6 +129,7 @@ class Connection:
         socket_keepalive_options: Mapping[int, int | bytes] | None = ...,
         socket_type: int = ...,
         retry_on_timeout: bool = ...,
+        retry_on_error: list[type[RedisError]] | _Sentinel = ...,
         encoding: str = ...,
         encoding_errors: str = ...,
         decode_responses: bool = ...,
@@ -211,10 +214,11 @@ class UnixDomainSocketConnection(Connection):
     socket_timeout: Any
     socket_connect_timeout: Any
     retry_on_timeout: Any
+    retry_on_error: list[type[RedisError]]
     retry: Any
     health_check_interval: Any
     next_health_check: int
-    redis_connect_func: Any
+    redis_connect_func: ConnectCallbackT | None
     encoder: Any
     def __init__(
         self,
@@ -229,12 +233,13 @@ class UnixDomainSocketConnection(Connection):
         encoding_errors: str = ...,
         decode_responses: bool = ...,
         retry_on_timeout: bool = ...,
+        retry_on_error: list[type[RedisError]] | _Sentinel = ...,
         parser_class: type[BaseParser] = ...,
         socket_read_size: int = ...,
         health_check_interval: float = ...,
         client_name: str | None = ...,
         retry: Retry | None = ...,
-        redis_connect_func: Any | None = ...,
+        redis_connect_func: ConnectCallbackT | None = ...,
     ) -> None: ...
     def repr_pieces(self) -> Iterable[tuple[str, str | int]]: ...
 

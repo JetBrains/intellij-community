@@ -97,8 +97,7 @@ public final class Utils {
       Component component = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
       return newPreCachedDataContext(component);
     }
-    else if (dataContext instanceof CustomizedDataContext) {
-      CustomizedDataContext context = (CustomizedDataContext)dataContext;
+    else if (dataContext instanceof CustomizedDataContext context) {
       DataContext delegate = wrapToAsyncDataContext(context.getParent());
       if (delegate == DataContext.EMPTY_CONTEXT) {
         return new PreCachedDataContext(null).prependProvider(context.getCustomDataProvider());
@@ -159,7 +158,7 @@ public final class Utils {
                                                                           @NotNull String place,
                                                                           boolean isToolbarAction,
                                                                           boolean skipFastTrack) {
-    LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + context.getClass().getName());
+    LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + dumpDataContextClass(context));
     ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction);
     List<AnAction> actions = skipFastTrack ? null : expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, null);
     if (actions != null) {
@@ -179,16 +178,6 @@ public final class Utils {
   }
 
   private static final boolean DO_FULL_EXPAND = Boolean.getBoolean("actionSystem.use.full.group.expand"); // for tests and debug
-
-  /** @deprecated Use {@link #expandActionGroup(ActionGroup, PresentationFactory, DataContext, String)} */
-  @Deprecated(forRemoval = true)
-  public static @NotNull List<AnAction> expandActionGroup(boolean isInModalContext,
-                                                          @NotNull ActionGroup group,
-                                                          @NotNull PresentationFactory presentationFactory,
-                                                          @NotNull DataContext context,
-                                                          @NotNull String place) {
-    return expandActionGroup(group, presentationFactory, context, place);
-  }
 
   public static @NotNull List<AnAction> expandActionGroup(@NotNull ActionGroup group,
                                                           @NotNull PresentationFactory presentationFactory,
@@ -276,7 +265,7 @@ public final class Utils {
     }
     else {
       if (Registry.is("actionSystem.update.actions.async") && !isUnitTestMode) {
-        LOG.error("Async data context required in '" + place + "': " + wrapped.getClass().getName());
+        LOG.error("Async data context required in '" + place + "': " + dumpDataContextClass(wrapped));
       }
       try {
         list = DO_FULL_EXPAND ?
@@ -315,7 +304,7 @@ public final class Utils {
     if (maxTime < 1) return null;
     BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(updater.asFastUpdateSession(missedKeys, queue::offer));
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FAST_TRACK)) {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.FAST_TRACK)) {
       long start = System.currentTimeMillis();
       CancellablePromise<List<AnAction>> promise = fastUpdater.expandActionGroupAsync(group, hideDisabled);
       return runLoopAndWaitForFuture(promise, null, false, () -> {
@@ -340,6 +329,9 @@ public final class Utils {
                        @Nullable RelativePoint progressPoint,
                        @Nullable BooleanSupplier expire) {
     if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
+      throw new ProcessCanceledException();
+    }
+    if (Thread.holdsLock(component.getTreeLock())) {
       throw new ProcessCanceledException();
     }
     List<AnAction> result = null;
@@ -511,10 +503,22 @@ public final class Utils {
     if (StringUtil.isNotEmpty(place)) sb.append("@").append(place);
     sb.append(" (");
     for (Object x = action; x instanceof ActionWithDelegate; x = ((ActionWithDelegate<?>)x).getDelegate(), c = x.getClass()) {
-      sb.append(c.getSimpleName()).append("/");
+      sb.append(StringUtil.getShortName(c.getName())).append("/");
     }
     sb.append(c.getName()).append(")");
-    sb.insert(0, StringUtil.isNotEmpty(c.getSimpleName()) ? c.getSimpleName() : StringUtil.getShortName(c.getName()));
+    sb.insert(0, StringUtil.getShortName(c.getName()));
+    return sb.toString();
+  }
+
+  private static @NotNull String dumpDataContextClass(@NotNull DataContext context) {
+    Class<?> c = context.getClass();
+    StringBuilder sb = new StringBuilder(200);
+    int i = 0;
+    for (Object x = context; x instanceof CustomizedDataContext; x = ((CustomizedDataContext)x).getParent(), i++, c = x.getClass()) {
+      sb.append(StringUtil.getShortName(c.getName())).append("(");
+    }
+    sb.append(c.getName());
+    StringUtil.repeatSymbol(sb, ')', i);
     return sb.toString();
   }
 
@@ -793,7 +797,7 @@ public final class Utils {
     List<ActionPromoter> promoters = ContainerUtil.concat(
       ActionPromoter.EP_NAME.getExtensionList(), ContainerUtil.filterIsInstance(actions, ActionPromoter.class));
     for (ActionPromoter promoter : promoters) {
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FORCE_ASSERT)) {
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.FORCE_ASSERT)) {
         List<AnAction> promoted = promoter.promote(readOnlyActions, frozenContext);
         if (promoted != null && !promoted.isEmpty()) {
           actions.removeAll(promoted);
@@ -847,7 +851,7 @@ public final class Utils {
     ProcessCanceledWithReasonException lastCancellation = null;
     int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
     for (int i = 0; i < retries; i++) {
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RESET)) {
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET)) {
         return computable.get();
       }
       catch (Utils.ProcessCanceledWithReasonException ex) {

@@ -13,8 +13,9 @@ import kotlin.reflect.KClass
 class KotlinQuickFixesList @ForKtQuickFixesListBuilder @OptIn(PrivateForInline::class) constructor(
     private val quickFixes: Map<KClass<out KtDiagnosticWithPsi<*>>, List<KotlinQuickFixFactory>>
 ) {
+    context(KtAnalysisSession)
     @OptIn(PrivateForInline::class)
-    fun KtAnalysisSession.getQuickFixesFor(diagnostic: KtDiagnosticWithPsi<*>): List<IntentionAction> {
+    fun getQuickFixesFor(diagnostic: KtDiagnosticWithPsi<*>): List<IntentionAction> {
         val factories = quickFixes[diagnostic.diagnosticClass] ?: return emptyList()
         return factories.flatMap { createQuickFixes(it, diagnostic) }
     }

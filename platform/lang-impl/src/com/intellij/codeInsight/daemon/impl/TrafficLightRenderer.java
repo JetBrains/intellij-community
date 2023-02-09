@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.UtilBundle;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
@@ -67,6 +68,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private final Object2IntMap<HighlightSeverity> errorCount = new Object2IntOpenHashMap<>();
   private final @NotNull UIController myUIController;
   private final boolean inLibrary; // true if getPsiFile() is in library sources
+  private final boolean shouldHighlight;
   private int[] cachedErrors = ArrayUtilRt.EMPTY_INT_ARRAY;
   private final Map<Language, FileHighlightingSetting> myFileHighlightingSettings; // each root language -> its highlighting level
   private final long myHighlightingSettingsModificationCount;
@@ -86,33 +88,33 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
     init(project, myDocument);
     myUIController = editor == null ? createUIController() : createUIController(editor);
-    myFileHighlightingSettings = ReadAction.compute(() -> {
+    record Stuff(@NotNull Map<Language, FileHighlightingSetting> fileHighlightingSettings,
+                 boolean inLibrary,
+                 boolean shouldHighlight){}
+    Stuff info = ReadAction.compute(() -> {
       PsiFile psiFile = getPsiFile();
       if (psiFile == null) {
-        return Collections.emptyMap();
+        return new Stuff(Collections.emptyMap(),false,false);
       }
       FileViewProvider viewProvider = psiFile.getViewProvider();
       Set<Language> languages = viewProvider.getLanguages();
-      Map<Language, FileHighlightingSetting> result = new HashMap<>(languages.size());
+      Map<Language, FileHighlightingSetting> settingMap = new HashMap<>(languages.size());
       HighlightingSettingsPerFile settings = HighlightingSettingsPerFile.getInstance(project);
-      for (Language language : languages) {
-        PsiFile psiRoot = viewProvider.getPsi(language);
+      for (PsiFile psiRoot : viewProvider.getAllFiles()) {
         FileHighlightingSetting setting = settings.getHighlightingSettingForRoot(psiRoot);
-        result.put(language, setting);
+        settingMap.put(psiRoot.getLanguage(), setting);
       }
 
-      return result;
-    });
-    inLibrary = ReadAction.compute(() -> {
-      PsiFile psiFile = getPsiFile();
-      if (psiFile == null) {
-        return false;
-      }
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       VirtualFile virtualFile = psiFile.getVirtualFile();
       assert virtualFile != null;
-      return fileIndex.isInLibrary(virtualFile) && !fileIndex.isInContent(virtualFile);
+      boolean inLib = fileIndex.isInLibrary(virtualFile) && !fileIndex.isInContent(virtualFile);
+      boolean shouldHighlight = ProblemHighlightFilter.shouldHighlightFile(getPsiFile());
+      return new Stuff(settingMap, inLib, shouldHighlight);
     });
+    myFileHighlightingSettings = info.fileHighlightingSettings();
+    inLibrary = info.inLibrary();
+    shouldHighlight = info.shouldHighlight();
     myHighlightingSettingsModificationCount = HighlightingSettingsPerFile.getInstance(project).getModificationCount();
   }
 
@@ -269,6 +271,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       shouldHighlight |= level != FileHighlightingSetting.SKIP_HIGHLIGHTING;
       status.minimumLevel = status.minimumLevel.compareTo(level) < 0 ? status.minimumLevel : level;
     }
+    shouldHighlight &= this.shouldHighlight;
 
     if (!shouldHighlight) {
       status.reasonWhyDisabled = DaemonBundle.message("process.title.highlighting.level.is.none");
@@ -449,6 +452,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         Language language = Language.findLanguageByID(level.getLangID());
         if (language != null) {
           PsiElement root = viewProvider.getPsi(language);
+          if (root == null) return;
           FileHighlightingSetting setting = FileHighlightingSetting.fromInspectionsLevel(level.getLevel());
           HighlightLevelUtil.forceRootHighlighting(root, setting);
           InjectedLanguageManager.getInstance(getProject()).dropFileCaches(psiFile);
@@ -471,11 +475,11 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         }
         myAdditionalPanels = list;
 
-        for (HectorComponentPanel p : myAdditionalPanels) {
+        for (HectorComponentPanel panel : myAdditionalPanels) {
           JComponent c;
           try {
-            p.reset();
-            c = p.createComponent();
+            panel.reset();
+            c = panel.createComponent();
           }
           catch (ProcessCanceledException e) {
             throw e;

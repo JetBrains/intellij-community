@@ -1,7 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.CustomFoldRegionRenderer;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
@@ -104,11 +107,9 @@ class DocRenderMouseEventBridge implements EditorMouseListener, EditorMouseMotio
     Point mousePoint = mouseEvent.getPoint();
     Editor editor = event.getEditor();
     FoldRegion foldRegion = event.getCollapsedFoldRegion();
-    if (foldRegion instanceof CustomFoldRegion) {
-      CustomFoldRegion cfr = (CustomFoldRegion)foldRegion;
+    if (foldRegion instanceof CustomFoldRegion cfr) {
       CustomFoldRegionRenderer r = cfr.getRenderer();
-      if (r instanceof DocRenderer) {
-        DocRenderer renderer = (DocRenderer)r;
+      if (r instanceof DocRenderer renderer) {
         Rectangle relativeBounds = renderer.getEditorPaneBoundsWithinRenderer(cfr.getWidthInPixels(), cfr.getHeightInPixels());
         Point location = cfr.getLocation();
         assert location != null;

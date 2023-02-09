@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.view;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -354,28 +355,28 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   @Override
-  protected void doUpdate() {
-    setNameAndTooltip(getName(), null);
+  protected void doUpdate(@NotNull PresentationData presentation) {
+    setNameAndTooltip(presentation, getName(), null);
   }
 
-  protected void setNameAndTooltip(String name, @Nullable @Tooltip String tooltip) {
-    setNameAndTooltip(name, tooltip, (String)null);
+  protected void setNameAndTooltip(@NotNull PresentationData presentation, @NlsSafe String name, @Nullable @Tooltip String tooltip) {
+    setNameAndTooltip(presentation, name, tooltip, (String)null);
   }
 
-  protected void setNameAndTooltip(String name, @Nullable @Tooltip String tooltip, @Nullable String hint) {
+  protected void setNameAndTooltip(@NotNull PresentationData presentation, @NlsSafe String name, @Nullable @Tooltip String tooltip, @Nullable @NlsSafe String hint) {
     final boolean ignored = isIgnored();
     final SimpleTextAttributes textAttributes = ignored ? SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES : getPlainAttributes();
-    setNameAndTooltip(name, tooltip, textAttributes);
+    setNameAndTooltip(presentation, name, tooltip, textAttributes);
     if (!StringUtil.isEmptyOrSpaces(hint)) {
-      addColoredFragment(" (" + hint + ")", ignored ? SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
+      presentation.addText(" (" + hint + ")", ignored ? SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
   }
 
-  protected void setNameAndTooltip(String name, @Nullable @Tooltip String tooltip, SimpleTextAttributes attributes) {
-    clearColoredText();
-    addColoredFragment(name, prepareAttributes(attributes));
+  protected void setNameAndTooltip(@NotNull PresentationData presentation, @NlsSafe String name, @Nullable @Tooltip String tooltip, SimpleTextAttributes attributes) {
+    presentation.clearText();
+    presentation.addText(name, prepareAttributes(attributes));
     final String s = (tooltip != null ? tooltip + "\n\r" : "") + StringUtil.join(myErrors, "\n\r");
-    getTemplatePresentation().setTooltip(s);
+    presentation.setTooltip(s);
   }
 
   private SimpleTextAttributes prepareAttributes(SimpleTextAttributes from) {

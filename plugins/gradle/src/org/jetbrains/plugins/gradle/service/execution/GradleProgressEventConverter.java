@@ -45,8 +45,7 @@ public final class GradleProgressEventConverter {
       return new ExternalSystemBuildEvent(
         id, new StartEventImpl(eventId.id, eventId.parentId, event.getEventTime(), description));
     }
-    else if (event instanceof StatusEvent) {
-      StatusEvent statusEvent = (StatusEvent)event;
+    else if (event instanceof StatusEvent statusEvent) {
       return new ExternalSystemBuildEvent(id, new ProgressBuildEventImpl(
         eventId.id, eventId.parentId, event.getEventTime(), description, statusEvent.getTotal(), statusEvent.getProgress(),
         statusEvent.getUnit()));

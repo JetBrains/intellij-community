@@ -8,6 +8,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.GotItTooltipService
 
 class TipAndTrickManagerImpl : TipAndTrickManager {
@@ -28,7 +29,7 @@ class TipAndTrickManagerImpl : TipAndTrickManager {
         closeTipDialog()
         openedDialog = TipDialog(project, sortingResult).also { dialog ->
           Disposer.register(dialog.disposable, Disposable { openedDialog = null })  // clear link to not leak the project
-          dialog.show()
+          dialog.showWhenTipInstalled()
         }
       }
     }
@@ -39,7 +40,8 @@ class TipAndTrickManagerImpl : TipAndTrickManager {
   }
 
   override fun canShowDialogAutomaticallyNow(project: Project): Boolean {
-    return GeneralSettings.getInstance().isShowTipsOnStartup
+    return Registry.`is`("tips.of.the.day.force.show", false)
+           || GeneralSettings.getInstance().isShowTipsOnStartup
            && !DISABLE_TIPS_FOR_PROJECT.get(project, false)
            && !GotItTooltipService.getInstance().isFirstRun
            && openedDialog?.isVisible != true

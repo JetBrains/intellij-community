@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -21,8 +22,8 @@ import com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Consumer
-import com.intellij.util.IconUtil
 import com.intellij.util.PairConsumer
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.JBIterable
 import org.jetbrains.annotations.Nls
 
@@ -36,7 +37,7 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
       e.presentation.isVisible = enabled
     }
     if (e.isFromActionToolbar && e.presentation.icon == null) {
-      e.presentation.icon = IconUtil.getAddIcon()
+      e.presentation.icon = AllIcons.General.Add
     }
   }
 
@@ -46,43 +47,43 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val unversionedFiles = getUnversionedFiles(e, project).toList()
+    val unversionedFiles = Manager.getUnversionedFiles(e, project).toList()
 
-    performUnversionedFilesAddition(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY), null)
+    Manager.performUnversionedFilesAddition(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY), null)
   }
 
   protected open fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.project
-    return project != null && getUnversionedFiles(e, project).isNotEmpty
+    return project != null && Manager.getUnversionedFiles(e, project).isNotEmpty
   }
 
-  protected fun performUnversionedFilesAddition(project: Project,
-                                                files: List<VirtualFile>,
-                                                browser: ChangesBrowserBase?,
-                                                additionalTask: PairConsumer<in ProgressIndicator, in MutableList<VcsException>>?) {
-    if (files.isEmpty() && additionalTask == null) return
+  object Manager {
+    internal fun performUnversionedFilesAddition(project: Project,
+                                                 files: List<VirtualFile>,
+                                                 browser: ChangesBrowserBase?,
+                                                 additionalTask: PairConsumer<in ProgressIndicator, in MutableList<VcsException>>?) {
+      if (files.isEmpty() && additionalTask == null) return
 
-    val targetChangeList = when (browser) {
-      is CommitDialogChangesBrowser -> browser.selectedChangeList
-      else -> ChangeListManager.getInstance(project).defaultChangeList
+      val targetChangeList = when (browser) {
+        is CommitDialogChangesBrowser -> browser.selectedChangeList
+        else -> ChangeListManager.getInstance(project).defaultChangeList
+      }
+
+      val changesConsumer = if (browser is CommitDialogChangesBrowser) {
+        Consumer { changes: List<Change> -> browser.viewer.includeChanges(changes) }
+      }
+      else null
+
+      FileDocumentManager.getInstance().saveAllDocuments()
+
+      if (ModalityState.current() == ModalityState.NON_MODAL) {
+        addUnversionedFilesToVcsInBackground(project, targetChangeList, files, changesConsumer, additionalTask)
+      }
+      else {
+        addUnversionedFilesToVcs(project, targetChangeList, files, changesConsumer, additionalTask)
+      }
     }
 
-    val changesConsumer = if (browser is CommitDialogChangesBrowser) {
-      Consumer { changes: List<Change> -> browser.viewer.includeChanges(changes) }
-    }
-    else null
-
-    FileDocumentManager.getInstance().saveAllDocuments()
-
-    if (ModalityState.current() == ModalityState.NON_MODAL) {
-      addUnversionedFilesToVcsInBackground(project, targetChangeList, files, changesConsumer, additionalTask)
-    }
-    else {
-      addUnversionedFilesToVcs(project, targetChangeList, files, changesConsumer, additionalTask)
-    }
-  }
-
-  companion object {
     fun getUnversionedFiles(e: AnActionEvent, project: Project): JBIterable<VirtualFile> {
       return getUnversionedFiles(e.dataContext, project)
     }
@@ -150,6 +151,27 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
           }
         }
       }
+    }
+
+    @JvmStatic
+    @RequiresBackgroundThread
+    fun addUnversionedFilesToVcsInSync(project: Project,
+                                       targetChangeList: LocalChangeList?,
+                                       files: List<VirtualFile>,
+                                       changesConsumer: Consumer<in List<Change>>?): Boolean {
+      val exceptions = mutableListOf<VcsException>()
+      try {
+        val allProcessedFiles = performUnversionedFilesAddition(project, files, exceptions)
+        moveAddedChangesTo(project, targetChangeList, allProcessedFiles, changesConsumer)
+      }
+      finally {
+        if (exceptions.isNotEmpty()) {
+          VcsNotifier.getInstance(project).notifyError(ADD_UNVERSIONED_ERROR,
+                                                       VcsBundle.message("error.adding.files.notification.title"),
+                                                       createErrorMessage(exceptions))
+        }
+      }
+      return exceptions.isEmpty()
     }
 
     @JvmStatic

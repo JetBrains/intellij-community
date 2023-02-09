@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -47,6 +47,12 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   public AbstractProjectWizard(@NlsContexts.DialogTitle String title, @Nullable Project project, Component dialogParent) {
     super(title, dialogParent);
+    myWizardContext = initContext(project, null, getDisposable());
+    myWizardContext.putUserData(AbstractWizard.KEY, this);
+  }
+
+  public AbstractProjectWizard(@NlsContexts.DialogTitle String title, @Nullable Project project) {
+    super(title, project);
     myWizardContext = initContext(project, null, getDisposable());
     myWizardContext.putUserData(AbstractWizard.KEY, this);
   }
@@ -121,8 +127,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   public @Nullable ProjectBuilder getBuilder(Project project) {
     final ProjectBuilder builder = getProjectBuilder();
-    if (builder instanceof ModuleBuilder) {
-      final ModuleBuilder moduleBuilder = (ModuleBuilder)builder;
+    if (builder instanceof ModuleBuilder moduleBuilder) {
       if (moduleBuilder.getName() == null) {
         moduleBuilder.setName(getProjectName());
       }
@@ -168,7 +173,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   public boolean doFinishAction() {
     if (myDelegate != null) {
       myDelegate.doFinishAction();
-      NewProjectWizardCollector.Companion.logGeneratorFinished(myWizardContext);
+      NewProjectWizardCollector.logGeneratorFinished(myWizardContext);
       return true;
     }
     int idx = getCurrentStep();
@@ -210,7 +215,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
       myCurrentStep = idx;
       updateStep();
     }
-    NewProjectWizardCollector.Companion.logGeneratorFinished(myWizardContext);
+    NewProjectWizardCollector.logGeneratorFinished(myWizardContext);
     return true;
   }
 

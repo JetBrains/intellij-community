@@ -11,9 +11,6 @@ import com.intellij.util.IconUtil;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class RemoveArrangementRuleAction extends AbstractArrangementRuleAction implements DumbAware {
   public RemoveArrangementRuleAction() {
     getTemplatePresentation().setText(ApplicationBundle.messagePointer("arrangement.action.rule.remove.text"));

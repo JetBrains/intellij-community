@@ -93,18 +93,18 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
                                                  PsiType arg,
                                                  boolean isContraVariantPosition,
                                                  LanguageLevel languageLevel) {
-    if (PsiType.VOID.equals(arg) || PsiType.VOID.equals(param)) return PsiType.NULL;
+    if (PsiTypes.voidType().equals(arg) || PsiTypes.voidType().equals(param)) return PsiTypes.nullType();
     if (param instanceof PsiArrayType && arg instanceof PsiArrayType) {
       return getSubstitutionForTypeParameter(typeParam, ((PsiArrayType)param).getComponentType(), ((PsiArrayType)arg).getComponentType(), isContraVariantPosition, languageLevel);
     } 
 
-    if (!(param instanceof PsiClassType)) return PsiType.NULL;
+    if (!(param instanceof PsiClassType)) return PsiTypes.nullType();
     if (arg == null) {
-      return PsiType.NULL;
+      return PsiTypes.nullType();
     }
     PsiClass paramClass = ((PsiClassType)param).resolve();
     if (!(paramClass instanceof PsiTypeParameter) && !arg.isAssignableFrom(((PsiClassType)param).rawType())) {
-      return PsiType.NULL;
+      return PsiTypes.nullType();
     }
     final PsiType[] leftTypes;
     final PsiType[] rightTypes;
@@ -129,7 +129,7 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
         }
       }
       if (!proceed) {
-        return PsiType.NULL;
+        return PsiTypes.nullType();
       }
     }
     final PsiSubstitutor substitutor = inferenceSession.infer();

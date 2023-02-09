@@ -13,7 +13,7 @@ public class CommandsRunner {
 
   private static CommandsRunner myCommandsRunner;
 
-  private ActionCallback startActionCallback;
+  private ActionCallback actionCallback;
 
   synchronized static CommandsRunner getInstance() {
     if (myCommandsRunner == null) {
@@ -24,21 +24,29 @@ public class CommandsRunner {
 
   //TODO: add methode with project in parameter? AT-114
   public static void doRunScript(@NotNull String text) {
-    runScript(ProjectManager.getInstance().getOpenProjects()[0], text);
+    runScript(ProjectManager.getInstance().getOpenProjects()[0], text, false);
   }
 
-  public static void setStartActionCallback(ActionCallback actionCallback) {
-    getInstance().startActionCallback = actionCallback;
+  public static void setActionCallback(ActionCallback actionCallback) {
+    getInstance().actionCallback = actionCallback;
   }
 
-  public static boolean areCommandsAfterStartFinished() {
-    if (getInstance().startActionCallback == null) return false;
-    return getInstance().startActionCallback.isDone();
+  public static boolean haveCommandsFinished() {
+    if (getInstance().actionCallback == null) return false;
+    return getInstance().actionCallback.isProcessed();
+  }
+
+  public static boolean haveCommandsFinishedSuccessfully() {
+    if (getInstance().actionCallback == null) return false;
+    return getInstance().actionCallback.isDone();
+  }
+
+  public static boolean haveCommandsFailed() {
+    return getInstance().actionCallback.isRejected();
   }
 
   public static int getPid() {
-    SystemInfo si = new SystemInfo();
-    OperatingSystem os = si.getOperatingSystem();
+    OperatingSystem os = new SystemInfo().getOperatingSystem();
     OSProcess myProc = os.getProcess(os.getProcessId());
     return myProc.getProcessID();
   }

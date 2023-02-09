@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
@@ -37,9 +36,8 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
   protected MapReduceIndexBase(@NotNull IndexExtension<Key, Value, FileContent> extension,
                                @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storage,
                                @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndex,
-                               @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                               @Nullable ReadWriteLock lock) throws IOException {
-    super(extension, storage, forwardIndex, forwardIndexAccessor, lock);
+                               @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) throws IOException {
+    super(extension, storage, forwardIndex, forwardIndexAccessor);
     if (!(myIndexId instanceof ID<?, ?>)) {
       throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
     }
@@ -58,6 +56,8 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
   public Map<Key, Value> getIndexedFileData(int fileId) throws StorageException {
     return ConcurrencyUtil.withLock(getLock().readLock(), () -> {
       try {
+        // TODO remove Collections.unmodifiableMap when ContainerUtil started to return unmodifiable map in all cases
+        //noinspection RedundantUnmodifiable
         return Collections.unmodifiableMap(ContainerUtil.notNullize(getNullableIndexedData(fileId)));
       }
       catch (IOException e) {
@@ -86,9 +86,8 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
       });
       return result.get();
     }
-    if (getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor) {
+    if (getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor) {
       ByteArraySequence serializedInputData = getForwardIndex().get(fileId);
-      AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor = (AbstractMapForwardIndexAccessor<Key, Value, ?>)getForwardIndexAccessor();
       return forwardIndexAccessor.convertToInputDataMap(fileId, serializedInputData);
     }
     getLogger().error("Can't fetch indexed data for index " + myIndexId.getName());

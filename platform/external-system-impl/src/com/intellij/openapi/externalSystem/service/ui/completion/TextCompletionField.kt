@@ -17,7 +17,7 @@ import javax.swing.text.BadLocationException
 
 abstract class TextCompletionField<T>(private val project: Project?) : ExtendableTextField() {
 
-  var renderer: TextCompletionRenderer<T> = DefaultTextCompletionRenderer()
+  var renderer: TextCompletionRenderer<T> = TextCompletionRenderer.Default()
 
   var completionType: CompletionType = CompletionType.REPLACE_TEXT
 
@@ -130,7 +130,7 @@ abstract class TextCompletionField<T>(private val project: Project?) : Extendabl
       }
       popup = TextCompletionPopup(project, this, contributor, renderer)
         .also { Disposer.register(it, Disposable { popup = null }) }
-        .also { it.showUnderneathOf(this) }
+        .apply { showUnderneathOfTextComponent() }
     }
     updatePopup()
   }

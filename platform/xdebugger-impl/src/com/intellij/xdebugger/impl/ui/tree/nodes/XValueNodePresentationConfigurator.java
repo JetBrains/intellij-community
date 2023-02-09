@@ -43,12 +43,6 @@ public final class XValueNodePresentationConfigurator {
     }
 
     @Override
-    public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator,
-                                @NonNls @Nullable String value, boolean hasChildren) {
-      XValueNodePresentationConfigurator.setPresentation(icon, type, separator, value, hasChildren, this);
-    }
-
-    @Override
     public void setPresentation(@Nullable Icon icon, @NotNull XValuePresentation presentation, boolean hasChildren) {
       XValueNodePresentationConfigurator.setPresentation(icon, presentation, hasChildren, this);
     }

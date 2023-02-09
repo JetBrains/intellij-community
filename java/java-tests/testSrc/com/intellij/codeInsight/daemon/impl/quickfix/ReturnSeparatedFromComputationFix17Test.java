@@ -6,9 +6,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.intermediaryVariable.ReturnSeparatedFromComputationInspection;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 public class ReturnSeparatedFromComputationFix17Test extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {

@@ -34,9 +34,6 @@ import org.junit.Assert;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author Irina.Chernushina on 3/28/2016.
- */
 public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
   private final static String BASE_PATH = "/tests/testData/jsonSchema/crossReferences";
 

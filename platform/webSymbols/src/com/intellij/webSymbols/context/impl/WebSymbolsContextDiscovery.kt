@@ -38,14 +38,12 @@ import com.intellij.webSymbols.framework.impl.WebSymbolsFrameworkExtension
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorFactoryImpl
 import com.intellij.webSymbols.utils.findOriginalFile
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.Pair
 import kotlin.collections.component1
 import kotlin.collections.component2
 
-private val CONTEXT_CACHE_KEY: Key<MutableMap<VirtualFile, DirContextCache>> = Key("web.isContext.dirCache")
-private val PREV_CONTEXT_KEY = Key<MutableMap<VirtualFile, MutableMap<String, String>>>("web.isContext.prev")
+private val CONTEXT_INFO_KEY: Key<WebSymbolsContextDiscoveryInfo> = Key("webSymbols.context.info")
 private val CONTEXT_RELOAD_MARKER_KEY = Key<Any>("web.isContext.reloadMarker")
 private val reloadMonitor = Any()
 private val LOG = Logger.getInstance(WebSymbolsContext::class.java)
@@ -148,22 +146,13 @@ private fun findContextInDirOrFileCached(kind: ContextKind,
     ?.let { return it }
   val proximityPerContextFromConfig = configInDir.getProximityPerContext(kind)
 
-  val proximityPerContextFromExtensionsMap = getDirContextCache(project, dir)
-    .getProximityPerContextFromExtensionsMap(kind)
-
   val proximityPerContextFromExtensions = WEB_SYMBOLS_CONTEXT_EP.allOf(kind).asSequence()
-    .map { it.key }
-    .map { name ->
-      Pair(name,
-           proximityPerContextFromExtensionsMap.computeIfAbsent(name) {
-             CachedValuesManager.getManager(project).createCachedValue {
-               webContextProximityFromProviders(kind, name, project, dir)
-             }
-           }.value
-      )
+    .mapNotNull {
+      val name = it.key
+      val proximity = project.contextInfo.getProximityFromExtensions(dir, kind, name)
+      proximity?.let { Pair(name, proximity) }
     }
-    .filter { it.second != null }
-    .toMap()
+    .toMap(HashMap())
 
   return proximityPerContextFromConfig.keys
     .asSequence().plus(proximityPerContextFromExtensions.keys)
@@ -183,7 +172,7 @@ private fun findContextInDirOrFileCached(kind: ContextKind,
 }
 
 private fun getContextConfigInDir(project: Project, dir: VirtualFile): ContextConfigInDir =
-  getDirContextCache(project, dir).getContextConfigInDir()
+  project.contextInfo.getContextConfigInDir(dir)
 
 private fun calcProximityPerContextFromRules(project: Project,
                                              directory: VirtualFile,
@@ -253,7 +242,7 @@ private class ContextConfigInDir(val project: Project,
                                  val rules: Map<ContextKind, WebSymbolsContextKindRules>,
                                  val dependencies: List<Any>) {
 
-  private val contextByFile = ConcurrentHashMap<String, ContextName>()
+  private val contextByFile = ConcurrentHashMap<Pair<ContextKind, String>, ContextName>()
 
   private val proximityCache = CachedValuesManager.getManager(project).createCachedValue {
     val result = calcProximityPerContextFromRules(project, directory, rules.mapValues { it.value.enable })
@@ -264,8 +253,9 @@ private class ContextConfigInDir(val project: Project,
 
   fun getProximityPerContext(kind: String): Map<String, Double> = proximityCache.value[kind] ?: emptyMap()
 
-  fun findByFileName(kind: String, file: VirtualFile): ContextName? =
-    contextByFile.computeIfAbsent("$kind:::" + file.name) { fileName ->
+  fun findByFileName(kind: String, file: VirtualFile): ContextName? {
+    val fileName = file.name
+    return contextByFile.computeIfAbsent(Pair(kind, fileName)) {
       val rules = rules[kind]
       rules?.enable?.keys
         ?.find { contextName ->
@@ -277,6 +267,7 @@ private class ContextConfigInDir(val project: Project,
           } != true
         } ?: ""
     }.takeIf { it.isNotBlank() }
+  }
 
 }
 
@@ -339,7 +330,7 @@ private fun webContextProximityFromProviders(kind: ContextKind,
   return CachedValueProvider.Result(proximity, *dependencies.toTypedArray())
 }
 
-private const val emptyContext = "%EMPTY%"
+private const val EMPTY_CONTEXT = "%EMPTY%"
 
 private fun withContextChangeCheck(kind: ContextKind,
                                    project: Project,
@@ -349,12 +340,9 @@ private fun withContextChangeCheck(kind: ContextKind,
   val currentState = findContextInDirOrFileCached(kind, project, dir, file, configInDir)
 
   val contextFile = file ?: dir
-  val stateMap = project.getUserData(PREV_CONTEXT_KEY)
-                 ?: (project as UserDataHolderEx).putUserDataIfAbsent(PREV_CONTEXT_KEY, ContainerUtil.createConcurrentWeakMap())
-  val kindMap = stateMap.computeIfAbsent(contextFile) { ConcurrentHashMap() }
-  val prevState = kindMap.put(kind, currentState ?: emptyContext)
-  if (prevState != null && prevState != (currentState ?: emptyContext)) {
-    reloadProject(kind, prevState.takeIf { it != emptyContext } ?: "none", currentState ?: "none", project, contextFile)
+  val prevState = project.contextInfo.updateContext(contextFile, kind, currentState ?: EMPTY_CONTEXT)
+  if (prevState != null && prevState != (currentState ?: EMPTY_CONTEXT)) {
+    reloadProject(kind, prevState.takeIf { it != EMPTY_CONTEXT } ?: "none", currentState ?: "none", project, contextFile)
   }
   return currentState
 }
@@ -371,8 +359,7 @@ private fun matchFileExt(fileName: String, fileExtensions: List<String>): Boolea
 class WebSymbolsContextProjectRootsListener : ModuleRootListener {
 
   override fun rootsChanged(event: ModuleRootEvent) {
-    event.project.putUserData(PREV_CONTEXT_KEY, null)
-    event.project.putUserData(CONTEXT_CACHE_KEY, null)
+    event.project.putUserData(CONTEXT_INFO_KEY, null)
   }
 
 }
@@ -400,28 +387,37 @@ private fun reloadProject(kind: ContextKind, prevState: ContextName, newState: C
   })
 }
 
-private fun getDirContextCache(project: Project, dir: VirtualFile): DirContextCache {
-  val cacheMap = project.getUserData(CONTEXT_CACHE_KEY)
-                 ?: (project as UserDataHolderEx).putUserDataIfAbsent(CONTEXT_CACHE_KEY, ContainerUtil.createConcurrentWeakMap())
-  if (!dir.isDirectory) {
-    throw IllegalStateException("${dir.path} is not a directory")
-  }
-  return cacheMap.computeIfAbsent(dir) { DirContextCache(project, it) }
-}
+private val Project.contextInfo
+  get() = getUserData(CONTEXT_INFO_KEY)
+          ?: (this as UserDataHolderEx).putUserDataIfAbsent(CONTEXT_INFO_KEY, WebSymbolsContextDiscoveryInfo(this))
 
-private class DirContextCache(private val project: Project, private val dir: VirtualFile) {
+private class WebSymbolsContextDiscoveryInfo(private val project: Project) {
 
-  private val contextConfigInDirCache: CachedValue<ContextConfigInDir> = CachedValuesManager.getManager(project).createCachedValue {
-    val result = loadContextConfiguration(project, dir)
-    CachedValueProvider.Result.create(result, result.dependencies)
-  }
+  private val previousContext = ConcurrentHashMap<ContextKind, MutableMap<VirtualFile, String>>()
+  private val proximityCache = ContainerUtil.createConcurrentWeakMap<VirtualFile, CachedValue<MutableMap<Pair<ContextKind, ContextName>, CachedValue<Int?>>>>()
+  private val configCache = ContainerUtil.createConcurrentWeakMap<VirtualFile, CachedValue<ContextConfigInDir>>()
 
-  private val proximityPerKindPerContextFromExtensionsMap: MutableMap<ContextKind, MutableMap<ContextName, CachedValue<Int?>>> = ConcurrentHashMap()
+  fun getProximityFromExtensions(dir: VirtualFile, kind: ContextKind, name: ContextName): Int? =
+    proximityCache.computeIfAbsent(dir) {
+      CachedValuesManager.getManager(project).createCachedValue {
+        CachedValueProvider.Result.create(ConcurrentHashMap<Pair<ContextKind, ContextName>, CachedValue<Int?>>(),
+                                          ModificationTracker.NEVER_CHANGED)
+      }
+    }.value.computeIfAbsent(Pair(kind, name)) {
+      CachedValuesManager.getManager(project).createCachedValue {
+        webContextProximityFromProviders(kind, name, project, dir)
+      }
+    }.value
 
-  fun getContextConfigInDir(): ContextConfigInDir =
-    contextConfigInDirCache.value
+  fun updateContext(contextFile: VirtualFile, kind: ContextKind, name: ContextName): String? =
+    previousContext.computeIfAbsent(kind) { ContainerUtil.createConcurrentWeakMap() }
+      .put(contextFile, name)
 
-  fun getProximityPerContextFromExtensionsMap(kind: ContextKind): MutableMap<ContextName, CachedValue<Int?>> =
-    proximityPerKindPerContextFromExtensionsMap.computeIfAbsent(kind) { ConcurrentHashMap() }
-
+  fun getContextConfigInDir(dir: VirtualFile): ContextConfigInDir =
+    configCache.computeIfAbsent(dir) {
+      CachedValuesManager.getManager(project).createCachedValue {
+        val result = loadContextConfiguration(project, dir)
+        CachedValueProvider.Result.create(result, result.dependencies)
+      }
+    }.value
 }

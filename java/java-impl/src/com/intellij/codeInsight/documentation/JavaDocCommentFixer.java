@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class JavaDocCommentFixer implements DocCommentFixer {
   private static final String PARAM_TAG = "@param";
   private static final String PARAM_TAG_NAME = "param";
@@ -60,11 +57,10 @@ public class JavaDocCommentFixer implements DocCommentFixer {
 
   @Override
   public void fixComment(@NotNull Project project, @NotNull Editor editor, @NotNull PsiComment comment) {
-    if (!(comment instanceof PsiDocComment)) {
+    if (!(comment instanceof PsiDocComment docComment)) {
       return;
     }
 
-    PsiDocComment docComment = (PsiDocComment)comment;
     PsiJavaDocumentedElement owner = docComment.getOwner();
     if (owner == null) return;
     PsiFile file = owner.getContainingFile();

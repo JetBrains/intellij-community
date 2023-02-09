@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.util.io.*
@@ -15,8 +16,11 @@ import java.nio.file.Path
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.*
+import java.util.function.Consumer
 import java.util.stream.Collectors
 import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.name
 
 internal object SettingsSnapshotZipSerializer {
   private const val METAINFO = ".metainfo"
@@ -45,10 +49,38 @@ internal object SettingsSnapshotZipSerializer {
       }
 
       for (fileState in snapshot.fileStates) {
-        val content = if (fileState is FileState.Modified) fileState.content else DELETED_FILE_MARKER.toByteArray()
-        zip.addFile(fileState.file, content)
+        zip.addFile(fileState.file, getContentForFileState(fileState))
+      }
+
+      for((relativePath, content) in serializeSettingsProviders(snapshot.settingsFromProviders)) {
+        zip.addFile("$METAINFO/$relativePath", content.toByteArray())
+      }
+
+      for (additionalFile in snapshot.additionalFiles) {
+        zip.addFile("$METAINFO/${additionalFile.file}", getContentForFileState(additionalFile))
       }
     }
+  }
+
+  internal fun serializeSettingsProviders(settingsFromProviders: Map<String, Any>): Map<String, String> {
+    val pathsAndContents = mutableMapOf<String, String>()
+    for ((id, state) in settingsFromProviders) {
+      val provider = SettingsSyncIdeMediatorImpl.findProviderById(id, state)
+      if (provider != null) {
+        try {
+          val string = provider.serialize(state)
+          pathsAndContents["$id/${provider.fileName}"] = string
+        }
+        catch (e: Exception) {
+          LOG.error("Could not serialize provider '$id' with $state", e)
+        }
+      }
+    }
+    return pathsAndContents
+  }
+
+  private fun getContentForFileState(fileState: FileState): ByteArray {
+    return if (fileState is FileState.Modified) fileState.content else DELETED_FILE_MARKER.toByteArray()
   }
 
   private fun serializePlugins(plugins: SettingsSyncPluginsState): String {
@@ -60,12 +92,35 @@ internal object SettingsSnapshotZipSerializer {
     Decompressor.Zip(zipFile).extract(tempDir)
     val metaInfoFolder = tempDir / METAINFO
     val metaInfo = parseMetaInfo(metaInfoFolder)
+
     val fileStates = Files.walk(tempDir)
       .filter { it.isFile() && !metaInfoFolder.isAncestor(it) }
       .map { getFileStateFromFileWithDeletedMarker(it, tempDir) }
       .collect(Collectors.toSet())
+
+    val (settingsFromProviders, filesFromProviders) = deserializeSettingsProviders(metaInfoFolder)
+
+    val additionalFiles = Files.walk(metaInfoFolder)
+      .filter { it.isFile() && it.name != INFO && it.name != PLUGINS && !filesFromProviders.contains(it) }
+      .map { getFileStateFromFileWithDeletedMarker(it, metaInfoFolder) }
+      .collect(Collectors.toSet())
+
     val plugins = deserializePlugins(metaInfoFolder)
-    return SettingsSnapshot(metaInfo, fileStates, plugins)
+    return SettingsSnapshot(metaInfo, fileStates, plugins, settingsFromProviders, additionalFiles)
+  }
+
+  internal fun deserializeSettingsProviders(containingFolder: Path): Pair<Map<String, Any>, Set<Path>> {
+    val settingsFromProviders = mutableMapOf<String, Any>()
+    val filesFromProviders = mutableSetOf<Path>()
+    SettingsProvider.SETTINGS_PROVIDER_EP.forEachExtensionSafe(Consumer {
+      val file = containingFolder.resolve(it.id).resolve(it.fileName)
+      if (file.exists()) {
+        val state = it.deserialize(file.readText())
+        settingsFromProviders[it.id] = state
+        filesFromProviders.add(file)
+      }
+    })
+    return settingsFromProviders to filesFromProviders
   }
 
   private fun deserializePlugins(metaInfoFolder: Path): SettingsSyncPluginsState {
@@ -86,6 +141,7 @@ internal object SettingsSnapshotZipSerializer {
     val metaInfo = MetaInfo().apply {
       date = formattedDate
       applicationId = snapshotMetaInfo.appInfo?.applicationId.toString()
+      buildNumber = snapshotMetaInfo.appInfo?.buildNumber?.asString() ?:""
       userName = snapshotMetaInfo.appInfo?.userName.toString()
       hostName = snapshotMetaInfo.appInfo?.hostName.toString()
       configFolder = snapshotMetaInfo.appInfo?.configFolder.toString()
@@ -102,8 +158,10 @@ internal object SettingsSnapshotZipSerializer {
           .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
           .readValue(infoFile.readText(), MetaInfo::class.java)
         val date = DateTimeFormatter.ISO_INSTANT.parse(metaInfo.date, Instant::from)
-        val appInfo = SettingsSnapshot.AppInfo(UUID.fromString(metaInfo.applicationId),
-                                               metaInfo.userName, metaInfo.hostName, metaInfo.configFolder)
+        val appInfo = SettingsSnapshot.AppInfo(
+          UUID.fromString(metaInfo.applicationId),
+          BuildNumber.fromString(metaInfo.buildNumber),
+          metaInfo.userName, metaInfo.hostName, metaInfo.configFolder)
         return SettingsSnapshot.MetaInfo(date, appInfo, metaInfo.isDeleted)
       }
       else {
@@ -119,6 +177,7 @@ internal object SettingsSnapshotZipSerializer {
   private class MetaInfo {
     lateinit var date: String
     lateinit var applicationId: String
+    var buildNumber: String = ""
     var userName: String = ""
     var hostName: String = ""
     var configFolder: String = ""

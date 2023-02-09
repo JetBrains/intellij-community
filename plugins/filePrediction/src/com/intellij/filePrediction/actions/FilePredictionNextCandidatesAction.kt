@@ -91,7 +91,7 @@ class FilePredictionNextCandidatesAction : AnAction() {
   private fun calculatePresentation(project: Project, candidate: FilePredictionCandidate): FileCandidatePresentation {
     val file = findSelectedFile(candidate)
     if (file == null) {
-      return FileCandidatePresentation(file, null, candidate.path, candidate)
+      return FileCandidatePresentation(file = null, icon = null, candidate.path, candidate)
     }
 
     val psiFile = PsiManager.getInstance(project).findFile(file)

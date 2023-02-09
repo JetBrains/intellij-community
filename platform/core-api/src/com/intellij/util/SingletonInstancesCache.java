@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class SingletonInstancesCache {
 
   private static final ConcurrentMap<String, Object> CACHE = new ConcurrentHashMap<>();

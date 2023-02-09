@@ -6,8 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Allow specifying if fully qualified name should be used for a reference instead of importing class.
- *
- * @author Eugene.Kudelevsky
  */
 public abstract class ImportFilter {
   public static final ExtensionPointName<ImportFilter> EP_NAME = new ExtensionPointName<>("com.intellij.importFilter");

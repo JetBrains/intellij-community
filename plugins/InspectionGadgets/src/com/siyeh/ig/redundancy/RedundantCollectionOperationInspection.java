@@ -148,7 +148,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       if (indexOfArg == null) return;
       CommentTracker ct = new CommentTracker();
       String text = ct.text(indexOfArg);
-      if (PsiType.INT.equals(indexOfArg.getType())) {
+      if (PsiTypes.intType().equals(indexOfArg.getType())) {
         text = "(" + CommonClassNames.JAVA_LANG_INTEGER + ")" + text;
       }
       if (!PsiTreeUtil.isAncestor(call, removeArg, false)) {
@@ -200,8 +200,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       PsiElement parent = PsiTreeUtil.getParentOfType(call, PsiIfStatement.class, PsiPolyadicExpression.class);
       if (parent == null) return;
       CommentTracker ct = new CommentTracker();
-      if (parent instanceof PsiPolyadicExpression) {
-        PsiPolyadicExpression conjunction = (PsiPolyadicExpression)parent;
+      if (parent instanceof PsiPolyadicExpression conjunction) {
         PsiExpression[] conjuncts = conjunction.getOperands();
         if (conjuncts.length == 2) {
           ct.replaceAndRestoreComments(parent, conjuncts[0]);
@@ -512,8 +511,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
         return new RedundantAsListForIterationHandler();
       }
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
-      if (parent instanceof PsiLocalVariable) {
-        PsiLocalVariable localVariable = (PsiLocalVariable)parent;
+      if (parent instanceof PsiLocalVariable localVariable) {
         if (!(localVariable.getParent() instanceof PsiDeclarationStatement) ||
             ((PsiDeclarationStatement)localVariable.getParent()).getDeclaredElements().length != 1) {
           return null;

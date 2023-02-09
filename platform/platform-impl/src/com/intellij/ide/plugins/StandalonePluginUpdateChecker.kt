@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ShowLogAction
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -18,6 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
@@ -165,7 +167,6 @@ open class StandalonePluginUpdateChecker(
     )
   }
 
-
   private fun initPluginDescriptor(newVersion: String): IdeaPluginDescriptor {
     val originalPlugin = findPluginDescriptor()
     return PluginNode(pluginId).apply {
@@ -182,8 +183,15 @@ open class StandalonePluginUpdateChecker(
     val os = URLEncoder.encode(SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION, CharsetToolkit.UTF8)
     val uid = PermanentInstallationID.get()
     val pluginId = pluginId.idString
-    val url =
+    var url =
       "https://plugins.jetbrains.com/plugins/list?pluginId=$pluginId&build=$buildNumber&pluginVersion=$currentVersion&os=$os&uuid=$uid"
+
+    if (!PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false)) {
+      val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates", "")
+      if (machineId != null) {
+        url += "&${UpdateChecker.MACHINE_ID_PARAMETER}=$machineId"
+      }
+    }
 
     val responseDoc = HttpRequests.request(url).connect { JDOMUtil.load(it.inputStream) }
     if (responseDoc.name != "plugin-repository") {

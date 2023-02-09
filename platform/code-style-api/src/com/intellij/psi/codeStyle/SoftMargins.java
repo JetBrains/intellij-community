@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -60,8 +61,7 @@ class SoftMargins implements Cloneable {
 
   void setValues(List<Integer> values) {
     if (values != null) {
-      myValues = new ArrayList<>(values);
-      Collections.sort(myValues);
+      myValues = ContainerUtil.sorted(values);
     }
     else {
       myValues = null;

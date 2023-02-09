@@ -37,7 +37,7 @@ public final class ClassContextFilter {
     }
 
     PsiType myType = getCachedType(typeText, placeFile);
-    if (checked == PsiType.NULL) return myType == PsiType.NULL;
+    if (checked == PsiTypes.nullType()) return myType == PsiTypes.nullType();
     return TypesUtil.isAssignableByMethodCallConversion(myType, checked, placeFile);
   }
 

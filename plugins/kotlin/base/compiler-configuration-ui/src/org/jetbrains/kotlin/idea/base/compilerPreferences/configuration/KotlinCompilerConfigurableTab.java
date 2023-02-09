@@ -35,13 +35,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
-import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils;
 import org.jetbrains.kotlin.cli.common.arguments.*;
 import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService;
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants;
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle;
 import org.jetbrains.kotlin.idea.base.compilerPreferences.facet.DescriptionListCellRenderer;
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants;
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils;
 import org.jetbrains.kotlin.idea.base.util.ProjectStructureUtils;
 import org.jetbrains.kotlin.idea.compiler.configuration.*;
 import org.jetbrains.kotlin.idea.facet.KotlinFacet;
@@ -58,6 +58,9 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import java.util.*;
 import java.util.function.Consumer;
+
+import static com.intellij.openapi.options.Configurable.isCheckboxModified;
+import static com.intellij.openapi.options.Configurable.isFieldModified;
 
 public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Disposable {
     private static final Map<String, @NlsSafe String> moduleKindDescriptions = new LinkedHashMap<>();
@@ -325,13 +328,13 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                                             TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     }
 
-    private static boolean isModifiedWithNullize(@NotNull TextFieldWithBrowseButton chooser, @Nullable String currentValue) {
+    private static boolean isBrowseFieldModifiedWithNullize(@NotNull TextFieldWithBrowseButton chooser, @Nullable String currentValue) {
         return !StringUtil.equals(
                 StringUtil.nullize(chooser.getText(), true),
                 StringUtil.nullize(currentValue, true));
     }
 
-    private static boolean isModified(@NotNull TextFieldWithBrowseButton chooser, @NotNull String currentValue) {
+    private static boolean isBrowseFieldModified(@NotNull TextFieldWithBrowseButton chooser, @NotNull String currentValue) {
         return !StringUtil.equals(chooser.getText(), currentValue);
     }
 
@@ -494,9 +497,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         }
 
         for (LanguageVersion languageVersion : LanguageVersion.values()) {
-            if (!LanguageVersionSettingsKt.isStableOrReadyForPreview(languageVersion) &&
-                !ApplicationManager.getApplication().isInternal()
-            ) {
+            if (!LanguageVersionSettingsKt.isStableOrReadyForPreview(languageVersion)) {
                 continue;
             }
 
@@ -549,27 +550,27 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
     @Override
     public boolean isModified() {
-        return isModified(reportWarningsCheckBox, !commonCompilerArguments.getSuppressWarnings()) ||
+        return isCheckboxModified(reportWarningsCheckBox, !commonCompilerArguments.getSuppressWarnings()) ||
                !getSelectedLanguageVersionView().equals(KotlinFacetSettingsKt.getLanguageVersionView(commonCompilerArguments)) ||
                !getSelectedAPIVersionView().equals(KotlinFacetSettingsKt.getApiVersionView(commonCompilerArguments)) ||
                jpsPluginSettings != null &&
                !getSelectedKotlinJpsPluginVersion().equals(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)) ||
                !additionalArgsOptionsField.getText().equals(compilerSettings.getAdditionalArguments()) ||
-               isModified(scriptTemplatesField, compilerSettings.getScriptTemplates()) ||
-               isModified(scriptTemplatesClasspathField, compilerSettings.getScriptTemplatesClasspath()) ||
-               isModified(copyRuntimeFilesCheckBox, compilerSettings.getCopyJsLibraryFiles()) ||
-               isModified(outputDirectory, compilerSettings.getOutputDirectoryForJsLibraryFiles()) ||
+               isFieldModified(scriptTemplatesField, compilerSettings.getScriptTemplates()) ||
+               isFieldModified(scriptTemplatesClasspathField, compilerSettings.getScriptTemplatesClasspath()) ||
+               isCheckboxModified(copyRuntimeFilesCheckBox, compilerSettings.getCopyJsLibraryFiles()) ||
+               isBrowseFieldModified(outputDirectory, compilerSettings.getOutputDirectoryForJsLibraryFiles()) ||
 
                (compilerWorkspaceSettings != null &&
-                (isModified(enableIncrementalCompilationForJvmCheckBox, compilerWorkspaceSettings.getPreciseIncrementalEnabled()) ||
-                 isModified(enableIncrementalCompilationForJsCheckBox, compilerWorkspaceSettings.getIncrementalCompilationForJsEnabled()) ||
-                 isModified(keepAliveCheckBox, compilerWorkspaceSettings.getEnableDaemon()))) ||
+                (isCheckboxModified(enableIncrementalCompilationForJvmCheckBox, compilerWorkspaceSettings.getPreciseIncrementalEnabled()) ||
+                 isCheckboxModified(enableIncrementalCompilationForJsCheckBox, compilerWorkspaceSettings.getIncrementalCompilationForJsEnabled()) ||
+                 isCheckboxModified(keepAliveCheckBox, compilerWorkspaceSettings.getEnableDaemon()))) ||
 
-               isModified(generateSourceMapsCheckBox, k2jsCompilerArguments.getSourceMap()) ||
-               isModifiedWithNullize(outputPrefixFile, k2jsCompilerArguments.getOutputPrefix()) ||
-               isModifiedWithNullize(outputPostfixFile, k2jsCompilerArguments.getOutputPostfix()) ||
+               isCheckboxModified(generateSourceMapsCheckBox, k2jsCompilerArguments.getSourceMap()) ||
+               isBrowseFieldModifiedWithNullize(outputPrefixFile, k2jsCompilerArguments.getOutputPrefix()) ||
+               isBrowseFieldModifiedWithNullize(outputPostfixFile, k2jsCompilerArguments.getOutputPostfix()) ||
                !getSelectedModuleKind().equals(getModuleKindOrDefault(k2jsCompilerArguments.getModuleKind())) ||
-               isModified(sourceMapPrefix, StringUtil.notNullize(k2jsCompilerArguments.getSourceMapPrefix())) ||
+               isFieldModified(sourceMapPrefix, StringUtil.notNullize(k2jsCompilerArguments.getSourceMapPrefix())) ||
                !getSelectedSourceMapSourceEmbedding().equals(
                        getSourceMapSourceEmbeddingOrDefault(k2jsCompilerArguments.getSourceMapEmbedSources())) ||
                !getSelectedJvmVersion().equals(getJvmVersionOrDefault(k2jvmCompilerArguments.getJvmTarget()));

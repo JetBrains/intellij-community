@@ -5,14 +5,22 @@ import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.observable.properties.GraphProperty
 
 interface MavenizedNewProjectWizardData<Data : Any> {
+
   val parentProperty: GraphProperty<DataView<Data>>
-  val groupIdProperty: GraphProperty<String>
-  val artifactIdProperty: GraphProperty<String>
-  val versionProperty: GraphProperty<String>
 
   var parent: DataView<Data>
+
   var parentData: Data?
+
+  val groupIdProperty: GraphProperty<String>
+
   var groupId: String
+
+  val artifactIdProperty: GraphProperty<String>
+
   var artifactId: String
+
+  val versionProperty: GraphProperty<String>
+
   var version: String
 }

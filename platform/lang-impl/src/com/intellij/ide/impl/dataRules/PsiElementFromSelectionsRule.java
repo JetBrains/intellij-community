@@ -3,6 +3,7 @@
 package com.intellij.ide.impl.dataRules;
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.model.Pointer;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -25,7 +26,8 @@ public class PsiElementFromSelectionsRule implements GetDataRule {
       Object o = AbstractProjectViewPane.extractValueFromNode(objects[i]);
       PsiElement element = o instanceof PsiElement ? (PsiElement)o :
                            o instanceof PsiAwareObject && project != null ? ((PsiAwareObject)o).findElement(project) :
-                           o instanceof PsiElementNavigationItem ? ((PsiElementNavigationItem)o).getTargetElement() : null;
+                           o instanceof PsiElementNavigationItem ? ((PsiElementNavigationItem)o).getTargetElement() :
+                           o instanceof Pointer<?> ? (PsiElement)((Pointer<?>)o).dereference() : null;
       if (element == null || !element.isValid()) return null;
       elements[i] = element;
     }

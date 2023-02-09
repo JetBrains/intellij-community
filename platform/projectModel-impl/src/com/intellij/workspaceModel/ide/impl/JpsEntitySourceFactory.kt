@@ -1,14 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
+import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
 object JpsEntitySourceFactory {
   fun createEntitySourceForModule(project: Project,
@@ -51,6 +54,12 @@ object JpsEntitySourceFactory {
     return createImportedEntitySource(project, externalSource, internalEntitySource)
   }
 
+  fun createEntitySourceForGlobalLibrary(): EntitySource {
+    val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
+    val globalLibrariesFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(ApplicationLibraryTable.getExternalFileName()).absolutePath)
+    return JpsGlobalFileEntitySource(globalLibrariesFile)
+  }
+
   private fun createInternalEntitySourceForProjectLibrary(project: Project): JpsFileEntitySource? {
     val location = getJpsProjectConfigLocation(project) ?: return null
     return createJpsEntitySourceForProjectLibrary(location)
@@ -75,6 +84,7 @@ object JpsEntitySourceFactory {
     is JpsProjectConfigLocation.DirectoryBased -> JpsFileEntitySource.FileInDirectory(configLocation.ideaFolder.append(directoryLocation),
                                                                                       configLocation)
     is JpsProjectConfigLocation.FileBased -> JpsFileEntitySource.ExactFile(configLocation.iprFile, configLocation)
+    else -> error("Unexpected state")
   }
 
 }

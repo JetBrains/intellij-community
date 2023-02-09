@@ -22,9 +22,6 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.IntFunction;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxColorProvider implements ElementColorProvider {
   private static final String COLOR = "color";
   private static final String RGB = "rgb";
@@ -40,8 +37,7 @@ public class JavaFxColorProvider implements ElementColorProvider {
     if (!(element instanceof PsiIdentifier)) return null;
     PsiElement parent = element.getParent();
     PsiElement gp = parent == null ? null : parent.getParent();
-    if (gp instanceof PsiNewExpression && ((PsiNewExpression)gp).getClassReference() == parent) {
-      PsiNewExpression newExpression = (PsiNewExpression)gp;
+    if (gp instanceof PsiNewExpression newExpression && ((PsiNewExpression)gp).getClassReference() == parent) {
       if (isColorClass(PsiTypesUtil.getPsiClass(newExpression.getType()))) {
         PsiExpressionList argumentList = newExpression.getArgumentList();
         if (argumentList != null) {
@@ -57,14 +53,12 @@ public class JavaFxColorProvider implements ElementColorProvider {
       parent = parent.getParent();
       gp = parent.getParent();
     }
-    if (gp instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)gp).getMethodExpression().getReferenceNameElement() == element) {
-      PsiMethodCallExpression methodCall = (PsiMethodCallExpression)gp;
+    if (gp instanceof PsiMethodCallExpression methodCall && ((PsiMethodCallExpression)gp).getMethodExpression().getReferenceNameElement() == element) {
       PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
       String methodName = methodExpression.getReferenceName();
       if (FACTORY_METHODS.contains(methodName)) {
         PsiElement resolved = methodExpression.resolve();
-        if (resolved instanceof PsiMethod) {
-          PsiMethod method = (PsiMethod)resolved;
+        if (resolved instanceof PsiMethod method) {
           if (method.hasModifierProperty(PsiModifier.STATIC)) {
             if (isColorClass(method.getContainingClass())) {
               return getColor(methodName, methodCall.getArgumentList());
@@ -186,14 +180,12 @@ public class JavaFxColorProvider implements ElementColorProvider {
   @Override
   public void setColorTo(@NotNull PsiElement element, @NotNull Color color) {
     Runnable command = null;
-    if (element instanceof PsiNewExpression) {
-      final PsiNewExpression expr = (PsiNewExpression)element;
+    if (element instanceof PsiNewExpression expr) {
       PsiExpressionList argumentList = expr.getArgumentList();
       assert argumentList != null;
       command = () -> replaceConstructorArgs(color, argumentList);
     }
-    if (element instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
+    if (element instanceof PsiMethodCallExpression methodCall) {
       PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
       String methodName = methodExpression.getReferenceName();
       if (COLOR.equals(methodName) || GRAY.equals(methodName)) {

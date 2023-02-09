@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.DialogPanel
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * See [docs](http://www.jetbrains.org/intellij/sdk/docs/user_interface_components/kotlin_ui_dsl.html).
@@ -18,6 +19,7 @@ import com.intellij.util.ui.UIUtil
  *
  * `ToolbarDecorator` and `JBScrollPane` (use [Row.scrollPane]) components automatically have [Row.grow] and [Row.push].
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use com.intellij.ui.dsl.builder.panel from Kotlin UI DSL Version 2 and kotlin documentations for related classes")
 inline fun panel(vararg constraints: LCFlags, @NlsContexts.DialogTitle title: String? = null, init: LayoutBuilder.() -> Unit): DialogPanel {
   val builder = createLayoutBuilder()
@@ -31,6 +33,7 @@ inline fun panel(vararg constraints: LCFlags, @NlsContexts.DialogTitle title: St
 }
 
 @PublishedApi
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 internal fun initPanel(builder: LayoutBuilder, panel: DialogPanel) {
   panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent

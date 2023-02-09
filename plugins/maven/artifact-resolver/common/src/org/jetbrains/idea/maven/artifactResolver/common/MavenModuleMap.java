@@ -9,9 +9,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class MavenModuleMap {
 
   private static final MavenModuleMap ourInstance = new MavenModuleMap();

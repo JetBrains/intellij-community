@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -10,7 +10,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview;
@@ -62,21 +65,21 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTE
  * Change browser for commits in the Log. For merge commits, can display changes to the commits parents in separate groups.
  */
 public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
-  @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
-  @NotNull private final MainVcsLogUiProperties myUiProperties;
-  @NotNull private final Function<? super CommitId, ? extends VcsShortCommitDetails> myDataGetter;
+  public static final @NotNull DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
+  private final @NotNull MainVcsLogUiProperties myUiProperties;
+  private final @NotNull Function<? super CommitId, ? extends VcsShortCommitDetails> myDataGetter;
 
-  @NotNull private final VcsLogUiProperties.PropertiesChangeListener myListener;
+  private final @NotNull VcsLogUiProperties.PropertiesChangeListener myListener;
 
-  @NotNull private final Set<VirtualFile> myRoots = new HashSet<>();
+  private final @NotNull Set<VirtualFile> myRoots = new HashSet<>();
   private boolean myHasMergeCommits = false;
-  @NotNull private final List<Change> myChanges = new ArrayList<>();
-  @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = new LinkedHashMap<>();
+  private final @NotNull List<Change> myChanges = new ArrayList<>();
+  private final @NotNull Map<CommitId, Set<Change>> myChangesToParents = new LinkedHashMap<>();
   private @Nullable Collection<? extends FilePath> myAffectedPaths;
   private @NotNull Consumer<? super StatusText> myUpdateEmptyText = this::updateEmptyText;
-  @NotNull private final Wrapper myToolbarWrapper;
-  @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
-  @Nullable private DiffPreviewController myEditorDiffPreviewController;
+  private final @NotNull Wrapper myToolbarWrapper;
+  private final @NotNull EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
+  private @Nullable DiffPreviewController myEditorDiffPreviewController;
 
   VcsLogChangesBrowser(@NotNull Project project,
                        @NotNull MainVcsLogUiProperties uiProperties,
@@ -115,15 +118,13 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     myViewer.rebuildTree();
   }
 
-  @NotNull
   @Override
-  protected JComponent createToolbarComponent() {
+  protected @NotNull JComponent createToolbarComponent() {
     return myToolbarWrapper;
   }
 
-  @NotNull
   @Override
-  protected JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     JComponent centerPanel = super.createCenterPanel();
     JScrollPane scrollPane = UIUtil.findComponentOfType(centerPanel, JScrollPane.class);
     if (scrollPane != null) {
@@ -146,18 +147,16 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     myUiProperties.removeChangeListener(myListener);
   }
 
-  @NotNull
   @Override
-  protected List<AnAction> createToolbarActions() {
+  protected @NotNull List<AnAction> createToolbarActions() {
     return ContainerUtil.append(
       super.createToolbarActions(),
-      CustomActionsSchema.getInstance().getCorrectedAction(VcsActions.VCS_LOG_CHANGES_BROWSER_TOOLBAR)
+      CustomActionsSchema.getInstance().getCorrectedAction(VcsLogActionIds.CHANGES_BROWSER_TOOLBAR_ACTION_GROUP)
     );
   }
 
-  @NotNull
   @Override
-  protected List<AnAction> createPopupMenuActions() {
+  protected @NotNull List<AnAction> createPopupMenuActions() {
     return ContainerUtil.append(
       super.createPopupMenuActions(),
       ActionManager.getInstance().getAction(VcsLogActionIds.CHANGES_BROWSER_POPUP_ACTION_GROUP)
@@ -249,9 +248,8 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     }
   }
 
-  @NotNull
   @Override
-  protected DefaultTreeModel buildTreeModel() {
+  protected @NotNull DefaultTreeModel buildTreeModel() {
     List<Change> changes = collectAffectedChanges(myChanges);
     ChangesFilterer.FilteredState filteredState = filterChanges(changes, !myHasMergeCommits);
 
@@ -283,8 +281,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return builder.build();
   }
 
-  @NotNull
-  private List<Change> collectAffectedChanges(@NotNull Collection<? extends Change> changes) {
+  private @NotNull List<Change> collectAffectedChanges(@NotNull Collection<? extends Change> changes) {
     if (!isShowOnlyAffectedSelected() || myAffectedPaths == null) return new ArrayList<>(changes);
     return ContainerUtil.filter(changes, change -> ContainerUtil.or(myAffectedPaths, filePath -> {
       if (filePath.isDirectory()) {
@@ -307,19 +304,16 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
            myUiProperties.get(SHOW_ONLY_AFFECTED_CHANGES);
   }
 
-  @NotNull
-  public List<Change> getDirectChanges() {
+  public @NotNull List<Change> getDirectChanges() {
     return myChanges;
   }
 
-  @NotNull
-  public List<Change> getSelectedChanges() {
+  public @NotNull List<Change> getSelectedChanges() {
     return VcsTreeModelData.selected(myViewer).userObjects(Change.class);
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     if (HAS_AFFECTED_FILES.is(dataId)) {
       return myAffectedPaths != null;
     }
@@ -377,10 +371,8 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return getDiffRequestProducer(userObject, false);
   }
 
-  @Nullable
-  public ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject, boolean forDiffPreview) {
-    if (!(userObject instanceof Change)) return null;
-    Change change = (Change)userObject;
+  public @Nullable ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject, boolean forDiffPreview) {
+    if (!(userObject instanceof Change change)) return null;
 
     Map<Key<?>, Object> context = new HashMap<>();
     if (!(change instanceof MergedChange)) {
@@ -389,13 +381,11 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return createDiffRequestProducer(myProject, change, context, forDiffPreview);
   }
 
-  @Nullable
-  public static ChangeDiffRequestChain.Producer createDiffRequestProducer(@NotNull Project project,
-                                                                          @NotNull Change change,
-                                                                          @NotNull Map<Key<?>, Object> context,
-                                                                          boolean forDiffPreview) {
-    if (change instanceof MergedChange) {
-      MergedChange mergedChange = (MergedChange)change;
+  public static @Nullable ChangeDiffRequestChain.Producer createDiffRequestProducer(@NotNull Project project,
+                                                                                    @NotNull Change change,
+                                                                                    @NotNull Map<Key<?>, Object> context,
+                                                                                    boolean forDiffPreview) {
+    if (change instanceof MergedChange mergedChange) {
       if (mergedChange.getSourceChanges().size() == 2) {
         if (forDiffPreview) {
           putFilePathsIntoMergedChangeContext(mergedChange, context);
@@ -426,8 +416,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     }
   }
 
-  @NotNull
-  public VcsLogChangeProcessor createChangeProcessor(boolean isInEditor) {
+  public @NotNull VcsLogChangeProcessor createChangeProcessor(boolean isInEditor) {
     return new VcsLogChangeProcessor(myProject, this, isInEditor, this);
   }
 
@@ -473,9 +462,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(leftRevision, leftFile, centerFile == null ? rightFile : centerFile));
   }
 
-  @NotNull
-  @Nls
-  private String getText(@NotNull CommitId commitId) {
+  private @NotNull @Nls String getText(@NotNull CommitId commitId) {
     String text = VcsLogBundle.message("vcs.log.changes.changes.to.parent.node", commitId.getHash().toShortString());
     VcsShortCommitDetails detail = myDataGetter.fun(commitId);
     if (!(detail instanceof LoadingDetails) || (detail instanceof IndexedDetails)) {
@@ -489,15 +476,13 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   }
 
   private class VcsLogChangesBrowserDiffPreviewController extends DiffPreviewControllerBase {
-    @NotNull
     @Override
-    protected DiffPreview getSimplePreview() {
+    protected @NotNull DiffPreview getSimplePreview() {
       return new VcsLogEditorDiffPreview(myProject, VcsLogChangesBrowser.this);
     }
 
-    @NotNull
     @Override
-    protected CombinedDiffPreview createCombinedDiffPreview() {
+    protected @NotNull CombinedDiffPreview createCombinedDiffPreview() {
       return new VcsLogCombinedDiffPreview(VcsLogChangesBrowser.this);
     }
   }

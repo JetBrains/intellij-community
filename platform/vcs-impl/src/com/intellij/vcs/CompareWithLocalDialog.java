@@ -39,7 +39,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class CompareWithLocalDialog {
+public final class CompareWithLocalDialog {
   @RequiresEdt
   public static void showChanges(@NotNull Project project,
                                  @NotNull @NlsContexts.DialogTitle String dialogTitle,
@@ -185,6 +185,7 @@ public class CompareWithLocalDialog {
     protected List<AnAction> createPopupMenuActions() {
       return ContainerUtil.append(
         super.createPopupMenuActions(),
+        ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"),
         ActionManager.getInstance().getAction("Vcs.GetVersion")
       );
     }

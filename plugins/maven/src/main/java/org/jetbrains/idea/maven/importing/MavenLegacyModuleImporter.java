@@ -33,11 +33,7 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class MavenLegacyModuleImporter {
@@ -57,7 +53,7 @@ public final class MavenLegacyModuleImporter {
 
   private final Map<MavenProject, String> myMavenProjectToModuleName;
   private final MavenImportingSettings mySettings;
-  private final ModifiableModelsProviderProxy myModifiableModelsProvider;
+  private final IdeModifiableModelsProvider myModifiableModelsProvider;
   @Nullable
   private MavenRootModelAdapter myRootModelAdapter;
 
@@ -66,7 +62,7 @@ public final class MavenLegacyModuleImporter {
                                    MavenProject mavenProject,
                                    Map<MavenProject, String> mavenProjectToModuleName,
                                    MavenImportingSettings settings,
-                                   ModifiableModelsProviderProxy modifiableModelsProvider) {
+                                   IdeModifiableModelsProvider modifiableModelsProvider) {
     myModule = module;
     myMavenTree = mavenTree;
     myMavenProject = mavenProject;
@@ -91,26 +87,6 @@ public final class MavenLegacyModuleImporter {
     myRootModelAdapter = mavenRootModelAdapter;
 
     configFolders();
-    configDependencies(importData.getDependencies());
-    LanguageLevel level = MavenImportUtil.getLanguageLevel(myMavenProject, () -> importData.getModuleData().getSourceLanguageLevel());
-    configLanguageLevel(level);
-  }
-
-  public void configMainAndTestAggregator(MavenRootModelAdapter mavenRootModelAdapter, MavenTreeModuleImportData importData) {
-    assert importData.getModuleData().getType() == StandardMavenModuleType.COMPOUND_MODULE;
-    myRootModelAdapter = mavenRootModelAdapter;
-
-    new MavenLegacyFoldersImporter(myMavenProject, mySettings, myRootModelAdapter).configMainAndTestAggregator();
-    configDependencies(importData.getDependencies());
-    LanguageLevel level = MavenImportUtil.getLanguageLevel(myMavenProject, () -> importData.getModuleData().getSourceLanguageLevel());
-    configLanguageLevel(level);
-  }
-
-  public void configMainAndTest(MavenRootModelAdapter mavenRootModelAdapter, MavenTreeModuleImportData importData) {
-    StandardMavenModuleType type = importData.getModuleData().getType();
-    assert type == StandardMavenModuleType.MAIN_ONLY || type == StandardMavenModuleType.TEST_ONLY;
-    myRootModelAdapter = mavenRootModelAdapter;
-    new MavenLegacyFoldersImporter(myMavenProject, mySettings, myRootModelAdapter).configMainAndTest(type);
     configDependencies(importData.getDependencies());
     LanguageLevel level = MavenImportUtil.getLanguageLevel(myMavenProject, () -> importData.getModuleData().getSourceLanguageLevel());
     configLanguageLevel(level);
@@ -187,7 +163,7 @@ public final class MavenLegacyModuleImporter {
       myModifiableModelsProvider = ideModelsProvider;
       myRootModelAdapter = new MavenRootModelAdapter(
         new MavenRootModelAdapterLegacyImpl(myMavenProject, myModule,
-                                            new ModifiableModelsProviderProxyWrapper(myModifiableModelsProvider)));
+                                            myModifiableModelsProvider));
     }
 
     private void doConfigurationStep(Runnable step) {
@@ -392,8 +368,7 @@ public final class MavenLegacyModuleImporter {
         myRootModelAdapter.addLibraryDependency(((LibraryDependency)dependency).getArtifact(), dependency.getScope(),
                                                 myModifiableModelsProvider, myMavenProject);
       }
-      else if (dependency instanceof ModuleDependency) {
-        ModuleDependency moduleDependency = (ModuleDependency)dependency;
+      else if (dependency instanceof ModuleDependency moduleDependency) {
         myRootModelAdapter.addModuleDependency(moduleDependency.getArtifact(), dependency.getScope(), moduleDependency.isTestJar());
       }
       else if (dependency instanceof BaseDependency) {

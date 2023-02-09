@@ -25,9 +25,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
-/**
- * @author dsl
- */
 public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
   private NameSuggestionsField myNameField;
   private final ReferenceEditorWithBrowseButton myTfTargetClassName;

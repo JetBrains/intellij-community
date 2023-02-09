@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
  * Register in {@code com.intellij.externalAnnotator} extension point, {@code language} attribute <em>must</em> be specified.
  * </p>
  *
- * @author ven
  * @see com.intellij.lang.ExternalLanguageAnnotators
  */
 public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {

@@ -10,6 +10,9 @@ import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider
 
 internal class MermaidCodeFenceLanguageProvider: CodeFenceLanguageProvider {
   override fun getLanguageByInfoString(infoString: String): Language? {
+    if (isMermaidPluginInstalled()) {
+      return null
+    }
     return when {
       isMermaidInfoString(infoString) -> obtainMermaidLanguage()
       else -> null
@@ -17,8 +20,14 @@ internal class MermaidCodeFenceLanguageProvider: CodeFenceLanguageProvider {
   }
 
   override fun getCompletionVariantsForInfoString(parameters: CompletionParameters): List<LookupElement> {
+    if (isMermaidPluginInstalled()) {
+      return emptyList()
+    }
+    val project = parameters.originalFile.project
     val language = obtainMermaidLanguage()
-    val lookupElement = LookupElementBuilder.create(MERMAID).withIcon(language.associatedFileType?.icon)
+    val lookupElement = LookupElementBuilder.create(MERMAID)
+      .withIcon(language.associatedFileType?.icon)
+      .withInsertHandler { _, _ -> advertiseMermaidPlugin(project) }
     return listOf(lookupElement)
   }
 

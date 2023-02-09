@@ -486,6 +486,11 @@ public class TestNGTreeHierarchyTest {
     private final TestResult empty = TestResult.newEmptyTestResult();
 
     @Override
+    public String id() {
+      return empty.id();
+    }
+
+    @Override
     public void setEndMillis(long millis) {
       empty.setEndMillis(millis);
     }

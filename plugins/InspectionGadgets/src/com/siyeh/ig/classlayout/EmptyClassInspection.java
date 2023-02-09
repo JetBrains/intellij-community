@@ -16,9 +16,9 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class EmptyClassInspection extends BaseInspection {
 
@@ -50,18 +50,15 @@ public class EmptyClassInspection extends BaseInspection {
   public boolean commentsAreContent = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-
-    panel.add(annotationsListControl, "growx, wrap");
-    panel.addCheckbox(InspectionGadgetsBundle.message("empty.class.ignore.parameterization.option"), "ignoreClassWithParameterization");
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.empty.class.ignore.subclasses.option", CommonClassNames.JAVA_LANG_THROWABLE),
-              "ignoreThrowables");
-    panel.addCheckbox(InspectionGadgetsBundle.message("comments.as.content.option"), "commentsAreContent");
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                 new JavaClassValidator().annotationsOnly()),
+      checkbox("ignoreClassWithParameterization", InspectionGadgetsBundle.message("empty.class.ignore.parameterization.option")),
+      checkbox("ignoreThrowables",
+               InspectionGadgetsBundle.message("inspection.empty.class.ignore.subclasses.option", CommonClassNames.JAVA_LANG_THROWABLE)),
+      checkbox("commentsAreContent", InspectionGadgetsBundle.message("comments.as.content.option"))
+    );
   }
 
   @Override
@@ -139,10 +136,9 @@ public class EmptyClassInspection extends BaseInspection {
     @Override
     public void visitFile(@NotNull PsiFile file) {
       super.visitFile(file);
-      if (!(file instanceof PsiJavaFile)) {
+      if (!(file instanceof PsiJavaFile javaFile)) {
         return;
       }
-      final PsiJavaFile javaFile = (PsiJavaFile)file;
       if (javaFile.getClasses().length != 0) {
         return;
       }
@@ -214,12 +210,11 @@ public class EmptyClassInspection extends BaseInspection {
     }
 
     private boolean isSuperParametrization(PsiClass aClass) {
-      if (!(aClass instanceof PsiAnonymousClass)) {
+      if (!(aClass instanceof PsiAnonymousClass anonymousClass)) {
         final PsiReferenceList extendsList = aClass.getExtendsList();
         final PsiReferenceList implementsList = aClass.getImplementsList();
         return hasTypeArguments(extendsList) || hasTypeArguments(implementsList);
       }
-      final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)aClass;
       final PsiJavaCodeReferenceElement reference = anonymousClass.getBaseClassReference();
       final PsiReferenceParameterList parameterList = reference.getParameterList();
       if (parameterList == null) {

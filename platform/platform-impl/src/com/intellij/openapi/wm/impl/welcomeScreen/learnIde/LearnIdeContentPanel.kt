@@ -15,7 +15,6 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.wm.InteractiveCourseFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts.HeaderColor
-import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.edutools.EduToolsInteractiveCoursePanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
@@ -57,7 +56,7 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
     initInteractiveCoursesPanel(interactiveCoursesExtensions)
     initHelpAndResourcePanel()
 
-    if (interactiveCoursesExtensions.mapNotNull { it.getInteractiveCourseData() }.isEmpty()) {
+    if (interactiveCoursesExtensions.none { it.isActive }) {
       contentPanel.add(helpAndResourcesPanel, BorderLayout.CENTER)
     }
     else {
@@ -103,20 +102,11 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
     interactiveCoursesPanel.layout = BoxLayout(interactiveCoursesPanel, BoxLayout.LINE_AXIS)
     interactiveCoursesPanel.isOpaque = false
 
-    val coursesList = interactiveCoursesExtensions.mapNotNull { it.getInteractiveCourseData() }
-    if (coursesList.isNotEmpty()) {
-      var actionButton: JButton? = null
-      for (interactiveCourse in coursesList) {
-        val interactiveCoursePanel = if (interactiveCourse.isEduTools()) {
-          EduToolsInteractiveCoursePanel(interactiveCourse)
-        }
-        else {
-          InteractiveCoursePanel(interactiveCourse)
-        }
-
-        interactiveCoursesPanel.add(interactiveCoursePanel)
+    val componentsList = interactiveCoursesExtensions.filter { it.isActive }.map { it.getInteractiveCourseComponent() }
+    if (componentsList.isNotEmpty()) {
+      for (interactiveCourse in componentsList) {
+        interactiveCoursesPanel.add(interactiveCourse)
         interactiveCoursesPanel.add((rigid(12, 6)))
-        if (actionButton == null) actionButton = interactiveCoursePanel.startLearningButton
       }
       contentPanel.add(interactiveCoursesHeader, BorderLayout.NORTH)
       contentPanel.add(interactiveCoursesPanel, BorderLayout.CENTER)

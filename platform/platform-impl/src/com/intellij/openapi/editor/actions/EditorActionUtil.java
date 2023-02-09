@@ -120,7 +120,7 @@ public final class EditorActionUtil {
    * Unless 'resetToSingleLineAtCaret' is set, and because the resulting selection always includes the line ending character,
    * repeated invocations of this method extend the selection to include each next line one by one.
    *
-   * @param resetToSingleLineAtCaret discard the the current selection, if any,
+   * @param resetToSingleLineAtCaret discard the current selection, if any,
    *                                 and select just a single line at the caret position.
    */
   public static void selectEntireLines(@NotNull Caret caret, boolean resetToSingleLineAtCaret) {

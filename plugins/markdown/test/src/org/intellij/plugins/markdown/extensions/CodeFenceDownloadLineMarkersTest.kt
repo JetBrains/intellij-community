@@ -11,7 +11,6 @@ import com.intellij.testFramework.rules.TempDirectory
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider
-import org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidBrowserExtension
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.junit.Rule
 import org.junit.Test
@@ -37,9 +36,7 @@ abstract class CodeFenceDownloadLineMarkersTest(createFakeFiles: Boolean): BaseP
       ExtensionTestingUtil.mockPathManager(tempDirectory.newDirectoryPath(), disposable!!)
       if (createFakeFiles) {
         val plantUmlExtension = MarkdownExtensionsUtil.findCodeFenceGeneratingProvider<PlantUMLCodeGeneratingProvider>()!!
-        val mermaidExtension = MarkdownExtensionsUtil.findBrowserExtensionProvider<MermaidBrowserExtension.Provider>()!!
         ExtensionTestingUtil.createFakeExternalFiles(plantUmlExtension)
-        ExtensionTestingUtil.createFakeExternalFiles(mermaidExtension)
       }
     }
 
@@ -59,23 +56,10 @@ abstract class CodeFenceDownloadLineMarkersTest(createFakeFiles: Boolean): BaseP
   }
 
   @Test
-  fun `mermaid single empty fence`() = doTest(1, ::mermaidPredicate)
-
-  @Test
-  fun `mermaid single fence`() = doTest(1, ::mermaidPredicate)
-
-  @Test
-  fun `mermaid multiple fences`() = doTest(2, ::mermaidPredicate)
-
-  @Test
   fun `plantuml single fence`() = doTest(1, ::plantumlPredicate)
 
   @Test
   fun `plantuml multiple fences`() = doTest(3, ::plantumlPredicate)
-
-  protected fun mermaidPredicate(markerInfo: LineMarkerInfo<*>): Boolean {
-    return markerInfo.lineMarkerTooltip == MarkdownBundle.message("markdown.extensions.mermaid.download.line.marker.text")
-  }
 
   protected fun plantumlPredicate(markerInfo: LineMarkerInfo<*>): Boolean {
     return markerInfo.lineMarkerTooltip == MarkdownBundle.message("markdown.extensions.plantuml.download.line.marker.text")

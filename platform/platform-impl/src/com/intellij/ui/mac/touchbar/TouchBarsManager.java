@@ -2,8 +2,6 @@
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SimpleTimer;
@@ -114,11 +112,9 @@ final class TouchBarsManager {
   }
 
   private static void processFocusEvent(AWTEvent e) {
-    if (!(e.getSource() instanceof Component)) {
+    if (!(e.getSource() instanceof Component src)) {
       return;
     }
-
-    final Component src = (Component)e.getSource();
 
     // NOTE: WindowEvent.WINDOW_GAINED_FOCUS can be fired when frame focused
     if (e.getID() == FocusEvent.FOCUS_GAINED) {
@@ -399,16 +395,6 @@ final class TouchBarsManager {
       return tb;
     }
 
-    private static boolean isEmptyGroup(@NotNull ActionGroup actions) {
-      AnAction[] kids = actions.getChildren(null);
-      if (kids == null || kids.length < 1)
-        return true;
-      for (AnAction kid: kids)
-        if (!(kid instanceof Separator))
-          return false;
-      return true;
-    }
-
     void clearCachedTouchbars() {
       if (current != null) {
         current.release();
@@ -557,8 +543,7 @@ final class TouchBarsManager {
 
         myLastShownTouchbar = tb;
 
-        if (myLastShownTouchbar instanceof TBPanelActionGroup) {
-          final TBPanelActionGroup atb = (TBPanelActionGroup)myLastShownTouchbar;
+        if (myLastShownTouchbar instanceof TBPanelActionGroup atb) {
           atb.startUpdateTimer();
 
           // timer can "sleep" sometimes (when user doesn't send input for expamle)

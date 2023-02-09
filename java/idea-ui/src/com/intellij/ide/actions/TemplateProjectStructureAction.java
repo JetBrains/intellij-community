@@ -31,6 +31,6 @@ public class TemplateProjectStructureAction extends ShowStructureSettingsAction 
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return super.getActionUpdateThread();
   }
 }

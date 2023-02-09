@@ -112,8 +112,8 @@ public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResu
           }
         }
         else {
-          List<String> versions = ContainerUtil.map(classResult.getSearchResults().getItems(), i -> i.getVersion());
-          versions.add(each.getVersion());
+          List<String> versions = ContainerUtil.append(ContainerUtil.map(classResult.getSearchResults().getItems(), i -> i.getVersion()),
+          each.getVersion());
           MavenRepositoryArtifactInfo artifactInfo = new MavenRepositoryArtifactInfo(
             each.getGroupId(), each.getArtifactId(),
             versions);

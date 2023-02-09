@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
 import org.jetbrains.annotations.NotNull;
@@ -25,9 +26,6 @@ import java.util.List;
 
 import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
-/**
- * @author irengrig
- */
 class DummyChangesView implements ChangesViewEx {
   DummyChangesView() {
   }
@@ -65,7 +63,7 @@ class DummyChangesView implements ChangesViewEx {
   }
 
   @Override
-  public Promise<?> promiseRefresh() {
+  public @NotNull Promise<?> promiseRefresh(@NotNull ModalityState modalityState) {
     return resolvedPromise();
   }
 

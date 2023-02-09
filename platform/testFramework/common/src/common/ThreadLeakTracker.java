@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -68,6 +68,7 @@ public final class ThreadLeakTracker {
       "Cidr Symbol Building Thread", // ForkJoinPool com.jetbrains.cidr.lang.symbols.symtable.building.OCBuildingActivityExecutionService
       "Cleaner-0", // Thread[Cleaner-0,8,InnocuousThreadGroup], java.lang.ref.Cleaner in android layoutlib, Java9+
       "CompilerThread0",
+      "Coroutines Debugger Cleaner", // kotlinx.coroutines.debug.internal.DebugProbesImpl.startWeakRefCleanerThread
       "dockerjava-netty",
       "External compiler",
       "Finalizer",
@@ -214,7 +215,8 @@ public final class ThreadLeakTracker {
            || isIdleCommonPoolThread(thread, stackTrace)
            || isFutureTaskAboutToFinish(stackTrace)
            || isIdleDefaultCoroutineExecutorThread(thread, stackTrace)
-           || isCoroutineSchedulerPoolThread(thread, stackTrace);
+           || isCoroutineSchedulerPoolThread(thread, stackTrace)
+           || isKotlinCIOSelector(stackTrace);
   }
 
   private static boolean isWellKnownOffender(@NotNull String threadName) {
@@ -231,6 +233,13 @@ public final class ThreadLeakTracker {
     return ContainerUtil.exists(stackTrace, element -> {
       return element.getMethodName().equals("getTask")
              && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor");
+    });
+  }
+
+  private static boolean isKotlinCIOSelector(StackTraceElement @NotNull [] stackTrace) {
+    return ContainerUtil.exists(stackTrace, element -> {
+      return element.getMethodName().equals("select")
+             && element.getClassName().equals("io.ktor.network.selector.ActorSelectorManager");
     });
   }
 

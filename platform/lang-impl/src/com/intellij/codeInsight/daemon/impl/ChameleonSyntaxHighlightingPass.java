@@ -121,7 +121,7 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
       IElementType type = PsiUtilCore.getElementType(token);
       @NotNull HighlightInfoHolder holder = priorityRange.contains(tokenRange) ? inside : outside;
       TextAttributesKey[] keys = syntaxHighlighter.getTokenHighlights(type);
-      InjectedGeneralHighlightingPass.overrideDefaultHighlights(scheme, tokenRange, keys, holder);
+      InjectedGeneralHighlightingPass.addSyntaxInjectedFragmentInfo(scheme, tokenRange, keys, info -> holder.add(info));
     }
   }
 

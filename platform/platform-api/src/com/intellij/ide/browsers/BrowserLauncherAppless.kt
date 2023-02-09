@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
 import com.intellij.CommonBundle
@@ -9,7 +9,7 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.BrowserUtil
-import com.intellij.ide.GeneralSettings
+import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.application.ApplicationManager
@@ -103,7 +103,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     }
 
     val settings = generalSettings
-    if (settings.isUseDefaultBrowser) {
+    if (settings.useDefaultBrowser) {
       openWithDefaultBrowser(url, project)
     }
     else {
@@ -227,8 +227,8 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
   protected open fun getEffectiveBrowser(browser: WebBrowser?): WebBrowser? = browser
 
-  private val generalSettings: GeneralSettings
-    get() = (if (ApplicationManager.getApplication() != null) GeneralSettings.getInstance() else null) ?: GeneralSettings()
+  private val generalSettings: GeneralLocalSettings
+    get() = (if (ApplicationManager.getApplication() != null) GeneralLocalSettings.getInstance() else null) ?: GeneralLocalSettings()
 
   private val defaultBrowserCommand: List<String>?
     get() = when {

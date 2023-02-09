@@ -4,6 +4,7 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
@@ -17,7 +18,7 @@ class JavaUFile(
   override val packageName: String
     get() = sourcePsi.packageName
 
-  override val imports: List<UImportStatement> by lz {
+  override val imports: List<UImportStatement> by lazyPub {
     sourcePsi.importList?.allImportStatements?.map { JavaUImportStatement(it, this) } ?: listOf()
   }
 
@@ -27,9 +28,9 @@ class JavaUFile(
   override val uAnnotations: List<UAnnotation>
     get() = sourcePsi.packageStatement?.annotationList?.annotations?.map { JavaUAnnotation(it, this) } ?: emptyList()
 
-  override val classes: List<UClass> by lz { sourcePsi.classes.map { JavaUClass.create(it, this) } }
+  override val classes: List<UClass> by lazyPub { sourcePsi.classes.map { JavaUClass.create(it, this) } }
 
-  override val allCommentsInFile: ArrayList<UComment> by lz {
+  override val allCommentsInFile: ArrayList<UComment> by lazyPub {
     val comments = ArrayList<UComment>(0)
     sourcePsi.accept(object : PsiRecursiveElementWalkingVisitor() {
       override fun visitComment(comment: PsiComment) {

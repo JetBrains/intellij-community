@@ -5,7 +5,13 @@ package com.intellij.history.core;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.LocalFilePath;
+import com.intellij.openapi.vcs.UrlFilePath;
+import com.intellij.openapi.vfs.VersionedFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -106,5 +112,22 @@ public final class Paths {
 
   public static void useSystemCaseSensitivity() {
     myIsCaseSensitive = SystemInfo.isFileSystemCaseSensitive;
+  }
+
+  @NotNull
+  public static FilePath createDvcsFilePath(@NotNull String path, boolean isDirectory) {
+    return path.contains(URLUtil.SCHEME_SEPARATOR)
+           ? new UrlFilePath(path, isDirectory)
+           : new LocalFilePath(path, isDirectory);
+  }
+
+  @NotNull
+  public static FilePath createDvcsFilePath(@NotNull VirtualFile file) {
+    if (file.getFileSystem() instanceof VersionedFileSystem) {
+      return new UrlFilePath(file.getUrl(), file.isDirectory());
+    }
+    else {
+      return new LocalFilePath(file.getPath(), file.isDirectory());
+    }
   }
 }

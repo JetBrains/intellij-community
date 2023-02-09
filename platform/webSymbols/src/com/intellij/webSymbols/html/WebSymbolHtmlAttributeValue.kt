@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.html
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.webSymbols.html.impl.WebSymbolHtmlAttributeValueImpl
 
 /**
@@ -23,7 +24,7 @@ interface WebSymbolHtmlAttributeValue {
   val required: Boolean?
     get() = null
 
-  val default: String?
+  val default: @NlsSafe String?
     get() = null
 
   val langType: Any?

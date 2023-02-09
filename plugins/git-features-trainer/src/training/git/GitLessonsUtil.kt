@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.progress.impl.CoreProgressManager
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vcs.BranchChangeListener
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
@@ -47,7 +46,7 @@ import kotlin.math.min
 import kotlin.reflect.KClass
 
 object GitLessonsUtil {
-  // Git tool window must showing to reset it
+  // Git tool window must show to reset it
   fun LessonContext.resetGitLogWindow() {
     prepareRuntimeTask {
       val vcsLogUi = VcsProjectLog.getInstance(project).mainLogUi
@@ -57,7 +56,7 @@ object GitLessonsUtil {
       VcsLogContentUtil.selectMainLog(project)
     }
 
-    // clear Git tool window to return it to default state (needed in case of restarting the lesson)
+    // clear Git tool window to return it to the default state (needed in case of restarting the lesson)
     task {
       triggerUI().component { ui: SearchTextField ->
         if (UIUtil.getParentOfType(MainFrame::class.java, ui) != null) {
@@ -164,7 +163,7 @@ object GitLessonsUtil {
   }
 
   /**
-   * Restores task if [PreviousTaskInfo.ui] is not showing and background task is not running
+   * Restores a task if [PreviousTaskInfo.ui] is not showing and a background task is not running
    */
   fun TaskContext.restoreByUiAndBackgroundTask(taskTitleRegex: @Nls String, delayMillis: Int = 0, restoreId: TaskContext.TaskId? = null) {
     val regex = Regex(taskTitleRegex)
@@ -319,9 +318,5 @@ object GitLessonsUtil {
       if (contains) return true
     }
     return false
-  }
-
-  fun loadIllustration(illustrationName: String): Icon {
-    return IconLoader.getIcon("illustrations/$illustrationName", GitLessonsUtil::class.java.classLoader)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,9 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author ven
- */
 public final class ExtractMethodUtil {
   private static final Logger LOG = Logger.getInstance(ExtractMethodUtil.class);
   private static final Key<PsiMethod> RESOLVE_TARGET_KEY = Key.create("RESOLVE_TARGET_KEY");
@@ -48,8 +45,7 @@ public final class ExtractMethodUtil {
       for (final PsiReference ref : ReferencesSearch.search(overload)) {
         final PsiElement element = ref.getElement();
         final PsiElement parent = element.getParent();
-        if (parent instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression call = (PsiMethodCallExpression)parent;
+        if (parent instanceof PsiMethodCallExpression call) {
           if (PsiTreeUtil.isAncestor(extractedFragment, element, false)) {
             call.putCopyableUserData(RESOLVE_TARGET_KEY, overload);
           } else {

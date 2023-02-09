@@ -8,6 +8,7 @@ import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.html.HtmlCompatibleFile;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
@@ -119,9 +120,9 @@ public final class HtmlUtil {
 
   static {
     for (HTMLControls.Control control : HTMLControls.getControls()) {
-      final String tagName = StringUtil.toLowerCase(control.name);
-      if (control.endTag == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
-      AUTO_CLOSE_BY_MAP.put(tagName, new HashSet<>(control.autoClosedBy));
+      final String tagName = StringUtil.toLowerCase(control.name());
+      if (control.endTag() == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
+      AUTO_CLOSE_BY_MAP.put(tagName, new HashSet<>(control.autoClosedBy()));
     }
   }
 
@@ -640,6 +641,9 @@ public final class HtmlUtil {
     }
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile != null) {
+      if (containingFile instanceof HtmlCompatibleFile) {
+        return true;
+      }
       final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
       if (tag instanceof HtmlTag) {
         return true;

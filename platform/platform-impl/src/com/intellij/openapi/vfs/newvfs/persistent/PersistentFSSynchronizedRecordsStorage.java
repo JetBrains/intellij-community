@@ -13,7 +13,7 @@ import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @ApiStatus.Internal
-final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsStorage {
+final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecordsStorage {
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
   private static final int NAME_OFFSET = PARENT_OFFSET + PARENT_SIZE;
@@ -174,7 +174,7 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
   @Override
   public void markRecordAsModified(int recordId) throws IOException {
     final int modCount = incrementGlobalModCount();
-    final int absoluteOffset = getOffset(recordId, MOD_COUNT_OFFSET);
+    final long absoluteOffset = getOffset(recordId, MOD_COUNT_OFFSET);
     write(() -> {
       myFile.putInt(absoluteOffset, modCount);
     });
@@ -208,7 +208,7 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
   }
 
   @Override
-  public boolean putTimestamp(int id, long value) throws IOException {
+  public boolean setTimestamp(int id, long value) throws IOException {
     return putRecordLong(id, TIMESTAMP_OFFSET, value);
   }
 
@@ -220,7 +220,7 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
   }
 
   @Override
-  public boolean putLength(int id, long value) throws IOException {
+  public boolean setLength(int id, long value) throws IOException {
     return putRecordLong(id, LENGTH_OFFSET, value);
   }
 
@@ -240,7 +240,7 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
   }
 
   private int getRecordInt(int id, int offset) throws IOException {
-    final int absoluteOffset = getOffset(id, offset);
+    final long absoluteOffset = getOffset(id, offset);
     return read(() -> {
       return myFile.getInt(absoluteOffset);
     });
@@ -249,8 +249,8 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
   private boolean putRecordInt(int recordId,
                                int relativeOffset,
                                int value) throws IOException {
-    final int absoluteOffset = getOffset(recordId, relativeOffset);
-    final int absoluteOffsetModCount = getOffset(recordId, MOD_COUNT_OFFSET);
+    final long absoluteOffset = getOffset(recordId, relativeOffset);
+    final long absoluteOffsetModCount = getOffset(recordId, MOD_COUNT_OFFSET);
     return write(() -> {
       final boolean reallyChanged = myFile.getInt(absoluteOffset) != value;
       if (reallyChanged) {
@@ -265,9 +265,9 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
   private Boolean putRecordLong(final int recordId,
                                 final int relativeFieldOffset,
                                 final long newValue) throws IOException {
+    final long absoluteFieldOffset = getOffset(recordId, relativeFieldOffset);
+    final long absoluteModCountOffset = getOffset(recordId, MOD_COUNT_OFFSET);
     return write(() -> {
-      int absoluteFieldOffset = getOffset(recordId, relativeFieldOffset);
-      int absoluteModCountOffset = getOffset(recordId, MOD_COUNT_OFFSET);
       final boolean reallyChanged = myFile.getLong(absoluteFieldOffset) != newValue;
       if (reallyChanged) {
         final int modCount = incrementGlobalModCount();
@@ -301,8 +301,10 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
     });
   }
 
-  private static int getOffset(int id, int offset) {
-    return id * RECORD_SIZE + offset;
+  private static long getOffset(int id, int offset) {
+    final long absoluteFileOffset = id * (long)RECORD_SIZE + offset;
+    assert absoluteFileOffset >= 0 : "offset(" + id + ", " + offset + ") = " + absoluteFileOffset + " must be >=0";
+    return absoluteFileOffset;
   }
 
   @Override

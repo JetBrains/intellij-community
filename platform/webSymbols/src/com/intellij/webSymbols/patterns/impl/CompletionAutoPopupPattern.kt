@@ -7,7 +7,7 @@ import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
-import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
+import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.utils.hideFromCompletion
 
 internal class CompletionAutoPopupPattern(val isSticky: Boolean) : WebSymbolsPattern() {
@@ -16,7 +16,7 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : WebSymbolsPat
 
   override fun match(owner: WebSymbol?,
                      scopeStack: Stack<WebSymbolsScope>,
-                     itemsProvider: WebSymbolsPatternItemsProvider?,
+                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> =
@@ -24,11 +24,11 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : WebSymbolsPat
 
   override fun getCompletionResults(owner: WebSymbol?,
                                     scopeStack: Stack<WebSymbolsScope>,
-                                    itemsProvider: WebSymbolsPatternItemsProvider?,
+                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                                     params: CompletionParameters,
                                     start: Int,
                                     end: Int): CompletionResults =
-    if (itemsProvider == null || itemsProvider.delegate?.hideFromCompletion == true) {
+    if (symbolsResolver == null || symbolsResolver.delegate?.hideFromCompletion == true) {
       CompletionResults(emptyList(), true)
     }
     else {

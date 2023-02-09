@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.JList
 
-/**
- * @author vlan
- */
 open class PySdkListCellRenderer @JvmOverloads constructor(@Nls private val nullSdkName: String = noInterpreterMarker,
                                                            private val nullSdkValue: Sdk? = null) : ColoredListCellRenderer<Any>() {
 

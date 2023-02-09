@@ -196,8 +196,7 @@ public final class GithubServerPath implements ServerPath {
 
   public boolean equals(Object o, boolean ignoreProtocol) {
     if (this == o) return true;
-    if (!(o instanceof GithubServerPath)) return false;
-    GithubServerPath path = (GithubServerPath)o;
+    if (!(o instanceof GithubServerPath path)) return false;
     return (ignoreProtocol || Objects.equals(myUseHttp, path.myUseHttp)) &&
            Objects.equals(myHost, path.myHost) &&
            Objects.equals(myPort, path.myPort) &&

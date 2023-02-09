@@ -44,13 +44,13 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
   override fun createCenterPanel(): JComponent {
     val tabbedPane = JBTabbedPane()
     tabbedPane.minimumSize = Dimension(300, 200)
-    tabbedPane.preferredSize = Dimension(800, 600)
+    tabbedPane.preferredSize = Dimension(1000, 800)
     tabbedPane.addTab("Labels", JScrollPane(LabelsPanel().panel))
     tabbedPane.addTab("Text Fields", createTextFields())
     tabbedPane.addTab("Comments", JScrollPane(createCommentsPanel()))
     tabbedPane.addTab("Text MaxLine", createTextMaxLinePanel())
     tabbedPane.addTab("Groups", JScrollPane(GroupsPanel().panel))
-    tabbedPane.addTab("Segmented Button", SegmentedButtonPanel().panel)
+    tabbedPane.addTab("Segmented Button", SegmentedButtonPanel(myDisposable).panel)
     tabbedPane.addTab("Visible/Enabled", createVisibleEnabled())
     tabbedPane.addTab("Cells With Sub-Panels", createCellsWithPanels())
     tabbedPane.addTab("Placeholder", PlaceholderPanel(myDisposable).panel)
@@ -58,6 +58,8 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     tabbedPane.addTab("Others", OthersPanel().panel)
     tabbedPane.addTab("Deprecated Api", JScrollPane(DeprecatedApiPanel().panel))
     tabbedPane.addTab("CheckBox/RadioButton", CheckBoxRadioButtonPanel().panel)
+    tabbedPane.addTab("Validation API", ValidationPanel(myDisposable).panel)
+    tabbedPane.addTab("OnChange", OnChangePanel().panel)
 
     return panel {
       row {
@@ -159,23 +161,21 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
               checkBox("visible")
                 .applyToComponent {
                   isSelected = true
-                  addItemListener {
-                    when (entity) {
-                      is Cell<*> -> entity.visible(this.isSelected)
-                      is Row -> entity.visible(this.isSelected)
-                      is Panel -> entity.visible(this.isSelected)
-                    }
+                }.onChanged {
+                  when (entity) {
+                    is Cell<*> -> entity.visible(it.isSelected)
+                    is Row -> entity.visible(it.isSelected)
+                    is Panel -> entity.visible(it.isSelected)
                   }
                 }
               checkBox("enabled")
                 .applyToComponent {
                   isSelected = true
-                  addItemListener {
-                    when (entity) {
-                      is Cell<*> -> entity.enabled(this.isSelected)
-                      is Row -> entity.enabled(this.isSelected)
-                      is Panel -> entity.enabled(this.isSelected)
-                    }
+                }.onChanged {
+                  when (entity) {
+                    is Cell<*> -> entity.enabled(it.isSelected)
+                    is Row -> entity.enabled(it.isSelected)
+                    is Panel -> entity.enabled(it.isSelected)
                   }
                 }
             }
@@ -263,14 +263,10 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     val result = panel {
       row("Component type") {
         comboBox(CollectionComboBoxModel(CommentComponentType.values().asList()))
-          .applyToComponent {
-            addItemListener {
-              if (it.stateChange == ItemEvent.SELECTED) {
-                type = it?.item as? CommentComponentType ?: CommentComponentType.CHECKBOX
-                applyType()
-                placeholder.revalidate()
-              }
-            }
+          .onChanged {
+            type = it.item ?: CommentComponentType.CHECKBOX
+            applyType()
+            placeholder.revalidate()
           }
       }
       row {

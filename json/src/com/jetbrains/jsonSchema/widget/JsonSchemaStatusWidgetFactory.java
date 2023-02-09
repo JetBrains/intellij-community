@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
 public final class JsonSchemaStatusWidgetFactory extends StatusBarEditorBasedWidgetFactory {
@@ -32,7 +33,7 @@ public final class JsonSchemaStatusWidgetFactory extends StatusBarEditorBasedWid
   }
 
   @Override
-  public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
-    return new JsonSchemaStatusWidget(project);
+  public @NotNull StatusBarWidget createWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
+    return new JsonSchemaStatusWidget(project, scope);
   }
 }

@@ -99,7 +99,8 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       myName.setOpaque(false);
       myCategory.clear();
       myCategory.setOpaque(false);
-      Object query = table.getClientProperty(SpeedSearchSupply.SEARCH_QUERY_KEY);
+      SpeedSearchSupply speedSearch = SpeedSearchSupply.getSupply(table);
+      String query = speedSearch == null ? null : speedSearch.getEnteredPrefix();
       SimpleTextAttributes attr = new SimpleTextAttributes(UIUtil.getListBackground(isSelected, hasFocus),
                                                            UIUtil.getListForeground(isSelected, hasFocus),
                                                            JBColor.RED,
@@ -108,7 +109,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
 
       String category = myPluginDescriptor.getCategory() == null ? null : StringUtil.toUpperCase(myPluginDescriptor.getCategory()); //NON-NLS
       if (category != null) {
-        if (query instanceof String) {
+        if (query != null) {
           SpeedSearchUtil.appendColoredFragmentForMatcher(category, myCategory, attr, matcher, UIUtil.getTableBackground(isSelected, hasFocus), true);
         }
         else {

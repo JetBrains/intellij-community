@@ -2,25 +2,19 @@
 package org.jetbrains.kotlin.gradle
 
 import junit.framework.AssertionFailedError
-import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinCompilationCoordinatesImpl
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
-import org.jetbrains.kotlin.idea.gradleTooling.findCompilation
+import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
 
 class AssociateCompilationsModelBuilderTest : MultiplePluginVersionGradleImportingTestCase() {
+
     @Test
     @PluginTargetVersions(pluginVersion = "1.6.20+")
     fun testAssociateCompilationIntegrationTest() {
         configureByFiles()
-        val model = buildKotlinMPPGradleModel().getNotNullByProjectPathOrThrow(":p2").inThisClassLoader()
+        val model = buildKotlinMPPGradleModel().getNotNullByProjectPathOrThrow(":p2")
 
         /* Test all associate coordinates can be resolved */
         model.targets.flatMap { it.compilations }.flatMap { it.associateCompilations }.forEach { coordinates ->
@@ -62,14 +56,4 @@ class AssociateCompilationsModelBuilderTest : MultiplePluginVersionGradleImporti
 private fun KotlinMPPGradleModel.getCompilation(targetName: String, compilationName: String): KotlinCompilation {
     return findCompilation(KotlinCompilationCoordinatesImpl(targetName, compilationName))
         ?: throw AssertionFailedError("Missing compilation: $targetName/$compilationName")
-}
-
-private fun KotlinMPPGradleModel.inThisClassLoader(): KotlinMPPGradleModel {
-    val unpacked = runCatching { ProtocolToModelAdapter().unpack(this) }.getOrElse { return this }
-    val serialized = ByteArrayOutputStream().use { baos ->
-        ObjectOutputStream(baos).use { oos -> oos.writeObject(unpacked) }
-        baos.toByteArray()
-    }
-
-    return ObjectInputStream(ByteArrayInputStream(serialized)).readObject() as KotlinMPPGradleModel
 }

@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" >
+<idea-plugin>
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.highlighterExtension"
@@ -42,7 +42,7 @@
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsPassFactory$Registrar"/>
 
     <problemHighlightFilter implementation="org.jetbrains.kotlin.idea.highlighter.KotlinProblemHighlightFilter"/>
-    <problemFileHighlightFilter implementation="org.jetbrains.kotlin.idea.projectView.KotlinProblemFileHighlightFilter"/>
+    <problemFileHighlightFilter implementation="org.jetbrains.kotlin.idea.highlighting.KotlinProblemFileHighlightFilter"/>
 
     <daemon.changeLocalityDetector implementation="org.jetbrains.kotlin.idea.base.highlighting.KotlinChangeLocalityDetector"/>
 

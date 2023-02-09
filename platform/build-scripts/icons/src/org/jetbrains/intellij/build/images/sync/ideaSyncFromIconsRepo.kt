@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images.sync
 
-import org.jetbrains.intellij.build.images.generateIconsClasses
+import org.jetbrains.intellij.build.images.generateIconClasses
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
 import kotlin.io.path.extension
@@ -22,7 +22,7 @@ fun main(args: Array<String>) = try {
   echo("Syncing icons..")
   checkIcons(context)
   echo("Generating classes..")
-  generateIconsClasses(dbFile = null)
+  generateIconClasses(dbFile = null)
   val changes = gitStatus(project, includeUntracked = true).all().asSequence().filter {
     val file = project.resolve(it)
     isImage(file) || file.extension == "java" || file.extension == "kt"

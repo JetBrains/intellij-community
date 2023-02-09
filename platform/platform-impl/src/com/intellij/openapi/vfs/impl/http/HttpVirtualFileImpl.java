@@ -222,7 +222,14 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
   @Override
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
     if (myFileInfo != null) {
-      myFileInfo.refresh(postRunnable);
+      myFileInfo.refresh(() -> {
+        // com.intellij.openapi.vfs.VirtualFile.refresh(boolean, boolean, java.lang.Runnable) contract
+        // states that postRunnable should be run on EDT under write lock
+        if (postRunnable != null) {
+          ApplicationManager.getApplication().invokeLater(
+            () -> ApplicationManager.getApplication().runWriteAction(postRunnable));
+        }
+      });
     }
     else if (postRunnable != null) {
       postRunnable.run();

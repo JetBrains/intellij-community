@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.EnumSet;
 
 /**
  * Replacement of read-write file channel with shadow file size, valid when file manipulations happen in with this class only.
@@ -27,7 +28,8 @@ final class FileChannelWithSizeTracking {
     if (!Files.exists(parent)) {
       Files.createDirectories(parent);
     }
-    myChannelHandle = new UnInterruptibleFileChannelHandle(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+    myChannelHandle =
+      new UnInterruptibleFileChannelHandle(path, EnumSet.of(StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE));
     mySize = myChannelHandle.executeOperation(ch -> ch.size());
     myPath = path;
 
@@ -71,7 +73,7 @@ final class FileChannelWithSizeTracking {
     return myPath + "@" + Integer.toHexString(hashCode());
   }
 
-  private void force() throws IOException {
+  public void force() throws IOException {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Forcing:" + this + "," + Thread.currentThread() );
     }

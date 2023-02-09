@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ProjectTopics;
@@ -41,6 +41,7 @@ import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
 import com.intellij.openapi.editor.ex.ErrorStripeEvent;
 import com.intellij.openapi.editor.ex.ErrorStripeListener;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -71,6 +72,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -132,7 +134,7 @@ public final class DaemonListeners implements Disposable {
       public void beforeDocumentChange(@NotNull DocumentEvent e) {
         Document document = e.getDocument();
         VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-        Project project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
+        Project project = virtualFile == null ? null : guessProject(virtualFile);
         //no need to stop daemon if something happened in the console or in non-physical document
         if (!myProject.isDisposed() && ApplicationManager.getApplication().isDispatchThread() && worthBothering(document, project)) {
           stopDaemon(true, "Document change");
@@ -203,16 +205,15 @@ public final class DaemonListeners implements Disposable {
         Editor editor = event.getEditor();
         Document document = editor.getDocument();
         Project editorProject = editor.getProject();
-        // worthBothering() checks for getCachedPsiFile, so call getPsiFile here
-        PsiFile file = editorProject == null ? null : PsiDocumentManager.getInstance(editorProject).getPsiFile(document);
         boolean showing = UIUtil.isShowing(editor.getContentComponent());
         boolean worthBothering = worthBothering(document, editorProject);
         if (!showing || !worthBothering) {
-          LOG.debug("Not worth bothering about editor created for : " + file + " because editor isShowing(): " +
+          LOG.debug("Not worth bothering about editor created for: " + editor.getVirtualFile() + " because editor isShowing(): " +
                     showing + "; project is open and file is mine: " + worthBothering);
           return;
         }
-
+        // worthBothering() checks for getCachedPsiFile, so call getPsiFile here
+        PsiFile file = editorProject == null ? null : PsiDocumentManager.getInstance(editorProject).getPsiFile(document);
         ErrorStripeUpdateManager.getInstance(myProject).repaintErrorStripePanel(editor, file);
       }
 
@@ -268,8 +269,7 @@ public final class DaemonListeners implements Disposable {
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         boolean isDaemonShouldBeStopped = false;
         for (VFileEvent event : events) {
-          if (event instanceof VFilePropertyChangeEvent) {
-            VFilePropertyChangeEvent e = (VFilePropertyChangeEvent)event;
+          if (event instanceof VFilePropertyChangeEvent e) {
             String propertyName = e.getPropertyName();
             if (VirtualFile.PROP_NAME.equals(propertyName)) {
               fileRenamed(e);
@@ -405,23 +405,45 @@ public final class DaemonListeners implements Disposable {
     HeavyProcessLatch.INSTANCE.addListener(this, __ -> stopDaemon(true, "re-scheduled to execute after heavy processing finished"));
   }
 
+  private Project guessProject(@NotNull VirtualFile virtualFile) {
+    if (FileEditorManager.getInstance(myProject).getAllEditors(virtualFile).length != 0) {
+      // if at least one editor in myProject frame has opened this file, then we can assume this file does belong to the myProject
+      return myProject;
+    }
+    return ProjectUtil.guessProjectForFile(virtualFile);
+  }
+
   private <T, U extends KeyedLazyInstance<T>> void restartOnExtensionChange(@NotNull ExtensionPointName<U> name, @NotNull String message) {
     name.addChangeListener(() -> stopDaemonAndRestartAllFiles(message), this);
   }
 
-  private boolean worthBothering(@Nullable Document document, Project project) {
+  private boolean worthBothering(@Nullable Document document, @Nullable Project guessedProject) {
     if (document == null) {
       return true;
     }
-    if (project != null && project != myProject) {
+    if (guessedProject != null && guessedProject != myProject) {
       return false;
     }
     if (myProject.isDisposed()) {
       return false;
     }
+    // Used to be these lines:
+
+    /*
     // cached is essential here since we do not want to create PSI file in alien project
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(document);
     return psiFile != null && psiFile.isPhysical() && psiFile.getOriginalFile() == psiFile;
+    */
+
+    // But had to replace them with the heuristics below which are not PSI-related to avoid accessing indexes in EDT
+    // see EA-659452 T: DirectoryIndexImpl.getInfoForFile
+    // and please don't do anything PSIthic here
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    if (virtualFile == null || virtualFile instanceof LightVirtualFile) {
+      return false;
+    }
+    // non-physical docs can be updated outside EDT as a rule
+    return !(document instanceof DocumentImpl) || ((DocumentImpl)document).isWriteThreadOnly();
   }
 
   @Override
@@ -486,19 +508,7 @@ public final class DaemonListeners implements Disposable {
       }
 
       String commandName = event.getCommandName();
-
-      String cutActionName = CUT_ACTION_NAME;
-      if (cutActionName == null) {
-        ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
-        if (actionManager != null) {
-          cutActionName = actionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
-          //noinspection AssignmentToStaticFieldFromInstanceMethod
-          CUT_ACTION_NAME = cutActionName;
-        }
-      }
-
-      cutOperationJustHappened = commandName != null && !commandName.isEmpty() && !commandName.startsWith("Editor") &&
-                                 commandName.equals(cutActionName);
+      cutOperationJustHappened = commandName != null && commandName.equals(getCutActionName());
       if (!myDaemonCodeAnalyzer.isRunning()) {
         return;
       }
@@ -541,6 +551,19 @@ public final class DaemonListeners implements Disposable {
         stopDaemon(true, "Command finish");
       }
     }
+  }
+
+  private static String getCutActionName() {
+    String cutActionName = CUT_ACTION_NAME;
+    if (cutActionName == null) {
+      ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+      if (actionManager != null) {
+        cutActionName = actionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        CUT_ACTION_NAME = cutActionName;
+      }
+    }
+    return cutActionName;
   }
 
   private final class MyTodoListener implements PropertyChangeListener {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Block;
@@ -641,12 +641,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private static boolean isAbstractMethod(ASTNode node) {
-    PsiElement element = node.getPsi();
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
-      return method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT);
-    }
-    return false;
+    return node.getPsi() instanceof PsiMethod method && method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT);
   }
 
   @Override
@@ -825,13 +820,24 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
+    handleForeach();
+  }
+
+  @Override
+  public void visitForeachPatternStatement(@NotNull PsiForeachPatternStatement statement) {
+    handleForeach();
+  }
+
+  private void handleForeach() {
     if (myRole1 == ChildRole.FOR_KEYWORD && myRole2 == ChildRole.LPARENTH) {
       createSpaceInCode(mySettings.SPACE_BEFORE_FOR_PARENTHESES);
     }
     else if (myRole1 == ChildRole.LPARENTH || myRole2 == ChildRole.RPARENTH) {
       createSpaceInCode(mySettings.SPACE_WITHIN_FOR_PARENTHESES);
     }
-    else if ((myRole1 == ChildRole.FOR_ITERATION_PARAMETER && myRole2 == ChildRole.COLON && myJavaSettings.SPACE_BEFORE_COLON_IN_FOREACH) ||
+    else if (((myRole1 == ChildRole.FOR_ITERATION_PARAMETER || ElementType.JAVA_PATTERN_BIT_SET.contains(myType1)) &&
+              myRole2 == ChildRole.COLON
+              && myJavaSettings.SPACE_BEFORE_COLON_IN_FOREACH) ||
              myRole1 == ChildRole.COLON && myRole2 == ChildRole.FOR_ITERATED_VALUE) {
       createSpaceInCode(true);
     }

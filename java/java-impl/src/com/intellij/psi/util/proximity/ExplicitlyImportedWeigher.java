@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util.proximity;
 
 import com.intellij.openapi.module.Module;
@@ -25,7 +25,7 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
     return position == null ? null : getContextPackage(position);
   });
   private static final NotNullLazyKey<List<String>, ProximityLocation> PLACE_IMPORTED_NAMES =
-    NotNullLazyKey.create("importedNames", location -> {
+    NotNullLazyKey.createLazyKey("importedNames", location -> {
       final PsiJavaFile psiJavaFile = PsiTreeUtil.getContextOfType(location.getPosition(), PsiJavaFile.class, false);
       final PsiImportList importList = psiJavaFile == null ? null : psiJavaFile.getImportList();
       if (importList == null) return Collections.emptyList();
@@ -77,8 +77,7 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
       return ImportWeight.DECLARED_IN_SAME_FILE;
     }
 
-    if (element instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass)element;
+    if (element instanceof PsiClass psiClass) {
       final String qname = psiClass.getQualifiedName();
       if (qname != null) {
         boolean topLevel = psiClass.getContainingClass() == null;

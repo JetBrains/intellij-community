@@ -65,8 +65,7 @@ public class GithubUser {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof GithubUser)) return false;
-    GithubUser user = (GithubUser)o;
+    if (!(o instanceof GithubUser user)) return false;
     return id.equals(user.id);
   }
 

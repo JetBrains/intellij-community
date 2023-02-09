@@ -70,9 +70,6 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
 
     final BuildManager buildManager = BuildManager.getInstance();
     File projectSystemIoFile = buildManager.getProjectSystemDirectory(project);
-    if (projectSystemIoFile == null) {
-      return;
-    }
 
     final Path projectSystemDir = projectSystemIoFile.toPath();
     RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project);
@@ -278,9 +275,6 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
 
     for (MavenResource resource : resources) {
       final String dir = resource.getDirectory();
-      if (dir == null) {
-        continue;
-      }
 
       final ResourceRootConfiguration props = new ResourceRootConfiguration();
       props.directory = transformer.toRemotePathOrSelf(FileUtil.toSystemIndependentName(dir));
@@ -445,9 +439,7 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
 
       for (MavenResource resource : ContainerUtil.concat(mavenProject.getResources(), mavenProject.getTestResources())) {
         String directory = resource.getDirectory();
-        if (directory != null) {
-          ContainerUtil.addIfNotNull(processedRoots, LocalFileSystem.getInstance().findFileByPath(directory));
-        }
+        ContainerUtil.addIfNotNull(processedRoots, LocalFileSystem.getInstance().findFileByPath(directory));
       }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.*;
@@ -85,10 +85,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
   }
 
-  private static void showStatusText(DebugProcessEvents debugProcess,  Event event) {
+  private static void showStatusText(DebugProcessEvents debugProcess, Event event) {
     Requestor requestor = RequestManagerImpl.findRequestor(event.request());
     Breakpoint breakpoint = null;
-    if(requestor instanceof Breakpoint) {
+    if (requestor instanceof Breakpoint) {
       breakpoint = (Breakpoint)requestor;
     }
     String text = debugProcess.getEventText(Pair.create(breakpoint, event));
@@ -306,7 +306,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     ThreadReferenceProxyImpl oldThread = suspendContext.getThread();
     suspendContext.setThread(thread);
 
-    if(oldThread == null) {
+    if (oldThread == null) {
       //this is the first event in the eventSet that we process
       suspendContext.getDebugProcess().beforeSuspend(suspendContext);
     }
@@ -559,8 +559,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if (Registry.is("debugger.preload.event.info") && DebuggerUtilsAsync.isAsyncEnabled()) {
       List<CompletableFuture> commands = new ArrayList<>();
       ThreadReference thread = event.thread();
-      if (thread instanceof ThreadReferenceImpl) {
-        ThreadReferenceImpl t = (ThreadReferenceImpl)thread;
+      if (thread instanceof ThreadReferenceImpl t) {
         commands.addAll(List.of(t.frameCountAsync(), t.nameAsync(), t.statusAsync(), t.frameAsync(0)));
       }
       Location location = event.location();
@@ -661,18 +660,18 @@ public class DebugProcessEvents extends DebugProcessImpl {
           if (!stepEvents.isEmpty()) {
             resumePreferred = resumePreferred ||
                               stepEvents.stream()
-                                        .map(DebugProcessEvents::getRequestHint)
-                                        .allMatch(h -> {
-                                          if (h != null) {
-                                            Integer depth = h.checkCurrentPosition(suspendContext, event.location());
-                                            return depth != null && depth != RequestHint.STOP;
-                                          }
-                                          return false;
-                                        });
+                                .map(DebugProcessEvents::getRequestHint)
+                                .allMatch(h -> {
+                                  if (h != null) {
+                                    Integer depth = h.checkCurrentPosition(suspendContext, event.location());
+                                    return depth != null && depth != RequestHint.STOP;
+                                  }
+                                  return false;
+                                });
           }
         }
 
-        if(!requestHit || resumePreferred) {
+        if (!requestHit || resumePreferred) {
           suspendManager.voteResume(suspendContext);
         }
         else {

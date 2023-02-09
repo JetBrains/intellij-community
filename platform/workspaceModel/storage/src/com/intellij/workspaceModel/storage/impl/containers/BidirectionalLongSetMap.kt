@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl.containers
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
@@ -88,7 +88,7 @@ internal class BidirectionalLongSetMap<V> private constructor(
   }
 
   fun putAll(from: BidirectionalLongSetMap<V>) {
-    from.keyToValueMap.long2ObjectEntrySet().forEach { entry ->
+    from.keyToValueMap.long2ObjectEntrySet().fastForEach { entry ->
       put(entry.longKey, entry.value)
     }
   }
@@ -106,9 +106,7 @@ internal class BidirectionalLongSetMap<V> private constructor(
   }
 
   fun forEach(action: (Long2ObjectMap.Entry<V>) -> Unit) {
-    keyToValueMap.long2ObjectEntrySet().forEach { entry ->
-      action(entry)
-    }
+    keyToValueMap.long2ObjectEntrySet().fastForEach(action)
   }
 
   override fun toString(): String {

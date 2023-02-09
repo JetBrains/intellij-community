@@ -28,9 +28,6 @@ import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.indexing.DumbModeAccessType
 
-/**
- * @author Pavel.Dolgov
- */
 @NeedsIndex.Full
 class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() {
   override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/reflectionParameters/"

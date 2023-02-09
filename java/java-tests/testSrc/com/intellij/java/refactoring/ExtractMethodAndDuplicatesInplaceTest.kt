@@ -1,13 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring
 
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.DuplicatesMethodExtractor
@@ -20,6 +24,28 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
 
 class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
+
+  companion object {
+    fun nextTemplateVariable(templateState: TemplateState?): Boolean {
+      if (templateState == null) return false
+      val previousRange = templateState.currentVariableRange
+      LookupManager.getActiveLookup(templateState.editor)?.hideLookup(true)
+      val dataContext = DataManager.getInstance().getDataContext(templateState.editor.component)
+      val event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, Presentation(), dataContext)
+      ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE).actionPerformed(event)
+      UIUtil.dispatchAllInvocationEvents()
+      return templateState.isFinished || templateState.currentVariableRange != previousRange
+    }
+
+    fun renameTemplate(templateState: TemplateState?, name: String) {
+      if (templateState == null) return
+      WriteCommandAction.runWriteCommandAction(templateState.project) {
+        val range = templateState.currentVariableRange!!
+        templateState.editor.document.replaceString(range.startOffset, range.endOffset, name)
+        templateState.update()
+      }
+    }
+  }
 
   private val BASE_PATH: @NonNls String = "/refactoring/extractMethodAndDuplicatesInplace"
 
@@ -40,18 +66,26 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testInvalidRename(){
-    doTest(changedName = "invalid! name", checkResults = false)
+    doTest {
+      renameTemplate("invalid! name")
+      nextTemplateVariable()
+    }
     require(getActiveTemplate() != null)
   }
 
   fun testConflictRename(){
-    doTest(changedName = "conflict", checkResults = false)
+    doTest {
+      renameTemplate("conflict")
+      nextTemplateVariable()
+    }
     require(getActiveTemplate() != null)
   }
 
   fun testValidRename(){
-    doTest(changedName = "valid")
-    require(getActiveTemplate() == null)
+    doTest {
+      renameTemplate("valid")
+      nextTemplateVariable()
+    }
   }
 
   fun testGeneratedDefault(){
@@ -59,11 +93,17 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testRenamedExactDuplicate(){
-    doTest(changedName = "renamed")
+    doTest {
+      renameTemplate("renamed")
+      nextTemplateVariable()
+    }
   }
 
   fun testRenamedParametrizedDuplicate(){
-    doTest(changedName = "averageWithOffset")
+    doTest {
+      renameTemplate("averageWithOffset")
+      nextTemplateVariable()
+    }
   }
 
   fun testStaticMustBePlaced(){
@@ -77,7 +117,10 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testThreeDuplicates(){
-    doTest(changedName = "sayHello")
+    doTest {
+      renameTemplate("sayHello")
+      nextTemplateVariable()
+    }
   }
 
   fun testParameterGrouping(){
@@ -199,27 +242,24 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testDuplicatedWithDeclinedChangeSignature(){
-    val default = DuplicatesMethodExtractor.changeSignatureDefault
-    try {
+    runAndRevertSettings {
       DuplicatesMethodExtractor.changeSignatureDefault = false
       doTest()
-    } finally {
-      DuplicatesMethodExtractor.changeSignatureDefault = default
     }
   }
 
   fun testDuplicatedButDeclined(){
-    val default = DuplicatesMethodExtractor.replaceDuplicatesDefault
-    try {
+    runAndRevertSettings {
       DuplicatesMethodExtractor.replaceDuplicatesDefault = false
       doTest()
-    } finally {
-      DuplicatesMethodExtractor.replaceDuplicatesDefault = default
     }
   }
 
   fun testTemplateRenamesInsertedCallOnly(){
-    doTest(changedName = "renamed")
+    doTest {
+      renameTemplate("renamed")
+      nextTemplateVariable()
+    }
   }
 
   fun testSignatureChangeIsNotAvoided() {
@@ -242,13 +282,118 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testMakeStaticWithThis(){
+    runAndRevertSettings {
+      JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+      doTest()
+    }
+  }
+
+  fun testMakeStaticWithQualifiedThis(){
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+    doTest()
+  }
+
+  fun testMakeStaticWithStaticMembers(){
+    runAndRevertSettings {
+      JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+      doTest()
+    }
+  }
+
+  fun testMakeStaticWithLocalMethod(){
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+    doTest()
+  }
+
   fun testFoldedParametersInExactDuplicates(){
-    val default = DuplicatesMethodExtractor.changeSignatureDefault
-    try {
+    runAndRevertSettings {
       DuplicatesMethodExtractor.changeSignatureDefault = false
       doTest()
-    } finally {
-      DuplicatesMethodExtractor.changeSignatureDefault = default
+    }
+  }
+
+  fun testIntroduceSimpleObject(){
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_8) {
+      doTest()
+    }
+  }
+
+  fun testIntroduceSimpleRecord(){
+      doTest()
+  }
+
+  fun testIntroduceNullableObject(){
+    doTest()
+  }
+
+  fun testIntroduceObjectWithAssignments(){
+    doTest()
+  }
+
+  fun testIntroduceObjectWithTypeParameters(){
+    doTest()
+  }
+
+  fun testIntroduceObjectWithRename(){
+    doTest {
+      renameTemplate("MyResult")
+      nextTemplateVariable()
+      renameTemplate("myVariable")
+      nextTemplateVariable()
+      nextTemplateVariable()
+    }
+  }
+
+  fun testIntroduceObjectWithWrongClassname1(){
+    doTest {
+      renameTemplate("Wrong !")
+      nextTemplateVariable()
+      nextTemplateVariable()
+      nextTemplateVariable()
+    }
+    require(getActiveTemplate() != null)
+  }
+
+  fun testIntroduceObjectWithWrongClassname2(){
+    doTest {
+      renameTemplate("Conflict")
+      nextTemplateVariable()
+      nextTemplateVariable()
+      nextTemplateVariable()
+    }
+    require(getActiveTemplate() != null)
+  }
+
+  fun testIntroduceObjectWithWrongVariableName1(){
+    doTest {
+      nextTemplateVariable()
+      renameTemplate("wrong !")
+      nextTemplateVariable()
+      nextTemplateVariable()
+    }
+    require(getActiveTemplate() != null)
+  }
+
+  fun testIntroduceObjectWithWrongVariableName2(){
+    doTest {
+      nextTemplateVariable()
+      renameTemplate("conflict")
+      nextTemplateVariable()
+      nextTemplateVariable()
+    }
+    require(getActiveTemplate() != null)
+  }
+
+  fun testIntroduceObjectFailedWithAssignment1(){
+    assertThrows(RefactoringErrorHintException::class.java) {
+      doTest()
+    }
+  }
+
+  fun testIntroduceObjectFailedWithAssignment2(){
+    assertThrows(RefactoringErrorHintException::class.java) {
+      doTest()
     }
   }
 
@@ -269,30 +414,51 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
         override fun conflictsDetected(refactoringId: String, conflictsData: RefactoringEventData) = Unit
         override fun undoRefactoring(refactoringId: String) = Unit
       })
-      val template = startRefactoring(editor)
+      startRefactoring(editor)
       require(startReceived)
-      finishTemplate(template)
+      nextTemplateVariable()
       require(doneReceived)
     }
   }
 
-  private fun doTest(checkResults: Boolean = true, changedName: String? = null){
+  private fun doTest(runnable: (TemplateState) -> Unit = { finishTemplate() }){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")
       val template = startRefactoring(editor)
-      if (changedName != null) {
-        renameTemplate(template, changedName)
-      }
-      finishTemplate(template)
-      if (checkResults) {
+      runnable.invoke(template)
+      if (getActiveTemplate() == null) {
         checkResultByFile("$BASE_PATH/${getTestName(false)}_after.java")
       }
+    }
+  }
+
+  private fun finishTemplate(){
+    do {
+      val isVariableSwitched = nextTemplateVariable()
+    } while (isVariableSwitched)
+  }
+
+  private inline fun runAndRevertSettings(action: () -> Unit) {
+    val settings = JavaRefactoringSettings.getInstance()
+    val defaultStatic = settings.EXTRACT_STATIC_METHOD
+    val defaultPassFields = settings.EXTRACT_STATIC_METHOD_AND_PASS_FIELDS
+    val defaultChangeSignature = DuplicatesMethodExtractor.changeSignatureDefault
+    val defaultReplaceDuplicates = DuplicatesMethodExtractor.replaceDuplicatesDefault
+    try {
+      action.invoke()
+    }
+    finally {
+      settings.EXTRACT_STATIC_METHOD = defaultStatic
+      settings.EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = defaultPassFields
+      DuplicatesMethodExtractor.changeSignatureDefault = defaultChangeSignature
+      DuplicatesMethodExtractor.replaceDuplicatesDefault = defaultReplaceDuplicates
     }
   }
 
   private fun startRefactoring(editor: Editor): TemplateState {
     val selection = with(editor.selectionModel) { TextRange(selectionStart, selectionEnd) }
     MethodExtractor().doExtract(file, selection)
+    UIUtil.dispatchAllInvocationEvents()
     val templateState = getActiveTemplate()
     require(templateState != null) { "Failed to start refactoring" }
     return templateState
@@ -300,20 +466,9 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
 
   private fun getActiveTemplate() = TemplateManagerImpl.getTemplateState(editor)
 
-  private fun finishTemplate(templateState: TemplateState){
-    try {
-      templateState.gotoEnd(false)
-      UIUtil.dispatchAllInvocationEvents()
-    } catch (ignore: RefactoringErrorHintException) {
-    }
-  }
+  private fun nextTemplateVariable(): Boolean = nextTemplateVariable(getActiveTemplate())
 
-  private fun renameTemplate(templateState: TemplateState, name: String) {
-    WriteCommandAction.runWriteCommandAction(project) {
-      val range = templateState.currentVariableRange!!
-      editor.document.replaceString(range.startOffset, range.endOffset, name)
-    }
-  }
+  private fun renameTemplate(name: String)  = renameTemplate(getActiveTemplate(), name)
 
   private inline fun templateTest(test: () -> Unit) {
     val disposable = Disposer.newDisposable()

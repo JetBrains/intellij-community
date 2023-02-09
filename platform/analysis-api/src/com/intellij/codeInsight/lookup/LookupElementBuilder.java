@@ -108,15 +108,6 @@ public final class LookupElementBuilder extends LookupElement {
     return result;
   }
 
-  /**
-   * @deprecated use {@link #withInsertHandler(InsertHandler)}
-   */
-  @Deprecated(forRemoval = true)
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setInsertHandler(@Nullable InsertHandler<LookupElement> insertHandler) {
-    return withInsertHandler(insertHandler);
-  }
-
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withInsertHandler(@Nullable InsertHandler<LookupElement> insertHandler) {
     return cloneWithUserData(myLookupString, myObject, insertHandler, myRenderer, myExpensiveRenderer, myHardcodedPresentation,
@@ -226,14 +217,6 @@ public final class LookupElementBuilder extends LookupElement {
                              myPsiElement, myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @deprecated use {@link #withTypeText(String)}
-   */
-  @Deprecated(forRemoval = true)
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setTypeText(@Nullable String typeText) {
-    return withTypeText(typeText);
-  }
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withTypeText(@Nullable String typeText) {
     return withTypeText(typeText, false);
@@ -260,14 +243,6 @@ public final class LookupElementBuilder extends LookupElement {
                              myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @deprecated use {@link #withPresentableText(String)}
-   */
-  @Deprecated(forRemoval = true)
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setPresentableText(@NotNull String presentableText) {
-    return withPresentableText(presentableText);
-  }
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withPresentableText(@NotNull String presentableText) {
     final LookupElementPresentation presentation = copyPresentation();
@@ -302,14 +277,6 @@ public final class LookupElementBuilder extends LookupElement {
                              myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @deprecated use {@link #withTailText(String)}
-   */
-  @Deprecated(forRemoval = true)
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setTailText(@Nullable String tailText) {
-    return withTailText(tailText);
-  }
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withTailText(@Nullable String tailText) {
     return withTailText(tailText, false);

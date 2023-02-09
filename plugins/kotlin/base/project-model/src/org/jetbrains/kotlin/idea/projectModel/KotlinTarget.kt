@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.projectModel
 
+import org.jetbrains.kotlin.tooling.core.HasMutableExtras
 import java.io.Serializable
 
-interface KotlinTarget : Serializable {
+interface KotlinTarget : Serializable, HasMutableExtras {
     val name: String
     val presetName: String?
     val disambiguationClassifier: String?

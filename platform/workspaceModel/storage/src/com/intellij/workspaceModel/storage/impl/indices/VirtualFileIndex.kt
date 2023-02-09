@@ -19,11 +19,14 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.*
+import it.unimi.dsi.fastutil.objects.Object2LongMap
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.annotations.TestOnly
 
 /**
- * EntityId2Vfu may contains these possible variants, due to memory optimization:
+ * EntityId2Vfu may contain these possible variants, due to memory optimization:
  * 1) Object2ObjectOpenHashMap<EntityId, Pair<String, VirtualFileUrl>>
  * 2) Object2ObjectOpenHashMap<EntityId, Pair<String, ObjectOpenHashSet<VirtualFileUrl>>>
  * 3) Object2ObjectOpenHashMap<EntityId, Object2ObjectOpenHashMap<String, VirtualFileUrl>>
@@ -50,7 +53,7 @@ open class VirtualFileIndex internal constructor(
     val result = mutableSetOf<VirtualFileUrl>()
     entityId2VirtualFileUrl[id]?.also { value ->
       when (value) {
-        is Object2ObjectOpenHashMap<*, *> -> value.values.forEach { vfu -> result.addAll(getVirtualFileUrl(vfu)) }
+        is Map<*, *> -> value.values.forEach { vfu -> result.addAll(getVirtualFileUrl(vfu!!)) }
         is Pair<*, *> -> result.addAll(getVirtualFileUrl(value.second!!))
       }
     }
@@ -66,7 +69,7 @@ open class VirtualFileIndex internal constructor(
 
   private fun addVirtualFileUrlsToMap(result: HashMap<String, MutableSet<VirtualFileUrl>>, value: Any) {
     when (value) {
-      is Object2ObjectOpenHashMap<*, *> -> value.forEach { result[it.key as String] = getVirtualFileUrl(it.value) }
+      is Map<*, *> -> value.forEach { result[it.key as String] = getVirtualFileUrl(it.value!!) }
       is Pair<*, *> -> result[value.first as String] = getVirtualFileUrl(value.second!!)
     }
   }
@@ -111,7 +114,7 @@ open class VirtualFileIndex internal constructor(
       }
 
       when (property2Vfu) {
-        is Object2ObjectOpenHashMap<*, *> -> property2Vfu.forEach { (property, vfus) -> assertProperty2Vfu(property as String, vfus) }
+        is Map<*, *> -> property2Vfu.forEach { (property, vfus) -> assertProperty2Vfu(property as String, vfus!!) }
         is Pair<*, *> -> assertProperty2Vfu(property2Vfu.first as String, property2Vfu.second!!)
       }
     }
@@ -140,7 +143,7 @@ open class VirtualFileIndex internal constructor(
     }
 
     @Synchronized
-    internal fun index(id: EntityId, propertyName: String, virtualFileUrls: Set<VirtualFileUrl>) {
+    internal fun index(id: EntityId, propertyName: String, virtualFileUrls: Collection<VirtualFileUrl>) {
       startWrite()
       val newVirtualFileUrls = HashSet(virtualFileUrls)
       fun cleanExistingVfu(existingVfu: Any): Boolean {
@@ -169,7 +172,7 @@ open class VirtualFileIndex internal constructor(
       val property2Vfu = entityId2VirtualFileUrl[id]
       if (property2Vfu != null) {
         when (property2Vfu) {
-          is Object2ObjectOpenHashMap<*, *> -> {
+          is MutableMap<*, *> -> {
             val existingVfu = property2Vfu[propertyName]
             if (existingVfu != null && cleanExistingVfu(existingVfu)) {
               property2Vfu.remove(propertyName)
@@ -212,8 +215,8 @@ open class VirtualFileIndex internal constructor(
       entityId2JarDir.removeKey(id)
       val removedValue = entityId2VirtualFileUrl.remove(id) ?: return
       when (removedValue) {
-        is Object2ObjectOpenHashMap<*, *> -> removedValue.forEach { (property, vfu) ->
-          removeFromVfu2EntityIdMap(id, property as String, vfu)
+        is MutableMap<*, *> -> removedValue.forEach { (property, vfu) ->
+          removeFromVfu2EntityIdMap(id, property as String, vfu!!)
         }
         is Pair<*, *> -> removeFromVfu2EntityIdMap(id, removedValue.first as String, removedValue.second!!)
       }
@@ -266,8 +269,8 @@ open class VirtualFileIndex internal constructor(
 
       if (property2Vfu != null) {
         val newProperty2Vfu = when (property2Vfu) {
-          is Object2ObjectOpenHashMap<*, *> -> {
-            property2Vfu as Object2ObjectOpenHashMap<String, Any>
+          is MutableMap<*, *> -> {
+            property2Vfu as MutableMap<String, Any>
             val vfu = property2Vfu[propertyName]
             if (vfu == null) {
               property2Vfu[propertyName] = virtualFileUrl
@@ -305,8 +308,8 @@ open class VirtualFileIndex internal constructor(
     private fun removeByPropertyFromIndexes(id: EntityId, propertyName: String) {
       val property2vfu = entityId2VirtualFileUrl[id] ?: return
       when (property2vfu) {
-        is Object2ObjectOpenHashMap<*, *> -> {
-          property2vfu as Object2ObjectOpenHashMap<String, Any>
+        is MutableMap<*, *> -> {
+          property2vfu as MutableMap<String, Any>
           val vfu = property2vfu.remove(propertyName) ?: return
           if (property2vfu.isEmpty()) entityId2VirtualFileUrl.remove(id)
           removeFromVfu2EntityIdMap(id, propertyName, vfu)

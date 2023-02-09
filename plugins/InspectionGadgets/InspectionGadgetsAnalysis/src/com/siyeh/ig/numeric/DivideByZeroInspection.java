@@ -52,11 +52,10 @@ public class DivideByZeroInspection extends BaseInspection {
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    if (infos.length > 0 && infos[0] instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binOp = (PsiBinaryExpression)infos[0];
+    if (infos.length > 0 && infos[0] instanceof PsiBinaryExpression binOp) {
       if (binOp.getOperationTokenType().equals(JavaTokenType.DIV) && isZero(binOp.getLOperand())) {
         PsiType type = binOp.getType();
-        if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
+        if (PsiTypes.doubleType().equals(type) || PsiTypes.floatType().equals(type)) {
           return new ReplaceWithNaNFix();
         }
       }
@@ -104,7 +103,7 @@ public class DivideByZeroInspection extends BaseInspection {
   }
 
   private static boolean isZero(PsiExpression expression) {
-    final Object value = ConstantExpressionUtil.computeCastTo(expression, PsiType.DOUBLE);
+    final Object value = ConstantExpressionUtil.computeCastTo(expression, PsiTypes.doubleType());
     if (value instanceof Double) {
       final double constantValue = ((Double)value).doubleValue();
       return constantValue == 0.0;

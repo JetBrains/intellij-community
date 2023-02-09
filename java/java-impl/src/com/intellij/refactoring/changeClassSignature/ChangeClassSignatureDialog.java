@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author dsl
  * @author Konstantin Bulenkov
  */
 public class ChangeClassSignatureDialog extends RefactoringDialog {

@@ -16,10 +16,10 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -28,15 +28,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.ui.ExternalizableStringSet;
-import com.siyeh.ig.ui.UiUtils;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Contract;
@@ -44,12 +41,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.siyeh.ig.psiutils.ClassUtils.isImmutable;
 
 public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
@@ -81,44 +77,25 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
     Set.of("add", "clear", "insert", "load", "merge", "offer", "poll", "pop", "push", "put", "remove", "replace", "retain", "sort", "set",
            "take");
   @SuppressWarnings("PublicField")
-  public final ExternalizableStringSet queryNames = new ExternalizableStringSet(defaultQueryNames.toArray(String[]::new));
+  public final ExternalizableStringSet queryNames = new ExternalizableStringSet(defaultQueryNames.stream().sorted()
+                                                                                    .toArray(String[]::new));
   @SuppressWarnings("PublicField")
-  public final ExternalizableStringSet updateNames = new ExternalizableStringSet(defaultUpdateNames.toArray(String[]::new));
+  public final ExternalizableStringSet updateNames = new ExternalizableStringSet(defaultUpdateNames.stream().sorted()
+                                                                                     .toArray(String[]::new));
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet ignoredClasses = new ExternalizableStringSet();
 
   @Override
-  public JComponent createOptionsPanel() {
-    final ListTable queryNamesTable = new ListTable(new ListWrappingTableModel(queryNames, InspectionGadgetsBundle.message("query.column.name")));
-    final JPanel queryNamesPanel = UiUtils.createAddRemovePanel(
-      queryNamesTable,
-      InspectionGadgetsBundle.message("query.label"),
-      true);
-
-    final ListTable updateNamesTable = new ListTable(new ListWrappingTableModel(updateNames, InspectionGadgetsBundle.message("update.column.name")));
-    final JPanel updateNamesPanel = UiUtils.createAddRemovePanel(
-      updateNamesTable,
-      InspectionGadgetsBundle.message("update.label"),
-      true);
-
-    String ignoreClassesMessage = InspectionGadgetsBundle.message("ignored.class.names");
-    final ListTable ignoredClassesTable = new ListTable(new ListWrappingTableModel(ignoredClasses, ignoreClassesMessage));
-    final JPanel ignoredClassesPanel =
-      UiUtils.createAddRemoveTreeClassChooserPanel(
-        ignoreClassesMessage,
-        InspectionGadgetsBundle.message("ignored.class.label"),
-        ignoredClassesTable,
-        true,
-        CommonClassNames.JAVA_UTIL_COLLECTION, CommonClassNames.JAVA_UTIL_MAP);
-
-    final JPanel namesPanel = new JPanel(new GridLayout(1, 2, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
-    namesPanel.add(queryNamesPanel);
-    namesPanel.add(updateNamesPanel);
-
-    final JPanel panel = new JPanel(new GridLayout(2, 1, UIUtil.DEFAULT_HGAP, JBUI.scale(8)));
-    panel.add(namesPanel);
-    panel.add(ignoredClassesPanel);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      horizontalStack(
+        stringList("queryNames", InspectionGadgetsBundle.message("query.label")),
+        stringList("updateNames", InspectionGadgetsBundle.message("update.label"))
+      ),
+      stringList("ignoredClasses", InspectionGadgetsBundle.message("ignored.class.label"),
+                 new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("ignored.class.names"))
+                  .withSuperClass(CommonClassNames.JAVA_UTIL_COLLECTION, CommonClassNames.JAVA_UTIL_MAP))
+    );
   }
 
   @Pattern(VALID_ID_PATTERN)
@@ -289,8 +266,8 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
       }
       final PsiMethod method = ObjectUtils.tryCast(expression.resolve(), PsiMethod.class);
       if (method != null &&
-          (!PsiType.VOID.equals(method.getReturnType()) &&
-           !PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(expression)) ||
+          (!PsiTypes.voidType().equals(method.getReturnType()) &&
+           !PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(expression)) ||
            ContainerUtil.or(method.getParameterList().getParameters(), p -> LambdaUtil.isFunctionalType(p.getType())))) {
         makeQueried();
       }
@@ -323,7 +300,7 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
       boolean queryQualifier = isQueryUpdateMethodName(name, myQueryNames);
       boolean updateQualifier = isQueryUpdateMethodName(name, myUpdateNames);
       if (queryQualifier &&
-          (!voidContext || PsiType.VOID.equals(call.getType()) || "toArray".equals(name) && !call.getArgumentList().isEmpty())) {
+          (!voidContext || PsiTypes.voidType().equals(call.getType()) || "toArray".equals(name) && !call.getArgumentList().isEmpty())) {
         makeQueried();
       }
       if (updateQualifier) {
@@ -407,10 +384,9 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
   }
 
   private static boolean isEmptyCollectionInitializer(PsiExpression initializer) {
-    if (!(initializer instanceof PsiNewExpression)) {
+    if (!(initializer instanceof PsiNewExpression newExpression)) {
       return ConstructionUtils.isEmptyCollectionInitializer(initializer);
     }
-    final PsiNewExpression newExpression = (PsiNewExpression)initializer;
     final PsiExpressionList argumentList = newExpression.getArgumentList();
     if (argumentList == null) {
       return false;
@@ -545,8 +521,7 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
             .allMatch(MismatchedCollectionQueryUpdateInspection::isEmptyCollectionInitializer)) {
         return true;
       }
-      if (initializer instanceof PsiNewExpression) {
-        final PsiNewExpression newExpression = (PsiNewExpression)initializer;
+      if (initializer instanceof PsiNewExpression newExpression) {
         final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
         if (anonymousClass != null) {
           if (getCollectionQueryUpdateInfo(null, anonymousClass, queryNames, updateNames).updated) {

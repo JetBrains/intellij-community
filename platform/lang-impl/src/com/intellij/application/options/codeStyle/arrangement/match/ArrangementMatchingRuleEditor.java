@@ -30,8 +30,6 @@ import java.util.*;
  * Control for managing {@link ArrangementEntryMatcher matching rule conditions} for a single {@link ArrangementMatchRule}.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class ArrangementMatchingRuleEditor extends JPanel implements ArrangementUiComponent.Listener {
 

@@ -12,9 +12,6 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 
-/**
- * @author db
- */
 public final class Util {
   private Util() { }
 
@@ -100,7 +97,7 @@ public final class Util {
       final PsiType elementType = type instanceof PsiArrayType ? type.getDeepComponentType() : type;
 
       if (elementType instanceof PsiPrimitiveType) {
-        return !elementType.equals(PsiType.VOID);
+        return !elementType.equals(PsiTypes.voidType());
       }
 
       if (elementType instanceof PsiClassType) {

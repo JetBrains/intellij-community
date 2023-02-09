@@ -4,5 +4,6 @@
   "oldName": "iterator",
   "newName": "foo",
   "mainFile": "iterator.kt",
-  "hint": "Naming conventions will be violated after rename"
+  "hint": "Naming conventions will be violated after rename",
+  "enabledInK2": true
 }

@@ -16,7 +16,7 @@
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -26,14 +26,18 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class AutoBoxingInspection extends BaseInspection {
 
@@ -65,10 +69,9 @@ public class AutoBoxingInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("auto.boxing.ignore.added.to.collection.option"), this,
-                                          "ignoreAddedToCollection");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreAddedToCollection", InspectionGadgetsBundle.message("auto.boxing.ignore.added.to.collection.option")));
   }
 
   @Override
@@ -130,8 +133,7 @@ public class AutoBoxingInspection extends BaseInspection {
       newExpression = classToConstruct + ".valueOf(" + expressionText + ')';
     }
     final PsiElement parent = expression.getParent();
-    if (parent instanceof PsiTypeCastExpression) {
-      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
+    if (parent instanceof PsiTypeCastExpression typeCastExpression) {
       PsiReplacementUtil.replaceExpression(typeCastExpression, newExpression, commentTracker);
     } else {
       PsiReplacementUtil.replaceExpression(expression, newExpression, commentTracker);
@@ -139,53 +141,52 @@ public class AutoBoxingInspection extends BaseInspection {
   }
 
   private static boolean shortcutReplace(PsiExpression expression, String classToConstruct) {
-    if (!(expression instanceof PsiMethodCallExpression)) {
+    if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
     if (qualifierExpression == null) {
       return false;
     }
     if (classToConstruct.equals(CommonClassNames.JAVA_LANG_INTEGER)) {
-      if (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_INTEGER, PsiType.INT, "intValue")) {
+      if (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_INTEGER, PsiTypes.intType(), "intValue")) {
         expression.replace(qualifierExpression);
         return true;
       }
     }
     else if (classToConstruct.equals(CommonClassNames.JAVA_LANG_SHORT)) {
-      if (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_SHORT, PsiType.SHORT, "shortValue")) {
+      if (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_SHORT, PsiTypes.shortType(), "shortValue")) {
         expression.replace(qualifierExpression);
         return true;
       }
     }
     else if (classToConstruct.equals(CommonClassNames.JAVA_LANG_BYTE)) {
-      if (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_BYTE, PsiType.BYTE, "byteValue")) {
+      if (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_BYTE, PsiTypes.byteType(), "byteValue")) {
         expression.replace(qualifierExpression);
         return true;
       }
     }
     else if (classToConstruct.equals(CommonClassNames.JAVA_LANG_CHARACTER)) {
-      if (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_CHARACTER, PsiType.CHAR, "charValue")) {
+      if (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_CHARACTER, PsiTypes.charType(), "charValue")) {
         expression.replace(qualifierExpression);
         return true;
       }
     }
     else if (classToConstruct.equals(CommonClassNames.JAVA_LANG_LONG)) {
-      if (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_LONG, PsiType.LONG, "longValue")) {
+      if (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_LONG, PsiTypes.longType(), "longValue")) {
         expression.replace(qualifierExpression);
         return true;
       }
     }
     else if (classToConstruct.equals(CommonClassNames.JAVA_LANG_FLOAT)) {
-      if (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_FLOAT, PsiType.FLOAT, "floatValue")) {
+      if (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_FLOAT, PsiTypes.floatType(), "floatValue")) {
         expression.replace(qualifierExpression);
         return true;
       }
     }
     else if (classToConstruct.equals(CommonClassNames.JAVA_LANG_DOUBLE)) {
-      if (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_DOUBLE, PsiType.DOUBLE, "doubleValue")) {
+      if (MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_DOUBLE, PsiTypes.doubleType(), "doubleValue")) {
         expression.replace(qualifierExpression);
         return true;
       }
@@ -272,8 +273,7 @@ public class AutoBoxingInspection extends BaseInspection {
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
-      if (expression instanceof PsiMethodReferenceExpression) {
-        final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)expression;
+      if (expression instanceof PsiMethodReferenceExpression methodReferenceExpression) {
         if (methodReferenceExpression.isConstructor()) {
           return;
         }
@@ -282,12 +282,11 @@ public class AutoBoxingInspection extends BaseInspection {
           return;
         }
         final PsiElement target = methodReferenceExpression.resolve();
-        if (!(target instanceof PsiMethod)) {
+        if (!(target instanceof PsiMethod method)) {
           return;
         }
-        final PsiMethod method = (PsiMethod)target;
         final PsiType returnType = method.getReturnType();
-        if (returnType == null || returnType.equals(PsiType.VOID) || !TypeConversionUtil.isPrimitiveAndNotNull(returnType)) {
+        if (returnType == null || returnType.equals(PsiTypes.voidType()) || !TypeConversionUtil.isPrimitiveAndNotNull(returnType)) {
           return;
         }
         final PsiPrimitiveType primitiveType = (PsiPrimitiveType)returnType;
@@ -325,15 +324,13 @@ public class AutoBoxingInspection extends BaseInspection {
 
     private boolean isAddedToCollection(PsiExpression expression) {
       final PsiElement parent = expression.getParent();
-      if (!(parent instanceof PsiExpressionList)) {
+      if (!(parent instanceof PsiExpressionList expressionList)) {
         return false;
       }
-      final PsiExpressionList expressionList = (PsiExpressionList)parent;
       final PsiElement grandParent = expressionList.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"put".equals(methodName) && !"set".equals(methodName) && !"add".equals(methodName)) {

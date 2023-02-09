@@ -1,19 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiConstructorCall
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 interface KotlinFindUsagesSupport {
@@ -21,20 +21,18 @@ interface KotlinFindUsagesSupport {
     companion object {
         fun getInstance(project: Project): KotlinFindUsagesSupport = project.service()
 
-        val KtParameter.isDataClassComponentFunction: Boolean
-            get() = getInstance(project).isDataClassComponentFunction(this)
-
         fun processCompanionObjectInternalReferences(
             companionObject: KtObjectDeclaration,
             referenceProcessor: Processor<PsiReference>
         ): Boolean =
             getInstance(companionObject.project).processCompanionObjectInternalReferences(companionObject, referenceProcessor)
 
-        fun getTopMostOverriddenElementsToHighlight(target: PsiElement): List<PsiElement> =
-            getInstance(target.project).getTopMostOverriddenElementsToHighlight(target)
-
         fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? =
             getInstance(declaration.project).tryRenderDeclarationCompactStyle(declaration)
+
+        @NlsSafe
+        fun formatJavaOrLightMethod(method: PsiMethod): String =
+            getInstance(method.project).formatJavaOrLightMethod(method)
 
         fun PsiReference.isConstructorUsage(ktClassOrObject: KtClassOrObject): Boolean {
             fun isJavaConstructorUsage(): Boolean {
@@ -47,24 +45,17 @@ interface KotlinFindUsagesSupport {
 
         fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?) : List<PsiElement> =
             getInstance(declaration.project).getSuperMethods(declaration, ignore)
-
-        fun sourcesAndLibraries(delegate: GlobalSearchScope, project: Project): GlobalSearchScope =
-            getInstance(project).sourcesAndLibraries(delegate, project)
     }
 
     fun processCompanionObjectInternalReferences(companionObject: KtObjectDeclaration, referenceProcessor: Processor<PsiReference>): Boolean
 
-    fun isDataClassComponentFunction(element: KtParameter): Boolean
-
-    fun getTopMostOverriddenElementsToHighlight(target: PsiElement): List<PsiElement>
-
     fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String?
+
+    fun formatJavaOrLightMethod(method: PsiMethod): String
 
     fun isKotlinConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean
 
     fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?) : List<PsiElement>
-
-    fun sourcesAndLibraries(delegate: GlobalSearchScope, project: Project): GlobalSearchScope
 
     fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?, @Nls actionString: String): List<PsiElement>
 }

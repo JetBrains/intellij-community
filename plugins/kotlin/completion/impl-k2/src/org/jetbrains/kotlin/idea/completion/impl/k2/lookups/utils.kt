@@ -8,22 +8,26 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.refactoring.suggested.endOffset
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TypeTextProvider.getTypeText
+import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSuperExpression
 
 internal fun KtAnalysisSession.withSymbolInfo(
     symbol: KtSymbol,
-    elementBuilder: LookupElementBuilder
+    elementBuilder: LookupElementBuilder,
+    substitutor: KtSubstitutor = KtSubstitutor.Empty(token)
 ): LookupElementBuilder = elementBuilder
     .withPsiElement(symbol.psi) // TODO check if it is a heavy operation and should be postponed
     .withIcon(getIconFor(symbol))
+    .withTypeText(getTypeText(symbol, treatAsFunctionCall = elementBuilder.`object` is FunctionCallLookupObject, substitutor))
 
 
 // FIXME: This is a hack, we should think how we can get rid of it

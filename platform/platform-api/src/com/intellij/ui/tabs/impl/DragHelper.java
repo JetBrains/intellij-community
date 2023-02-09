@@ -300,9 +300,6 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
       myDragOutSource = myDragSource;
     }
 
-    myDragSource = null;
-    myDragRec = null;
-
     myTabs.resetTabsCache();
     if (!willDragOutStart) {
      myTabs.fireTabsMoved();
@@ -310,6 +307,9 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
     myTabs.relayout(true, false);
 
     myTabs.revalidate();
+
+    myDragSource = null;
+    myDragRec = null;
   }
 
   @Override

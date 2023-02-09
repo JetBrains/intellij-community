@@ -6,8 +6,8 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -157,13 +157,14 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       }
       // there's a chance to add a breakpoint when the class is prepared
     }
-    catch(Exception ex) {
+    catch (Exception ex) {
       LOG.info(ex);
     }
     updateUI();
   }
 
   private static final Pattern ourAnonymousPattern = Pattern.compile(".*\\$\\d*$");
+
   private static boolean isAnonymousClass(ReferenceType classType) {
     if (classType instanceof ClassType) {
       return ourAnonymousPattern.matcher(classType.name()).matches();
@@ -210,7 +211,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
         // apply filtering to breakpoints from content sources only, not for sources attached to libraries
         final Collection<VirtualFile> candidates = findClassCandidatesInSourceContent(className, debugProcess.getSearchScope(), fileIndex);
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Found "+ (candidates == null? "null" : candidates.size()) + " candidate containing files for class " + className);
+          LOG.debug("Found " + (candidates == null ? "null" : candidates.size()) + " candidate containing files for class " + className);
         }
         if (candidates == null) {
           // If no candidates are found in scope then assume that class is loaded dynamically and allow breakpoint
@@ -243,7 +244,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
                     "; contains=" + contains +
                     "; contentRoot=" + contentRoot +
                     "; module = " + module +
-                    "; all files in index are: " + files+
+                    "; all files in index are: " + files +
                     "; all possible files are: " + allFiles
           );
         }
@@ -257,11 +258,11 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   @Nullable
   private Collection<VirtualFile> findClassCandidatesInSourceContent(final String className, final GlobalSearchScope scope, final ProjectFileIndex fileIndex) {
     final int dollarIndex = className.indexOf("$");
-    final String topLevelClassName = dollarIndex >= 0? className.substring(0, dollarIndex) : className;
+    final String topLevelClassName = dollarIndex >= 0 ? className.substring(0, dollarIndex) : className;
     return ReadAction.compute(() -> {
       final PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(topLevelClassName, scope);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Found "+ classes.length + " classes " + topLevelClassName + " in scope "+scope);
+        LOG.debug("Found " + classes.length + " classes " + topLevelClassName + " in scope " + scope);
       }
       if (classes.length == 0) {
         return null;
@@ -308,13 +309,13 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   }
 
   private @NlsContexts.Label String getDisplayInfoInternal(boolean showPackageInfo, int totalTextLength) {
-    if(isValid()) {
+    if (isValid()) {
       final int lineNumber = getLineIndex() + 1;
       String className = getClassName();
       final boolean hasClassInfo = className != null && className.length() > 0;
       final String methodName = getMethodName();
-      final String displayName = methodName != null? methodName + "()" : null;
-      final boolean hasMethodInfo = displayName != null && displayName.length() > 0;
+      final String displayName = methodName != null ? methodName + "()" : null;
+      final boolean hasMethodInfo = displayName != null;
       if (hasClassInfo || hasMethodInfo) {
         final StringBuilder info = new StringBuilder();
         boolean isFile = getFileName().equals(className);
@@ -338,7 +339,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
           info.append(className);
         }
-        if(hasMethodInfo) {
+        if (hasMethodInfo) {
           if (isFile) {
             info.append(":");
           }
@@ -365,7 +366,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     if (file instanceof PsiClassOwner) {
       return ReadAction.compute(() -> {
         PsiMethod method = DebuggerUtilsEx.findPsiMethod(file, offset);
-        return method != null? method.getName() : null;
+        return method != null ? method.getName() : null;
       });
     }
     return null;
@@ -408,7 +409,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       return false;
     }
     final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
-    final LineBreakpoint breakpointAtLine = breakpointManager.findBreakpoint( document, document.getLineStartOffset(lineIndex), CATEGORY);
+    final LineBreakpoint breakpointAtLine = breakpointManager.findBreakpoint(document, document.getLineStartOffset(lineIndex), CATEGORY);
     if (breakpointAtLine != null) {
       // there already exists a line breakpoint at this line
       return false;
@@ -421,7 +422,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
         return true;
       }
       PsiElement child = element;
-      while(element != null) {
+      while (element != null) {
 
         final int offset = element.getTextOffset();
         if (offset >= 0) {
@@ -433,9 +434,9 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
         element = element.getParent();
       }
 
-      if(child instanceof PsiMethod && child.getTextRange().getEndOffset() >= document.getLineEndOffset(lineIndex)) {
+      if (child instanceof PsiMethod && child.getTextRange().getEndOffset() >= document.getLineEndOffset(lineIndex)) {
         PsiCodeBlock body = ((PsiMethod)child).getBody();
-        if(body == null) {
+        if (body == null) {
           canAdd[0] = false;
         }
         else {

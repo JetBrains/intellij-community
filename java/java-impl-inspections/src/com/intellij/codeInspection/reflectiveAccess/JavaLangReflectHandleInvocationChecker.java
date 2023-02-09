@@ -23,9 +23,6 @@ import java.util.function.Supplier;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-/**
- * @author Pavel.Dolgov
- */
 final class JavaLangReflectHandleInvocationChecker {
   private static final Logger LOG = Logger.getInstance(JavaLangReflectHandleInvocationChecker.class);
 
@@ -183,7 +180,7 @@ final class JavaLangReflectHandleInvocationChecker {
     } else {
       maybeVararg = false;
     }
-    PsiExpression[] expressions = actualArguments.expressions;
+    PsiExpression[] expressions = actualArguments.expressions();
     if (!maybeVararg || expressions.length < requiredArgumentCount - 1) {
       if (!checkArgumentCount(expressions, requiredArgumentCount, argumentOffset, argumentList, holder)) return false;
     }
@@ -224,7 +221,7 @@ final class JavaLangReflectHandleInvocationChecker {
     }
     else if (requiredType.isPrimitive()) {
       final PsiExpression definition = findDefinition(argument);
-      if (definition != null && PsiType.NULL.equals(definition.getType())) {
+      if (definition != null && PsiTypes.nullType().equals(definition.getType())) {
         if (PsiTreeUtil.isAncestor(argumentList, argument, false)) {
           holder.registerProblem(argument,
                                  JavaBundle.message("inspection.reflect.handle.invocation.primitive.argument.null",

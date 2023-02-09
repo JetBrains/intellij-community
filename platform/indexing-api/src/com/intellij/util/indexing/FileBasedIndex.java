@@ -46,12 +46,9 @@ public abstract class FileBasedIndex {
 
   public static class IndexWritingFile {
     public final int fileId;
-    @Nullable
-    public final String filePath;
 
-    public IndexWritingFile(int id, @Nullable String path) {
+    public IndexWritingFile(int id) {
       fileId = id;
-      filePath = path;
     }
   }
 
@@ -359,10 +356,6 @@ public abstract class FileBasedIndex {
   public interface FileTypeSpecificInputFilter extends InputFilter {
     void registerFileTypesUsedForIndexing(@NotNull Consumer<? super FileType> fileTypeSink);
   }
-
-  /** @deprecated inline true */
-  @Deprecated(forRemoval = true)
-  public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping = true;
 
   @ApiStatus.Internal
   public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);

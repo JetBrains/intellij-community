@@ -59,6 +59,7 @@ public abstract class GitReference implements Comparable<GitReference> {
 
   @Override
   public int compareTo(GitReference o) {
+    // NB: update overridden comparators on modifications
     return o == null ? 1 : StringUtil.compare(getFullName(), o.getFullName(), SystemInfo.isFileSystemCaseSensitive);
   }
 }

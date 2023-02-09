@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.NonHideableIconGutterMark;
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.hint.TooltipController;
@@ -16,6 +17,9 @@ import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorPreciseContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -134,7 +138,8 @@ import java.util.concurrent.atomic.AtomicReference;
  *</ul>
  */
 @DirtyUI
-final class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider, Accessible {
+final class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider,
+                                                                                 Accessible, UiInspectorPreciseContextProvider {
   public static final String DISTRACTION_FREE_MARGIN = "editor.distraction.free.margin";
   private static final Logger LOG = Logger.getInstance(EditorGutterComponentImpl.class);
 
@@ -387,7 +392,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
 
     // paint all backgrounds
-    int gutterSeparatorX = getWhitespaceSeparatorOffset();
+    int gutterSeparatorX = ExperimentalUI.isNewUI() ? (int)getExpUIVerticalLineX() : getWhitespaceSeparatorOffset();
     Color caretRowColor = getCaretRowColor();
     paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor, caretRowColor);
     paintBackground(g, clip, gutterSeparatorX, getFoldingAreaWidth(), myEditor.getBackgroundColor(), caretRowColor);
@@ -697,10 +702,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (myEditor.isInDistractionFreeMode() || !myPaintBackground) {
       return myEditor.getBackgroundColor();
     }
-    Color color = myEditor.getColorsScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+
     if (ExperimentalUI.isNewUI()) {
-      color = myEditor.getBackgroundColor();
+      Color bg = myEditor.getColorsScheme().getColor(EditorColors.EDITOR_GUTTER_BACKGROUND);
+      return bg == null ? myEditor.getBackgroundColor() : bg;
     }
+
+    Color color = myEditor.getColorsScheme().getColor(EditorColors.GUTTER_BACKGROUND);
     return color != null ? color : EditorColors.GUTTER_BACKGROUND.getDefaultColor();
   }
 
@@ -1578,12 +1586,14 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     double[] dyPoints = {y + baseHeight, y, y, y + baseHeight, y + height + (height < 0 ? 1 : 0)};
 
     if (ExperimentalUI.isNewUI()) {
-      if (height > 0) {
-        myAlphaContext.paintWithComposite(g, () -> {
-          Icon icon = scaleIcon(ExperimentalUI.Icons.Gutter.Fold);
-          icon.paintIcon(this, g, getFoldingAreaOffset(), getFoldingIconY(visualLine, icon));
-        });
+      if (height <= 0 && !EditorSettingsExternalizable.getInstance().isFoldingEndingsShown()) {
+        //do not paint folding endings in new UI by default
+        return;
       }
+      myAlphaContext.paintWithComposite(g, () -> {
+        Icon icon = scaleIcon(height > 0 ? ExperimentalUI.Icons.Gutter.Fold : ExperimentalUI.Icons.Gutter.FoldBottom);
+        icon.paintIcon(this, g, getFoldingAreaOffset(), getFoldingIconY(visualLine, icon));
+      });
       return;
     }
 
@@ -2156,7 +2166,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       repaint();
     }
     else {
-      ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
+      ActiveGutterRenderer lineRenderer = e.isConsumed() ? null : getActiveRendererByMouseEvent(e);
       if (lineRenderer != null) {
         lineRenderer.doAction(myEditor, e);
       }
@@ -2230,7 +2240,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (findFoldingAnchorAt(e.getX(), e.getY()) != null) {
       return null;
     }
-    if (e.isConsumed() || e.getX() > getWhitespaceSeparatorOffset()) {
+    if (e.getX() > getWhitespaceSeparatorOffset()) {
       return null;
     }
     final ActiveGutterRenderer[] gutterRenderer = {null};
@@ -2704,8 +2714,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private static final HoverStateListener HOVER_STATE_LISTENER = new HoverStateListener() {
     @Override
     protected void hoverChanged(@NotNull Component component, boolean hovered) {
-      if (component instanceof EditorGutterComponentImpl && ExperimentalUI.isNewUI()) {
-        EditorGutterComponentImpl gutter = (EditorGutterComponentImpl)component;
+      if (component instanceof EditorGutterComponentImpl gutter && ExperimentalUI.isNewUI()) {
         gutter.myAlphaContext.setVisible(hovered);
       }
     }
@@ -2728,5 +2737,36 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Override
   public int getHoveredFreeMarkersLine() {
     return myHoveredFreeMarkersLine;
+  }
+
+  @Override
+  public @Nullable UiInspectorInfo getUiInspectorContext(@NotNull MouseEvent event) {
+    Point point = event.getPoint();
+    PointInfo pointInfo = getPointInfo(point);
+    if (pointInfo != null) {
+      List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Clicked Renderer", pointInfo.renderer));
+      result.add(new PropertyBean("Clicked Renderer Class", UiInspectorUtil.getClassPresentation(pointInfo.renderer)));
+      result.add(new PropertyBean("Accessible Name", pointInfo.renderer.getAccessibleName()));
+      result.add(new PropertyBean("Icon", pointInfo.renderer.getIcon()));
+      if (pointInfo.renderer instanceof LineMarkerInfo.LineMarkerGutterIconRenderer<?> lineMarkerRenderer) {
+        LineMarkerInfo<?> markerInfo = lineMarkerRenderer.getLineMarkerInfo();
+        result.add(new PropertyBean("Marker Info - Element", markerInfo.getElement()));
+        if (markerInfo.getNavigationHandler() != null) {
+          result.add(new PropertyBean("Marker Info - Navigation Handler", markerInfo.getNavigationHandler()));
+        }
+      }
+      return new UiInspectorInfo("GutterIconRenderer", result, null);
+    }
+
+    ActiveGutterRenderer gutterRenderer = getActiveRendererByMouseEvent(event);
+    if (gutterRenderer != null) {
+      List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Clicked Renderer", gutterRenderer));
+      result.add(new PropertyBean("Clicked Renderer Class", UiInspectorUtil.getClassPresentation(gutterRenderer)));
+      return new UiInspectorInfo("ActiveGutterRenderer", result, null);
+    }
+
+    return null;
   }
 }

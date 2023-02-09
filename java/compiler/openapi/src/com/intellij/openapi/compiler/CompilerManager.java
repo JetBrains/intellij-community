@@ -71,17 +71,8 @@ public abstract class CompilerManager {
    * @param type the type for which the Compile action is enabled.
    * @deprecated use {@link CompilableFileTypesProvider} extension point to register compilable file types
    */
-  @Deprecated
-  public abstract void addCompilableFileType(@NotNull FileType type);
-
-  /**
-   * Unregisters the type as a compilable type so that Compile action will be disabled on files of this type.
-   *
-   * @param type the type for which the Compile action is disabled.
-   * @deprecated use {@link CompilableFileTypesProvider} extension point to register compilable file types
-   */
   @Deprecated(forRemoval = true)
-  public abstract void removeCompilableFileType(@NotNull FileType type);
+  public abstract void addCompilableFileType(@NotNull FileType type);
 
   /**
    * Checks if files of the specified type can be compiled by one of registered compilers.

@@ -25,7 +25,7 @@ class Test {
     };
   }
 
-  String nestedTotalPattern(Integer i) {
+  String nestedUnconditionalPattern(Integer i) {
     return switch (i) {
       case Integer ii -> {
         switch (i) {

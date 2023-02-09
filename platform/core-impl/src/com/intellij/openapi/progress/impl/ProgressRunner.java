@@ -289,7 +289,7 @@ public final class ProgressRunner<R> {
   // must be handled by very synchronous direct call (alt: use proper progress indicator, i.e. PotemkinProgress or ProgressWindow).
   // Note: running sync task on pooled thread from EDT can lead to deadlock if pooled thread will try to invokeAndWait.
   private boolean checkIfForceDirectExecNeeded() {
-    if (isSync && EDT.isCurrentThreadEdt() && !ApplicationManager.getApplication().isWriteThread()) {
+    if (isSync && EDT.isCurrentThreadEdt() && !ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
       throw new IllegalStateException("Running sync tasks on pure EDT (w/o IW lock) is dangerous for several reasons.");
     }
     if (!isSync && isModal && EDT.isCurrentThreadEdt()) {
@@ -371,7 +371,7 @@ public final class ProgressRunner<R> {
       };
       // If a progress indicator has not been calculated yet, grabbing IW lock might lead to deadlock, as progress might need it for init
       progressFuture = progressFuture.thenApplyAsync(modalityRunnable, r -> {
-        if (ApplicationManager.getApplication().isWriteThread()) {
+        if (ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
           r.run();
         }
         else {
@@ -386,7 +386,7 @@ public final class ProgressRunner<R> {
       CompletableFuture<Void> modalityExitFuture = resultFuture
         .handle((r, throwable) -> r) // ignore result computation exception
         .thenAcceptBoth(progressFuture, (r, progressIndicator) -> {
-          if (ApplicationManager.getApplication().isWriteThread()) {
+          if (ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
             LaterInvocator.leaveModal(progressIndicator);
           }
           else {
@@ -406,7 +406,7 @@ public final class ProgressRunner<R> {
   }
 
   private static void waitForFutureUnlockingThread(@NotNull CompletableFuture<?> resultFuture) {
-    if (ApplicationManager.getApplication().isWriteThread()) {
+    if (ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
       pollLaterInvocatorActively(resultFuture, LaterInvocator::pollWriteThreadEventsOnce);
       return;
     }

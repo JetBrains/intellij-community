@@ -7,9 +7,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.UserDataHolder
 import com.jetbrains.python.sdk.add.PyAddSdkProvider
 
-/**
- * @author vlan
- */
 
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>

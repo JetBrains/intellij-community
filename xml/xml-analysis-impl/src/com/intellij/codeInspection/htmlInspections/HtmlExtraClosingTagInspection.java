@@ -14,9 +14,6 @@ import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
 public class HtmlExtraClosingTagInspection extends HtmlLocalInspectionTool {
 
   @Override

@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Function;
 
-/**
- * @author Danila Ponomarenko
- */
 public final class SdkSetupNotificationProvider implements EditorNotificationProvider, DumbAware {
   @Override
   public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,

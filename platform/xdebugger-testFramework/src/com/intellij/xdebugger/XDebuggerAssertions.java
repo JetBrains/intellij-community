@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.concurrency.FutureResult;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
@@ -344,7 +345,6 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
   }
 
   public static void assertVariables(@NotNull List<? extends XValue> vars, String... names) {
-    List<String> expectedNames = new ArrayList<>(Arrays.asList(names));
 
     List<String> actualNames = new ArrayList<>();
     for (XValue each : vars) {
@@ -352,7 +352,7 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
     }
 
     Collections.sort(actualNames);
-    Collections.sort(expectedNames);
+    List<String> expectedNames = ContainerUtil.sorted(Arrays.asList(names));
     UsefulTestCase.assertOrderedEquals(actualNames, expectedNames);
   }
 

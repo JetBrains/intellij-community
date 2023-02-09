@@ -1,13 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import kotlin.system.measureTimeMillis
@@ -19,8 +22,15 @@ import kotlin.system.measureTimeMillis
  * of workspace model with project model files (iml/xml).
  */
 @VisibleForTesting
-class DelayedProjectSynchronizer : ProjectPostStartupActivity {
+class DelayedProjectSynchronizer : ProjectActivity {
   override suspend fun execute(project: Project) {
+    // TODO:: Introduce the process of delayed sync even if project was not opened
+    if (GlobalLibraryTableBridge.isEnabled()) {
+      val modelSynchronizer = JpsGlobalModelSynchronizer.getInstance()
+      writeAction {
+        modelSynchronizer.delayLoadGlobalWorkspaceModel()
+      }
+    }
     doSync(project)
   }
 

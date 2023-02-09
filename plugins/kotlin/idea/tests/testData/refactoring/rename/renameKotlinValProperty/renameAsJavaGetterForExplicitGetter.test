@@ -2,5 +2,6 @@
   "type": "JAVA_METHOD",
   "classId": "testing/rename/BP",
   "methodSignature": "int getFirst()",
-  "newName": "second"
+  "newName": "second",
+  "enabledInK2": true
 }

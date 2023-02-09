@@ -9,6 +9,7 @@ import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinTargetJarReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinTargetReflection
+import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinExtras
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
@@ -47,6 +48,9 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
         }.orEmpty()
 
         val testRunTasks = buildTestRunTasks(importingContext.project, origin.gradleTarget)
+
+        val serializedExtras = importingContext.importReflection?.resolveExtrasSerialized(origin.gradleTarget)
+
         val target = KotlinTargetImpl(
             name,
             targetPresetName,
@@ -56,7 +60,8 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
             testRunTasks,
             nativeMainRunTasks,
             jar,
-            artifacts
+            artifacts,
+            IdeaKotlinExtras.from(serializedExtras)
         )
         compilations.forEach {
             it.disambiguationClassifier = target.disambiguationClassifier

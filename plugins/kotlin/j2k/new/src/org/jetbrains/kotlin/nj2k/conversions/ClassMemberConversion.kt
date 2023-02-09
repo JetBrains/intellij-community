@@ -28,19 +28,39 @@ class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveApplicab
     }
 
     private fun JKMethodImpl.convert() {
+        removeStaticModifierFromAnonymousClassMember()
+
         if (throwsList.isNotEmpty()) {
             annotationList.annotations +=
                 throwsAnnotation(throwsList.map { it.type.updateNullabilityRecursively(NotNull) }, symbolProvider)
         }
+
         if (isMainFunctionDeclaration()) {
-            annotationList.annotations += jvmAnnotation("JvmStatic", symbolProvider)
-            parameters.single().let {
-                it.type.type = JKJavaArrayType(typeFactory.types.string, NotNull)
-                it.isVarArgs = false
+            val parameter = parameters.single()
+            parameter.type.type = JKJavaArrayType(typeFactory.types.string, NotNull)
+            parameter.isVarArgs = false
+
+            if (isTopLevel()) {
+                if (!parameter.hasUsages(scope = this, context)) {
+                    // simple top-level parameterless `main`
+                    parameters = emptyList()
+                }
+            } else {
+                annotationList.annotations += jvmAnnotation("JvmStatic", symbolProvider)
             }
         }
+
         psi<PsiMethod>()?.let { psiMethod ->
             context.externalCodeProcessor.addMember(JKPhysicalMethodData(psiMethod))
+        }
+    }
+
+    private fun JKDeclaration.removeStaticModifierFromAnonymousClassMember() {
+        (this as? JKOtherModifiersOwner)?.elementByModifier(STATIC)?.let { static ->
+            val grandParent = parent?.parent
+            if (grandParent is JKNewExpression && grandParent.isAnonymousClass) {
+                otherModifierElements -= static
+            }
         }
     }
 
@@ -56,6 +76,7 @@ class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveApplicab
     }
 
     private fun JKField.convert() {
+        removeStaticModifierFromAnonymousClassMember()
         mutability = if (modality == FINAL) IMMUTABLE else MUTABLE
         modality = FINAL
         psi<PsiField>()?.let { psiField ->

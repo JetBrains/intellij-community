@@ -277,8 +277,7 @@ public final class GlobalSearchScopesCore {
     @Override
     public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
       if (equals(scope)) return this;
-      if (scope instanceof DirectoryScope) {
-        DirectoryScope other = (DirectoryScope)scope;
+      if (scope instanceof DirectoryScope other) {
         if (containsScope(other)) return this;
         if (other.containsScope(this)) return other;
         return new DirectoriesScope(Objects.requireNonNull(getProject()),

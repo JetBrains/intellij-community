@@ -11,6 +11,22 @@ import org.jetbrains.kotlin.test.TestMetadata
 @TestMetadata("testData/inspections/dfa")
 class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testAlwaysZero() = doTest()
+    @Suppress("ClassExplicitlyAnnotation")
+    fun testAnnotationInJava() {
+        myFixture.addClass("""
+            import java.lang.annotation.Annotation;
+
+            @interface Storage {}
+
+            public class FileStorageAnnotation implements Storage {
+                @Override
+                public Class<? extends Annotation> annotationType() {
+                    throw new UnsupportedOperationException("Method annotationType not implemented in " + getClass());
+                }
+            }
+        """.trimIndent())
+        doTest()
+    }
     fun testAnyType() = doTest()
     fun testArrays() = doTest()
     fun testBoolean() = doTest()
@@ -22,6 +38,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testClassRef() = doTest()
     fun testCollectionConstructors() = doTest()
     fun testComparison() = doTest()
+    fun testComparisonNoValues() = doTest(false)
     fun testCustomObjectComparison() = doTest()
     fun testDestructuringInLoop() = doTest()
     fun testDoubleComparison() = doTest()
@@ -37,6 +54,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testIndices() = doTest()
     fun testJavaMethods() = doTest()
     fun testJavaConstant() = doTest()
+    fun testJavaType() = doTest()
     fun testLambda() = doTest()
     fun testLanguageConstructs() = doTest()
     fun testList() = doTest()
@@ -77,13 +95,15 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testWhen() = doTest()
     fun testWhileLoop() = doTest()
 
-    fun doTest() {
+    fun doTest(warnOnConstantRefs: Boolean = true) {
         val fileName = "${getTestName(false)}.kt"
         KotlinCommonCompilerArgumentsHolder.getInstance(myFixture.project).update {
             languageVersion = "1.8" // `rangeUntil` operator
         }
         myFixture.configureByFile(fileName)
-        myFixture.enableInspections(KotlinConstantConditionsInspection())
+        val inspection = KotlinConstantConditionsInspection()
+        inspection.warnOnConstantRefs = warnOnConstantRefs 
+        myFixture.enableInspections(inspection)
         myFixture.testHighlighting(true, false, true, fileName)
     }
 }

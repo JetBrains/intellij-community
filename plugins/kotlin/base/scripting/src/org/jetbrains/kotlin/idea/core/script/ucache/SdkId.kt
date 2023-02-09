@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.exists
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 /**
  * Safe key for locating sdk in intellij project jdk table

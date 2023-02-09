@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author Irina.Chernushina on 2/20/2017.
- */
 public class JsonJsonPropertyAdapter implements JsonPropertyAdapter {
   @NotNull private final JsonProperty myProperty;
 

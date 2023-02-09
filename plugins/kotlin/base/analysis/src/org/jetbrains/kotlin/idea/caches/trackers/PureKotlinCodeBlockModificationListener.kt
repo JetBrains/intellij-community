@@ -2,11 +2,12 @@
 
 package org.jetbrains.kotlin.idea.caches.trackers
 
+import com.intellij.AppTopics
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
@@ -25,18 +26,12 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.findTopmostParentOfType
 import com.intellij.psi.util.parentOfTypes
-import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 
-interface PureKotlinOutOfCodeBlockModificationListener {
-    fun kotlinFileOutOfCodeBlockChanged(file: KtFile, physical: Boolean)
-}
-
-class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
+class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable {
     companion object {
         fun getInstance(project: Project): PureKotlinCodeBlockModificationListener = project.service()
 
@@ -260,11 +255,6 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
         }
     }
 
-    private val listeners: MutableList<PureKotlinOutOfCodeBlockModificationListener> = ContainerUtil.createLockFreeCopyOnWriteList()
-
-    private val outOfCodeBlockModificationTrackerImpl = SimpleModificationTracker()
-    val outOfCodeBlockModificationTracker = ModificationTracker { outOfCodeBlockModificationTrackerImpl.modificationCount }
-
     init {
         val treeAspect: TreeAspect = TreeAspect.getInstance(project)
         val model = PomManager.getModel(project)
@@ -295,11 +285,6 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
 
                     if (inBlockElements.isEmpty()) {
                         val physical = physicalFile && !isReplLine(ktFile.virtualFile)
-
-                        if (physical) {
-                            outOfCodeBlockModificationTrackerImpl.incModificationCount()
-                        }
-
                         ktFile.incOutOfBlockModificationCount()
 
                         didChangeKotlinCode(ktFile, physical)
@@ -310,20 +295,21 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
             },
             this,
         )
-    }
-
-    fun addListener(listener: PureKotlinOutOfCodeBlockModificationListener, parentDisposable: Disposable) {
-        listeners.add(listener)
-        Disposer.register(parentDisposable) { removeModelListener(listener) }
-    }
-
-    private fun removeModelListener(listener: PureKotlinOutOfCodeBlockModificationListener) {
-        listeners.remove(listener)
+        project.messageBus.connect(this).subscribe(AppTopics.FILE_DOCUMENT_SYNC, object : FileDocumentManagerListener {
+            override fun fileWithNoDocumentChanged(file: VirtualFile) {
+                //no document means no pomModel change
+                //if psi was not loaded, then the count would be modified by PsiTreeChangeEvent.PROP_UNLOADED_PSI
+                //if psi was loaded, then [FileManagerImpl.reloadPsiAfterTextChange] is fired which doesn't provide any explicit change anyway,
+                //so one need to inc the tracker to ensure that nothing significant was changed externally
+                KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
+            }
+        })
     }
 
     private fun didChangeKotlinCode(ktFile: KtFile, physical: Boolean) {
-        listeners.forEach {
-            it.kotlinFileOutOfCodeBlockChanged(ktFile, physical)
+        if (physical) {
+            KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
+            KotlinModuleOutOfCodeBlockModificationTracker.getUpdaterInstance(project).onKotlinPhysicalFileOutOfBlockChange(ktFile, true)
         }
     }
 
@@ -356,8 +342,14 @@ val KtFile.inBlockModificationCount: Long by NotNullableUserDataProperty(FILE_IN
 
 val KtFile.inBlockModifications: Collection<KtElement>
     get() {
-        val collection = getUserData(IN_BLOCK_MODIFICATIONS)
-        return collection ?: emptySet()
+        val collection = getUserData(IN_BLOCK_MODIFICATIONS) ?: return emptyList()
+        return synchronized(collection) {
+            if (collection.isNotEmpty()) {
+                ArrayList(collection)
+            } else {
+                emptyList()
+            }
+        }
     }
 
 private fun KtFile.addInBlockModifiedItem(element: KtElement) {
@@ -373,11 +365,20 @@ private fun KtFile.addInBlockModifiedItem(element: KtElement) {
     putUserData(FILE_IN_BLOCK_MODIFICATION_COUNT, count + 1)
 }
 
+fun KtFile.removeInBlockModifications(blockModifications: Collection<KtElement>) {
+    if (blockModifications.isEmpty()) return
+
+    getUserData(IN_BLOCK_MODIFICATIONS)?.let { collection ->
+        synchronized(collection) {
+            collection.removeAll(blockModifications.toSet())
+        }
+    }
+}
+
 fun KtFile.clearInBlockModifications() {
-    val collection = getUserData(IN_BLOCK_MODIFICATIONS)
-    collection?.let {
-        synchronized(it) {
-            it.clear()
+    getUserData(IN_BLOCK_MODIFICATIONS)?.let { collection ->
+        synchronized(collection) {
+            collection.clear()
         }
     }
 }

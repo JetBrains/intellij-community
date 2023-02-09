@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
-import com.intellij.openapi.externalSystem.util.PathPrefixTreeMap
+import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -32,10 +32,9 @@ class AsyncFilesChangesListener(
   override fun apply() {
     val updatedFilesSnapshot = HashMap(updatedFiles)
     filesProvider.supply(parentDisposable) { filesToWatch ->
-      val index = PathPrefixTreeMap<Boolean>()
-      filesToWatch.forEach { index[it] = true }
+      val index = CanonicalPathPrefixTreeFactory.createSet(filesToWatch)
       val updatedWatchedFiles = updatedFilesSnapshot.flatMap { (path, modificationData) ->
-        index.getAllDescendantKeys(path)
+        index.getDescendantSequence(path)
           .map { it to modificationData }
       }
       if (updatedWatchedFiles.isNotEmpty()) {

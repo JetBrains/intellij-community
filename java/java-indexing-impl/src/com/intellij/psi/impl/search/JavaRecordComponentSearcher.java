@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
@@ -19,8 +19,7 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
   @Override
   public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<? super PsiReference> consumer) {
     PsiElement element = queryParameters.getElementToSearch();
-    if (element instanceof PsiRecordComponent) {
-      PsiRecordComponent recordComponent = (PsiRecordComponent)element;
+    if (element instanceof PsiRecordComponent recordComponent) {
       RecordNavigationInfo info = findNavigationInfo(recordComponent);
       if (info != null) {
         SearchRequestCollector optimizer = queryParameters.getOptimizer();
@@ -48,7 +47,6 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
   private static RecordNavigationInfo findNavigationInfo(PsiRecordComponent recordComponent) {
     return ReadAction.compute(() -> {
       String name = recordComponent.getName();
-      if (name == null) return null;
       PsiClass containingClass = recordComponent.getContainingClass();
       if (containingClass == null) return null;
 

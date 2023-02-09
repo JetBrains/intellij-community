@@ -9,6 +9,7 @@ import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,14 +63,6 @@ public final class PathManager {
   private static String ourScratchPath;
   private static String ourPluginsPath;
   private static String ourLogPath;
-
-  private static final ArrayList<Path> ourPerProjectLockedPaths = new ArrayList<>();
-
-  public static void lockPerProjectPath(Path path) { ourPerProjectLockedPaths.add(path); }
-
-  public static void unlockPerProjectPath(Path path) { ourPerProjectLockedPaths.remove(path); }
-
-  public static @NotNull List<Path> getPerProjectLockedPaths() { return ourPerProjectLockedPaths; }
 
   // IDE installation paths
 
@@ -305,6 +298,11 @@ public final class PathManager {
     }
 
     return ourConfigPath;
+  }
+
+  @TestOnly
+  public static void setExplicitConfigPath(@Nullable String path) {
+    ourConfigPath = path;
   }
 
   public static @NotNull String getScratchPath() {

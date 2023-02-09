@@ -1,6 +1,5 @@
 package com.intellij.settingsSync.plugins
 
-import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginStateListener
 import com.intellij.ide.plugins.PluginStateManager
@@ -54,7 +53,8 @@ internal class SettingsSyncPluginManager : Disposable {
   }
 
   private fun firePluginsStateChangeEvent(pluginsState: SettingsSyncPluginsState) {
-    val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()), emptySet(), pluginsState)
+    val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()),
+                                    emptySet(), pluginsState, emptyMap(), emptySet())
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
   }
 
@@ -86,7 +86,6 @@ internal class SettingsSyncPluginManager : Disposable {
 
   private fun getLineIfNotEmpty(prefix: String, plugins: Collection<*>) = if (plugins.isNotEmpty()) "$prefix: $plugins\n" else ""
   private fun getLineIfNotEmpty(prefix: String, plugins: Map<*, *>) = if (plugins.isNotEmpty()) "$prefix: $plugins\n" else ""
-  private fun enabledOrDisabled(value: Boolean?) = if (value == null) "null" else if (value) "enabled" else "disabled"
 
   private fun getPluginData(plugin: IdeaPluginDescriptor, explicitEnabled: Boolean? = null): PluginData {
     val isEnabled = if (explicitEnabled != null) {
@@ -174,8 +173,6 @@ internal class SettingsSyncPluginManager : Disposable {
     LOG.info("Installing plugins: $pluginsToInstall")
     pluginManagerProxy.createInstaller().installPlugins(pluginsToInstall)
   }
-
-  private fun isPluginEnabled(pluginId: PluginId) = !DisabledPluginsState.getDisabledIds().contains(pluginId)
 
   private fun findPlugin(idString: String): IdeaPluginDescriptor? {
     return PluginId.findId(idString)?.let { PluginManagerProxy.getInstance().findPlugin(it) }

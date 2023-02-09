@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible.filters;
 
 import com.intellij.openapi.util.Comparing;
@@ -15,11 +15,11 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
-  @NotNull private final List<String> myBranches;
-  @NotNull private final List<Pattern> myPatterns;
+  private final @NotNull List<String> myBranches;
+  private final @NotNull List<Pattern> myPatterns;
 
-  @NotNull private final List<String> myExcludedBranches;
-  @NotNull private final List<Pattern> myExcludedPatterns;
+  private final @NotNull List<String> myExcludedBranches;
+  private final @NotNull List<Pattern> myExcludedPatterns;
 
   VcsLogBranchFilterImpl(@NotNull List<String> branches,
                          @NotNull List<Pattern> patterns,
@@ -31,9 +31,8 @@ class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
     myExcludedPatterns = excludedPatterns;
   }
 
-  @NotNull
   @Override
-  public Collection<String> getTextPresentation() {
+  public @NotNull Collection<String> getTextPresentation() {
     List<String> result = new ArrayList<>();
 
     result.addAll(myBranches);
@@ -54,8 +53,7 @@ class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     String result = "";
     if (!myPatterns.isEmpty()) {
       result += "on patterns: " + StringUtil.join(myPatterns, ", ");

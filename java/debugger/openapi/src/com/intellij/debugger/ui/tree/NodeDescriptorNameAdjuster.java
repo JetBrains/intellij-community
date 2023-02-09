@@ -9,7 +9,8 @@ import org.jetbrains.annotations.NotNull;
  * Allows to adjust variables names, for example trim outer class variable name prefix in java classes
  */
 public abstract class NodeDescriptorNameAdjuster {
-  public static final ExtensionPointName<NodeDescriptorNameAdjuster> EP_NAME = ExtensionPointName.create("com.intellij.debugger.nodeNameAdjuster");
+  public static final ExtensionPointName<NodeDescriptorNameAdjuster> EP_NAME =
+    ExtensionPointName.create("com.intellij.debugger.nodeNameAdjuster");
 
   public abstract boolean isApplicable(@NotNull NodeDescriptor descriptor);
 

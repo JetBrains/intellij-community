@@ -22,9 +22,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 class ReplaceConstructorWithFactoryViewDescriptor extends UsageViewDescriptorAdapter {
   private final PsiMethod myConstructor;
   private final PsiClass myClass;

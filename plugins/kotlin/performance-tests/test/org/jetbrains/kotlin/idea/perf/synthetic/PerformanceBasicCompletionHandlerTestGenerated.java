@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
@@ -44,6 +44,49 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("KT12077.kt")
         public void testKT12077() throws Exception {
             runTest("../completion/testData/handlers/basic/annotation/KT12077.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../completion/testData/handlers/basic/backticked")
+    public static class Backticked extends AbstractPerformanceBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ClassifierNameWithSpace.kt")
+        public void testClassifierNameWithSpace() throws Exception {
+            runTest("../completion/testData/handlers/basic/backticked/ClassifierNameWithSpace.kt");
+        }
+
+        @TestMetadata("FunNameWithSpace.kt")
+        public void testFunNameWithSpace() throws Exception {
+            runTest("../completion/testData/handlers/basic/backticked/FunNameWithSpace.kt");
+        }
+
+        @TestMetadata("KT19863.kt")
+        public void testKT19863() throws Exception {
+            runTest("../completion/testData/handlers/basic/backticked/KT19863.kt");
+        }
+
+        @TestMetadata("KT19864.kt")
+        public void testKT19864() throws Exception {
+            runTest("../completion/testData/handlers/basic/backticked/KT19864.kt");
+        }
+
+        @TestMetadata("PreferMatchingKeyword.kt")
+        public void testPreferMatchingKeyword() throws Exception {
+            runTest("../completion/testData/handlers/basic/backticked/PreferMatchingKeyword.kt");
+        }
+
+        @TestMetadata("PropertyAfterBacktick.kt")
+        public void testPropertyAfterBacktick() throws Exception {
+            runTest("../completion/testData/handlers/basic/backticked/PropertyAfterBacktick.kt");
+        }
+
+        @TestMetadata("VariableNameWithSpace.kt")
+        public void testVariableNameWithSpace() throws Exception {
+            runTest("../completion/testData/handlers/basic/backticked/VariableNameWithSpace.kt");
         }
     }
 
@@ -1055,16 +1098,6 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/KT14130.kt");
         }
 
-        @TestMetadata("KT19863.kt")
-        public void testKT19863() throws Exception {
-            runTest("../completion/testData/handlers/basic/KT19863.kt");
-        }
-
-        @TestMetadata("KT19864.kt")
-        public void testKT19864() throws Exception {
-            runTest("../completion/testData/handlers/basic/KT19864.kt");
-        }
-
         @TestMetadata("KT23627.kt")
         public void testKT23627() throws Exception {
             runTest("../completion/testData/handlers/basic/KT23627.kt");
@@ -1108,11 +1141,6 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("PreferClassToConstructor.kt")
         public void testPreferClassToConstructor() throws Exception {
             runTest("../completion/testData/handlers/basic/PreferClassToConstructor.kt");
-        }
-
-        @TestMetadata("PreferMatchingKeyword.kt")
-        public void testPreferMatchingKeyword() throws Exception {
-            runTest("../completion/testData/handlers/basic/PreferMatchingKeyword.kt");
         }
 
         @TestMetadata("ReceiverParam.kt")
@@ -1233,6 +1261,24 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("UnstableSmartCast_typeParams.kt")
         public void testUnstableSmartCast_typeParams() throws Exception {
             runTest("../completion/testData/handlers/basic/UnstableSmartCast_typeParams.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../completion/testData/handlers/basic/variableNameAndType")
+    public static class VariableNameAndType extends AbstractPerformanceBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("NoTypeInsertion.kt")
+        public void testNoTypeInsertion() throws Exception {
+            runTest("../completion/testData/handlers/basic/variableNameAndType/NoTypeInsertion.kt");
+        }
+
+        @TestMetadata("TypeInsertionOnLateinit.kt")
+        public void testTypeInsertionOnLateinit() throws Exception {
+            runTest("../completion/testData/handlers/basic/variableNameAndType/TypeInsertionOnLateinit.kt");
         }
     }
 }

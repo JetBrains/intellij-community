@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
@@ -136,6 +136,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       }
 
       if (value instanceof PsiElement) {
+        //noinspection unchecked
         T element = (T)value;
         @NlsContexts.Label String name = ((PsiElement)value).isValid() ? getElementText(element) : "INVALID";
 
@@ -230,7 +231,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     myRightComponentWidth = 0;
 
     final TextWithIcon itemLocation;
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RENDERING)) {
       itemLocation = getItemLocation(value);
     }
     final JLabel locationComponent;
@@ -255,7 +256,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
     ListCellRenderer<Object> leftRenderer = new LeftRenderer(value == null ? new ItemMatchers(null, null) : getItemMatchers(list, value));
     Component result;
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RENDERING)) {
       result = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     }
     final Component leftCellRendererComponent = result;
@@ -360,7 +361,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       String containerText = getContainerText(element, elementText);
       TextWithIcon moduleTextWithIcon = getModuleTextWithIcon(element);
       return (containerText == null ? elementText : elementText + " " + containerText) +
-             (moduleTextWithIcon != null ? moduleTextWithIcon.getText() : "");
+             (moduleTextWithIcon != null ? " " + moduleTextWithIcon.getText() : "");
     });
   }
 
@@ -376,7 +377,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     installSpeedSearch(builder, false);
   }
 
-  public void installSpeedSearch(IPopupChooserBuilder builder, final boolean includeContainerText) {
+  public void installSpeedSearch(@NotNull IPopupChooserBuilder builder, final boolean includeContainerText) {
     builder.setNamerForFiltering(o -> {
       if (o instanceof PsiElement) {
         final String elementText = getElementText((T)o);
@@ -385,16 +386,14 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         }
         return elementText;
       }
-      else {
-        return o.toString();
-      }
+      return o.toString();
     });
   }
 
   @ApiStatus.Internal
-  @SuppressWarnings("unchecked")
   @RequiresReadLock
   public final @NotNull TargetPresentation computePresentation(@NotNull PsiElement element) {
+    //noinspection unchecked
     return targetPresentation(
       (T)element,
       myRenderingInfo,
@@ -404,8 +403,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     );
   }
 
-  private final PsiElementRenderingInfo<T> myRenderingInfo = new PsiElementRenderingInfo<T>() {
-
+  private final PsiElementRenderingInfo<T> myRenderingInfo = new PsiElementRenderingInfo<>() {
     @Override
     public @Nullable Icon getIcon(@NotNull T element) {
       return PsiElementListCellRenderer.this.getIcon(element);

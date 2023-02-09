@@ -47,7 +47,7 @@ public class BackwardDependenciesAction extends BaseAnalysisAction {
 
   @Override
   @Nullable
-  protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
+  protected JComponent getAdditionalActionSettings(final @NotNull Project project, final BaseAnalysisActionDialog dialog) {
     myPanel = new BackwardDependenciesAdditionalUi();
     myPanel.getScopeChooserCombo().init(project, null);
     return myPanel.getPanel();

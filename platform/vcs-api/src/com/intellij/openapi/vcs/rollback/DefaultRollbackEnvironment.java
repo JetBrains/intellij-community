@@ -25,10 +25,6 @@ public abstract class DefaultRollbackEnvironment implements RollbackEnvironment 
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public void rollbackIfUnchanged(final VirtualFile file) {
-  }
-
   @Nls(capitalization = Nls.Capitalization.Title)
   @NotNull
   public static String getRollbackOperationText() {

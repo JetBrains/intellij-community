@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PlatformTestUtil.dispatchAllEventsInIdeEventQueue
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
@@ -77,7 +76,7 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
   private fun withVariantsFor(context: RunAnythingContext, command: String, action: (List<String>) -> Unit) {
     val dataContext = SimpleDataContext.getSimpleContext(RunAnythingProvider.EXECUTING_CONTEXT, context, myDataContext)
     val variants = provider.getValues(dataContext, "gradle $command")
-    action(variants.map { StringUtil.trimStart(it, "gradle ") })
+    action(variants.map { it.removePrefix("gradle ") })
   }
 
   private fun executeAndWait(context: RunAnythingContext, command: String): BuildView {
@@ -159,6 +158,21 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
     )
   }
 
+
+  fun BuildView.assertExecutionTree(
+    expected: String
+  ): BuildView = apply {
+    BuildViewTestFixture.assertExecutionTree(this, expected, false)
+  }
+
+  fun BuildView.assertExecutionTreeNode(
+    nodeText: String,
+    assertSelected: Boolean = false,
+    consoleTextChecker: (String?) -> Unit
+  ): BuildView = apply {
+    BuildViewTestFixture.assertExecutionTreeNode(this, nodeText, consoleTextChecker, null, assertSelected)
+  }
+
   companion object {
     /**
      * It's sufficient to run the test against one gradle version
@@ -167,14 +181,4 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
     @JvmStatic
     fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(BASE_GRADLE_VERSION))
   }
-}
-
-fun BuildView.assertExecutionTree(expected: String): BuildView {
-  BuildViewTestFixture.assertExecutionTree(this, expected, false)
-  return this
-}
-
-fun BuildView.assertExecutionTreeNode(nodeText: String, consoleTextChecker: (String?) -> Unit, assertSelected: Boolean = false): BuildView {
-  BuildViewTestFixture.assertExecutionTreeNode(this, nodeText, consoleTextChecker, null, assertSelected)
-  return this
 }

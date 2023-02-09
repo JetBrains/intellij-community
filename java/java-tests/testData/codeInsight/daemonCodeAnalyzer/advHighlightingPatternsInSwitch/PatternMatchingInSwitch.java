@@ -169,20 +169,20 @@ class Main {
     };
 
     switch (i) {
-      // total pattern
+      // unconditional pattern
       case Object oo:
         System.out.println("s1");
     }
     str = switch (i) {
-      // total pattern
+      // unconditional pattern
       case Object oo -> "s1";
     };
 
     // unsafe casts
     switch (list1) {
-      case <error descr="'java.util.List<capture<? extends java.lang.Number>>' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> l</error>:
+      case <error descr="'List<capture of ? extends Number>' cannot be safely cast to 'List<Integer>'">List<Integer> l</error>:
         break;
-      case ((((<error descr="'java.util.List<capture<? extends java.lang.Number>>' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> l</error>)) && Math.random() > 0.5)):
+      case ((((<error descr="'List<capture of ? extends Number>' cannot be safely cast to 'List<Integer>'">List<Integer> l</error>)) && Math.random() > 0.5)):
         break;
     }
 
@@ -202,9 +202,9 @@ class Main {
         break;
     }
     switch (o) {
-      case <error descr="'java.lang.Object' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> ll</error>:
+      case <error descr="'Object' cannot be safely cast to 'List<Integer>'">List<Integer> ll</error>:
         break;
-      case ((((<error descr="'java.lang.Object' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> ll</error>)) && Math.random() > 0.5)):
+      case ((((<error descr="'Object' cannot be safely cast to 'List<Integer>'">List<Integer> ll</error>)) && Math.random() > 0.5)):
         break;
       case default:
         break;
@@ -298,11 +298,11 @@ class Main {
       case <error descr="Duplicate label 'null'">null</error> -> "null";
     };
 
-    // total pattern duplicates
+    // unconditional pattern duplicates
     switch (i) {
-      case <error descr="Duplicate total pattern">Object o</error>:
+      case <error descr="Duplicate unconditional pattern">Object o</error>:
         break;
-      case <error descr="Duplicate total pattern">((Integer ii && true))</error>:
+      case <error descr="Duplicate unconditional pattern">((Integer ii && true))</error>:
         break;
     }
     str = switch (i) {
@@ -709,7 +709,7 @@ class Main {
     };
 
     // !!! here are some contradictory examples with spec, but javac still compiles them. To be discussed in the mailing list
-    // at least for now it's look quite logical if we have a total pattern in a switch label, and following constant switch label,
+    // at least for now it's look quite logical if we have an unconditional pattern in a switch label, and following constant switch label,
     // then the first switch label dominates the second one.
     switch (d) {
       case Day dd: break;
@@ -756,9 +756,9 @@ class Main {
     };
 
     switch (d) {
-      case <error descr="'switch' has both a total pattern and a default label">((Day dd && true))</error>:
+      case <error descr="'switch' has both an unconditional pattern and a default label">((Day dd && true))</error>:
         System.out.println("ok");
-      <error descr="'switch' has both a total pattern and a default label"><caret>default</error>: // blah blah blah
+      <error descr="'switch' has both an unconditional pattern and a default label"><caret>default</error>: // blah blah blah
         System.out.println("mon");
     };
     switch (d) {

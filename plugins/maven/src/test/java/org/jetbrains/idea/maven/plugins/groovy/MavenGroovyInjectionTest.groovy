@@ -19,9 +19,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenGroovyInjectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Test

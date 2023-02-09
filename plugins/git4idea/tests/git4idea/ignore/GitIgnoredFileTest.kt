@@ -2,9 +2,9 @@
 package git4idea.ignore
 
 import com.intellij.configurationStore.saveSettings
-import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -25,6 +25,7 @@ import com.intellij.util.io.createFile
 import git4idea.GitUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertFalse
 import java.io.File
@@ -47,8 +48,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
     super.setUpProject()
 
     // will create .idea directory
-    // setUpProject is executed in EDT
-    runBlockingUnderModalProgress {
+    runBlockingMaybeCancellable {
       saveSettings(project)
     }
   }
@@ -104,7 +104,9 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
   fun `test generation default gitignore content in config dir`() {
     val gitIgnore = file("$DIRECTORY_STORE_FOLDER/$GITIGNORE").assertNotExists().file
 
-    GitIgnoreInStoreDirGenerator(project).run()
+    runBlocking {
+      GitIgnoreInStoreDirGenerator(project).run()
+    }
 
     assertGitignoreValid(gitIgnore,
                          """

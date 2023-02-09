@@ -16,6 +16,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.Module;
@@ -382,6 +383,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return true;
   }
 
+  public boolean isAutoScrollEnabledWithoutFocus() {
+    return false;
+  }
+
   public boolean isFileNestingEnabled() {
     return false;
   }
@@ -396,6 +401,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
     if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
       return selectedUserObjects;
+    }
+    if (PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.is(dataId)) {
+      return FileEditorManagerEx.getInstanceEx(myProject).getSelectedEditor();
     }
 
     if (BGT_DATA_PROVIDER.is(dataId)) {
@@ -624,8 +632,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @Nullable
   protected Module getNodeModule(@Nullable final Object element) {
-    if (element instanceof PsiElement) {
-      PsiElement psiElement = (PsiElement)element;
+    if (element instanceof PsiElement psiElement) {
       return ModuleUtilCore.findModuleForPsiElement(psiElement);
     }
     return null;
@@ -1108,9 +1115,13 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         .getTreeCellRendererComponent(getTree(), object, false, false, true, getTree().getRowForPath(path), false);
       Icon[] icon = new Icon[1];
       String[] text = new String[1];
-      ObjectUtils.consumeIfCast(component, ProjectViewRenderer.class, renderer -> icon[0] = renderer.getIcon());
-      ObjectUtils.consumeIfCast(component, SimpleColoredComponent.class, renderer -> text[0] = renderer.getCharSequence(true).toString());
-      return Pair.create(icon[0], text[0]);
+      if (component instanceof ProjectViewRenderer renderer) {
+        icon[0] = renderer.getIcon();
+      }
+      if (component instanceof SimpleColoredComponent colored) {
+        text[0] = colored.getCharSequence(true).toString();
+      }
+      return new Pair<>(icon[0], text[0]);
     }
   }
 

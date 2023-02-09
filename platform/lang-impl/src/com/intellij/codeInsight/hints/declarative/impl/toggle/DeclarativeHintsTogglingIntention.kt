@@ -39,8 +39,8 @@ class DeclarativeHintsTogglingIntention(
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    val settings = DeclarativeInlayHintsSettings.getInstance(project)
+    val settings = DeclarativeInlayHintsSettings.getInstance()
     settings.setProviderEnabled(providerId, !providerEnabledNow)
-    DeclarativeInlayHintsPassFactory.scheduleRecompute(editor)
+    DeclarativeInlayHintsPassFactory.scheduleRecompute(editor, project)
   }
 }

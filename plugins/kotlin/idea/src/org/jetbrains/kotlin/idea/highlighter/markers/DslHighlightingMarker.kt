@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.highlighter.dsl.DslKotlinHighlightingVisitorExtension
 import org.jetbrains.kotlin.idea.highlighter.dsl.isDslHighlightingMarker
@@ -23,7 +24,7 @@ private val navHandler = GutterIconNavigationHandler<PsiElement> { event, elemen
         ?: return@GutterIconNavigationHandler
     val ktClass = element?.parent as? KtClass ?: return@GutterIconNavigationHandler
     val styleId = ktClass.styleIdForMarkerAnnotation() ?: return@GutterIconNavigationHandler
-    ColorAndFontOptions.selectOrEditColor(dataContext, DslKotlinHighlightingVisitorExtension.styleOptionDisplayName(styleId), KotlinLanguage.NAME)
+    ColorAndFontOptions.selectOrEditColor(dataContext, DslStyleUtils.styleOptionDisplayName(styleId), KotlinLanguage.NAME)
 }
 
 private val toolTipHandler = Function<PsiElement, String> {
@@ -45,7 +46,7 @@ fun collectHighlightingColorsMarkers(
         LineMarkerInfo(
             anchor,
             anchor.textRange,
-            createDslStyleIcon(styleId),
+            DslStyleUtils.createDslStyleIcon(styleId),
             toolTipHandler,
             navHandler,
             GutterIconRenderer.Alignment.RIGHT,

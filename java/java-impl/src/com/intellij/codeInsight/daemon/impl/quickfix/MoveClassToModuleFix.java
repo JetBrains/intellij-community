@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.java.JavaBundle;
@@ -16,11 +17,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -35,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -121,6 +127,21 @@ class MoveClassToModuleFix implements IntentionAction {
         .showInBestPositionFor(editor);
     }
   }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    @NlsSafe String name = myReferenceName;
+    if (name == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    Icon icon = ModuleType.get(myCurrentModule).getIcon();
+    HtmlBuilder builder = new HtmlBuilder()
+      .append(name)
+      .append(" ").append(HtmlChunk.htmlEntity("&rarr;")).append(" ")
+      .append(HtmlChunk.icon("module", icon))
+      .nbsp()
+      .append(myCurrentModule.getName());
+    return new IntentionPreviewInfo.Html(builder.wrapWith("p"));  }
 
   private void moveClass(Project project, Editor editor, PsiFile file, PsiClass aClass) {
     RefactoringActionHandler moveHandler = RefactoringActionHandlerFactory.getInstance().createMoveHandler();

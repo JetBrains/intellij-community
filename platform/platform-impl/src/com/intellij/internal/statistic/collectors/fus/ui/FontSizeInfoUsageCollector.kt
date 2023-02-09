@@ -2,11 +2,11 @@
 package com.intellij.internal.statistic.collectors.fus.ui
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
@@ -16,7 +16,7 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
  */
 class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("ui.fonts", 5)
+    private val GROUP = EventLogGroup("ui.fonts", 6)
 
     val FONT_NAME = EventFields.String(
       "font_name", arrayListOf(
@@ -34,7 +34,7 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
       "mononoki", "Bitstream_Vera_Sans_Mono", "Comic_Sans_MS", "Courier_10_Pitch", "Cousine", "2Coding_ligature", "Droid_Sans_Mono_Dotted",
       "Inconsolata-dz", "Input", "Input_Mono", "Meslo_LG_M_DZ_for_Powerline", "Migu_2M", "Monoid", "Operator_Mono_Book",
       "Operator_Mono_Lig", "Operator_Mono_Medium", "Abadi_MT_Condensed_Extra_Bold", "Al_Bayan", "Meiryo", "Microsoft_JhengHei",
-      "Microsoft_Yahei_UI", "SansSerif", "Ubuntu_Light", "JetBrains_Mono", ".AppleSystemUIFont", ".SFNS-Regular"
+      "Microsoft_Yahei_UI", "SansSerif", "Ubuntu_Light", "JetBrains_Mono", ".AppleSystemUIFont", ".SFNS-Regular", "Inter"
     ))
 
     val FONT_SIZE = EventFields.Int("font_size")
@@ -59,7 +59,7 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
     val ui = UISettings.shadowInstance
     val usages = mutableSetOf(
       UI_FONT.metric(ui.fontFace, ui.fontSize, ui.fontSize2D),
-      PRESENTATION_MODE_FONT.metric(ui.presentationModeFontSize)
+      PRESENTATION_MODE_FONT.metric(UISettingsUtils.with(ui).presentationModeFontSize.toInt())
     )
     if (!scheme.isUseAppFontPreferencesInEditor) {
       usages += EDITOR_FONT.metric(

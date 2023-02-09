@@ -8,9 +8,6 @@ import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.lexer.PythonLexer;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PythonNamesValidator implements NamesValidator {
   private static final PythonLexer ourLexer = new PythonLexer();
 

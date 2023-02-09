@@ -2,6 +2,7 @@
 package com.intellij.ide.util.projectWizard
 
 import com.intellij.ide.wizard.*
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.module.WebModuleBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.UIBundle
@@ -11,7 +12,9 @@ abstract class WebTemplateNewProjectWizardBase : GeneratorNewProjectWizard {
   override val groupName: String = WebModuleBuilder.GROUP_NAME
 
   override fun createStep(context: WizardContext): NewProjectWizardStep =
-    RootNewProjectWizardStep(context).chain(::NewProjectWizardBaseStep, ::createTemplateStep)
+    RootNewProjectWizardStep(context)
+      .nextStep(::NewProjectWizardBaseStep)
+      .nextStep(::createTemplateStep)
 
   abstract fun createTemplateStep(parent: NewProjectWizardBaseStep): NewProjectWizardStep
 }

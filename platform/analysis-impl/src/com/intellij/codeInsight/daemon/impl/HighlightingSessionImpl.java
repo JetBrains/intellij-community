@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -10,11 +11,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.TransferToEDTQueue;
@@ -39,8 +42,10 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   private final ProperTextRange myVisibleRange;
   @NotNull
   private final CanISilentlyChange.Result myCanChangeFileSilently;
+  private volatile boolean myIsEssentialHighlightingOnly;
   private final Long2ObjectMap<RangeMarker> myRanges2markersCache = new Long2ObjectOpenHashMap<>();
   private final TransferToEDTQueue<Runnable> myEDTQueue;
+  private volatile boolean myInContent;
 
   private HighlightingSessionImpl(@NotNull PsiFile psiFile,
                                   @NotNull DaemonProgressIndicator progressIndicator,
@@ -71,8 +76,8 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     myEDTQueue.offer(runnable);
   }
 
-  boolean canChangeFileSilently(boolean isInContent) {
-    return myCanChangeFileSilently.canIReally(isInContent);
+  boolean canChangeFileSilently() {
+    return myCanChangeFileSilently.canIReally(myInContent);
   }
 
   @NotNull
@@ -84,8 +89,11 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     }
     HighlightingSession session = map.get(file);
     if (session == null) {
-      String mapStr = map.entrySet().stream().map(e -> e.getKey() + " (" + e.getKey().getClass() + ") -> " + e.getValue()).collect(Collectors.joining("; "));
-      throw new IllegalStateException("No HighlightingSession found for " + file + " (" + file.getClass() + ") in " + indicator + " in map: " + mapStr);
+      String mapStr = map.entrySet().stream().map(e -> {
+        PsiFile storedFile = e.getKey();
+        return storedFile + ": " + System.identityHashCode(storedFile) + " (" + storedFile.getClass() + ") -> " + e.getValue();
+      }).collect(Collectors.joining("; "));
+      throw new IllegalStateException("No HighlightingSession found for " + file +  ": " + System.identityHashCode(file) + " (" + file.getClass() + ") in " + indicator + " in map: " + mapStr);
     }
     return session;
   }
@@ -101,7 +109,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   @NotNull
-  static HighlightingSession createHighlightingSession(@NotNull PsiFile psiFile,
+  static HighlightingSessionImpl createHighlightingSession(@NotNull PsiFile psiFile,
                                                        @Nullable Editor editor,
                                                        @Nullable EditorColorsScheme editorColorsScheme,
                                                        @NotNull DaemonProgressIndicator progressIndicator) {
@@ -109,7 +117,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     TextRange fileRange = psiFile.getTextRange();
     ProperTextRange visibleRange = editor == null ? ProperTextRange.create(ObjectUtils.notNull(fileRange, TextRange.EMPTY_RANGE)) : VisibleHighlightingPassFactory.calculateVisibleRange(editor);
     CanISilentlyChange.Result canChangeFileSilently = CanISilentlyChange.thisFile(psiFile);
-    return createHighlightingSession(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently);
+    return (HighlightingSessionImpl)createHighlightingSession(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently);
   }
 
   @NotNull
@@ -178,8 +186,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                           @NotNull TextRange restrictedRange,
                           int groupId) {
     applyInEDT(() ->
-      UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, getDocument(), getPsiFile(), restrictedRange.getStartOffset(),
-                                                                 restrictedRange.getEndOffset(),
+      UpdateHighlightersUtil.addHighlighterToEditorIncrementally(getPsiFile(), getDocument(), restrictedRange,
                                                                  info, getColorsScheme(), groupId, myRanges2markersCache));
   }
 
@@ -208,7 +215,20 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   @Override
+  public boolean isEssentialHighlightingOnly() {
+    return myIsEssentialHighlightingOnly;
+  }
+
+  @Override
   public String toString() {
-    return "HighlightingSessionImpl: myVisibleRange:"+myVisibleRange+"; myPsiFile: "+myPsiFile;
+    return "HighlightingSessionImpl: myVisibleRange:"+myVisibleRange+"; myPsiFile: "+myPsiFile+ (myIsEssentialHighlightingOnly ? "; essentialHighlightingOnly":"");
+  }
+
+  // compute additional stuff in background thread
+  void additionalSetupFromBackground(@NotNull PsiFile psiFile) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    myIsEssentialHighlightingOnly = HighlightingLevelManager.getInstance(psiFile.getProject()).runEssentialHighlightingOnly(psiFile);
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    myInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(psiFile.getProject(), virtualFile, false);
   }
 }

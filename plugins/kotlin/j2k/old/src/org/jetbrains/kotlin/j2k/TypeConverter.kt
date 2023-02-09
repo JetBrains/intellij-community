@@ -416,7 +416,7 @@ class TypeFlavorCalculator(val converter: TypeFlavorConverterFacade) {
 
         private fun PsiExpression.nullability(): Nullability {
             return when (this) {
-                is PsiLiteralExpression -> if (type != PsiType.NULL) Nullability.NotNull else Nullability.Nullable
+                is PsiLiteralExpression -> if (type != PsiTypes.nullType()) Nullability.NotNull else Nullability.Nullable
 
                 is PsiNewExpression -> Nullability.NotNull
 
@@ -528,13 +528,13 @@ fun PsiExpression.getTypeConversionMethod(expectedType: PsiType): String? {
     if (actualType == expectedType) return null
     if (expectedType.canonicalText == CommonClassNames.JAVA_LANG_STRING) return "toString"
     return when (expectedType) {
-        PsiType.BYTE -> "toByte"
-        PsiType.SHORT -> "toShort"
-        PsiType.INT -> "toInt"
-        PsiType.LONG -> "toLong"
-        PsiType.FLOAT -> "toFloat"
-        PsiType.DOUBLE -> "toDouble"
-        PsiType.CHAR -> "toChar"
+        PsiTypes.byteType() -> "toByte"
+        PsiTypes.shortType() -> "toShort"
+        PsiTypes.intType() -> "toInt"
+        PsiTypes.longType() -> "toLong"
+        PsiTypes.floatType() -> "toFloat"
+        PsiTypes.doubleType() -> "toDouble"
+        PsiTypes.charType() -> "toChar"
         else -> null
     }
 }

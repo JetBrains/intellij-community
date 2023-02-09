@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
@@ -58,7 +59,7 @@ public class FileSetLimiter {
       final File file = path.toFile();
       if (!FileUtilRt.deleteFile(file)) {
         file.deleteOnExit();
-        LOG.info("Can't delete " + path +" (scheduled for delete on exit)");
+        LOG.info("Can't delete " + path + " (scheduled for delete on exit)");
       }
     }
   };
@@ -206,10 +207,28 @@ public class FileSetLimiter {
   }
 
   public Path createNewFile(final @NotNull Clock clock) throws IOException {
-    final Path path = generatePath(clock);
-    final Path createdPath = Files.createFile(path);
-    removeOlderFiles();
-    return createdPath;
+    final int maxTries = 1024;
+    try {
+      final Path basePath = generatePath(clock);
+      Path candidatePath = basePath;
+      for (int tryNo = 0; tryNo < maxTries; tryNo++) {
+        try {
+          if (Files.exists(candidatePath)) {
+            final String numeratedFileName = basePath.getFileName() + "." + tryNo;
+            candidatePath = basePath.resolveSibling(numeratedFileName);
+          }
+          final Path createdPath = Files.createFile(candidatePath);
+          return createdPath;
+        }
+        catch (FileAlreadyExistsException e) {
+          //retry with new candidate
+        }
+      }
+      throw new IOException("Can't create new file like " + basePath + ".X in X=[0.." + maxTries + ") attempts");
+    }
+    finally {
+      removeOlderFiles();
+    }
   }
 
   /**

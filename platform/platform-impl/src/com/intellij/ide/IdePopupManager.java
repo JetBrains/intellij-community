@@ -73,8 +73,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
         shouldCloseAllPopup = true;
       }
 
-      if (!shouldCloseAllPopup && ultimateParentForEventWindow instanceof IdeFrame) {
-        IdeFrame ultimateParentWindowForEvent = (IdeFrame)ultimateParentForEventWindow;
+      if (!shouldCloseAllPopup && ultimateParentForEventWindow instanceof IdeFrame ultimateParentWindowForEvent) {
         if (ultimateParentWindowForEvent.isInFullScreen()
             && !ultimateParentForFocusedComponent.equals(ultimateParentForEventWindow)) {
           shouldCloseAllPopup = true;
@@ -85,9 +84,8 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
         closeAllPopups();
       }
     }
-    else if (e instanceof KeyEvent) {
+    else if (e instanceof KeyEvent keyEvent) {
       // the following is copied from IdeKeyEventDispatcher
-      KeyEvent keyEvent = (KeyEvent)e;
       Object source = keyEvent.getSource();
       if (myIgnoreNextKeyTypedEvent) {
         if (KeyEvent.KEY_TYPED == e.getID()) return true;

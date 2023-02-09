@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Optionally typed Python element.
  *
- * @author vlan
  */
 public interface PyTypedElement extends PyElement {
   @Nullable

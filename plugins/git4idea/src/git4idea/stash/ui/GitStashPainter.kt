@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeCellRenderer
+import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.openapi.vcs.changes.ui.HoverChangesTree.Companion.getBackground
 import com.intellij.openapi.vcs.changes.ui.HoverChangesTree.Companion.getRowHeight
 import com.intellij.openapi.vcs.changes.ui.HoverChangesTree.Companion.getTransparentScrollbarWidth
@@ -46,7 +47,8 @@ class GitStashPainter(val tree: ChangesTree, private val renderer: ChangesTreeCe
     val nodeLocation = TreeUtil.getNodeRowX(tree, row) + tree.insets.left
     val availableWidth = tree.visibleRect.width - tree.getTransparentScrollbarWidth() -
                          (nodeLocation - tree.visibleRect.x).coerceAtLeast(0)
-    customizePainter(tree.getBackground(row, selected), UIUtil.getLabelForeground(), selected, availableWidth,
+    val foreground = if (selected) UIUtil.getLabelForeground() else CurrentBranchComponent.TEXT_COLOR
+    customizePainter(tree.getBackground(row, selected), foreground, selected, availableWidth,
                      listOf(StashRefGroup(branchName, isCurrentBranch)))
 
     // label coordinates are calculated relative to the node location

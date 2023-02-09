@@ -3,9 +3,6 @@ package com.intellij.refactoring.extractMethod.preview;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 interface PreviewTreeListener {
   void onNodeSelected(@NotNull FragmentNode node);
 }

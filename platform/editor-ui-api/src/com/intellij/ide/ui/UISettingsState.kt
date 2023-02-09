@@ -67,8 +67,10 @@ class UISettingsState : BaseState() {
 
   @get:OptionTag("WIDESCREEN_SUPPORT")
   var wideScreenSupport by property(false)
-  @get:OptionTag("REMEMBER_SIZE_FOR_EACH_TOOL_WINDOW")
-  var rememberSizeForEachToolWindow by property(false)
+  @get:OptionTag("REMEMBER_SIZE_FOR_EACH_TOOL_WINDOW_OLD_UI")
+  var rememberSizeForEachToolWindowOldUI by property(true)
+  @get:OptionTag("REMEMBER_SIZE_FOR_EACH_TOOL_WINDOW_NEW_UI")
+  var rememberSizeForEachToolWindowNewUI by property(false)
   @get:OptionTag("LEFT_HORIZONTAL_SPLIT")
   var leftHorizontalSplit by property(false)
   @get:OptionTag("RIGHT_HORIZONTAL_SPLIT")
@@ -110,6 +112,9 @@ class UISettingsState : BaseState() {
   var hideKnownExtensionInTabs by property(false)
   var showTreeIndentGuides by property(false)
   var compactTreeIndents by property(false)
+  @get:ReportValue
+  @get:OptionTag("UI_DENSITY")
+  var uiDensity by enum(UIDensity.DEFAULT)
 
   @get:OptionTag("SORT_TABS_ALPHABETICALLY")
   var sortTabsAlphabetically by property(false)

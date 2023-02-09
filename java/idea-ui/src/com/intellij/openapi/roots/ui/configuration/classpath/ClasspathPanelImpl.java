@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.JavaUiBundle;
@@ -390,7 +390,6 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
             }
           });
         final RelativePoint point = button.getPreferredPopupPoint();
-        if (point == null) return;
         popup.show(point);
       }
     })
@@ -679,8 +678,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       setPaintFocusBorder(false);
       setFocusBorderAroundIcon(true);
       setBorder(NO_FOCUS_BORDER);
-      if (value instanceof ClasspathTableItem<?>) {
-        final ClasspathTableItem<?> tableItem = (ClasspathTableItem<?>)value;
+      if (value instanceof ClasspathTableItem<?> tableItem) {
         getCellAppearance(tableItem, myContext, selected).customize(this);
         setToolTipText(tableItem.getTooltipText());
       }

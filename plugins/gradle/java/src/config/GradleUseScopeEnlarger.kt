@@ -14,7 +14,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiReference
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.UseScopeEnlarger
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -45,13 +44,7 @@ class GradleUseScopeEnlarger : UseScopeEnlarger() {
       if (!isInBuildSrc(project, virtualFile) && !isInGradleDistribution(project, virtualFile)) return null
 
 
-      return object : GlobalSearchScope(element.project) {
-        override fun contains(file: VirtualFile): Boolean {
-          return GradleConstants.EXTENSION == file.extension || file.name.endsWith(GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
-        }
-        override fun isSearchInModuleContent(aModule: Module) = true
-        override fun isSearchInLibraries() = false
-      }
+      return GradleBuildscriptSearchScope(element.project)
     }
 
     private fun isInGradleDistribution(project: Project, file: VirtualFile) : Boolean {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.Facet;
@@ -164,12 +164,9 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   @Nullable
   public ProjectStructureElement getSelectedElement() {
     final TreePath selectionPath = myTree.getSelectionPath();
-    if (selectionPath != null && selectionPath.getLastPathComponent() instanceof MyNode) {
-      MyNode node = (MyNode)selectionPath.getLastPathComponent();
-      final NamedConfigurable configurable = node.getConfigurable();
-      if (configurable instanceof ProjectStructureElementConfigurable) {
-        return ((ProjectStructureElementConfigurable<?>)configurable).getProjectStructureElement();
-      }
+    if (selectionPath != null && selectionPath.getLastPathComponent() instanceof MyNode node &&
+        node.getConfigurable() instanceof ProjectStructureElementConfigurable<?> configurable) {
+      return configurable.getProjectStructureElement();
     }
     return null;
   }

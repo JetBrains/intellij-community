@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.classRefs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,11 +7,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 
-/**
- * @author dsl
- */
 public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
   private static final Logger LOG = Logger.getInstance(ClassInstanceScanner.class);
   private final PsiClass myClass;
@@ -108,61 +106,47 @@ public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
     if(parent instanceof PsiReferenceExpression && expression == ((PsiReferenceExpression) parent).getQualifierExpression()) {
       visitor.visitQualifier((PsiReferenceExpression) parent, expression, referencedElement);
     }
-    else if(parent instanceof PsiTypeCastExpression) {
-      visitor.visitTypeCast((PsiTypeCastExpression) parent, expression, referencedElement);
+    else if (parent instanceof PsiTypeCastExpression) {
+      visitor.visitTypeCast((PsiTypeCastExpression)parent, expression, referencedElement);
     }
-    else if(parent instanceof PsiReturnStatement) {
-      final PsiReturnStatement returnStatement = (PsiReturnStatement) parent;
-      PsiElement enclosingMethod = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class, PsiLambdaExpression.class);
-      final PsiType returnType;
-      if(enclosingMethod instanceof PsiMethod) {
-        returnType = ((PsiMethod)enclosingMethod).getReturnType();
-      }
-      else {
-        returnType = null;
-      }
+    else if (parent instanceof PsiReturnStatement returnStatement) {
+      PsiType returnType =
+        PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiMethod method
+        ? method.getReturnType()
+        : null;
       visitor.visitReadUsage(expression, returnType, referencedElement);
     }
-    else if(parent instanceof PsiStatement) {
+    else if (parent instanceof PsiStatement) {
       visitor.visitReadUsage(expression, null, referencedElement);
     }
-    else if(parent instanceof PsiExpressionList) {
-      PsiExpressionList expressionList = (PsiExpressionList) parent;
+    else if (parent instanceof PsiExpressionList expressionList) {
       PsiElement pparent = expressionList.getParent();
-      if(pparent instanceof PsiStatement) {
+      if (pparent instanceof PsiStatement) {
         visitor.visitReadUsage(expression, null, referencedElement);
       }
-      else if(pparent instanceof PsiCallExpression) {
-        PsiCallExpression callExpression = (PsiCallExpression) pparent;
+      else if (pparent instanceof PsiCallExpression callExpression) {
         PsiExpression[] arguments = callExpression.getArgumentList().getExpressions();
         PsiMethod method = callExpression.resolveMethod();
-        if(method != null) {
-          int index = -1;
-          for (int i = 0; i < arguments.length; i++) {
-            PsiExpression argument = arguments[i];
-            if(argument.equals(expression)) {
-              index = i; break;
-            }
-          }
-          if(index >= 0) {
+        if (method != null) {
+          int index = ArrayUtil.indexOf(arguments, expression);
+          if (index >= 0) {
             PsiParameter[] parameters = method.getParameterList().getParameters();
-            if(parameters.length > index) {
+            if (parameters.length > index) {
               visitor.visitReadUsage(expression, parameters[index].getType(), referencedElement);
             }
           }
         }
       }
     }
-    else if(parent instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression) parent;
-      if(expression.equals(assignmentExpression.getRExpression())) {
+    else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
+      if (expression.equals(assignmentExpression.getRExpression())) {
         visitor.visitReadUsage(expression, assignmentExpression.getLExpression().getType(), referencedElement);
       }
       else { // LExpression
         visitor.visitWriteUsage(expression, assignmentExpression.getRExpression().getType(), referencedElement);
       }
     }
-    else if(RefactoringUtil.isAssignmentLHS(expression)) {
+    else if (RefactoringUtil.isAssignmentLHS(expression)) {
       visitor.visitWriteUsage(expression, null, referencedElement);
     }
     else if(parent instanceof PsiVariable) {

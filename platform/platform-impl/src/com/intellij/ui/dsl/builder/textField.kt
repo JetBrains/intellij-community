@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.validation.forTextComponent
 import com.intellij.openapi.ui.validation.trimParameter
 import com.intellij.ui.dsl.ValidationException
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
+import com.intellij.ui.dsl.builder.impl.DslComponentPropertyInternal
 import com.intellij.ui.dsl.catchValidationException
 import com.intellij.ui.dsl.stringToInt
 import com.intellij.ui.dsl.validateIntInRange
@@ -101,13 +102,13 @@ fun <T : JTextField> T.columns(columns: Int) = apply {
 @Throws(ValidationException::class)
 private fun JTextComponent.getValidatedIntValue(value: String): Int {
   val result = stringToInt(value)
-  val range = getClientProperty(DSL_INT_TEXT_RANGE_PROPERTY) as? IntRange
+  val range = getClientProperty(DslComponentPropertyInternal.INT_TEXT_RANGE) as IntRange?
   range?.let { validateIntInRange(result, it) }
   return result
 }
 
 private fun JTextComponent.isIntInRange(value: Int): Boolean {
-  val range = getClientProperty(DSL_INT_TEXT_RANGE_PROPERTY) as? IntRange
+  val range = getClientProperty(DslComponentPropertyInternal.INT_TEXT_RANGE) as IntRange?
   return range == null || value in range
 }
 

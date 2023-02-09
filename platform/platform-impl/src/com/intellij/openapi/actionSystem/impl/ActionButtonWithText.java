@@ -29,6 +29,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.function.Supplier;
 
 public class ActionButtonWithText extends ActionButton {
   private static final int ICON_TEXT_SPACE = 2;
@@ -44,6 +45,13 @@ public class ActionButtonWithText extends ActionButton {
                               @Nullable Presentation presentation,
                               @NotNull String place,
                               @NotNull Dimension minimumSize) {
+    this(action, presentation, place, () -> minimumSize);
+  }
+
+  public ActionButtonWithText(@NotNull AnAction action,
+                              @Nullable Presentation presentation,
+                              @NotNull String place,
+                              Supplier<? extends @NotNull Dimension> minimumSize) {
     super(action, presentation, place, minimumSize);
     setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : StartupUiUtil.getLabelFont());
     setForeground(UIUtil.getLabelForeground());
@@ -73,7 +81,7 @@ public class ActionButtonWithText extends ActionButton {
   @Override
   public void updateUI() {
     super.updateUI();
-    if (myPlace == ActionPlaces.EDITOR_TOOLBAR) {
+    if (ActionPlaces.EDITOR_TOOLBAR.equals(myPlace)) {
       // tweak font & color for editor toolbar to match editor tabs style
       setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
       setForeground(ColorUtil.dimmer(JBColor.BLACK));
@@ -212,7 +220,7 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   @NotNull
-  private static Icon getDownArrowIcon() { // later can be done protected by demand
+  protected Icon getDownArrowIcon() {
     return AllIcons.General.LinkDropTriangle;
   }
 
@@ -262,9 +270,8 @@ public class ActionButtonWithText extends ActionButton {
     final ShortcutSet shortcutSet = myAction.getShortcutSet();
     final Shortcut[] shortcuts = shortcutSet.getShortcuts();
     for (Shortcut shortcut : shortcuts) {
-      if (!(shortcut instanceof KeyboardShortcut)) continue;
+      if (!(shortcut instanceof KeyboardShortcut keyboardShortcut)) continue;
 
-      KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
       if (keyboardShortcut.getSecondKeyStroke() == null) { // we are interested only in "mnemonic-like" shortcuts
         final KeyStroke keyStroke = keyboardShortcut.getFirstKeyStroke();
         final int modifiers = keyStroke.getModifiers();

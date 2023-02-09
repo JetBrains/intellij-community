@@ -7,6 +7,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
+//import org.jetbrains.plugins.gradle.service.resolve.static.getStaticallyHandledExtensions
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
@@ -46,12 +47,16 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
     val factory = PsiElementFactory.getInstance(containingFile.project)
     val manager = containingFile.manager
 
+    val staticExtensions = getGradleStaticallyHandledExtensions(place.project)
+
     for (extension in extensions) {
+      if (staticExtensions.contains(extension.name)) continue
+
       val delegateType = createType(factory, extension.rootTypeFqn, place.resolveScope)
       if (delegateType !is PsiClassType) {
         continue
       }
-      val type = GradleExtensionType(delegateType)
+      val type = GradleExtensionType(decoratePsiClassType(delegateType))
       if (processProperties) {
         val extensionProperty = GradleExtensionProperty(extension.name, type, containingFile)
         if (!processor.execute(extensionProperty, state)) {

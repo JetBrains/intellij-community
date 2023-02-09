@@ -27,23 +27,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * @author ven
- */
 public class JspxIncludePathReferenceProvider extends PsiReferenceProvider implements CustomizableReferenceProvider {
   @Nullable private Map<CustomizationKey, Object> myOptions;
 
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-    if (element instanceof XmlAttributeValue) {
-      final XmlAttributeValue attributeValue = ((XmlAttributeValue)element);
+    if (element instanceof XmlAttributeValue attributeValue) {
 
       String valueString = attributeValue.getValue();
       if(valueString.indexOf('?') >= 0)
         return getReferencesByString(valueString.substring(0, valueString.indexOf('?')), attributeValue, 1);
       return getReferencesByString(valueString, attributeValue, 1);
-    } else if (element instanceof XmlTag) {
-      final XmlTag tag = ((XmlTag)element);
+    } else if (element instanceof XmlTag tag) {
 
       final XmlTagValue value = tag.getValue();
       final String text = value.getText();

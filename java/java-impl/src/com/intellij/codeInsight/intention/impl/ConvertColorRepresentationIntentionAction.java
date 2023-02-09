@@ -26,9 +26,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Danila Ponomarenko
- */
 public class ConvertColorRepresentationIntentionAction extends BaseColorIntentionAction {
 
   @Override

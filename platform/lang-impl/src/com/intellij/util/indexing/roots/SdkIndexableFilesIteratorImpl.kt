@@ -45,7 +45,9 @@ class SdkIndexableFilesIteratorImpl private constructor(private val sdk: Sdk,
   }
 
   companion object {
-    fun createIterator(sdk: Sdk): SdkIndexableFilesIteratorImpl = SdkIndexableFilesIteratorImpl(sdk, getRootsToIndex(sdk))
+    fun createIterator(sdk: Sdk): IndexableFilesIterator {
+      return SdkIndexableFilesIteratorImpl(sdk, getRootsToIndex(sdk))
+    }
 
     fun getRootsToIndex(sdk: Sdk): Collection<VirtualFile> {
       val rootProvider = sdk.rootProvider
@@ -56,13 +58,12 @@ class SdkIndexableFilesIteratorImpl private constructor(private val sdk: Sdk,
       val sdkRoots = getRootsToIndex(sdk).toMutableList()
       val rootsToIndex = filterRootsToIterate(sdkRoots, listOfRootsToFilter)
 
-      val oldStyle: Collection<IndexableFilesIterator> = if (rootsToIndex.isEmpty()) {
+      return if (rootsToIndex.isEmpty()) {
         emptyList()
       }
       else {
         Collections.singletonList(SdkIndexableFilesIteratorImpl(sdk, rootsToIndex))
       }
-      return oldStyle
     }
 
     fun filterRootsToIterate(initialRoots: MutableList<VirtualFile>,

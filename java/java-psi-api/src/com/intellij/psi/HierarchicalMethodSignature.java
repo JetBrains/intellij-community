@@ -23,8 +23,6 @@ import java.util.List;
 
 /**
  * Data structure which allows efficient retrieval of super methods for a Java method.
- *
- * @author ven
  */
 public abstract class HierarchicalMethodSignature extends MethodSignatureBackedByPsiMethod {
   public HierarchicalMethodSignature(@NotNull MethodSignatureBackedByPsiMethod signature) {

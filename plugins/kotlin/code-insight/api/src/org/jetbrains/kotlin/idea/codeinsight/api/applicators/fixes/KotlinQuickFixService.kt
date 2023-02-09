@@ -3,15 +3,23 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 
 class KotlinQuickFixService {
+    companion object {
+        @JvmStatic
+        fun getInstance(): KotlinQuickFixService = service()
+    }
+
     private val list = KotlinQuickFixesList.createCombined(KotlinQuickFixRegistrar.allQuickFixesList())
 
-    fun KtAnalysisSession.getQuickFixesFor(diagnostic: KtDiagnosticWithPsi<*>): List<IntentionAction> =
-        with(list) { getQuickFixesFor(diagnostic) }
+    context(KtAnalysisSession)
+    fun getQuickFixesFor(diagnostic: KtDiagnosticWithPsi<*>): List<IntentionAction> {
+        return list.getQuickFixesFor(diagnostic)
+    }
 }
 
 abstract class KotlinQuickFixRegistrar {

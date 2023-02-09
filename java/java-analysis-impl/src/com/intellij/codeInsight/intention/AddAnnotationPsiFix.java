@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -8,8 +8,8 @@ import com.intellij.codeInsight.ExternalAnnotationsManager.AnnotationPlace;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
-import com.intellij.codeInspection.OnTheFlyLocalFix;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -36,10 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 
-import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
-import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
-
-public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements OnTheFlyLocalFix {
+public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements LocalQuickFix {
   protected final String myAnnotation;
   final String[] myAnnotationsToRemove;
   @SafeFieldForPreview
@@ -159,10 +156,9 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
 
     if (modifierListOwner instanceof PsiParameter && ((PsiParameter)modifierListOwner).getTypeElement() == null) {
       if (modifierListOwner.getParent() instanceof PsiParameterList &&
-          modifierListOwner.getParent().getParent() instanceof PsiLambdaExpression) {
+          modifierListOwner.getParent().getParent() instanceof PsiLambdaExpression lambda) {
         // Lambda parameter without type cannot be annotated. Check if we can specify types
         if (PsiUtil.isLanguageLevel11OrHigher(modifierListOwner)) return true;
-        PsiLambdaExpression lambda = (PsiLambdaExpression)modifierListOwner.getParent().getParent();
         return LambdaUtil.createLambdaParameterListWithFormalTypes(lambda.getFunctionalInterfaceType(), lambda, false) != null;
       }
       return false;
@@ -171,8 +167,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
     PsiModifierList modifierList = modifierListOwner.getModifierList();
     return modifierList != null
            && !(modifierList instanceof LightElement)
-           && !(modifierListOwner instanceof LightElement)
-           && !AnnotationUtil.isAnnotated(modifierListOwner, annotationFQN, CHECK_EXTERNAL | CHECK_TYPE);
+           && !(modifierListOwner instanceof LightElement);
   }
 
   @Override

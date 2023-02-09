@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -119,7 +120,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     assertPassIdsAreNotCrazy(afterStartingOf, "afterStartingOf");
     assertPassIdsAreNotCrazy(afterCompletionOf, "afterCompletionOf");
     PassConfig info = new PassConfig(factory, afterCompletionOf, afterStartingOf);
-    int passId = forcedPassId == -1 ? nextAvailableId.incrementAndGet() : forcedPassId;
+    int passId = forcedPassId == -1 ? getNextAvailableId() : forcedPassId;
     PassConfig registered = myRegisteredPassFactories.get(passId);
     assert registered == null: "Pass id "+passId +" has already been registered in: "+ registered.passFactory;
     myRegisteredPassFactories.put(passId, info);
@@ -151,9 +152,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     }
   }
 
-  @NotNull
-  AtomicInteger getNextAvailableId() {
-    return nextAvailableId;
+  int getNextAvailableId() {
+    return nextAvailableId.incrementAndGet();
   }
 
   @Override
@@ -183,7 +183,9 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
         }
         TextEditorHighlightingPassFactory factory = passConfig.passFactory;
         TextEditorHighlightingPass pass =
-          isDumb && !DumbService.isDumbAware(factory) ? null : factory.createHighlightingPass(psiFile, editor);
+          isDumb && !DumbService.isDumbAware(factory)
+          || !ProblemHighlightFilter.shouldHighlightFile(psiFile)
+          ? null : factory.createHighlightingPass(psiFile, editor);
         if (pass == null || isDumb && !DumbService.isDumbAware(pass)) {
           passesRefusedToCreate.add(passId);
         }

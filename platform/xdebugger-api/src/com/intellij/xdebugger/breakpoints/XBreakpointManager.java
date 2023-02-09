@@ -48,13 +48,6 @@ public interface XBreakpointManager {
 
   boolean isDefaultBreakpoint(@NotNull XBreakpoint<?> breakpoint);
 
-  /**
-   * @deprecated There could be more than one default breakpoint per type. Use {@link XBreakpointManager#getDefaultBreakpoints} instead
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  <B extends XBreakpoint<?>> B getDefaultBreakpoint(@NotNull XBreakpointType<B, ?> type);
-
   @NotNull
   <B extends XBreakpoint<?>> Set<B> getDefaultBreakpoints(@NotNull XBreakpointType<B, ?> type);
 

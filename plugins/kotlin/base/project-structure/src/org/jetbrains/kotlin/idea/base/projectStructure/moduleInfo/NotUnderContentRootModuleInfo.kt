@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.NonSourceModuleInfoBase
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
@@ -9,10 +11,22 @@ import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAna
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.idea.caches.project.NotUnderContentRootModuleInfo as OldNotUnderContentRootModuleInfo
 
-object NotUnderContentRootModuleInfo : OldNotUnderContentRootModuleInfo(), IdeaModuleInfo, NonSourceModuleInfoBase {
+class NotUnderContentRootModuleInfo(
+    override val project: Project,
+    file: KtFile?
+) : OldNotUnderContentRootModuleInfo(), IdeaModuleInfo, NonSourceModuleInfoBase {
+    @Deprecated("Backing 'KtFile' expected")
+    constructor(project: Project) : this(project, null)
+
+    private val filePointer: SmartPsiElementPointer<KtFile>? = file?.let { SmartPointerManager.createPointer(it) }
+
+    val file: KtFile?
+        get() = filePointer?.element
+
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.OTHER
 
@@ -20,9 +34,6 @@ object NotUnderContentRootModuleInfo : OldNotUnderContentRootModuleInfo(), IdeaM
 
     override val displayedName: String
         get() = KotlinBaseProjectStructureBundle.message("special.module.for.files.not.under.source.root")
-
-    override val project: Project?
-        get() = null
 
     override val contentScope: GlobalSearchScope
         get() = GlobalSearchScope.EMPTY_SCOPE
@@ -36,4 +47,20 @@ object NotUnderContentRootModuleInfo : OldNotUnderContentRootModuleInfo(), IdeaM
 
     override val analyzerServices: PlatformDependentAnalyzerServices
         get() = platform.single().findAnalyzerServices()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as NotUnderContentRootModuleInfo
+
+        if (project != other.project) return false
+        return filePointer == other.filePointer
+    }
+
+    override fun hashCode(): Int {
+        var result = project.hashCode()
+        result = 31 * result + (filePointer?.hashCode() ?: 0)
+        return result
+    }
 }

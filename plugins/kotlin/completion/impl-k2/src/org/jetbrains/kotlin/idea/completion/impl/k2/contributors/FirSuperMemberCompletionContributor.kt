@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -27,7 +26,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtSuperExpression
-import org.jetbrains.kotlin.utils.addIfNotNull
 
 internal class FirSuperMemberCompletionContributor(
     basicContext: FirBasicCompletionContext,
@@ -46,8 +44,7 @@ internal class FirSuperMemberCompletionContributor(
         )
 
         val (nonExtensionMembers: Iterable<Pair<KtType, KtCallableSymbol>>, namesNeedDisambiguation: Set<Name>) = if (superType !is KtIntersectionType) {
-            val scope = superType.getTypeScope()?.getDeclarationScope() ?: return
-            collectNonExtensions(scope, visibilityChecker, scopeNameFilter).map { superType to it }.asIterable() to emptySet()
+            getNonExtensionsMemberSymbols(superType, visibilityChecker).map { superType to it }.asIterable() to emptySet()
         } else {
             getSymbolsAndNamesNeedDisambiguation(superType.conjuncts, visibilityChecker)
         }
@@ -93,8 +90,9 @@ internal class FirSuperMemberCompletionContributor(
         receiverType: KtType,
         visibilityChecker: CompletionVisibilityChecker
     ): Sequence<KtCallableSymbol> {
-        val possibleReceiverScope = receiverType.getTypeScope()?.getDeclarationScope() ?: return emptySequence()
-        return collectNonExtensions(possibleReceiverScope, visibilityChecker, scopeNameFilter)
+        val scope = receiverType.getTypeScope()?.getDeclarationScope() ?: return emptySequence()
+        val syntheticJavaPropertiesScope = receiverType.getSyntheticJavaPropertiesScope()?.getDeclarationScope()
+        return collectNonExtensions(scope, syntheticJavaPropertiesScope, visibilityChecker, scopeNameFilter)
     }
 
     private fun KtAnalysisSession.collectCallToSuperMember(
@@ -103,33 +101,22 @@ internal class FirSuperMemberCompletionContributor(
         context: WeighingContext,
         namesNeedDisambiguation: Set<Name>
     ) {
-        val syntheticPropertyOrigins = mutableSetOf<KtFunctionSymbol>()
-        nonExtensionMembers
-            .onEach {
-                if (it is KtSyntheticJavaPropertySymbol) {
-                    syntheticPropertyOrigins.add(it.javaGetterSymbol)
-                    syntheticPropertyOrigins.addIfNotNull(it.javaSetterSymbol)
-                }
-            }
-            .forEach { (superType, callableSymbol) ->
-                if (callableSymbol !in syntheticPropertyOrigins) {
-                    // For basic completion, FE1.0 skips Java functions that are mapped to Kotlin properties.
-                    addCallableSymbolToCompletion(
-                        context,
+        nonExtensionMembers.forEach { (superType, callableSymbol) ->
+            addCallableSymbolToCompletion(
+                context,
+                callableSymbol,
+                CallableInsertionOptions(
+                    importStrategyDetector.detectImportStrategy(callableSymbol),
+                    wrapWithDisambiguationIfNeeded(
+                        getInsertionStrategy(callableSymbol),
+                        superType,
                         callableSymbol,
-                        CallableInsertionOptions(
-                            importStrategyDetector.detectImportStrategy(callableSymbol),
-                            wrapWithDisambiguationIfNeeded(
-                                getInsertionStrategy(callableSymbol),
-                                superType,
-                                callableSymbol,
-                                namesNeedDisambiguation,
-                                superReceiver
-                            )
-                        )
+                        namesNeedDisambiguation,
+                        superReceiver
                     )
-                }
-            }
+                )
+            )
+        }
     }
 
     private fun KtAnalysisSession.getInsertionStrategy(symbol: KtCallableSymbol): CallableInsertionStrategy = when (symbol) {

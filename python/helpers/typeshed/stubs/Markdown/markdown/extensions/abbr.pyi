@@ -1,4 +1,5 @@
-from typing import Any, Pattern
+from re import Pattern
+from typing import Any
 
 from markdown.blockprocessors import BlockProcessor
 from markdown.extensions import Extension

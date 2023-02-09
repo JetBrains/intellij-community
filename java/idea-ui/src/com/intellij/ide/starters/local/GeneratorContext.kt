@@ -2,7 +2,7 @@
 package com.intellij.ide.starters.local
 
 import com.intellij.openapi.projectRoots.JavaSdkVersion
-import com.intellij.openapi.vfs.VirtualFile
+import java.nio.file.Path
 
 internal class GeneratorContext(
   val starterId: String,
@@ -18,7 +18,7 @@ internal class GeneratorContext(
   private val dependencyConfig: DependencyConfig,
   private val properties: Map<String, String>,
   val assets: List<GeneratorAsset>,
-  val outputDirectory: VirtualFile
+  val outputDirectory: Path
 ) {
   fun hasLanguage(languageId: String): Boolean {
     return this.languageId == languageId
@@ -60,6 +60,7 @@ internal class GeneratorContext(
     return desiredSdkVersion != null && sdkVersion != null && sdkVersion.isAtLeast(desiredSdkVersion)
   }
 
+  @Suppress("unused")
   val rootPackagePath: String
     get() {
       return rootPackage.replace(".", "/").removeSuffix("/")

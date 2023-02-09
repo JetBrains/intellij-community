@@ -24,9 +24,6 @@ import com.intellij.refactoring.typeCook.TypeCookProcessor;
 
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class TypeCookRefactoringImpl extends RefactoringImpl<TypeCookProcessor> implements TypeCookRefactoring {
   TypeCookRefactoringImpl(Project project,
                           PsiElement[] elements,

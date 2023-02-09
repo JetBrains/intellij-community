@@ -41,6 +41,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.properties.models.Property;
+import org.jetbrains.plugins.gradle.properties.GradleProperties;
+import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
 import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension;
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
@@ -48,8 +51,6 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleProperties;
-import org.jetbrains.plugins.gradle.util.GradlePropertiesUtil;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.awt.geom.IllegalPathStateException;
@@ -67,9 +68,6 @@ import static org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutio
 import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_KEY;
 import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_PREFIX_KEY;
 
-/**
- * @author Denis Zhdanov
- */
 public class GradleExecutionHelper {
 
   private static final Logger LOG = Logger.getInstance(GradleExecutionHelper.class);
@@ -481,12 +479,18 @@ public class GradleExecutionHelper {
     var arguments = new ArrayList<String>();
     addSettingsArguments(arguments, settings);
     var testTaskPatterns = extractTestTaskPatterns(arguments);
-    var path = renderInitScript(testTaskPatterns);
+    var path = renderTestFilterInitScript(testTaskPatterns, isTestExecForced(settings));
     if (path != null) {
       ContainerUtil.addAll(arguments, GradleConstants.INIT_SCRIPT_CMD_OPTION, path);
     }
     addIdeaParameters(arguments);
     operation.withArguments(arguments);
+  }
+
+  private static boolean isTestExecForced(GradleExecutionSettings settings) {
+    return Optional.ofNullable(settings)
+      .map(s -> s.getUserData(GradleConstants.FORCE_TEST_EXECUTION))
+      .orElse(false);
   }
 
   private static void addSettingsArguments(@NotNull ArrayList<String> arguments, @NotNull GradleExecutionSettings settings) {
@@ -513,9 +517,9 @@ public class GradleExecutionHelper {
     if (buildEnvironment == null) {
       return;
     }
-    GradleProperties properties = GradlePropertiesUtil.getGradleProperties(settings.getServiceDirectory(),
-                                                                           buildEnvironment.getBuildIdentifier().getRootDir().toPath());
-    GradleProperties.GradleProperty<String> loggingLevelProperty = properties.getGradleLoggingLevel();
+    GradleProperties properties = GradlePropertiesFile.INSTANCE.getProperties(settings.getServiceDirectory(),
+                                                                              buildEnvironment.getBuildIdentifier().getRootDir().toPath());
+    Property<String> loggingLevelProperty = properties.getGradleLoggingLevel();
     @NonNls String gradleLogLevel = loggingLevelProperty != null ? loggingLevelProperty.getValue() : null;
 
     if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))
@@ -912,7 +916,7 @@ public class GradleExecutionHelper {
   }
 
   @Nullable
-  public static String renderInitScript(@NotNull Set<String> testTasksPatterns) {
+  public static String renderTestFilterInitScript(@NotNull Set<String> testTasksPatterns, boolean forceExecution) {
     InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/testFilterInit.gradle");
     if (stream == null) {
       LOG.error("Can't find test filter init script template");
@@ -920,7 +924,9 @@ public class GradleExecutionHelper {
     }
     try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
       var testNameIncludes = Matcher.quoteReplacement(toGroovyList(new ArrayList<>(testTasksPatterns)));
-      String script = StreamUtil.readText(reader).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), testNameIncludes);
+      String script = StreamUtil.readText(reader)
+        .replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), testNameIncludes)
+        .replaceFirst(Pattern.quote("${FORCE_TEST_EXECUTION}"), forceExecution ? " task.outputs.upToDateWhen { false } " : "");
       File tempFile = writeToFileGradleInitScript(script, "ijtestinit");
       return tempFile.getAbsolutePath();
     }

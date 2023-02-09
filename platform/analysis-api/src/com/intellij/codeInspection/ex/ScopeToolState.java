@@ -3,6 +3,8 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -107,9 +109,10 @@ public final class ScopeToolState {
   }
 
   @Nullable
-  public JComponent getAdditionalConfigPanel() {
+  public JComponent getAdditionalConfigPanel(Disposable parent, @NotNull Project project) {
     if (myAdditionalConfigPanelState == null) {
-      myAdditionalConfigPanelState = ConfigPanelState.of(myToolWrapper.getTool().createOptionsPanel(), myToolWrapper);
+      myAdditionalConfigPanelState = ConfigPanelState.of(
+        InspectionOptionPaneRenderer.createOptionsPanel(myToolWrapper.getTool(), parent, project), myToolWrapper);
     }
     return myAdditionalConfigPanelState.getPanel(isEnabled());
   }

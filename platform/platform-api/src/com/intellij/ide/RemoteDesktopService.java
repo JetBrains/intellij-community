@@ -6,15 +6,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.util.SystemInfoRt;
 
+import java.util.function.Supplier;
+
 public abstract class RemoteDesktopService {
-  private static volatile RemoteDesktopService ourInstance = CachedSingletonsRegistry.markCachedField(RemoteDesktopService.class);
+  private static final Supplier<RemoteDesktopService> ourInstance = CachedSingletonsRegistry.lazy(() -> {
+    return ApplicationManager.getApplication().getService(RemoteDesktopService.class);
+  });
 
   public static RemoteDesktopService getInstance() {
-    RemoteDesktopService service = ourInstance;
-    if (service == null) {
-      ourInstance = service = ApplicationManager.getApplication().getService(RemoteDesktopService.class);
-    }
-    return service;
+    return ourInstance.get();
   }
 
   public static boolean isRemoteSession() {

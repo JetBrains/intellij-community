@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtilBase;
@@ -28,7 +28,8 @@ import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ParameterHidingMemberVariableInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
@@ -72,19 +73,15 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.setters.option"),
-                             "m_ignoreForPropertySetters");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.superclass.option"),
-                             "m_ignoreInvisibleFields");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.constructors.option"),
-                             "m_ignoreForConstructors");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.abstract.methods.option"),
-                             "m_ignoreForAbstractMethods");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.static.parameters.option"),
-                             "m_ignoreStaticMethodParametersHidingInstanceFields");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreForPropertySetters", InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.setters.option")),
+      checkbox("m_ignoreInvisibleFields", InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.superclass.option")),
+      checkbox("m_ignoreForConstructors", InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.constructors.option")),
+      checkbox("m_ignoreForAbstractMethods",
+               InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.abstract.methods.option")),
+      checkbox("m_ignoreStaticMethodParametersHidingInstanceFields",
+               InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.static.parameters.option")));
   }
 
   @Override
@@ -98,10 +95,9 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
     public void visitParameter(@NotNull PsiParameter variable) {
       super.visitParameter(variable);
       final PsiElement declarationScope = variable.getDeclarationScope();
-      if (!(declarationScope instanceof PsiMethod)) {
+      if (!(declarationScope instanceof PsiMethod method)) {
         return;
       }
-      final PsiMethod method = (PsiMethod)declarationScope;
       if (method.isConstructor() &&
           (m_ignoreForConstructors || JavaPsiRecordUtil.isCanonicalConstructor(method))) {
         return;
@@ -117,7 +113,7 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
       }
       if (m_ignoreForPropertySetters) {
         final String methodName = method.getName();
-        if (methodName.startsWith(HardcodedMethodConstants.SET) && PsiType.VOID.equals(method.getReturnType())) {
+        if (methodName.startsWith(HardcodedMethodConstants.SET) && PsiTypes.voidType().equals(method.getReturnType())) {
           return;
         }
 

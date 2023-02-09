@@ -28,9 +28,6 @@ import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public class PyiInspectionsTest extends PyTestCase {
 
   private Disposable myRootsDisposable;

@@ -17,10 +17,11 @@ package com.siyeh.ig.memory;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.BatchQuickFix;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressManager;
@@ -43,11 +44,13 @@ import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class InnerClassMayBeStaticInspection extends BaseInspection {
 
@@ -61,11 +64,11 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("inner.class.may.be.static.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                 new JavaClassValidator().annotationsOnly()));
   }
 
   @Override
@@ -174,10 +177,9 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
           .sorted((r1, r2) -> PsiUtilCore.compareElementsByPosition(r2, r1))
           .forEach(reference -> {
             final PsiElement parent = reference.getParent();
-            if (!(parent instanceof PsiNewExpression)) {
+            if (!(parent instanceof PsiNewExpression newExpression)) {
               return;
             }
-            final PsiNewExpression newExpression = (PsiNewExpression)parent;
             final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
             if (classReference == null) {
               return;

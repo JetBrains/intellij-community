@@ -62,10 +62,9 @@ public class StaticInheritanceInspection extends BaseInspection {
         implementsList.getReferenceElements();
       for (final PsiJavaCodeReferenceElement reference : references) {
         final PsiElement target = reference.resolve();
-        if (!(target instanceof PsiClass)) {
+        if (!(target instanceof PsiClass targetClass)) {
           return;
         }
-        final PsiClass targetClass = (PsiClass)target;
         if (targetClass.isInterface() && interfaceContainsOnlyConstants(targetClass, new HashSet<>())) {
           registerError(reference);
         }

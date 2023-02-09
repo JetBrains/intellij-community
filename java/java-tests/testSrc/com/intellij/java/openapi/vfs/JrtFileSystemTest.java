@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.openapi.vfs;
 
 import com.intellij.JavaTestUtil;
@@ -28,7 +28,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -164,8 +163,8 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
     IoTestUtil.performTestOnWindowsSubst(myJrtPath.toString(), substRoot -> {
       VfsRootAccess.allowRootAccess(myDisposable, substRoot.getPath());
 
-      String substedUrl = "jrt://" + UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(substRoot.getPath())) + "/!/java.base";
-      VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(substedUrl, myDisposable, null);
+      String substitutedUrl = "jrt://" + UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(substRoot.getPath())) + "/!/java.base";
+      VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(substitutedUrl, myDisposable, null);
       assertTrue(pointer.isValid());
       VirtualFile file = pointer.getFile();
       assertNotNull(file);

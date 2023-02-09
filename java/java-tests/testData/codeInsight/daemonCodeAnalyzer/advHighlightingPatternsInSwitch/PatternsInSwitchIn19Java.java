@@ -59,8 +59,8 @@ class X {
 
   void unconditionalGuardAndDefault(Object obj) {
     switch (obj) {
-      case <error descr="'switch' has both a total pattern and a default label">Object o when true</error> -> {}
-      <error descr="'switch' has both a total pattern and a default label">default</error> -> {}
+      case <error descr="'switch' has both an unconditional pattern and a default label">Object o when true</error> -> {}
+      <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> {}
     }
   }
 

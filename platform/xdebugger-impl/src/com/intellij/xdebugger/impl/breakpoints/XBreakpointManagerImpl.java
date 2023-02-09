@@ -366,13 +366,6 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   }
 
   @Override
-  @Nullable
-  public <B extends XBreakpoint<?>> B getDefaultBreakpoint(@NotNull XBreakpointType<B, ?> type) {
-    Set<B> defaultBreakpoints = getDefaultBreakpoints(type);
-    return ContainerUtil.getFirstItem(defaultBreakpoints);
-  }
-
-  @Override
   @NotNull
   public <B extends XBreakpoint<?>> Set<B> getDefaultBreakpoints(@NotNull XBreakpointType<B, ?> type) {
     Set<XBreakpointBase<?, ?, ?>> breakpointsSet = myDefaultBreakpoints.get(type);

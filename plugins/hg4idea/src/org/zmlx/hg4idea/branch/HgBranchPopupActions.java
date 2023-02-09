@@ -17,6 +17,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -46,10 +47,7 @@ import org.zmlx.hg4idea.ui.HgBookmarkDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
@@ -93,7 +91,8 @@ public class HgBranchPopupActions {
       .toList();
     int topShownBookmarks = getNumOfTopShownBranches(bookmarkActions);
     if (currentBookmark != null) {
-      bookmarkActions.add(0, new CurrentActiveBookmark(myProject, Collections.singletonList(myRepository), currentBookmark));
+      bookmarkActions = ContainerUtil.prepend(bookmarkActions, new CurrentActiveBookmark(myProject, Collections.singletonList(myRepository),
+                                                                                         currentBookmark));
       topShownBookmarks++;
     }
     wrapWithMoreActionIfNeeded(myProject, popupGroup, bookmarkActions, topShownBookmarks,
@@ -102,14 +101,15 @@ public class HgBranchPopupActions {
     //only opened branches have to be shown
     popupGroup.addSeparator(specificRepository == null ?
                             HgBundle.message("hg4idea.branch.branches.separator") :
-                            HgBundle.message("hg4idea.branch.branches.in.repo.separator", DvcsUtil.getShortRepositoryName(specificRepository)));
+                            HgBundle.message("hg4idea.branch.branches.in.repo.separator",
+                                             DvcsUtil.getShortRepositoryName(specificRepository)));
     List<BranchActions> branchActions = StreamEx.of(myRepository.getOpenedBranches())
       .sorted(StringUtil::naturalCompare)
       .filter(b -> !b.equals(myRepository.getCurrentBranch()))
       .map(b -> new BranchActions(myProject, Collections.singletonList(myRepository), b))
       .sorted(FAVORITE_BRANCH_COMPARATOR)
+      .prepend(new CurrentBranch(myProject, Collections.singletonList(myRepository), myRepository.getCurrentBranch()))
       .toList();
-    branchActions.add(0, new CurrentBranch(myProject, Collections.singletonList(myRepository), myRepository.getCurrentBranch()));
     wrapWithMoreActionIfNeeded(myProject, popupGroup, branchActions, getNumOfTopShownBranches(branchActions) + 1,
                                firstLevelGroup ? HgBranchPopup.SHOW_ALL_BRANCHES_KEY : null, firstLevelGroup);
     return popupGroup;
@@ -189,10 +189,11 @@ public class HgBranchPopupActions {
       List<Change> changesForRepositories = ContainerUtil.filter(activeChangeList.getChanges(),
                                                                  change -> myRepositories.contains(repositoryManager.getRepositoryForFile(
                                                                    ChangesUtil.getFilePath(change))));
-      HgCloseBranchExecutor closeBranchExecutor = new HgCloseBranchExecutor(myRepositories);
-      CommitChangeListDialog.commitChanges(project, changesForRepositories, changesForRepositories, activeChangeList,
-                                           Collections.singletonList(closeBranchExecutor), false, vcs, "Close Branch", null,
-                                           false); //NON-NLS
+      Set<AbstractVcs> affectedVcses = Collections.singleton(vcs);
+      List<HgCloseBranchExecutor> executors = Collections.singletonList(new HgCloseBranchExecutor(myRepositories));
+      String commitMessage = "Close Branch"; //NON-NLS
+      CommitChangeListDialog.showCommitDialog(project, affectedVcses, changesForRepositories, activeChangeList,
+                                              executors, false, commitMessage, null);
     }
 
     @Override

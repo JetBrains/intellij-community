@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.workspaceModel.storage.EntityInformation
@@ -10,16 +10,22 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityWithSymbolicId
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.io.Serializable
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -40,6 +46,12 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
 
     override val roots: List<KotlinScriptLibraryRoot>
         get() = dataSource.roots
+
+    override var indexSourceRoots: Boolean = false
+        get() = dataSource.indexSourceRoots
+
+    override val usedInScripts: Set<KotlinScriptId>
+        get() = dataSource.usedInScripts
 
     override val entitySource: EntitySource
         get() = dataSource.entitySource
@@ -66,11 +78,6 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
             this.snapshot = builder
             addToBuilder()
             this.id = getEntityData().createEntityId()
-
-            // DON'T_REMOVE_AT_CODE_GENERATION: start (see IDEA-305887)
-            indexLibraryRoots(roots)
-            // DON'T_REMOVE_AT_CODE_GENERATION: end
-
             // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
             // Builder may switch to snapshot at any moment and lock entity data to modification
             this.currentEntityData = null
@@ -91,6 +98,9 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
             if (!getEntityData().isRootsInitialized()) {
                 error("Field KotlinScriptLibraryEntity#roots should be initialized")
             }
+            if (!getEntityData().isUsedInScriptsInitialized()) {
+                error("Field KotlinScriptLibraryEntity#usedInScripts should be initialized")
+            }
         }
 
         override fun connectionIdList(): List<ConnectionId> {
@@ -102,6 +112,10 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
             if (collection_roots is MutableWorkspaceList<*>) {
                 collection_roots.cleanModificationUpdateAction()
             }
+            val collection_usedInScripts = getEntityData().usedInScripts
+            if (collection_usedInScripts is MutableWorkspaceSet<*>) {
+                collection_usedInScripts.cleanModificationUpdateAction()
+            }
         }
 
         // Relabeling code, move information from dataSource to this builder
@@ -110,20 +124,11 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
             if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
             if (this.name != dataSource.name) this.name = dataSource.name
             if (this.roots != dataSource.roots) this.roots = dataSource.roots.toMutableList()
-            if (parents != null) {
-            }
+            if (this.indexSourceRoots != dataSource.indexSourceRoots) this.indexSourceRoots = dataSource.indexSourceRoots
+            if (this.usedInScripts != dataSource.usedInScripts) this.usedInScripts = dataSource.usedInScripts.toMutableSet()
+            updateChildToParentReferences(parents)
         }
 
-        // DON'T_REMOVE_AT_CODE_GENERATION: start (see IDEA-305887)
-        private fun indexLibraryRoots(libraryRoots: List<KotlinScriptLibraryRoot>) {
-            val jarDirectories = mutableSetOf<VirtualFileUrl>()
-            val libraryRootList = libraryRoots.map {
-                it.url
-            }.toHashSet()
-            index(this, "roots", libraryRootList)
-            indexJarDirectories(this, jarDirectories)
-        }
-        // DON'T_REMOVE_AT_CODE_GENERATION: end
 
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
@@ -163,16 +168,103 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
                 rootsUpdater.invoke(value)
             }
 
+        override var indexSourceRoots: Boolean
+            get() = getEntityData().indexSourceRoots
+            set(value) {
+                checkModificationAllowed()
+                getEntityData(true).indexSourceRoots = value
+                changedProperty.add("indexSourceRoots")
+            }
+
+        private val usedInScriptsUpdater: (value: Set<KotlinScriptId>) -> Unit = { value ->
+
+            changedProperty.add("usedInScripts")
+        }
+        override var usedInScripts: MutableSet<KotlinScriptId>
+            get() {
+                val collection_usedInScripts = getEntityData().usedInScripts
+                if (collection_usedInScripts !is MutableWorkspaceSet) return collection_usedInScripts
+                if (diff == null || modifiable.get()) {
+                    collection_usedInScripts.setModificationUpdateAction(usedInScriptsUpdater)
+                } else {
+                    collection_usedInScripts.cleanModificationUpdateAction()
+                }
+                return collection_usedInScripts
+            }
+            set(value) {
+                checkModificationAllowed()
+                getEntityData(true).usedInScripts = value
+                usedInScriptsUpdater.invoke(value)
+            }
+
         override fun getEntityClass(): Class<KotlinScriptLibraryEntity> = KotlinScriptLibraryEntity::class.java
     }
 }
 
-class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<KotlinScriptLibraryEntity>() {
+class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<KotlinScriptLibraryEntity>(), SoftLinkable {
     lateinit var name: String
     lateinit var roots: MutableList<KotlinScriptLibraryRoot>
+    var indexSourceRoots: Boolean = false
+    lateinit var usedInScripts: MutableSet<KotlinScriptId>
 
     fun isNameInitialized(): Boolean = ::name.isInitialized
     fun isRootsInitialized(): Boolean = ::roots.isInitialized
+    fun isUsedInScriptsInitialized(): Boolean = ::usedInScripts.isInitialized
+
+    override fun getLinks(): Set<SymbolicEntityId<*>> {
+        val result = HashSet<SymbolicEntityId<*>>()
+        for (item in roots) {
+        }
+        for (item in usedInScripts) {
+            result.add(item)
+        }
+        return result
+    }
+
+    override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+        for (item in roots) {
+        }
+        for (item in usedInScripts) {
+            index.index(this, item)
+        }
+    }
+
+    override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+        // TODO verify logic
+        val mutablePreviousSet = HashSet(prev)
+        for (item in roots) {
+        }
+        for (item in usedInScripts) {
+            val removedItem_item = mutablePreviousSet.remove(item)
+            if (!removedItem_item) {
+                index.index(this, item)
+            }
+        }
+        for (removed in mutablePreviousSet) {
+            index.remove(this, removed)
+        }
+    }
+
+    override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
+        var changed = false
+        val usedInScripts_data = usedInScripts.map {
+            val it_data = if (it == oldLink) {
+                changed = true
+                newLink as KotlinScriptId
+            } else {
+                null
+            }
+            if (it_data != null) {
+                it_data
+            } else {
+                it
+            }
+        }
+        if (usedInScripts_data != null) {
+            usedInScripts = usedInScripts_data as MutableSet<KotlinScriptId>
+        }
+        return changed
+    }
 
     override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<KotlinScriptLibraryEntity> {
         val modifiable = KotlinScriptLibraryEntityImpl.Builder(null)
@@ -195,6 +287,7 @@ class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolic
         val clonedEntity = super.clone()
         clonedEntity as KotlinScriptLibraryEntityData
         clonedEntity.roots = clonedEntity.roots.toMutableWorkspaceList()
+        clonedEntity.usedInScripts = clonedEntity.usedInScripts.toMutableWorkspaceSet()
         return clonedEntity
     }
 
@@ -213,7 +306,7 @@ class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolic
     }
 
     override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-        return KotlinScriptLibraryEntity(name, roots, entitySource) {
+        return KotlinScriptLibraryEntity(name, roots, indexSourceRoots, usedInScripts, entitySource) {
         }
     }
 
@@ -231,6 +324,8 @@ class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolic
         if (this.entitySource != other.entitySource) return false
         if (this.name != other.name) return false
         if (this.roots != other.roots) return false
+        if (this.indexSourceRoots != other.indexSourceRoots) return false
+        if (this.usedInScripts != other.usedInScripts) return false
         return true
     }
 
@@ -242,6 +337,8 @@ class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolic
 
         if (this.name != other.name) return false
         if (this.roots != other.roots) return false
+        if (this.indexSourceRoots != other.indexSourceRoots) return false
+        if (this.usedInScripts != other.usedInScripts) return false
         return true
     }
 
@@ -249,6 +346,8 @@ class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolic
         var result = entitySource.hashCode()
         result = 31 * result + name.hashCode()
         result = 31 * result + roots.hashCode()
+        result = 31 * result + indexSourceRoots.hashCode()
+        result = 31 * result + usedInScripts.hashCode()
         return result
     }
 
@@ -256,13 +355,17 @@ class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolic
         var result = javaClass.hashCode()
         result = 31 * result + name.hashCode()
         result = 31 * result + roots.hashCode()
+        result = 31 * result + indexSourceRoots.hashCode()
+        result = 31 * result + usedInScripts.hashCode()
         return result
     }
 
     override fun collectClassUsagesData(collector: UsedClassesCollector) {
+        collector.add(KotlinScriptId::class.java)
         collector.add(KotlinScriptLibraryRootTypeId::class.java)
         collector.add(KotlinScriptLibraryRoot::class.java)
         this.roots?.let { collector.add(it::class.java) }
+        this.usedInScripts?.let { collector.add(it::class.java) }
         collector.sameForAllEntities = false
     }
 }

@@ -24,14 +24,24 @@ interface UiSwitcher {
 
   companion object {
 
-    private val UI_SWITCHER = Key.create<UiSwitcher>("com.intellij.openapi.ui.UI_SWITCHER")
+    private val UI_SWITCHERS = Key.create<Set<UiSwitcher>>("com.intellij.openapi.ui.UI_SWITCHERS")
 
     @JvmStatic
     fun append(component: JComponent, uiSwitcher: UiSwitcher) {
-      val existingSwitcher = component.getUserData(UI_SWITCHER)
-      component.putUserData(UI_SWITCHER, if (existingSwitcher == null) uiSwitcher
-      else UnionUiSwitcher(
-        listOf(existingSwitcher, uiSwitcher)))
+      val uiSwitchers = getUiSwitchers(component)
+      component.putUserData(UI_SWITCHERS, uiSwitchers + uiSwitcher)
+    }
+
+    @JvmStatic
+    fun appendAll(component: JComponent, uiSwitchers: Set<UiSwitcher>) {
+      val myUiSwitchers = getUiSwitchers(component)
+      component.putUserData(UI_SWITCHERS, myUiSwitchers + uiSwitchers)
+    }
+
+    @JvmStatic
+    fun removeAll(component: JComponent, uiSwitchers: Set<UiSwitcher>) {
+      val myUiSwitchers = getUiSwitchers(component)
+      component.putUserData(UI_SWITCHERS, (myUiSwitchers - uiSwitchers).ifEmpty { null })
     }
 
     /**
@@ -40,23 +50,20 @@ interface UiSwitcher {
      */
     @JvmStatic
     fun show(component: Component) {
-      var c: Component?  = component
+      var c: Component? = component
       while (c != null && !c.isShowing) {
         if (c is JComponent) {
-          val uiSwitcher = c.getUserData(UI_SWITCHER)
-          if (uiSwitcher?.show() == false) {
-            return
+          val uiSwitchers = getUiSwitchers(c)
+          for (uiSwitcher in uiSwitchers) {
+            uiSwitcher.show()
           }
         }
         c = c.parent
       }
     }
-  }
-}
 
-private class UnionUiSwitcher(private val uiSwitchers: List<UiSwitcher>) : UiSwitcher {
-
-  override fun show(): Boolean {
-    return uiSwitchers.all { it.show() }
+    private fun getUiSwitchers(component: JComponent): Set<UiSwitcher> {
+      return component.getUserData(UI_SWITCHERS) ?: mutableSetOf()
+    }
   }
 }

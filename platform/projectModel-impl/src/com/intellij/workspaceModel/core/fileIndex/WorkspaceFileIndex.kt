@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Provides access to the information collected from [WorkspaceFileIndexContributor]s.
@@ -17,13 +18,39 @@ interface WorkspaceFileIndex {
   }
 
   /**
+   * Returns `true` if [file] is included to the workspace. 
+   * I.e., it's located under a registered file set of any [kind][WorkspaceFileKind], and isn't excluded or ignored.
+   * Currently, this function is equivalent to [com.intellij.openapi.roots.ProjectFileIndex.isInProject].
+   */
+  @RequiresReadLock
+  fun isInWorkspace(file: VirtualFile): Boolean
+
+  /**
+   * Returns `true` if [file] is included to the workspace with [content][WorkspaceFileKind.isContent] kind assigned to it.
+   * Currently, this function is equivalent to [com.intellij.openapi.roots.ProjectFileIndex.isInContent].
+   */
+  @RequiresReadLock
+  fun isInContent(file: VirtualFile): Boolean
+
+  /**
+   * Return the root file of a file set of [content][WorkspaceFileKind.isContent] kind containing [file]. 
+   * If [file] doesn't belong to such a file set, `null` is returned.
+   * 
+   * This function is similar to [com.intellij.openapi.roots.ProjectFileIndex.getContentRootForFile], but it processes custom file sets as 
+   * well, not only content roots of the project's modules.
+   * @param honorExclusion determines whether exclusions should be taken into account when searching for the file set.
+   */
+  @RequiresReadLock
+  fun getContentFileSetRoot(file: VirtualFile, honorExclusion: Boolean): VirtualFile?
+
+  /**
    * Searches for the first parent of [file] (or [file] itself) which has an associated [WorkspaceFileSet] taking into account the passed
    * flags. 
    * If there are several instances of [WorkspaceFileSet] associated with the found file, any of them is returned. If you need to get a
    * specific file set in such case, use [findFileSetWithCustomData] instead.
    * 
    * @param honorExclusion if `true` the function will return `null` if [file] is excluded from the found file set
-   * @param includeContentSets if `true` file sets of [WorkspaceFileKind.CONTENT] kind will be processed
+   * @param includeContentSets if `true` file sets of [content][WorkspaceFileKind.isContent] kind will be processed
    * @param includeExternalSets if `true` file sets of [WorkspaceFileKind.EXTERNAL] kind will be processed
    * @param includeExternalSourceSets if `true` file sets of [WorkspaceFileKind.EXTERNAL_SOURCE] kind will be processed
    */

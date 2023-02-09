@@ -19,7 +19,7 @@ import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class KeywordArgumentCompletionUtil {
+public final class KeywordArgumentCompletionUtil {
   public static void collectFunctionArgNames(PyElement element,
                                              List<? super LookupElement> ret,
                                              @NotNull final TypeEvalContext context,
@@ -209,8 +209,7 @@ public class KeywordArgumentCompletionUtil {
       else if (node.isCalleeText("__init__")) {
         kwArgsTransit = false;
         for (PyExpression e : node.getArguments()) {
-          if (e instanceof PyStarArgument) {
-            PyStarArgument kw = (PyStarArgument)e;
+          if (e instanceof PyStarArgument kw) {
             if (Objects.equals(myKwArgs.getName(), kw.getFirstChild().getNextSibling().getText())) {
               kwArgsTransit = true;
               break;

@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
@@ -27,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author ven
- */
 public class IntroduceFieldInSameClassTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
@@ -137,7 +135,7 @@ public class IntroduceFieldInSameClassTest extends LightJavaCodeInsightTestCase 
     new MockIntroduceFieldHandler(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD, false) {
       @Override
       protected PsiType getFieldType(PsiType type) {
-        return PsiType.INT;
+        return PsiTypes.intType();
       }
     }.invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile("afterForcedFieldType.java");

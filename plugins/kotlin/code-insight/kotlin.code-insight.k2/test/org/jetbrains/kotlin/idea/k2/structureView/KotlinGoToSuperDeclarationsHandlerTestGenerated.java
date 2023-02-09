@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.structureView;
 
@@ -43,13 +43,28 @@ public abstract class KotlinGoToSuperDeclarationsHandlerTestGenerated extends Ab
                 performTest();
             }
 
+            @TestMetadata("classObject.kt")
+            public void testClassObject() throws Exception {
+                performTest();
+            }
+
             @TestMetadata("classWithDeepHeiarchy.kt")
             public void testClassWithDeepHeiarchy() throws Exception {
                 performTest();
             }
 
+            @TestMetadata("noSuper.kt")
+            public void testNoSuper() throws Exception {
+                performTest();
+            }
+
             @TestMetadata("singleSuperClass.kt")
             public void testSingleSuperClass() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("withJavaSuperClass.kt")
+            public void testWithJavaSuperClass() throws Exception {
                 performTest();
             }
         }
@@ -94,6 +109,11 @@ public abstract class KotlinGoToSuperDeclarationsHandlerTestGenerated extends Ab
             public void testSingleSuperMethod() throws Exception {
                 performTest();
             }
+
+            @TestMetadata("withJavaSuperClass.kt")
+            public void testWithJavaSuperClass() throws Exception {
+                performTest();
+            }
         }
     }
 
@@ -129,6 +149,16 @@ public abstract class KotlinGoToSuperDeclarationsHandlerTestGenerated extends Ab
 
             @TestMetadata("multipleSuperPropertiesFromInterfaces.kt")
             public void testMultipleSuperPropertiesFromInterfaces() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("primaryConstructorProperty.kt")
+            public void testPrimaryConstructorProperty() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("primaryConstructorPropertyInSuper.kt")
+            public void testPrimaryConstructorPropertyInSuper() throws Exception {
                 performTest();
             }
 

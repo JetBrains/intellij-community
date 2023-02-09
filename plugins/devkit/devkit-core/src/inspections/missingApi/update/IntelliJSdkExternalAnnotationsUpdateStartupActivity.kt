@@ -6,15 +6,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.startup.ProjectActivity
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 
 /**
  * Startup activity that updates external annotations of IDEA JDKs configured in the project.
  */
-internal class IntelliJSdkExternalAnnotationsUpdateStartupActivity : StartupActivity {
-  override fun runActivity(project: Project) {
+internal class IntelliJSdkExternalAnnotationsUpdateStartupActivity : ProjectActivity {
+  override suspend fun execute(project: Project) {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode) {
       return
@@ -29,10 +28,7 @@ internal class IntelliJSdkExternalAnnotationsUpdateStartupActivity : StartupActi
   }
 
   private fun updateAnnotationsLaterIfNecessary(project: Project, ideaJdk: Sdk) {
-    val buildNumber = getIdeaBuildNumber(ideaJdk)
-    if (buildNumber != null) {
-      IntelliJSdkExternalAnnotationsUpdater.getInstance().updateIdeaJdkAnnotationsIfNecessary(project, ideaJdk, buildNumber)
-    }
+    IntelliJSdkExternalAnnotationsUpdater.getInstance().updateIdeaJdkAnnotationsIfNecessary(project, ideaJdk)
   }
 
   private fun subscribeToJdkChanges(project: Project, application: Application) {
@@ -50,11 +46,5 @@ internal class IntelliJSdkExternalAnnotationsUpdateStartupActivity : StartupActi
         }
       }
     })
-  }
-
-  private fun getIdeaBuildNumber(ideaJdk: Sdk): BuildNumber? {
-    val homePath = ideaJdk.homePath ?: return null
-    val buildNumberStr = IdeaJdk.getBuildNumber(homePath) ?: return null
-    return BuildNumber.fromStringOrNull(buildNumberStr)
   }
 }

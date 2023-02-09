@@ -2,6 +2,7 @@
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.dnd.SmoothAutoScroller;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -30,8 +31,6 @@ import java.awt.event.*;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Map;
-
-import static com.intellij.ide.dnd.SmoothAutoScroller.installDropTargetAsNecessary;
 
 public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Queryable,
                                            ComponentWithFileColors, TreePathBackgroundSupplier {
@@ -92,8 +91,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           TreePath newPath = getPathForLocation(p.x, p.y);
           if (newPath != null && !newPath.equals(rollOverPath)) {
             TreeCellRenderer renderer = getCellRenderer();
-            if (newPath.getLastPathComponent() instanceof TreeNode) {
-              TreeNode node = (TreeNode)newPath.getLastPathComponent();
+            if (newPath.getLastPathComponent() instanceof TreeNode node) {
               JComponent c = (JComponent)renderer.getTreeCellRendererComponent(
                 Tree.this, node,
                 isPathSelected(newPath),
@@ -509,8 +507,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         int lastIndex = -1;
         for (int i = 0; i < kids.length; i++) {
           Object kid = kids[i];
-          if (kid instanceof PresentableNodeDescriptor) {
-            PresentableNodeDescriptor eachKid = (PresentableNodeDescriptor)kid;
+          if (kid instanceof PresentableNodeDescriptor eachKid) {
             if (!node.isHighlightableContentNode(eachKid)) continue;
             if (first == null) {
               first = eachKid;
@@ -526,16 +523,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         if (isExpanded(getPath(last))) {
           if (lastIndex + 1 < kids.length) {
             Object child = kids[lastIndex + 1];
-            if (child instanceof PresentableNodeDescriptor) {
-              PresentableNodeDescriptor nextKid = (PresentableNodeDescriptor)child;
+            if (child instanceof PresentableNodeDescriptor nextKid) {
               int nextRow = getRowForPath(getPath(nextKid));
               last = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, getPathForRow(nextRow - 1));
             }
           }
           else {
             NodeDescriptor parentNode = node.getParentDescriptor();
-            if (parentNode instanceof PresentableNodeDescriptor) {
-              PresentableNodeDescriptor ppd = (PresentableNodeDescriptor)parentNode;
+            if (parentNode instanceof PresentableNodeDescriptor ppd) {
               int nodeIndex = node.getIndex();
               if (nodeIndex + 1 < structure.getChildElements(ppd).length) {
                 PresentableNodeDescriptor nextChild = ppd.getChildToHighlightAt(nodeIndex + 1);
@@ -726,8 +721,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     public void mouseExited(MouseEvent e) {
       if (UIUtil.isUnderWin10LookAndFeel() && rollOverPath != null) {
         TreeCellRenderer renderer = getCellRenderer();
-        if (rollOverPath.getLastPathComponent() instanceof TreeNode) {
-          TreeNode node = (TreeNode)rollOverPath.getLastPathComponent();
+        if (rollOverPath.getLastPathComponent() instanceof TreeNode node) {
           JComponent c = (JComponent)renderer.getTreeCellRendererComponent(
             Tree.this, node,
             isPathSelected(rollOverPath),
@@ -747,8 +741,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         Point p = e.getPoint();
         TreePath path = getPathForLocation(p.x, p.y);
         if (path != null) {
-          if (path.getLastPathComponent() instanceof TreeNode) {
-            TreeNode node = (TreeNode)path.getLastPathComponent();
+          if (path.getLastPathComponent() instanceof TreeNode node) {
             JComponent c = (JComponent)getCellRenderer().getTreeCellRendererComponent(
               Tree.this, node,
               isPathSelected(path), isExpanded(path),
@@ -921,7 +914,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public void setTransferHandler(TransferHandler handler) {
-    installDropTargetAsNecessary(this);
+    SmoothAutoScroller.installDropTargetAsNecessary(this);
     super.setTransferHandler(handler);
   }
 }

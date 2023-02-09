@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author spleaner
- */
 public interface IdeGlassPaneEx extends IdeGlassPane {
   Component add(Component comp);
 

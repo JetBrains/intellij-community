@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -14,10 +14,7 @@ import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author lex
- */
-public class SyntheticVariableEvaluator implements Evaluator{
+public class SyntheticVariableEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance(SyntheticVariableEvaluator.class);
 
   private final CodeFragmentEvaluator myCodeFragmentEvaluator;

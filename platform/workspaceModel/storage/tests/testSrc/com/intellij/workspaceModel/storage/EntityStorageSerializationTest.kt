@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
@@ -11,8 +11,8 @@ import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.Assert.*
 import org.junit.Test
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 
 class EntityStorageSerializationTest {
@@ -83,14 +83,12 @@ class EntityStorageSerializationTest {
     val deserializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
       .also { it.serializerDataFormatVersion = "XYZ" }
 
-    val stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, builder.toSnapshot())
+    withTempFile { file ->
+      serializer.serializeCache(file, builder.toSnapshot())
 
-    val byteArray = stream.toByteArray()
-    val deserialized = (deserializer.deserializeCache(
-      ByteArrayInputStream(byteArray)).getOrThrow() as? MutableEntityStorageImpl)?.toSnapshot()
-
-    assertNull(deserialized)
+      val deserialized = (deserializer.deserializeCache(file).getOrThrow() as? MutableEntityStorageImpl)?.toSnapshot()
+      assertNull(deserialized)
+    }
   }
 
   @Test
@@ -114,8 +112,9 @@ class EntityStorageSerializationTest {
     // Do not replace ArrayList() with emptyList(). This must be a new object for this test
     builder.addLibraryEntity("myName", LibraryTableId.ProjectLibraryTableId, ArrayList(), ArrayList(), MySource)
 
-    val stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, builder.toSnapshot())
+    withTempFile { file ->
+      serializer.serializeCache(file, builder.toSnapshot())
+    }
   }
 
   @Test
@@ -127,10 +126,10 @@ class EntityStorageSerializationTest {
 
     builder.addSampleEntity("myString")
 
-    val stream = ByteArrayOutputStream()
-    val result = serializer.serializeCache(stream, builder.toSnapshot())
-
-    assertTrue(result is SerializationResult.Success)
+    withTempFile { file ->
+      val result = serializer.serializeCache(file, builder.toSnapshot())
+      assertTrue(result is SerializationResult.Success)
+    }
   }
 
   @Test
@@ -142,10 +141,10 @@ class EntityStorageSerializationTest {
 
     builder.addEntity(ProjectModelTestEntity("info", DescriptorInstance("info"), MySource))
 
-    val stream = ByteArrayOutputStream()
-    val result = serializer.serializeCache(stream, builder.toSnapshot())
-
-    assertTrue(result is SerializationResult.Success)
+    withTempFile { file ->
+      val result = serializer.serializeCache(file, builder.toSnapshot())
+      assertTrue(result is SerializationResult.Success)
+    }
   }
 
   @Test
@@ -157,15 +156,14 @@ class EntityStorageSerializationTest {
 
     builder.addSampleEntity("myString")
 
-    val stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, builder.toSnapshot())
+    withTempFile { file ->
+      serializer.serializeCache(file, builder.toSnapshot())
 
-    // Remove random byte from a serialised store
-    val inputStream = stream.toByteArray().filterIndexed { i, _ -> i != 3 }.toByteArray().inputStream()
-
-    val result = serializer.deserializeCache(inputStream)
-
-    assertNull(result.getOrNull())
+      // Remove random byte from a serialised store
+      Files.write(file, Files.readAllBytes(file).filterIndexed { i, _ -> i != 3 }.toByteArray())
+      val result = serializer.deserializeCache(file)
+      assertNull(result.getOrNull())
+    }
   }
 }
 
@@ -230,3 +228,13 @@ private val expectedKryoRegistration = """
   [66, Object[]]
   [67, java.util.UUID]
 """.trimIndent()
+
+private inline fun withTempFile(task: (file: Path) -> Unit) {
+  val file = Files.createTempFile("", "")
+  try {
+    task(file)
+  }
+  finally {
+    Files.deleteIfExists(file)
+  }
+}

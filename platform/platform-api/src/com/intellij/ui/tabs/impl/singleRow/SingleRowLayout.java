@@ -81,13 +81,6 @@ public abstract class SingleRowLayout extends TabLayout {
     return layoutLabels;
   }
 
-  public int getScrollOffset() {
-    return 0;
-  }
-
-  public void scroll(int units) {
-  }
-
   public int getScrollUnitIncrement() {
     return 0;
   }
@@ -301,10 +294,6 @@ public abstract class SingleRowLayout extends TabLayout {
     }
 
     return result;
-  }
-
-  public boolean isWithScrollBar() {
-    return false;
   }
 
   @Override

@@ -143,6 +143,8 @@ public final class JBCefApp {
     settings.log_severity = getLogLevel();
     settings.log_file = System.getProperty("ide.browser.jcef.log.path",
       System.getProperty("user.home") + Platform.current().fileSeparator + "jcef_" + ProcessHandle.current().pid() + ".log");
+    if (settings.log_file.trim().isEmpty())
+      settings.log_file = null;
     //todo[tav] IDEA-260446 & IDEA-260344 However, without proper background the CEF component flashes white in dark themes
     //settings.background_color = settings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
     int port = Registry.intValue("ide.browser.jcef.debug.port");
@@ -153,8 +155,31 @@ public final class JBCefApp {
     settings.cache_path = ApplicationManager.getApplication().getService(JBCefAppCache.class).getPath().toString();
 
     if (Registry.is("ide.browser.jcef.sandbox.enable")) {
-      LOG.debug("enabled JCEF-sandbox");
+      LOG.info("JCEF-sandbox is enabled");
       settings.no_sandbox = false;
+
+      if (SystemInfoRt.isWindows) {
+        String sandboxPtr = System.getProperty("jcef.sandbox.ptr");
+        if (sandboxPtr != null && !sandboxPtr.trim().isEmpty()) {
+          if (isSandboxSupported())
+            settings.browser_subprocess_path = "";
+          else {
+            LOG.info("JCEF-sandbox was disabled because current jcef version doesn't support sandbox");
+            settings.no_sandbox = true;
+          }
+        } else {
+          LOG.info("JCEF-sandbox was disabled because java-process initialized without sandbox");
+          settings.no_sandbox = true;
+        }
+      } else if (SystemInfoRt.isMac) {
+        ProcessHandle.Info i = ProcessHandle.current().info();
+        Optional<String> processAppPath = i.command();
+        if (processAppPath.isPresent() && processAppPath.get().endsWith("/bin/java")) {
+          // Sandbox must be disabled when user runs IDE from debugger (otherwise dlopen will fail)
+          LOG.info("JCEF-sandbox was disabled (to enable you should start IDE from launcher)");
+          settings.no_sandbox = true;
+        }
+      }
     }
 
     String[] argsFromProviders = JBCefAppRequiredArgumentsProvider
@@ -222,6 +247,18 @@ public final class JBCefApp {
       case "default" -> LogSeverity.LOGSEVERITY_DEFAULT;
       default -> LogSeverity.LOGSEVERITY_DEFAULT;
     };
+  }
+
+  private static boolean isSandboxSupported() {
+    JCefVersionDetails version;
+    try {
+      version = JCefAppConfig.getVersionDetails();
+    }
+    catch (Throwable e) {
+      LOG.error("JCEF runtime version is not supported");
+      return false;
+    }
+    return version.cefVersion.major >= 104 && version.apiVersion.minor >= 9;
   }
 
   @NotNull
@@ -344,7 +381,7 @@ public final class JBCefApp {
       String name = JCefAppConfig.class.getName().replace('.', '/');
       boolean isJbrModule = path != null && path.contains("/jcef/" + name);
       if (!isJbrModule) {
-        return unsupported.apply("JCEF runtime library is not a JBR module");
+        LOG.warn("JCefAppConfig is not from a JBR module, path: " + path);
       }
       ourSupported = new AtomicBoolean(true);
       return true;

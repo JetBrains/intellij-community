@@ -27,9 +27,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jetbrains.idea.svn.api.BaseSvnClient.callHandler;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class BaseUpdateCommandListener extends LineCommandAdapter {
 
   @NotNull

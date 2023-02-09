@@ -17,7 +17,7 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,7 +30,8 @@ import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ConfusingElseInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -51,8 +52,9 @@ public class ConfusingElseInspection extends BaseInspection implements CleanupLo
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("confusing.else.option"), this, "reportWhenNoStatementFollow");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("reportWhenNoStatementFollow", InspectionGadgetsBundle.message("confusing.else.option")));
   }
 
   @Override
@@ -91,8 +93,7 @@ public class ConfusingElseInspection extends BaseInspection implements CleanupLo
         anchor = parent;
         parent = anchor.getParent();
       }
-      if (elseBranch instanceof PsiBlockStatement) {
-        final PsiBlockStatement elseBlock = (PsiBlockStatement)elseBranch;
+      if (elseBranch instanceof PsiBlockStatement elseBlock) {
         final PsiCodeBlock block = elseBlock.getCodeBlock();
         final PsiElement[] children = block.getChildren();
         if (children.length > 2) {
@@ -145,8 +146,7 @@ public class ConfusingElseInspection extends BaseInspection implements CleanupLo
 
     private boolean parentCompletesNormally(PsiElement element) {
       PsiElement parent = element.getParent();
-      while (parent instanceof PsiIfStatement) {
-        final PsiIfStatement ifStatement = (PsiIfStatement)parent;
+      while (parent instanceof PsiIfStatement ifStatement) {
         final PsiStatement elseBranch = ifStatement.getElseBranch();
         if (elseBranch != element) {
           return true;
@@ -165,8 +165,7 @@ public class ConfusingElseInspection extends BaseInspection implements CleanupLo
     private PsiStatement getNextStatement(PsiIfStatement statement) {
       while (true) {
         final PsiElement parent = statement.getParent();
-        if (parent instanceof PsiIfStatement) {
-          final PsiIfStatement parentIfStatement = (PsiIfStatement)parent;
+        if (parent instanceof PsiIfStatement parentIfStatement) {
           final PsiStatement elseBranch = parentIfStatement.getElseBranch();
           if (elseBranch == statement) {
             statement = parentIfStatement;

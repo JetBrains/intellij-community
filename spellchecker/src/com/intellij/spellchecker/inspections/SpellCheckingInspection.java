@@ -2,7 +2,7 @@
 package com.intellij.spellchecker.inspections;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
@@ -21,9 +21,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class SpellCheckingInspection extends LocalInspectionTool {
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
@@ -164,14 +165,12 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
   public boolean processComments = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final Box verticalBox = Box.createVerticalBox();
-    verticalBox.add(new SingleCheckboxOptionsPanel(SpellCheckerBundle.message("process.code"), this, "processCode"));
-    verticalBox.add(new SingleCheckboxOptionsPanel(SpellCheckerBundle.message("process.literals"), this, "processLiterals"));
-    verticalBox.add(new SingleCheckboxOptionsPanel(SpellCheckerBundle.message("process.comments"), this, "processComments"));
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(verticalBox, BorderLayout.NORTH);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("processCode", SpellCheckerBundle.message("process.code")),
+      checkbox("processLiterals", SpellCheckerBundle.message("process.literals")),
+      checkbox("processComments", SpellCheckerBundle.message("process.comments"))
+    );
   }
 
   private static final class MyTokenConsumer extends TokenConsumer implements Consumer<TextRange> {

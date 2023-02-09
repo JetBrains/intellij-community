@@ -1068,16 +1068,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     }
   }
 
-  private static final class CompiledPattern {
-    @NotNull final Pattern fileName;
-    @Nullable final Pattern dir;
-    @Nullable final Pattern srcRoot;
-
-    private CompiledPattern(@NotNull Pattern fileName, @Nullable Pattern dir, @Nullable Pattern srcRoot) {
-      this.fileName = fileName;
-      this.dir = dir;
-      this.srcRoot = srcRoot;
-    }
+  private record CompiledPattern(@NotNull Pattern fileName, @Nullable Pattern dir, @Nullable Pattern srcRoot) {
   }
 
   private static Element addChild(Element parent, final String childName) {

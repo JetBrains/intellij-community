@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.MethodSignatureUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -18,7 +19,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
-import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMethodDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaOrKotlinMemberDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.hasJavaResolutionFacade
@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
 import org.jetbrains.kotlin.idea.util.FuzzyType
 import org.jetbrains.kotlin.idea.util.fuzzyExtensionReceiverType
 import org.jetbrains.kotlin.idea.util.toFuzzyType
-import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
@@ -39,12 +38,12 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.descriptorUtil.isTypeRefinementEnabled
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.sam.getSingleAbstractMethodOrNull
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.util.isValidOperator
 
-@Deprecated(
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated(
     "This method is obsolete and will be removed",
     ReplaceWith(
         "resolveToDescriptorIfAny(BodyResolveMode.FULL)",
@@ -92,14 +91,6 @@ class JavaConstructorCallLazyDescriptorHandle(psiMethod: PsiMethod) :
 
 fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? =
     declaration.descriptor?.let { DescriptorRenderer.COMPACT.render(it) }
-
-fun isSamInterface(psiClass: PsiClass): Boolean {
-    val classDescriptor = psiClass.getJavaMemberDescriptor() as? JavaClassDescriptor
-    return classDescriptor != null && getSingleAbstractMethodOrNull(classDescriptor) != null
-}
-
-fun hasType(element: KtExpression): Boolean =
-    element.analyze(BodyResolveMode.PARTIAL).getType(element) != null
 
 val KtDeclaration.constructor: ConstructorDescriptor?
     get() {

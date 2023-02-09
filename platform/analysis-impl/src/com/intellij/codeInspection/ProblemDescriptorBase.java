@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -285,7 +285,8 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   }
 
   @Override
-  public LocalQuickFix @Nullable [] getFixes() {
-    return (LocalQuickFix[])super.getFixes();
+  public LocalQuickFix @NotNull [] getFixes() {
+    var fixes = super.getFixes();
+    return fixes.length == 0 ? LocalQuickFix.EMPTY_ARRAY : (LocalQuickFix[])fixes;
   }
 }

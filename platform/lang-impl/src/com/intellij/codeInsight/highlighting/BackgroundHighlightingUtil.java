@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.function.BiFunction;
 
-public class BackgroundHighlightingUtil {
+public final class BackgroundHighlightingUtil {
   /**
    * start background thread where find injected fragment at the caret position,
    * invoke {@code backgroundProcessor} on that fragment and invoke later {@code edtProcessor} in EDT,
@@ -35,8 +35,8 @@ public class BackgroundHighlightingUtil {
    */
   static <T> void lookForInjectedFileInOtherThread(@NotNull Project project,
                                                    @NotNull Editor editor,
-                                                   @NotNull BiFunction<? super PsiFile, ? super Editor, ? extends @NotNull T> backgroundProcessor,
-                                                   @NotNull TriConsumer<? super PsiFile, ? super Editor, ? super @NotNull T> edtProcessor) {
+                                                   @NotNull BiFunction<? super PsiFile, ? super Editor, ? extends T> backgroundProcessor,
+                                                   @NotNull TriConsumer<? super PsiFile, ? super Editor, ? super T> edtProcessor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!isValidEditor(editor)) return;
 
@@ -76,7 +76,7 @@ public class BackgroundHighlightingUtil {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private static boolean isValidEditor(@NotNull Editor editor) {
+  static boolean isValidEditor(@NotNull Editor editor) {
     Project editorProject = editor.getProject();
     return editorProject != null && !editorProject.isDisposed() && !editor.isDisposed() &&
            UIUtil.isShowing(editor.getContentComponent());
@@ -94,7 +94,7 @@ public class BackgroundHighlightingUtil {
   }
 
   @NotNull
-  private static PsiFile getInjectedFileIfAny(int offset, @NotNull PsiFile psiFile) {
+  static PsiFile getInjectedFileIfAny(int offset, @NotNull PsiFile psiFile) {
     PsiElement injectedElement = InjectedLanguageManager.getInstance(psiFile.getProject()).findInjectedElementAt(psiFile, offset);
     if (injectedElement != null) {
       PsiFile injected = injectedElement.getContainingFile();

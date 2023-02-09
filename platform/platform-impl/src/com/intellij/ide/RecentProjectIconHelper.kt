@@ -4,7 +4,6 @@ package com.intellij.ide
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.JBColor
@@ -16,7 +15,6 @@ import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
 import com.intellij.util.ImageLoader
 import com.intellij.util.io.basicAttributesIfExists
-import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
 import com.intellij.util.ui.*
 import org.imgscalr.Scalr
@@ -26,6 +24,7 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
+import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.math.max
 
@@ -142,11 +141,13 @@ internal class RecentProjectIconHelper {
   }
 
   fun getProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean = true): Icon {
+    val iconSize = projectIconSize()
+
     if (!RecentProjectsManagerBase.isFileSystemPath(path)) {
-      return EmptyIcon.create(projectIconSize())
+      return EmptyIcon.create(iconSize)
     }
 
-    return IconDeferrer.getInstance().defer(EmptyIcon.create(projectIconSize()), Pair(path, isProjectValid)) {
+    return IconDeferrer.getInstance().defer(EmptyIcon.create(iconSize), Triple(path, isProjectValid, iconSize)) {
       return@defer getCustomIcon(path = it.first, isProjectValid = it.second)
                                 ?: getGeneratedProjectIcon(path = it.first, isProjectValid = it.second)
     }
@@ -181,7 +182,7 @@ private class ProjectFileIcon(
     ) {
       cachedIcon
     } else {
-      iconData.getScaledIcon(sysScale, pixScale).also {
+      iconData.getScaledIcon(sysScale).also {
         this.cachedIcon = it
         this.cachedIconSysScale = sysScale
         this.cachedIconPixScale = pixScale
@@ -213,14 +214,14 @@ private fun loadIconFile(file: Path): IconData = try {
 
 private sealed class IconData(protected val userScaledSize: Int) {
 
-  abstract fun getScaledIcon(sysScale: Float, pixScale: Float): Icon
+  abstract fun getScaledIcon(sysScale: Float): Icon
 
   protected fun emptyIcon(): Icon = EmptyIcon.create(userScaledSize)
 
 }
 
 private class SvgIconData(private val originalIcon: Icon?, userScaledSize: Int) : IconData(userScaledSize) {
-  override fun getScaledIcon(sysScale: Float, pixScale: Float): Icon {
+  override fun getScaledIcon(sysScale: Float): Icon {
     if (originalIcon == null) {
       return emptyIcon()
     }
@@ -236,11 +237,11 @@ private class SvgIconData(private val originalIcon: Icon?, userScaledSize: Int) 
 }
 
 private class PngIconData(private val originalImage: Image?, userScaledSize: Int) : IconData(userScaledSize) {
-  override fun getScaledIcon(sysScale: Float, pixScale: Float): Icon {
+  override fun getScaledIcon(sysScale: Float): Icon {
     if (originalImage == null) {
       return emptyIcon()
     }
-    val targetSize = if (UIUtil.isRetina()) 32 else (userScaledSize * pixScale).toInt()
+    val targetSize = (userScaledSize * sysScale).toInt()
     return IconUtil.toRetinaAwareIcon(
       Scalr.resize(ImageUtil.toBufferedImage(originalImage), Scalr.Method.ULTRA_QUALITY, targetSize),
       sysScale
@@ -249,7 +250,7 @@ private class PngIconData(private val originalImage: Image?, userScaledSize: Int
 }
 
 private class EmptyIconData(userScaledSize: Int) : IconData(userScaledSize) {
-  override fun getScaledIcon(sysScale: Float, pixScale: Float): Icon = EmptyIcon.create(userScaledSize)
+  override fun getScaledIcon(sysScale: Float): Icon = EmptyIcon.create(userScaledSize)
 }
 
 private object ProjectIconPalette : ColorPalette() {

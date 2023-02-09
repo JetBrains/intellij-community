@@ -32,6 +32,9 @@ And we've got error in injected code!
 val b = "It is friend."
 ```
 
+It's a <warning descr="A_GOOGLE">react</warning> method. (An LT warning here)
+It's a *react* method. (Fine, as it's emphasized)
+
 ## Немного русского
 
 В коробке лежало <warning descr="Sklonenije_NUM_NN">пять карандаша</warning>.

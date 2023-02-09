@@ -4,7 +4,6 @@ package com.intellij;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.idea.Bombed;
 import com.intellij.idea.RecordExecution;
-import com.intellij.nastradamus.NastradamusClient;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -290,17 +289,7 @@ public class TestAll implements Test {
       }
     }
 
-    if (TestCaseLoader.IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED) {
-      try {
-        var nastradamusClient = new NastradamusClient();
-        var testRunRequest = nastradamusClient.collectTestRunResults();
-        nastradamusClient.sendTestRunResults(testRunRequest);
-      }
-      catch (Exception e) {
-        System.err.println("Unexpected error happened during sending test results to Nastradamus");
-        e.printStackTrace();
-      }
-    }
+    TestCaseLoader.sendTestRunResultsToNastradamus();
   }
 
   private static TestListener loadDiscoveryListener() {
@@ -344,7 +333,8 @@ public class TestAll implements Test {
     int errorCount = testResult.errorCount();
     int count = errorCount + testResult.failureCount() - myIgnoredTests;
     if (count > MAX_FAILURE_TEST_COUNT && MAX_FAILURE_TEST_COUNT >= 0) {
-      addErrorMessage(testResult, "Too many errors (" + count + ", MAX_FAILURE_TEST_COUNT = " + MAX_FAILURE_TEST_COUNT + "). Executed: " + myRunTests + " of " + totalTests);
+      addErrorMessage(testResult, "Too many errors (" + count + ", MAX_FAILURE_TEST_COUNT = " + MAX_FAILURE_TEST_COUNT +
+                                  "). Executed: " + myRunTests + " of " + totalTests);
       testResult.stop();
       return;
     }
@@ -469,8 +459,8 @@ public class TestAll implements Test {
       if ("junit5".equals(System.getProperty("intellij.build.test.runner"))) {
         try {
           cache = (JUnit4TestAdapterCache)Class.forName("com.intellij.tests.JUnit5TeamCityRunnerForTestAllSuite")
-                .getMethod("createJUnit4TestAdapterCache")
-                .invoke(null);
+            .getMethod("createJUnit4TestAdapterCache")
+            .invoke(null);
         }
         catch (Throwable e) {
           cache = JUnit4TestAdapterCache.getDefault();

@@ -5,6 +5,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -41,7 +42,7 @@ public class PyTypeModelBuilder {
       return visitor.getString();
     }
 
-    public void toBodyWithLinks(@NotNull ChainIterable<String> body, @NotNull PsiElement anchor) {
+    public void toBodyWithLinks(@NotNull HtmlBuilder body, @NotNull PsiElement anchor) {
       final TypeToBodyWithLinksVisitor visitor = new TypeToBodyWithLinksVisitor(body, anchor);
       accept(visitor);
     }
@@ -250,8 +251,7 @@ public class PyTypeModelBuilder {
     myVisited.put(type, null); //mark as evaluating
 
     TypeModel result = null;
-    if (type instanceof PyTypedDictType) {
-      PyTypedDictType typedDictType = (PyTypedDictType)type;
+    if (type instanceof PyTypedDictType typedDictType) {
       if (typedDictType.isInferred()) {
         return build(new PyCollectionTypeImpl(typedDictType.getPyClass(), false,
                                               typedDictType.getElementTypes()), allowUnions);
@@ -273,8 +273,7 @@ public class PyTypeModelBuilder {
     else if (type instanceof PyNamedTupleType) {
       result = NamedType.nameOrAny(type);
     }
-    else if (type instanceof PyTupleType) {
-      final PyTupleType tupleType = (PyTupleType)type;
+    else if (type instanceof PyTupleType tupleType) {
 
       final List<PyType> elementTypes = tupleType.isHomogeneous()
                                         ? Collections.singletonList(tupleType.getIteratedItemType())
@@ -284,8 +283,7 @@ public class PyTypeModelBuilder {
       final List<TypeModel> elementModels = ContainerUtil.map(elementTypes, elementType -> build(elementType, true));
       result = new TupleType(elementModels, tupleType.isHomogeneous(), useTypingAlias);
     }
-    else if (type instanceof PyCollectionType) {
-      final PyCollectionType asCollection = (PyCollectionType)type;
+    else if (type instanceof PyCollectionType asCollection) {
       final List<TypeModel> elementModels = new ArrayList<>();
       for (PyType elementType : asCollection.getElementTypes()) {
         elementModels.add(build(elementType, true));
@@ -296,8 +294,7 @@ public class PyTypeModelBuilder {
         result = new CollectionOf(collectionType, elementModels, useTypingAlias);
       }
     }
-    else if (type instanceof PyUnionType && allowUnions) {
-      final PyUnionType unionType = (PyUnionType)type;
+    else if (type instanceof PyUnionType unionType && allowUnions) {
       final Collection<PyType> unionMembers = unionType.getMembers();
       final Pair<List<PyLiteralType>, List<PyType>> literalsAndOthers = extractLiterals(unionType);
       final Ref<PyType> optionalType = getOptionalType(unionType);
@@ -493,23 +490,23 @@ public class PyTypeModelBuilder {
   }
 
   private static class TypeToBodyWithLinksVisitor extends TypeNameVisitor {
-    private final ChainIterable<String> myBody;
+    private final HtmlBuilder myBody;
     private final PsiElement myAnchor;
 
-    TypeToBodyWithLinksVisitor(ChainIterable<String> body, PsiElement anchor) {
+    TypeToBodyWithLinksVisitor(HtmlBuilder body, PsiElement anchor) {
       myBody = body;
       myAnchor = anchor;
     }
 
     @Override
     protected void add(String s) {
-      myBody.addItem(combUp(s));
+      myBody.appendRaw(combUp(s));
     }
 
     @Override
     protected void addType(String name) {
       final TypeEvalContext context = TypeEvalContext.userInitiated(myAnchor.getProject(), myAnchor.getContainingFile());
-      myBody.addItem(PyDocumentationLink.toPossibleClass(name, myAnchor, context));
+      myBody.appendRaw(PyDocumentationLink.toPossibleClass(name, myAnchor, context));
     }
   }
 

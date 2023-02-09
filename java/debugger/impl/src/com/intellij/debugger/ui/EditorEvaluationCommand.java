@@ -16,8 +16,8 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -29,9 +29,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author lex
- */
 public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandImpl {
   protected final PsiElement myElement;
   @Nullable private final Editor myEditor;
@@ -61,7 +58,8 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
       ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(myProgressIndicator);
 
       return result;
-    } catch (final EvaluateException e) {
+    }
+    catch (final EvaluateException e) {
       if (myEditor != null) {
         DebuggerInvocationUtil.invokeLater(myElement.getProject(),
                                            () -> showEvaluationHint(myEditor, myElement, e),
@@ -79,5 +77,4 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
                                             HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_TEXT_CHANGE,
                                             1500);
   }
-
 }

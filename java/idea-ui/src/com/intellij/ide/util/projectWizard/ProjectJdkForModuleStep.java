@@ -78,7 +78,8 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
                                                      GridBagConstraints.HORIZONTAL, JBUI.insets(2, 10, 10, 5), 0, 0));
 
     mySetAsDefaultButton = new JButton(JavaUiBundle.message("button.set.default"));
-    mySetAsDefaultButton.setMnemonic('D');
+    final @NonNls char defaultMnemonic = 'D';
+    mySetAsDefaultButton.setMnemonic(defaultMnemonic);
     myPanel.add(mySetAsDefaultButton, new GridBagConstraints(1, 2, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST,
                                                              GridBagConstraints.NONE, JBUI.insets(2, 10, 10, 5), 0, 0));
 

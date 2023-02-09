@@ -6,6 +6,7 @@ import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +22,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GroovyInplaceFieldValidator;
 
 import javax.swing.*;
-import java.util.ArrayList;
+import java.util.List;
 
 public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrIntroduceConstantSettings> {
   private final GrInplaceIntroduceConstantPanel myPanel;
@@ -37,7 +38,7 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
 
     GrVariable localVar = GrIntroduceHandlerBase.resolveLocalVar(context);
     if (localVar != null) {
-      ArrayList<String> result = ContainerUtil.newArrayList(localVar.getName());
+      List<String> result = new SmartList<>(localVar.getName());
 
       GrExpression initializer = localVar.getInitializerGroovy();
       if (initializer != null) {

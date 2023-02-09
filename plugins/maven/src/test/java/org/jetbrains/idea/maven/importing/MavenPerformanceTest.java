@@ -73,7 +73,7 @@ public abstract class MavenPerformanceTest extends MavenMultiVersionImportingTes
     r.run();
     long after = System.currentTimeMillis();
     long timing = after - before;
-    //System.out.println(getName() + ": " + timing + " ->" + ProfilingUtil.captureCPUSnapshot());
+    //System.out.println(getName() + ": " + timing + " ->\n" + ProfilingUtil.captureCPUSnapshot());
     //ProfilingUtil.stopCPUProfiling();
     assertTrue(timing < expected);
   }

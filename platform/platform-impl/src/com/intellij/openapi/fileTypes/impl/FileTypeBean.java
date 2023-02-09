@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.extensions.PluginAware;
@@ -33,7 +33,7 @@ public final class FileTypeBean implements PluginAware {
   public String implementationClass;
 
   /**
-   * Name of the public static field in the implementationClass class containing the file type instance.
+   * Name of the public static field in the 'implementationClass' class containing the file type instance.
    */
   @Attribute("fieldName")
   public String fieldName;
@@ -56,13 +56,15 @@ public final class FileTypeBean implements PluginAware {
 
   /**
    * Semicolon-separated list of exact file names to be associated with the file type.
+   *
+   * @see #fileNamesCaseInsensitive
    */
   @Attribute("fileNames")
   @NonNls
   public String fileNames;
 
   /**
-   * Semicolon-separated list of patterns (strings containing ? and * characters) to be associated with the file type.
+   * Semicolon-separated list of patterns (strings containing '?' and '*' characters) to be associated with the file type.
    */
   @Attribute("patterns")
   @NonNls
@@ -70,6 +72,8 @@ public final class FileTypeBean implements PluginAware {
 
   /**
    * Semicolon-separated list of exact file names (case-insensitive) to be associated with the file type.
+   *
+   * @see #fileNames
    */
   @Attribute("fileNamesCaseInsensitive")
   @NonNls
@@ -83,7 +87,7 @@ public final class FileTypeBean implements PluginAware {
   public String language;
 
   /**
-   * Semicolon-separated list of hash bang patterns to be associated with the file type
+   * Semicolon-separated list of hash bang patterns to be associated with the file type.
    */
   @Attribute("hashBangs")
   @NonNls

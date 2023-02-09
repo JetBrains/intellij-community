@@ -35,7 +35,7 @@ object GinqResolveUtils : GinqSupport {
       val clazz = getNamedRecord(place)
       val dataSourceTypes = tree.getDataSourceFragments().mapNotNull {
         val aliasName = it.alias.referenceName ?: return@mapNotNull null
-        aliasName to lazyPub { inferDataSourceComponentType(it.dataSource.type) ?: PsiType.NULL }
+        aliasName to lazyPub { inferDataSourceComponentType(it.dataSource.type) ?: PsiTypes.nullType() }
       }.toMap()
       val type = clazz?.let { GrSyntheticNamedRecordClass(emptyList(), dataSourceTypes, emptyList(), it).type() } ?: return null
       val resultType = JavaPsiFacade.getInstance(place.project).elementFactory.createType(containerClass, type)

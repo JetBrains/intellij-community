@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.*
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
+import com.intellij.codeInspection.options.OptPane.*
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -16,11 +16,11 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.canBeReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.compareDescriptors
 import org.jetbrains.kotlin.idea.core.unwrapIfFakeOverride
 import org.jetbrains.kotlin.idea.imports.importableFqName
-import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -36,7 +36,6 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
 import org.jetbrains.kotlin.resolve.scopes.utils.findFirstClassifierWithDeprecationStatus
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import javax.swing.JComponent
 
 class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     /**
@@ -47,12 +46,8 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), Clean
      */
     var unwrapFakeOverrides: Boolean = false
 
-    override fun createOptionsPanel(): JComponent =
-        SingleCheckboxOptionsPanel(
-            KotlinBundle.message("redundant.qualifier.unnecessary.non.direct.parent.class.qualifier"),
-            this,
-            ::unwrapFakeOverrides.name
-        )
+  override fun getOptionsPane() = pane(
+    checkbox(::unwrapFakeOverrides.name, KotlinBundle.message("redundant.qualifier.unnecessary.non.direct.parent.class.qualifier")))
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : KtVisitorVoid() {
@@ -77,7 +72,7 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), Clean
                     }
                     receiverReference.isEnumClass() -> {
                         hasCompanion = expressionForAnalyze.selectorExpression?.declarationDescriptor(context).isEnumCompanionObject()
-                        callingBuiltInEnumFunction = expressionForAnalyze.isReferenceToBuiltInEnumFunction()
+                        callingBuiltInEnumFunction = expressionForAnalyze.canBeReferenceToBuiltInEnumFunction()
                         when {
                             receiver is KtDotQualifiedExpression -> expressionForAnalyze = receiver
                             hasCompanion || callingBuiltInEnumFunction -> return

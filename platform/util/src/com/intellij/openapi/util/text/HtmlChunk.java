@@ -144,7 +144,7 @@ public abstract class HtmlChunk {
      * @return a new element that is like this element but has the specified attribute added or replaced
      */
     @Contract(pure = true)
-    public @NotNull Element attr(@NonNls String name, String value) {
+    public @NotNull Element attr(@NonNls String name, @NotNull String value) {
       return new Element(myTagName, myAttributes.with(name, value), myChildren);
     }
 

@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import static com.jetbrains.python.PyElementTypes.*;
 import static com.jetbrains.python.PyTokenTypes.*;
 
-/**
- * @author vlan
- */
 public class PythonTokenSetContributor extends PythonDialectsTokenSetContributorBase {
   @NotNull
   @Override

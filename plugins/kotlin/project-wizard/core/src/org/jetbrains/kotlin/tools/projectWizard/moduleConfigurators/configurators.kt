@@ -183,6 +183,7 @@ val ModuleType.defaultTarget
     get() = when (this) {
         ModuleType.jvm -> JvmTargetConfigurator
         ModuleType.js -> JsBrowserTargetConfigurator
+        ModuleType.wasm -> WasmTargetConfigurator
         ModuleType.native -> NativeForCurrentSystemTarget
         ModuleType.common -> CommonTargetConfigurator
         ModuleType.android -> AndroidTargetConfigurator

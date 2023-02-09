@@ -80,8 +80,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   private RadComponent getRadComponent(final int i) {
     RadComponent c = null;
     final Component component = getTabbedPane().getComponentAt(i);
-    if (component instanceof JComponent) {
-      JComponent jc = (JComponent) component;
+    if (component instanceof JComponent jc) {
       c = (RadComponent) jc.getClientProperty(RadComponent.CLIENT_PROP_RAD_COMPONENT);
     }
     return c;

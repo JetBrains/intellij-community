@@ -7,9 +7,6 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 public class ExtractIncrementAndDecrementTest extends IPPTestCase {
 
   public void testPostfixDecrement() {doExtractTest("--");}

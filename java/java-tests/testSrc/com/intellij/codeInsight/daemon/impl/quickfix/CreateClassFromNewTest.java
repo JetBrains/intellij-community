@@ -5,9 +5,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.lang.java.JavaLanguage;
 
-/**
- * @author ven
- */
 public class CreateClassFromNewTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected void setUp() throws Exception {

@@ -40,8 +40,6 @@ import java.util.*;
 /**
  * There is a possible case that particular test class is not properly configured with test annotations but uses test data files.
  * This class contains utility methods for guessing test data files location and name patterns from existing one.
- *
- * @author Denis Zhdanov
  */
 public final class TestDataGuessByExistingFilesUtil {
   private static final Logger LOG = Logger.getInstance(TestDataGuessByExistingFilesUtil.class);
@@ -170,11 +168,10 @@ public final class TestDataGuessByExistingFilesUtil {
       ProgressManager.checkCanceled();
       Object[] elements = gotoModel.getElementsByName(name, false, name);
       for (Object element : elements) {
-        if (!(element instanceof PsiFileSystemItem)) {
+        if (!(element instanceof PsiFileSystemItem psiFile)) {
           continue;
         }
 
-        PsiFileSystemItem psiFile = (PsiFileSystemItem)element;
         if (normalizedTestDataPath != null) {
           PsiFileSystemItem containingDirectory = psiFile.getParent();
           if (containingDirectory != null) {

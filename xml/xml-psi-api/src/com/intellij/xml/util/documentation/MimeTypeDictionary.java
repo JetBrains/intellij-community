@@ -4,6 +4,7 @@ package com.intellij.xml.util.documentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ArrayUtilRt;
 
 import java.io.IOException;
@@ -43,7 +44,7 @@ public final class MimeTypeDictionary {
     }
     final String[] lines = StringUtil.splitByLines(csv);
     for (String line : lines) {
-      if (line == lines[0]) continue;
+      if (Strings.areSameInstance(line, lines[0])) continue;
 
       final String[] split = line.split(",");
       if (split.length > 1) {

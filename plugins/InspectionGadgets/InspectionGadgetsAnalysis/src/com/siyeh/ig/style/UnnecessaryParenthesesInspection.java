@@ -17,6 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,6 +31,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Objects;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class UnnecessaryParenthesesInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -49,13 +52,12 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("unnecessary.parentheses.option"), "ignoreClarifyingParentheses");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("unnecessary.parentheses.conditional.option"),
-                             "ignoreParenthesesOnConditionals");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("ignore.parentheses.around.single.no.formal.type.lambda.parameter"), "ignoreParenthesesOnLambdaParameter");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreClarifyingParentheses", InspectionGadgetsBundle.message("unnecessary.parentheses.option")),
+      checkbox("ignoreParenthesesOnConditionals", InspectionGadgetsBundle.message("unnecessary.parentheses.conditional.option")),
+      checkbox("ignoreParenthesesOnLambdaParameter",
+               InspectionGadgetsBundle.message("ignore.parentheses.around.single.no.formal.type.lambda.parameter")));
   }
 
   @Override

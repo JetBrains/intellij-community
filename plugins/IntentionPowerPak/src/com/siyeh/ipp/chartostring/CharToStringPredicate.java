@@ -29,13 +29,11 @@ class CharToStringPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiLiteralExpression)) {
+    if (!(element instanceof PsiLiteralExpression expression)) {
       return false;
     }
-    final PsiLiteralExpression expression =
-      (PsiLiteralExpression)element;
     final PsiType type = expression.getType();
-    if (!PsiType.CHAR.equals(type)) {
+    if (!PsiTypes.charType().equals(type)) {
       return false;
     }
     final String charLiteral = element.getText();
@@ -53,9 +51,7 @@ class CharToStringPredicate implements PsiElementPredicate {
   static boolean isInConcatenationContext(PsiExpression element) {
     if (ExpressionUtils.isStringConcatenationOperand(element)) return true;
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
-    if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression parentExpression =
-        (PsiAssignmentExpression)parent;
+    if (parent instanceof PsiAssignmentExpression parentExpression) {
       final IElementType tokenType = parentExpression.getOperationTokenType();
       if (!JavaTokenType.PLUSEQ.equals(tokenType)) {
         return false;
@@ -69,11 +65,9 @@ class CharToStringPredicate implements PsiElementPredicate {
     }
     if (parent instanceof PsiExpressionList) {
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression methodCall)) {
         return false;
       }
-      final PsiMethodCallExpression methodCall =
-        (PsiMethodCallExpression)grandParent;
       final PsiReferenceExpression methodExpression =
         methodCall.getMethodExpression();
       final PsiExpression qualifierExpression =

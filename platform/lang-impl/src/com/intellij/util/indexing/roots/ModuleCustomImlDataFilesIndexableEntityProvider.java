@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.util.indexing.roots.IndexableEntityProvider.ParentEntityDependent;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import org.jetbrains.annotations.NotNull;
@@ -11,11 +11,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ModuleCustomImlDataFilesIndexableEntityProvider implements ParentEntityDependent<ModuleCustomImlDataEntity, ModuleEntity> {
+public class ModuleCustomImlDataFilesIndexableEntityProvider implements IndexableEntityProvider.Enforced<ModuleCustomImlDataEntity> {
 
   @Override
   public @NotNull Class<ModuleCustomImlDataEntity> getEntityClass() {
     return ModuleCustomImlDataEntity.class;
+  }
+
+  @Override
+  public @NotNull Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
+    return Collections.singletonList(DependencyOnParent.create(
+      ModuleEntity.class, ModuleCustomImlDataFilesIndexableEntityProvider::getReplacedParentEntityIteratorBuilder));
   }
 
   @Override
@@ -49,18 +55,14 @@ public class ModuleCustomImlDataFilesIndexableEntityProvider implements ParentEn
     return false;
   }
 
-  @Override
-  public @NotNull Class<ModuleEntity> getParentEntityClass() {
-    return ModuleEntity.class;
-  }
-
-  @Override
-  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedParentEntityIteratorBuilder(@NotNull ModuleEntity oldEntity,
-                                                                                                        @NotNull ModuleEntity newEntity,
-                                                                                                        @NotNull Project project) {
-    List<IndexableIteratorBuilder> result = new ArrayList<>();
-    result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(oldEntity.getSymbolicId()));
-    result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getSymbolicId()));
-    return result;
+  private static @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedParentEntityIteratorBuilder(@NotNull ModuleEntity oldEntity,
+                                                                                                                @NotNull ModuleEntity newEntity) {
+    if (shouldBeRescanned(oldEntity.getCustomImlData(), newEntity.getCustomImlData())) {
+      List<IndexableIteratorBuilder> result = new ArrayList<>();
+      result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(oldEntity.getSymbolicId()));
+      result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getSymbolicId()));
+      return result;
+    }
+    return Collections.emptyList();
   }
 }

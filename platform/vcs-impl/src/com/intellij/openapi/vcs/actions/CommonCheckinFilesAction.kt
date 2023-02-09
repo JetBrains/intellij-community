@@ -15,7 +15,7 @@ open class CommonCheckinFilesAction : AbstractCommonCheckinAction() {
   override fun getActionName(dataContext: VcsContext): String {
     val project = dataContext.project!!
     val roots = dataContext.getRoots().take(2).toList()
-    return CommonCheckinFilesAction.getActionName(project, roots)
+    return CommonCheckinFilesAction.Manager.getActionName(project, roots)
   }
 
   override fun getInitiallySelectedChangeList(context: VcsContext, project: Project): LocalChangeList {
@@ -26,7 +26,7 @@ open class CommonCheckinFilesAction : AbstractCommonCheckinAction() {
     dataContext.getRoots().any { isApplicableRoot(it, dataContext) }
 
   protected open fun isApplicableRoot(path: FilePath, dataContext: VcsContext): Boolean {
-    return CommonCheckinFilesAction.isActionEnabled(dataContext.project!!, path)
+    return CommonCheckinFilesAction.Manager.isActionEnabled(dataContext.project!!, path)
   }
 
   override fun getRoots(dataContext: VcsContext): Array<FilePath> = dataContext.selectedFilePaths

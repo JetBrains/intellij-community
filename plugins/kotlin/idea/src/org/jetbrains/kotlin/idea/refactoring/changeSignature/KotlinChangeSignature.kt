@@ -12,7 +12,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.changeSignature.*
@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeProp
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog
 import org.jetbrains.kotlin.idea.refactoring.createJavaMethod
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
@@ -176,7 +175,7 @@ class KotlinChangeSignature(
                             visibility ?: VisibilityUtil.getVisibilityModifier(myMethod.method.modifierList),
                             javaChangeInfo.method,
                             methodName,
-                            returnType ?: CanonicalTypes.createTypeWrapper(PsiType.VOID),
+                            returnType ?: CanonicalTypes.createTypeWrapper(PsiTypes.voidType()),
                             parameters.toTypedArray(),
                             exceptions,
                             isGenerateDelegate,
@@ -226,7 +225,7 @@ class KotlinChangeSignature(
         // Create JavaChangeInfo based on new signature
         // TODO: Support visibility change
         val visibility = VisibilityUtil.getVisibilityModifier(originalMethod.modifierList)
-        val returnType = CanonicalTypes.createTypeWrapper(preview.returnType ?: PsiType.VOID)
+        val returnType = CanonicalTypes.createTypeWrapper(preview.returnType ?: PsiTypes.voidType())
         val params = (preview.parameterList.parameters.zip(ktChangeInfo.newParameters)).map {
             val (param, paramInfo) = it
             // Keep original default value for proper update of Kotlin usages

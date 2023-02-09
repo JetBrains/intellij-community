@@ -11,6 +11,7 @@ sealed class FileOperation {
   internal class Add(val path: Path, val content: CharSequence) : FileOperation()
   internal class Move(val file: VirtualFile, val path: Path) : FileOperation()
   internal class Remove(val file: VirtualFile) : FileOperation()
+  internal class Rename(val file: VirtualFile, val newName: String) : FileOperation()
   internal class Modify(val file: PsiFile, val modifications: Collection<StringOperation>) : FileOperation() {
     init {
       require(modifications.isNotEmpty())
@@ -27,6 +28,12 @@ sealed class FileOperation {
 
     @JvmStatic
     fun removeFile(file: VirtualFile): FileOperation = Remove(file)
+
+    /**
+     * @param newName the new file name, including the file extension.
+     */
+    @JvmStatic
+    fun renameFile(file: VirtualFile, newName: String): FileOperation = Rename(file, newName)
 
     @JvmStatic
     fun modifyFile(file: PsiFile, modifications: Collection<StringOperation>): FileOperation = Modify(file, modifications)

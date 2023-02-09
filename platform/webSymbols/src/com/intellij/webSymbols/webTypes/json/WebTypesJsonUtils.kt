@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.webTypes.json
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_CLASSES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_FUNCTIONS
@@ -24,9 +25,8 @@ import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConverter
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
-import com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorImpl.Companion.asSymbolNamespace
-import com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorImpl.Companion.parsePath
 import com.intellij.webSymbols.utils.NameCaseUtils
+import com.intellij.webSymbols.utils.lastWebSymbol
 import com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupport
 import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
 import com.intellij.webSymbols.webTypes.json.NameConversionRulesSingle.NameConverter
@@ -148,12 +148,10 @@ internal fun Reference.getSymbolKind(context: WebSymbol?): WebSymbolQualifiedKin
     is ReferenceWithProps -> reference.path
     else -> null
   }
-    .let { parsePath(it, context?.namespace) }
+    .let { parseWebTypesPath(it, context) }
     .lastOrNull()
     ?.let {
-      if (it.namespace != null)
-        WebSymbolQualifiedKind(it.namespace, it.kind)
-      else null
+      WebSymbolQualifiedKind(it.namespace, it.kind)
     }
 
 internal fun Reference.resolve(name: String?,
@@ -165,15 +163,15 @@ internal fun Reference.resolve(name: String?,
     return emptyList()
   return when (val reference = this.value) {
     is String -> queryExecutor.runNameMatchQuery(
-      reference + if (name != null) "/$name" else "",
+      parseWebTypesPath(reference + if (name != null) "/$name" else "", scope.lastWebSymbol),
       virtualSymbols, abstractSymbols, scope = scope)
     is ReferenceWithProps -> {
-      val nameConversionRules = reference.createNameConversionRules()
-      val matches = queryExecutor.withNameConversionRules(nameConversionRules).runNameMatchQuery(
-        (reference.path ?: return emptyList()) + if (name != null) "/$name" else "",
-        reference.includeVirtual ?: virtualSymbols,
-        reference.includeAbstract ?: abstractSymbols,
-        scope = scope)
+      val nameConversionRules = reference.createNameConversionRules(scope.lastWebSymbol)
+      val path = parseWebTypesPath((reference.path ?: return emptyList()) + if (name != null) "/$name" else "", scope.lastWebSymbol)
+      val matches = queryExecutor.withNameConversionRules(nameConversionRules)
+        .runNameMatchQuery(path, reference.includeVirtual ?: virtualSymbols,
+                           reference.includeAbstract ?: abstractSymbols,
+                           false, scope)
       if (reference.filter == null) return matches
       val properties = reference.additionalProperties.toMap()
       WebSymbolsFilter.get(reference.filter)
@@ -189,13 +187,13 @@ internal fun Reference.codeCompletion(name: String,
                                       position: Int = 0,
                                       virtualSymbols: Boolean = true): List<WebSymbolCodeCompletionItem> {
   return when (val reference = this.value) {
-    is String -> queryExecutor.runCodeCompletionQuery("$reference/$name", position, virtualSymbols, scope)
+    is String -> queryExecutor.runCodeCompletionQuery(parseWebTypesPath("$reference/$name", scope.lastWebSymbol), position,
+                                                      virtualSymbols, scope)
     is ReferenceWithProps -> {
-      val nameConversionRules = reference.createNameConversionRules()
-      val codeCompletions = queryExecutor.withNameConversionRules(nameConversionRules).runCodeCompletionQuery(
-        (reference.path ?: return emptyList()) + "/$name", position,
-        reference.includeVirtual ?: virtualSymbols,
-        scope)
+      val nameConversionRules = reference.createNameConversionRules(scope.lastWebSymbol)
+      val path = parseWebTypesPath((reference.path ?: return emptyList()) + "/$name", scope.lastWebSymbol)
+      val codeCompletions = queryExecutor.withNameConversionRules(nameConversionRules)
+        .runCodeCompletionQuery(path, position, reference.includeVirtual ?: virtualSymbols, scope)
       if (reference.filter == null) return codeCompletions
       val properties = reference.additionalProperties.toMap()
       WebSymbolsFilter.get(reference.filter)
@@ -351,10 +349,10 @@ private fun Any.toGenericHtmlPropertyValue(): GenericHtmlContributions =
     list.add(GenericHtmlContributionOrProperty().also { it.value = this })
   }
 
-private fun ReferenceWithProps.createNameConversionRules(): List<WebSymbolNameConversionRules> {
+private fun ReferenceWithProps.createNameConversionRules(context: WebSymbol?): List<WebSymbolNameConversionRules> {
   val rules = nameConversion ?: return emptyList()
-  val lastPath = parsePath(path).lastOrNull()
-  if (lastPath?.namespace == null)
+  val lastPath = parseWebTypesPath(path, context).lastOrNull()
+  if (lastPath == null)
     return emptyList()
 
   val builder = WebSymbolNameConversionRules.builder()
@@ -408,7 +406,7 @@ internal fun <T> buildNameConverters(map: Map<String, T>?,
     val path = key.splitToSequence('/')
                  .filter { it.isNotEmpty() }
                  .toList().takeIf { it.size == 2 } ?: continue
-    val namespace = path[0].asSymbolNamespace() ?: continue
+    val namespace = path[0].asWebTypesSymbolNamespace() ?: continue
     val symbolKind = path[1]
     val converter = mapper(value) ?: continue
     addToBuilder(WebSymbolQualifiedKind(namespace, symbolKind), converter)
@@ -434,3 +432,32 @@ internal fun ContextBase.evaluate(context: WebSymbolsContext): Boolean =
     is ContextNot -> !not.evaluate(context)
     else -> throw IllegalStateException(this.javaClass.simpleName)
   }
+fun parseWebTypesPath(path: String?, context: WebSymbol?): List<WebSymbolQualifiedName> =
+  if (path != null)
+    parseWebTypesPath(StringUtil.split(path, "/", true, true), context)
+  else
+    emptyList()
+
+internal fun String.asWebTypesSymbolNamespace(): SymbolNamespace? =
+  takeIf { it == NAMESPACE_JS || it == NAMESPACE_HTML || it == NAMESPACE_CSS }
+
+private fun parseWebTypesPath(path: List<String>, context: WebSymbol?): List<WebSymbolQualifiedName> {
+  var i = 0
+  var prevNamespace: SymbolNamespace = context?.namespace ?: NAMESPACE_HTML
+  val result = mutableListOf<WebSymbolQualifiedName>()
+  while (i < path.size) {
+    var namespace = path[i].asWebTypesSymbolNamespace()
+    if (namespace != null) {
+      i++
+      prevNamespace = namespace
+    }
+    else {
+      namespace = prevNamespace
+    }
+    if (i >= path.size) break
+    val kind = path[i++]
+    val name = if (i >= path.size) "" else path[i++]
+    result.add(WebSymbolQualifiedName(namespace, kind, name))
+  }
+  return result
+}

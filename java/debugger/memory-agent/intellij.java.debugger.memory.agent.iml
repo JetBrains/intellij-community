@@ -21,6 +21,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="commons-io" level="project" />
-    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
   </component>
 </module>

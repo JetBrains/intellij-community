@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author ven
- */
 public final class GenericsUtil {
 
   private static final Logger LOG = Logger.getInstance(GenericsUtil.class);
@@ -596,7 +593,7 @@ public final class GenericsUtil {
       PsiType argSubstitution = expectedType.getSubstitutor().substitute(parameter);
       PsiType substitution = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper()
         .getSubstitutionForTypeParameter(typeParam, paramSubstitution, argSubstitution, true, PsiUtil.getLanguageLevel(context));
-      if (substitution != null && substitution != PsiType.NULL) {
+      if (substitution != null && substitution != PsiTypes.nullType()) {
         return substitution;
       }
     }

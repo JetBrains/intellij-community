@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor {
   private static final Logger LOG = Logger.getInstance(JavaDuplicatesExtractMethodProcessor.class);
 
@@ -126,7 +123,7 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     myVariableDatum = getInputVariables().getInputVariables().toArray(new VariableData[0]);
     myMethodVisibility = visibility;
 
-    myArtificialOutputVariable = PsiType.VOID.equals(myReturnType) ? getArtificialOutputVariable() : null;
+    myArtificialOutputVariable = PsiTypes.voidType().equals(myReturnType) ? getArtificialOutputVariable() : null;
     final PsiType returnType = myArtificialOutputVariable != null ? myArtificialOutputVariable.getType() : myReturnType;
 
     if (returnType != null) {

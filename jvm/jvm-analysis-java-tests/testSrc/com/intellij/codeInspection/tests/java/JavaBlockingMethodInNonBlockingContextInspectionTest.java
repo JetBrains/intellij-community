@@ -84,4 +84,9 @@ public class JavaBlockingMethodInNonBlockingContextInspectionTest extends Useful
     myFixture.configureByFiles("TestThrowsTypeDetection.java", "Blocking.java", "NonBlocking.java");
     myFixture.testHighlighting(true, false, true, "TestThrowsTypeDetection.java");
   }
+
+  public void testBlockingConstructor() {
+    myFixture.configureByFiles("TestBlockingConstructor.java", "Blocking.java", "NonBlocking.java");
+    myFixture.testHighlighting(true, false, true, "TestBlockingConstructor.java");
+  }
 }

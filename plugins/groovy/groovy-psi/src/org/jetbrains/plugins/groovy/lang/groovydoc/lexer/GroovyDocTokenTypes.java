@@ -6,9 +6,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType;
 
-/**
- * @author ilyas
- */
 public interface GroovyDocTokenTypes {
 
   IElementType mGDOC_TAG_VALUE_TOKEN = new GroovyDocTagValueTokenType();

@@ -26,7 +26,7 @@ import java.util.concurrent.CompletableFuture
 
 class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
                                  private val pullRequestId: GHPRIdentifier,
-                                 private val messageBus: MessageBus)
+                                 override val messageBus: MessageBus)
   : GHPRReviewDataProvider, Disposable {
 
   override val submitReviewCommentDocument by lazy(LazyThreadSafetyMode.NONE) { EditorFactory.getInstance().createDocument("") }
@@ -87,29 +87,17 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
   override fun canComment() = reviewService.canComment()
 
   override fun addComment(progressIndicator: ProgressIndicator,
-                          reviewId: String,
-                          body: String,
-                          commitSha: String,
-                          fileName: String,
-                          diffLine: Int): CompletableFuture<out GHPullRequestReviewComment> {
-    val future =
-      reviewService.addComment(progressIndicator, reviewId, body, commitSha, fileName, diffLine)
-
-    pendingReviewRequestValue.overrideProcess(future.successOnEdt { it.pullRequestReview })
-    return future.dropReviews().notifyReviews()
-  }
-
-  override fun addComment(progressIndicator: ProgressIndicator,
                           replyToCommentId: String,
                           body: String): CompletableFuture<out GHPullRequestReviewComment> {
     return pendingReviewRequestValue.value.thenCompose {
       val reviewId = it?.id
       if (reviewId == null) {
-        createReview(progressIndicator).thenCompose { review ->
+        reviewService.createReview(progressIndicator, pullRequestId).thenCompose { review ->
           reviewService.addComment(progressIndicator, pullRequestId, review.id, replyToCommentId, body).thenCompose { comment ->
-            submitReview(progressIndicator, review.id, GHPullRequestReviewEvent.COMMENT, null).thenApply {
-              comment
-            }
+            reviewService.submitReview(progressIndicator, pullRequestId, review.id, GHPullRequestReviewEvent.COMMENT, null)
+              .thenApply {
+                comment
+              }
           }.dropReviews().notifyReviews()
         }
       }
@@ -137,7 +125,8 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
         if (comments.isEmpty())
           null
         else
-          GHPullRequestReviewThread(it.id, it.isResolved, it.isOutdated, it.path, it.side, it.line, it.startLine, GraphQLNodesDTO(comments))
+          GHPullRequestReviewThread(it.id, it.isResolved, it.isOutdated, it.path, it.side, it.line, it.originalLine, it.startLine,
+                                    GraphQLNodesDTO(comments))
       }
     }
 
@@ -149,7 +138,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
     val future = reviewService.updateComment(progressIndicator, pullRequestId, commentId, newText)
     reviewThreadsRequestValue.combineResult(future) { list, newComment ->
       list.map {
-        GHPullRequestReviewThread(it.id, it.isResolved, it.isOutdated, it.path, it.side, it.line, it.startLine,
+        GHPullRequestReviewThread(it.id, it.isResolved, it.isOutdated, it.path, it.side, it.line, it.originalLine, it.startLine,
                                   GraphQLNodesDTO(it.comments.map { comment ->
                                     if (comment.id == commentId)
                                       GHPullRequestReviewComment(comment.id, comment.databaseId, comment.url, comment.author,

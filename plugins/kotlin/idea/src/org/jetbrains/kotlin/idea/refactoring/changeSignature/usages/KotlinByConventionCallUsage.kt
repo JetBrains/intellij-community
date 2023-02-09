@@ -6,9 +6,9 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.RemoveEmptyParenthesesFromLambdaCallUtils.removeEmptyArgumentListIfApplicable
 import org.jetbrains.kotlin.idea.inspections.conventionNameCalls.ReplaceGetOrSetInspection
-import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.ReplaceInvokeIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -29,7 +29,7 @@ class KotlinByConventionCallUsage(
             OperatorNameConventions.INVOKE.asString() -> {
                 with(ReplaceInvokeIntention()) {
                     if (applicabilityRange(expression) != null) {
-                        OperatorToFunctionIntention.replaceExplicitInvokeCallWithImplicit(expression)
+                        OperatorToFunctionConverter.replaceExplicitInvokeCallWithImplicit(expression)
                             ?.getPossiblyQualifiedCallExpression()
                             ?.valueArgumentList?.let(::removeEmptyArgumentListIfApplicable)
                     }
@@ -52,7 +52,7 @@ class KotlinByConventionCallUsage(
 
     override fun preprocessUsage() {
         val element = element ?: return
-        val convertedExpression = OperatorToFunctionIntention.convert(element).first
+        val convertedExpression = OperatorToFunctionConverter.convert(element).first
         val callExpression = convertedExpression.getPossiblyQualifiedCallExpression() ?: return
         resolvedCall = callExpression.resolveToCall()
         convertedCallExpression = callExpression

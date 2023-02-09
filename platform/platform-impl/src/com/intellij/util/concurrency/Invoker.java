@@ -284,8 +284,7 @@ public abstract class Invoker implements Disposable {
         promise.setError("disposed");
         return false; // the current invoker is disposed
       }
-      if (supplier instanceof Obsolescent) {
-        Obsolescent obsolescent = (Obsolescent)supplier;
+      if (supplier instanceof Obsolescent obsolescent) {
         if (obsolescent.isObsolete()) {
           if (LOG.isTraceEnabled()) LOG.debug("Task is obsolete");
           promise.setError("obsolete");
@@ -382,49 +381,6 @@ public abstract class Invoker implements Disposable {
       else {
         EdtExecutorService.getInstance().execute(runnable);
       }
-    }
-  }
-
-  /**
-   * This class is the {@code Invoker} in a single background thread.
-   * This invoker does not need additional synchronization.
-   *
-   * @deprecated use {@link Invoker#forBackgroundThreadWithReadAction(Disposable)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static final class BackgroundThread extends Invoker {
-    private final ScheduledExecutorService executor;
-    private volatile Thread thread;
-
-    public BackgroundThread(@NotNull Disposable parent) {
-      super("Background.Thread", parent.toString(), ThreeState.YES);
-      executor = AppExecutorUtil.createBoundedScheduledExecutorService(toString(), 1);
-      Disposer.register(parent, this);
-    }
-
-    @Override
-    public void dispose() {
-      super.dispose();
-      executor.shutdown();
-    }
-
-    @Override
-    public boolean isValidThread() {
-      return thread == Thread.currentThread();
-    }
-
-    @Override
-    void offer(@NotNull Runnable runnable, int delay) {
-      schedule(executor, () -> {
-        if (thread != null) LOG.error("unexpected thread: " + thread);
-        try {
-          thread = Thread.currentThread();
-          runnable.run(); // may throw an assertion error
-        }
-        finally {
-          thread = null;
-        }
-      }, delay);
     }
   }
 

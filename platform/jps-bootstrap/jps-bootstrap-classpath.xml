@@ -62,19 +62,31 @@
       <resolver:path refid="classpath.buildscripts" classpath="runtime"/>
     </resolver:resolve>
 
-    <delete dir="${classes.dir}" />
-    <mkdir dir="${classes.dir}" />
-    <javac
-      destdir="${classes.dir}"
-      encoding="UTF-8"
-      release="11"
-      debug="true"
-      includeantruntime="false"
-      classpathref="classpath.buildscripts">
+    <resolver:resolve failOnMissingAttachments="true">
+      <resolver:remoterepos refid="remoterepos.buildscript"/>
+      <resolver:dependencies>
+        <resolver:dependency groupId="org.jetbrains.kotlin" artifactId="kotlin-compiler" version="${kotlinc.version}" />
+      </resolver:dependencies>
+      <resolver:path refid="classpath.kotlin.compiler" classpath="runtime"/>
+    </resolver:resolve>
 
-      <src path="${jps.bootstrap.dir}/src/main/java" />
-      <src path="${community.home}/platform/build-scripts/downloader/src" />
-    </javac>
+    <delete dir="${classes.dir}" />
+    <java
+      classname="org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
+      classpathref="classpath.kotlin.compiler"
+      fork="true"
+      failonerror="true">
+      <arg value="-no-reflect" />
+      <arg value="-no-stdlib" />
+      <arg value="-jvm-target" />
+      <arg value="11" />
+      <arg value="-classpath" />
+      <arg pathref="classpath.buildscripts" />
+      <arg path="${jps.bootstrap.dir}/src/main/java" />
+      <arg path="${community.home}/platform/build-scripts/downloader/src" />
+      <arg value="-d" />
+      <arg value="${classes.dir}" />
+    </java>
 
     <delete file="${classes.dir}.jar" />
     <zip destfile="${classes.dir}.jar">

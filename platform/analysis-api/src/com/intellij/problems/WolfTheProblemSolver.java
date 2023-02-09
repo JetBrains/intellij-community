@@ -57,10 +57,10 @@ public abstract class WolfTheProblemSolver {
   @Deprecated(forRemoval = true)
   public abstract static class ProblemListener implements com.intellij.problems.ProblemListener {
     @Override
-    public void problemsAppeared(@NotNull VirtualFile file) {}
+    public void problemsAppeared(@NotNull VirtualFile file) { com.intellij.problems.ProblemListener.super.problemsAppeared(file); }
 
     @Override
-    public void problemsDisappeared(@NotNull VirtualFile file) {}
+    public void problemsDisappeared(@NotNull VirtualFile file) { com.intellij.problems.ProblemListener.super.problemsDisappeared(file); }
   }
 
   /**

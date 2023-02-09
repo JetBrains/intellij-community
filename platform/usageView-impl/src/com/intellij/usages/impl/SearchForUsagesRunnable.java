@@ -268,11 +268,9 @@ final class SearchForUsagesRunnable implements Runnable {
   }
 
   private static void flashUsageScriptaculously(@NotNull Usage usage) {
-    if (!(usage instanceof UsageInfo2UsageAdapter)) {
+    if (!(usage instanceof UsageInfo2UsageAdapter usageInfo)) {
       return;
     }
-
-    UsageInfo2UsageAdapter usageInfo = (UsageInfo2UsageAdapter)usage;
 
     Editor editor = usageInfo.openTextEditor(true);
     if (editor == null) return;
@@ -302,7 +300,8 @@ final class SearchForUsagesRunnable implements Runnable {
       // associate progress only if created successfully, otherwise Dispose will cancel the actual progress, see IDEA-195542
       PsiElement element = getPsiElement(mySearchFor);
       Language language = element != null ? element.getLanguage() : null;
-      UsageViewStatisticsCollector.logSearchStarted(myProject, usageView, CodeNavigateSource.FindToolWindow, language);
+      UsageViewStatisticsCollector.logSearchStarted(myProject, usageView, CodeNavigateSource.FindToolWindow, language, element,
+                                                    mySearchFor.length);
       usageView.associateProgress(indicator);
       if (myProcessPresentation.isShowFindOptionsPrompt()) {
         openView(usageView);
@@ -413,7 +412,7 @@ final class SearchForUsagesRunnable implements Runnable {
       }
       return true;
     });
-    if (getUsageView(indicator, startSearchStamp) != null) {
+    if (myProcessPresentation.isShowFindOptionsPrompt() && getUsageView(indicator, startSearchStamp) != null) {
       ApplicationManager.getApplication().invokeLater(() -> myUsageViewManager.showToolWindow(true), myProject.getDisposed());
     }
   }

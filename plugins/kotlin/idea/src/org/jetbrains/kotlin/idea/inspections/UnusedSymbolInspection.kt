@@ -6,18 +6,17 @@ import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
+import com.intellij.codeInsight.options.JavaInspectionButtons
+import com.intellij.codeInsight.options.JavaInspectionControls
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
-import com.intellij.codeInspection.ex.EntryPointsManagerImpl
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiReference
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.PsiSearchHelper.SearchCostResult
@@ -31,30 +30,38 @@ import com.intellij.util.Processor
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.mustHaveNonEmptyPrimaryConstructor
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
+import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindClassUsagesHandler
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.caches.project.implementingDescriptors
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.idea.core.toDescriptor
-import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory;
-import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindClassUsagesHandler
 import org.jetbrains.kotlin.idea.intentions.isFinalizeMethod
+import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumEntries
 import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction
+import org.jetbrains.kotlin.idea.intentions.isUsedStarImportOfEnumStaticFunctions
 import org.jetbrains.kotlin.idea.isMainFunction
 import org.jetbrains.kotlin.idea.quickfix.RemoveUnusedFunctionParameterFix
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -68,6 +75,7 @@ import org.jetbrains.kotlin.idea.util.hasActualsFor
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -78,14 +86,6 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyPublicApi
 import org.jetbrains.kotlin.resolve.isInlineClass
 import org.jetbrains.kotlin.resolve.isInlineClassType
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
-import java.awt.Insets
-import javax.swing.JComponent
-import javax.swing.JPanel
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 
 class UnusedSymbolInspection : AbstractKotlinInspection() {
     companion object {
@@ -478,7 +478,8 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         if (declaration is KtSecondaryConstructor) {
             val containingClass = declaration.containingClass()
             if (containingClass != null && ReferencesSearch.search(KotlinReferencesSearchParameters(containingClass, useScope)).any {
-                    it.element.getStrictParentOfType<KtTypeAlias>() != null
+                    it.element.getStrictParentOfType<KtTypeAlias>() != null ||
+                            it.element.getStrictParentOfType<KtCallExpression>()?.resolveToCall()?.resultingDescriptor == descriptor
                 }) return true
         }
 
@@ -503,18 +504,89 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
 
     private fun hasBuiltInEnumFunctionReference(enumClass: KtClass?, useScope: SearchScope): Boolean {
         if (enumClass == null) return false
-        return enumClass.anyDescendantOfType(KtExpression::isReferenceToBuiltInEnumFunction) ||
-                ReferencesSearch.search(KotlinReferencesSearchParameters(enumClass, useScope)).any(::hasBuiltInEnumFunctionReference)
+        val isFoundEnumFunctionReferenceViaSearch = ReferencesSearch.search(KotlinReferencesSearchParameters(enumClass, useScope))
+            .any { hasBuiltInEnumFunctionReference(it, enumClass) }
+
+        return isFoundEnumFunctionReferenceViaSearch || hasEnumFunctionReferenceInEnumClass(enumClass)
     }
 
-    private fun hasBuiltInEnumFunctionReference(reference: PsiReference): Boolean {
-        val parent = reference.element.getParentOfTypes(
-            true,
-            KtTypeReference::class.java,
-            KtQualifiedExpression::class.java,
-            KtCallableReferenceExpression::class.java
-        ) ?: return false
-        return parent.isReferenceToBuiltInEnumFunction()
+    /**
+     * Checks calls in enum class without receiver expression. Example: values(), ::values
+     */
+    private fun hasEnumFunctionReferenceInEnumClass(enumClass: KtClass): Boolean {
+        val isFoundCallableReference = enumClass.anyDescendantOfType<KtCallableReferenceExpression> {
+            it.receiverExpression == null && it.containingClass() == enumClass && it.isReferenceToBuiltInEnumFunction()
+        }
+        if (isFoundCallableReference) return true
+
+        val isFoundSimpleNameExpression = enumClass.anyDescendantOfType<KtSimpleNameExpression> {
+            it.parent !is KtCallableReferenceExpression && it.containingClass() == enumClass
+                    && it.getQualifiedExpressionForSelector() == null && it.isReferenceToBuiltInEnumEntries()
+        }
+        if (isFoundSimpleNameExpression) return true
+
+        return enumClass.anyDescendantOfType<KtCallExpression> {
+            it.getQualifiedExpressionForSelector() == null && it.containingClass() == enumClass && it.isReferenceToBuiltInEnumFunction()
+        }
+    }
+
+    /**
+     * Checks calls in enum class with explicit receiver expression. Example: EnumClass.values(), EnumClass::values.
+     * Also includes search by imports and kotlin.enumValues, kotlin.enumValueOf functions
+     */
+    private fun hasBuiltInEnumFunctionReference(reference: PsiReference, enumClass: KtClass): Boolean {
+        val parent = reference.element.parent
+        if ((parent as? KtQualifiedExpression)?.normalizeEnumQualifiedExpression(enumClass)?.canBeReferenceToBuiltInEnumFunction() == true) return true
+        if ((parent as? KtQualifiedExpression)?.normalizeEnumCallableReferenceExpression(enumClass)?.canBeReferenceToBuiltInEnumFunction() == true) return true
+        if ((parent as? KtCallableReferenceExpression)?.canBeReferenceToBuiltInEnumFunction() == true) return true
+        if (((parent as? KtTypeElement)?.parent as? KtTypeReference)?.isReferenceToBuiltInEnumFunction() == true) return true
+        if ((parent as? PsiImportStaticReferenceElement)?.isReferenceToBuiltInEnumFunction() == true) return true
+        if ((parent as? PsiReferenceExpression)?.isReferenceToBuiltInEnumFunction(enumClass) == true) return true
+        if ((parent as? KtElement)?.normalizeImportDirective()?.isUsedStarImportOfEnumStaticFunctions() == true) return true
+        return (parent as? PsiImportStaticStatement)?.isUsedStarImportOfEnumStaticFunctions() == true
+    }
+
+    private fun KtElement.normalizeImportDirective(): KtImportDirective? {
+        if (this is KtImportDirective) return this
+        return this.parent as? KtImportDirective
+    }
+
+    private fun KtQualifiedExpression.normalizeEnumQualifiedExpression(enumClass: KtClass): KtQualifiedExpression? {
+        if (this.parent !is KtQualifiedExpression && this.receiverExpression.text == enumClass.name) return this
+        if (this.selectorExpression?.text == enumClass.name) return this.parent as? KtQualifiedExpression
+        return null
+    }
+
+    private fun KtQualifiedExpression.normalizeEnumCallableReferenceExpression(enumClass: KtClass): KtCallableReferenceExpression? {
+        if (this.selectorExpression?.text == enumClass.name) return this.parent as? KtCallableReferenceExpression
+        return null
+    }
+
+    private fun PsiImportStaticStatement.isUsedStarImportOfEnumStaticFunctions(): Boolean {
+        val importedEnumQualifiedName = importReference?.qualifiedName ?: return false
+        if ((resolveTargetClass() as? KtUltraLightClass)?.isEnum != true) return false
+
+        fun PsiReference.isQualifiedNameInEnumStaticMethods(): Boolean {
+            val referenceExpression = resolve() as? PsiMember ?: return false
+            return referenceExpression.containingClass?.kotlinFqName == FqName(importedEnumQualifiedName)
+                    && referenceExpression.name in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES_IN_JAVA.map { it.asString() }
+        }
+
+        return containingFile.anyDescendantOfType(PsiReferenceExpression::isQualifiedNameInEnumStaticMethods)
+    }
+
+    /**
+     * Check static java imports according to the following pattern: 'org.test.Enum.(values/valueOf)'
+     */
+    private fun PsiImportStaticReferenceElement.isReferenceToBuiltInEnumFunction(): Boolean {
+        val importedEnumQualifiedName = classReference.qualifiedName
+        val enumStaticMethods = ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES_IN_JAVA.map { FqName("$importedEnumQualifiedName.$it") }
+        return FqName(qualifiedName) in enumStaticMethods
+    }
+
+    private fun PsiReferenceExpression.isReferenceToBuiltInEnumFunction(enumClass: KtClass): Boolean {
+        val reference = resolve() as? KtLightMethod ?: return false
+        return reference.containingClass.name == enumClass.name && reference is SyntheticElement && reference.name in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES_IN_JAVA.map { it.asString() }
     }
 
     private fun checkPrivateDeclaration(declaration: KtNamedDeclaration, descriptor: DeclarationDescriptor?): Boolean {
@@ -593,11 +665,8 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                 commonModuleDescriptor.hasActualsFor(descriptor)
     }
 
-    override fun createOptionsPanel(): JComponent = JPanel(GridBagLayout()).apply {
-        add(
-            EntryPointsManagerImpl.createConfigureAnnotationsButton(),
-            GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, Insets(0, 0, 0, 0), 0, 0)
-        )
+    override fun getOptionsPane(): OptPane {
+        return OptPane.pane(JavaInspectionControls.button(JavaInspectionButtons.ButtonKind.ENTRY_POINT_ANNOTATIONS))
     }
 
     private fun createQuickFixes(declaration: KtNamedDeclaration): List<LocalQuickFix> {

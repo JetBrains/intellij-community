@@ -19,9 +19,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogSorter;
-import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
+import com.intellij.vcs.log.graph.impl.print.GraphColorGetterByNodeFactory;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
@@ -30,7 +30,6 @@ import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import com.intellij.vcsUtil.VcsFileUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
@@ -60,8 +59,6 @@ import static git4idea.history.GitCommitRequirements.DiffRenameLimit;
 public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
   private static final Logger LOG = Logger.getInstance(GitLogProvider.class);
   public static final Function<VcsRef, String> GET_TAG_NAME = ref -> ref.getType() == GitRefManager.TAG ? ref.getName() : null;
-
-
   public static final it.unimi.dsi.fastutil.Hash.Strategy<VcsRef> DONT_CONSIDER_SHA = new it.unimi.dsi.fastutil.Hash.Strategy<>() {
     @Override
     public int hashCode(@Nullable VcsRef ref) {
@@ -73,7 +70,8 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
     @Override
     public boolean equals(@Nullable VcsRef ref1, @Nullable VcsRef ref2) {
-      return ref1 == ref2 || (ref1 != null && ref2 != null && ref1.getName().equals(ref2.getName()) && ref1.getType().equals(ref2.getType()));
+      if (ref1 == ref2) return true;
+      return ref1 != null && ref2 != null && ref1.getName().equals(ref2.getName()) && ref1.getType().equals(ref2.getType());
     }
   };
 
@@ -141,7 +139,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       }
     }
 
-    List<VcsCommitMetadata> sortedCommits = computeWithSpan(myTracer, "sorting commits", span ->  {
+    List<VcsCommitMetadata> sortedCommits = computeWithSpan(myTracer, "sorting commits", span -> {
       span.setAttribute("rootName", root.getName());
       List<VcsCommitMetadata> commits = VcsLogSorter.sortByDateTopoOrder(allDetails);
       return ContainerUtil.getFirstItems(commits, requirements.getCommitCount());
@@ -154,40 +152,26 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     return new LogDataImpl(allRefs, GitBekParentFixer.fixCommits(sortedCommits));
   }
 
-  private void validateDataAndReportError(@NotNull final VirtualFile root,
-                                                 @NotNull final Set<? extends VcsRef> allRefs,
-                                                 @NotNull final List<? extends VcsCommitMetadata> sortedCommits,
-                                                 @NotNull final DetailedLogData firstBlockSyncData,
-                                                 @NotNull final Set<? extends VcsRef> manuallyReadBranches,
-                                                 @Nullable final Set<String> currentTagNames,
-                                                 @Nullable final DetailedLogData commitsFromTags) {
+  private void validateDataAndReportError(@NotNull VirtualFile root,
+                                          @NotNull Set<? extends VcsRef> allRefs,
+                                          @NotNull List<? extends VcsCommitMetadata> sortedCommits,
+                                          @NotNull DetailedLogData firstBlockSyncData,
+                                          @NotNull Set<? extends VcsRef> manuallyReadBranches,
+                                          @Nullable Set<String> currentTagNames,
+                                          @Nullable DetailedLogData commitsFromTags) {
     runWithSpan(myTracer, "validating data", span -> {
       span.setAttribute("rootName", root.getName());
 
-      final Set<Hash> refs = ContainerUtil.map2Set(allRefs, VcsRef::getCommitHash);
+      Set<Hash> refs = ContainerUtil.map2Set(allRefs, VcsRef::getCommitHash);
 
-      PermanentGraphImpl.newInstance(sortedCommits, new GraphColorManager<>() {
-        @Override
-        public int getColorOfBranch(@NotNull Hash headCommit) {
-          return 0;
+      PermanentGraphImpl.newInstance(sortedCommits, new GraphColorGetterByNodeFactory<>((hash, integer) -> 0), (head1, head2) -> {
+        if (!refs.contains(head1) || !refs.contains(head2)) {
+          Attachment attachment = new Attachment("error-details.txt",
+                                                 printErrorDetails(root, allRefs, sortedCommits, firstBlockSyncData,
+                                                                   manuallyReadBranches, currentTagNames, commitsFromTags));
+          LOG.error("GitLogProvider returned inconsistent data", attachment);
         }
-
-        @Override
-        public int getColorOfFragment(@NotNull Hash headCommit, int magicIndex) {
-          return 0;
-        }
-
-        @Override
-        public int compareHeads(@NotNull Hash head1, @NotNull Hash head2) {
-          if (!refs.contains(head1) || !refs.contains(head2)) {
-            LOG.error("GitLogProvider returned inconsistent data", new Attachment("error-details.txt",
-                                                                                  printErrorDetails(root, allRefs, sortedCommits,
-                                                                                                    firstBlockSyncData,
-                                                                                                    manuallyReadBranches,
-                                                                                                    currentTagNames, commitsFromTags)));
-          }
-          return 0;
-        }
+        return 0;
       }, refs);
     });
   }
@@ -312,7 +296,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
   @Override
   @NotNull
-  public LogData readAllHashes(@NotNull VirtualFile root, @NotNull final Consumer<? super TimedVcsCommit> commitConsumer)
+  public LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<? super TimedVcsCommit> commitConsumer)
     throws VcsException {
     if (getRepository(root) == null) {
       return LogDataImpl.empty();
@@ -321,7 +305,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     List<String> parameters = new ArrayList<>(GitLogUtil.LOG_ALL);
     parameters.add("--date-order");
 
-    final GitBekParentFixer parentFixer = GitBekParentFixer.prepare(myProject, root);
+    GitBekParentFixer parentFixer = GitBekParentFixer.prepare(myProject, root);
     Set<VcsUser> userRegistry = new HashSet<>();
     Set<VcsRef> refs = new HashSet<>();
     GitLogUtil.readTimedCommits(myProject, root, parameters, new CollectConsumer<>(userRegistry), new CollectConsumer<>(refs),
@@ -397,8 +381,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
   @NotNull
   @Override
-  public Disposable subscribeToRootRefreshEvents(@NotNull final Collection<? extends VirtualFile> roots,
-                                                 @NotNull final VcsLogRefresher refresher) {
+  public Disposable subscribeToRootRefreshEvents(@NotNull Collection<? extends VirtualFile> roots, @NotNull VcsLogRefresher refresher) {
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, repository -> {
       VirtualFile root = repository.getRoot();
@@ -411,8 +394,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
   @NotNull
   @Override
-  public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull final VirtualFile root,
-                                                       @NotNull VcsLogFilterCollection filterCollection,
+  public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection,
                                                        int maxCount) throws VcsException {
     VcsLogRangeFilter rangeFilter = filterCollection.get(RANGE_FILTER);
     if (rangeFilter == null) {
@@ -436,16 +418,15 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   }
 
   @NotNull
-  private List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull final VirtualFile root,
-                                                        @NotNull VcsLogFilterCollection filterCollection,
-                                                        @Nullable VcsLogRangeFilter.RefRange range,
-                                                        int maxCount) throws VcsException {
+  private List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection,
+                                                        @Nullable VcsLogRangeFilter.RefRange range, int maxCount) throws VcsException {
 
     GitRepository repository = getRepository(root);
     if (repository == null) {
       return Collections.emptyList();
     }
 
+    List<String> configParameters = new ArrayList<>();
     List<String> filterParameters = new ArrayList<>();
 
     VcsLogBranchFilter branchFilter = filterCollection.get(BRANCH_FILTER);
@@ -519,6 +500,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       else {
         filterParameters.addAll(ContainerUtil.map(names, a -> prepareParameter("author", StringUtil.escapeBackSlashes(a))));
       }
+      configParameters.add("log.mailmap=false");
     }
 
     if (maxCount > 0) {
@@ -540,7 +522,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     }
 
     List<TimedVcsCommit> commits = new ArrayList<>();
-    GitLogUtil.readTimedCommits(myProject, root, filterParameters, EmptyConsumer.getInstance(),
+    GitLogUtil.readTimedCommits(myProject, root, configParameters, filterParameters, EmptyConsumer.getInstance(),
                                 EmptyConsumer.getInstance(), new CollectConsumer<>(commits));
     return commits;
   }
@@ -601,16 +583,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
   @Override
   public @NotNull VirtualFile getVcsRoot(@NotNull Project project, @NotNull VirtualFile detectedRoot, @NotNull FilePath path) {
-    if (VcsUtil.getFilePath(detectedRoot).equals(path)) {
-      GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(detectedRoot);
-      if (repository != null) {
-        GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
-        if (submodule != null) {
-          return submodule.getParent().getRoot();
-        }
-      }
-    }
-    return detectedRoot;
+    return getCorrectedVcsRoot(myRepositoryManager, detectedRoot, path);
   }
 
   @SuppressWarnings("unchecked")
@@ -665,5 +638,20 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       return null;
     }
     return repository;
+  }
+
+  @NotNull
+  public static VirtualFile getCorrectedVcsRoot(@NotNull GitRepositoryManager repositoryManager,
+                                                @NotNull VirtualFile detectedRoot,
+                                                @NotNull FilePath path) {
+    if (path.isDirectory()) return detectedRoot;
+    GitRepository repository = repositoryManager.getRepositoryForRootQuick(path);
+    if (repository != null && repository.getRoot().equals(detectedRoot)) {
+      GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
+      if (submodule != null) {
+        return submodule.getParent().getRoot();
+      }
+    }
+    return detectedRoot;
   }
 }

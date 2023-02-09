@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.jcef.JBCefJSQuery.JSQueryFunc;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.cef.CefClient;
 import org.cef.CefSettings;
 import org.cef.browser.CefBrowser;
@@ -42,7 +41,7 @@ public final class JBCefClient implements JBCefDisposable {
   /**
    * @see #setProperty(String, Object)
    */
-  public static class Properties {
+  public static final class Properties {
     /**
      * Defines the size of the pool used by {@link JBCefJSQuery} after a native browser has been created.
      * <p>

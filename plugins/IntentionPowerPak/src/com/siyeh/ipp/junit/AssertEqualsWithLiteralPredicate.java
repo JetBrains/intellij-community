@@ -24,11 +24,9 @@ class AssertEqualsWithLiteralPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiMethodCallExpression)) {
+    if (!(element instanceof PsiMethodCallExpression expression)) {
       return false;
     }
-    final PsiMethodCallExpression expression =
-      (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = expression.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
     final int argumentCount = arguments.length;

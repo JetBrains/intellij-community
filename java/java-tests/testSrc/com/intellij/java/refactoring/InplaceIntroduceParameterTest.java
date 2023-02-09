@@ -122,6 +122,10 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     doTestEscape();
   }
 
+  public void testRevertImports(){
+    doTestEscape();
+  }
+
   public void testExtractParamOverLocal() {
     doTest(null);
   }

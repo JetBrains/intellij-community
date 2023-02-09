@@ -4,10 +4,13 @@ package com.intellij.feedback.common.notification
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.util.NlsSafe
 
-open class ThanksForFeedbackNotification : Notification(
+open class ThanksForFeedbackNotification(
+  @NlsSafe title: String = CommonFeedbackBundle.message("notification.thanks.feedback.title"),
+  @NlsSafe description: String = CommonFeedbackBundle.message("notification.thanks.feedback.content")
+) : Notification(
   "Feedback In IDE",
-  CommonFeedbackBundle.message("notification.thanks.feedback.title"),
-  CommonFeedbackBundle.message("notification.thanks.feedback.content"),
+  title, description,
   NotificationType.INFORMATION
 )

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -19,9 +19,6 @@ import java.util.Set;
 import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectHandleInvocationChecker.*;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-/**
- * @author Pavel.Dolgov
- */
 final class JavaLangReflectVarHandleInvocationChecker {
   private static final Logger LOG = Logger.getInstance(JavaLangReflectVarHandleInvocationChecker.class);
 
@@ -103,8 +100,7 @@ final class JavaLangReflectVarHandleInvocationChecker {
   static boolean checkVarHandleAccess(PsiMethodCallExpression methodCall, @NotNull ProblemsHolder holder) {
     if (isVarHandleAccessMethod(methodCall)) {
       final PsiExpression qualifierDefinition = findDefinition(methodCall.getMethodExpression().getQualifierExpression());
-      if (qualifierDefinition instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression handleFactoryCall = (PsiMethodCallExpression)qualifierDefinition;
+      if (qualifierDefinition instanceof PsiMethodCallExpression handleFactoryCall) {
         final PsiExpression[] factoryArguments = handleFactoryCall.getArgumentList().getExpressions();
 
         if (isCallToMethod(handleFactoryCall, JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP, FIND_VAR_HANDLE)) {

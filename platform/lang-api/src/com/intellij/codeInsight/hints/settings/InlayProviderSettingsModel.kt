@@ -48,6 +48,8 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    *
    * Should not make any visible changes (run in nonBlockingReadAction)
    *
+   * Must not access index! You must expect the default project inside.
+   *
    * @return continuation which is run in EDT
    */
   open fun collectData(editor: Editor, file: PsiFile) : Runnable {
@@ -56,6 +58,13 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
 
   open fun collectAndApply(editor: Editor, file: PsiFile) {
 
+  }
+
+  /**
+   * In case when [caseId] is null, it is required to create file not for the case, but for the whole provider
+   */
+  open fun createFile(project: Project, fileType: FileType, document: Document, caseId: String?) : PsiFile {
+    return createFile(project, fileType, document)
   }
 
   open fun createFile(project: Project, fileType: FileType, document: Document): PsiFile {

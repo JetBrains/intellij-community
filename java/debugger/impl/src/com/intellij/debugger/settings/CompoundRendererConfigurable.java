@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -74,9 +74,7 @@ class CompoundRendererConfigurable extends JPanel {
   CompoundRendererConfigurable(@NotNull Disposable parentDisposable) {
     super(new CardLayout());
 
-    if (myProject == null) {
-      myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
-    }
+    myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
 
     myRbDefaultLabel = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
     myRbExpressionLabel = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
@@ -268,9 +266,9 @@ class CompoundRendererConfigurable extends JPanel {
       }
     };
     editorComponent.registerKeyboardAction(e -> editor.stopCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+                                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     editorComponent.registerKeyboardAction(e -> editor.cancelCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+                                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     TableColumn exprColumn = myTable.getColumnModel().getColumn(EXPRESSION_TABLE_COLUMN);
     exprColumn.setCellEditor(editor);
@@ -396,9 +394,8 @@ class CompoundRendererConfigurable extends JPanel {
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
     }
-    else if (childrenRenderer instanceof ExpressionChildrenRenderer) {
+    else if (childrenRenderer instanceof ExpressionChildrenRenderer exprRenderer) {
       myRbExpressionChildrenRenderer.setSelected(true);
-      final ExpressionChildrenRenderer exprRenderer = (ExpressionChildrenRenderer)childrenRenderer;
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(exprRenderer.getChildrenExpression()));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(exprRenderer.getChildrenExpandable()));
     }
@@ -406,8 +403,7 @@ class CompoundRendererConfigurable extends JPanel {
       myRbListChildrenRenderer.setSelected(true);
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
-      if (childrenRenderer instanceof EnumerationChildrenRenderer) {
-        EnumerationChildrenRenderer enumerationRenderer = (EnumerationChildrenRenderer)childrenRenderer;
+      if (childrenRenderer instanceof EnumerationChildrenRenderer enumerationRenderer) {
         getTableModel().init(enumerationRenderer.getChildren());
         myAppendDefaultChildren.setSelected(enumerationRenderer.isAppendDefaultChildren());
       }

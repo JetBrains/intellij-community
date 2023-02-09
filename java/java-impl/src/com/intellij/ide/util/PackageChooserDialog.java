@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -97,11 +97,10 @@ public class PackageChooserDialog extends PackageChooser {
           super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
           setIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Package));
 
-          if (value instanceof DefaultMutableTreeNode) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
+          if (value instanceof DefaultMutableTreeNode node) {
             Object object = node.getUserObject();
-            if (object instanceof PsiPackage) {
-              String name = ((PsiPackage)object).getName();
+            if (object instanceof PsiPackage pkg) {
+              String name = pkg.getName();
               if (name != null && name.length() > 0) {
                 setText(name);
               }
@@ -319,11 +318,9 @@ public class PackageChooserDialog extends PackageChooser {
 
   private DefaultMutableTreeNode findNodeForPackage(String qualifiedPackageName) {
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)myModel.getRoot();
-    Enumeration enumeration = root.depthFirstEnumeration();
+    Enumeration<TreeNode> enumeration = root.depthFirstEnumeration();
     while (enumeration.hasMoreElements()) {
-      Object o = enumeration.nextElement();
-      if (o instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)o;
+      if (enumeration.nextElement() instanceof DefaultMutableTreeNode node) {
         PsiPackage nodePackage = (PsiPackage)node.getUserObject();
         if (nodePackage != null) {
           if (Objects.equals(nodePackage.getQualifiedName(), qualifiedPackageName)) return node;
@@ -358,9 +355,7 @@ public class PackageChooserDialog extends PackageChooser {
           String newQualifiedName = selectedPackage.getQualifiedName();
           if (!Comparing.strEqual(newQualifiedName,"")) newQualifiedName += ".";
           newQualifiedName += newPackageName;
-          final PsiDirectory dir = PackageUtil.findOrCreateDirectoryForPackage(myProject, newQualifiedName, null, false);
-          if (dir == null) return;
-          final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(dir);
+          final PsiPackage newPackage = getPsiPackage(newQualifiedName);
 
           if (newPackage != null) {
             DefaultMutableTreeNode newChild = addPackage(newPackage);
@@ -388,6 +383,13 @@ public class PackageChooserDialog extends PackageChooser {
     },
                                                   IdeBundle.message("command.create.new.package"),
                                                   null);
+  }
+
+  @Nullable
+  protected PsiPackage getPsiPackage(String newQualifiedName) {
+    final PsiDirectory dir = PackageUtil.findOrCreateDirectoryForPackage(myProject, newQualifiedName, null, false);
+    if (dir == null) return null;
+    return JavaDirectoryService.getInstance().getPackage(dir);
   }
 
   private class NewPackageAction extends AnAction {

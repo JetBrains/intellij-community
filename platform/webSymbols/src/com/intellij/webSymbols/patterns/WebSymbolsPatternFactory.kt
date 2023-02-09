@@ -45,8 +45,8 @@ object WebSymbolsPatternFactory {
   fun createPatternSequence(patternsProvider: () -> List<WebSymbolsPattern>): WebSymbolsPattern =
     SequencePattern(patternsProvider)
 
-  fun createItemReferencePlaceholder(displayName: String? = null): WebSymbolsPattern =
-    ItemPattern(displayName)
+  fun createSymbolReferencePlaceholder(displayName: String? = null): WebSymbolsPattern =
+    SymbolReferencePattern(displayName)
 
   fun createStringMatch(content: String): WebSymbolsPattern =
     StaticPattern(content)

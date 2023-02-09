@@ -12,8 +12,6 @@ import java.util.Set;
 
 /**
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class JavaElementArrangementEntry extends DefaultArrangementEntry
   implements TypeAwareArrangementEntry, NameAwareArrangementEntry, ModifierAwareArrangementEntry {
@@ -44,9 +42,8 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
     myName = name;
   }
 
-  @NotNull
   @Override
-  public Set<ArrangementSettingsToken> getModifiers() {
+  public @NotNull Set<? extends ArrangementSettingsToken> getModifiers() {
     return myModifiers;
   }
 
@@ -60,9 +57,8 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
     return myName;
   }
 
-  @NotNull
   @Override
-  public Set<ArrangementSettingsToken> getTypes() {
+  public @NotNull Set<? extends ArrangementSettingsToken> getTypes() {
     return myTypes;
   }
 

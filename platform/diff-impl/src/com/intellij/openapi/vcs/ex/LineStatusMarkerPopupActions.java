@@ -20,7 +20,7 @@ import java.awt.datatransfer.StringSelection;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
-public class LineStatusMarkerPopupActions {
+public final class LineStatusMarkerPopupActions {
   public static void showDiff(@NotNull LineStatusTrackerI<?> tracker, @NotNull Range range) {
     Project project = tracker.getProject();
     Range ourRange = expand(range, tracker.getDocument(), tracker.getVcsDocument());

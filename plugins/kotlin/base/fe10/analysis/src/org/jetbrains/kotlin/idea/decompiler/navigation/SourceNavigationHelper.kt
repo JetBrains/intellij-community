@@ -5,10 +5,11 @@ package org.jetbrains.kotlin.idea.decompiler.navigation
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.stubs.StringStubIndexExtension
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -16,15 +17,13 @@ import org.jetbrains.kotlin.fileClasses.JvmMultifileClassPartInfo
 import org.jetbrains.kotlin.fileClasses.fileClassInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.binariesScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.decompiler.navigation.MemberMatching.*
-import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
+import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -32,6 +31,8 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.debugText.getDebugText
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.utils.SmartList
 
 object SourceNavigationHelper {
     private val LOG = Logger.getInstance(SourceNavigationHelper::class.java)
@@ -53,30 +54,31 @@ object SourceNavigationHelper {
         SourceNavigationHelper.forceResolve = forceResolve
     }
 
-    private fun targetScopes(declaration: KtNamedDeclaration, navigationKind: NavigationKind): List<GlobalSearchScope> {
+    fun targetClassFilesToSourcesScopes(virtualFile: VirtualFile, project: Project): List<GlobalSearchScope> {
+        val binaryModuleInfos = ModuleInfoProvider.getInstance(project)
+            .collectLibraryBinariesModuleInfos(virtualFile)
+            .toList()
+
+        val primaryScope = binaryModuleInfos.mapNotNull { it.sourcesModuleInfo?.sourceScope() }.union()
+        val additionalScope = binaryModuleInfos.flatMap {
+            it.associatedCommonLibraries() + it.sourcesOnlyDependencies()
+        }.mapNotNull { it.sourcesModuleInfo?.sourceScope() }.union()
+
+        return if (binaryModuleInfos.any { it is ScriptDependenciesInfo }) {
+            // NOTE: this is a workaround for https://github.com/gradle/gradle/issues/13783:
+            // script configuration for *.gradle.kts files doesn't include sources for included plugins
+            primaryScope + additionalScope + ProjectScope.getContentScope(project)
+        } else {
+            primaryScope + additionalScope
+        }
+    }
+
+    private fun targetScopes(declaration: KtElement, navigationKind: NavigationKind): List<GlobalSearchScope> {
         val containingFile = declaration.containingKtFile
         val vFile = containingFile.virtualFile ?: return emptyList()
-
+        val project = declaration.project
         return when (navigationKind) {
-            NavigationKind.CLASS_FILES_TO_SOURCES -> {
-                val binaryModuleInfos = ModuleInfoProvider.getInstance(declaration.project)
-                    .collectLibraryBinariesModuleInfos(vFile)
-                    .toList()
-
-                val primaryScope = binaryModuleInfos.mapNotNull { it.sourcesModuleInfo?.sourceScope() }.union()
-                val additionalScope = binaryModuleInfos.flatMap {
-                    it.associatedCommonLibraries()
-                }.mapNotNull { it.sourcesModuleInfo?.sourceScope() }.union()
-
-                if (binaryModuleInfos.any { it is ScriptDependenciesInfo }) {
-                    // NOTE: this is a workaround for https://github.com/gradle/gradle/issues/13783:
-                    // script configuration for *.gradle.kts files doesn't include sources for included plugins
-                    primaryScope + additionalScope + ProjectScope.getContentScope(containingFile.project)
-                } else {
-                    primaryScope + additionalScope
-                }
-            }
-
+            NavigationKind.CLASS_FILES_TO_SOURCES -> targetClassFilesToSourcesScopes(vFile, project)
             NavigationKind.SOURCES_TO_CLASS_FILES -> {
                 if (containingFile.fileClassInfo is JvmMultifileClassPartInfo) {
                     // if the asked element is multifile classs, it might be compiled into .kotlin_metadata and .class
@@ -84,14 +86,14 @@ object SourceNavigationHelper {
                     // acceptOverrides). That's why we include only .class jar in the scope.
                     val psiClass = containingFile.findFacadeClass()
                     if (psiClass != null) {
-                        return ModuleInfoProvider.getInstance(declaration.project)
+                        return ModuleInfoProvider.getInstance(project)
                             .collectLibraryBinariesModuleInfos(psiClass.containingFile.virtualFile)
                             .map { it.binariesScope }
                             .toList()
                             .union()
                     }
                 }
-                ModuleInfoProvider.getInstance(declaration.project)
+                ModuleInfoProvider.getInstance(project)
                     .collectLibrarySourcesModuleInfos(vFile)
                     .map { it.binariesModuleInfo.binariesScope }
                     .toList()
@@ -103,13 +105,24 @@ object SourceNavigationHelper {
     private fun BinaryModuleInfo.associatedCommonLibraries(): List<BinaryModuleInfo> {
         if (platform.isCommon()) return emptyList()
 
-        return dependencies().filterIsInstance<BinaryModuleInfo>().filter {
-            it.platform.isCommon()
+        val result = SmartList<BinaryModuleInfo>()
+        val dependencies = dependencies()
+        for (ideaModuleInfo in dependencies) {
+            if (ideaModuleInfo is BinaryModuleInfo && ideaModuleInfo.platform.isCommon()) {
+                result += ideaModuleInfo
+            }
         }
+        return result
+    }
+
+    private fun BinaryModuleInfo.sourcesOnlyDependencies(): List<BinaryModuleInfo> {
+        if (this !is LibraryInfo) return emptyList()
+
+        return LibraryDependenciesCache.getInstance(project).getLibraryDependencies(this).sourcesOnlyDependencies
     }
 
     private fun Collection<GlobalSearchScope>.union(): List<GlobalSearchScope> =
-        if (this.isNotEmpty()) listOf(GlobalSearchScope.union(this.toTypedArray())) else emptyList()
+        if (this.isNotEmpty()) listOf(GlobalSearchScope.union(this)) else emptyList()
 
     private fun haveRenamesInImports(files: Collection<KtFile>) = files.any { file -> file.importDirectives.any { it.aliasName != null } }
 
@@ -124,9 +137,9 @@ object SourceNavigationHelper {
 
         // enum entries
         if (containingClass.hasModifier(KtTokens.ENUM_KEYWORD)) {
-            for (enumEntry in ContainerUtil.findAll(containingClass.declarations, KtEnumEntry::class.java)) {
-                if (memberName == enumEntry.nameAsName) {
-                    return enumEntry
+            for (declaration in containingClass.declarations) {
+                if (declaration is KtEnumEntry && declaration.nameAsSafeName == memberName) {
+                    return declaration
                 }
             }
         }
@@ -142,11 +155,11 @@ object SourceNavigationHelper {
             return sourceClassOrObject?.primaryConstructor ?: sourceClassOrObject
         }
 
-        val memberNameAsString = declaration.name
-        if (memberNameAsString == null) {
+        val memberNameAsString = declaration.name ?: run {
             LOG.debug("Declaration with null name:" + declaration.getDebugText())
             return null
         }
+
         val memberName = Name.identifier(memberNameAsString)
 
         val decompiledContainer = declaration.parent
@@ -227,9 +240,8 @@ object SourceNavigationHelper {
         }
     }
 
-    private fun findClassOrObject(decompiledClassOrObject: KtClassOrObject, navigationKind: NavigationKind): KtClassOrObject? {
-        return findFirstMatchingInIndex<KtClassOrObject>(decompiledClassOrObject, navigationKind, KotlinFullClassNameIndex)
-    }
+    private fun findClassOrObject(decompiledClassOrObject: KtClassOrObject, navigationKind: NavigationKind): KtClassOrObject? =
+        findFirstMatchingInIndex(decompiledClassOrObject, navigationKind, KotlinFullClassNameIndex)
 
     private fun getInitialTopLevelCandidates(
         declaration: KtNamedDeclaration,
@@ -253,8 +265,14 @@ object SourceNavigationHelper {
         sourceClassOrObject: KtClassOrObject,
         name: Name,
         declarationClass: Class<out KtNamedDeclaration>
-    ) = sourceClassOrObject.declarations.filterIsInstance(declarationClass).filter { declaration ->
-        name == declaration.nameAsSafeName
+    ): List<KtNamedDeclaration> {
+        val result = SmartList<KtNamedDeclaration>()
+        for (declaration in sourceClassOrObject.declarations) {
+            if (declarationClass.isInstance(declaration) && name == (declaration as? KtNamedDeclaration)?.nameAsSafeName) {
+                result += declaration
+            }
+        }
+        return result
     }
 
     fun getNavigationElement(declaration: KtDeclaration): KtDeclaration {
@@ -269,7 +287,8 @@ object SourceNavigationHelper {
         from: KtDeclaration,
         navigationKind: NavigationKind
     ): KtDeclaration {
-        if (DumbService.isDumb(from.project)) return from
+        val project = from.project
+        if (DumbService.isDumb(project)) return from
 
         when (navigationKind) {
             NavigationKind.CLASS_FILES_TO_SOURCES -> if (!from.containingKtFile.isCompiled) return from
@@ -298,7 +317,8 @@ object SourceNavigationHelper {
             findFirstMatchingInIndex(typeAlias, navigationKind, KotlinTopLevelTypeAliasFqNameIndex)
 
         override fun visitParameter(parameter: KtParameter, data: Unit): KtDeclaration? {
-            val callableDeclaration = parameter.parent.parent as KtCallableDeclaration
+            val callableDeclaration = parameter.parents.match(KtParameterList::class, last = KtCallableDeclaration::class)
+                ?: error("Can't typeMatch ${parameter.parent.parent}")
             val parameters = callableDeclaration.valueParameters
             val index = parameters.indexOf(parameter)
 

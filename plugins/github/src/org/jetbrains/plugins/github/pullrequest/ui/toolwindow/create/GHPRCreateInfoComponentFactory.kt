@@ -4,8 +4,10 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.ListenableProgressIndicator
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.progress.ProgressIndicator
@@ -18,8 +20,6 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
-import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -47,10 +47,9 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHIOExecutorLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowRepositoryContentController
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import com.intellij.collaboration.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import java.awt.Component
 import java.awt.Container
@@ -63,7 +62,7 @@ import javax.swing.text.Document
 internal class GHPRCreateInfoComponentFactory(private val project: Project,
                                               private val settings: GithubPullRequestsProjectUISettings,
                                               private val dataContext: GHPRDataContext,
-                                              private val viewController: GHPRToolWindowTabComponentController) {
+                                              private val viewController: GHPRToolWindowRepositoryContentController) {
 
   fun create(directionModel: MergeDirectionModel<GHGitRepositoryMapping>,
              titleDocument: Document,
@@ -165,12 +164,12 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     }
     val createButton = JBOptionButton(createAction, arrayOf(createDraftAction))
     val cancelButton = JButton(cancelAction)
-    val actionsPanel = JPanel(HorizontalLayout(JBUIScale.scale(8))).apply {
+    val actionsPanel = HorizontalListPanel(8).apply {
       add(createButton)
       add(cancelButton)
     }
     val statusPanel = JPanel().apply {
-      layout = MigLayout(LC().gridGap("0", "${JBUIScale.scale(8)}").insets("0").fill().flowY().hideMode(3))
+      layout = MigLayout(LC().gridGap("0", "8").insets("0").fill().flowY().hideMode(3))
       border = JBUI.Borders.empty(8)
 
       add(createNoChangesWarningLabel(directionModel, commitsCountModel, createLoadingModel), CC().minWidth("0"))

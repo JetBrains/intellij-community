@@ -12,9 +12,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author pegov
- */
 public class ShowLogAction extends AnAction implements DumbAware {
   public static @NotNull @NlsActions.ActionText String getActionName() {
     return ActionsBundle.message("show.log.in.action.text", RevealFileAction.getFileManagerName());

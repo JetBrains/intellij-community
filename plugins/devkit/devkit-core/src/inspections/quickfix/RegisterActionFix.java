@@ -72,6 +72,6 @@ public class RegisterActionFix extends AbstractRegisterFix {
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    return IntentionPreviewInfo.EMPTY;
+    return super.generatePreview(project, previewDescriptor);
   }
 }

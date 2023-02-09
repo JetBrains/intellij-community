@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.Disposable;
@@ -15,7 +16,6 @@ import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.impl.CaretModelImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.EditorTextFieldRendererDocument;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -185,7 +184,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       else {
         UISettings uiSettings = UISettings.getInstance();
         if (uiSettings.getPresentationMode()) {
-          editor.setFontSize(uiSettings.getPresentationModeFontSize());
+          editor.setFontSize(UISettingsUtils.with(uiSettings).getPresentationModeFontSize());
         }
       }
 
@@ -220,19 +219,20 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
 
     void setTextToEditor(String text) {
-      myEditor.getMarkupModel().removeAllHighlighters();
-      myEditor.getDocument().setText(text);
-      ((EditorImpl)myEditor).resetSizes();
-      myEditor.getHighlighter().setText(text);
+      EditorImpl editor = (EditorImpl)myEditor;
+      editor.getMarkupModel().removeAllHighlighters();
+      editor.getDocument().setText(text);
+      editor.resetSizes();
+      editor.getHighlighter().setText(text);
       if (myTextAttributes != null) {
-        myEditor.getMarkupModel().addRangeHighlighter(0, myEditor.getDocument().getTextLength(),
+        editor.getMarkupModel().addRangeHighlighter(0, editor.getDocument().getTextLength(),
                                                       HighlighterLayer.ADDITIONAL_SYNTAX, myTextAttributes, HighlighterTargetArea.EXACT_RANGE);
       }
 
-      ((EditorImpl)myEditor).setPaintSelection(mySelected);
-      SelectionModel selectionModel = myEditor.getSelectionModel();
-      selectionModel.setSelection(0, mySelected ? myEditor.getDocument().getTextLength() : 0);
-      ObjectUtils.consumeIfCast(myEditor.getCaretModel(), CaretModelImpl.class, CaretModelImpl::updateVisualPosition);
+      editor.setPaintSelection(mySelected);
+      SelectionModel selectionModel = editor.getSelectionModel();
+      selectionModel.setSelection(0, mySelected ? editor.getDocument().getTextLength() : 0);
+      editor.getCaretModel().updateVisualPosition();
     }
   }
 

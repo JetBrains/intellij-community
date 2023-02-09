@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -21,17 +20,17 @@ abstract class ProjectManagerEx : ProjectManager() {
   }
 
   companion object {
-    private const val perProjectOptionName = "ide.per.project.instance"
+    const val PER_PROJECT_OPTION_NAME: String = "ide.per.project.instance"
 
     @JvmField
     @Experimental
-    val IS_PER_PROJECT_INSTANCE_READY: Boolean = System.getProperty(perProjectOptionName)?.let {
-      SystemInfoRt.isMac && PerProjectState.valueOf(it) != PerProjectState.DISABLED
+    val IS_PER_PROJECT_INSTANCE_READY: Boolean = System.getProperty(PER_PROJECT_OPTION_NAME)?.let {
+      (SystemInfoRt.isMac || SystemInfoRt.isLinux) && PerProjectState.valueOf(it) != PerProjectState.DISABLED
     } ?: false
 
     @JvmField
     @Experimental
-    val IS_PER_PROJECT_INSTANCE_ENABLED: Boolean = System.getProperty(perProjectOptionName)?.let {
+    val IS_PER_PROJECT_INSTANCE_ENABLED: Boolean = System.getProperty(PER_PROJECT_OPTION_NAME)?.let {
       IS_PER_PROJECT_INSTANCE_READY && PerProjectState.valueOf(it) == PerProjectState.ENABLED
     } ?: false
 
@@ -53,7 +52,7 @@ abstract class ProjectManagerEx : ProjectManager() {
     }
 
     @Experimental
-    fun isChildProcessPath(path: Path): Boolean = path.fileName.toString().startsWith("perProject_")
+    fun isChildProcessPath(path: Path): Boolean = path.toString().contains(PER_PROJECT_SUFFIX)
   }
 
   @Suppress("UNUSED_PARAMETER")

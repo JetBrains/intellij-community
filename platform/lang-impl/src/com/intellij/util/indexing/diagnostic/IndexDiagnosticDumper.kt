@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -20,16 +21,16 @@ import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.jacksonM
 import com.intellij.util.indexing.diagnostic.dto.*
 import com.intellij.util.indexing.diagnostic.presentation.createAggregateHtml
 import com.intellij.util.indexing.diagnostic.presentation.generateHtml
-import com.intellij.util.io.*
+import com.intellij.util.io.createDirectories
+import com.intellij.util.io.delete
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.sizeOrNull
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.bufferedReader
-import kotlin.io.path.bufferedWriter
-import kotlin.io.path.extension
-import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.streams.asSequence
@@ -115,6 +116,11 @@ class IndexDiagnosticDumper : Disposable {
     @TestOnly
     var shouldDumpInUnitTestMode: Boolean = false
 
+    @JvmStatic
+    val shouldDumpPathsOfFilesIndexedByInfrastructureExtensions =
+      SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.indexed.by.infrastructure.extensions",
+                                          ApplicationManagerEx.isInIntegrationTest())
+
     private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
 
     fun readJsonIndexDiagnostic(file: Path): JsonIndexDiagnostic =
@@ -133,6 +139,26 @@ class IndexDiagnosticDumper : Disposable {
       directory.createDirectories()
       return directory
     }
+
+    private fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<ExistingDiagnostic>, sizeLimit: Long): Pair<Int, Long> {
+      thisLogger().assertTrue(sizeLimit > 0)
+      var sizeLimitLevel = sizeLimit
+      var number = 0
+      for (diagnostic in existingDiagnostics) {
+        sizeLimitLevel -= max(0, diagnostic.jsonFile.sizeOrNull())
+        sizeLimitLevel -= max(0, diagnostic.htmlFile.sizeOrNull())
+        if (sizeLimitLevel <= 0) {
+          break
+        }
+        number++
+      }
+      return Pair(min(indexingDiagnosticsLimitOfFiles, number), sizeLimitLevel)
+    }
+
+    @TestOnly
+    fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<ExistingDiagnostic>): Int =
+      getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics,
+                                              indexingDiagnosticsSizeLimitOfFilesInMiBPerProject * 1024 * 1024.toLong()).first
   }
 
   private var isDisposed = false
@@ -266,16 +292,9 @@ class IndexDiagnosticDumper : Disposable {
       numberLimit = existingDiagnostics.size
     }
     else if (sizeLimit > 0) {
-      var number = 0
-      for (diagnostic in existingDiagnostics) {
-        sizeLimit -= max(0, diagnostic.jsonFile.sizeOrNull())
-        sizeLimit -= max(0, diagnostic.htmlFile.sizeOrNull())
-        if (sizeLimit <= 0) {
-          break
-        }
-        number++
-      }
-      numberLimit = min(indexingDiagnosticsLimitOfFiles, number)
+      val pair = getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics, sizeLimit)
+      numberLimit = pair.first
+      sizeLimit = pair.second
     }
     else {
       numberLimit = indexingDiagnosticsLimitOfFiles

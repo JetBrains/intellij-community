@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.DefaultTableModel;
 
-/**
- * @author Denis Zhdanov
- */
 public class MoveArrangementGroupingRuleDownAction extends AnAction implements DumbAware {
 
   public MoveArrangementGroupingRuleDownAction() {

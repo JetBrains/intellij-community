@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GrRegexImpl extends GrStringImpl implements GrRegex {
 
   public GrRegexImpl(@NotNull ASTNode node) {

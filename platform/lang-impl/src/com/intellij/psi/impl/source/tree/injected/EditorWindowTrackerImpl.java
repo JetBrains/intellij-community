@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -55,11 +55,10 @@ import java.util.function.IntFunction;
 public final class EditorWindowTrackerImpl extends EditorWindowTracker {
   private final Collection<EditorWindowImpl> allEditors = new UnsafeWeakList<>(); // guarded by allEditors
 
-  @Override
   @NotNull
-  public Editor createEditor(@NotNull final DocumentWindow documentRange,
-                             @NotNull final Editor editor,
-                             @NotNull final PsiFile injectedFile) {
+  Editor createEditor(@NotNull final DocumentWindowImpl documentRange,
+                      @NotNull final EditorImpl editor,
+                      @NotNull final PsiFile injectedFile) {
     assert documentRange.isValid();
     assert injectedFile.isValid();
     Ref<EditorWindowImpl> editorWindow = Ref.create();
@@ -72,15 +71,12 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
           }
         }
       }
-      if (editor instanceof EditorImpl && documentRange instanceof DocumentWindowImpl) {
-        ((EditorImpl)editor).executeNonCancelableBlock(() -> {
-          EditorWindowImpl newEditorWindow =
-            new EditorWindowImpl((DocumentWindowImpl)documentRange, ((EditorImpl)editor), injectedFile, documentRange.isOneLine());
-          editorWindow.set(newEditorWindow);
-          allEditors.add(newEditorWindow);
-          newEditorWindow.assertValid();
-        });
-      }
+      editor.executeNonCancelableBlock(()-> {
+        EditorWindowImpl newEditorWindow = new EditorWindowImpl(documentRange, editor, injectedFile, documentRange.isOneLine());
+        editorWindow.set(newEditorWindow);
+        allEditors.add(newEditorWindow);
+        newEditorWindow.assertValid();
+      });
     }
     return editorWindow.get();
   }
@@ -202,8 +198,7 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
       return new LogicalPosition(hostPos.line, hostPos.column + virtualSpaceDelta);
     }
 
-    @Override
-    public void dispose() {
+    private void dispose() {
       assert !myDisposed;
       myCaretModelDelegate.disposeModel();
 

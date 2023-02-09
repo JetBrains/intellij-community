@@ -5,6 +5,7 @@ import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -79,8 +80,7 @@ public final class EditorUtil {
   }
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
-    if (editor instanceof EditorImpl) {
-      EditorImpl editorImpl = (EditorImpl)editor;
+    if (editor instanceof EditorImpl editorImpl) {
       int lineEndOffset = line >= editorImpl.getVisibleLineCount()
                           ? editor.getDocument().getTextLength() : new VisualLinesIterator(editorImpl, line).getVisualLineEndOffset();
       return editor.offsetToVisualPosition(lineEndOffset, true, true).column;
@@ -859,10 +859,15 @@ public final class EditorUtil {
    * editor.
    */
   public static Font getEditorFont() {
+    float fontSize = UISettingsUtils.getInstance().getScaledEditorFontSize();
+    if (UISettings.getInstance().getPresentationMode()) {
+      fontSize -= 4f;
+    }
+
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Font editorFont = scheme.getFont(EditorFontType.PLAIN);
-    if (UISettings.getInstance().getPresentationMode()) {
-      editorFont = editorFont.deriveFont(UISettings.getInstance().getPresentationModeFontSize() - 4f);
+    if (editorFont.getSize() != fontSize) {
+      editorFont = editorFont.deriveFont(fontSize);
     }
     return UIUtil.getFontWithFallback(editorFont);
   }
@@ -957,10 +962,6 @@ public final class EditorUtil {
 
   @NotNull
   public static String displayCharInEditor(char c, @NotNull TextAttributesKey textAttributesKey, @NotNull String fallback) {
-    if (!Character.isValidCodePoint(c)) {
-      return fallback;
-    }
-
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes textAttributes = scheme.getAttributes(textAttributesKey);
     int style = textAttributes != null ? textAttributes.getFontType() : Font.PLAIN;

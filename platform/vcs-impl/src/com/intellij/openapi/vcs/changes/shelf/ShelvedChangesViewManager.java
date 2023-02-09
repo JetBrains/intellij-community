@@ -26,7 +26,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -386,7 +385,11 @@ public class ShelvedChangesViewManager implements Disposable {
     @NotNull
     @Override
     protected ChangesGroupingSupport installGroupingSupport() {
-      return new ChangesGroupingSupport(myProject, this, false);
+      ChangesGroupingSupport groupingSupport = new ChangesGroupingSupport(myProject, this, false);
+      ChangesTree.installGroupingSupport(this, groupingSupport,
+                                         () -> ShelveChangesManager.getInstance(myProject).getGrouping(),
+                                         (newGrouping) -> ShelveChangesManager.getInstance(myProject).setGrouping(newGrouping));
+      return groupingSupport;
     }
 
     @Override
@@ -437,9 +440,6 @@ public class ShelvedChangesViewManager implements Disposable {
         return VcsTreeModelData.selected(this).iterateUserObjects(ShelvedWrapper.class)
           .map(s -> s.getBinaryFile())
           .filterNotNull().toList();
-      }
-      else if (VcsDataKeys.HAVE_SELECTED_CHANGES.is(dataId)) {
-        return getSelectionCount() > 0;
       }
       else if (VcsDataKeys.CHANGES.is(dataId)) {
         List<ShelvedWrapper> shelvedChanges = VcsTreeModelData.selected(this).userObjects(ShelvedWrapper.class);
@@ -675,7 +675,7 @@ public class ShelvedChangesViewManager implements Disposable {
   private static boolean canHandleDropEvent(@NotNull Project project, @NotNull DnDEvent event) {
     Object attachedObject = event.getAttachedObject();
     if (attachedObject instanceof ChangeListDragBean) {
-      List<Change> changes = Arrays.asList(((ChangeListDragBean)attachedObject).getChanges());
+      List<Change> changes = ((ChangeListDragBean)attachedObject).getChanges();
       return !changes.isEmpty();
     }
     return false;
@@ -685,7 +685,7 @@ public class ShelvedChangesViewManager implements Disposable {
     Object attachedObject = event.getAttachedObject();
     if (attachedObject instanceof ChangeListDragBean) {
       FileDocumentManager.getInstance().saveAllDocuments();
-      List<Change> changes = Arrays.asList(((ChangeListDragBean)attachedObject).getChanges());
+      List<Change> changes = ((ChangeListDragBean)attachedObject).getChanges();
       ShelveChangesManager.getInstance(project).shelveSilentlyUnderProgress(changes, true);
     }
   }
@@ -715,11 +715,6 @@ public class ShelvedChangesViewManager implements Disposable {
       myTree = new ShelfTree(myProject);
       myTree.setEditable(true);
       myTree.setDragEnabled(!ApplicationManager.getApplication().isHeadlessEnvironment());
-      myTree.getGroupingSupport().setGroupingKeysOrSkip(myShelveChangesManager.getGrouping());
-      myTree.addGroupingChangeListener(e -> {
-        myShelveChangesManager.setGrouping(myTree.getGroupingSupport().getGroupingKeys());
-        myTree.rebuildTree();
-      });
       DefaultTreeCellEditor treeCellEditor = new DefaultTreeCellEditor(myTree, null) {
         @Override
         public boolean isCellEditable(EventObject event) {
@@ -1133,17 +1128,6 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public boolean canEat(Update update) {
       return true;
-    }
-  }
-
-  /**
-   * @deprecated Implement {@link StartupActivity.Background} directly.
-   */
-  @Deprecated
-  public static class PostStartupActivity implements StartupActivity.Background {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      throw new UnsupportedOperationException();
     }
   }
 

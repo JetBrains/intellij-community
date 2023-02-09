@@ -43,11 +43,6 @@ class KotlinScriptLibraryIndexableIteratorHandler : IndexableIteratorBuilderHand
 private fun createLibraryIterator(
     libraryId: KotlinScriptLibraryId,
     entityStorage: EntityStorage
-): LibraryIndexableFilesIterator? {
-
-    return entityStorage.entities(KotlinScriptLibraryEntity::class.java)
-        .find { it.symbolicId == libraryId }
-        ?.let {
-            KotlinScriptLibraryIndexableFilesIteratorImpl.createIterator(it)
-        }
+): LibraryIndexableFilesIterator? = entityStorage.resolve(libraryId)?.let {
+    KotlinScriptLibraryIndexableFilesIteratorImpl.createIterator(it)
 }

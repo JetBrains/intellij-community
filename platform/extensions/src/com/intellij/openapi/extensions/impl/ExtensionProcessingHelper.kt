@@ -47,19 +47,21 @@ object ExtensionProcessingHelper {
     return computeSafeIfAny({ o: T -> if (predicate.test(o)) o else null }, iterable)
   }
 
-  fun <T, R> computeSafeIfAny(processor: Function<T, out R?>, iterable: Iterable<T?>): R? {
+  fun <T : Any, R> computeSafeIfAny(processor: Function<T, out R>, iterable: Iterable<T?>): R? {
     for (t in iterable) {
       if (t == null) {
         return null
       }
 
       try {
-        val result = processor.apply(t)
-        if (result != null) {
-          return result
+        processor.apply(t)?.let {
+          return it
         }
       }
       catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: CancellationException) {
         throw e
       }
       catch (e: Exception) {

@@ -40,18 +40,16 @@ internal class CreateEnumConstantAction(
     return IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", text)
   }
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, file: PsiFile, target: PsiClass) {
     val name = request.fieldName
-    val targetClass = target
     val elementFactory = JavaPsiFacade.getElementFactory(project)!!
 
     // add constant
-    var enumConstant: PsiEnumConstant
-    enumConstant = elementFactory.createEnumConstantFromText(name, null)
-    enumConstant = targetClass.add(enumConstant) as PsiEnumConstant
+    var enumConstant = elementFactory.createEnumConstantFromText(name, null)
+    enumConstant = target.add(enumConstant) as PsiEnumConstant
 
     // start template
-    val constructor = targetClass.constructors.firstOrNull() ?: return
+    val constructor = target.constructors.firstOrNull() ?: return
     val parameters = constructor.parameterList.parameters
     if (parameters.isEmpty()) return
 
@@ -66,7 +64,7 @@ internal class CreateEnumConstantAction(
     enumConstant = forcePsiPostprocessAndRestoreElement(enumConstant) ?: return
     val template = builder.buildTemplate()
 
-    val newEditor = positionCursor(project, targetClass.containingFile, enumConstant) ?: return
+    val newEditor = positionCursor(project, target.containingFile, enumConstant) ?: return
     val range = enumConstant.textRange
     newEditor.document.deleteString(range.startOffset, range.endOffset)
     startTemplate(newEditor, template, project)

@@ -47,8 +47,7 @@ public final class Scopes {
     else if (scope instanceof ModuleWithDependenciesScope) {
       return ((ModuleWithDependenciesScope)scope).getModule().getName();
     }
-    else if (scope instanceof GlobalSearchScopesCore.DirectoryScope) {
-      final GlobalSearchScopesCore.DirectoryScope directoryScope = (GlobalSearchScopesCore.DirectoryScope)scope;
+    else if (scope instanceof GlobalSearchScopesCore.DirectoryScope directoryScope) {
       final String url = directoryScope.getDirectory().getPresentableUrl();
       return directoryScope.isWithSubdirectories() ? "*" + url : url;
     }

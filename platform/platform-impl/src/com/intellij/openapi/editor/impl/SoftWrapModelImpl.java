@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
@@ -46,8 +46,6 @@ import java.util.List;
  * utility methods built on top of subcomponents API.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener,
@@ -159,7 +157,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     }
     Project project = myEditor.getProject();
     Document document = myEditor.getDocument();
-    if (project != null && PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document)) {
+    if (project != null && PostprocessReformattingAspect.getInstance(project).isDocumentLocked(document)) {
       // Disable checking for files in intermediate states - e.g., for files during refactoring.
       return false;
     }
@@ -510,7 +508,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
     // We delay processing of changed fold regions till the invocation of onFoldProcessingEnd(), as
     // FoldingModel can return inconsistent data before that moment.
-    myDeferredFoldRegions.add(TextRange.create(region)); // copy because region can become invalid later
+    myDeferredFoldRegions.add(region.getTextRange()); // copy because region can become invalid later
   }
 
   @Override

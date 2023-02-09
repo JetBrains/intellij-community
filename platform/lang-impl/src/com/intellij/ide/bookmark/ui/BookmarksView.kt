@@ -4,6 +4,7 @@ package com.intellij.ide.bookmark.ui
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
+import com.intellij.ide.bookmark.actions.registerNavigateOnEnterAction
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
 import com.intellij.ide.bookmark.ui.tree.FolderNodeComparator
 import com.intellij.ide.bookmark.ui.tree.FolderNodeUpdater
@@ -11,6 +12,7 @@ import com.intellij.ide.bookmark.ui.tree.VirtualFileVisitor
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
@@ -25,14 +27,12 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.preview.DescriptorPreview
-import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.EditSourceOnDoubleClickHandler
-import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.containers.toArray
@@ -49,6 +49,9 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   }
 
   val isPopup = showToolbar == null
+
+  fun interface EditSourceListener { fun onEditSource() }
+  private val editSourceListeners: MutableList<EditSourceListener> = mutableListOf()
 
   private val state = BookmarksViewState.getInstance(project)
   private val preview = DescriptorPreview(this, false, null)
@@ -68,13 +71,6 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
   val selectedNodes
     get() = tree.selectionPaths?.mapNotNull { TreeUtil.getAbstractTreeNode(it) }?.ifEmpty { null }
-
-  private val selectedFiles: List<VirtualFile>?
-    get() {
-      val nodes = selectedNodes ?: return null
-      val files = nodes.mapNotNull { it.asVirtualFile }
-      return if (files.size == nodes.size) files else null
-    }
 
   private val previousOccurrence
     get() = when (val occurrence = selectedNode?.bookmarkOccurrence) {
@@ -97,9 +93,16 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
     PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
     PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
-    SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.`is`(dataId) -> SpeedSearchSupply.getSupply(tree)?.enteredPrefix
-    PlatformDataKeys.VIRTUAL_FILE.`is`(dataId) -> selectedNode?.asVirtualFile
-    PlatformDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selectedFiles?.toTypedArray()
+    PlatformDataKeys.BGT_DATA_PROVIDER.`is`(dataId) -> {
+      val selectedNodes = selectedNodes
+      DataProvider { slowDataId -> getSlowData(slowDataId, selectedNodes) }
+    }
+    else -> null
+  }
+
+  private fun getSlowData(dataId: String, selection: List<AbstractTreeNode<*>>?) = when {
+    PlatformDataKeys.VIRTUAL_FILE.`is`(dataId) -> selection?.firstOrNull()?.asVirtualFile
+    PlatformDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selection?.mapNotNull { it.asVirtualFile }?.ifEmpty { null }?.toTypedArray()
     else -> null
   }
 
@@ -201,6 +204,10 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     ApplicationManager.getApplication()?.invokeLater(task, stateForComponent(tree)) { project.isDisposed }
   }
 
+  fun addEditSourceListener(listener: EditSourceListener) {
+    editSourceListeners.add(listener)
+  }
+
   init {
     panel.addToCenter(createScrollPane(tree, true))
     panel.putClientProperty(OPEN_IN_PREVIEW_TAB, true)
@@ -231,8 +238,8 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
     TreeSpeedSearch(tree)
     TreeUtil.promiseSelectFirstLeaf(tree)
-    EditSourceOnEnterKeyHandler.install(tree)
-    EditSourceOnDoubleClickHandler.install(tree)
+    tree.registerNavigateOnEnterAction { editSourceListeners.forEach { it.onEditSource() } }
+    EditSourceOnDoubleClickHandler.install(tree) { editSourceListeners.forEach { it.onEditSource() } }
 
     val group = ContextMenuActionGroup(tree)
     val handler = PopupHandler.installPopupMenu(tree, group, ActionPlaces.BOOKMARKS_VIEW_POPUP)

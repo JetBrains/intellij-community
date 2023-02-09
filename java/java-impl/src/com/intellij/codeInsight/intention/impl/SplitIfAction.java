@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
@@ -27,8 +27,7 @@ public class SplitIfAction extends BaseElementAtCaretIntentionAction {
     if (expression == null) return false;
 
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (!(parent instanceof PsiIfStatement)) return false;
-    PsiIfStatement ifStatement = (PsiIfStatement)parent;
+    if (!(parent instanceof PsiIfStatement ifStatement)) return false;
 
     if (!PsiTreeUtil.isAncestor(ifStatement.getCondition(), expression, false)) return false;
     if (ifStatement.getThenBranch() == null) return false;

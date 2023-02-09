@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -302,8 +302,13 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
             myStreamPool.recycle(bytes);
           }
         }
+        catch (ClosedStorageException ex) {
+          //TODO rethrow original
+          throw new RuntimeException(ex);
+        }
         catch (IOException e) {
           markCorrupted();
+          //TODO rethrow original
           throw new RuntimeException(e);
         }
         finally {
@@ -352,7 +357,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     }
     catch (IOException ignored) {
     }
-    IOUtil.deleteAllFilesStartingWith(baseFile.toFile());
+    IOUtil.deleteAllFilesStartingWith(baseFile);
     try {
       if (myWal != null) {
         myWal.closeAndDelete();
@@ -395,7 +400,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   @NotNull
   private static Path checkDataFiles(@NotNull Path file) {
     if (!Files.exists(file)) {
-      IOUtil.deleteAllFilesStartingWith(getDataFile(file).toFile());
+      IOUtil.deleteAllFilesStartingWith(getDataFile(file));
     }
     return file;
   }
@@ -415,6 +420,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     getWriteLock().lock();
     try {
       doPut(key, value);
+    }
+    catch (ClosedStorageException ex) {
+      throw ex;
     }
     catch (IOException ex) {
       markCorrupted();
@@ -504,6 +512,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     try {
       doAppendData(key, appender);
     }
+    catch (ClosedStorageException e) {
+      throw e;
+    }
     catch (IOException ex) {
       markCorrupted();
       throw ex;
@@ -544,6 +555,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       flushAppendCache();
       return myEnumerator.iterateData(processor);
     }
+    catch (ClosedStorageException e) {
+      throw e;
+    }
     catch (IOException e) {
       markCorrupted();
       throw e;
@@ -580,6 +594,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
         }
       });
     }
+    catch (ClosedStorageException ex) {
+      throw ex;
+    }
     catch (IOException e) {
       markCorrupted();
       throw e;
@@ -595,6 +612,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     try {
       return doGet(key);
     }
+    catch (ClosedStorageException ex) {
+      throw ex;
+    }
     catch (IOException ex) {
       markCorrupted();
       throw ex;
@@ -604,7 +624,8 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     }
   }
 
-  private void markCorrupted() {
+  @Override
+  public void markCorrupted() {
     if (!myStorageFile.getFileSystem().isReadOnly()) {
       try {
         myEnumerator.markCorrupted();

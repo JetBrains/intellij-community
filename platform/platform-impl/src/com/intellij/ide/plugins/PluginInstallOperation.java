@@ -24,6 +24,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
@@ -140,7 +141,7 @@ public final class PluginInstallOperation {
   private void updateUrls() {
     boolean unknownNodes = false;
     for (PluginNode node : myPluginsToInstall) {
-      if (node.getRepositoryName() == PluginInstaller.UNKNOWN_HOST_MARKER) {
+      if (Strings.areSameInstance(node.getRepositoryName(), PluginInstaller.UNKNOWN_HOST_MARKER)) {
         unknownNodes = true;
         break;
       }
@@ -162,7 +163,7 @@ public final class PluginInstallOperation {
     }
 
     for (PluginNode node : myPluginsToInstall) {
-      if (node.getRepositoryName() == PluginInstaller.UNKNOWN_HOST_MARKER) {
+      if (Strings.areSameInstance(node.getRepositoryName(), PluginInstaller.UNKNOWN_HOST_MARKER)) {
         PluginNode descriptor = allPlugins.get(node.getPluginId());
         node.setRepositoryName(descriptor != null ? descriptor.getRepositoryName() : null);
         if (descriptor != null) {

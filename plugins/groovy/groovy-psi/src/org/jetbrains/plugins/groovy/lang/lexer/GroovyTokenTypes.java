@@ -8,8 +8,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 /**
  * Interface that contains all tokens returned by GroovyLexer
- *
- * @author ilyas
  */
 public interface GroovyTokenTypes {
 

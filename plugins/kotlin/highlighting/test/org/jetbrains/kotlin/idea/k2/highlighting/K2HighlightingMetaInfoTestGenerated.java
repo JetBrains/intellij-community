@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.highlighting;
 
@@ -19,6 +19,44 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../idea/tests/testData/highlighterMetaInfo")
 public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2HighlightingMetaInfoTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/highlighterMetaInfo/dsl")
+    public static class Dsl extends AbstractK2HighlightingMetaInfoTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("AnnotatedTypeParameter.kt")
+        public void testAnnotatedTypeParameter() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/dsl/AnnotatedTypeParameter.kt");
+        }
+
+        @TestMetadata("AnnotatedTypeSpecifier.kt")
+        public void testAnnotatedTypeSpecifier() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/dsl/AnnotatedTypeSpecifier.kt");
+        }
+
+        @TestMetadata("ImplementsDslInterface.kt")
+        public void testImplementsDslInterface() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/dsl/ImplementsDslInterface.kt");
+        }
+
+        @TestMetadata("NestedReceivers.kt")
+        public void testNestedReceivers() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/dsl/NestedReceivers.kt");
+        }
+
+        @TestMetadata("RegularDsl.kt")
+        public void testRegularDsl() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/dsl/RegularDsl.kt");
+        }
+
+        @TestMetadata("SubclassOfDslClass.kt")
+        public void testSubclassOfDslClass() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/dsl/SubclassOfDslClass.kt");
+        }
+    }
+
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/highlighterMetaInfo/smartCasts")
     public static class SmartCasts extends AbstractK2HighlightingMetaInfoTest {

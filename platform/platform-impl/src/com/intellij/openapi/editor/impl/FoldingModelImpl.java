@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -42,6 +42,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   private static final Key<SavedCaretPosition> SAVED_CARET_POSITION = Key.create("saved.position.before.folding");
   private static final Key<Boolean> MARK_FOR_UPDATE = Key.create("marked.for.position.update");
   private static final Key<Boolean> DO_NOT_NOTIFY = Key.create("do.not.notify.on.region.disposal");
+
+  static final Key<Boolean> HIDE_GUTTER_RENDERER_FOR_COLLAPSED = Key.create("FoldRegion.HIDE_GUTTER_RENDERER_FOR_COLLAPSED");
 
   private final List<FoldingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -123,8 +125,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
   };
   @Override
-  @NotNull
-  public List<FoldRegion> getGroupedRegions(@NotNull FoldingGroup group) {
+  public @NotNull List<FoldRegion> getGroupedRegions(@NotNull FoldingGroup group) {
     return (List<FoldRegion>)myGroups.get(group);
   }
 
@@ -204,6 +205,14 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     if (!(region instanceof FoldRegionImpl)) {
       throw new IllegalArgumentException("Only regions created by this instance of FoldingModel are accepted");
     }
+  }
+
+  /**
+   * Do not show default gutter icon for a collapsed region.
+   * E.g. if Editor provides another means of expanding the region.
+   */
+  public static void hideGutterRendererForCollapsedRegion(@NotNull FoldRegion region) {
+    region.putUserData(HIDE_GUTTER_RENDERER_FOR_COLLAPSED, Boolean.TRUE);
   }
 
   @Override
@@ -311,7 +320,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       myEditor.getContentComponent().repaint();
     }
     if (gutterMarkChanged) {
-      myEditor.getGutterComponentEx().updateSize();
+      ((EditorGutterComponentImpl)myEditor.getGutterComponentEx()).updateSize();
     }
   }
 
@@ -328,21 +337,18 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  @Nullable
-  public FoldRegion getCollapsedRegionAtOffset(int offset) {
+  public @Nullable FoldRegion getCollapsedRegionAtOffset(int offset) {
     return myFoldTree.fetchOutermost(offset);
   }
 
-  @Nullable
   @Override
-  public FoldRegion getFoldRegion(int startOffset, int endOffset) {
+  public @Nullable FoldRegion getFoldRegion(int startOffset, int endOffset) {
     assertReadAccess();
     return myFoldTree.getRegionAt(startOffset, endOffset);
   }
 
   @Override
-  @Nullable
-  public FoldRegion getFoldingPlaceholderAt(@NotNull Point p) {
+  public @Nullable FoldRegion getFoldingPlaceholderAt(@NotNull Point p) {
     return getFoldingPlaceholderAt(new EditorLocation(myEditor, p), false);
   }
 
@@ -479,7 +485,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
     myEditor.updateCaretCursor();
     myEditor.recalculateSizeAndRepaint();
-    myEditor.getGutterComponentEx().updateSize();
+    ((EditorGutterComponentImpl)myEditor.getGutterComponentEx()).updateSize();
     myEditor.getGutterComponentEx().repaint();
     myEditor.invokeDelayedErrorStripeRepaint();
 
@@ -539,7 +545,6 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
   }
 
-  @Override
   public boolean isInBatchFoldingOperation() {
     return myIsBatchFoldingProcessing;
   }
@@ -600,7 +605,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     return myFoldTree.intersectsRegion(startOffset, endOffset);
   }
 
-  FoldRegion @Nullable [] fetchVisible() {
+  @ApiStatus.Internal
+  public FoldRegion @Nullable [] fetchVisible() {
     return myFoldTree.fetchVisible();
   }
 
@@ -686,13 +692,12 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
   }
 
-  @Nullable
   @Override
-  public FoldRegion createFoldRegion(int startOffset,
-                                     int endOffset,
-                                     @NotNull String placeholder,
-                                     @Nullable FoldingGroup group,
-                                     boolean neverExpands) {
+  public @Nullable FoldRegion createFoldRegion(int startOffset,
+                                               int endOffset,
+                                               @NotNull String placeholder,
+                                               @Nullable FoldingGroup group,
+                                               boolean neverExpands) {
     assertIsDispatchThreadForEditor();
     if (!myIsBatchFoldingProcessing) {
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
@@ -777,9 +782,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
   }
 
-  @NotNull
   @Override
-  public String dumpState() {
+  public @NotNull String dumpState() {
     return Arrays.toString(myFoldTree.fetchTopLevel());
   }
 
@@ -883,8 +887,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       super(document);
     }
 
-    @NotNull
-    private FoldRegionImpl getRegion(@NotNull IntervalNode<FoldRegionImpl> node) {
+    private static @NotNull FoldRegionImpl getRegion(@NotNull IntervalNode<FoldRegionImpl> node) {
       assert node.intervals.size() == 1;
       FoldRegionImpl region = node.intervals.get(0).get();
       assert region != null;
@@ -903,15 +906,14 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       return c1 == c2 ? 0 : c1 ? 1 : -1;
     }
 
-    @NotNull
     @Override
-    protected RMNode<FoldRegionImpl> createNewNode(@NotNull FoldRegionImpl key,
-                                                 int start,
-                                                 int end,
-                                                 boolean greedyToLeft,
-                                                 boolean greedyToRight,
-                                                 boolean stickingToRight,
-                                                 int layer) {
+    protected @NotNull RMNode<FoldRegionImpl> createNewNode(@NotNull FoldRegionImpl key,
+                                                            int start,
+                                                            int end,
+                                                            boolean greedyToLeft,
+                                                            boolean greedyToRight,
+                                                            boolean stickingToRight,
+                                                            int layer) {
       return new FRNode(this, key, start, end);
     }
 

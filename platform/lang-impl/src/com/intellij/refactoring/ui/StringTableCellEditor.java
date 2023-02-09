@@ -28,9 +28,6 @@ import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class StringTableCellEditor extends AbstractCellEditor implements TableCellEditor {
   private Document myDocument;
   private final Project myProject;

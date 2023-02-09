@@ -1,3 +1,1 @@
-from typing import Any
-
-version_info: Any
+version_info: tuple[int, int, int, str, int]

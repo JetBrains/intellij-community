@@ -23,7 +23,7 @@ internal fun artifact(project: Project, name: String): Artifact {
 }
 
 internal fun artifactEntity(project: Project, name: String): ArtifactEntity {
-  val artifactEntities = WorkspaceModel.getInstance(project).entityStorage.current.entities(ArtifactEntity::class.java)
+  val artifactEntities = WorkspaceModel.getInstance(project).currentSnapshot.entities(ArtifactEntity::class.java)
   val artifactEntity = artifactEntities.find { it.name == name }
   Assert.assertNotNull(artifactEntity)
   return artifactEntity!!

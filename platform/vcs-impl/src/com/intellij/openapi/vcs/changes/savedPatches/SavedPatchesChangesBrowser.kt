@@ -157,7 +157,7 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
       return VcsTreeModelData.getListSelectionOrAll(myViewer).map { (it as? SavedPatchesProvider.ChangeObject)?.asChange() }
     }
     else if (VcsDataKeys.CHANGE_LEAD_SELECTION.`is`(dataId)) {
-      return VcsTreeModelData.exactlySelected(myViewer).mapToChange().take(1).toList().toTypedArray()
+      return VcsTreeModelData.exactlySelected(myViewer).mapToChange().toList().toTypedArray()
     }
     else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId)) {
       return VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
@@ -178,6 +178,9 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
     }
     else if (SavedPatchesUi.SAVED_PATCH_SELECTED_CHANGES.`is`(dataId)) {
       return VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
+    }
+    else if (SavedPatchesUi.SAVED_PATCH_CHANGES.`is`(dataId)) {
+      return VcsTreeModelData.all(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
     }
     return super.getData(dataId)
   }

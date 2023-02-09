@@ -104,7 +104,7 @@ public class PyFormattedStringElementImpl extends PyElementImpl implements PyFor
 
   @Override
   public boolean isTerminated() {
-    return findChildrenByType(PyTokenTypes.FSTRING_END) != null;
+    return findChildByType(PyTokenTypes.FSTRING_END) != null;
   }
 
   @Override

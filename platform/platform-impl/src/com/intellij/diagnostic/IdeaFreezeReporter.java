@@ -17,6 +17,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,21 +33,22 @@ import java.util.function.Function;
 final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final ExtensionPointName<FreezeProfiler> EP_NAME = new ExtensionPointName<>("com.intellij.diagnostic.freezeProfiler");
 
-  private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 10 : 20; // seconds
+  private static final int FREEZE_THRESHOLD = Math.max(SystemProperties.getIntProperty(
+    "freeze.reporter.threshold.s", ApplicationManager.getApplication().isInternal() ? 10 : 20), 1);
   private static final String REPORT_PREFIX = "report";
   private static final String DUMP_PREFIX = "dump";
   private static final String MESSAGE_FILE_NAME = ".message";
   private static final String THROWABLE_FILE_NAME = ".throwable";
-  public static final String APPINFO_FILE_NAME = ".appinfo";
+  static final String APPINFO_FILE_NAME = ".appinfo";
   // common sub-stack contains more than the specified % samples
   private static final double COMMON_SUB_STACK_WEIGHT = 0.25;
 
   @SuppressWarnings("FieldMayBeFinal")
-  private static boolean DEBUG = false;
+  private static boolean DEBUG;
 
   private SamplingTask myDumpTask;
   private final List<ThreadDump> myCurrentDumps = new ArrayList<>();
-  private List<StackTraceElement> myStacktraceCommonPart = null;
+  private List<? extends StackTraceElement> myStacktraceCommonPart;
   private volatile boolean myAppClosing;
 
   IdeaFreezeReporter() {
@@ -190,7 +192,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       StackTraceElement[] edtStack = dump.getEDTStackTrace();
       if (edtStack != null) {
         if (myStacktraceCommonPart == null) {
-          myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
+          myStacktraceCommonPart = List.of(edtStack);
         }
         else {
           myStacktraceCommonPart = PerformanceWatcherImpl.getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
@@ -359,7 +361,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     CallTreeNode root = CallTreeNode.buildTree(causeThreads, dumpInterval);
     int classLoadingRatio = countClassLoading(causeThreads) * 100 / causeThreads.size();
     CallTreeNode commonStackNode = root.findDominantCommonStack((long)(causeThreads.size() * dumpInterval * COMMON_SUB_STACK_WEIGHT));
-    List<StackTraceElement> commonStack = commonStackNode != null ? commonStackNode.getStack() : null;
+    List<? extends StackTraceElement> commonStack = commonStackNode != null ? commonStackNode.getStack() : null;
 
     boolean nonEdtCause = false;
     if (ContainerUtil.isEmpty(commonStack)) {
@@ -380,7 +382,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     }
 
     if (!ContainerUtil.isEmpty(commonStack)) {
-      if (commonStack.stream().anyMatch(IdeaFreezeReporter::skippedFrame)) {
+      if (ContainerUtil.exists(commonStack, IdeaFreezeReporter::skippedFrame)) {
         return null;
       }
 
@@ -414,15 +416,15 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     return null;
   }
 
-  private static boolean skippedFrame(StackTraceElement e) {
+  private static boolean skippedFrame(@NotNull StackTraceElement e) {
     return ApplicationImpl.class.getName().equals(e.getClassName()) && "runEdtProgressWriteAction".equals(e.getMethodName());
   }
 
-  private static int countClassLoading(List<? extends ThreadInfo> causeThreads) {
-    return (int)causeThreads.stream().filter(t -> Arrays.stream(t.getStackTrace()).anyMatch(IdeaFreezeReporter::isClassLoading)).count();
+  private static int countClassLoading(@NotNull List<? extends ThreadInfo> causeThreads) {
+    return (int)causeThreads.stream().filter(t -> ContainerUtil.exists(t.getStackTrace(), IdeaFreezeReporter::isClassLoading)).count();
   }
 
-  private static boolean isClassLoading(StackTraceElement stackTraceElement) {
+  private static boolean isClassLoading(@NotNull StackTraceElement stackTraceElement) {
     return "loadClass".equals(stackTraceElement.getMethodName()) && "java.lang.ClassLoader".equals(stackTraceElement.getClassName());
   }
 
@@ -444,7 +446,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       myThreadInfo = info;
     }
 
-    public static @NotNull CallTreeNode buildTree(List<? extends ThreadInfo> threadInfos, long time) {
+    static @NotNull CallTreeNode buildTree(@NotNull List<? extends ThreadInfo> threadInfos, long time) {
       CallTreeNode root = new CallTreeNode(null, null, 0, null);
       for (ThreadInfo thread : threadInfos) {
         CallTreeNode node = root;
@@ -456,7 +458,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       return root;
     }
 
-    CallTreeNode addCallee(StackTraceElement e, long time, ThreadInfo threadInfo) {
+    @NotNull CallTreeNode addCallee(StackTraceElement e, long time, ThreadInfo threadInfo) {
       for (CallTreeNode child : myChildren) {
         if (PerformanceWatcherImpl.compareStackTraceElements(child.myStackTraceElement, e)) {
           child.myTime += time;
@@ -484,13 +486,13 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       return myTime + " " + myStackTraceElement;
     }
 
-    public void appendIndentedString(StringBuilder builder) {
+    void appendIndentedString(@NotNull StringBuilder builder) {
       StringUtil.repeatSymbol(builder, ' ', myDepth);
       builder.append(myStackTraceElement.getClassName()).append(".").append(myStackTraceElement.getMethodName())
         .append(" ").append(myTime).append("ms").append("\n");
     }
 
-    String dump() {
+    @NotNull String dump() {
       StringBuilder sb = new StringBuilder();
       LinkedList<CallTreeNode> nodes = new LinkedList<>(myChildren);
       while (!nodes.isEmpty()) {
@@ -501,7 +503,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       return sb.toString();
     }
 
-    private List<StackTraceElement> getStack() {
+    private @NotNull List<StackTraceElement> getStack() {
       List<StackTraceElement> res = new ArrayList<>();
       CallTreeNode node = this;
       while (node != null && node.myStackTraceElement != null) {

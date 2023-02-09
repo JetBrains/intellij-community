@@ -89,7 +89,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
           types.add(elementFactory.createTypeFromText(s, element));
         }
         catch (IncorrectOperationException e) {
-          types.add(PsiType.NULL);
+          types.add(PsiTypes.nullType());
         }
       }
       methodSignature = MethodSignatureUtil.createMethodSignature(name, types.toArray(PsiType.createArray(types.size())),

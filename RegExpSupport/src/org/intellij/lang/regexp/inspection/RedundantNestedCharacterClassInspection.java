@@ -43,8 +43,7 @@ public class RedundantNestedCharacterClassInspection extends LocalInspectionTool
       // JDK 9: [^a&&b] is the intersection of [a] and [b] (which is nothing), inverted, which equals everything.
       // see https://bugs.openjdk.org/browse/JDK-8189343
       // and http://mail.openjdk.org/pipermail/core-libs-dev/2011-June/006957.html
-      if (parent instanceof RegExpClass) {
-        final RegExpClass parentClass = (RegExpClass)parent;
+      if (parent instanceof RegExpClass parentClass) {
         if (!parentClass.isNegated() && !regExpClass.isNegated()) {
           myHolder.registerProblem(regExpClass.getFirstChild(), RegExpBundle.message("inspection.warning.redundant.nested.character.class"),
                                    new RedundantNestedCharacterClassFix());
@@ -52,8 +51,7 @@ public class RedundantNestedCharacterClassInspection extends LocalInspectionTool
       }
       else if (parent instanceof RegExpIntersection) {
         final PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof RegExpClass) {
-          final RegExpClass grandparentClass = (RegExpClass)grandParent;
+        if (grandParent instanceof RegExpClass grandparentClass) {
           if (!grandparentClass.isNegated() && !regExpClass.isNegated()) {
             myHolder.registerProblem(regExpClass.getFirstChild(), RegExpBundle.message("inspection.warning.redundant.nested.character.class"),
                                      new RedundantNestedCharacterClassFix());
@@ -72,8 +70,7 @@ public class RedundantNestedCharacterClassInspection extends LocalInspectionTool
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiElement element = descriptor.getPsiElement().getParent();
-        if (element instanceof RegExpClass) {
-          final RegExpClass regExpClass = (RegExpClass)element;
+        if (element instanceof RegExpClass regExpClass) {
           final RegExpClassElement[] elements = regExpClass.getElements();
           final PsiElement parent = regExpClass.getParent();
           for (RegExpClassElement classElement : elements) {

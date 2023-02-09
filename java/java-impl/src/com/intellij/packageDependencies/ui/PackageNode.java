@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.cyclicDependencies.ui.CyclicDependenciesPanel;
@@ -74,14 +74,9 @@ public class PackageNode extends PackageDependenciesNode {
       return super.equals(o);
     }
     if (this == o) return true;
-    if (!(o instanceof PackageNode)) return false;
-
-    final PackageNode packageNode = (PackageNode)o;
-
-    if (!myPackageName.equals(packageNode.myPackageName)) return false;
-    if (myPackageQName != null ? !myPackageQName.equals(packageNode.myPackageQName) : packageNode.myPackageQName != null) return false;
-
-    return true;
+    return o instanceof PackageNode packageNode &&
+           myPackageName.equals(packageNode.myPackageName) &&
+           Objects.equals(myPackageQName, packageNode.myPackageQName);
   }
 
   public int hashCode() {

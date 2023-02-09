@@ -18,9 +18,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
-/**
- * @author ilyas
- */
 public final class GroovyConfigUtils extends AbstractConfigUtils {
 
   // to avoid java modules deps the same pattern was copied at org.jetbrains.plugins.gradle.service.GradleInstallationManager.GROOVY_ALL_JAR_PATTERN
@@ -185,12 +182,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
     return false;
   }
 
-  @NotNull
-  public String getSDKLibVersion(Library library) {
-    return getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library));
-  }
-
   public Collection<String> getSDKVersions(Library[] libraries) {
-    return ContainerUtil.map2List(libraries, library -> getSDKLibVersion(library));
+    return ContainerUtil.map2List(libraries, library -> getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library)));
   }
 }

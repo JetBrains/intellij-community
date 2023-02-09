@@ -31,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-/**
- * @author vlan
- */
 public final class PyCallableParameterImpl implements PyCallableParameter {
   @Nullable private final String myName;
   @Nullable private final Ref<PyType> myType;
@@ -216,8 +213,7 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
   public PyType getArgumentType(@NotNull TypeEvalContext context) {
     final PyType parameterType = getType(context);
 
-    if (parameterType instanceof PyCollectionType) {
-      final PyCollectionType collectionType = (PyCollectionType)parameterType;
+    if (parameterType instanceof PyCollectionType collectionType) {
 
       if (isPositionalContainer()) {
         return collectionType.getIteratedItemType();

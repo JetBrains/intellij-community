@@ -23,7 +23,7 @@ import java.util.List;
 
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getSpace;
 
-class ArgumentSuggester {
+final class ArgumentSuggester {
   static @NotNull Collection<LookupElement> suggestArgument(PsiReferenceExpression ref, List<ExpectedTypeInfo> expectedTypeInfos) {
     PsiExpression qualifier = ref.getQualifierExpression();
 
@@ -39,7 +39,7 @@ class ArgumentSuggester {
     StreamEx<MethodWithArgument> stream = StreamEx.of(
       new MethodWithArgument(toLowerCase, type, "java.util.Locale.ROOT", "Locale.ROOT"),
       new MethodWithArgument(toUpperCase, type, "java.util.Locale.ROOT", "Locale.ROOT"),
-      new MethodWithArgument(getBytes, PsiType.BYTE.createArrayType(), "java.nio.charset.StandardCharsets.UTF_8",
+      new MethodWithArgument(getBytes, PsiTypes.byteType().createArrayType(), "java.nio.charset.StandardCharsets.UTF_8",
                              "StandardCharsets.UTF_8"));
     if (!expectedTypeInfos.isEmpty()) {
       stream =

@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PyPsiRefactoringUtil {
+public final class PyPsiRefactoringUtil {
   /**
    * Adds element to statement list to the correct place according to its dependencies.
    *

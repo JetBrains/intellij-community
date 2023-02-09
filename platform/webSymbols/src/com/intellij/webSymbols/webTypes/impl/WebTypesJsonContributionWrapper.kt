@@ -19,7 +19,6 @@ import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
-import com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorImpl.Companion.asSymbolNamespace
 import com.intellij.webSymbols.utils.merge
 import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.webSymbols.webTypes.WebTypesSymbol
@@ -80,7 +79,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
            if (!path.startsWith('/')) return@mapNotNull null
            val slash = path.indexOf('/', 1)
            if (path.lastIndexOf('/') != slash) return@mapNotNull null
-           val n = path.substring(1, slash).asSymbolNamespace()
+           val n = path.substring(1, slash).asWebTypesSymbolNamespace()
                    ?: return@mapNotNull null
            val k = path.substring(slash + 1, path.length)
            Pair(n, k)
@@ -109,7 +108,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
                 ?.also { contributions -> _superContributions = contributions }
               ?: emptyList()
 
-    override fun getSymbols(namespace: SymbolNamespace?,
+    override fun getSymbols(namespace: SymbolNamespace,
                             kind: String,
                             name: String?,
                             params: WebSymbolsNameMatchQueryParams,
@@ -119,7 +118,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
                     namespace, kind, name, params, scope)
         .toList()
 
-    override fun getCodeCompletions(namespace: SymbolNamespace?,
+    override fun getCodeCompletions(namespace: SymbolNamespace,
                                     kind: String,
                                     name: String?,
                                     params: WebSymbolsCodeCompletionQueryParams,
@@ -138,11 +137,8 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
     override val namespace: SymbolNamespace
       get() = base.namespace
 
-    override val nameSegments: List<WebSymbolNameSegment>
-      get() = listOf(WebSymbolNameSegment(0, if (base is Pattern) 0 else matchedName.length, this))
-
     override val name: String
-      get() = base.contributionName
+      get() = if (base is Pattern) base.contributionName else base.name
 
     override val description: String?
       get() = base.contribution.description
@@ -153,7 +149,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
       get() = (base.contribution.descriptionSections?.additionalProperties?.asSequence() ?: emptySequence())
         .plus(superContributions.asSequence().flatMap { it.descriptionSections.asSequence() })
         .distinctBy { it.key }
-        .associateBy({ it.key }, { it.value })
+        .associateBy({ it.key }, { base.jsonOrigin.renderDescription(it.value) })
 
     override val docUrl: String?
       get() = base.contribution.docUrl
@@ -224,9 +220,6 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
     override val pattern: WebSymbolsPattern?
       get() = base.jsonPattern?.wrap(base.contribution.name)
 
-    override val matchedName: String
-      get() = base.name
-
     override fun createPointer(): Pointer<WebTypesSymbolImpl> {
       val queryExecutorPtr = this.queryExecutor.createPointer()
       val basePtr = this.base.createPointer()
@@ -237,17 +230,17 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
       }
     }
 
-    override val queryScope: Sequence<WebSymbolsScope>
+    override val queryScope: List<WebSymbolsScope>
       get() = superContributions.asSequence()
         .flatMap { it.queryScope }
         .plus(this)
+        .toList()
 
     override val properties: Map<String, Any>
       get() = base.contribution.genericProperties
 
-    override fun isExclusiveFor(namespace: SymbolNamespace?, kind: SymbolKind): Boolean =
-      namespace != null
-      && namespace == this.namespace
+    override fun isExclusiveFor(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
+      namespace == this.namespace
       && (base.isExclusiveFor(namespace, kind)
           || superContributions.any { it.isExclusiveFor(namespace, kind) })
 

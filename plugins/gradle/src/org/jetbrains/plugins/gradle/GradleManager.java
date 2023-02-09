@@ -44,6 +44,7 @@ import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.indexing.UnindexedFilesScannerExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +68,8 @@ import java.util.*;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findAll;
 import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
+import static org.jetbrains.plugins.gradle.util.GradleUtil.excludeOutDir;
+import static org.jetbrains.plugins.gradle.util.GradleUtil.unexcludeOutDir;
 
 public final class GradleManager
   implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSystemAutoImportAware, StartupActivity, ExternalSystemManager<
@@ -370,12 +373,13 @@ public final class GradleManager
         ProgressManager.getInstance().run(new Task.Backgroundable(project, title, false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            DumbService.getInstance(project).suspendIndexingAndRun(title, () -> {
+            UnindexedFilesScannerExecutor.getInstance(project).suspendScanningAndIndexingThenRun(title, () -> {
               for (DataNode<ModuleData> moduleDataNode : findAll(projectStructure, ProjectKeys.MODULE)) {
                 moduleDataNode.getData().useExternalCompilerOutput(delegatedBuild);
                 for (DataNode<GradleSourceSetData> sourceSetDataNode : findAll(moduleDataNode, GradleSourceSetData.KEY)) {
                   sourceSetDataNode.getData().useExternalCompilerOutput(delegatedBuild);
                 }
+                configureExcludeOutDir(moduleDataNode, delegatedBuild);
               }
               ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, project);
             });
@@ -397,6 +401,17 @@ public final class GradleManager
     GradleLocalSettings localSettings = GradleLocalSettings.getInstance(project);
     patchRecentTasks(adjustedPaths, localSettings);
     patchAvailableProjects(adjustedPaths, localSettings);
+  }
+
+  private static void configureExcludeOutDir(DataNode<ModuleData> moduleDataNode, boolean delegatedBuild) {
+    ModuleData module = moduleDataNode.getData();
+    File ideaOutDir = new File(module.getLinkedExternalProjectPath(), "out");
+    module.useExternalCompilerOutput(delegatedBuild);
+    if (!delegatedBuild) {
+      excludeOutDir(moduleDataNode, ideaOutDir);
+    } else {
+      unexcludeOutDir(moduleDataNode, ideaOutDir);
+    }
   }
 
   @Nullable

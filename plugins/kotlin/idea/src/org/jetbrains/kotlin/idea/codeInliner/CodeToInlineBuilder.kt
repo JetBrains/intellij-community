@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.codeInliner.CommentHolder.CommentNode.Companion
 import org.jetbrains.kotlin.idea.core.asExpression
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.SpecifyExplicitLambdaSignatureIntention
@@ -42,6 +43,7 @@ import org.jetbrains.kotlin.types.typeUtil.unCapture
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 class CodeToInlineBuilder(
     private val targetCallable: CallableDescriptor,
@@ -217,7 +219,12 @@ class CodeToInlineBuilder(
         return context.diagnostics.any { diagnostic ->
             val factory = diagnostic.factory
             val element = diagnostic.psiElement
-            val hasCantInferParameter = factory == Errors.CANNOT_INFER_PARAMETER_TYPE && element.parent.parent == functionLiteral
+            val hasCantInferParameter =
+                factory == Errors.CANNOT_INFER_PARAMETER_TYPE && functionLiteral == element.parentsWithSelf.match(
+                    KtParameter::class,
+                    KtParameterList::class,
+                    last = KtFunctionLiteral::class
+                )
             val hasUnresolvedItOrThis = factory == Errors.UNRESOLVED_REFERENCE &&
                     element.text == "it" &&
                     element.getStrictParentOfType<KtFunctionLiteral>() == functionLiteral

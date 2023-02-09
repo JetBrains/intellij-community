@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -45,7 +45,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -58,11 +61,13 @@ final class PassExecutorService implements Disposable {
   private final Map<ScheduledPass, Job<Void>> mySubmittedPasses = new ConcurrentHashMap<>();
   private final Project myProject;
   private volatile boolean isDisposed;
-  private final AtomicInteger nextAvailablePassId; // used to assign random id to a pass if not set
 
   PassExecutorService(@NotNull Project project) {
     myProject = project;
-    nextAvailablePassId = ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject)).getNextAvailableId();
+  }
+
+  private int getNextAvailablePassId() {
+    return ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject)).getNextAvailableId();
   }
 
   @Override
@@ -117,14 +122,12 @@ final class PassExecutorService implements Disposable {
     AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
 
     for (HighlightingPass pass : passes) {
-      if (pass instanceof EditorBoundHighlightingPass) {
-        EditorBoundHighlightingPass editorPass = (EditorBoundHighlightingPass)pass;
+      if (pass instanceof EditorBoundHighlightingPass editorPass) {
         // have to make ids unique for this document
         assignUniqueId(editorPass, id2Pass);
         editorBoundPasses.add(editorPass);
       }
-      else if (pass instanceof TextEditorHighlightingPass) {
-        TextEditorHighlightingPass tePass = (TextEditorHighlightingPass)pass;
+      else if (pass instanceof TextEditorHighlightingPass tePass) {
         assignUniqueId(tePass, id2Pass);
         documentBoundPasses.add(tePass);
       }
@@ -166,7 +169,7 @@ final class PassExecutorService implements Disposable {
     int oldId = pass.getId();
     int id;
     if (oldId == -1 || oldId == 0) {
-      id = nextAvailablePassId.incrementAndGet();
+      id = getNextAvailablePassId();
       pass.setId(id);
     }
     else {

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.framework
 
 import com.intellij.facet.ProjectFacetManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.platform.isCommon
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.platform.konan.isNative
  * This activity is work-around required until the issue IDEA-203655 is fixed. The major case is to create
  * Kotlin SDK when the KotlinSourceRootType is created
  */
-private class CreateKotlinSdkActivity : ProjectPostStartupActivity {
+private class CreateKotlinSdkActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
         val modulesWithFacet = ProjectFacetManager.getInstance(project).getModulesWithFacet(KotlinFacetType.TYPE_ID)
         if (modulesWithFacet.isNotEmpty()) {

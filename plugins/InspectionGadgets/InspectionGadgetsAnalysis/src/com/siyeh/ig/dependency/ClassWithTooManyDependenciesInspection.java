@@ -19,17 +19,19 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ClassWithTooManyDependenciesInspection extends BaseGlobalInspection {
 
@@ -41,8 +43,7 @@ public class ClassWithTooManyDependenciesInspection extends BaseGlobalInspection
                                                            @NotNull AnalysisScope scope,
                                                            @NotNull InspectionManager manager,
                                                            @NotNull GlobalInspectionContext globalContext) {
-    if (refEntity instanceof RefClass) {
-      RefClass refClass = (RefClass)refEntity;
+    if (refEntity instanceof RefClass refClass) {
       if (!(refClass.getOwner() instanceof RefPackage)) {
         return null;
       }
@@ -57,10 +58,11 @@ public class ClassWithTooManyDependenciesInspection extends BaseGlobalInspection
     }
     return null;
   }
-  
+
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message("class.with.too.many.dependencies.max.option"), this, "limit");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("limit", InspectionGadgetsBundle.message("class.with.too.many.dependencies.max.option"), 1,
+             1000));
   }
 }

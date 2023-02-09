@@ -60,10 +60,18 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
     return result;
   }
 
-  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
-                                                   @NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField) {
-    return true;
+  private boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
+                                                 @NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField) {
+    if (null == nameHint) {
+      return true;
+    }
+    final Collection<String> namesOfGeneratedElements = getNamesOfPossibleGeneratedElements(psiClass, psiAnnotation, psiField);
+    return namesOfGeneratedElements.isEmpty() || namesOfGeneratedElements.contains(nameHint);
   }
+
+  protected abstract Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass,
+                                                                   @NotNull PsiAnnotation psiAnnotation,
+                                                                   @NotNull PsiField psiField);
 
   protected abstract void generatePsiElements(@NotNull PsiField psiField,
                                               @NotNull PsiAnnotation psiAnnotation,
@@ -103,9 +111,8 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
                                         @NotNull PsiField psiField,
                                         @NotNull ProblemSink problemSink,
                                         @NotNull String parameterName) {
-    if(problemSink.deepValidation()) {
-      final @NotNull List<PsiAnnotation> copyableAnnotations =
-        LombokCopyableAnnotations.collectCopyableAnnotations(psiField, LombokCopyableAnnotations.BASE_COPYABLE);
+    if (problemSink.deepValidation()) {
+      final @NotNull List<PsiAnnotation> copyableAnnotations = LombokCopyableAnnotations.BASE_COPYABLE.collectCopyableAnnotations(psiField);
 
       if (!copyableAnnotations.isEmpty()) {
         final Iterable<String> onXAnnotations = LombokProcessorUtil.getOnX(psiAnnotation, parameterName);
@@ -134,7 +141,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
     final PsiClass psiClass = psiField.getContainingClass();
     if (null != psiClass) {
-      //cache signatures to speedup editing of big files, where getName goes in psi tree
+      //cache signatures to speed up editing of big files, where getName goes in psi tree
       List<MethodSignatureBackedByPsiMethod> ownSignatures = CachedValuesManager.getCachedValue(psiClass, () -> {
         List<MethodSignatureBackedByPsiMethod> signatures =
           ContainerUtil.map(PsiClassUtil.collectClassMethodsIntern(psiClass),
@@ -144,7 +151,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
       final List<MethodSignatureBackedByPsiMethod> classMethods = new ArrayList<>(ownSignatures);
 
-      final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
+      final boolean isBoolean = PsiTypes.booleanType().equals(psiField.getType());
       final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
       final String fieldName = psiField.getName();
       String accessorName = isGetter ? LombokUtils.toGetterName(accessorsInfo, fieldName, isBoolean)
@@ -156,7 +163,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
       if (!classMethods.isEmpty()) {
         builder.addWarningMessage("inspection.message.not.generated.s.method.with.similar.name.s.already.exists",
-                           accessorName, accessorName);
+                                  accessorName, accessorName);
         return false;
       }
     }

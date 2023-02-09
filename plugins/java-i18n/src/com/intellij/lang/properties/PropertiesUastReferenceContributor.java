@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -20,11 +6,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UField;
+import org.jetbrains.uast.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,40 +46,36 @@ public class PropertiesUastReferenceContributor extends PsiReferenceContributor 
                                                                       @NotNull PsiLanguageInjectionHost host,
                                                                       @NotNull ProcessingContext context) {
           final UElement parent = uExpression.getUastParent();
-          if (!(parent instanceof UField)) {
+          if (!(parent instanceof UField field)) {
             return PsiReference.EMPTY_ARRAY;
           }
-          final UField field = (UField)parent;
+          PsiElement elementSource = uExpression.getSourcePsi();
+          if (elementSource == null) return PsiReference.EMPTY_ARRAY;
           UExpression initializer = field.getUastInitializer();
           if (initializer == null) return PsiReference.EMPTY_ARRAY;
-          PsiElement initializerSource = initializer.getSourcePsi();
-          if (initializerSource == null) return PsiReference.EMPTY_ARRAY;
-          PsiElement elementSource = uExpression.getSourcePsi();
-          if (initializerSource != elementSource ||
-              !field.isFinal() ||
+          if (!field.isFinal() ||
               !field.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
             return PsiReference.EMPTY_ARRAY;
           }
           List<PsiReference> references = new ArrayList<>();
           final PsiClass propertyKeyAnnotation =
-            JavaPsiFacade.getInstance(initializerSource.getProject())
+            JavaPsiFacade.getInstance(elementSource.getProject())
               .findClass(AnnotationUtil.PROPERTY_KEY, elementSource.getResolveScope());
           if (propertyKeyAnnotation != null) {
             LOG.assertTrue(propertyKeyAnnotation.isAnnotationType());
             AnnotatedElementsSearch.searchPsiParameters(propertyKeyAnnotation, new LocalSearchScope(elementSource.getContainingFile()))
               .forEach(parameter -> {
-                final PsiModifierList list = parameter.getModifierList();
-                LOG.assertTrue(list != null);
-                final PsiAnnotation annotation = list.findAnnotation(AnnotationUtil.PROPERTY_KEY);
-                LOG.assertTrue(annotation != null);
-                for (PsiNameValuePair pair : annotation.getParameterList().getAttributes()) {
-                  if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(pair.getName())) {
-                    final PsiAnnotationMemberValue value = pair.getValue();
-                    if (value instanceof PsiReferenceExpression && ((PsiReferenceExpression)value).resolve() == field.getSourcePsi()) {
-                      Collections.addAll(references, myUnderlying.getReferencesForInjectionHost(uExpression, host, context));
-                      return false;
-                    }
-                  }
+                UParameter uParameter = ObjectUtils.tryCast(UastContextKt.toUElement(parameter), UParameter.class);
+                if (uParameter == null) return true;
+                List<UAnnotation> annotations = uParameter.getUAnnotations();
+                UAnnotation uAnnotation =
+                  ContainerUtil.find(annotations, anno -> AnnotationUtil.PROPERTY_KEY.equals(anno.getQualifiedName()));
+                if (uAnnotation == null) return true;
+                UExpression attributeValue = uAnnotation.findAttributeValue(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
+                if (attributeValue instanceof UResolvable &&
+                    field.equals(UastContextKt.toUElement(((UResolvable)attributeValue).resolve()))) {
+                  Collections.addAll(references, myUnderlying.getReferencesForInjectionHost(uExpression, host, context));
+                  return false;
                 }
                 return true;
               });

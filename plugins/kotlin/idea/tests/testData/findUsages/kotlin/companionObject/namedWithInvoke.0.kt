@@ -6,3 +6,4 @@ interface Foos {
         operator fun invoke() = 1
     }
 }
+

@@ -58,12 +58,6 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
     private set
 
   protected var statusBar: StatusBar? = null
-    set(value) {
-      field?.let {
-        Disposer.dispose(it)
-      }
-      field = value
-    }
 
   init {
     if (project != null) {
@@ -84,6 +78,9 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
   open fun show() {
     show(true)
   }
+
+  protected open val isDockWindow: Boolean
+    get() = false
 
   fun createContents() {
     val frame = getFrame()
@@ -129,7 +126,7 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
 
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       component?.let {
-        component = CustomFrameDialogContent.getCustomContentHolder(frame, it)
+        component = CustomFrameDialogContent.getCustomContentHolder(window = frame, content = it, isForDockContainerProvider = isDockWindow)
       }
     }
 
@@ -192,17 +189,12 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
     }
 
     val frame = frame
-    val statusBar = statusBar
     this.frame = null
     preferredFocusedComponent = null
     project = null
     component = null
     images = emptyList()
     isDisposed = true
-
-    if (statusBar != null) {
-      Disposer.dispose(statusBar)
-    }
 
     if (frame != null) {
       frame.isVisible = false

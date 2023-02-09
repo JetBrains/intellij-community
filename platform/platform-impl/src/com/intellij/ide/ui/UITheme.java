@@ -10,7 +10,6 @@ import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.ui.Gray;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.DigestUtil;
 import com.intellij.util.ui.JBDimension;
@@ -102,6 +101,36 @@ public final class UITheme {
     return loadFromJson(theme, provider, iconsMapper);
   }
 
+  public static @NotNull UITheme loadFromJson(@Nullable UITheme parentTheme,
+                                              byte[] data,
+                                              @NotNull @NonNls String themeId,
+                                              @Nullable ClassLoader provider,
+                                              @NotNull Function<? super String, String> iconsMapper) throws IOException {
+    UITheme theme = JSON_READER.beanFrom(UITheme.class, data);
+    theme.id = themeId;
+    if (parentTheme != null) {
+      importFromParentTheme(theme, parentTheme);
+    }
+    return loadFromJson(theme, provider, iconsMapper);
+  }
+
+  private static void importFromParentTheme(@NotNull UITheme theme, @NotNull UITheme parentTheme) {
+    theme.ui = importMapFromParentTheme(theme.ui, parentTheme.ui);
+    theme.icons = importMapFromParentTheme(theme.icons, parentTheme.icons);
+    theme.background = importMapFromParentTheme(theme.background, parentTheme.background);
+    theme.emptyFrameBackground = importMapFromParentTheme(theme.emptyFrameBackground, parentTheme.emptyFrameBackground);
+    theme.colors = importMapFromParentTheme(theme.colors, parentTheme.colors);
+    theme.iconColorsOnSelection = importMapFromParentTheme(theme.iconColorsOnSelection, parentTheme.iconColorsOnSelection);
+  }
+
+  private static @Nullable Map<String, Object> importMapFromParentTheme(@Nullable Map<String, Object> themeMap,
+                                                                        @Nullable Map<String, Object> parentThemeMap) {
+    if (parentThemeMap == null) return themeMap;
+    Map<String, Object> result = new LinkedHashMap<>(parentThemeMap);
+    if (themeMap != null) result.putAll(themeMap);
+    return result;
+  }
+
   private static @NotNull UITheme loadFromJson(@NotNull UITheme theme,
                                                @Nullable ClassLoader provider,
                                                @NotNull Function<? super String, String> iconsMapper)
@@ -171,9 +200,7 @@ public final class UITheme {
       };
 
       Object palette = theme.icons.get("ColorPalette");
-      if (palette instanceof Map) {
-        @SuppressWarnings("rawtypes")
-        Map colors = (Map)palette;
+      if (palette instanceof @SuppressWarnings("rawtypes")Map colors) {
         for (Object o : colors.keySet()) {
           String colorKey = o.toString();
           PaletteScope scope = paletteScopeManager.getScope(colorKey);
@@ -183,8 +210,7 @@ public final class UITheme {
 
           String key = toColorString(colorKey, theme.isDark());
           Object v = colors.get(colorKey);
-          if (v instanceof String) {
-            String value = (String)v;
+          if (v instanceof String value) {
             Object namedColor = theme.colors != null ? theme.colors.get(value) : null;
             if (namedColor instanceof String) {
               value = (String)namedColor;
@@ -234,7 +260,14 @@ public final class UITheme {
     for (String key : namedColors) {
       Object value = map.get(key);
       if (value instanceof String && !((String)value).startsWith("#")) {
-        map.put(key, ObjectUtils.notNull(map.get(map.get(key)), Gray.TRANSPARENT));
+        Object delegateColor = map.get(value);
+        if (delegateColor != null) {
+          map.put(key, delegateColor);
+        }
+        else {
+          LOG.warn("Can't parse '" + value + "' for key '" + key + "'");
+          map.put(key, Gray.TRANSPARENT);
+        }
       }
     }
 
@@ -469,9 +502,9 @@ public final class UITheme {
 
   private static boolean isOSCustomization(Map<String, Object> map) {
     return map.containsKey(OS_MACOS_KEY)
-        || map.containsKey(OS_WINDOWS_KEY)
-        || map.containsKey(OS_LINUX_KEY)
-        || map.containsKey(OS_DEFAULT_KEY);
+           || map.containsKey(OS_WINDOWS_KEY)
+           || map.containsKey(OS_LINUX_KEY)
+           || map.containsKey(OS_DEFAULT_KEY);
   }
 
   @SuppressWarnings("unchecked")
@@ -567,7 +600,7 @@ public final class UITheme {
       }
     }
     catch (Exception e) {
-      LOG.warn("Can't parse '" + value +"' for key '" + key + "'");
+      LOG.warn("Can't parse '" + value + "' for key '" + key + "'");
     }
 
     return value;
@@ -608,7 +641,8 @@ public final class UITheme {
           int alpha = Integer.parseInt(value.substring(6, 8), 16);
           return new ColorUIResource(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
         }
-        catch (Exception ignore) { }
+        catch (Exception ignore) {
+        }
         return null;
       }
     }
@@ -636,7 +670,8 @@ public final class UITheme {
     if (value.contains(".")) {
       try {
         return Float.parseFloat(value);
-      } catch (NumberFormatException e) {
+      }
+      catch (NumberFormatException e) {
         if (key != null) {
           LOG.warn("Can't parse: " + key + " = " + value);
         }

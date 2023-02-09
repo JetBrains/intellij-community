@@ -8,11 +8,14 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -20,6 +23,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
@@ -46,8 +50,10 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -75,10 +81,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -89,10 +93,10 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GR
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.LOCAL_CHANGES;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowShown;
-import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static java.util.Arrays.asList;
 import static org.jetbrains.concurrency.Promises.cancelledPromise;
+import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 @State(
   name = "ChangesViewManager",
@@ -187,7 +191,8 @@ public class ChangesViewManager implements ChangesViewEx,
   ChangesViewPanel initChangesPanel() {
     if (myChangesPanel == null) {
       Activity activity = StartUpMeasurer.startActivity("ChangesViewPanel initialization", ActivityCategory.DEFAULT);
-      myChangesPanel = new ChangesViewPanel(myProject);
+      ChangesListView tree = new LocalChangesListView(myProject);
+      myChangesPanel = new ChangesViewPanel(tree);
       activity.end();
     }
     return myChangesPanel;
@@ -236,9 +241,20 @@ public class ChangesViewManager implements ChangesViewEx,
 
   private void migrateShowFlattenSetting() {
     if (!myState.myShowFlatten) {
-      myState.groupingKeys = Set.copyOf(DEFAULT_GROUPING_KEYS);
+      myState.groupingKeys.clear();
+      myState.groupingKeys.addAll(DEFAULT_GROUPING_KEYS);
       myState.myShowFlatten = true;
     }
+  }
+
+  @NotNull
+  public Collection<String> getGrouping() {
+    return myState.groupingKeys;
+  }
+
+  public void setGrouping(@NotNull Collection<String> grouping) {
+    myState.groupingKeys.clear();
+    myState.groupingKeys.addAll(grouping);
   }
 
   public static class State {
@@ -251,21 +267,22 @@ public class ChangesViewManager implements ChangesViewEx,
     public boolean myShowFlatten = true;
 
     @XCollection
-    public Set<String> groupingKeys = new HashSet<>();
+    public TreeSet<String> groupingKeys = new TreeSet<>();
 
     @Attribute("show_ignored")
     public boolean myShowIgnored;
   }
 
   @Override
-  public Promise<?> promiseRefresh() {
+  public @NotNull Promise<?> promiseRefresh(@NotNull ModalityState modalityState) {
     if (myToolWindowPanel == null) return cancelledPromise();
-    return myToolWindowPanel.scheduleRefresh();
+    return myToolWindowPanel.scheduleRefreshWithDelay(0, modalityState);
   }
 
   @Override
   public void scheduleRefresh() {
-    promiseRefresh();
+    if (myToolWindowPanel == null) return;
+    myToolWindowPanel.scheduleRefresh();
   }
 
   @Override
@@ -355,6 +372,9 @@ public class ChangesViewManager implements ChangesViewEx,
     @Nullable private ChangesViewCommitPanel myCommitPanel;
     @Nullable private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
 
+    private final BackgroundRefresher<Runnable> myBackgroundRefresher =
+      new BackgroundRefresher<>(getClass().getSimpleName() + " refresh", this);
+
     private boolean myModelUpdateInProgress;
 
     private boolean myDisposed = false;
@@ -370,13 +390,13 @@ public class ChangesViewManager implements ChangesViewEx,
       MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
       myVcsConfiguration = VcsConfiguration.getInstance(myProject);
 
+      // ChangesViewPanel is used for a singular ChangesViewToolWindowPanel instance. Cleanup is not needed.
       myView = myChangesPanel.getChangesView();
       myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
-      myView.getGroupingSupport().setGroupingKeysOrSkip(myChangesViewManager.myState.groupingKeys);
-      myView.addGroupingChangeListener(e -> {
-        myChangesViewManager.myState.groupingKeys = myView.getGroupingSupport().getGroupingKeys();
-        scheduleRefresh();
-      });
+      ChangesTree.installGroupingSupport(myView.getGroupingSupport(),
+                                         () -> myChangesViewManager.getGrouping(),
+                                         (newValue) -> myChangesViewManager.setGrouping(newValue),
+                                         () -> scheduleRefresh());
       ChangesViewDnDSupport.install(myProject, myView, this);
 
       myChangesPanel.getToolbarActionGroup().addAll(createChangesToolbarActions(myView.getTreeExpander()));
@@ -718,32 +738,27 @@ public class ChangesViewManager implements ChangesViewEx,
       invokeLaterIfNeeded(() -> myView.setPaintBusy(b));
     }
 
-    public Promise<?> scheduleRefresh() {
-      return scheduleRefreshWithDelay(100);
-    }
-
-    private final BackgroundRefresher<?> myBackgroundRefresher = new BackgroundRefresher<>(
-      getClass().getSimpleName() + " refresh", this);
-
-    @CalledInAny
-    private Promise<?> scheduleRefreshWithDelay(int delayMillis) {
-      setBusy(true);
-      return myBackgroundRefresher.requestRefresh(delayMillis, () -> {
-        refreshView();
-        return null;
-      }).then(result -> {
-        setBusy(false);
-        return null;
-      });
+    public void scheduleRefresh() {
+      scheduleRefreshWithDelay(100, ModalityState.NON_MODAL);
     }
 
     private void scheduleRefreshNow() {
-      scheduleRefreshWithDelay(0);
+      scheduleRefreshWithDelay(0, ModalityState.NON_MODAL);
+    }
+
+    @CalledInAny
+    private @NotNull Promise<?> scheduleRefreshWithDelay(int delayMillis, @NotNull ModalityState modalityState) {
+      setBusy(true);
+      return myBackgroundRefresher.requestRefresh(delayMillis, this::refreshView)
+        .thenAsync(callback -> callback != null
+                               ? AppUIExecutor.onUiThread(modalityState).submit(callback)
+                               : rejectedPromise("no callback"))
+        .onProcessed(__ -> setBusy(false));
     }
 
     @RequiresBackgroundThread
-    private void refreshView() {
-      if (myDisposed || !myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return;
+    private @Nullable Runnable refreshView() {
+      if (myDisposed || !myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return null;
 
       Span span = TRACER.spanBuilder("changes-view-refresh-background").startSpan();
       try {
@@ -770,6 +785,9 @@ public class ChangesViewManager implements ChangesViewEx,
           try {
             extension.modifyTreeModelBuilder(treeModelBuilder);
           }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
           catch (Throwable t) {
             Logger.getInstance(ChangesViewToolWindowPanel.class).error(t);
           }
@@ -780,9 +798,12 @@ public class ChangesViewManager implements ChangesViewEx,
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.checkCanceled();
 
-        ApplicationManager.getApplication().invokeAndWait(() -> {
+        boolean[] wasCalled = new boolean[1]; // ensure multiple merged refresh requests are applied once
+        return () -> {
+          if (wasCalled[0]) return;
+          wasCalled[0] = true;
           refreshViewOnEdt(treeModel, changeLists, unversionedFiles, indicator.isCanceled());
-        });
+        };
       }
       finally {
         span.end();
@@ -830,7 +851,8 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     public void setGrouping(@NotNull String groupingKey) {
-      myView.getGroupingSupport().setGroupingKeysOrSkip(set(groupingKey));
+      myView.getGroupingSupport().setGroupingKeysOrSkip(Set.of(groupingKey));
+      scheduleRefreshNow();
     }
 
     public void selectFile(@Nullable VirtualFile vFile) {
@@ -929,6 +951,48 @@ public class ChangesViewManager implements ChangesViewEx,
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myChangesViewManager.myState.myShowIgnored = state;
         scheduleRefreshNow();
+      }
+    }
+  }
+
+  private static class LocalChangesListView extends ChangesListView {
+    private LocalChangesListView(@NotNull Project project) {
+      super(project, false);
+      putClientProperty(LOG_COMMIT_SESSION_EVENTS, true);
+
+      setTreeExpander(new MyTreeExpander(this));
+
+      setDoubleClickHandler(e -> {
+        if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return false;
+        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), true);
+        return true;
+      });
+      setEnterKeyHandler(e -> {
+        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), false);
+        return true;
+      });
+    }
+
+    @Override
+    protected @NotNull ChangesGroupingSupport installGroupingSupport() {
+      // can't install support here - 'rebuildTree' is not defined
+      return new ChangesGroupingSupport(myProject, this, true);
+    }
+
+    @Override
+    public @Nullable HoverIcon getHoverIcon(@NotNull ChangesBrowserNode<?> node) {
+      return ChangesViewNodeAction.EP_NAME.computeSafeIfAny(myProject, (it) -> it.createNodeHoverIcon(node));
+    }
+
+    private static class MyTreeExpander extends DefaultTreeExpander {
+      private MyTreeExpander(@NotNull JTree tree) {
+        super(tree);
+      }
+
+      @Override
+      protected void collapseAll(@NotNull JTree tree, int keepSelectionLevel) {
+        super.collapseAll(tree, 2);
+        TreeUtil.expand(tree, 1);
       }
     }
   }

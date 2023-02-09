@@ -74,6 +74,7 @@ abstract class AbstractKotlinInlineDialog<TDeclaration : KtNamedDeclaration>(
     override fun getBorderTitle() = refactoringName
 
     override fun getNameLabelText(): String {
+        @Suppress("HardCodedStringLiteral")
         val occurrencesString = occurrencesString?.let { " - $it" } ?: ""
         return "${kind.capitalize()} ${declaration.nameAsSafeName} $occurrencesString"
     }

@@ -22,9 +22,6 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class JavaLangReflectHandleInvocationTest : LightJavaCodeInsightFixtureTestCase() {
   fun testVirtual() = doTest()
   fun testStatic() = doTest()

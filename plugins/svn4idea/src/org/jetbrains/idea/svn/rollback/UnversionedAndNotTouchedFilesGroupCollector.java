@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public class UnversionedAndNotTouchedFilesGroupCollector extends EmptyChangelistBuilder {
   private final List<Couple<File>> myToBeDeleted;
   private final Map<File, ThroughRenameInfo> myFromTo;

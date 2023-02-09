@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.runActivity
@@ -13,7 +13,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.WordPrefixMatcher
 import com.intellij.util.text.Matcher
@@ -30,7 +30,7 @@ import kotlin.coroutines.coroutineContext
 abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHitProvider {
   companion object {
     // project level here means not that EP itself in project area, but that extensions applicable for project only
-    val PROJECT_LEVEL_EP = ExtensionPointName<ProjectLevelProvider>("com.intellij.search.projectOptionsTopHitProvider")
+    val PROJECT_LEVEL_EP: ExtensionPointName<ProjectLevelProvider> = ExtensionPointName("com.intellij.search.projectOptionsTopHitProvider")
 
     @JvmStatic
     fun consumeTopHits(provider: OptionsSearchTopHitProvider,
@@ -99,7 +99,7 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
     }
   }
 
-  internal class Activity : ProjectPostStartupActivity {
+  internal class Activity : ProjectActivity {
     private val appJob: Job
 
     init {

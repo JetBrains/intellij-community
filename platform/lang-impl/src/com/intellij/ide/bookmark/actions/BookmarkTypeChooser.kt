@@ -9,10 +9,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.RowGridLayout
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.RegionPaintIcon
 import com.intellij.util.ui.UIUtil
@@ -74,8 +71,7 @@ internal class BookmarkTypeChooser(
     content = panel {
       customizeSpacingConfiguration(MySpacingConfiguration) {
         row {
-          val lineLength = if (ExperimentalUI.isNewUI()) 63 else 55
-          comment(message("mnemonic.chooser.comment"), lineLength).applyToComponent {
+          comment(message("mnemonic.chooser.comment"), MAX_LINE_LENGTH_NO_WRAP).applyToComponent {
             if (ExperimentalUI.isNewUI()) border = JBUI.Borders.empty(2, 4, 0, 4)
           }
         }.bottomGap(BottomGap.MEDIUM)

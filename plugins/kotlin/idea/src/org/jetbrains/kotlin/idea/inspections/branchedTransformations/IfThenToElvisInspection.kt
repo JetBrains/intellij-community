@@ -3,24 +3,24 @@
 package org.jetbrains.kotlin.idea.inspections.branchedTransformations
 
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.formatter.rightMarginOrDefault
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.idea.formatter.rightMarginOrDefault
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.*
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import javax.swing.JComponent
 
 class IfThenToElvisInspection @JvmOverloads constructor(
     @JvmField var highlightStatement: Boolean = false,
@@ -44,9 +44,9 @@ class IfThenToElvisInspection @JvmOverloads constructor(
 
     override fun inspectionHighlightRangeInElement(element: KtIfExpression) = element.fromIfKeywordToRightParenthesisTextRangeInThis()
 
-    override fun createOptionsPanel(): JComponent = MultipleCheckboxOptionsPanel(this).also {
-        it.addCheckbox(KotlinBundle.message("report.also.on.statement"), "highlightStatement")
-    }
+    override fun getOptionsPane() = pane(
+        checkbox("highlightStatement", KotlinBundle.message("report.also.on.statement"))
+    )
 
     companion object {
         val INTENTION_TEXT get() = KotlinBundle.message("replace.if.expression.with.elvis.expression")

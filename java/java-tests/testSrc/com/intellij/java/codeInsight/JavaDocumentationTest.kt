@@ -242,7 +242,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
       val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
       val doc = JavaDocumentationProvider().generateRenderedDoc(method!!.docComment!!)
-      val expected = "<div class='content'> @return smth </div><table class='sections'><tr><td valign='top' class='section'><p>Returns:</td><td valign='top'><p> smth</td></table>"
+      val expected = "<div class='content'> Returns smth. </div><table class='sections'><tr><td valign='top' class='section'><p>Returns:</td><td valign='top'><p> smth</td></table>"
       TestCase.assertEquals(expected, doc)
     }
   }

@@ -24,7 +24,7 @@ def gradleApiBaseVersion = GradleVersion.version(gradleApiVersion).getBaseVersio
 def gradleWrapperFileName = "gradle-wrapper.jar"
 def gradleLauncherFileName = "gradle-launcher-${gradleApiBaseVersion}.jar"
 
-def gradleApiDepsDir = new File(buildDir, "tmp/gradleApiExpanded/$gradleApiVersion/build")
+def gradleApiDepsDir = new File(buildDir, "tmp/gradleApiExpanded/$gradleApiVersion/build/apiDeps")
 
 task expandGradleApiJar() {
   doLast {

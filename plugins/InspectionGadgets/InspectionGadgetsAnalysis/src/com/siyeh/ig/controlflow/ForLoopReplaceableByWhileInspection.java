@@ -20,7 +20,7 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -37,9 +37,10 @@ import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Collection;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.openapi.util.Predicates.nonNull;
 
 public class ForLoopReplaceableByWhileInspection extends BaseInspection implements CleanupLocalInspectionTool {
@@ -64,11 +65,10 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection implemen
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message(
-      "for.loop.replaceable.by.while.ignore.option"), "m_ignoreLoopsWithoutConditions");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreLoopsWithoutConditions", InspectionGadgetsBundle.message(
+        "for.loop.replaceable.by.while.ignore.option")));
   }
 
   @Override
@@ -119,8 +119,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection implemen
       final PsiStatement update = forStatement.getUpdate();
       if (update != null) {
         final PsiStatement[] updateStatements;
-        if (update instanceof PsiExpressionListStatement) {
-          final PsiExpressionListStatement expressionListStatement = (PsiExpressionListStatement)update;
+        if (update instanceof PsiExpressionListStatement expressionListStatement) {
           final PsiExpressionList expressionList = expressionListStatement.getExpressionList();
           final PsiExpression[] expressions = expressionList.getExpressions();
           updateStatements = new PsiStatement[expressions.length];

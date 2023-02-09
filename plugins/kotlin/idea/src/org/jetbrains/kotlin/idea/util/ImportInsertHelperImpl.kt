@@ -486,10 +486,10 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
                 val newDirective = psiFactory.createImportDirective(importPath)
                 val imports = importList.imports
                 return if (imports.isEmpty()) { //TODO: strange hack
-                    importList.add(psiFactory.createNewLine())
+                    if (!isInjectedScript) importList.add(psiFactory.createNewLine())
                     (importList.add(newDirective) as KtImportDirective).also {
                         if (isInjectedScript) {
-                            importList.add(psiFactory.createNewLine())
+                            importList.add(psiFactory.createNewLine(2))
                         }
                     }
                 } else {
@@ -501,7 +501,12 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
 
                     (importList.addAfter(newDirective, insertAfter) as KtImportDirective).also { insertedDirective ->
                         if (isInjectedScript) {
-                            importList.addBefore(psiFactory.createNewLine(1), insertedDirective)
+                            if (insertAfter != null) {
+                                importList.addBefore(psiFactory.createNewLine(1), insertedDirective)
+                            }
+                            if (insertAfter == null) {
+                                importList.addAfter(psiFactory.createNewLine(1), insertedDirective)
+                            }
                         }
                     }
                 }

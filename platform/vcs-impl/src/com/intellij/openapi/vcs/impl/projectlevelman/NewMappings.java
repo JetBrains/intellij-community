@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.ide.impl.TrustedProjects;
@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -267,15 +266,18 @@ public final class NewMappings implements Disposable {
   }
 
   private void refreshMainMenu() {
-    // GitToolbarWidgetFactory handles update in a new UI
-    if (!(SystemInfoRt.isMac && ExperimentalUI.isNewUI())) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(myProject);
-        if (frame != null && frame.getRootPane() != null) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(myProject);
+      if (frame != null) {
+        // GitToolbarWidgetFactory handles update in a new UI
+        if (ExperimentalUI.isNewUI()) {
+          frame.rootPane.updateMainMenuActions();
+        }
+        else {
           frame.updateView();
         }
-      }, myProject.getDisposed());
-    }
+      }
+    }, myProject.getDisposed());
   }
 
   /**
@@ -400,13 +402,19 @@ public final class NewMappings implements Disposable {
   private List<MappedRoot> reuseDefaultMappingsFrom(@NotNull VcsDirectoryMapping mapping,
                                                     @NotNull List<MappedRoot> oldMappedRoots,
                                                     @NotNull Disposable pointerDisposable) {
+    // Pretend that mappings did not change at first, and "<Project>" mappings has detected all the roots that were used before.
+    // This prevents such roots from being temporally unregistered if they will be detected later by the proper-and-slow logic.
+    // Which in its turn allows preserving Change-to-Changelist mappings and
+    // avoiding sporadic "file not under VCS root anymore" errors in the middle of operation.
+
+    // For example, if a "$PROJECT_DIR$" was replaced with a "<Project>" mapping as a part of shelve-unshelve operation.
+
     List<MappedRoot> result = new ArrayList<>();
     ReadAction.run(() -> {
-      for (MappedRoot root : oldMappedRoots) {
-        if (root.mapping.isDefaultMapping() && root.mapping.equals(mapping)) {
-          VirtualFilePointerManager.getInstance().create(root.root, pointerDisposable, myFilePointerListener);
-          result.add(root);
-        }
+      List<MappedRoot> oldMappings = ContainerUtil.filter(oldMappedRoots, root -> root.mapping.getVcs().equals(mapping.getVcs()));
+      for (MappedRoot root : oldMappings) {
+        VirtualFilePointerManager.getInstance().create(root.root, pointerDisposable, myFilePointerListener);
+        result.add(new MappedRoot(root.vcs, mapping, root.root));
       }
     });
     return result;

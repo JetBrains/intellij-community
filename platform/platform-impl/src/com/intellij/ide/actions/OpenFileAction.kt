@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.GeneralSettings
+import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask
@@ -23,7 +23,7 @@ import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser
 import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -67,8 +67,9 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible {
     val showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null
     val descriptor: FileChooserDescriptor = if (showFiles) ProjectOrFileChooserDescriptor() else ProjectOnlyFileChooserDescriptor()
     var toSelect: VirtualFile? = null
-    if (!GeneralSettings.getInstance().defaultProjectDirectory.isNullOrEmpty()) {
-      toSelect = VfsUtil.findFileByIoFile(File(GeneralSettings.getInstance().defaultProjectDirectory), true)
+    val defaultProjectDirectory = GeneralLocalSettings.getInstance().defaultProjectDirectory
+    if (defaultProjectDirectory.isNotEmpty()) {
+      toSelect = VfsUtil.findFileByIoFile(File(defaultProjectDirectory), true)
     }
     descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, toSelect == null && showFiles)
     FileChooser.chooseFiles(descriptor, project, toSelect ?: pathToSelect) { files ->
@@ -80,8 +81,8 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible {
         }
       }
       @Suppress("DialogTitleCapitalization")
-      runBlockingModal(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
-                       title = IdeBundle.message("title.open.project")) {
+      runBlockingModalWithRawProgressReporter(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
+                                              title = IdeBundle.message("title.open.project")) {
         for (file in files) {
           doOpenFile(project, file)
         }

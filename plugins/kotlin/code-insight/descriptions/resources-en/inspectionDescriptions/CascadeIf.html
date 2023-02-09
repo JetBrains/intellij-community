@@ -16,7 +16,7 @@ Reports <code>if</code> statements with three or more branches that can be repla
       }
   }
 </code></pre>
-<p>A quick-fix converts the <code>if</code> expression to <code>when</code>:</p>
+<p>The quick-fix converts the <code>if</code> expression to <code>when</code>:</p>
 <pre><code>
   fun checkIdentifier(id: String) {
       fun Char.isIdentifierStart() = this in 'A'..'z'

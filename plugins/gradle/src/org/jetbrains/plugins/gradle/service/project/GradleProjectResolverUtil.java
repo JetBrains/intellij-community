@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
@@ -311,9 +311,13 @@ public final class GradleProjectResolverUtil {
 
     final String moduleType = ExternalSystemApiUtil.getExternalModuleType(module);
     boolean trimSourceSet = GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(moduleType);
-    final List<String> pathParts = StringUtil.split(externalProjectId, ":");
-    if (!externalProjectId.startsWith(":") && !pathParts.isEmpty()) pathParts.remove(0);
-    if (trimSourceSet && !pathParts.isEmpty()) pathParts.remove(pathParts.size() - 1);
+    List<String> pathParts = StringUtil.split(externalProjectId, ":");
+    if (!externalProjectId.startsWith(":") && !pathParts.isEmpty()) {
+      pathParts = pathParts.subList(1, pathParts.size());
+    }
+    if (trimSourceSet && !pathParts.isEmpty()) {
+      pathParts = pathParts.subList(0, pathParts.size() - 1);
+    }
     String join = StringUtil.join(pathParts, ":");
     return join.isEmpty() ? ":" : ":" + join;
   }
@@ -544,7 +548,7 @@ public final class GradleProjectResolverUtil {
                                        @Nullable DataNode<ProjectData> ideProject) throws IllegalStateException {
     Map<ExternalDependencyId, ExternalDependency> dependencyMap = new HashMap<>();
 
-    Queue<ExternalDependency> queue = new LinkedList<>(dependencies);
+    Queue<ExternalDependency> queue = new ArrayDeque<>(dependencies);
     while (!queue.isEmpty()) {
       final ExternalDependency dependency = queue.remove();
       DefaultExternalDependencyId key = new DefaultExternalDependencyId(dependency.getId());
@@ -634,9 +638,7 @@ public final class GradleProjectResolverUtil {
       assert ownerModule != null;
 
       DataNode<? extends ExternalEntityData> depOwnerDataNode = null;
-      if (mergedDependency instanceof ExternalProjectDependency) {
-
-        final ExternalProjectDependency projectDependency = (ExternalProjectDependency)mergedDependency;
+      if (mergedDependency instanceof ExternalProjectDependency projectDependency) {
 
         Collection<ProjectDependencyInfo> projectDependencyInfos = new ArrayList<>();
         if (resolverCtx.getSettings() != null) {
@@ -737,7 +739,7 @@ public final class GradleProjectResolverUtil {
         }
 
         LibraryLevel level = StringUtil.isNotEmpty(libraryName) ? LibraryLevel.PROJECT : LibraryLevel.MODULE;
-        if (StringUtil.isEmpty(libraryName) || !linkProjectLibrary(resolverCtx, ideProject, library)) {
+        if (StringUtil.isEmpty(libraryName) || !linkProjectLibrary(ideProject, library)) {
           level = LibraryLevel.MODULE;
         }
 
@@ -800,7 +802,7 @@ public final class GradleProjectResolverUtil {
           libraryName, failureMessage, resolverCtx.getProjectPath(), isOfflineWork, ownerModule.getId());
         resolverCtx.report(MessageEvent.Kind.ERROR, buildIssue);
 
-        LibraryLevel level = linkProjectLibrary(resolverCtx, ideProject, library) ? LibraryLevel.PROJECT : LibraryLevel.MODULE;
+        LibraryLevel level = linkProjectLibrary(ideProject, library) ? LibraryLevel.PROJECT : LibraryLevel.MODULE;
         LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule, library, level);
         libraryDependencyData.setScope(dependencyScope);
         libraryDependencyData.setOrder(mergedDependency.getClasspathOrder() + classpathOrderShift);
@@ -830,9 +832,19 @@ public final class GradleProjectResolverUtil {
   private static final Key<Map<String, DataNode<LibraryData>>> LIBRARIES_BY_NAME_CACHE =
     Key.create("GradleProjectResolverUtil.FOUND_LIBRARIES");
 
+  /**
+   * @deprecated use {@link GradleProjectResolverUtil#linkProjectLibrary(DataNode, LibraryData)} instead
+   */
+  @Deprecated
   public static boolean linkProjectLibrary(/*@NotNull*/ ProjectResolverContext context,
                                                         @Nullable DataNode<ProjectData> ideProject,
                                                         @NotNull final LibraryData library) {
+    return linkProjectLibrary(ideProject, library);
+  }
+
+  public static boolean linkProjectLibrary(
+    @Nullable DataNode<ProjectData> ideProject,
+    @NotNull final LibraryData library) {
     if (ideProject == null) return false;
 
     Map<String, DataNode<LibraryData>> cache = ideProject.getUserData(LIBRARIES_BY_NAME_CACHE);

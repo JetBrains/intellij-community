@@ -19,9 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author dsl
- */
 public class SafeDeleteFieldWriteReference extends SafeDeleteReferenceUsageInfo {
   private final PsiAssignmentExpression myExpression;
 

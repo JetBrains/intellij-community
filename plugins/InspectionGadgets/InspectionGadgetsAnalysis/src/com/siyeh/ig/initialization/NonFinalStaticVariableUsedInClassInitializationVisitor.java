@@ -28,10 +28,9 @@ class NonFinalStaticVariableUsedInClassInitializationVisitor extends BaseInspect
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     super.visitReferenceExpression(expression);
     final PsiElement referent = expression.resolve();
-    if (!(referent instanceof PsiField)) {
+    if (!(referent instanceof PsiField field)) {
       return;
     }
-    final PsiField field = (PsiField)referent;
     if (!field.hasModifierProperty(PsiModifier.STATIC)) {
       return;
     }

@@ -56,13 +56,23 @@ public final class GitLogUtil {
                                       @Nullable Consumer<? super VcsUser> userConsumer,
                                       @Nullable Consumer<? super VcsRef> refConsumer,
                                       @NotNull Consumer<? super TimedVcsCommit> commitConsumer) throws VcsException {
+    readTimedCommits(project, root, Collections.emptyList(), parameters, userConsumer, refConsumer, commitConsumer);
+  }
+
+  public static void readTimedCommits(@NotNull Project project,
+                                      @NotNull VirtualFile root,
+                                      @NotNull List<String> configParameters,
+                                      @NotNull List<String> parameters,
+                                      @Nullable Consumer<? super VcsUser> userConsumer,
+                                      @Nullable Consumer<? super VcsRef> refConsumer,
+                                      @NotNull Consumer<? super TimedVcsCommit> commitConsumer) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return;
     }
 
-    GitLineHandler handler = createGitHandler(project, root, Collections.emptyList(), false);
-    List<GitLogParser.GitLogOption> options = ContainerUtil.newArrayList(HASH, PARENTS, COMMIT_TIME);
+    GitLineHandler handler = createGitHandler(project, root, configParameters, false);
+    List<GitLogParser.GitLogOption> options = new ArrayList<>(Arrays.asList(HASH, PARENTS, COMMIT_TIME));
     if (userConsumer != null) {
       options.add(AUTHOR_NAME);
       options.add(AUTHOR_EMAIL);

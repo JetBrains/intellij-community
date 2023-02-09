@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
@@ -10,7 +10,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
+import java.util.*
 import java.util.concurrent.ThreadLocalRandom
+import java.util.concurrent.TimeUnit
 
 /**
  * Pass comma-separated names of build steps (see below) to this system property to skip them.
@@ -37,7 +39,7 @@ class BuildOptions {
      */
     const val OS_NONE = "none"
 
-    /** Pre-builds SVG icons for all SVG resource files to speedup icons loading at runtime  */
+    /** Pre-builds SVG icons for all SVG resource files to speed up icons loading at runtime  */
     const val SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
 
     /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used.  */
@@ -68,6 +70,9 @@ class BuildOptions {
 
     /** Sign macOS distribution.  */
     const val MAC_SIGN_STEP = "mac_sign"
+
+    /** Notarize macOS distribution.  */
+    const val MAC_NOTARIZE_STEP = "mac_notarize"
 
     /** Build Linux artifacts.  */
     const val LINUX_ARTIFACTS_STEP = "linux_artifacts"
@@ -177,6 +182,8 @@ class BuildOptions {
      */
     const val RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY = "intellij.build.dependencies.resolution.retry.delay.ms"
     const val TARGET_OS_PROPERTY = "intellij.build.target.os"
+
+    private val currentBuildTimeInSeconds = System.currentTimeMillis() / 1000
   }
 
   var classesOutputDirectory: String? = System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
@@ -192,12 +199,29 @@ class BuildOptions {
   var targetArch: JvmArchitecture? = null
 
   /**
+   * If `true` the build is running in 'Development mode' i.e. its artifacts aren't supposed to be used in production. In development
+   * mode build scripts won't fail if some non-mandatory dependencies are missing and will just show warnings.
+   *
+   * By default, 'development mode' is enabled if build is not running under continuous integration server (TeamCity).
+   */
+  var isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null)
+  var useCompiledClassesFromProjectOutput = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode)
+
+  /**
    * Pass comma-separated names of build steps (see below) to [BUILD_STEPS_TO_SKIP_PROPERTY] system property to skip them when building locally.
    */
   var buildStepsToSkip: MutableSet<String> = System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "")
     .split(',')
     .dropLastWhile { it.isEmpty() }
-    .filterTo(HashSet()) { !it.isBlank() }
+    .filterNot { it.isBlank() }
+    .toMutableSet()
+    .apply {
+      /* Skip signing and notarization for local builds */
+      if (isInDevelopmentMode) {
+        add(MAC_SIGN_STEP)
+        add(MAC_NOTARIZE_STEP)
+      }
+    }
 
   var buildMacArtifactsWithoutRuntime = SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITHOUT_RUNTIME,
                                                                             SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
@@ -250,15 +274,6 @@ class BuildOptions {
    */
   var compilationLogEnabled = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true)
   var cleanOutputFolder = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_FOLDER_PROPERTY, true)
-
-  /**
-   * If `true` the build is running in 'Development mode' i.e. its artifacts aren't supposed to be used in production. In development
-   * mode build scripts won't fail if some non-mandatory dependencies are missing and will just show warnings.
-   *
-   * By default, 'development mode' is enabled if build is not running under continuous integration server (TeamCity).
-   */
-  var isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null)
-  var useCompiledClassesFromProjectOutput = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode)
 
   /**
    * If `true` the build is running as a unit test
@@ -324,7 +339,21 @@ class BuildOptions {
   /**
    * See [GlobalOptions.BUILD_DATE_IN_SECONDS]
    */
-  var buildDateInSeconds: Long = 0
+  val buildDateInSeconds: Long = run {
+    val sourceDateEpoch = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)
+    val minZipTime = GregorianCalendar(1980, 0, 1)
+    val minZipTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(minZipTime.timeInMillis)
+    val value = sourceDateEpoch?.toLong() ?: currentBuildTimeInSeconds
+    require(value >= minZipTimeInSeconds) {
+      ".zip archive cannot store timestamps older than ${minZipTime.time} " +
+      "(see specification: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT) " +
+      "but ${GlobalOptions.BUILD_DATE_IN_SECONDS}=$sourceDateEpoch was supplied. " +
+      "If timestamps aren't stored then .zip content files modification time will be set to extraction time " +
+      "diverging from modification times specified in .manifest."
+    }
+    value
+  }
+
   var randomSeedNumber: Long = 0
 
   @ApiStatus.Experimental
@@ -342,9 +371,6 @@ class BuildOptions {
       targetOsId == OsFamily.LINUX.osId -> persistentListOf(OsFamily.LINUX)
       else -> throw IllegalStateException("Unknown target OS $targetOsId")
     }
-
-    val sourceDateEpoch = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)
-    buildDateInSeconds = sourceDateEpoch?.toLong() ?: (System.currentTimeMillis() / 1000)
     val randomSeedString = System.getProperty("intellij.build.randomSeed")
     randomSeedNumber = if (randomSeedString == null || randomSeedString.isBlank()) {
       ThreadLocalRandom.current().nextLong()

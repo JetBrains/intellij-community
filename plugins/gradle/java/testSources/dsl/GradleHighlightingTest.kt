@@ -1,18 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.openapi.externalSystem.util.runReadAction
-import com.intellij.openapi.externalSystem.util.text
+import com.intellij.openapi.vfs.readText
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.assertInstanceOf
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.EMPTY_PROJECT
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.JAVA_PROJECT
+import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -38,11 +40,37 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
       val file = getFile("build.gradle")
       runReadAction {
         val psiFile = fixture.psiManager.findFile(file)!!
-        val offset = file.text.indexOf("transitive") + 1
+        val offset = file.readText().indexOf("transitive") + 1
         val reference = psiFile.findReferenceAt(offset)!!
         val method = assertInstanceOf<PsiMethod>(reference.resolve())
         assertEquals("setTransitive", method.name)
       }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testGeneratedSetter(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_PROJECT) {
+      fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
+      testHighlighting("""
+        jar {
+          archiveClassifier = "a"
+        }
+      """.trimIndent())
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testGeneratedSetter2(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_PROJECT) {
+      fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
+      testHighlighting("""
+        tasks.register('jc', Jar) {
+            archiveBaseName = 'abcde'
+        }
+      """.trimIndent())
     }
   }
 
@@ -87,6 +115,19 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
         |    }
         |}
       """.trimMargin())
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test runtime decoration of Action to Closure`(gradleVersion: GradleVersion) {
+    test(gradleVersion, BUILD_SRC_FIXTURE_2) {
+      fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
+      testHighlighting("""
+        task grr(type: GrTask) {
+            foo {}
+        }
+      """.trimIndent())
     }
   }
 
@@ -199,6 +240,24 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
       }
       withDirectory("buildSrc/src/main/groovy")
       withDirectory("buildSrc/src/main/java")
+    }
+
+    private val BUILD_SRC_FIXTURE_2 = GradleTestFixtureBuilder.create("GradleHighlightingTest-buildSrc2") {
+      withSettingsFile {
+        setProjectName("GradleHighlightingTest-buildSrc2")
+      }
+      withFile("buildSrc/src/main/groovy/GrTask.groovy", """
+        import org.gradle.api.Action
+        import org.gradle.api.DefaultTask;
+        
+        class GrTask extends DefaultTask {
+            @FunctionalInterface
+            static interface FunInterface1 { void foo(String s) }
+        
+            void foo(FunInterface1 _) {}
+            void foo(Action<? super String> _) {}
+        }
+      """.trimIndent())
     }
   }
 }

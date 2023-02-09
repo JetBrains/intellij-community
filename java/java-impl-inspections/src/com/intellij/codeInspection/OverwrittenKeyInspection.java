@@ -229,7 +229,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
     }
   }
 
-  private static class NavigateToDuplicateFix implements OnTheFlyLocalFix {
+  private static class NavigateToDuplicateFix implements LocalQuickFix {
     private final SmartPsiElementPointer<PsiExpression> myPointer;
 
     NavigateToDuplicateFix(PsiExpression arg) {
@@ -245,6 +245,11 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
 
     @Override
     public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
+    public boolean availableInBatchMode() {
       return false;
     }
 

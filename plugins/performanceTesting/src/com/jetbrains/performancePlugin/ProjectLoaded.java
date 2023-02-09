@@ -27,13 +27,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Alarm;
-import com.intellij.util.AlarmFactory;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand;
 import com.jetbrains.performancePlugin.commands.TakeScreenshotCommand;
 import com.jetbrains.performancePlugin.profilers.ProfilersController;
+import com.jetbrains.performancePlugin.utils.ReporterCommandAsTelemetrySpan;
 import io.opentelemetry.context.Context;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +84,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
 
   private static final String INDEXING_PROFILER_PREFIX = "%%profileIndexing";
   private static ScheduledExecutorService screenshotExecutor;
-  private final Alarm myAlarm = AlarmFactory.getInstance().create();
+  private final Alarm myAlarm = new Alarm();
 
   private static boolean ourScriptStarted;
 
@@ -396,27 +396,32 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
     }), TIMEOUT)));
   }
 
-  public static void runScript(Project project, String script) {
-    PlaybackRunner playback = new PlaybackRunnerExtended(script, new CommandLogger(), project);
+  public static void runScript(Project project, String script, boolean mustExitOnFailure) {
+    PlaybackRunner playback = new PlaybackRunnerExtended(script, project);
     ActionCallback scriptCallback = playback.run();
-    runScript(scriptCallback);
+    CommandsRunner.setActionCallback(scriptCallback);
+    registerOnFinishRunnables(scriptCallback, mustExitOnFailure);
   }
 
   private static void runScriptFromFile(Project project) {
-    PlaybackRunner playback = new PlaybackRunnerExtended("%include " + getTestFile(), new CommandLogger(), project);
+    PlaybackRunner playback = new PlaybackRunnerExtended("%include " + getTestFile(), project);
     playback.setScriptDir(getTestFile().getParentFile());
+    if (SystemProperties.getBooleanProperty(ReporterCommandAsTelemetrySpan.USE_SPAN_WRAPPER_FOR_COMMAND, false)) {
+      playback.setCommandStartStopProcessor(new ReporterCommandAsTelemetrySpan());
+    }
     ActionCallback scriptCallback = playback.run();
-    CommandsRunner.setStartActionCallback(scriptCallback);
-    runScript(scriptCallback);
+    CommandsRunner.setActionCallback(scriptCallback);
+    registerOnFinishRunnables(scriptCallback, true);
   }
 
-  private static void runScript(ActionCallback scriptCallback) {
+  private static void registerOnFinishRunnables(ActionCallback scriptCallback, boolean mustExitOnFailure) {
     scriptCallback
       .doWhenDone(() -> {
         LOG.info("Execution of the script has been finished successfully");
       })
       .doWhenRejected(errorMessage -> {
         String message = "IDE will be terminated because some errors are detected while running the startup script: " + errorMessage;
+
         if (MUST_REPORT_TEAMCITY_TEST_FAILURE_ON_IDE_ERROR) {
           String testName = getTeamCityFailedTestName();
           reportTeamCityFailedTestAndBuildProblem(testName, message, "");
@@ -428,18 +433,20 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
 
         LOG.error(message);
 
+        if (System.getProperty("ide.performance.screenshot.on.failure") != null) {
+          TakeScreenshotCommand.takeScreenshotOfFrame(System.getProperty("ide.performance.screenshot.on.failure"));
+        }
+
         String threadDump = "Thread dump before IDE termination:\n" + ThreadDumper.dumpThreadsToString();
         LOG.info(threadDump);
 
-        if (System.getProperty("ide.performance.screenshot.on.failure") != null) {
-          TakeScreenshotCommand.takeScreenshotOfFrame(System.getProperty("ide.performance.screenshot.before.kill"));
-        }
-
-        if (MUST_EXIT_PROCESS_WITH_NON_SUCCESS_CODE_ON_IDE_ERROR) {
-          System.exit(1);
-        }
-        else {
-          ApplicationManagerEx.getApplicationEx().exit(true, true);
+        if (mustExitOnFailure) {
+          if (MUST_EXIT_PROCESS_WITH_NON_SUCCESS_CODE_ON_IDE_ERROR) {
+            System.exit(1);
+          }
+          else {
+            ApplicationManagerEx.getApplicationEx().exit(true, true);
+          }
         }
       });
   }

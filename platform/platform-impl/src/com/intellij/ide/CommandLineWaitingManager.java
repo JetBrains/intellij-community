@@ -21,18 +21,20 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 @Service(Service.Level.APP)
 public final class CommandLineWaitingManager {
@@ -117,23 +119,17 @@ public final class CommandLineWaitingManager {
     future.complete(CliResult.OK);
   }
 
-  static final class MyNotification extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
-    private static final Key<EditorNotificationPanel> KEY = Key.create("CommandLineWaitingNotification");
-
+  static final class MyNotification implements EditorNotificationProvider, DumbAware {
     @Override
-    public @NotNull Key<EditorNotificationPanel> getKey() {
-      return KEY;
-    }
+    public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+                                                                                                                   @NotNull VirtualFile file) {
+      if (PropertiesComponent.getInstance().getBoolean(DO_NOT_SHOW_KEY, false)) return null;
+      CommandLineWaitingManager manager = ApplicationManager.getApplication().getServiceIfCreated(CommandLineWaitingManager.class);
+      if (manager == null || !manager.hasHookFor(file) || manager.myDismissedObjects.contains(file)) return null;
 
-    @Override
-    public @Nullable EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
-      if (!PropertiesComponent.getInstance().getBoolean(DO_NOT_SHOW_KEY, false)) {
-        CommandLineWaitingManager manager = ApplicationManager.getApplication().getServiceIfCreated(CommandLineWaitingManager.class);
-        if (manager != null && manager.hasHookFor(file) && !manager.myDismissedObjects.contains(file)) {
-          return new MyNotificationPanel(file);
-        }
-      }
-      return null;
+      return fileEditor -> {
+        return new MyNotificationPanel(file);
+      };
     }
   }
 

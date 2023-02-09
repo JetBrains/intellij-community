@@ -6,6 +6,7 @@ import com.intellij.remoteServer.agent.util.log.TerminalListener.TtyResizeHandle
 import com.intellij.remoteServer.impl.runtime.log.TerminalHandlerBase;
 import com.intellij.terminal.JBTerminalPanel;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -13,6 +14,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Objects;
 
 public class TerminalHandlerImpl extends TerminalHandlerBase {
 
@@ -33,7 +35,8 @@ public class TerminalHandlerImpl extends TerminalHandlerBase {
     CloudTerminalRunner terminalRunner =
       new CloudTerminalRunner(project, presentableName, process, handlerBoundLater, deferTerminalSessionUntilFirstShown);
 
-    myTerminalWidget = terminalRunner.createTerminalWidget(project, (String)null);
+    TerminalWidget widget = terminalRunner.startShellTerminalWidget(project, null, deferTerminalSessionUntilFirstShown);
+    myTerminalWidget = Objects.requireNonNull(JBTerminalWidget.asJediTermWidget(widget));
     myTerminalPanel = myTerminalWidget.getTerminalPanel();
     myCopyActionKeyListener = new MyCopyActionKeyListener();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.platform.util.ArgsParser
@@ -190,5 +190,33 @@ class ArgsTest {
     val parser = ArgsParser(listOf())
     parser.arg("test", "").booleanOrNull().andApply { error("123") }
     parser.tryReadAll()
+  }
+
+  @Test
+  fun test_flag_1() {
+    val parser = ArgsParser(listOf("--test=true"))
+    val value by parser.arg("test", "").flag()
+    assertEquals(true, value)
+  }
+
+  @Test
+  fun test_flag_2() {
+    val parser = ArgsParser(listOf("--test"))
+    val value by parser.arg("test", "").flag()
+    assertEquals(true, value)
+  }
+
+  @Test
+  fun test_flag_3() {
+    val parser = ArgsParser(listOf(""))
+    val value by parser.arg("test", "").flag()
+    assertEquals(false, value)
+  }
+
+  @Test
+  fun test_flag_4() {
+    val parser = ArgsParser(listOf("--test=false"))
+    val value by parser.arg("test", "").flag()
+    assertEquals(false, value)
   }
 }

@@ -94,8 +94,7 @@ open class ReferredEntityImpl(val dataSource: ReferredEntityData) : ReferredEnti
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.version != dataSource.version) this.version = dataSource.version
       if (this.name != dataSource.name) this.name = dataSource.name
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

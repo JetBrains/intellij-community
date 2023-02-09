@@ -126,13 +126,13 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       @Override
       public void actionPerformed(ActionEvent e) {
         myCommonJavaParameters.setModuleContext(myModuleSelector.getModule());
-        myModel.reloadTestKindModel(JUnitConfigurable.this.myTypeChooser, myModuleSelector.getModule());
+        myModel.reloadTestKindModel(JUnitConfigurable.this.myTypeChooser, myModuleSelector.getModule(), null);
       }
     });
     final TestClassBrowser classBrowser = new TestClassBrowser(myProject, myModuleSelector, myPackage.getComponent());
     myClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, createClassVisibilityChecker(classBrowser)));
 
-    myModel.reloadTestKindModel(myTypeChooser, myModuleSelector.getModule());
+    myModel.reloadTestKindModel(myTypeChooser, myModuleSelector.getModule(), () -> addListeners());
     myTypeChooser.setRenderer(SimpleListCellRenderer.create("", value -> JUnitConfigurationModel.getKindName(value)));
 
     myTestLocations[JUnitConfigurationModel.ALL_IN_PACKAGE] = myPackage;
@@ -176,22 +176,15 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myTypeChooser.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myModel.setType((Integer)Objects.requireNonNull(myTypeChooser.getSelectedItem()));
-        changePanel();
+        Integer item = (Integer)myTypeChooser.getSelectedItem();
+        if (item != null) {
+          myModel.setType(item);
+          changePanel();
+        }
       }
     }
     );
 
-    myRepeatCb.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        int testType = (Integer)Objects.requireNonNull(myTypeChooser.getSelectedItem());
-        if (testType == JUnitConfigurationModel.CLASS || testType == JUnitConfigurationModel.METHOD) {
-          String[] model = getForkModel(testType, JUnitConfigurable.this.myRepeatCb.getSelectedItem());
-          myForkCb.setModel(new DefaultComboBoxModel<>(model));
-        }
-      }
-    });
     myModel.setType(JUnitConfigurationModel.CLASS);
     installDocuments();
     addRadioButtonsListeners(new JRadioButton[]{myWholeProjectScope, mySingleModuleScope, myModuleWDScope}, null);
@@ -221,6 +214,19 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     myUseModulePath.getComponent().setText(ExecutionBundle.message("use.module.path.checkbox.label"));
     myUseModulePath.getComponent().setSelected(true);
+  }
+
+  private void addListeners() {
+    myRepeatCb.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        int testType = (Integer)Objects.requireNonNull(myTypeChooser.getSelectedItem());
+        if (testType == JUnitConfigurationModel.CLASS || testType == JUnitConfigurationModel.METHOD) {
+          String[] model = getForkModel(testType, JUnitConfigurable.this.myRepeatCb.getSelectedItem());
+          myForkCb.setModel(new DefaultComboBoxModel<>(model));
+        }
+      }
+    });
   }
 
   static void setupChangeLists(Project project, JComboBox<String> comboBox) {
@@ -401,7 +407,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     if (forkMethod == null) {
       forkMethod = JUnitConfiguration.FORK_NONE;
     }
-    else if (selectedType == JUnitConfigurationModel.CLASS && forkMethod == JUnitConfiguration.FORK_KLASS &&
+    else if (selectedType == JUnitConfigurationModel.CLASS && JUnitConfiguration.FORK_KLASS.equals(forkMethod) &&
              RepeatCount.ONCE.equals(repeat)) {
       forkMethod = JUnitConfiguration.FORK_METHOD;
     }

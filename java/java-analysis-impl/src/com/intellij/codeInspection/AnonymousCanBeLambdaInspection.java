@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -19,19 +19,18 @@ import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.function.UnaryOperator;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(AnonymousCanBeLambdaInspection.class);
@@ -56,10 +55,11 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     return "Convert2Lambda";
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("report.when.interface.is.not.annotated.with.functional.interface"), this, "reportNotAnnotatedInterfaces");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("reportNotAnnotatedInterfaces",
+               JavaAnalysisBundle.message("report.when.interface.is.not.annotated.with.functional.interface")));
   }
 
   @NotNull
@@ -152,7 +152,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
         ((PsiLambdaExpression)lambda).getBody().replace(method.getBody());
         final PsiType interfaceType;
         if (copyCall.resolveMethod() == null) {
-          return PsiType.NULL;
+          return PsiTypes.nullType();
         }
         else {
           interfaceType = ((PsiLambdaExpression)lambda).getFunctionalInterfaceType();
@@ -162,7 +162,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
       }
     }
 
-    return PsiType.NULL;
+    return PsiTypes.nullType();
   }
 
   public static boolean canBeConvertedToLambda(PsiAnonymousClass aClass,
@@ -237,11 +237,10 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
   public static PsiExpression replacePsiElementWithLambda(@NotNull PsiElement element,
                                                           final boolean ignoreEqualsMethod,
                                                           boolean forceIgnoreTypeCast) {
-    if (!(element instanceof PsiNewExpression)) {
+    if (!(element instanceof PsiNewExpression newExpression)) {
       return null;
     }
 
-    final PsiNewExpression newExpression = (PsiNewExpression)element;
     final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
 
     if (anonymousClass == null) return null;
@@ -408,7 +407,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
 
       if (names.isEmpty()) return;
 
-      final LinkedHashMap<PsiElement, PsiElement> replacements = new LinkedHashMap<>();
+      final Map<PsiElement, PsiElement> replacements = new LinkedHashMap<>();
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitVariable(@NotNull PsiVariable variable) {

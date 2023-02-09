@@ -6,19 +6,9 @@ import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
-
 @ApiStatus.Internal
-fun Disposable.whenDisposed(listener: () -> Unit) = whenDisposed(null, listener)
-
-@ApiStatus.Internal
-fun Disposable.whenDisposed(
-  parentDisposable: Disposable?,
-  listener: () -> Unit
-): Disposable = apply {
-  when (parentDisposable) {
-    null -> Disposer.register(this, Disposable(listener))
-    else -> whenDisposedImpl(parentDisposable, listener)
-  }
+fun Disposable.whenDisposed(listener: () -> Unit) {
+  Disposer.register(this, Disposable { listener() })
 }
 
 /**
@@ -29,19 +19,25 @@ fun Disposable.whenDisposed(
  * @param parentDisposable unsubscribes listener from [this] dispose events.
  *  So [listener] never be called when [parentDisposable] is disposed.
  */
-private fun Disposable.whenDisposedImpl(
+@ApiStatus.Internal
+@ApiStatus.Experimental
+fun Disposable.whenDisposed(
   parentDisposable: Disposable,
   listener: () -> Unit
-): Disposable = apply {
+) {
   val isDisposed = AtomicBoolean(false)
+
   val disposable = Disposable {
     if (isDisposed.compareAndSet(false, true)) {
       listener()
     }
   }
+
   Disposer.register(this, disposable)
+
   Disposer.register(parentDisposable, Disposable {
-    isDisposed.set(true)
-    Disposer.dispose(disposable)
+    if (isDisposed.compareAndSet(false, true)) {
+      Disposer.dispose(disposable)
+    }
   })
 }

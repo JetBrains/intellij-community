@@ -15,7 +15,7 @@ import java.util.function.BiPredicate
 /**
  * Describes distribution of an IntelliJ-based IDE. Override this class and build distribution of your product.
  */
-abstract class ProductProperties() {
+abstract class ProductProperties {
   /**
    *  The base name for script files (*.bat, *.sh, *.exe), usually a shortened product name in lower case
    * (e.g. 'idea' for IntelliJ IDEA, 'datagrip' for DataGrip).

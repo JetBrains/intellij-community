@@ -13,6 +13,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.lang.Language;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -743,8 +744,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     if (myEditConfigOnly) return;
 
     final SearchScope scope = myScopePanel.getScope();
-    if (scope instanceof GlobalSearchScopesCore.DirectoryScope) {
-      final GlobalSearchScopesCore.DirectoryScope directoryScope = (GlobalSearchScopesCore.DirectoryScope)scope;
+    if (scope instanceof GlobalSearchScopesCore.DirectoryScope directoryScope) {
       FindInProjectSettings.getInstance(myProject).addDirectory(directoryScope.getDirectory().getPresentableUrl());
     }
 
@@ -1238,8 +1238,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       if (editorTextField == null) {
         return;
       }
-      final Object object = editorTextField.getClientProperty("JComponent.outline");
-      if ("error".equals(object) || "warning".equals(object)) {
+      DarculaUIUtil.Outline object = DarculaUIUtil.getOutline(editorTextField);
+      if (DarculaUIUtil.isWarningOrError(object)) {
         myErrorBorder.paintBorder(c, g, x, y, width, height);
       }
     }

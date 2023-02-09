@@ -16,8 +16,6 @@ import java.util.Set;
 import static com.intellij.util.containers.ContainerUtil.subtract;
 
 /**
-* @author irengrig
- *
  * see {@link SelectedState}
 */
 public class SelectionManager {

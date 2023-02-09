@@ -261,7 +261,7 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
       .flatMap { it.rootModel.contentEntries.asIterable() }
       .forEach { contentEntry -> folders.addAll(contentEntry.excludeFolders.map { File(it.url).name }) }
 
-    assertThat(folders).containsExactlyInAnyOrderElementsOf(listOf(".gradle", "build", "newExclDir"))
+    assertThat(folders).containsExactlyInAnyOrderElementsOf(listOf("build", "newExclDir"))
   }
 
   @Test

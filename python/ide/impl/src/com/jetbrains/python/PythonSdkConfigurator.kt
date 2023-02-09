@@ -35,7 +35,6 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.suppress
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 
 /**
- * @author vlan
  * @see [PyConfigureSdkOnWslTest]
  */
 class PythonSdkConfigurator : DirectoryProjectConfigurator {

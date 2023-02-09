@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.*;
@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import javax.swing.*;
 import java.util.*;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
@@ -677,8 +676,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     if (annotation != null && !annotation.isPhysical() && type instanceof PsiPrimitiveType) {
       reportIncorrectLocation(holder, annotation, owner, "inspection.nullable.problems.primitive.type.annotation");
     }
-    if (owner instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)owner;
+    if (owner instanceof PsiParameter parameter) {
       Nullability expectedNullability = DfaPsiUtil.inferParameterNullability(parameter);
       if (annotated.notNull != null && expectedNullability == Nullability.NULLABLE) {
         reportParameterNullabilityMismatch(parameter, annotated.notNull, holder, "parameter.can.be.null");
@@ -1062,11 +1060,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
     }
     return null;
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    throw new RuntimeException("No UI in headless mode");
   }
 
   private static class MyAnnotateMethodFix extends AnnotateMethodFix {

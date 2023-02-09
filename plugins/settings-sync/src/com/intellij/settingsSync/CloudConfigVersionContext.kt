@@ -20,15 +20,14 @@ internal class CloudConfigVersionContext : HeaderStorage {
     contextVersionMap.remove(path)
   }
 
-  fun <T> doWithVersion(version: String?, function: () -> T): T {
-    val path = SETTINGS_SYNC_SNAPSHOT_ZIP
+  fun <T> doWithVersion(filePath: String, version: String?, function: (String) -> T): T {
     return lock.withLock {
       try {
         if (version != null) {
-          contextVersionMap[path] = version
+          contextVersionMap[filePath] = version
         }
 
-        function()
+        function(filePath)
       }
       finally {
         contextVersionMap.clear()

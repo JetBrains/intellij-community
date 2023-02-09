@@ -16,6 +16,7 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FactoryMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -312,11 +313,6 @@ public final class ChainCompletionContext {
     if (resolvedClass == null) return false;
     final String qName = resolvedClass.getQualifiedName();
     if (qName == null) return false;
-    for (String name : WIDELY_USED_CLASS_NAMES) {
-      if (name.equals(qName)) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(qName, WIDELY_USED_CLASS_NAMES);
   }
 }

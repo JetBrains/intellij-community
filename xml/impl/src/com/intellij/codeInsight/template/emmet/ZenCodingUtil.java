@@ -14,9 +14,6 @@ import org.apache.xerces.util.XML11Char;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public final class ZenCodingUtil {
   private static final char NUMBER_IN_ITERATION_PLACE_HOLDER = '$';
   private static final String SURROUNDED_TEXT_MARKER = "$#";

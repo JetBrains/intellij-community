@@ -3,6 +3,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -16,6 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * @author Bas Leijdekkers
@@ -32,9 +35,9 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("string.concatenation.missing.whitespace.option"),
-                                          this, "ignoreNonStringLiterals");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreNonStringLiterals", InspectionGadgetsBundle.message("string.concatenation.missing.whitespace.option")));
   }
 
   @Override

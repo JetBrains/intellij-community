@@ -33,9 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.sam.SamConversionKt;
 
-/**
- * @author ven
- */
 public class GroovyInsertHandler implements InsertHandler<LookupElement> {
   public static final GroovyInsertHandler INSTANCE = new GroovyInsertHandler();
 
@@ -49,8 +46,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       obj = ((GroovyResolveResult)obj).getElement();
     }
 
-    if (obj instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)obj;
+    if (obj instanceof PsiMethod method) {
       PsiParameter[] parameters = method.getParameterList().getParameters();
       Editor editor = context.getEditor();
       Document document = editor.getDocument();

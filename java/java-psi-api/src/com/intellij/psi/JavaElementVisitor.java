@@ -157,6 +157,9 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitVariable(field);
   }
 
+  public void visitForeachPatternStatement(@NotNull PsiForeachPatternStatement statement) {
+    visitStatement(statement);
+  }
   public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
     visitStatement(statement);
   }

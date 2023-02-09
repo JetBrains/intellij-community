@@ -20,14 +20,18 @@ internal class AgentTestLogger(logger: Logger, private val factory: AgentTestLog
   }
 
   private fun sendToTestRunner(session: RdTestSession, message: String?, t: Throwable?) {
-    fun getRdStackTrace(_stackTrace: Array<StackTraceElement>?): List<RdTestSessionStackTraceElement> =
-      _stackTrace?.map { it -> RdTestSessionStackTraceElement(it.className, it.methodName, it.fileName.orEmpty(), it.lineNumber) }
+    fun getRdStackTrace(stackTrace: Array<StackTraceElement>?): List<RdTestSessionStackTraceElement> =
+      stackTrace?.map { RdTestSessionStackTraceElement(it.className, it.methodName, it.fileName.orEmpty(), it.lineNumber) }
       ?: emptyList()
 
     val rdtseMessage: String =
-      if (message != t?.message)
-        listOfNotNull(message, t?.message).joinToString(": ")
-      else message ?: "There was an error of type ${t?.javaClass?.name}"
+      when (message) {
+        t?.message ->
+          message ?: "There was an error of type ${t?.javaClass?.name}"
+        else ->
+          listOfNotNull(message, t?.message).joinToString(": ")
+      }
+
     val rdtseType = t?.javaClass?.typeName ?: "<LOG_ERROR>"
     val rdtseStackTrace = getRdStackTrace(t?.stackTrace)
     val rdtseCause = t?.cause?.let { cause ->

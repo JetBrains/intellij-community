@@ -24,8 +24,7 @@ public class ComboBoxButtonUI extends DarculaButtonUI {
   public void paint(Graphics g, JComponent c) {
     super.paint(g, c);
 
-    if (!(c instanceof ComboBoxAction.ComboBoxButton)) return;
-    ComboBoxAction.ComboBoxButton button = (ComboBoxAction.ComboBoxButton)c;
+    if (!(c instanceof ComboBoxAction.ComboBoxButton button)) return;
 
     if (!button.isArrowVisible()) {
       return;
@@ -71,8 +70,7 @@ public class ComboBoxButtonUI extends DarculaButtonUI {
 
   @Override
   protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
-    if (!(c instanceof ComboBoxAction.ComboBoxButton)) return prefSize;
-    ComboBoxAction.ComboBoxButton button = (ComboBoxAction.ComboBoxButton)c;
+    if (!(c instanceof ComboBoxAction.ComboBoxButton button)) return prefSize;
 
     Dimension buttonSize = super.getDarculaButtonSize(c, prefSize);
     Insets i = button.getInsets();

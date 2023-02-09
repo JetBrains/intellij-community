@@ -28,21 +28,21 @@ import java.util.List;
  */
 public class FilteredRequestorImpl implements JDOMExternalizable, FilteredRequestor {
 
-  public String  SUSPEND_POLICY = DebuggerSettings.SUSPEND_ALL;
-  public boolean  SUSPEND = true;
+  public String SUSPEND_POLICY = DebuggerSettings.SUSPEND_ALL;
+  public boolean SUSPEND = true;
 
-  public boolean COUNT_FILTER_ENABLED     = false;
+  public boolean COUNT_FILTER_ENABLED = false;
   public int COUNT_FILTER = 0;
 
-  public boolean CONDITION_ENABLED        = false;
+  public boolean CONDITION_ENABLED = false;
   private TextWithImports myCondition;
 
-  public boolean CLASS_FILTERS_ENABLED    = false;
-  private ClassFilter[] myClassFilters          = ClassFilter.EMPTY_ARRAY;
+  public boolean CLASS_FILTERS_ENABLED = false;
+  private ClassFilter[] myClassFilters = ClassFilter.EMPTY_ARRAY;
   private ClassFilter[] myClassExclusionFilters = ClassFilter.EMPTY_ARRAY;
 
   public boolean INSTANCE_FILTERS_ENABLED = false;
-  private InstanceFilter[] myInstanceFilters  = InstanceFilter.EMPTY_ARRAY;
+  private InstanceFilter[] myInstanceFilters = InstanceFilter.EMPTY_ARRAY;
 
   @NonNls private static final String FILTER_OPTION_NAME = "filter";
   @NonNls private static final String EXCLUSION_FILTER_OPTION_NAME = "exclusion_filter";
@@ -61,12 +61,12 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
   }
 
   public void setInstanceFilters(InstanceFilter[] instanceFilters) {
-    myInstanceFilters = instanceFilters != null? instanceFilters : InstanceFilter.EMPTY_ARRAY;
+    myInstanceFilters = instanceFilters != null ? instanceFilters : InstanceFilter.EMPTY_ARRAY;
   }
 
   @Override
   public String getSuspendPolicy() {
-    return SUSPEND? SUSPEND_POLICY : DebuggerSettings.SUSPEND_NONE;
+    return SUSPEND ? SUSPEND_POLICY : DebuggerSettings.SUSPEND_NONE;
   }
 
   @Override
@@ -75,7 +75,7 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
   }
 
   public final void setClassFilters(ClassFilter[] classFilters) {
-    myClassFilters = classFilters != null? classFilters : ClassFilter.EMPTY_ARRAY;
+    myClassFilters = classFilters != null ? classFilters : ClassFilter.EMPTY_ARRAY;
   }
 
   @Override
@@ -84,7 +84,7 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
   }
 
   public void setClassExclusionFilters(ClassFilter[] classExclusionFilters) {
-    myClassExclusionFilters = classExclusionFilters != null? classExclusionFilters : ClassFilter.EMPTY_ARRAY;
+    myClassExclusionFilters = classExclusionFilters != null ? classExclusionFilters : ClassFilter.EMPTY_ARRAY;
   }
 
   public void readTo(Element parentNode, Breakpoint breakpoint) throws InvalidDataException {
@@ -128,7 +128,7 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
     myClassFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(FILTER_OPTION_NAME));
     myClassExclusionFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(EXCLUSION_FILTER_OPTION_NAME));
 
-    final ClassFilter [] instanceFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(INSTANCE_ID_OPTION_NAME));
+    final ClassFilter[] instanceFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(INSTANCE_ID_OPTION_NAME));
     final List<InstanceFilter> iFilters = new ArrayList<>(instanceFilters.length);
 
     for (ClassFilter instanceFilter : instanceFilters) {

@@ -9,9 +9,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GroovyMoveStatementTest extends GroovyEditorActionTestBase {
   @Override
   protected String getBasePath() {

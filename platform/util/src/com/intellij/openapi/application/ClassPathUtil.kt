@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.fasterxml.aalto.`in`.ReaderConfig
 import com.intellij.diff.comparison.ComparisonUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.Strings
-import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.util.lang.UrlClassLoader
 import com.sun.jna.TypeMapper
 import com.sun.jna.platform.FileUtils
@@ -42,7 +41,6 @@ object ClassPathUtil {
       PathManager::class.java,  // module 'intellij.platform.util'
       Strings::class.java,  // module 'intellij.platform.util.base'
       classLoader.loadClass("com.intellij.util.xml.dom.XmlDomReader"),  // module 'intellij.platform.util.xmlDom'
-      MinusculeMatcher::class.java,  // module 'intellij.platform.util.text.matching'
       SystemInfoRt::class.java,  // module 'intellij.platform.util.rt'
       ComparisonUtil::class.java,  // module 'intellij.platform.util.diff'
       UrlClassLoader::class.java,  // module 'intellij.platform.util.classLoader'

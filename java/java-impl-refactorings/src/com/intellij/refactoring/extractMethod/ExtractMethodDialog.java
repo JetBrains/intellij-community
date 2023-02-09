@@ -5,8 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -277,14 +276,14 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
       @Override
       public PsiType[] getTypesForAll(boolean direct) {
         final PsiType[] types = super.getTypesForAll(direct);
-        return !isVoidReturn() ? types : ArrayUtil.prepend(PsiType.VOID, types);
+        return !isVoidReturn() ? types : ArrayUtil.prepend(PsiTypes.voidType(), types);
       }
     };
     mySelector = manager.getTypeSelector();
     final JComponent component = mySelector.getComponent();
     if (component instanceof ComboBox) {
       if (isVoidReturn()) {
-        mySelector.selectType(PsiType.VOID);
+        mySelector.selectType(PsiTypes.voidType());
       }
       final JPanel returnTypePanel = new JPanel(new BorderLayout(2, 0));
       final JLabel label = new JLabel(RefactoringBundle.message("changeSignature.return.type.prompt"));
@@ -714,8 +713,8 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   @Override
   public void show() {
     super.show();
-    final FeatureUsageData featureUsageData = collectStatistics();
-    FUCounterUsageLogger.getInstance().logEvent(myProject, "java.extract.method","dialog.closed", featureUsageData);
+    final List<EventPair<?>> listData = collectStatistics();
+    JavaExtractMethodCollector.logDialogClosed(myProject, listData);
   }
 
   private static final class ParameterInfo {
@@ -740,55 +739,55 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     return map;
   }
 
-  private FeatureUsageData collectStatistics() {
-    final FeatureUsageData data = new FeatureUsageData();
+  private List<EventPair<?>> collectStatistics() {
+    final List<EventPair<?>> data = new ArrayList<>(15);
 
-    data.addData("parameters_count", myVariableData.getInputVariables().size());
+    data.add(JavaExtractMethodCollector.PARAMETERS_COUNT_FIELD.with(myVariableData.getInputVariables().size()));
 
     final Map<PsiVariable, ParameterInfo> resultParams = getParameterInfos(getChosenParameters());
     final List<Pair<ParameterInfo, ParameterInfo>> parameterChanges = ContainerUtil.map(getChosenParameters(), (param) ->
       new Pair<>(resultParams.get(param.variable), myInitialParameterInfos.get(param.variable))
     );
-    if (! resultParams.isEmpty()) {
-      boolean renamed = ContainerUtil.exists(parameterChanges, (changePair) -> ! changePair.first.myName.equals(changePair.second.myName));
-      boolean typeChanged = ContainerUtil.exists(parameterChanges, (changePair) -> ! changePair.first.myType.equals(changePair.second.myType));
-      boolean removed = ContainerUtil.exists(parameterChanges, (changePair) -> ! changePair.first.myIsEnabled);
-      data.addData("parameters_type_changed", typeChanged);
-      data.addData("parameters_renamed", renamed);
-      data.addData("parameters_removed", removed);
+    if (!resultParams.isEmpty()) {
+      boolean renamed = ContainerUtil.exists(parameterChanges, (changePair) -> !changePair.first.myName.equals(changePair.second.myName));
+      boolean typeChanged =
+        ContainerUtil.exists(parameterChanges, (changePair) -> !changePair.first.myType.equals(changePair.second.myType));
+      boolean removed = ContainerUtil.exists(parameterChanges, (changePair) -> !changePair.first.myIsEnabled);
+      data.add(JavaExtractMethodCollector.PARAMETERS_TYPE_CHANGED_FIELD.with(typeChanged));
+      data.add(JavaExtractMethodCollector.PARAMETERS_RENAMED_FIELD.with(renamed));
+      data.add(JavaExtractMethodCollector.PARAMETERS_REMOVED_FIELD.with(removed));
     }
-    if(resultParams.size() > 1) {
+    if (resultParams.size() > 1) {
       boolean reordered = ContainerUtil.exists(parameterChanges, (changePair) -> changePair.first.myIndex != changePair.second.myIndex);
-      data.addData("parameters_reordered", reordered);
+      data.add(JavaExtractMethodCollector.PARAMETERS_REORDERED_FIELD.with(reordered));
     }
 
     if (myVisibilityPanel != null) {
-      data.addData("visibility_changed", !myDefaultVisibility);
+      data.add(JavaExtractMethodCollector.VISIBILITY_CHANGED_FIELD.with(!myDefaultVisibility));
     }
     if (isReturnVisible) {
-      data.addData("return_changed", getReturnType() != myReturnType);
+      data.add(JavaExtractMethodCollector.RETURN_CHANGED_FIELD.with(getReturnType() != myReturnType));
     }
     if (myMakeStatic != null && myMakeStatic.isEnabled()) {
-      data.addData("static", myMakeStatic.isSelected());
-      data.addData("static_pass_fields_available", myVariableData.isPassFields());
+      data.add(JavaExtractMethodCollector.STATIC_FIELD.with(myMakeStatic.isSelected()));
+      data.add(JavaExtractMethodCollector.STATIC_PASS_AVAILABLE_FIELD.with(myVariableData.isPassFields()));
     }
-    if (myMakeVarargs != null){
-      data.addData("make_varargs", myMakeVarargs.isSelected());
+    if (myMakeVarargs != null) {
+      data.add(JavaExtractMethodCollector.MAKE_VARARGS_FIELD.with(myMakeVarargs.isSelected()));
     }
     if (myFoldParameters != null && myFoldParameters.isVisible()) {
-      data.addData("folded", myFoldParameters.isSelected());
+      data.add(JavaExtractMethodCollector.FOLDED_FIELD.with(myFoldParameters.isSelected()));
     }
     if (myCbChainedConstructor != null) {
-      data.addData("constructor", myCbChainedConstructor.isSelected());
+      data.add(JavaExtractMethodCollector.CONSTRUCTOR_FIELD.with(myCbChainedConstructor.isSelected()));
     }
     if (myGenerateAnnotations != null) {
-      data.addData("annotated", myGenerateAnnotations.isSelected());
+      data.add(JavaExtractMethodCollector.ANNOTATED_FIELD.with(myGenerateAnnotations.isSelected()));
     }
     if (hasPreviewButton()) {
-      data.addData("preview_used", isPreviewUsages());
+      data.add(JavaExtractMethodCollector.PREVIEW_USED_FIELD.with(isPreviewUsages()));
     }
-    data.addData("finished", isOK());
-
+    data.add(JavaExtractMethodCollector.FINISHED_FIELD.with(isOK()));
     return data;
   }
 }

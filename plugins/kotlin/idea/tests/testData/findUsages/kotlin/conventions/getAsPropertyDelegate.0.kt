@@ -9,5 +9,5 @@ class Delegate() {
 
 val p: String by Delegate()
 
-// FIR_COMPARISON
+
 // IGNORE_FIR_LOG

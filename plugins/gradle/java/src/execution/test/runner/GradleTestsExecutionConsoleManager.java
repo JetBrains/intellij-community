@@ -110,8 +110,7 @@ public class GradleTestsExecutionConsoleManager
     else {
       configuration = settings.getConfiguration();
     }
-    if (!(configuration instanceof ExternalSystemRunConfiguration)) return null;
-    ExternalSystemRunConfiguration externalSystemRunConfiguration = (ExternalSystemRunConfiguration)configuration;
+    if (!(configuration instanceof ExternalSystemRunConfiguration externalSystemRunConfiguration)) return null;
 
     if (consoleProperties == null) {
       consoleProperties = new GradleConsoleProperties(externalSystemRunConfiguration, env.getExecutor());
@@ -263,8 +262,7 @@ public class GradleTestsExecutionConsoleManager
 
   @Override
   public boolean isApplicableFor(@NotNull ExternalSystemTask task) {
-    if (task instanceof ExternalSystemExecuteTaskTask) {
-      var taskTask = (ExternalSystemExecuteTaskTask)task;
+    if (task instanceof ExternalSystemExecuteTaskTask taskTask) {
       if (StringUtil.equals(taskTask.getExternalSystemId().getId(), GradleConstants.SYSTEM_ID.getId())) {
         if (hasTestOption(taskTask) || hasTestTasks(taskTask)) {
           taskTask.putUserData(RUN_TASK_AS_TEST, true);

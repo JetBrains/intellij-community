@@ -3,9 +3,6 @@ package com.jetbrains.python.sdk.poetry
 
 import com.jetbrains.python.sdk.flavors.PythonFlavorProvider
 
-/**
- * @author vlan
- */
 
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>

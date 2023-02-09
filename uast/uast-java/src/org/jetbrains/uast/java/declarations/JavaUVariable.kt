@@ -9,8 +9,10 @@ import com.intellij.psi.impl.light.LightRecordField
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
+import org.jetbrains.uast.internal.CONVERSION_LOGGER
 import org.jetbrains.uast.internal.UElementAlternative
 import org.jetbrains.uast.internal.accommodate
 import org.jetbrains.uast.internal.alternative
@@ -27,13 +29,13 @@ abstract class AbstractJavaUVariable(
   override val psi
     get() = javaPsi
 
-  override val uastInitializer: UExpression? by lz {
-    val initializer = javaPsi.initializer ?: return@lz null
+  override val uastInitializer: UExpression? by lazyPub {
+    val initializer = javaPsi.initializer ?: return@lazyPub null
     UastFacade.findPlugin(initializer)?.convertElement(initializer, this) as? UExpression
   }
 
-  override val uAnnotations: List<UAnnotation> by lz { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
-  override val typeReference: UTypeReferenceExpression? by lz {
+  override val uAnnotations: List<UAnnotation> by lazyPub { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
+  override val typeReference: UTypeReferenceExpression? by lazyPub {
     javaPsi.typeElement?.let { UastFacade.findPlugin(it)?.convertOpt<UTypeReferenceExpression>(javaPsi.typeElement, this) }
   }
 
@@ -128,27 +130,36 @@ internal fun convertRecordConstructorParameterAlternatives(element: PsiElement,
 
 private fun createAlternatives(element: PsiElement,
                                givenParent: UElement?): Pair<UElementAlternative<JavaRecordUParameter>, UElementAlternative<JavaRecordUField>>? {
+
+  fun <T> logAndNull(message: () -> String): T? =
+    CONVERSION_LOGGER.logAndNull { "createAlternatives($element) ${message()}" }
+
   val (psiRecordComponent, lightRecordField, lightConstructorParameter) = when (element) {
     is PsiRecordComponent -> Triple(element, null, null)
     is LightRecordConstructorParameter -> {
-      val lightRecordField = element.parentOfType<PsiMethod>()?.containingClass?.findFieldByName(element.name, false)
-                               ?.asSafely<LightRecordField>() ?: return null
+      val containingClass = element.parentOfType<PsiMethod>()?.containingClass
+                            ?: return logAndNull { "failed to get containingClass" }
+      val findFieldByName = containingClass.findFieldByName(element.name, false)
+                            ?: return logAndNull { "failed to find ${element.name} in $containingClass" }
+      val lightRecordField = findFieldByName.asSafely<LightRecordField>()
+                             ?: return logAndNull { "failed to cast ${findFieldByName} to LightRecordField" }
       Triple(lightRecordField.recordComponent, lightRecordField, element)
     }
     is LightRecordField -> Triple(element.recordComponent, element, null)
-    else -> return null
+    else -> return logAndNull { "no matches in when" }
   }
 
   val paramAlternative = alternative {
-    val psiClass = psiRecordComponent.containingClass ?: return@alternative null
+    val psiClass = psiRecordComponent.containingClass ?: return@alternative logAndNull { "no psiRecordComponent containingClass" }
     val jvmParameter = lightConstructorParameter ?: psiClass.constructors.asSequence()
       .filter { it is LightElement }
       .flatMap { it.parameterList.parameters.asSequence() }.firstOrNull { it.name == psiRecordComponent.name }
-    JavaRecordUParameter(psiRecordComponent, jvmParameter ?: return@alternative null, givenParent)
+    val psiParameter = jvmParameter ?: return@alternative logAndNull { "no psiRecordComponent psiParameter ${psiRecordComponent.name}" }
+    JavaRecordUParameter(psiRecordComponent, psiParameter, givenParent)
   }
   val fieldAlternative = alternative {
     val psiField = lightRecordField ?: psiRecordComponent.containingClass?.findFieldByName(psiRecordComponent.name, false)
-                   ?: return@alternative null
+                   ?: return@alternative logAndNull { "no lightRecordField by name ${psiRecordComponent.name}" }
     JavaRecordUField(psiRecordComponent, psiField, givenParent)
   }
   return Pair(paramAlternative, fieldAlternative)
@@ -214,7 +225,7 @@ class JavaUEnumConstant(
   override val sourcePsi: PsiEnumConstant,
   givenParent: UElement?
 ) : AbstractJavaUVariable(givenParent), UEnumConstantEx, UCallExpression, PsiEnumConstant by sourcePsi, UMultiResolvable {
-  override val initializingClass: UClass? by lz { UastFacade.findPlugin(sourcePsi)?.convertOpt(sourcePsi.initializingClass, this) }
+  override val initializingClass: UClass? by lazyPub { UastFacade.findPlugin(sourcePsi)?.convertOpt(sourcePsi.initializingClass, this) }
 
   @Suppress("OverridingDeprecatedMember")
   override val psi: PsiEnumConstant
@@ -239,7 +250,7 @@ class JavaUEnumConstant(
   override val valueArgumentCount: Int
     get() = sourcePsi.argumentList?.expressions?.size ?: 0
 
-  override val valueArguments: List<UExpression> by lz {
+  override val valueArguments: List<UExpression> by lazyPub {
     sourcePsi.argumentList?.expressions?.map {
       UastFacade.findPlugin(it)?.convertElement(it, this) as? UExpression ?: UastEmptyExpression(this)
     } ?: emptyList()

@@ -25,7 +25,6 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * @author pegov
  * @author Konstantin Bulenkov
  */
 public final class PopupPositionManager {

@@ -18,18 +18,12 @@ class KtClassOrObjectTreeNode(project: Project?, ktClassOrObject: KtClassOrObjec
 
     override fun extractPsiFromValue(): PsiElement? = value
 
-    override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> {
-        return if (value != null && settings.isShowMembers) {
-            value.getStructureDeclarations().map { declaration ->
-                if (declaration is KtClassOrObject)
-                    KtClassOrObjectTreeNode(project, declaration, settings)
-                else
-                    KtDeclarationTreeNode(project, declaration, settings)
-            }
+    override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> =
+        if (value != null && settings.isShowMembers) {
+            value.getStructureDeclarations().toNodes(settings)
         } else {
             emptyList()
         }
-    }
 
     override fun updateImpl(data: PresentationData) {
         value?.let {

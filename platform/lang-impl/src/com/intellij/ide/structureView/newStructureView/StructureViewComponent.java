@@ -151,7 +151,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     myStructureTreeModel = new StructureTreeModel<>(myTreeStructure, this);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, this);
-    myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
 
     Disposer.register(this, myTreeModelWrapper);
@@ -270,11 +269,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   @NotNull
   private static JBTreeTraverser<Object> traverser() {
     return JBTreeTraverser.from(o -> o instanceof Group ? ((Group)o).getChildren() : null);
-  }
-
-  @NotNull
-  public static JBIterable<Object> getSelectedValues(JTree tree) {
-    return getSelectedValues(JBIterable.of(tree.getSelectionPaths()).map(TreePath::getLastPathComponent));
   }
 
   @NotNull
@@ -796,10 +790,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     @Override
     public FileStatus getFileStatus() {
-      StructureViewModel model = ((TreeModelWrapper)myTreeModel).getModel();
-      StructureViewTreeElement value = (StructureViewTreeElement)getValue();
-      if (value == null) return FileStatus.NOT_CHANGED;
-      return model.getElementStatus(value.getValue());
+      if (myTreeModel instanceof StructureViewModel model &&
+          getValue() instanceof StructureViewTreeElement value) {
+        return model.getElementStatus(value.getValue());
+      }
+      return FileStatus.NOT_CHANGED;
     }
 
     @Override

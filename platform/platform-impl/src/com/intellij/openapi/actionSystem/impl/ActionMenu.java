@@ -221,7 +221,7 @@ public final class ActionMenu extends JBMenu {
     if (icon != null && settings != null && settings.getShowIconsInMenus()) {
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
-        icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
+        icon = IconLoader.INSTANCE.getMenuBarIcon(icon, myUseDarkIcons);
       } else if (shouldConvertIconToDarkVariant()) {
         icon = IconLoader.getDarkIcon(icon, true);
       }
@@ -235,7 +235,7 @@ public final class ActionMenu extends JBMenu {
           setDisabledIcon(myPresentation.getDisabledIcon());
         }
         else {
-          setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
+          setDisabledIcon(IconLoader.getDisabledIcon(icon));
         }
         if (myScreenMenuPeer != null) myScreenMenuPeer.setIcon(icon);
       }
@@ -469,8 +469,7 @@ public final class ActionMenu extends JBMenu {
 
     @Override
     public void eventDispatched(AWTEvent event) {
-      if (event instanceof ComponentEvent) {
-        ComponentEvent componentEvent = (ComponentEvent)event;
+      if (event instanceof ComponentEvent componentEvent) {
         Component component = componentEvent.getComponent();
         JPopupMenu popup = ComponentUtil.getParentOfType((Class<? extends JPopupMenu>)JPopupMenu.class, component);
         if (popup != null && popup.getInvoker() == myComponent && popup.isShowing()) {

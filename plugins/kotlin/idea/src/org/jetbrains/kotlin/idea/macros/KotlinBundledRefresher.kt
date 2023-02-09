@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.macros
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -22,7 +22,7 @@ import kotlin.io.path.listDirectoryEntries
  * Component forces update for built-in libraries in plugin directory. They are ignored because of
  * com.intellij.util.indexing.FileBasedIndex.isUnderConfigOrSystem()
  */
-internal class KotlinBundledRefresher : ProjectPostStartupActivity {
+internal class KotlinBundledRefresher : ProjectActivity {
     init {
         if (isUnitTestMode()) {
             throw ExtensionNotApplicableException.create()

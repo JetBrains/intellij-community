@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -113,7 +113,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnreachable() { doTest(false); }
   public void testUnreachableMultiFinally() { doTest(false); }
   public void testFinalFieldInit() { doTest(false); }
-  public void testLocalVariableInitialization() { doTest(false); }
+  public void testLocalVariableInitialization() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_5, () -> doTest(false)); }
   public void testVarDoubleInitialization() { doTest(false); }
   public void testFieldDoubleInitialization() { doTest(false); }
   public void testFinalFieldInitialization() { doTest(false); }

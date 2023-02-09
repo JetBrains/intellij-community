@@ -10,29 +10,28 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.SLRUMap;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-public class ContentAnnotationCacheImpl implements ContentAnnotationCache {
+final class ContentAnnotationCacheImpl implements ContentAnnotationCache {
   private final SLRUMap<HistoryCacheWithRevisionKey, TreeMap<Integer, Long>> myCache;
   private final Object myLock;
 
-  public ContentAnnotationCacheImpl() {
+  ContentAnnotationCacheImpl() {
     myLock = new Object();
     myCache = new SLRUMap<>(50, 50);
   }
 
   @Override
-  @Nullable
-  public ThreeState isRecent(final VirtualFile vf,
-                             final VcsKey vcsKey,
-                             final VcsRevisionNumber number,
-                             final TextRange range,
-                             final long boundTime) {
+  public @NotNull ThreeState isRecent(final VirtualFile vf,
+                                      final VcsKey vcsKey,
+                                      final VcsRevisionNumber number,
+                                      final TextRange range,
+                                      final long boundTime) {
     TreeMap<Integer, Long> treeMap;
     synchronized (myLock) {
       treeMap = myCache.get(new HistoryCacheWithRevisionKey(VcsContextFactory.getInstance().createFilePathOn(vf), vcsKey, number));

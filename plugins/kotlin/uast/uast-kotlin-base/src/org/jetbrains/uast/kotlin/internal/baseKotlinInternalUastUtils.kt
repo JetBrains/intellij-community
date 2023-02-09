@@ -5,6 +5,7 @@ package org.jetbrains.uast.kotlin
 import com.intellij.lang.Language
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
+import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -130,7 +131,7 @@ fun PsiElement.getMaybeLightElement(sourcePsi: KtExpression? = null): PsiElement
 val PsiMethod.desc: String
     get() = buildString {
         parameterList.parameters.joinTo(this, separator = "", prefix = "(", postfix = ")") { MapPsiToAsmDesc.typeDesc(it.type) }
-        append(MapPsiToAsmDesc.typeDesc(returnType ?: PsiType.VOID))
+        append(MapPsiToAsmDesc.typeDesc(returnType ?: PsiTypes.voidType()))
     }
 
 private val KtCallElement.isAnnotationArgument: Boolean
@@ -180,10 +181,39 @@ fun convertUnitToVoidIfNeeded(
     fun PsiPrimitiveType.orBoxed() = if (boxed) getBoxedType(context) else this
     return when {
         typeOwnerKind == TypeOwnerKind.DECLARATION && context is KtNamedFunction ->
-            PsiType.VOID.orBoxed()
+            PsiTypes.voidType().orBoxed()
         typeOwnerKind == TypeOwnerKind.EXPRESSION && context is KtBlockExpression && context.isFunctionBody ->
-            PsiType.VOID.orBoxed()
+            PsiTypes.voidType().orBoxed()
         else -> null
+    }
+}
+
+class PsiTypeConversionConfiguration(
+    val typeOwnerKind: TypeOwnerKind,
+    val isBoxed: Boolean = false,
+    val typeMappingMode: KtTypeMappingMode = KtTypeMappingMode.DEFAULT_UAST,
+) {
+    companion object {
+        fun create(
+            ktElement: KtElement,
+            isBoxed: Boolean = false,
+            isForFake: Boolean = false,
+        ): PsiTypeConversionConfiguration {
+            return PsiTypeConversionConfiguration(
+                ktElement.typeOwnerKind,
+                isBoxed,
+                ktElement.ktTypeMappingMode(isBoxed, isForFake)
+            )
+        }
+
+        private fun KtElement.ktTypeMappingMode(isBoxed: Boolean, isForFake: Boolean): KtTypeMappingMode {
+            return when {
+                isForFake && this is KtParameter -> KtTypeMappingMode.VALUE_PARAMETER
+                isForFake && this is KtCallableDeclaration -> KtTypeMappingMode.RETURN_TYPE
+                isBoxed -> KtTypeMappingMode.GENERIC_ARGUMENT
+                else -> KtTypeMappingMode.DEFAULT_UAST
+            }
+        }
     }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -8,7 +8,6 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.internal.statistic.service.fus.collectors.CtrlMouseHintShown
-import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.impl.DocumentationManager
 import com.intellij.lang.documentation.ide.impl.injectedThenHost
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -37,11 +36,11 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.HintText
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.documentation.DocumentationTarget
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.ScreenUtil.isMovementTowards
@@ -62,11 +61,8 @@ import javax.swing.event.HyperlinkListener
 import kotlin.math.max
 import kotlin.math.min
 
-internal class InitCtrlMouseHandlerActivity : ProjectPostStartupActivity {
+internal class InitCtrlMouseHandlerActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    if (!Registry.`is`("documentation.v2.ctrl.mouse", true)) {
-      return
-    }
     project.service<CtrlMouseHandler2>()
   }
 }

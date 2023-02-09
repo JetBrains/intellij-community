@@ -42,10 +42,9 @@ public class DisjointPackageInspection extends BaseGlobalInspection {
     @NotNull RefEntity refEntity, @NotNull AnalysisScope analysisScope,
     @NotNull InspectionManager inspectionManager,
     @NotNull GlobalInspectionContext globalInspectionContext) {
-    if (!(refEntity instanceof RefPackage)) {
+    if (!(refEntity instanceof RefPackage refPackage)) {
       return null;
     }
-    final RefPackage refPackage = (RefPackage)refEntity;
     final Set<RefClass> childClasses = StreamEx.of(refPackage.getChildren()).select(RefClass.class).toSet();
     if (childClasses.isEmpty()) {
       return null;

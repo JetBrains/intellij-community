@@ -15,8 +15,5 @@
  */
 package com.jetbrains.jsonSchema.extension;
 
-/**
- * @author Irina.Chernushina on 2/15/2016.
- */
 public interface JsonSchemaImportedProviderMarker {
 }

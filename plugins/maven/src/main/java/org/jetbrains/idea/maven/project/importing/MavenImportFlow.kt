@@ -36,6 +36,7 @@ import org.jetbrains.idea.maven.utils.FileFinder
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 @IntellijInternalApi
 @ApiStatus.Internal
@@ -47,7 +48,7 @@ class MavenImportFlow {
                        importingSettings: MavenImportingSettings,
                        enabledProfiles: Collection<String>,
                        disabledProfiles: Collection<String>): MavenInitialImportContext {
-    val isVeryNewProject = project.getUserData<Boolean>(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == true
+    val isVeryNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == true
                            && ModuleManager.getInstance(project).modules.size == 0
     if (isVeryNewProject) {
       ExternalStorageConfigurationManager.getInstance(project).isEnabled = true
@@ -187,8 +188,8 @@ class MavenImportFlow {
     val resolveContext = ResolveContext(context.projectsTree)
     val d = Disposer.newDisposable("MavenImportFlow:resolveDependencies:treeListener")
     Disposer.register(context.initialContext.importDisposable, d)
-    val projectsToImport = ArrayList(context.toResolve)
-    val nativeProjectStorage = ArrayList<kotlin.Pair<MavenProject, NativeMavenProjectHolder>>()
+    val projectsToImport = ConcurrentLinkedQueue(context.toResolve)
+    val nativeProjectStorage = ConcurrentLinkedQueue<kotlin.Pair<MavenProject, NativeMavenProjectHolder>>()
     context.projectsTree.addListener(object : MavenProjectsTree.Listener {
       override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
                                    nativeMavenProject: NativeMavenProjectHolder?) {
@@ -204,7 +205,7 @@ class MavenImportFlow {
                      resolveContext, context.initialContext.indicator)
     Disposer.dispose(d)
     return MavenResolvedContext(context.project, resolveContext.getUserData(MavenProjectResolver.UNRESOLVED_ARTIFACTS) ?: emptySet(),
-                                projectsToImport, nativeProjectStorage, context)
+                                projectsToImport.toList(), nativeProjectStorage.toList(), context)
   }
 
   fun resolvePlugins(context: MavenResolvedContext): MavenPluginResolvedContext {
@@ -290,7 +291,8 @@ class MavenImportFlow {
     val projectImporter = MavenProjectImporter.createImporter(context.project, context.readContext.projectsTree,
                                                               context.projectsToImport.map {
                                                                 it to MavenProjectChanges.ALL
-                                                              }.toMap(), context.initialContext.importingSettings.isCreateModuleGroups,
+                                                              }.toMap(),
+                                                              context.initialContext.importingSettings.isCreateModuleGroups,
                                                               modelsProvider, context.initialContext.importingSettings,
                                                               context.initialContext.previewModule, importingActivity)
     val postImportTasks = projectImporter.importProject()
@@ -328,10 +330,6 @@ class MavenImportFlow {
 }
 
 internal fun assertNonDispatchThread() {
-  val app = ApplicationManager.getApplication()
-  if (app.isUnitTestMode && app.isDispatchThread) {
-    throw RuntimeException("Access from event dispatch thread is not allowed")
-  }
   ApplicationManager.getApplication().assertIsNonDispatchThread()
 }
 

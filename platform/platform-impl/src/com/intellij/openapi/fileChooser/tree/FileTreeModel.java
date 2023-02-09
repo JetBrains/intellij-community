@@ -174,16 +174,13 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       if (event instanceof VFilePropertyChangeEvent) {
         if (hasEntry(event.getFile())) files.add(event.getFile());
       }
-      else if (event instanceof VFileCreateEvent) {
-        VFileCreateEvent create = (VFileCreateEvent)event;
+      else if (event instanceof VFileCreateEvent create) {
         if (hasEntry(create.getParent())) parents.add(create.getParent());
       }
-      else if (event instanceof VFileCopyEvent) {
-        VFileCopyEvent copy = (VFileCopyEvent)event;
+      else if (event instanceof VFileCopyEvent copy) {
         if (hasEntry(copy.getNewParent())) parents.add(copy.getNewParent());
       }
-      else if (event instanceof VFileMoveEvent) {
-        VFileMoveEvent move = (VFileMoveEvent)event;
+      else if (event instanceof VFileMoveEvent move) {
         if (hasEntry(move.getNewParent())) parents.add(move.getNewParent());
         if (hasEntry(move.getOldParent())) parents.add(move.getOldParent());
       }
@@ -357,7 +354,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
 
     private void removeRoots(@NotNull List<Root> roots, int[] indicesToRemove) {
       if (indicesToRemove.length > 0) {
-        List<Root> rootsToRemove = Arrays.stream(indicesToRemove).mapToObj(ind -> roots.get(ind)).collect(Collectors.toList());
+        List<Root> rootsToRemove = Arrays.stream(indicesToRemove).mapToObj(ind -> roots.get(ind)).toList();
         if (LOG.isDebugEnabled()) {
           LOG.debug("Removing " + toRootFiles(rootsToRemove));
         }

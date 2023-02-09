@@ -9,4 +9,3 @@ class A {
     }
 }
 
-// FIR_COMPARISON

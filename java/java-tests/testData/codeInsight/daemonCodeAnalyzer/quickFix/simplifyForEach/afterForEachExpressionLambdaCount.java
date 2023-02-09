@@ -1,4 +1,4 @@
-// "Replace with count()" "true-preview"
+// "Replace with 'count()'" "true-preview"
 
 import java.util.*;
 

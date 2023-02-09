@@ -11,7 +11,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -49,12 +48,8 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -96,61 +91,6 @@ public class GradleInstallationManager implements Disposable {
   @Nullable private Ref<File> myCachedGradleHomeFromPath;
   private final Map<String, BuildLayoutParameters> myBuildLayoutParametersCache = new ConcurrentHashMap<>();
 
-  public GradleInstallationManager() {
-    ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
-      @Override
-      public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
-        myBuildLayoutParametersCache.remove(workingDir);
-      }
-
-      @Override
-      public void onEnd(@NotNull ExternalSystemTaskId id) {
-        // it is not enough to clean up cache on the start of an external event, because sometimes the changes occur `after` the event finishes.
-        // An example of this behavior is the downloading of gradle distribution:
-        // we must not rely on the caches that were computed without downloaded distribution.
-        if (!(id.getProjectSystemId() == GradleConstants.SYSTEM_ID && id.getType() == ExternalSystemTaskType.RESOLVE_PROJECT)) {
-          return;
-        }
-        Project project = id.findProject();
-        if (project == null) {
-          return;
-        }
-        myBuildLayoutParametersCache.remove(getDefaultProjectKey(project));
-        GradleSettings settings = GradleSettings.getInstance(project);
-        for (GradleProjectSettings linkedSettings : settings.getLinkedProjectsSettings()) {
-          String path = linkedSettings.getExternalProjectPath();
-          myBuildLayoutParametersCache.remove(path);
-        }
-      }
-    };
-
-    ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(listener, this);
-    AtomicBoolean listenerAdded = new AtomicBoolean(true);
-    MessageBusConnection appConnection = ApplicationManager.getApplication().getMessageBus().connect();
-    appConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(@NotNull Project project) {
-        if (listenerAdded.compareAndSet(false, true)) {
-          ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(listener, GradleInstallationManager.this);
-        }
-      }
-
-      @Override
-      public void projectClosed(@NotNull Project project) {
-        myBuildLayoutParametersCache.clear();
-        if (listenerAdded.compareAndSet(true, false)) {
-          ExternalSystemProgressNotificationManager.getInstance().removeNotificationListener(listener);
-        }
-      }
-    });
-    appConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        myBuildLayoutParametersCache.clear();
-      }
-    });
-  }
-
   private static String getDefaultProjectKey(Project project) {
     return project.getLocationHash();
   }
@@ -170,8 +110,7 @@ public class GradleInstallationManager implements Disposable {
   public BuildLayoutParameters guessBuildLayoutParameters(@NotNull Project project, @Nullable String projectPath) {
     return myBuildLayoutParametersCache.computeIfAbsent(ObjectUtils.notNull(projectPath, getDefaultProjectKey(project)), p -> {
       for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(GradleConstants.SYSTEM_ID)) {
-        if (!(executionAware instanceof GradleExecutionAware)) continue;
-        GradleExecutionAware gradleExecutionAware = (GradleExecutionAware)executionAware;
+        if (!(executionAware instanceof GradleExecutionAware gradleExecutionAware)) continue;
         BuildLayoutParameters buildLayoutParameters = projectPath == null
                                                       ? gradleExecutionAware.getDefaultBuildLayoutParameters(project)
                                                       : gradleExecutionAware.getBuildLayoutParameters(project, projectPath);
@@ -411,8 +350,7 @@ public class GradleInstallationManager implements Disposable {
       project = openProjects.length > 0 ? openProjects[0] : projectManager.getDefaultProject();
     }
     for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(GradleConstants.SYSTEM_ID)) {
-      if (!(executionAware instanceof GradleExecutionAware)) continue;
-      GradleExecutionAware gradleExecutionAware = (GradleExecutionAware)executionAware;
+      if (!(executionAware instanceof GradleExecutionAware gradleExecutionAware)) continue;
       if (gradleExecutionAware.isGradleInstallationHomeDir(project, file.getPath())) {
         return true;
       }
@@ -649,5 +587,44 @@ public class GradleInstallationManager implements Disposable {
       }
     }
     return null;
+  }
+
+  private static class BuildLayoutParametersCacheCleanupListener extends ExternalSystemTaskNotificationListenerAdapter
+    implements ProjectManagerListener, DynamicPluginListener {
+    @Override
+    public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+      getInstance().myBuildLayoutParametersCache.remove(workingDir);
+    }
+
+    @Override
+    public void onEnd(@NotNull ExternalSystemTaskId id) {
+      // it is not enough to clean up cache on the start of an external event, because sometimes the changes occur `after` the event finishes.
+      // An example of this behavior is the downloading of gradle distribution:
+      // we must not rely on the caches that were computed without downloaded distribution.
+      if (!(id.getProjectSystemId() == GradleConstants.SYSTEM_ID && id.getType() == ExternalSystemTaskType.RESOLVE_PROJECT)) {
+        return;
+      }
+      Project project = id.findProject();
+      if (project == null) {
+        return;
+      }
+      GradleInstallationManager installationManager = getInstance();
+      installationManager.myBuildLayoutParametersCache.remove(getDefaultProjectKey(project));
+      GradleSettings settings = GradleSettings.getInstance(project);
+      for (GradleProjectSettings linkedSettings : settings.getLinkedProjectsSettings()) {
+        String path = linkedSettings.getExternalProjectPath();
+        installationManager.myBuildLayoutParametersCache.remove(path);
+      }
+    }
+
+    @Override
+    public void projectClosed(@NotNull Project project) {
+      getInstance().myBuildLayoutParametersCache.clear();
+    }
+
+    @Override
+    public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+      getInstance().myBuildLayoutParametersCache.clear();
+    }
   }
 }

@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public class ExtractedParameter {
   @NotNull public final PsiType myType;
   @NotNull public final ExtractableExpressionPart myPattern;

@@ -11,6 +11,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -36,10 +38,12 @@ import static java.nio.file.StandardOpenOption.*;
  */
 @ApiStatus.Internal
 public final class CsvMetricsExporter implements MetricExporter {
-  private static final Logger LOGGER = Logger.getInstance(CsvMetricsExporter.class);
+  private static final Logger LOG = Logger.getInstance(CsvMetricsExporter.class);
+
+  private static final String HTML_PLOTTER_NAME = "open-telemetry-metrics-plotter.html";
+
 
   private final @NotNull Path writeToFile;
-
 
   public CsvMetricsExporter(final @NotNull Path writeToFile) throws IOException {
     this.writeToFile = writeToFile;
@@ -54,6 +58,23 @@ public final class CsvMetricsExporter implements MetricExporter {
     }
     if (!Files.exists(writeToFile) || Files.size(writeToFile) == 0) {
       Files.write(writeToFile, csvHeadersLines(), CREATE, WRITE);
+    }
+
+    copyHtmlPlotterToOutputDir(writeToFile.getParent());
+  }
+
+  /** Copy html file with plotting scripts into targetDir */
+  private static void copyHtmlPlotterToOutputDir(final @NotNull Path targetDir) throws IOException {
+    final Path targetToCopyTo = targetDir.resolve(HTML_PLOTTER_NAME);
+    final URL plotterHtmlUrl = CsvMetricsExporter.class.getResource(HTML_PLOTTER_NAME);
+    if (plotterHtmlUrl == null) {
+      LOG.info(HTML_PLOTTER_NAME + " is not found in classpath");
+    }
+    else {
+      try (InputStream stream = plotterHtmlUrl.openStream()) {
+        final byte[] bytes = stream.readAllBytes();
+        Files.write(targetToCopyTo, bytes);
+      }
     }
   }
 
@@ -78,7 +99,7 @@ public final class CsvMetricsExporter implements MetricExporter {
       result.succeed();
     }
     catch (IOException e) {
-      LOGGER.warn("Can't write metrics into " + writeToFile.toAbsolutePath(), e);
+      LOG.warn("Can't write metrics into " + writeToFile.toAbsolutePath(), e);
       result.fail();
     }
     return result;

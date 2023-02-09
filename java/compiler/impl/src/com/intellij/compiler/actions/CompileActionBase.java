@@ -20,7 +20,6 @@ public abstract class CompileActionBase extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
@@ -30,10 +29,10 @@ public abstract class CompileActionBase extends AnAction implements DumbAware {
     if (file != null && editor != null && !DumbService.getInstance(project).isDumb()) {
       DaemonCodeAnalyzer.getInstance(project).autoImportReferenceAtCursor(editor, file); //let autoimport complete
     }
-    doAction(e, project);
+    doAction(e.getDataContext(), project);
   }
 
-  protected abstract void doAction(@NotNull AnActionEvent event, final Project project);
+  protected abstract void doAction(@NotNull DataContext dataContext, final Project project);
 
   @Override
   public void update(@NotNull final AnActionEvent e) {

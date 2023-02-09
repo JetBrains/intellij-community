@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.gradle.workspace
 
-import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.konan.target.HostManager
 
 private enum class SanitationState {
@@ -20,9 +19,7 @@ private enum class SanitationState {
  * ```
  * `{{KGP_VERSION}}` stubs will be replaced by the KGP version used in a test
  */
-internal fun MultiplePluginVersionGradleImportingTestCase.sanitizeExpectedFile(
-    text: String,
-): String = buildString {
+internal fun sanitizeExpectedFile(text: String): String = buildString {
     var currentState = SanitationState.TAKE
 
     for ((index, line) in text.lines().withIndex()) {
@@ -32,10 +29,10 @@ internal fun MultiplePluginVersionGradleImportingTestCase.sanitizeExpectedFile(
             currentState = nextState
         } else {
             checkUnexpectedCommands(currentState, line, index + 1)
-            appendLine(sanitizeLine(line))
+            appendLine(line)
         }
     }
-}
+}.trim()
 
 private fun nextState(currentState: SanitationState, nextLine: String): SanitationState = when (currentState) {
     SanitationState.TAKE -> {
@@ -70,20 +67,14 @@ private fun checkUnexpectedCommands(currentState: SanitationState, nextLine: Str
     }
 }
 
-private fun MultiplePluginVersionGradleImportingTestCase.sanitizeLine(line: String): String =
-    line.replace(kgpVersionPlaceholderPattern, kotlinPluginVersion.toString())
-
 private const val LINUX_HOST_CLASSIFIER = "LINUX"
 private const val WINDOWS_HOST_CLASSIFIER = "WINDOWS"
 private const val MACOS_HOST_CLASSIFIER = "MACOS"
 
 private val hostAlternatives = listOf(LINUX_HOST_CLASSIFIER, MACOS_HOST_CLASSIFIER, WINDOWS_HOST_CLASSIFIER)
 
-private const val KGP_VERSION = "KGP_VERSION"
-
 private val platformDependentBlockPattern = "^#\\s*(${hostAlternatives.joinToString("|")})\\s*$".toRegex()
 private val blockEndPattern = "^#END\\s*$".toRegex()
-private val kgpVersionPlaceholderPattern = "\\{\\s*\\{\\s*$KGP_VERSION\\s*}\\s*}".toRegex()
 
 private fun getHostClassifier() = when {
     HostManager.hostIsMingw -> WINDOWS_HOST_CLASSIFIER

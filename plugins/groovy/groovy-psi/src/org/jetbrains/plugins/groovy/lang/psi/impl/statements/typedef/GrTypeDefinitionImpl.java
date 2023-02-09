@@ -54,9 +54,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefinitionStub>
   implements GrTypeDefinition, StubBasedPsiElement<GrTypeDefinitionStub> {
 
@@ -159,8 +156,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   @Override
   public void delete() throws IncorrectOperationException {
     PsiElement parent = getParent();
-    if (parent instanceof GroovyFileImpl) {
-      GroovyFileImpl file = (GroovyFileImpl)parent;
+    if (parent instanceof GroovyFileImpl file) {
       if (file.getTypeDefinitions().length == 1 && !file.isScript()) {
         file.delete();
         return;
@@ -576,8 +572,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   private boolean isRenameFileOnClassRenaming() {
     final PsiFile file = getContainingFile();
-    if (!(file instanceof GroovyFile)) return false;
-    final GroovyFile groovyFile = (GroovyFile)file;
+    if (!(file instanceof GroovyFile groovyFile)) return false;
     if (groovyFile.isScript()) return false;
     final String name = getName();
     final VirtualFile vFile = groovyFile.getVirtualFile();

@@ -14,6 +14,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import kotlin.io.path.writeText
 
 class HtmlReportGenerator(
   outputDir: String,
@@ -25,6 +26,7 @@ class HtmlReportGenerator(
 ) : FullReportGenerator {
   companion object {
     private const val globalReportName = "index.html"
+
     private val resources = listOf(
       "/script.js",
       "/style.css",
@@ -48,7 +50,8 @@ class HtmlReportGenerator(
 
   private var fileGenerator: FileReportGenerator = if (isCompletionGolfEvaluation) {
     CompletionGolfFileReportGenerator(filterName, comparisonFilterName, featuresStorages, dirs)
-  } else {
+  }
+  else {
     BasicFileReportGenerator(suggestionsComparators, filterName, comparisonFilterName, featuresStorages, dirs)
   }
 
@@ -99,6 +102,7 @@ class HtmlReportGenerator(
 
   override fun generateGlobalReport(globalMetrics: List<MetricInfo>): Path {
     val reportPath = Paths.get(dirs.filterDir.toString(), globalReportName)
+
     val reportTitle = "Code Completion Report for filters \"$filterName\" and \"$comparisonFilterName\""
     createHTML().html {
       head {
@@ -122,19 +126,20 @@ class HtmlReportGenerator(
         div { id = "metricsTable" }
         script { unsafe { raw(getMetricsTable(globalMetrics)) } }
       }
-    }.also { html -> FileWriter(reportPath.toString()).use { it.write(html) } }
+    }.also { html -> reportPath.writeText(html) }
+
     return reportPath
   }
 
   private fun getMetricsTable(globalMetrics: List<MetricInfo>): String {
-    val metricNames = globalMetrics.map { it.name }.toSet().sorted()
     val evaluationTypes = globalMetrics.map { it.evaluationType }.toSet().sorted().toMutableList()
+    val uniqueMetricsInfo = globalMetrics.filter { it.evaluationType == evaluationTypes.first() }
     val manyTypes = (evaluationTypes.size > 1)
     val withDiff = (evaluationTypes.size == 2)
     if (withDiff) evaluationTypes.add(diffColumnTitle)
     var rowId = 1
 
-    val errorMetrics = globalMetrics.map { MetricInfo(it.name, Double.NaN, it.evaluationType, it.valueType) }
+    val errorMetrics = globalMetrics.map { MetricInfo(it.name, Double.NaN, it.evaluationType, it.valueType, it.showByDefault) }
 
     fun getReportMetrics(repRef: ReferenceInfo) = globalMetrics.map { metric ->
       MetricInfo(
@@ -142,15 +147,16 @@ class HtmlReportGenerator(
         repRef.metrics.find { it.name == metric.name && it.evaluationType == metric.evaluationType }?.value
         ?: Double.NaN,
         metric.evaluationType,
-        metric.valueType
+        metric.valueType,
+        metric.showByDefault
       )
     }
 
     fun formatMetrics(metrics: List<MetricInfo>): String = (
       if (withDiff) listOf(metrics, metrics
-        .groupBy({ it.name }, { Pair(it.value, it.valueType) })
-        .mapValues { with(it.value) { Pair(first().first - last().first, first().second) } }
-        .map { MetricInfo(it.key, it.value.first, diffColumnTitle, it.value.second) }).flatten()
+        .groupBy({ it.name }, { Triple(it.value, it.valueType, it.showByDefault) })
+        .mapValues { with(it.value) { Triple(first().first - last().first, first().second, first().third) } }
+        .map { MetricInfo(it.key, it.value.first, diffColumnTitle, it.value.second, it.value.third) }).flatten()
       else metrics
                                                            ).joinToString(",") {
         "${it.name}${it.evaluationType}:'${
@@ -171,10 +177,10 @@ class HtmlReportGenerator(
         |let table=new Tabulator('#metricsTable',{data:tableData,
         |columns:[{title:'File Report',field:'file',formatter:'html'${if (manyTypes) ",width:'120'" else ""}},
         |${
-      metricNames.joinToString(",\n") { name ->
-        "{title:'$name',columns:[${
+      uniqueMetricsInfo.joinToString(",\n") { metric ->
+        "{title:'${metric.name}',visible:${if (metric.showByDefault) "true" else "false"},columns:[${
           evaluationTypes.joinToString(",") { type ->
-            "{title:'$type',field:'${name.filter { it.isLetterOrDigit() }}$type',sorter:'number',align:'right',headerVertical:${manyTypes}}"
+            "{title:'$type',field:'${metric.name.filter { it.isLetterOrDigit() }}$type',sorter:'number',align:'right',headerVertical:${manyTypes},visible:${if (metric.showByDefault) "true" else "false"}}"
           }
         }]}"
       }
@@ -204,11 +210,11 @@ class HtmlReportGenerator(
   }
 
   private fun getToolbar(globalMetrics: List<MetricInfo>): String {
-    val metricNames = globalMetrics.map { it.name }.toSet().sorted()
     val evaluationTypes = globalMetrics.mapTo(HashSet()) { it.evaluationType }
+    val uniqueMetricsInfo = globalMetrics.filter { it.evaluationType == evaluationTypes.first() }
     val withDiff = evaluationTypes.size == 2
     if (withDiff) evaluationTypes.add(diffColumnTitle)
-    val sessionMetricIsPresent = metricNames.contains("Sessions")
+    val sessionMetricIsPresent = globalMetrics.any { it.name == "Sessions" }
     val toolbar = createHTML().div {
       div("toolbar") {
         input(InputType.text) {
@@ -223,13 +229,13 @@ class HtmlReportGenerator(
           +"Metrics visibility"
         }
         ul("dropdown") {
-          metricNames.map { metricName ->
+          uniqueMetricsInfo.map { metric ->
             li {
               input(InputType.checkBox) {
-                id = metricName.filter { it.isLetterOrDigit() }
-                checked = true
+                id = metric.name.filter { it.isLetterOrDigit() }
+                checked = metric.showByDefault
                 onClick = "updateCols()"
-                +metricName
+                +metric.name
               }
             }
           }
@@ -257,7 +263,7 @@ class HtmlReportGenerator(
     }
     val ifDiff: (String) -> String = { if (withDiff) it else "" }
     val ifSessions: (String) -> String = { if (sessionMetricIsPresent) it else "" }
-    val filteredNames = metricNames.map { it.filter { ch -> ch.isLetterOrDigit() } }
+    val filteredNames = uniqueMetricsInfo.map { it.name.filter { ch -> ch.isLetterOrDigit() } }
     val toolbarScript = """|<script>
         |${filteredNames.joinToString("") { "let ${it}=document.getElementById('${it}');" }}
         |function updateCols(${ifDiff("toggleDiff=false")}){

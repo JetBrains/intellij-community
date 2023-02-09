@@ -41,7 +41,7 @@ class GradleOnWslExecutionAware : GradleExecutionAware {
     val jdkWslDistribution = WslPath.getDistributionByWindowsUncPath(homePath)
     if (wslDistribution.id != jdkWslDistribution?.id) {
       val isResolveProjectTask = task is ExternalSystemResolveProjectTask
-      val distributionPath = wslDistribution.uncRootPath.toString()
+      val distributionPath = wslDistribution.getUNCRootPath().toString()
       val distributionName = wslDistribution.presentableName
       val message = message("gradle.incorrect.jvm.wsl.issue.description", distributionName, distributionPath)
       throw BuildIssueException(IncorrectGradleJdkIssue(externalProjectPath, homePath, message, isResolveProjectTask))

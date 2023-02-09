@@ -104,7 +104,7 @@ public final class VcsFacadeImpl extends VcsFacade {
     }
     if (change.getType() == Change.Type.NEW) {
       TextRange fileRange = file.getTextRange();
-      return new ChangedRangesInfo(ContainerUtil.newArrayList(fileRange), null);
+      return new ChangedRangesInfo(List.of(fileRange), null);
     }
 
     String contentFromVcs = getRevisionedContentFrom(change.getBeforeRevision());

@@ -2,8 +2,8 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.streamMigration.CollectMigration.CollectTerminal;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -20,9 +20,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Objects;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -113,11 +114,10 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     }
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.fuse.stream.operations.option.strict.mode"), this,
-                                          "myStrictMode");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myStrictMode", JavaBundle.message("inspection.fuse.stream.operations.option.strict.mode")));
   }
 
   @NotNull

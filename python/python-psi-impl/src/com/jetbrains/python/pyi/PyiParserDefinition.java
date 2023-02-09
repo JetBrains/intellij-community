@@ -21,9 +21,6 @@ import com.intellij.psi.tree.IFileElementType;
 import com.jetbrains.python.PythonParserDefinition;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public class PyiParserDefinition extends PythonParserDefinition {
   public static final IFileElementType PYTHON_STUB_FILE = new PyiFileElementType(PyiLanguageDialect.getInstance());
 

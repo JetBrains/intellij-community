@@ -8,9 +8,11 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 
-internal abstract class BaseBusConnection(bus: MessageBusImpl) : MessageHandlerHolder {
+internal sealed class BaseBusConnection(bus: MessageBusImpl) : MessageHandlerHolder {
   @JvmField
   var bus: MessageBusImpl?
+
+  // array of topic1: Topic<L>, handler1: L, topic2: Topic<L>, handler2: L, ...
   @JvmField
   protected val subscriptions = AtomicReference(ArrayUtilRt.EMPTY_OBJECT_ARRAY)
 
@@ -41,7 +43,7 @@ internal abstract class BaseBusConnection(bus: MessageBusImpl) : MessageHandlerH
     bus!!.notifyOnSubscription(topic)
   }
 
-  override fun collectHandlers(topic: Topic<*>, result: MutableList<Any>) {
+  override fun collectHandlers(topic: Topic<*>, result: MutableList<in Any>) {
     val list = subscriptions.get()
     var i = 0
     val n = list.size

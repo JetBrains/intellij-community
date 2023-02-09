@@ -105,6 +105,14 @@ public abstract class TextProblem {
     return List.of();
   }
 
+  /**
+   * Whether this problem should be suppressed when the surrounding text looks like code.
+   * Inline code tends to produce irrelevant grammar warnings, so this method returns true by default.
+   */
+  public boolean shouldSuppressInCodeLikeFragments() {
+    return true;
+  }
+
   /** @return a list of correction suggestions for this problem */
   public @NotNull List<Suggestion> getSuggestions() {
     List<String> corrections = getCorrections();
@@ -143,6 +151,11 @@ public abstract class TextProblem {
 
     /** The text to show in the context action popup */
     String getPresentableText();
+
+    /** If non-null, there's a UI option to invoke all fixes in the file with the same batch id */
+    default @Nullable String getBatchId() {
+      return null;
+    }
 
     /** Create a suggestion for a single replacement operation in the given range */
     static Suggestion replace(TextRange range, CharSequence replacement) {

@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBarCentralWidgetProvider;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBScrollBar;
@@ -393,6 +394,7 @@ final class NavBarContainer extends JPanel implements InfoAndProgressPanel.Scrol
     scrollPane.setViewportBorder(null);
 
     if (ExperimentalUI.isNewUI()) {
+      ClientProperty.put(scrollPane, JBScrollPane.FORCE_HORIZONTAL_SCROLL, true);
       boolean visible = NavBarIdeUtil.isNavbarShown(settings);
       scrollPane.setVisible(visible);
       if (panel.myNavigationBar instanceof NavBarPanel) {

@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
-import org.jetbrains.annotations.ApiStatus;
-
 import java.util.Locale;
 
 /**
@@ -24,10 +22,4 @@ public final class SystemInfoRt {
 
   public static final boolean isFileSystemCaseSensitive =
     isUnix && !isMac || "true".equalsIgnoreCase(System.getProperty("idea.case.sensitive.fs"));
-
-  private static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
-  /** @deprecated inexact, please use {@code com.intellij.util.system.CpuArch} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final boolean is64Bit = !(ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32"));
 }

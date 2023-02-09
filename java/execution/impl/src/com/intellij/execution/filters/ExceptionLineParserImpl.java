@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.execution.filters.ExceptionAnalysisProvider.StackLine;
@@ -37,6 +37,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
@@ -128,8 +130,10 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
   }
 
   @Override
-  public PsiClass getPsiClass() {
-    return ObjectUtils.tryCast(ContainerUtil.getFirstItem(myClassResolveInfo.getClasses().values()), PsiClass.class);
+  public @Nullable UClass getUClass() {
+    ExceptionInfoCache.ClassResolveInfo info = myClassResolveInfo;
+    if (info == null) return null;
+    return UastContextKt.toUElement(ContainerUtil.getFirstItem(info.getClasses().values()), UClass.class);
   }
 
   @Override
@@ -195,9 +199,8 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
     }
 
     private boolean isTargetClass(PsiElement maybeClass) {
-      if (!(maybeClass instanceof PsiClass)) return false;
+      if (!(maybeClass instanceof PsiClass declaredClass)) return false;
       if (myClassName.startsWith("com.sun.proxy.$Proxy")) return true;
-      PsiClass declaredClass = (PsiClass)maybeClass;
       String declaredName = declaredClass.getQualifiedName();
       if (myClassName.equals(declaredName)) return true;
       PsiClass calledClass = ClassUtil.findPsiClass(maybeClass.getManager(), myClassName, declaredClass, true);

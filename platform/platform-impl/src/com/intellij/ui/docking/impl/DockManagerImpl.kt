@@ -41,7 +41,6 @@ import com.intellij.ui.components.panels.VerticalBox
 import com.intellij.ui.docking.*
 import com.intellij.ui.docking.DockContainer.ContentResponse
 import com.intellij.util.IconUtil
-import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.ImageUtil
@@ -128,7 +127,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
     }
   }
 
-  override fun getContainers(): Set<DockContainer> = allContainers.toSet()
+  override fun getContainers(): Set<DockContainer> = getAllContainers().toSet()
 
   override fun getIdeFrame(container: DockContainer): IdeFrame? {
     return ComponentUtil.findUltimateParent(container.containerComponent) as? IdeFrame
@@ -151,13 +150,13 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
       return null
     }
 
-    for (eachContainer in allContainers) {
+    for (eachContainer in getAllContainers()) {
       if (SwingUtilities.isDescendingFrom(c, eachContainer.containerComponent) && filter.test(eachContainer)) {
         return eachContainer
       }
     }
     val parent = ComponentUtil.findUltimateParent(c)
-    for (eachContainer in allContainers) {
+    for (eachContainer in getAllContainers()) {
       if (parent === ComponentUtil.findUltimateParent(eachContainer.containerComponent) && filter.test(eachContainer)) {
         return eachContainer
       }
@@ -167,7 +166,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
 
   override fun createDragSession(mouseEvent: MouseEvent, content: DockableContent<*>): DragSession {
     stopCurrentDragSession()
-    for (each in allContainers) {
+    for (each in getAllContainers()) {
       if (each.isEmpty && each.isDisposeWhenEmpty) {
         val window = containerToWindow.get(each)
         window?.setTransparent(true)
@@ -182,7 +181,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
       currentDragSession!!.cancelSession()
       currentDragSession = null
       busyObject.onReady()
-      for (each in allContainers) {
+      for (each in getAllContainers()) {
         if (!each.isEmpty) {
           val window = containerToWindow.get(each)
           window?.setTransparent(false)
@@ -227,6 +226,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
         }
       })
       window.contentPane = imageContainer
+      window.pack()
       setLocationFrom(mouseEvent)
       window.isVisible = true
       val windowManager = WindowManagerEx.getInstanceEx()
@@ -245,7 +245,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
 
     override fun getResponse(e: MouseEvent): ContentResponse {
       val point = DevicePoint(e)
-      for (each in allContainers) {
+      for (each in getAllContainers()) {
         val rec = each.acceptArea
         if (rec.contains(point)) {
           val component = each.containerComponent
@@ -289,21 +289,26 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
         setLocationFrom(e)
       }
       else if (e.id == MouseEvent.MOUSE_RELEASED) {
+        val currentOverContainer = currentOverContainer
         if (currentOverContainer == null) {
           // This relative point might be relative to a component that's on a different screen, with a different DPI scaling factor than
           // the target location. Ideally, we should pass the DevicePoint to createNewDockContainerFor, but that will change the API. We'll
           // fix it up inside createNewDockContainerFor
           val point = RelativePoint(e)
-          createNewDockContainerFor(content, point)
-          e.consume() //Marker for DragHelper: drag into separate window is not tabs reordering
+          if (content is DockableContentContainer) {
+            content.add(point)
+          }
+          else {
+            createNewDockContainerFor(content, point)
+          }
+          e.consume() //Marker for DragHelper: drag into a separate window is not tabs reordering
         }
         else {
-          val point = devicePoint.toRelativePoint(currentOverContainer!!.containerComponent)
-          currentOverContainer!!.add(content, point)
-          ObjectUtils.consumeIfCast(currentOverContainer,
-                                    DockableEditorTabbedContainer::class.java) { container: DockableEditorTabbedContainer ->
-            //Marker for DragHelper, not 'refined' drop in tab-set shouldn't affect ABC-order setting
-            if (container.currentDropSide == SwingConstants.CENTER) e.consume()
+          val point = devicePoint.toRelativePoint(currentOverContainer.containerComponent)
+          currentOverContainer.add(content, point)
+          // marker for DragHelper, not 'refined' drop in tab-set shouldn't affect ABC-order setting
+          if (currentOverContainer is DockableEditorTabbedContainer && currentOverContainer.currentDropSide == SwingConstants.CENTER) {
+            e.consume()
           }
         }
         stopCurrentDragSession()
@@ -324,8 +329,8 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
   }
 
   private fun findContainerFor(devicePoint: DevicePoint, content: DockableContent<*>): DockContainer? {
-    val containers = containers.toMutableList()
-    FileEditorManagerEx.getInstanceEx(project)?.dockContainer?.let(containers::add)
+    val containers = getAllContainers().toMutableList()
+    getFileManagerContainer()?.let(containers::add)
 
     val startDragContainer = currentDragSession?.startDragContainer
     if (startDragContainer != null) {
@@ -383,8 +388,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
     SwingUtilities.invokeLater { window.uiContainer.preferredSize = null }
   }
 
-  fun createNewDockContainerFor(file: VirtualFile,
-                                fileEditorManager: FileEditorManagerImpl): FileEditorComposite {
+  fun createNewDockContainerFor(file: VirtualFile, openFile: (EditorWindow) -> FileEditorComposite): FileEditorComposite {
     val container = getFactory(DockableEditorContainerFactory.TYPE)!!.createContainer(null)
 
     // Order is important here. Create the dock window, then create the editor window. That way, any listeners can check to see if the
@@ -394,7 +398,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
       window.show(true)
     }
     val editorWindow = (container as DockableEditorTabbedContainer).splitters.getOrCreateCurrentWindow(file)
-    val result = fileEditorManager.openFileImpl2(editorWindow, file, FileEditorOpenOptions(requestFocus = true))
+    val result = openFile(editorWindow)
     if (!isSingletonEditorInWindow(result.allEditors)) {
       window.setupToolWindowPane()
     }
@@ -403,7 +407,11 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
       window.setupNorthPanel()
     }
     container.add(
-      EditorTabbedContainer.createDockableEditor(project, null, file, Presentation(file.name), editorWindow, isNorthPanelAvailable),
+      EditorTabbedContainer.createDockableEditor(image = null,
+                                                 file = file,
+                                                 presentation = Presentation(file.name),
+                                                 window = editorWindow,
+                                                 isNorthPanelAvailable = isNorthPanelAvailable),
       null
     )
     SwingUtilities.invokeLater { window.uiContainer.preferredSize = null }
@@ -452,13 +460,18 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
     val dockContentUiContainer: JPanel
     var toolWindowPane: ToolWindowPane? = null
 
+    override val isDockWindow: Boolean
+      get() = true
+
     init {
       if (!ApplicationManager.getApplication().isHeadlessEnvironment && container !is DockContainer.Dialog) {
-        val statusBar = WindowManager.getInstance().getStatusBar(project)
-        if (statusBar != null) {
+        val mainStatusBar = WindowManager.getInstance().getStatusBar(project)
+        if (mainStatusBar != null) {
           val frame = getFrame()
           if (frame is IdeFrame) {
-            this.statusBar = statusBar.createChild(frame)
+            statusBar = mainStatusBar.createChild(frame) {
+              (container as? DockableEditorTabbedContainer)?.splitters?.currentWindow?.selectedComposite?.selectedWithProvider?.fileEditor
+            }
           }
         }
       }
@@ -470,7 +483,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
       centerPanel.add(dockContentUiContainer, BorderLayout.CENTER)
       uiContainer.add(centerPanel, BorderLayout.CENTER)
       statusBar?.let {
-        uiContainer.add(it.component, BorderLayout.SOUTH)
+        uiContainer.add(it.component!!, BorderLayout.SOUTH)
       }
       component = uiContainer
       IdeEventQueue.getInstance().addPostprocessor({ e ->
@@ -521,7 +534,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
         override fun stateChanged(toolWindowManager: ToolWindowManager, eventType: ToolWindowManagerEventType) {
           // Various events can mean a tool window has been removed from the frame's stripes. The comments are not exhaustive
           if (eventType == ToolWindowManagerEventType.HideToolWindow
-            || eventType == ToolWindowManagerEventType.SetSideToolAndAnchor   // Last tool window dragged to another stripe on another frame
+            || eventType == ToolWindowManagerEventType.SetSideToolAndAnchor   // The last tool window dragged to another stripe on another frame
             || eventType == ToolWindowManagerEventType.SetToolWindowType      // Last tool window made floating
             || eventType == ToolWindowManagerEventType.ToolWindowUnavailable  // Last tool window programmatically set unavailable
             || eventType == ToolWindowManagerEventType.UnregisterToolWindow) {
@@ -645,7 +658,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
 
   override fun getState(): Element {
     val root = Element("state")
-    for (each in allContainers) {
+    for (each in getAllContainers()) {
       val eachWindow = containerToWindow.get(each)
       if (eachWindow != null && eachWindow.supportReopen && each is DockContainer.Persistent) {
         val eachWindowElement = Element("window")
@@ -662,12 +675,18 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
     return root
   }
 
-  private val allContainers: Sequence<DockContainer>
-    get() {
-      return sequenceOfNotNull(FileEditorManagerEx.getInstanceEx (project)?.dockContainer) +
-             containers.asSequence () +
-             containerToWindow.keys
+  private fun getAllContainers(): Sequence<DockContainer> {
+    return sequenceOfNotNull(getFileManagerContainer()) +
+           containers.asSequence() +
+           containerToWindow.keys
+  }
+
+  private fun getFileManagerContainer(): DockContainer? {
+    if (project.isDefault) {
+      return null
     }
+    return FileEditorManagerEx.getInstanceEx(project).dockContainer
+  }
 
   override fun loadState(state: Element) {
     loadedState = state

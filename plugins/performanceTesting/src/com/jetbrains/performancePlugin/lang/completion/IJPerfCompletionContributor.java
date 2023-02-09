@@ -27,12 +27,12 @@ public class IJPerfCompletionContributor extends CompletionContributor implement
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
-      List<LookupElement> commands = ContainerUtil.map(
+      List<LookupElement> commands = ContainerUtil.append(ContainerUtil.map(
         CommandProvider.getAllCommandNames(),
         LookupElementBuilder::create
-      );
-      commands.add(LookupElementBuilder.create("%%project"));
-      commands.add(LookupElementBuilder.create("%%profileIndexing"));
+      ),
+      LookupElementBuilder.create("%%project"),
+      LookupElementBuilder.create("%%profileIndexing"));
       String prefix = CompletionUtil.findIdentifierPrefix(parameters.getPosition(), parameters.getOffset(),
                                                           StandardPatterns.character(), StandardPatterns.character());
       result.withPrefixMatcher(prefix).addAllElements(commands);

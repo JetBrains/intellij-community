@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -18,14 +18,12 @@ import java.util.*;
 
 public final class FindSuperElementsHelper {
   public static PsiElement @NotNull [] findSuperElements(@NotNull PsiElement element) {
-    if (element instanceof PsiClass) {
-      PsiClass aClass = (PsiClass) element;
+    if (element instanceof PsiClass aClass) {
       List<PsiClass> allSupers = new ArrayList<>(Arrays.asList(aClass.getSupers()));
       allSupers.removeIf(superClass -> CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName()));
       return allSupers.toArray(PsiClass.EMPTY_ARRAY);
     }
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod) element;
+    if (element instanceof PsiMethod method) {
       if (method.isConstructor()) {
         PsiMethod constructorInSuper = JavaPsiConstructorUtil.findConstructorInSuper(method);
         if (constructorInSuper != null) {

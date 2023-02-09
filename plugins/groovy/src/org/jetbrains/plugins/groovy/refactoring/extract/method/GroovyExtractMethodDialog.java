@@ -46,9 +46,6 @@ import java.util.EventListener;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author ilyas
- */
 public class GroovyExtractMethodDialog extends DialogWrapper {
   private final ExtractMethodInfoHelper myHelper;
 
@@ -130,7 +127,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     myNameLabel.setLabelFor(myNameField);
 
     final PsiType type = myHelper.getOutputType();
-    if (!PsiType.VOID.equals(type)) {
+    if (!PsiTypes.voidType().equals(type)) {
       myForceReturnCheckBox.setSelected(GroovyApplicationSettings.getInstance().FORCE_RETURN);
     }
     else {

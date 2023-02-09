@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.collections.isMap
 import org.jetbrains.kotlin.idea.intentions.getArguments
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 /**
  * Tests:
@@ -36,30 +38,31 @@ class ReplaceManualRangeWithIndicesCallsInspection : AbstractRangeInspection() {
         val collection = sizeOrLengthCall.safeAs<KtQualifiedExpression>()?.receiverExpression
         if (collection != null && collection !is KtSimpleNameExpression && collection !is KtThisExpression) return
 
-        val parent = range.parent.parent
-        if (parent is KtForExpression) {
-            val paramElement = parent.loopParameter?.originalElement ?: return
-            val usageElement = ReferencesSearch.search(paramElement).singleOrNull()?.element
-            val arrayAccess = usageElement?.parent?.parent as? KtArrayAccessExpression
-            if (arrayAccess != null &&
-                arrayAccess.indexExpressions.singleOrNull() == usageElement &&
-                (arrayAccess.arrayExpression as? KtSimpleNameExpression)?.mainReference?.resolve() == collection?.mainReference?.resolve()
-            ) {
-                val arrayAccessParent = arrayAccess.parent
-                if (arrayAccessParent !is KtBinaryExpression ||
-                    arrayAccessParent.left != arrayAccess ||
-                    arrayAccessParent.operationToken !in KtTokens.ALL_ASSIGNMENTS
+        range.parents.match(KtContainerNode::class, last = KtForExpression::class)
+            ?.let { it.loopParameter?.originalElement ?: return }
+            ?.let { paramElement ->
+                val usageElement = ReferencesSearch.search(paramElement).singleOrNull()?.element
+                val arrayAccess =
+                    usageElement?.parents?.match(KtContainerNode::class, last = KtArrayAccessExpression::class)
+                if (arrayAccess != null &&
+                    arrayAccess.indexExpressions.singleOrNull() == usageElement &&
+                    (arrayAccess.arrayExpression as? KtSimpleNameExpression)?.mainReference?.resolve() == collection?.mainReference?.resolve()
                 ) {
-                    holder.registerProblem(
-                        range,
-                        KotlinBundle.message("for.loop.over.indices.could.be.replaced.with.loop.over.elements"),
-                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                        ReplaceIndexLoopWithCollectionLoopQuickFix(type)
-                    )
-                    return
+                    val arrayAccessParent = arrayAccess.parent
+                    if (arrayAccessParent !is KtBinaryExpression ||
+                        arrayAccessParent.left != arrayAccess ||
+                        arrayAccessParent.operationToken !in KtTokens.ALL_ASSIGNMENTS
+                    ) {
+                        holder.registerProblem(
+                            range,
+                            KotlinBundle.message("for.loop.over.indices.could.be.replaced.with.loop.over.elements"),
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                            ReplaceIndexLoopWithCollectionLoopQuickFix(type)
+                        )
+                        return
+                    }
                 }
             }
-        }
         holder.registerProblem(
             range,
             KotlinBundle.message("range.could.be.replaced.with.indices.call"),
@@ -91,6 +94,9 @@ class ReplaceManualRangeWithIndicesCallQuickFix : LocalQuickFix {
     }
 }
 
+/**
+ * Affected tests: [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.ReplaceManualRangeWithIndicesCalls]
+ */
 class ReplaceIndexLoopWithCollectionLoopQuickFix(private val type: RangeKtExpressionType) : LocalQuickFix {
     override fun getName() = KotlinBundle.message("replace.index.loop.with.collection.loop.quick.fix.text")
 
@@ -109,7 +115,8 @@ class ReplaceIndexLoopWithCollectionLoopQuickFix(private val type: RangeKtExpres
         val collection = (sizeOrLengthCall as? KtDotQualifiedExpression)?.receiverExpression
         val paramElement = loopParameter.originalElement ?: return
         val usageElement = ReferencesSearch.search(paramElement).singleOrNull()?.element ?: return
-        val arrayAccessElement = usageElement.parent.parent as? KtArrayAccessExpression ?: return
+        val arrayAccessElement =
+            usageElement.parents.match(KtContainerNode::class, last = KtArrayAccessExpression::class) ?: return
         val factory = KtPsiFactory(project)
         val newParameter = factory.createLoopParameter("element")
         val newReferenceExpression = factory.createExpression("element")

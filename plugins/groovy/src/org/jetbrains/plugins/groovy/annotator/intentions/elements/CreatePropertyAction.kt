@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JvmPsiConversionHelper
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.presentation.java.ClassPresentationUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.getPropertyNameByAccessorName
@@ -57,7 +57,7 @@ internal class CreatePropertyAction(
       GETTER, BOOLEAN_GETTER -> SETTER
       SETTER -> {
         val expectedType = request.expectedParameters.single().expectedTypes.singleOrNull()
-        if (expectedType != null && PsiType.BOOLEAN == JvmPsiConversionHelper.getInstance(project).convertType(expectedType.theType)) {
+        if (expectedType != null && PsiTypes.booleanType() == JvmPsiConversionHelper.getInstance(project).convertType(expectedType.theType)) {
           BOOLEAN_GETTER
         }
         else {

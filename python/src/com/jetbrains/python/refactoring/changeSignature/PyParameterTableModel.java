@@ -19,6 +19,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.ColumnInfo;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyParameterList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -128,7 +129,6 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
   }
 
   private static class MyCodeFragmentTableCellEditor extends AbstractCellEditor implements TableCellEditor {
-    private Document myDocument;
     protected PsiCodeFragment myCodeFragment;
     private final Project myProject;
     private final FileType myFileType;
@@ -143,20 +143,18 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       myCodeFragment = (PsiCodeFragment)((Pair<?, ?>)value).getFirst();
 
-      myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myCodeFragment);
+      Document document = PsiDocumentManager.getInstance(myProject).getDocument(myCodeFragment);
       JPanel panel = new JPanel();
-      myEditorTextField = createEditorField(myDocument);
-      if (myEditorTextField != null) {
-        myEditorTextField.setDocument(myDocument);
-        myEditorTextField.setBorder(new LineBorder(table.getSelectionBackground()));
-      }
+      myEditorTextField = createEditorField(document);
+      myEditorTextField.setDocument(document);
+      myEditorTextField.setBorder(new LineBorder(table.getSelectionBackground()));
 
       panel.add(myEditorTextField);
       panel.add(new JCheckBox());
       return panel;
     }
 
-    protected EditorTextField createEditorField(Document document) {
+    protected @NotNull EditorTextField createEditorField(Document document) {
       EditorTextField field = new EditorTextField(document, myProject, myFileType) {
         @Override
         protected boolean shouldHaveBorder() {

@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.TreeUIHelper;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -326,14 +327,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
 
   private boolean isSelected(TreePath path) {
     TreePath[] selectionPaths = getSelectionPaths();
-    if (selectionPaths != null) {
-      for (TreePath selectionPath : selectionPaths) {
-        if (path.equals(selectionPath)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return selectionPaths != null && ArrayUtil.contains(path, selectionPaths);
   }
 
   public boolean isMultipleSelection() {

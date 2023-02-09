@@ -85,8 +85,8 @@ internal object ImaginaryInplaceRefactoring : InplaceRefactoring(
   override fun performRefactoring(): Boolean = error("must not be called")
 
   override fun getSelectedInEditorElement(nameIdentifier: PsiElement?,
-                                          refs: MutableCollection<out PsiReference>?,
-                                          stringUsages: MutableCollection<out Pair<PsiElement, TextRange>>?,
+                                          refs: Collection<PsiReference>,
+                                          stringUsages: Collection<Pair<PsiElement, TextRange>>,
                                           offset: Int): PsiElement = error("must not be called")
 
   override fun addHighlights(ranges: MutableMap<TextRange, TextAttributes>,
@@ -94,8 +94,8 @@ internal object ImaginaryInplaceRefactoring : InplaceRefactoring(
                              highlighters: MutableCollection<RangeHighlighter>,
                              highlightManager: HighlightManager): Unit = error("must not be called")
 
-  override fun buildTemplateAndStart(refs: MutableCollection<PsiReference>?,
-                                     stringUsages: MutableCollection<Pair<PsiElement, TextRange>>?,
-                                     scope: PsiElement?,
-                                     containingFile: PsiFile?): Boolean = error("must not be called")
+  override fun buildTemplateAndStart(refs: MutableCollection<PsiReference>,
+                                     stringUsages: MutableCollection<Pair<PsiElement, TextRange>>,
+                                     scope: PsiElement,
+                                     containingFile: PsiFile): Boolean = error("must not be called")
 }

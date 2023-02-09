@@ -9,6 +9,7 @@ import java.util.*;
 class UnsupportedFeatures {
   void m(<error descr="Variable arity methods are not supported at language level '1.4'">String... args</error>) throws Exception {
     <error descr="For-each loops are not supported at language level '1.4'">for (String s : args) { System.out.println(s); }</error>
+    <error descr="For-each loops are not supported at language level '1.4'">for (Integer i : args) { System.out.println(i); }</error>
 
     List<error descr="Generics are not supported at language level '1.4'"><String></error> list =
       new ArrayList<error descr="Generics are not supported at language level '1.4'"><></error>();

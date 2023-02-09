@@ -40,7 +40,7 @@ public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference
     }
   }
 
-  static final ExtensionPointName<UnresolvedReferenceQuickFixProvider<?>> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.unresolvedReferenceQuickFixProvider");
+  private static final ExtensionPointName<UnresolvedReferenceQuickFixProvider<?>> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.unresolvedReferenceQuickFixProvider");
 
   public abstract void registerFixes(@NotNull T ref, @NotNull QuickFixActionRegistrar registrar);
 

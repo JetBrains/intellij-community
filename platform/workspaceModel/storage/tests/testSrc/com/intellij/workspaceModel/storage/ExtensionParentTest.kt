@@ -1,12 +1,10 @@
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.test.api.AttachedEntityToParent
-import com.intellij.workspaceModel.storage.entities.test.api.MainEntityToParent
-import com.intellij.workspaceModel.storage.entities.test.api.MySource
-import com.intellij.workspaceModel.storage.entities.test.api.ref
-import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.*
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ExtensionParentTest {
@@ -86,5 +84,27 @@ class ExtensionParentTest {
     val ref = entity.child!!
     val children = ref.ref
     assertEquals("123", children.x)
+  }
+
+  @Test
+  fun `check reference via extension property removes correctly`() {
+    val builder = createEmptyBuilder()
+    val entity = MainEntityToParent("123", MySource) {
+      this.childNullableParent = AttachedEntityToNullableParent("xyz", MySource)
+    }
+    builder.addEntity(entity)
+
+    var existingMainEntity = builder.entities(MainEntityToParent::class.java).single()
+    assertNotNull(existingMainEntity.childNullableParent)
+
+    val existingAttachedEntity = builder.entities(AttachedEntityToNullableParent::class.java).single()
+    assertNotNull(existingAttachedEntity.nullableRef)
+
+    builder.modifyEntity(existingAttachedEntity) {
+      this.nullableRef = null
+    }
+
+    existingMainEntity = builder.entities(MainEntityToParent::class.java).single()
+    assertNull(existingMainEntity.child)
   }
 }

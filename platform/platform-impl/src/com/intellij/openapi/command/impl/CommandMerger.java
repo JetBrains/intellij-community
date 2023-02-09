@@ -67,8 +67,7 @@ public final class CommandMerger {
   }
 
   private void addActionToSharedStack(@NotNull UndoableAction action) {
-    if (action instanceof AdjustableUndoableAction) {
-      AdjustableUndoableAction adjustable = (AdjustableUndoableAction)action;
+    if (action instanceof AdjustableUndoableAction adjustable) {
       DocumentReference[] affected = action.getAffectedDocuments();
       if (affected == null) {
         return;

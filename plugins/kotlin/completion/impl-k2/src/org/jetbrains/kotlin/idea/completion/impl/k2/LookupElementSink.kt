@@ -8,9 +8,8 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.editor.Document
+import com.intellij.patterns.ElementPattern
 import com.intellij.psi.util.elementType
-import org.jetbrains.kotlin.idea.base.psi.canDropCurlyBrackets
-import org.jetbrains.kotlin.idea.base.psi.dropCurlyBrackets
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
 import org.jetbrains.kotlin.idea.completion.stringTemplates.wrapLookupElementForStringTemplateAfterDotCompletion
 import org.jetbrains.kotlin.idea.completion.weighers.CompletionContributorGroupWeigher.groupPriority
@@ -39,6 +38,10 @@ internal class LookupElementSink(
             it.groupPriority = groupPriority
         }
         resultSet.addAllElements(elements.map(::applyWrappersToLookupElement))
+    }
+
+    fun restartCompletionOnPrefixChange(prefixCondition: ElementPattern<String>) {
+        resultSet.restartCompletionOnPrefixChange(prefixCondition)
     }
 
     private fun applyWrappersToLookupElement(lookupElement: LookupElement): LookupElement {

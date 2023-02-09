@@ -238,8 +238,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       Object[] items = indexResult.apply(matchResult.elementName);
       ProgressManager.checkCanceled();
       for (Object item : items) {
-        if (!(item instanceof PsiFileSystemItem)) continue;
-        PsiFileSystemItem psiItem = (PsiFileSystemItem)item;
+        if (!(item instanceof PsiFileSystemItem psiItem)) continue;
         if (!scope.contains(psiItem.getVirtualFile())) continue;
         String qualifier = getParentPath(psiItem);
         if (qualifier != null) {
@@ -386,17 +385,17 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         }
       }
       MinusculeMatcher qualifierMatcher = getQualifiedNameMatcher(parameters.getLocalPatternName());
-      Comparator<MatchResult> comparator1 = matchingDegreeComparator();
-      Comparator<MatchResult> comparator2 = Comparator.comparing(
+      Comparator<MatchResult> byNameWithoutExtension = Comparator.comparing(
         mr -> StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(mr.elementName)));
-      matchingNames.sort(comparator1);
+      Comparator<MatchResult> matchingDegreeComparator = matchingDegreeComparator();
+      matchingNames = ContainerUtil.sorted(matchingNames, matchingDegreeComparator);
       // comparator1.thenComparing(comparator2) is too slow, let's lazily apply comparator2 as needed below
       Function<List<MatchResult>, List<MatchResult>> sortGroup = new Function<>() {
         final Set<Object> sortedGroups = CollectionFactory.createCustomHashingStrategySet(HashingStrategy.identity());
         @Override
         public List<MatchResult> apply(List<MatchResult> results) {
           if (sortedGroups.add(results)) {
-            results.sort(comparator2);
+            results.sort(byNameWithoutExtension);
           }
           return results;
         }
@@ -405,11 +404,11 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       GlobalSearchScope scope = dirMatcher.narrowDown(parameters.getSearchScope());
       FindSymbolParameters parametersAdjusted = parameters.withScope(scope);
 
-      List<List<MatchResult>> groups = group(matchingNames, comparator1);
+      List<List<MatchResult>> groups = group(matchingNames, matchingDegreeComparator);
       Function<String, Object[]> indexResult = key -> myModel.getElementsByName(key, parametersAdjusted, indicator);
 
       for (List<MatchResult> group : groups) {
-        List<List<MatchResult>> sortedNames = group(sortGroup.apply(group), comparator2);
+        List<List<MatchResult>> sortedNames = group(sortGroup.apply(group), byNameWithoutExtension);
         JBIterable<FoundItemDescriptor<PsiFileSystemItem>> filesMatchingPath = JBIterable.from(sortedNames)
           .flatMap(nameGroup -> getItemsForNames(scope, nameGroup, indexResult));
         Iterable<FoundItemDescriptor<PsiFileSystemItem>> matchedFiles =
@@ -443,8 +442,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       for (MatchResult matchResult : group) {
         for (Object o : myModel.getElementsByName(matchResult.elementName, adjusted, indicator)) {
           ProgressManager.checkCanceled();
-          if (o instanceof PsiFileSystemItem) {
-            PsiFileSystemItem psiItem = (PsiFileSystemItem)o;
+          if (o instanceof PsiFileSystemItem psiItem) {
             String qualifier = getParentPath(psiItem);
             if (qualifier != null) return true;
           }

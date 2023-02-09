@@ -33,8 +33,6 @@ import java.util.Set;
  * {@link ArrangementUiComponent} for {@link ArrangementAtomMatchCondition} representation.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class ArrangementAtomMatchConditionComponent implements ArrangementUiComponent {
 

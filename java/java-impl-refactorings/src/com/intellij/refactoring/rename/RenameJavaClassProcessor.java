@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -130,14 +130,12 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   @Override
   @Nullable
   public Pair<String, String> getTextOccurrenceSearchStrings(@NotNull final PsiElement element, @NotNull final String newName) {
-    if (element instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)element;
-      if (aClass.getParent() instanceof PsiClass) {
-        final String dollaredStringToSearch = ClassUtil.getJVMClassName(aClass);
-        final String dollaredStringToReplace = dollaredStringToSearch == null ? null : RefactoringUtil.getNewInnerClassName(aClass, dollaredStringToSearch, newName);
-        if (dollaredStringToReplace != null) {
-          return Pair.create(dollaredStringToSearch, dollaredStringToReplace);
-        }
+    if (element instanceof PsiClass aClass && aClass.getParent() instanceof PsiClass) {
+      final String dollaredStringToSearch = ClassUtil.getJVMClassName(aClass);
+      final String dollaredStringToReplace =
+        dollaredStringToSearch == null ? null : RefactoringUtil.getNewInnerClassName(aClass, dollaredStringToSearch, newName);
+      if (dollaredStringToReplace != null) {
+        return Pair.create(dollaredStringToSearch, dollaredStringToReplace);
       }
     }
     return null;
@@ -204,8 +202,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   }
 
   public static void findSubmemberHidesMemberCollisions(final PsiClass aClass, final String newName, final List<UsageInfo> result) {
-    if (aClass.getParent() instanceof PsiClass) {
-      PsiClass parent = (PsiClass)aClass.getParent();
+    if (aClass.getParent() instanceof PsiClass parent) {
       Collection<PsiClass> inheritors = ClassInheritorsSearch.search(parent).findAll();
       for (PsiClass inheritor : inheritors) {
         if (newName.equals(inheritor.getName())) {

@@ -18,10 +18,12 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.Win10ActionButtonLook;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -93,15 +95,15 @@ public abstract class ActionButtonLook {
   }
 
   public void paintBackground(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
-    if (state == ActionButtonComponent.NORMAL && !component.isBackgroundSet()) return;
+    Color color = getStateBackground(component, state);
+    if (color == null) return;
     Rectangle rect = new Rectangle(component.getSize());
     JBInsets.removeFrom(rect, component.getInsets());
-    Color color = getStateBackground(component, state);
     paintLookBackground(g, rect, color);
   }
 
-  protected Color getStateBackground(JComponent component, int state) {
-    return state == ActionButtonComponent.NORMAL ? component.getBackground() :
+  protected @Nullable Color getStateBackground(JComponent component, int state) {
+    return state == ActionButtonComponent.NORMAL ? (component.isBackgroundSet() ? component.getBackground() : null) :
                   state == ActionButtonComponent.PUSHED ? JBUI.CurrentTheme.ActionButton.pressedBackground() :
                   JBUI.CurrentTheme.ActionButton.hoverBackground();
   }
@@ -139,6 +141,10 @@ public abstract class ActionButtonLook {
     return button.getPopState();
   }
 
+  public @NotNull Icon getDisabledIcon(@NotNull Icon icon) {
+    return IconLoader.getDisabledIcon(icon);
+  }
+
   public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon) {
     Point iconPos = getIconPosition(actionButton, icon);
     paintIcon(g, actionButton, icon, iconPos.x, iconPos.y);
@@ -157,6 +163,30 @@ public abstract class ActionButtonLook {
     int arrowIconX = iconPos.x + 1 + (originalIcon.getIconWidth() - arrowIcon.getIconWidth());
     int arrowIconY = iconPos.y + 1 + (originalIcon.getIconHeight() - arrowIcon.getIconHeight());
     arrowIcon.paintIcon(actionButton instanceof Component ? (Component)actionButton : null, g, arrowIconX, arrowIconY);
+  }
+
+  @ActionButtonComponent.ButtonState
+  public static int getButtonState(
+    boolean isEnabled,
+    boolean isHovered,
+    boolean isFocused,
+    boolean isPressedByMouse,
+    boolean isPressedByKeyboard
+  ) {
+    if (!isEnabled) return ActionButtonComponent.NORMAL;
+
+    if (isPressedByMouse || isPressedByKeyboard) {
+      return ActionButtonComponent.PUSHED;
+    }
+    else if (isHovered) {
+      return ActionButtonComponent.POPPED;
+    }
+    else if (isFocused) {
+      return ActionButtonComponent.SELECTED;
+    }
+    else {
+      return ActionButtonComponent.NORMAL;
+    }
   }
 
   private static Point getIconPosition(ActionButtonComponent actionButton, Icon icon) {

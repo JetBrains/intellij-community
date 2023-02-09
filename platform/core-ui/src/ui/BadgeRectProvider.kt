@@ -19,16 +19,14 @@ open class BadgeRectProvider : BadgeShapeProvider() {
     if (size <= 0) return null
 
     val top = height * getTop()
-    if (top >= height) return null
 
     val left = width * getLeft()
-    if (left >= width) return null
 
-    val right = width - width * getRight()
-    if (right <= 0 || right <= left) return null
+    val right = width * getRight()
+    if (right <= left) return null
 
-    val bottom = height - height * getBottom()
-    if (bottom <= 0 || bottom <= top) return null
+    val bottom = height * getBottom()
+    if (bottom <= top) return null
 
     val border = when {
       hole -> size * getBorder()

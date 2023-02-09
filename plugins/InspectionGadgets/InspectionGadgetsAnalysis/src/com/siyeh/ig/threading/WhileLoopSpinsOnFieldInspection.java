@@ -17,6 +17,7 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -40,6 +41,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
   private static final CallMatcher THREAD_ON_SPIN_WAIT = CallMatcher.staticCall("java.lang.Thread", "onSpinWait");
 
@@ -59,10 +62,9 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("while.loop.spins.on.field.ignore.non.empty.loops.option"),
-                                          this, "ignoreNonEmtpyLoops");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreNonEmtpyLoops", InspectionGadgetsBundle.message("while.loop.spins.on.field.ignore.non.empty.loops.option")));
   }
 
   @Override
@@ -122,16 +124,14 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
     if (field != null) {
       return field;
     }
-    if (condition instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)condition;
+    if (condition instanceof PsiPrefixExpression prefixExpression) {
       IElementType type = prefixExpression.getOperationTokenType();
       if(!type.equals(JavaTokenType.PLUSPLUS) && !type.equals(JavaTokenType.MINUSMINUS)) {
         final PsiExpression operand = prefixExpression.getOperand();
         return getFieldIfSimpleFieldComparison(operand);
       }
     }
-    if (condition instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
+    if (condition instanceof PsiBinaryExpression binaryExpression) {
       final PsiExpression lOperand = binaryExpression.getLOperand();
       final PsiExpression rOperand = binaryExpression.getROperand();
       if (ExpressionUtils.isLiteral(rOperand)) {
@@ -153,19 +153,17 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
     if (expression == null) {
       return null;
     }
-    if (!(expression instanceof PsiReferenceExpression)) {
+    if (!(expression instanceof PsiReferenceExpression reference)) {
       return null;
     }
-    final PsiReferenceExpression reference = (PsiReferenceExpression)expression;
     final PsiExpression qualifierExpression = reference.getQualifierExpression();
     if (qualifierExpression != null) {
       return null;
     }
     final PsiElement referent = reference.resolve();
-    if (!(referent instanceof PsiField)) {
+    if (!(referent instanceof PsiField field)) {
       return null;
     }
-    final PsiField field = (PsiField)referent;
     if (field.hasModifierProperty(PsiModifier.VOLATILE) && !PsiUtil.isLanguageLevel9OrHigher(field)) {
       return null;
     }
@@ -233,8 +231,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
 
     private static void addVolatile(PsiElement element) {
       PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiWhileStatement)) return;
-      PsiWhileStatement whileStatement = (PsiWhileStatement)parent;
+      if (!(parent instanceof PsiWhileStatement whileStatement)) return;
       PsiExpression condition = whileStatement.getCondition();
       PsiField field = getFieldIfSimpleFieldComparison(condition);
       if (field == null) return;

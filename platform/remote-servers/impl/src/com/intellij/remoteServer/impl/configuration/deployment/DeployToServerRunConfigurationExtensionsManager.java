@@ -20,8 +20,7 @@ public class DeployToServerRunConfigurationExtensionsManager
 
   public void patchDeploymentTask(@NotNull DeploymentTask<?> deploymentTask) {
     RunProfile runProfile = deploymentTask.getExecutionEnvironment().getRunProfile();
-    if (runProfile instanceof DeployToServerRunConfiguration<?, ?>) {
-      DeployToServerRunConfiguration<?, ?> runConfiguration = (DeployToServerRunConfiguration<?, ?>)runProfile;
+    if (runProfile instanceof DeployToServerRunConfiguration<?, ?> runConfiguration) {
       processApplicableExtensions(runConfiguration, next -> {
         next.patchDeploymentTask(runConfiguration, deploymentTask);
         return null;

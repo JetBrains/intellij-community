@@ -4,7 +4,7 @@ package com.siyeh.ig.numeric;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -19,7 +19,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -34,15 +35,12 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "unpredictable.big.decimal.constructor.call.ignore.references.option"),
-                             "ignoreReferences");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "unpredictable.big.decimal.constructor.call.ignore.complex.literals.option"),
-                             "ignoreComplexLiterals");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreReferences", InspectionGadgetsBundle.message(
+        "unpredictable.big.decimal.constructor.call.ignore.references.option")),
+      checkbox("ignoreComplexLiterals", InspectionGadgetsBundle.message(
+        "unpredictable.big.decimal.constructor.call.ignore.complex.literals.option")));
   }
 
   @Override
@@ -120,7 +118,7 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
       if (constructor == null) return false;
       final PsiParameter[] parameters = constructor.getParameterList().getParameters();
       if (parameters.length == 0) return false;
-      if (!PsiType.DOUBLE.equals(parameters[0].getType())) return false;
+      if (!PsiTypes.doubleType().equals(parameters[0].getType())) return false;
       return true;
     }
   }
@@ -151,7 +149,7 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
       final PsiParameter[] parameters = parameterList.getParameters();
       final PsiParameter firstParameter = parameters[0];
       final PsiType type = firstParameter.getType();
-      if (!PsiType.DOUBLE.equals(type)) {
+      if (!PsiTypes.doubleType().equals(type)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
@@ -178,11 +176,10 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
           return false;
         }
       }
-      else if (expression instanceof PsiPolyadicExpression) {
+      else if (expression instanceof PsiPolyadicExpression polyadicExpression) {
         if (ignoreComplexLiterals) {
           return false;
         }
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
         for (PsiExpression operand : polyadicExpression.getOperands()) {
           if (!checkExpression(operand)) {
             return false;

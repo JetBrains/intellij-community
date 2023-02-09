@@ -241,7 +241,7 @@ public class MavenGroovyPolyglotPomMemberContributor extends NonCodeMembersContr
     }
 
     PsiFile file = aClass.getContainingFile();
-    if (file == null || !"pom.groovy".equals(file.getName())) return;
+    if (!"pom.groovy".equals(file.getName())) return;
 
     List<String> methodCallInfo = MavenGroovyPomUtil.getGroovyMethodCalls(place);
 

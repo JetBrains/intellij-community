@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.PosixFilePermissionsUtil
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -12,12 +13,15 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.TraceManager
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
 import java.io.BufferedInputStream
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
-import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE
+import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
 interface OsSpecificDistributionBuilder {
@@ -28,98 +32,104 @@ interface OsSpecificDistributionBuilder {
 
   suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture)
 
-  fun generateExecutableFilesPatterns(includeRuntime: Boolean): List<String> = emptyList()
+  @Deprecated("Please specify architecture explicitly", replaceWith = ReplaceWith("generateExecutableFilesPatterns(includeRuntime, arch)"))
+  fun generateExecutableFilesPatterns(includeRuntime: Boolean): List<String> {
+    return generateExecutableFilesPatterns(includeRuntime, JvmArchitecture.x64)
+  }
 
-  fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true) {
+  fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> = emptyList()
+  fun generateExecutableFilesMatchers(includeRuntime: Boolean, arch: JvmArchitecture): Map<PathMatcher, String> {
+    val fileSystem = FileSystems.getDefault()
+    return generateExecutableFilesPatterns(includeRuntime, arch)
+      .asSequence().distinct()
+      .map(FileUtil::toSystemIndependentName)
+      .associateBy {
+        fileSystem.getPathMatcher("glob:$it")
+      }
+  }
+
+  fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true, arch: JvmArchitecture) {
     TraceManager.spanBuilder("Permissions check for ${distribution.name}").useWithScope {
-      val executableFilesPatterns = generateExecutableFilesPatterns(includeRuntime)
-      val patterns = executableFilesPatterns.map {
-        FileSystems.getDefault().getPathMatcher("glob:$it")
+      val patterns = generateExecutableFilesMatchers(includeRuntime, arch)
+      val matchedFiles = when {
+        patterns.isEmpty() -> return
+        SystemInfoRt.isWindows && distribution.isDirectory() -> return
+        distribution.isDirectory() -> checkDirectory(distribution.resolve(root), patterns.keys)
+        "$distribution".endsWith(".tar.gz") -> checkTar(distribution, root, patterns.keys)
+        else -> checkZip(distribution, root, patterns.keys)
       }
-      try {
-        val entries = when {
-          patterns.isEmpty() -> return
-          Files.isDirectory(distribution) -> checkDirectory(distribution.resolve(root), patterns)
-          "$distribution".endsWith(".tar.gz") -> checkTar(distribution, root, patterns)
-          else -> checkZip(distribution, root, patterns)
-        }
-        if (entries.isNotEmpty()) {
-          val message = "Missing executable permissions in $distribution for:\n" + entries.joinToString(separator = "\n")
-          if (SystemInfoRt.isWindows) {
-            // IJI-971 workaround
-            context.messages.warning(message)
-          }
-          else {
-            context.messages.error(message)
-          }
-        }
+      val notValid = matchedFiles.filterNot { it.isValid }
+      check(notValid.isEmpty()) {
+        "Missing executable permissions in $distribution for:\n" +
+        notValid.joinToString(separator = "\n")
       }
-      catch (e: MissingFilesException) {
-        context.messages.error("Executable files patterns:\n" +
-                               executableFilesPatterns.joinToString(separator = "\n") +
-                               "\nFound files:\n" +
-                               e.found.joinToString(separator = "\n"))
+      val unmatchedPatterns = patterns.keys - matchedFiles.asSequence()
+        .flatMap { it.patterns }
+        .toSet()
+      if (unmatchedPatterns.isNotEmpty()) {
+        context.messages.warning(matchedFiles.joinToString(prefix = "Matched files ${distribution.name}:\n", separator = "\n"))
+        if (TeamCityHelper.isUnderTeamCity) {
+          reportBuildProblem(
+            unmatchedPatterns.joinToString(prefix = "Unmatched executable permissions patterns in ${distribution.name}: ") {
+              patterns.getValue(it)
+            }
+          )
+        }
       }
     }
   }
 
-  private fun checkDirectory(distribution: Path, patterns: List<PathMatcher>): List<String> {
-    val entries = Files.walk(distribution).use { files ->
-      val found = files.filter { file ->
+  private class MatchedFile(val relativePath: String, val isValid: Boolean, val patterns: Collection<PathMatcher>) {
+    override fun toString() = relativePath
+  }
+
+  private fun checkDirectory(distribution: Path, patterns: Collection<PathMatcher>): List<MatchedFile> {
+    return Files.walk(distribution).use { files ->
+      files.filter { !Files.isDirectory(it) }.map { file ->
         val relativePath = distribution.relativize(file)
-        !Files.isDirectory(file) && patterns.any {
-          it.matches(relativePath)
+        val matched = patterns.filter { it.matches(relativePath) }
+        if (matched.isEmpty()) null
+        else {
+          MatchedFile(distribution.relativize(file).toString(), OWNER_EXECUTE in Files.getPosixFilePermissions(file), matched)
         }
-      }.toList()
-      if (found.size < patterns.size) {
-        throw MissingFilesException(found)
-      }
-      found.stream()
-        .filter { PosixFilePermission.OWNER_EXECUTE !in Files.getPosixFilePermissions(it) }
-        .map { distribution.relativize(it).toString() }
-        .toList()
+      }.toList().filterNotNull()
     }
-    return entries
   }
 
-  private fun checkTar(distribution: Path, root: String, patterns: List<PathMatcher>) =
+  private fun checkTar(distribution: Path, root: String, patterns: Collection<PathMatcher>): List<MatchedFile> {
     TarArchiveInputStream(GzipCompressorInputStream(BufferedInputStream(Files.newInputStream(distribution)))).use { stream ->
-      val found = mutableListOf<TarArchiveEntry>()
+      val matched = mutableListOf<MatchedFile>()
       while (true) {
         val entry = (stream.nextEntry ?: break) as TarArchiveEntry
         var entryPath = Path.of(entry.name)
         if (!root.isEmpty()) {
           entryPath = Path.of(root).relativize(entryPath)
         }
-        if (!entry.isDirectory && patterns.any { it.matches(entryPath) }) {
-          found.add(entry)
+        if (!entry.isDirectory) {
+          val matchedPatterns = patterns.filter { it.matches(entryPath) }
+          if (matchedPatterns.isNotEmpty()) {
+            matched.add(MatchedFile(entry.name, OWNER_EXECUTE in PosixFilePermissionsUtil.fromUnixMode(entry.mode), matchedPatterns))
+          }
         }
       }
-      if (found.size < patterns.size) {
-        throw MissingFilesException(found)
-      }
-      found
-        .filter { PosixFilePermission.OWNER_EXECUTE !in PosixFilePermissionsUtil.fromUnixMode(it.mode) }
-        .map { "${it.name}: mode is 0${Integer.toOctalString(it.mode)}" }
+      return matched
     }
+  }
 
 
-  private fun checkZip(distribution: Path, root: String, patterns: List<PathMatcher>) =
-    ZipFile(Files.newByteChannel(distribution)).use { zipFile ->
-      val found = zipFile.entries.asSequence().filter { entry ->
+  private fun checkZip(distribution: Path, root: String, patterns: Collection<PathMatcher>): List<MatchedFile> {
+    return ZipFile(Files.newByteChannel(distribution)).use { zipFile ->
+      zipFile.entries.asSequence().filter { !it.isDirectory }.mapNotNull { entry ->
         var entryPath = Path.of(entry.name)
         if (!root.isEmpty()) {
           entryPath = Path.of(root).relativize(entryPath)
         }
-        !entry.isDirectory && patterns.any { it.matches(entryPath) }
+        val matched = patterns.filter { it.matches(entryPath) }
+        if (matched.isEmpty()) null
+        else {
+          MatchedFile(entry.name, OWNER_EXECUTE in PosixFilePermissionsUtil.fromUnixMode(entry.unixMode), matched)
+        }
       }.toList()
-      if (found.size < patterns.size) {
-        throw MissingFilesException(found)
-      }
-      found
-        .filter { entry -> PosixFilePermission.OWNER_EXECUTE !in PosixFilePermissionsUtil.fromUnixMode(entry.unixMode) }
-        .map { "${it.name}: mode is 0${Integer.toOctalString(it.unixMode)}" }
     }
-
-  private class MissingFilesException(val found: List<Any>) : Exception()
+  }
 }

@@ -41,7 +41,7 @@ import static com.intellij.updater.Runner.LOG;
  * because we are not running on Windows, then the class is flagged as failed and no further attempts
  * will be made to load the DLL.</p>
  */
-public class NativeFileManager {
+public final class NativeFileManager {
   private static final int MAX_PROCESSES = 10;
 
   private static boolean ourFailed = !Utils.IS_WINDOWS;

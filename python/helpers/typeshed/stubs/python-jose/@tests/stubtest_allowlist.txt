@@ -4,6 +4,3 @@ jose.backends.CryptographyECKey
 jose.backends.CryptographyHMACKey
 jose.backends.CryptographyRSAKey
 jose.backends.ECDSAECKey
-jose.backends.ECKey
-jose.backends.HMACKey
-jose.backends.RSAKey

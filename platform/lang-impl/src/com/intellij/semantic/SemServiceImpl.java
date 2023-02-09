@@ -43,7 +43,7 @@ public final class SemServiceImpl extends SemService implements Disposable {
     Result.create(createSemCache(), PsiModificationTracker.MODIFICATION_COUNT);
 
   private final Object lock = ObjectUtils.sentinel(getClass().getName());
-  private volatile MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> producers;
+  private volatile MultiMap<SemKey<?>, BiFunction<? super PsiElement, ? super ProcessingContext, ? extends Collection<? extends SemElement>>> producers;
   private final Project project;
   private final CachedValuesManager myCVManager;
 
@@ -67,8 +67,8 @@ public final class SemServiceImpl extends SemService implements Disposable {
     });
   }
 
-  private MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> collectProducers() {
-    MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> map = new MultiMap<>();
+  private MultiMap<SemKey<?>, BiFunction<? super PsiElement, ? super ProcessingContext, ? extends Collection<? extends SemElement>>> collectProducers() {
+    var map = new MultiMap<SemKey<?>, BiFunction<? super PsiElement, ? super ProcessingContext, ? extends Collection<? extends SemElement>>>();
 
     SemRegistrar registrar = new SemRegistrar() {
       @Override
@@ -76,7 +76,7 @@ public final class SemServiceImpl extends SemService implements Disposable {
         SemKey<T> key,
         BiFunction<? super PsiElement, ? super ProcessingContext, ? extends Collection<T>> provider
       ) {
-        map.putValue(key, provider::apply);
+        map.putValue(key, provider);
       }
     };
 
@@ -114,7 +114,7 @@ public final class SemServiceImpl extends SemService implements Disposable {
   @SuppressWarnings("unchecked")
   private @NotNull <T extends SemElement> List<T> createSemElements(@NotNull SemKey<T> key, @NotNull PsiElement psi,
                                                                     IntObjectMap<List<SemElement>> chunk) {
-    MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> currentProducers = ensureInitialized();
+    var currentProducers = ensureInitialized();
 
     RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
@@ -146,8 +146,8 @@ public final class SemServiceImpl extends SemService implements Disposable {
     return List.copyOf(result);
   }
 
-  private MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> ensureInitialized() {
-    MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> current = producers;
+  private MultiMap<SemKey<?>, BiFunction<? super PsiElement, ? super ProcessingContext, ? extends Collection<? extends SemElement>>> ensureInitialized() {
+    var current = producers;
     if (current != null) {
       return current;
     }
@@ -158,20 +158,20 @@ public final class SemServiceImpl extends SemService implements Disposable {
         return current;
       }
 
-      MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> newProducers = collectProducers();
+      var newProducers = collectProducers();
       producers = newProducers;
       return newProducers;
     }
   }
 
   private static @NotNull List<SemElement> createSemElements(
-    MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> producers,
+    MultiMap<SemKey<?>, BiFunction<? super PsiElement, ? super ProcessingContext, ? extends Collection<? extends SemElement>>> producers,
     SemKey<?> key, PsiElement psi, ProcessingContext processingContext
   ) {
     List<SemElement> result = null;
-    Collection<BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> functions = producers.get(key);
+    Collection<BiFunction<? super PsiElement, ? super ProcessingContext, ? extends Collection<? extends SemElement>>> functions = producers.get(key);
     if (!functions.isEmpty()) {
-      for (BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>> producer : functions) {
+      for (var producer : functions) {
         Collection<? extends SemElement> elements = producer.apply(psi, processingContext);
         if (elements != null && !elements.isEmpty()) {
           if (result == null) result = new SmartList<>();

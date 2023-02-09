@@ -79,6 +79,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private final BaselinePanel myNameAndButtons;
   private JButton myRestartButton;
   private InstallButton myInstallButton;
+  private final SuggestedIdeBanner mySuggestedIdeBanner = new SuggestedIdeBanner();
   private JButton myUpdateButton;
   private JComponent myGearButton;
   private JButton myEnableDisableButton;
@@ -218,10 +219,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
   @NotNull
   private static CustomLineBorder createMainBorder() {
-    return new CustomLineBorder(JBColor.border(), JBUI.insets(1, 0, 0, 0)) {
+    return new CustomLineBorder(JBColor.border(), JBUI.insetsTop(1)) {
       @Override
       public Insets getBorderInsets(Component c) {
-        return JBUI.insets(15, 20, 0, 0);
+        return JBUI.insets(15, 20, 0, 20);
       }
     };
   }
@@ -242,6 +243,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myHomePage = new LinkPanel(linkPanel, false);
 
     topPanel.add(myNameAndButtons);
+    topPanel.add(mySuggestedIdeBanner, VerticalLayout.FILL_HORIZONTAL);
 
     myNameAndButtons.add(myVersion1 = new JBLabel().setCopyable(true));
 
@@ -787,8 +789,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     else {
       boolean syncLoading = true;
       IdeaPluginDescriptor descriptor = component.getPluginDescriptor();
-      if (descriptor instanceof PluginNode) {
-        PluginNode node = (PluginNode)descriptor;
+      if (descriptor instanceof PluginNode node) {
         if (!node.detailsLoaded()) {
           syncLoading = false;
           doLoad(component, () -> {
@@ -879,11 +880,16 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
     select(0, true);
 
+    String suggestedCommercialIde = null;
+
     if (myPlugin instanceof PluginNode) {
-      if (((PluginNode)myPlugin).getSuggestedCommercialIde() != null) {
-        myInstallButton.setText(IdeBundle.message("action.AnActionButton.text.upgrade"));
+      suggestedCommercialIde = ((PluginNode)myPlugin).getSuggestedCommercialIde();
+      if (suggestedCommercialIde != null) {
+        myInstallButton.setVisible(false);
       }
     }
+
+    mySuggestedIdeBanner.suggestIde(suggestedCommercialIde);
   }
 
   private enum EmptyState {
@@ -913,6 +919,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private void showPlugin() {
     @NlsSafe String text = "<html><span>" + myPlugin.getName() + "</span></html>";
     myNameComponent.setText(text);
+    myNameComponent.setForeground(null);
     updateNotifications();
     updateIcon();
 
@@ -958,8 +965,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       String rating = null;
       String downloads = null;
       String size = null;
-      if (myPlugin instanceof PluginNode) {
-        PluginNode pluginNode = (PluginNode)myPlugin;
+      if (myPlugin instanceof PluginNode pluginNode) {
         rating = pluginNode.getPresentableRating();
         downloads = pluginNode.getPresentableDownloads();
         size = pluginNode.getPresentableSize();
@@ -1205,6 +1211,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       if (myMultiTabs) {
         if (installed || myInstalledDescriptorForMarketplace == null) {
           myGearButton.setVisible(false);
+          myEnableDisableButton.setVisible(false);
         }
         else {
           boolean[] state = getDeletedState(myInstalledDescriptorForMarketplace);
@@ -1224,13 +1231,14 @@ public final class PluginDetailsPageComponent extends MultiPanel {
             }
           }
 
+          boolean bundled = myInstalledDescriptorForMarketplace.isBundled();
           myEnableDisableController.update();
-          myGearButton.setVisible(!uninstalled);
+          myGearButton.setVisible(!uninstalled && !bundled);
+          myEnableDisableButton.setVisible(bundled);
           myUpdateButton.setVisible(!uninstalled && myUpdateDescriptor != null && !installedWithoutRestart);
           updateEnableForNameAndIcon();
           updateErrors();
         }
-        myEnableDisableButton.setVisible(false);
       }
       else {
         myGearButton.setVisible(false);
@@ -1352,7 +1360,6 @@ public final class PluginDetailsPageComponent extends MultiPanel {
             myInstalledDescriptorForMarketplace = PluginManagerCore.findPlugin(myPlugin.getPluginId());
             if (myInstalledDescriptorForMarketplace != null) {
               myInstallButton.setVisible(false);
-              myEnableDisableButton.setVisible(true);
               myVersion1.setText(myInstalledDescriptorForMarketplace.getVersion());
               myVersion1.setVisible(true);
               updateEnabledState();
@@ -1389,7 +1396,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
         myEnableDisableController.update();
       }
       if (myMultiTabs) {
-        boolean bundled = myPlugin.isBundled();
+        boolean bundled = getDescriptorForActions().isBundled();
         myGearButton.setVisible(!bundled);
         myEnableDisableButton.setVisible(bundled);
       }

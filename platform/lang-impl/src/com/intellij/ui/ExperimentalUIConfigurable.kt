@@ -1,8 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
+import com.intellij.feedback.new_ui.dialog.NewUIFeedbackDialog
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.SendFeedbackAction
+import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.Configurable
@@ -31,11 +32,13 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
         .comment(IdeBundle.message("checkbox.enable.new.ui.description"))
     }
 
-    row { browserLink(IdeBundle.message("new.ui.blog.changes.and.issues"), "https://youtrack.jetbrains.com/articles/IDEA-A-156/Main-changes-and-known-issues") }
-    row { link(IdeBundle.message("new.ui.submit.feedback")) { SendFeedbackAction.submit(null) } }
-
-    if (SystemInfo.isWindows || SystemInfo.isXWindow) {
-      group(IdeBundle.message("new.ui.settings.group.name")) {
+    indent {
+      row {
+        checkBox(IdeBundle.message("checkbox.compact.mode"))
+          .bindSelected(UISettings.getInstance()::compactMode)
+        comment(IdeBundle.message("checkbox.compact.mode.description"))
+      }
+      if (SystemInfo.isWindows || SystemInfo.isXWindow) {
         row {
           checkBox(IdeBundle.message("checkbox.main.menu.separate.toolbar"))
             .bindSelected(UISettings.getInstance()::separateMainMenu)
@@ -47,6 +50,9 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
         }
       }
     }
+
+    row { browserLink(IdeBundle.message("new.ui.blog.changes.and.issues"), "https://youtrack.jetbrains.com/articles/IDEA-A-156/Main-changes-and-known-issues") }
+    row { link(IdeBundle.message("new.ui.submit.feedback")) { NewUIFeedbackDialog(null, false).show() } }
   }
 
   override fun getHelpTopic(): String? {
@@ -57,7 +63,7 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
     val uiSettingsChanged = isModified
     super.apply()
     if (uiSettingsChanged) {
-      UISettings.getInstance().fireUISettingsChanged()
+      LafManager.getInstance().applyDensity()
     }
   }
 }

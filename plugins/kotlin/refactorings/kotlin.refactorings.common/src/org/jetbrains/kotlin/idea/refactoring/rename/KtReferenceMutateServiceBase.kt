@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -14,9 +15,11 @@ import org.jetbrains.kotlin.plugin.references.SimpleNameReferenceExtension
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.astReplace
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
+import org.jetbrains.kotlin.util.OperatorNameConventions
 
 abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
     override fun handleElementRename(ktReference: KtReference, newElementName: String): PsiElement? {
@@ -31,11 +34,30 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
         }
     }
 
-    protected abstract fun KtArrayAccessReference.renameTo(newElementName: String): KtExpression
+    private fun KtArrayAccessReference.renameTo(newElementName: String): KtExpression {
+        return renameImplicitConventionalCall(newElementName)
+    }
 
     protected abstract fun KDocReference.renameTo(newElementName: String): PsiElement?
 
-    protected abstract fun KtInvokeFunctionReference.renameTo(newElementName: String): PsiElement
+    private fun KtInvokeFunctionReference.renameTo(newElementName: String): PsiElement {
+        val callExpression = expression
+        val fullCallExpression = callExpression.getQualifiedExpressionForSelectorOrThis()
+        if (newElementName == OperatorNameConventions.GET.asString() && callExpression.typeArguments.isEmpty()) {
+            val arrayAccessExpression = KtPsiFactory(callExpression.project).buildExpression {
+                if (fullCallExpression is KtQualifiedExpression) {
+                    appendExpression(fullCallExpression.receiverExpression)
+                    appendFixedText(fullCallExpression.operationSign.value)
+                }
+                appendExpression(callExpression.calleeExpression)
+                appendFixedText("[")
+                appendExpressions(callExpression.valueArguments.map { it.getArgumentExpression() })
+                appendFixedText("]")
+            }
+            return fullCallExpression.replace(arrayAccessExpression)
+        }
+        return renameImplicitConventionalCall(newElementName)
+    }
 
     private fun KtSimpleNameReference.renameTo(newElementName: String): KtExpression {
         if (!canRename()) throw IncorrectOperationException()
@@ -100,5 +122,18 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
      *
      * @return A pair of resulting function call expression and a [KtSimpleNameExpression] pointing to the function name in that expression.
      */
-    protected abstract fun convertOperatorToFunctionCall(opExpression: KtOperationExpression): Pair<KtExpression, KtSimpleNameExpression>
+    private fun convertOperatorToFunctionCall(opExpression: KtOperationExpression): Pair<KtExpression, KtSimpleNameExpression> =
+        OperatorToFunctionConverter.convert(opExpression)
+
+    protected abstract fun replaceWithImplicitInvokeInvocation(newExpression: KtDotQualifiedExpression): KtExpression?
+
+    private fun AbstractKtReference<out KtExpression>.renameImplicitConventionalCall(newName: String): KtExpression {
+        val (newExpression, newNameElement) = OperatorToFunctionConverter.convert(expression)
+        if (OperatorNameConventions.INVOKE.asString() == newName && newExpression is KtDotQualifiedExpression) {
+            replaceWithImplicitInvokeInvocation(newExpression)?.let { return it }
+        }
+
+        newNameElement.mainReference.handleElementRename(newName)
+        return newExpression
+    }
 }

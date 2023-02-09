@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
@@ -17,7 +17,10 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.JavaPsiBoxingUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,7 +92,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
      * @return false if boxing is required anyway
      */
     boolean checkExpression(@NotNull PsiExpression expression) {
-      if (expression.getType() instanceof PsiPrimitiveType && !PsiType.NULL.equals(expression.getType())) {
+      if (expression.getType() instanceof PsiPrimitiveType && !PsiTypes.nullType().equals(expression.getType())) {
         myAfterRemovalOperationCountDiff -= 1;
       }
       else if (isValueOfCall(expression)) {
@@ -209,8 +212,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       if (parent instanceof PsiExpressionList) {
         return expressionListImpactAfterBoxingRemoval((PsiExpressionList)parent, expression);
       }
-      else if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+      else if (parent instanceof PsiAssignmentExpression assignment) {
         final PsiType lExprType = assignment.getLExpression().getType();
         if (lExprType != null && TypeUtils.isJavaLangString(lExprType)) return 0;
         PsiExpression rExpression = assignment.getRExpression();
@@ -240,11 +242,10 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     private static Integer expressionListImpactAfterBoxingRemoval(@NotNull PsiExpressionList expressionList,
                                                                   @NotNull PsiReferenceExpression reference) {
       PsiElement grandParent = expressionList.getParent();
-      if (!(grandParent instanceof PsiCallExpression)) return null;
+      if (!(grandParent instanceof PsiCallExpression callExpression)) return null;
       PsiExpression[] arguments = expressionList.getExpressions();
       int argumentsIndex = ArrayUtil.indexOf(arguments, reference);
       if (argumentsIndex == -1) return null;
-      PsiCallExpression callExpression = (PsiCallExpression)grandParent;
       PsiMethod method = callExpression.resolveMethod();
       if (method == null) return null;
       if (!changedCallResolvesToSameMethod(callExpression, arguments[argumentsIndex], method)) return null;
@@ -375,8 +376,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
         if (call != null) {
           replaceInstanceCall(call);
         }
-        else if (parent instanceof PsiAssignmentExpression) {
-          PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+        else if (parent instanceof PsiAssignmentExpression assignment) {
           if (!ExpressionUtils.isReferenceTo(assignment.getLExpression(), myVariable)) return;
           tryReplaceStaticCall(assignment.getRExpression());
         }

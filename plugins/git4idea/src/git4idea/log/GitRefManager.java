@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log;
 
 import com.intellij.dvcs.repo.RepositoryManager;
@@ -56,8 +56,9 @@ public class GitRefManager implements VcsLogRefManager {
   private static final List<VcsRefType> REF_TYPE_INDEX = Arrays.asList(HEAD, LOCAL_BRANCH, REMOTE_BRANCH, TAG, OTHER);
 
   public static final String MASTER = "master";
+  public static final String MAIN = "main";
   public static final String ORIGIN_MASTER = "origin/master";
-  public static final String ORIGIN_MASTER_REF = GitBranch.REFS_REMOTES_PREFIX + ORIGIN_MASTER;
+  public static final String ORIGIN_MAIN = "origin/main";
   private static final Logger LOG = Logger.getInstance(GitRefManager.class);
   private static final String REMOTE_TABLE_SEPARATOR = " & ";
   private static final String SEPARATOR = "/";
@@ -220,7 +221,7 @@ public class GitRefManager implements VcsLogRefManager {
       VcsRef trackedRef = ContainerUtil.find(remoteBranches, ref -> ref.getName().equals(trackInfo.getRemoteBranch().getName()));
       if (trackedRef != null) {
         return new SimpleRefGroup(trackInfo.getRemote().getName() + REMOTE_TABLE_SEPARATOR + localRef.getName(),
-                                  ContainerUtil.newArrayList(localRef, trackedRef));
+                                  new ArrayList<>(Arrays.asList(localRef, trackedRef)));
       }
     }
 
@@ -229,7 +230,7 @@ public class GitRefManager implements VcsLogRefManager {
       for (VcsRef candidate : trackingCandidates) {
         if (candidate.getName().equals(remote.getName() + SEPARATOR + localRef.getName())) {
           return new SimpleRefGroup(remote.getName() + REMOTE_TABLE_SEPARATOR + localRef.getName(),
-                                    ContainerUtil.newArrayList(localRef, candidate));
+                                    new ArrayList<>(Arrays.asList(localRef, candidate)));
         }
       }
     }
@@ -440,6 +441,7 @@ public class GitRefManager implements VcsLogRefManager {
     @NotNull
     protected RefType getType(@NotNull VcsRef ref) {
       VcsRefType type = ref.getType();
+      String name = ref.getName();
       if (type == HEAD) {
         return RefType.HEAD;
       }
@@ -447,13 +449,13 @@ public class GitRefManager implements VcsLogRefManager {
         return RefType.TAG;
       }
       else if (type == LOCAL_BRANCH) {
-        if (ref.getName().equals(MASTER)) {
+        if (name.equals(MASTER) || name.equals(MAIN)) {
           return RefType.MASTER;
         }
         return RefType.LOCAL_BRANCH;
       }
       else if (type == REMOTE_BRANCH) {
-        if (ref.getName().equals(ORIGIN_MASTER)) {
+        if (name.equals(ORIGIN_MASTER) || name.equals(ORIGIN_MAIN)) {
           return RefType.ORIGIN_MASTER;
         }
         return RefType.REMOTE_BRANCH;

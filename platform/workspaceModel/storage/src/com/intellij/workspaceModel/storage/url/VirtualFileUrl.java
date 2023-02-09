@@ -1,23 +1,22 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.url;
 
-import org.jetbrains.annotations.ApiStatus;
-
 import java.util.List;
 
+/**
+ * Represents a reference to a file or directory. This interface must be used instead of {@link String} for properties of workspace model
+ * entities. It stores a URL of the file inside in a compact form.
+ * <br>
+ * Use {@link VirtualFileUrlManager#fromUrl} or {@link com.intellij.workspaceModel.ide.VirtualFileUrls#toVirtualFileUrl toVirtualFileUrl}
+ * extension function to get an instance of this interface. 
+ * Use {@link com.intellij.workspaceModel.ide.VirtualFileUrls#getVirtualFile virtualFile} extension property to locate a 
+ * {@link com.intellij.openapi.vfs.VirtualFile VirtualFile} instance by an instance of this interface.
+ */
 public interface VirtualFileUrl {
+  /**
+   * Returns URL in the Virtual File System format.
+   */
   String getUrl();
-
-  @ApiStatus.Internal
-  List<String> getUrlSegments();
-
-  default String getUrlWithoutTrailingSlash() {
-    String url = getUrl();
-    if (!url.isEmpty() && url.charAt(url.length() -1) == '/') {
-      return url.substring(0, url.length() - 1);
-    }
-    return url;
-  }
 
   String getFileName();
 

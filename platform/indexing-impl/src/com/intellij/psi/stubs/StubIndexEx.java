@@ -2,6 +2,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.model.ModelBranch;
 import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -181,12 +182,18 @@ public abstract class StubIndexEx extends StubIndex {
       trace.stubTreesDeserializingStarted();
 
       try {
+        Collection<ModelBranch> branches = null;
         while (fileStream.hasNext()) {
           VirtualFile file = fileStream.next();
           assert file != null;
-
-          List<VirtualFile> filesInScope =
-            scope != null ? FileBasedIndexEx.filesInScopeWithBranches(scope, file) : Collections.singletonList(file);
+          List<VirtualFile> filesInScope;
+          if (scope != null) {
+            if (branches == null) branches = scope.getModelBranchesAffectingScope();
+            filesInScope = FileBasedIndexEx.filesInScopeWithBranches(scope, file, branches);
+          }
+          else {
+            filesInScope = Collections.singletonList(file);
+          }
           if (filesInScope.isEmpty()) {
             continue;
           }
@@ -323,33 +330,6 @@ public abstract class StubIndexEx extends StubIndex {
       throw e;
     }
     return true;
-  }
-
-  @Override
-  public @NotNull <Key> IdIterator getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey,
-                                                    @NotNull Key dataKey,
-                                                    final @NotNull Project project,
-                                                    final @Nullable GlobalSearchScope scope) {
-    IntSet result = getContainingIds(indexKey, dataKey, project, null, scope);
-    if (result == null) return IdIterator.EMPTY;
-    return new IdIterator() {
-      final IntIterator iterator = result.iterator();
-
-      @Override
-      public boolean hasNext() {
-        return iterator.hasNext();
-      }
-
-      @Override
-      public int next() {
-        return iterator.nextInt();
-      }
-
-      @Override
-      public int size() {
-        return result.size();
-      }
-    };
   }
 
   @Override
@@ -504,28 +484,7 @@ public abstract class StubIndexEx extends StubIndex {
     return ((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
   }
 
-  private static final class KeyAndFileId<K> {
-    @NotNull
-    private final K key;
-    private final int fileId;
-
-    private KeyAndFileId(@NotNull K key, int fileId) {
-      this.key = key;
-      this.fileId = fileId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      KeyAndFileId<?> key1 = (KeyAndFileId<?>)o;
-      return fileId == key1.fileId && Objects.equals(key, key1.key);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(key, fileId);
-    }
+  private record KeyAndFileId<K>(@NotNull K key, int fileId) {
   }
 
   @TestOnly

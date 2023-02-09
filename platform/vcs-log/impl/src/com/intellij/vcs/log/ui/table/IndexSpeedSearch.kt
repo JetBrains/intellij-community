@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table
 
 import com.intellij.openapi.project.Project
@@ -10,6 +10,8 @@ import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.ui.table.column.Author
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil
+import it.unimi.dsi.fastutil.ints.IntSet
+import it.unimi.dsi.fastutil.ints.IntSets
 import java.beans.PropertyChangeEvent
 
 open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, private val storage: VcsLogStorage, component: VcsLogGraphTable) :
@@ -40,7 +42,7 @@ open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, pr
 
     val matchedByUserCommits = dataGetter.filter(listOf<VcsLogDetailsFilter>(SimpleVcsLogUserFilter(matchedUsers)))
 
-    return MatchResult(newPattern, matchedByUserCommits, matchedUsers)
+    return MatchResult(pattern = newPattern, commitsForUsers = matchedByUserCommits, matchingUsers = matchedUsers)
   }
 
   override fun isSpeedSearchEnabled(): Boolean {
@@ -72,15 +74,15 @@ open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, pr
     return IndexedDetails(dataGetter, storage, getCommitId(row))
   }
 
-  protected fun getCommitId(row: Int) = myComponent.model.getIdAtRow(row)
+  protected fun getCommitId(row: Int): Int = myComponent.model.getIdAtRow(row)
+}
 
-  private data class MatchResult(val pattern: String,
-                                 val commitsForUsers: Set<Int> = emptySet(),
-                                 val matchingUsers: Collection<VcsUser> = emptySet())
+private data class MatchResult(@JvmField val pattern: String,
+                               @JvmField val commitsForUsers: IntSet = IntSets.emptySet(),
+                               @JvmField val matchingUsers: Collection<VcsUser> = emptySet())
 
-  private class SimpleVcsLogUserFilter(private val users: Collection<VcsUser>) : VcsLogUserFilter {
-    override fun getUsers(root: VirtualFile): Collection<VcsUser> = users
-    override fun getValuesAsText(): Collection<String> = users.map { VcsUserUtil.toExactString(it) }
-    override fun matches(details: VcsCommitMetadata): Boolean = users.contains(details.author)
-  }
+private class SimpleVcsLogUserFilter(private val users: Collection<VcsUser>) : VcsLogUserFilter {
+  override fun getUsers(root: VirtualFile): Collection<VcsUser> = users
+  override fun getValuesAsText(): Collection<String> = users.map { VcsUserUtil.toExactString(it) }
+  override fun matches(details: VcsCommitMetadata): Boolean = users.contains(details.author)
 }

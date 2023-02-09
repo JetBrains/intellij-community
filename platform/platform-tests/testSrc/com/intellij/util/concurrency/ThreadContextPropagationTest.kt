@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
 import com.intellij.concurrency.*
@@ -12,10 +12,10 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
-import org.junit.jupiter.api.extension.RegisterExtension
 import java.lang.reflect.Method
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
@@ -24,22 +24,18 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
+@ExtendWith(ThreadContextPropagationTest.Enabler::class)
 class ThreadContextPropagationTest {
 
-  companion object {
+  class Enabler : InvocationInterceptor {
 
-    @RegisterExtension
-    @JvmField
-    val propagationExtension: InvocationInterceptor = object : InvocationInterceptor {
-
-      override fun interceptTestMethod(
-        invocation: InvocationInterceptor.Invocation<Void>,
-        invocationContext: ReflectiveInvocationContext<Method>,
-        extensionContext: ExtensionContext,
-      ) {
-        Propagation.runWithContextPropagationEnabled {
-          invocation.proceed()
-        }
+    override fun interceptTestMethod(
+      invocation: InvocationInterceptor.Invocation<Void>,
+      invocationContext: ReflectiveInvocationContext<Method>,
+      extensionContext: ExtensionContext,
+    ) {
+      Propagation.runWithContextPropagationEnabled {
+        invocation.proceed()
       }
     }
   }
@@ -80,16 +76,16 @@ class ThreadContextPropagationTest {
     val service = EdtExecutorService.getInstance()
     doExecutorServiceTest(service)
     doTest {
-      service.execute(it, ModalityState.any())
+      service.execute(it)
     }
     doTest {
-      service.execute(it, ModalityState.any(), Conditions.alwaysFalse<Nothing?>())
+      service.execute(it)
     }
     doTest {
-      service.submit(it, ModalityState.any())
+      service.submit(it)
     }
     doTest {
-      service.submit(it.callable(), ModalityState.any())
+      service.submit(it.callable())
     }
   }
 

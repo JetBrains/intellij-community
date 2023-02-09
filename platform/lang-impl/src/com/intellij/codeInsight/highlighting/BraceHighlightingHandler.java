@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -125,13 +125,13 @@ public class BraceHighlightingHandler {
 
     BraceHighlightingAndNavigationContext context = BraceMatchingUtil.computeHighlightingAndNavigationContext(myEditor, myPsiFile);
     if (context != null) {
-      doHighlight(context.currentBraceOffset, context.isCaretAfterBrace);
-      offset = context.currentBraceOffset;
+      doHighlight(context.currentBraceOffset(), context.isCaretAfterBrace());
+      offset = context.currentBraceOffset();
     }
     else if (offset > 0 && offset < chars.length()) {
       // There is a possible case that there are paired braces nearby the caret position and the document contains only white
       // space symbols between them. We want to highlight such braces as well.
-      // Example: 
+      // Example:
       //     public void test() { <caret>
       //     }
       char c = chars.charAt(offset);
@@ -142,8 +142,8 @@ public class BraceHighlightingHandler {
       if (backwardNonSpaceEndOffset > 0 && backwardNonSpaceEndOffset < offset) {
         context = BraceMatchingUtil.computeHighlightingAndNavigationContext(myEditor, myPsiFile, backwardNonSpaceEndOffset);
         if (context != null) {
-          doHighlight(context.currentBraceOffset, true);
-          offset = context.currentBraceOffset;
+          doHighlight(context.currentBraceOffset(), true);
+          offset = context.currentBraceOffset();
           searchForward = false;
         }
       }
@@ -154,8 +154,8 @@ public class BraceHighlightingHandler {
         if (nextNonSpaceCharOffset > offset) {
           context = BraceMatchingUtil.computeHighlightingAndNavigationContext(myEditor, myPsiFile, nextNonSpaceCharOffset);
           if (context != null) {
-            doHighlight(context.currentBraceOffset, true);
-            offset = context.currentBraceOffset;
+            doHighlight(context.currentBraceOffset(), true);
+            offset = context.currentBraceOffset();
           }
         }
       }

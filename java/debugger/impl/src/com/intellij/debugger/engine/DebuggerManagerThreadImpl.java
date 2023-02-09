@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -24,9 +24,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author lex
- */
 public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerCommandImpl> implements DebuggerManagerThread, Disposable {
   private static final Logger LOG = Logger.getInstance(DebuggerManagerThreadImpl.class);
   private static final ThreadLocal<LinkedList<DebuggerCommandImpl>> myCurrentCommands = ThreadLocal.withInitial(LinkedList::new);
@@ -220,19 +217,18 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
 
   @Override
   public void invokeCommand(final DebuggerCommand command) {
-    if(command instanceof SuspendContextCommand) {
-      SuspendContextCommand suspendContextCommand = (SuspendContextCommand)command;
+    if (command instanceof SuspendContextCommand suspendContextCommand) {
       schedule(new SuspendContextCommandImpl((SuspendContextImpl)suspendContextCommand.getSuspendContext()) {
-          @Override
-          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-            command.action();
-          }
+        @Override
+        public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+          command.action();
+        }
 
-          @Override
-          protected void commandCancelled() {
-            command.commandCancelled();
-          }
-        });
+        @Override
+        protected void commandCancelled() {
+          command.commandCancelled();
+        }
+      });
     }
     else {
       schedule(new DebuggerCommandImpl() {
@@ -247,7 +243,6 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
         }
       });
     }
-
   }
 
   public boolean isIdle() {

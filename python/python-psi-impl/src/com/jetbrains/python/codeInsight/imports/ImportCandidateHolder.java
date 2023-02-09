@@ -25,8 +25,6 @@ import java.util.List;
  *   <li>Candidates not yet imported. In this case {@link #getPath()} must return not {@code null}.</li>
  * </ul>
  * <p/>
- *
- * @author dcheryasov
  */
 public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
   private static final Logger LOG = Logger.getInstance(ImportCandidateHolder.class);
@@ -147,9 +145,8 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
         sb.append(")");
       }
     }
-    if (parent instanceof PyFromImportStatement) {
+    if (parent instanceof PyFromImportStatement fromImportStatement) {
       sb.append(" from ");
-      final PyFromImportStatement fromImportStatement = (PyFromImportStatement)parent;
       sb.append(StringUtil.repeat(".", fromImportStatement.getRelativeLevel()));
       final PyReferenceExpression source = fromImportStatement.getImportSource();
       if (source != null) {

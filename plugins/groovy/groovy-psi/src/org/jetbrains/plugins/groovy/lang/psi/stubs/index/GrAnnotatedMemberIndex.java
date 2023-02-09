@@ -7,9 +7,6 @@ import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 
-/**
- * @author ilyas
- */
 public class GrAnnotatedMemberIndex extends StringStubIndexExtension<PsiElement> {
   public static final StubIndexKey<String, PsiElement> KEY = StubIndexKey.createIndexKey("gr.annot.members");
 

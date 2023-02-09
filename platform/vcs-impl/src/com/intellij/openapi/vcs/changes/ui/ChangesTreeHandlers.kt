@@ -7,49 +7,40 @@ import com.intellij.util.ui.tree.TreeUtil
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.VK_ENTER
-import java.awt.event.KeyListener
 import java.awt.event.MouseEvent
-import kotlin.properties.Delegates.observable
 
 private fun ChangesTree.isLeafSelected(): Boolean = lastSelectedPathComponent?.let { model.isLeaf(it) } == true
 
 private class ChangesTreeHandlers(private val tree: ChangesTree) {
-  private var enterKeyListener: KeyListener? = null
-  private var doubleClickListener: DoubleClickListener? = null
-
-  var enterKeyHandler by observable<Processor<in KeyEvent>?>(null) { _, oldValue, newValue ->
-    if (oldValue == newValue) return@observable
-
-    if (oldValue == null) enterKeyListener = createEnterListener().also { tree.addKeyListener(it) }
-    if (newValue == null) enterKeyListener?.let { tree.removeKeyListener(it) }?.also { enterKeyListener = null }
+  init {
+    tree.addKeyListener(MyEnterListener())
+    MyDoubleClickListener().installOn(tree)
   }
 
-  var doubleClickHandler by observable<Processor<in MouseEvent>?>(null) { _, oldValue, newValue ->
-    if (oldValue == newValue) return@observable
+  var enterKeyHandler: Processor<in KeyEvent>? = null
+  var doubleClickHandler: Processor<in MouseEvent>? = null
 
-    if (oldValue == null) doubleClickListener = createDoubleClickListener().also { it.installOn(tree) }
-    if (newValue == null) doubleClickListener?.uninstall(tree)?.also { doubleClickListener = null }
+  private inner class MyEnterListener : KeyAdapter() {
+    override fun keyPressed(e: KeyEvent) {
+      val handler = enterKeyHandler ?: return
+
+      if (VK_ENTER != e.keyCode || e.modifiers != 0) return
+      if (tree.selectionCount <= 1 && !tree.isLeafSelected()) return
+
+      if (handler.process(e)) e.consume()
+    }
   }
 
-  private fun createEnterListener(): KeyListener =
-    object : KeyAdapter() {
-      override fun keyPressed(e: KeyEvent) {
-        if (VK_ENTER != e.keyCode || e.modifiers != 0) return
-        if (tree.selectionCount <= 1 && !tree.isLeafSelected()) return
+  private inner class MyDoubleClickListener : DoubleClickListener() {
+    override fun onDoubleClick(e: MouseEvent): Boolean {
+      val handler = doubleClickHandler ?: return false
 
-        if (enterKeyHandler?.process(e) == true) e.consume()
-      }
+      val clickPath = TreeUtil.getPathForLocation(tree, e.x, e.y)
+      if (clickPath == null) return false
+
+      if (tree.getPathIfCheckBoxClicked(e.point) != null) return false
+
+      return handler.process(e)
     }
-
-  private fun createDoubleClickListener(): DoubleClickListener =
-    object : DoubleClickListener() {
-      override fun onDoubleClick(e: MouseEvent): Boolean {
-        val clickPath = TreeUtil.getPathForLocation(tree, e.x, e.y)
-        if (clickPath == null) return false
-
-        if (tree.getPathIfCheckBoxClicked(e.point) != null) return false
-
-        return doubleClickHandler?.process(e) == true
-      }
-    }
+  }
 }

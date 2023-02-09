@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class BreakpointManager
@@ -223,8 +223,7 @@ public class BreakpointManager {
     ApplicationManager.getApplication().assertIsDispatchThread();
     XLineBreakpoint xBreakpoint = addXLineBreakpoint(JavaFieldBreakpointType.class, document, lineIndex);
     Breakpoint javaBreakpoint = getJavaBreakpoint(xBreakpoint);
-    if (javaBreakpoint instanceof FieldBreakpoint) {
-      FieldBreakpoint fieldBreakpoint = (FieldBreakpoint)javaBreakpoint;
+    if (javaBreakpoint instanceof FieldBreakpoint fieldBreakpoint) {
       fieldBreakpoint.setFieldName(fieldName);
       addBreakpoint(javaBreakpoint);
       return fieldBreakpoint;
@@ -239,9 +238,7 @@ public class BreakpointManager {
     return WriteAction.compute(() -> {
       XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint = XDebuggerManager.getInstance(myProject).getBreakpointManager()
         .addBreakpoint(type, new JavaExceptionBreakpointProperties(exceptionClassName, packageName));
-      Breakpoint javaBreakpoint = getJavaBreakpoint(xBreakpoint);
-      if (javaBreakpoint instanceof ExceptionBreakpoint) {
-        ExceptionBreakpoint exceptionBreakpoint = (ExceptionBreakpoint)javaBreakpoint;
+      if (getJavaBreakpoint(xBreakpoint) instanceof ExceptionBreakpoint exceptionBreakpoint) {
         exceptionBreakpoint.setQualifiedName(exceptionClassName);
         exceptionBreakpoint.setPackageName(packageName);
         addBreakpoint(exceptionBreakpoint);
@@ -257,15 +254,14 @@ public class BreakpointManager {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     XLineBreakpoint xBreakpoint = addXLineBreakpoint(JavaMethodBreakpointType.class, document, lineIndex);
-    Breakpoint javaBreakpoint = getJavaBreakpoint(xBreakpoint);
-    if (javaBreakpoint instanceof MethodBreakpoint) {
-      addBreakpoint(javaBreakpoint);
-      return (MethodBreakpoint)javaBreakpoint;
+    if (getJavaBreakpoint(xBreakpoint) instanceof MethodBreakpoint methodBreakpoint) {
+      addBreakpoint(methodBreakpoint);
+      return methodBreakpoint;
     }
     return null;
   }
 
-  private <B extends XBreakpoint<?>> XLineBreakpoint addXLineBreakpoint(Class<? extends XBreakpointType<B,?>> typeCls, Document document, final int lineIndex) {
+  private <B extends XBreakpoint<?>> XLineBreakpoint addXLineBreakpoint(Class<? extends XBreakpointType<B, ?>> typeCls, Document document, final int lineIndex) {
     final XBreakpointType<B, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     return WriteAction.compute(() -> XDebuggerManager.getInstance(myProject).getBreakpointManager()

@@ -5,6 +5,7 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
+import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,14 +17,19 @@ import java.util.Set;
 
 public class FilteringTreeModel extends StructureTreeModel<FilteringTreeStructure> {
 
+  public static FilteringTreeModel createModel(AbstractTreeStructure structure, @NotNull ElementFilter<?> filter, @NotNull Invoker invoker, @NotNull Disposable parent) {
+    FilteringTreeStructure filteringTreeStructure = new FilteringTreeStructure(filter, structure);
+    return new FilteringTreeModel(filteringTreeStructure, invoker, parent);
+  }
+
   public static FilteringTreeModel createModel(AbstractTreeStructure structure, @NotNull ElementFilter<?> filter, @NotNull Disposable parent) {
     FilteringTreeStructure filteringTreeStructure = new FilteringTreeStructure(filter, structure);
-    return new FilteringTreeModel(filteringTreeStructure, parent);
+    return new FilteringTreeModel(filteringTreeStructure, Invoker.forBackgroundThreadWithReadAction(parent), parent);
   }
 
   private FilteringTreeModel(@NotNull FilteringTreeStructure structure,
-                            @NotNull Disposable parent) {
-    super(structure, parent);
+                             @NotNull Invoker invoker, @NotNull Disposable parent) {
+    super(structure, null, invoker, parent);
   }
 
   public void updateTree(@NotNull JTree tree, boolean expand, @Nullable Object preferredSelection) {

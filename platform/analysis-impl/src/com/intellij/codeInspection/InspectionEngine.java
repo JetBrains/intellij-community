@@ -283,7 +283,7 @@ public final class InspectionEngine {
         boolean inspectionWasRun = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
         long inspectionDuration = TimeoutUtil.getDurationMillis(inspectionStartTime);
 
-        boolean needToReportStatsToQodana = (inspectionWasRun && !isOnTheFly);
+        boolean needToReportStatsToQodana = inspectionWasRun && !isOnTheFly;
         if (needToReportStatsToQodana) {
           publisher.inspectionFinished(inspectionDuration, Thread.currentThread().getId(), holder.getResultCount(), toolWrapper,
                                        InspectListener.InspectionKind.LOCAL, file, file.getProject());
@@ -326,8 +326,7 @@ public final class InspectionEngine {
         }
         else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
           GlobalInspectionTool globalTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();
-          if (globalTool instanceof GlobalSimpleInspectionTool) {
-            GlobalSimpleInspectionTool simpleTool = (GlobalSimpleInspectionTool)globalTool;
+          if (globalTool instanceof GlobalSimpleInspectionTool simpleTool) {
             ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, file, false);
             ProblemDescriptionsProcessor collectProcessor = new ProblemDescriptionsProcessor() {
               @Override
@@ -414,12 +413,8 @@ public final class InspectionEngine {
       boolean applyToDialects = tool.applyToDialects();
       Map<String, Boolean> map = applyToDialects ? resultsWithDialects : resultsNoDialects;
       return map.computeIfAbsent(language, __ ->
-        ContainerUtil.intersects(elementDialectIds, getDialectIdsSpecifiedForTool(language, applyToDialects)));
+        ToolLanguageUtil.isToolLanguageOneOf(elementDialectIds, language, applyToDialects));
     });
-  }
-
-  private static @NotNull Set<String> getDialectIdsSpecifiedForTool(@NotNull String langId, boolean applyToDialects) {
-    return ToolLanguageUtil.getAllMatchingLanguages(langId, applyToDialects);
   }
 
   public static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> inside, @NotNull List<? extends PsiElement> outside) {

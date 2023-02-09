@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.enhancedSwitch;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -16,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.java.JavaBundle.message;
 
-/**
- * @author Pavel.Dolgov
- */
 public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspectionTool {
   @NotNull
   @Override
@@ -36,8 +33,7 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
           PsiCodeBlock codeBlock = ((PsiBlockStatement)body).getCodeBlock();
           PsiStatement bodyStatement = getSingleStatement(codeBlock);
 
-          if (bodyStatement instanceof PsiYieldStatement) {
-            PsiYieldStatement yieldStatement = (PsiYieldStatement)bodyStatement;
+          if (bodyStatement instanceof PsiYieldStatement yieldStatement) {
             if (yieldStatement.getExpression() != null &&
                 PsiTreeUtil.getParentOfType(yieldStatement, PsiSwitchBlock.class) instanceof PsiSwitchExpression) {
               registerProblem(bodyStatement.getFirstChild());

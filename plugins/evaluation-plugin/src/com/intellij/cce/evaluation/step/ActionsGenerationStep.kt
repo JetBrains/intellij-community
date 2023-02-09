@@ -13,6 +13,7 @@ import com.intellij.cce.visitor.CodeFragmentBuilder
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.cce.workspace.info.FileErrorInfo
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -27,7 +28,7 @@ class ActionsGenerationStep(
   override val description: String = "Generating actions by selected files"
 
   override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
-    val filesForEvaluation = FilesHelper.getFilesOfLanguage(project, config.evaluationRoots, language)
+    val filesForEvaluation = ReadAction.compute<List<VirtualFile>, Throwable> { FilesHelper.getFilesOfLanguage(project, config.evaluationRoots, language) }
     generateActions(workspace, language, filesForEvaluation, config.strategy, evaluationRootInfo, progress)
     return workspace
   }

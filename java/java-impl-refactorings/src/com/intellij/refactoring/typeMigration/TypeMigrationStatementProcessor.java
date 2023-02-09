@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
@@ -397,7 +397,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   protected boolean tryFindConversionIfOperandIsNull(TypeView nullCandidate, TypeView comparingType, PsiExpression comparingExpr) {
-    if (nullCandidate.getType() == PsiType.NULL && comparingType.isChanged()) {
+    if (nullCandidate.getType() == PsiTypes.nullType() && comparingType.isChanged()) {
       Pair<PsiType, PsiType> typePair = comparingType.getTypePair();
       final TypeConversionDescriptorBase
         conversion = myLabeler.getRules().findConversion(typePair.getFirst(), typePair.getSecond(), null, comparingExpr, false, myLabeler);
@@ -434,7 +434,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
 
   private void checkIndexExpression(final PsiExpression indexExpression) {
     final PsiType indexType = myTypeEvaluator.evaluateType(indexExpression);
-    if (indexType != null && !TypeConversionUtil.isAssignable(PsiType.INT, indexType)) {
+    if (indexType != null && !TypeConversionUtil.isAssignable(PsiTypes.intType(), indexType)) {
       myLabeler.markFailedConversion(Pair.create(indexExpression.getType(), indexType), indexExpression);
     }
   }
@@ -581,8 +581,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         @Override
         public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
           final PsiElement parent = expression.getParent();
-          if (parent instanceof PsiLocalVariable) {
-            final PsiLocalVariable var = (PsiLocalVariable)parent;
+          if (parent instanceof PsiLocalVariable var) {
             final PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(var, PsiDeclarationStatement.class);
             if (decl == null) return null;
             final Project project = var.getProject();
@@ -595,8 +594,8 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
               var.delete();
             }
           }
-          else if (parent instanceof PsiAssignmentExpression) {
-            final PsiExpression rExpression = ((PsiAssignmentExpression)parent).getRExpression();
+          else if (parent instanceof PsiAssignmentExpression assignment) {
+            final PsiExpression rExpression = assignment.getRExpression();
             return rExpression == null ? null : (PsiExpression)parent.replace(rExpression);
           }
           return null;
@@ -609,7 +608,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
 
 
   private static boolean canBeVariableType(@NotNull PsiType type) {
-    return !type.getDeepComponentType().equals(PsiType.VOID);
+    return !type.getDeepComponentType().equals(PsiTypes.voidType());
   }
 
   private static PsiType adjustMigrationTypeIfGenericArrayCreation(PsiType migrationType, PsiExpression expression) {
@@ -697,8 +696,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     final PsiExpression lExpression = expression.getLExpression();
     if (lExpression instanceof PsiReferenceExpression) {
       final PsiElement resolved = ((PsiReferenceExpression)lExpression).resolve();
-      if (resolved instanceof PsiField) {
-        PsiField field = (PsiField) resolved;
+      if (resolved instanceof PsiField field) {
         final NavigatablePsiElement containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, PsiLambdaExpression.class);
         if (containingMethod instanceof PsiMethod) {
           final PsiMethod setter = PropertyUtilBase
@@ -715,8 +713,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   private static boolean isGetter(PsiExpression returnValue, PsiElement containingMethod) {
     if (returnValue instanceof PsiReferenceExpression) {
       final PsiElement resolved = ((PsiReferenceExpression)returnValue).resolve();
-      if (resolved instanceof PsiField) {
-        PsiField field = (PsiField)resolved;
+      if (resolved instanceof PsiField field) {
         final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
         final PsiMethod[] getters = GetterSetterPrototypeProvider.findGetters(field.getContainingClass(), field.getName(), isStatic);
         if (getters != null) {

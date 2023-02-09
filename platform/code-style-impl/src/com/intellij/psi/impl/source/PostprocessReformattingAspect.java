@@ -19,6 +19,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -53,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 public final class PostprocessReformattingAspect implements PomModelAspect {
   private static final Logger LOG = Logger.getInstance(PostprocessReformattingAspect.class);
@@ -157,7 +159,7 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
   private void decrementPostponedCounter() {
     Application application = ApplicationManager.getApplication();
     if (--getContext().myPostponedCounter == 0) {
-      if (application.isWriteAccessAllowed() || !application.isWriteThread()) {
+      if (application.isWriteAccessAllowed() || !application.isWriteIntentLockAcquired()) {
         doPostponedFormatting();
       }
       else {
@@ -271,6 +273,16 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
 
   public boolean isViewProviderLocked(@NotNull FileViewProvider fileViewProvider) {
     return getContext().myReformatElements.containsKey(fileViewProvider);
+  }
+
+  public boolean isDocumentLocked(@NotNull Document document) {
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    if (file != null && file.isValid()) {
+      for (FileViewProvider provider : getContext().myReformatElements.keySet()) {
+        if (file.equals(provider.getVirtualFile())) return true;
+      }
+    }
+    return false;
   }
 
   public static void assertDocumentChangeIsAllowed(@NotNull PsiFile file) {
@@ -553,7 +565,7 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
     if (currentTask instanceof ReformatWithHeadingWhitespaceTask && currentTask.getStartOffset() == currentTask.getEndOffset()) {
       return false;
     }
-    // reindent actions can't be be stuck at all
+    // reindent actions can't be stuck at all
     return !(currentTask instanceof ReindentTask);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.util.Comparing;
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 
 public class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements Closeable {
@@ -80,18 +81,25 @@ public class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements
       var cached = myValueOfCache.getEntry(idx);
       if (cached != null) return cached.value.get();
     }
-    SubIndexerVersion result = null;
-    for (SubIndexerVersion version : myMap.getAllKeysWithExistingMapping()) {
-      Integer versionIdx = myMap.get(version);
-      if (Comparing.equal(idx, versionIdx)) {
-        result = version;
-        break;
+    Ref<SubIndexerVersion> ref = new Ref<>();
+    myMap.processKeysWithExistingMapping(version -> {
+      Integer versionIdx;
+      try {
+        versionIdx = myMap.get(version);
       }
-    }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+      if (Comparing.equal(idx, versionIdx)) {
+        ref.set(version);
+        return false;
+      }
+      return true;
+    });
     synchronized (this) {
-      myValueOfCache.putEntry(new IntObjectLRUMap.MapEntry<>(idx, Ref.create(result)));
+      myValueOfCache.putEntry(new IntObjectLRUMap.MapEntry<>(idx, ref));
     }
-    return result;
+    return ref.get();
   }
 
   private void init() throws IOException {

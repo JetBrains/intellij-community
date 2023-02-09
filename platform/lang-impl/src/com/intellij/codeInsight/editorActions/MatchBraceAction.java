@@ -48,7 +48,7 @@ public class MatchBraceAction extends EditorAction {
     }
 
     /**
-     * Attempts to find closest target offset for the caret. Uses {@link BraceMatcher} and {@link CodeBlockSupportHandler}
+     * Attempts to find the closest target offset for the caret. Uses {@link BraceMatcher} and {@link CodeBlockSupportHandler}
      *
      * @return target caret offset or -1 if uncomputable.
      */
@@ -78,7 +78,7 @@ public class MatchBraceAction extends EditorAction {
      */
     private static int getOffsetFromBraceMatcher(@NotNull Editor editor, @NotNull PsiFile file) {
       BraceHighlightingAndNavigationContext matchingContext = BraceMatchingUtil.computeHighlightingAndNavigationContext(editor, file);
-      return matchingContext != null ? matchingContext.navigationOffset : tryFindPreviousUnclosedOpeningBraceOffset(editor, file);
+      return matchingContext != null ? matchingContext.navigationOffset() : tryFindPreviousUnclosedOpeningBraceOffset(editor, file);
     }
 
     /**

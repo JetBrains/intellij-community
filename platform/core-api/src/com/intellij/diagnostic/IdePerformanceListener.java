@@ -2,7 +2,6 @@
 package com.intellij.diagnostic;
 
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,21 +19,11 @@ public interface IdePerformanceListener {
 
   /**
    * Invoked when IDE has detected that the UI hasn't responded for some time (5 seconds by default)
-   * @deprecated use {{@link #uiFreezeStarted(File)}}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  default void uiFreezeStarted() {
-  }
-
-  /**
-   * Invoked when IDE has detected that the UI hasn't responded for some time (5 seconds by default)
    *
    * @param reportDir folder where all freeze report data is collected (may be temporary,
    *                  the final folder will be provided in {@link #uiFreezeRecorded(long, File)})
    */
   default void uiFreezeStarted(@NotNull File reportDir) {
-    uiFreezeStarted();
   }
 
   /**

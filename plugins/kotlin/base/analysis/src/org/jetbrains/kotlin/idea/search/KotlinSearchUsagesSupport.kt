@@ -5,16 +5,19 @@ package org.jetbrains.kotlin.idea.search
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.ImportPath
+import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 
 interface KotlinSearchUsagesSupport {
 
@@ -24,15 +27,14 @@ interface KotlinSearchUsagesSupport {
 
     companion object {
         fun getInstance(project: Project): KotlinSearchUsagesSupport = project.service()
+    }
 
+    object SearchUtils { // not a companion object to load less bytecode simultaneously with KotlinSearchUsagesSupport
         val KtParameter.dataClassComponentMethodName: String?
-            get() = getInstance(project).dataClassComponentMethodName(this)
-
-        val KtExpression.hasType: Boolean
-            get() = getInstance(project).hasType(this)
-
-        val PsiClass.isSamInterface: Boolean
-            get() = getInstance(project).isSamInterface(this)
+            get() {
+                if (!hasValOrVar() || containingClassOrObject?.hasModifier(KtTokens.DATA_KEYWORD) != true) return null
+                return DataClassResolver.createComponentName(parameterIndex() + 1).asString()
+            }
 
         fun <T : PsiNamedElement> List<T>.filterDataClassComponentsIfDisabled(kotlinOptions: KotlinReferencesSearchOptions): List<T> {
             fun PsiNamedElement.isComponentElement(): Boolean {
@@ -51,8 +53,14 @@ interface KotlinSearchUsagesSupport {
             return if (kotlinOptions.searchForComponentConventions) this else filter { !it.isComponentElement() }
         }
 
+        fun PsiNamedElement.getClassNameForCompanionObject(): String? =
+            getInstance(project).getClassNameToSearch(this)
+
         fun PsiReference.isCallableOverrideUsage(declaration: KtNamedDeclaration): Boolean =
             getInstance(declaration.project).isCallableOverrideUsage(this, declaration)
+
+        fun PsiReference.isInvokeOfCompanionObject(declaration: KtNamedDeclaration): Boolean =
+            getInstance(declaration.project).isInvokeOfCompanionObject(this, declaration)
 
         fun PsiReference.isUsageInContainingDeclaration(declaration: KtNamedDeclaration): Boolean =
             getInstance(declaration.project).isUsageInContainingDeclaration(this, declaration)
@@ -83,25 +91,12 @@ interface KotlinSearchUsagesSupport {
         fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
             getInstance(method.project).findDeepestSuperMethodsNoWrapping(method)
 
-        fun findTypeAliasByShortName(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> =
-            getInstance(project).findTypeAliasByShortName(shortName, project, scope)
-
-        fun isInProjectSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean = false): Boolean =
-            getInstance(element.project).isInProjectSource(element, includeScriptsOutsideSourceRoots)
-
         fun KtDeclaration.isOverridable(): Boolean =
             getInstance(project).isOverridable(this)
 
+        @JvmStatic
         fun KtClass.isInheritable(): Boolean =
             getInstance(project).isInheritable(this)
-
-        @NlsSafe
-        fun formatJavaOrLightMethod(method: PsiMethod): String =
-            getInstance(method.project).formatJavaOrLightMethod(method)
-
-        @NlsSafe
-        fun formatClass(classOrObject: KtClassOrObject): String =
-            getInstance(classOrObject.project).formatClass(classOrObject)
 
         fun KtDeclaration.expectedDeclarationIfAny(): KtDeclaration? =
             getInstance(project).expectedDeclarationIfAny(this)
@@ -122,13 +117,9 @@ interface KotlinSearchUsagesSupport {
             getInstance(psiMethod.project).createConstructorHandle(psiMethod)
     }
 
+    fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean
+
     fun actualsForExpected(declaration: KtDeclaration, module: Module? = null): Set<KtDeclaration>
-
-    fun dataClassComponentMethodName(element: KtParameter): String?
-
-    fun hasType(element: KtExpression): Boolean
-
-    fun isSamInterface(psiClass: PsiClass): Boolean
 
     fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean
 
@@ -165,19 +156,9 @@ interface KotlinSearchUsagesSupport {
 
     fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement>
 
-    fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement>
-
-    fun findTypeAliasByShortName(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias>
-
-    fun isInProjectSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean = false): Boolean
-
     fun isOverridable(declaration: KtDeclaration): Boolean
 
     fun isInheritable(ktClass: KtClass): Boolean
-
-    fun formatJavaOrLightMethod(method: PsiMethod): String
-
-    fun formatClass(classOrObject: KtClassOrObject): String
 
     fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration?
 
@@ -188,4 +169,12 @@ interface KotlinSearchUsagesSupport {
     fun createConstructorHandle(ktDeclaration: KtDeclaration): ConstructorCallHandle
 
     fun createConstructorHandle(psiMethod: PsiMethod): ConstructorCallHandle
+
+    /**
+     * Name for companion object or for invoke located in class without constructor
+     */
+    fun getClassNameToSearch(namedElement : PsiNamedElement): String? =
+        (namedElement is KtObjectDeclaration && namedElement.isCompanion())
+            .ifTrue { namedElement.getNonStrictParentOfType<KtClass>()?.name }
+
 }

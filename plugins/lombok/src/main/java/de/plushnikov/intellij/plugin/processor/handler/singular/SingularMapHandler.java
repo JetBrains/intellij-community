@@ -9,8 +9,8 @@ import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 class SingularMapHandler extends AbstractSingularHandler {
 
@@ -41,7 +41,7 @@ class SingularMapHandler extends AbstractSingularHandler {
     final PsiType valueType = getValueType(info.getManager(), info.getFieldType());
     final PsiType builderFieldValueType = getBuilderFieldType(valueType, info.getProject());
 
-    return Arrays.asList(
+    return List.of(
       new LombokLightFieldBuilder(info.getManager(), info.getFieldName() + LOMBOK_KEY, builderFieldKeyType)
         .withContainingClass(info.getBuilderClass())
         .withModifier(PsiModifier.PRIVATE)

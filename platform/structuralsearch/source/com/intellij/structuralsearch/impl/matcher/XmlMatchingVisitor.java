@@ -14,9 +14,6 @@ import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIter
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author Eugene.Kudelevsky
-*/
 public class XmlMatchingVisitor extends XmlElementVisitor {
   private final GlobalMatchingVisitor myMatchingVisitor;
 
@@ -113,8 +110,7 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
   public void visitXmlComment(@NotNull XmlComment comment) {
     super.visitXmlComment(comment);
     final PsiElement element = myMatchingVisitor.getElement();
-    if (!(element instanceof XmlComment)) return;
-    final XmlComment other = (XmlComment)element;
+    if (!(element instanceof XmlComment other)) return;
     final XmlToken text = XmlUtil.getTokenOfType(comment, XmlTokenType.XML_COMMENT_CHARACTERS);
     assert text != null;
     final CompiledPattern pattern = myMatchingVisitor.getMatchContext().getPattern();

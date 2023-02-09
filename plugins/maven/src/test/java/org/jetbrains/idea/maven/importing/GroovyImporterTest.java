@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -28,18 +29,19 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testConfiguringFacetWithoutLibrary() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.groovy.maven</groupId>" +
-                  "      <artifactId>gmaven-plugin</artifactId>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.codehaus.groovy.maven</groupId>
+                          <artifactId>gmaven-plugin</artifactId>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertModules("project");
 
@@ -48,26 +50,26 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testConfiguringFacetWithLibrary() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>org.codehaus.groovy.maven.runtime</groupId>" +
-                  "    <artifactId>gmaven-runtime-default</artifactId>" +
-                  "    <version>1.0-rc-1</version>" +
-                  "  </dependency>" +
-                  "</dependencies>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.groovy.maven</groupId>" +
-                  "      <artifactId>gmaven-plugin</artifactId>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>org.codehaus.groovy.maven.runtime</groupId>
+                        <artifactId>gmaven-runtime-default</artifactId>
+                        <version>1.0-rc-1</version>
+                      </dependency>
+                    </dependencies>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.codehaus.groovy.maven</groupId>
+                          <artifactId>gmaven-plugin</artifactId>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertModules("project");
 
@@ -87,18 +89,19 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                            "src/test/groovy");
     }
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.groovy.maven</groupId>" +
-                  "      <artifactId>gmaven-plugin</artifactId>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.codehaus.groovy.maven</groupId>
+                          <artifactId>gmaven-plugin</artifactId>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertModules("project");
 
@@ -120,18 +123,19 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                            "src/test/groovy");
     }
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.gmaven</groupId>" +
-                  "      <artifactId>groovy-maven-plugin</artifactId>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.codehaus.gmaven</groupId>
+                          <artifactId>groovy-maven-plugin</artifactId>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertModules("project");
 
@@ -153,18 +157,19 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                            "src/test/groovy");
     }
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.gmavenplus</groupId>" +
-                  "      <artifactId>gmavenplus-plugin</artifactId>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.codehaus.gmavenplus</groupId>
+                          <artifactId>gmavenplus-plugin</artifactId>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertModules("project");
 
@@ -332,52 +337,53 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                            "src/test-foo2");
     }
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.groovy.maven</groupId>" +
-                  "      <artifactId>gmaven-plugin</artifactId>" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <id>one</id>" +
-                  "          <goals>" +
-                  "            <goal>compile</goal>" +
-                  "          </goals>" +
-                  "          <configuration>" +
-                  "            <sources>" +
-                  "              <fileset>" +
-                  "                <directory>${pom.basedir}/src/foo1</directory>" +
-                  "              </fileset>" +
-                  "              <fileset>" +
-                  "                <directory>${pom.basedir}/src/foo2</directory>" +
-                  "              </fileset>" +
-                  "            </sources>" +
-                  "          </configuration>" +
-                  "        </execution>" +
-                  "        <execution>" +
-                  "          <id>two</id>" +
-                  "          <goals>" +
-                  "            <goal>testCompile</goal>" +
-                  "          </goals>" +
-                  "          <configuration>" +
-                  "            <sources>" +
-                  "              <fileset>" +
-                  "                <directory>${pom.basedir}/src/test-foo1</directory>" +
-                  "              </fileset>" +
-                  "              <fileset>" +
-                  "                <directory>${pom.basedir}/src/test-foo2</directory>" +
-                  "              </fileset>" +
-                  "            </sources>" +
-                  "          </configuration>" +
-                  "        </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.codehaus.groovy.maven</groupId>
+                          <artifactId>gmaven-plugin</artifactId>
+                          <executions>
+                            <execution>
+                              <id>one</id>
+                              <goals>
+                                <goal>compile</goal>
+                              </goals>
+                              <configuration>
+                                <sources>
+                                  <fileset>
+                                    <directory>${pom.basedir}/src/foo1</directory>
+                                  </fileset>
+                                  <fileset>
+                                    <directory>${pom.basedir}/src/foo2</directory>
+                                  </fileset>
+                                </sources>
+                              </configuration>
+                            </execution>
+                            <execution>
+                              <id>two</id>
+                              <goals>
+                                <goal>testCompile</goal>
+                              </goals>
+                              <configuration>
+                                <sources>
+                                  <fileset>
+                                    <directory>${pom.basedir}/src/test-foo1</directory>
+                                  </fileset>
+                                  <fileset>
+                                    <directory>${pom.basedir}/src/test-foo2</directory>
+                                  </fileset>
+                                </sources>
+                              </configuration>
+                            </execution>
+                          </executions>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertModules("project");
 
@@ -405,52 +411,53 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                            "src/test-foo2");
     }
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.gmavenplus</groupId>" +
-                  "      <artifactId>gmavenplus-plugin</artifactId>" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <id>one</id>" +
-                  "          <goals>" +
-                  "            <goal>compile</goal>" +
-                  "          </goals>" +
-                  "          <configuration>" +
-                  "            <sources>" +
-                  "              <fileset>" +
-                  "                <directory>${pom.basedir}/src/foo1</directory>" +
-                  "              </fileset>" +
-                  "              <fileset>" +
-                  "                <directory>${pom.basedir}/src/foo2</directory>" +
-                  "              </fileset>" +
-                  "            </sources>" +
-                  "          </configuration>" +
-                  "        </execution>" +
-                  "        <execution>" +
-                  "          <id>two</id>" +
-                  "          <goals>" +
-                  "            <goal>testCompile</goal>" +
-                  "          </goals>" +
-                  "          <configuration>" +
-                  "            <sources>" +
-                  "              <fileset>" +
-                  "                <directory>${pom.basedir}/src/test-foo1</directory>" +
-                  "              </fileset>" +
-                  "              <fileset>" +
-                  "                <directory>${pom.basedir}/src/test-foo2</directory>" +
-                  "              </fileset>" +
-                  "            </sources>" +
-                  "          </configuration>" +
-                  "        </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.codehaus.gmavenplus</groupId>
+                          <artifactId>gmavenplus-plugin</artifactId>
+                          <executions>
+                            <execution>
+                              <id>one</id>
+                              <goals>
+                                <goal>compile</goal>
+                              </goals>
+                              <configuration>
+                                <sources>
+                                  <fileset>
+                                    <directory>${pom.basedir}/src/foo1</directory>
+                                  </fileset>
+                                  <fileset>
+                                    <directory>${pom.basedir}/src/foo2</directory>
+                                  </fileset>
+                                </sources>
+                              </configuration>
+                            </execution>
+                            <execution>
+                              <id>two</id>
+                              <goals>
+                                <goal>testCompile</goal>
+                              </goals>
+                              <configuration>
+                                <sources>
+                                  <fileset>
+                                    <directory>${pom.basedir}/src/test-foo1</directory>
+                                  </fileset>
+                                  <fileset>
+                                    <directory>${pom.basedir}/src/test-foo2</directory>
+                                  </fileset>
+                                </sources>
+                              </configuration>
+                            </execution>
+                          </executions>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertModules("project");
 
@@ -473,46 +480,47 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                            "src/test-foo");
     }
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.groovy.maven</groupId>" +
-                  "      <artifactId>gmaven-plugin</artifactId>" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <id>one</id>" +
-                  "          <goals>" +
-                  "            <goal>compile</goal>" +
-                  "          </goals>" +
-                  "          <configuration>" +
-                  "            <sources>" +
-                  "              <fileset>" +
-                  "                <directory>src/foo</directory>" +
-                  "              </fileset>" +
-                  "            </sources>" +
-                  "          </configuration>" +
-                  "        </execution>" +
-                  "        <execution>" +
-                  "          <id>two</id>" +
-                  "          <goals>" +
-                  "            <goal>testCompile</goal>" +
-                  "          </goals>" +
-                  "          <configuration>" +
-                  "            <sources>" +
-                  "              <fileset>" +
-                  "                <directory>src/test-foo</directory>" +
-                  "              </fileset>" +
-                  "            </sources>" +
-                  "          </configuration>" +
-                  "        </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.codehaus.groovy.maven</groupId>
+                          <artifactId>gmaven-plugin</artifactId>
+                          <executions>
+                            <execution>
+                              <id>one</id>
+                              <goals>
+                                <goal>compile</goal>
+                              </goals>
+                              <configuration>
+                                <sources>
+                                  <fileset>
+                                    <directory>src/foo</directory>
+                                  </fileset>
+                                </sources>
+                              </configuration>
+                            </execution>
+                            <execution>
+                              <id>two</id>
+                              <goals>
+                                <goal>testCompile</goal>
+                              </goals>
+                              <configuration>
+                                <sources>
+                                  <fileset>
+                                    <directory>src/test-foo</directory>
+                                  </fileset>
+                                </sources>
+                              </configuration>
+                            </execution>
+                          </executions>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertModules("project");
 
@@ -535,28 +543,29 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                          "target/generated-sources/groovy-stubs/main/foo",
                          "target/generated-sources/groovy-stubs/test/bar");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.groovy.maven</groupId>" +
-                  "      <artifactId>gmaven-plugin</artifactId>" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <goals>" +
-                  "            <goal>generateStubs</goal>" +
-                  "            <goal>compile</goal>" +
-                  "            <goal>generateTestStubs</goal>" +
-                  "            <goal>testCompile</goal>" +
-                  "          </goals>" +
-                  "        </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.codehaus.groovy.maven</groupId>
+                          <artifactId>gmaven-plugin</artifactId>
+                          <executions>
+                            <execution>
+                              <goals>
+                                <goal>generateStubs</goal>
+                                <goal>compile</goal>
+                                <goal>generateTestStubs</goal>
+                                <goal>testCompile</goal>
+                              </goals>
+                            </execution>
+                          </executions>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertModules("project");
 
@@ -589,38 +598,39 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                          "target/generated-sources/foo/aaa",
                          "target/generated-sources/bar/bbb");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.groovy.maven</groupId>" +
-                  "      <artifactId>gmaven-plugin</artifactId>" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <id>one</id>" +
-                  "          <goals>" +
-                  "            <goal>generateStubs</goal>" +
-                  "          </goals>" +
-                  "          <configuration>" +
-                  "            <outputDirectory>${project.build.directory}/generated-sources/foo</outputDirectory>" +
-                  "          </configuration>" +
-                  "        </execution>" +
-                  "        <execution>" +
-                  "          <id>two</id>" +
-                  "          <goals>" +
-                  "            <goal>generateTestStubs</goal>" +
-                  "          </goals>" +
-                  "          <configuration>" +
-                  "            <outputDirectory>${project.build.directory}/generated-sources/bar</outputDirectory>" +
-                  "          </configuration>" +
-                  "        </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.codehaus.groovy.maven</groupId>
+                          <artifactId>gmaven-plugin</artifactId>
+                          <executions>
+                            <execution>
+                              <id>one</id>
+                              <goals>
+                                <goal>generateStubs</goal>
+                              </goals>
+                              <configuration>
+                                <outputDirectory>${project.build.directory}/generated-sources/foo</outputDirectory>
+                              </configuration>
+                            </execution>
+                            <execution>
+                              <id>two</id>
+                              <goals>
+                                <goal>generateTestStubs</goal>
+                              </goals>
+                              <configuration>
+                                <outputDirectory>${project.build.directory}/generated-sources/bar</outputDirectory>
+                              </configuration>
+                            </execution>
+                          </executions>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertModules("project");
 
@@ -650,38 +660,39 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                          "target/generated-sources/foo/aaa",
                          "target/generated-sources/bar/bbb");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.groovy.maven</groupId>" +
-                  "      <artifactId>gmaven-plugin</artifactId>" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <id>one</id>" +
-                  "          <goals>" +
-                  "            <goal>generateStubs</goal>" +
-                  "          </goals>" +
-                  "          <configuration>" +
-                  "            <outputDirectory>target/generated-sources/foo</outputDirectory>" +
-                  "          </configuration>" +
-                  "        </execution>" +
-                  "        <execution>" +
-                  "          <id>two</id>" +
-                  "          <goals>" +
-                  "            <goal>generateTestStubs</goal>" +
-                  "          </goals>" +
-                  "          <configuration>" +
-                  "            <outputDirectory>target/generated-sources/bar</outputDirectory>" +
-                  "          </configuration>" +
-                  "        </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.codehaus.groovy.maven</groupId>
+                          <artifactId>gmaven-plugin</artifactId>
+                          <executions>
+                            <execution>
+                              <id>one</id>
+                              <goals>
+                                <goal>generateStubs</goal>
+                              </goals>
+                              <configuration>
+                                <outputDirectory>target/generated-sources/foo</outputDirectory>
+                              </configuration>
+                            </execution>
+                            <execution>
+                              <id>two</id>
+                              <goals>
+                                <goal>generateTestStubs</goal>
+                              </goals>
+                              <configuration>
+                                <outputDirectory>target/generated-sources/bar</outputDirectory>
+                              </configuration>
+                            </execution>
+                          </executions>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertModules("project");
 
@@ -706,32 +717,33 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
   @Test
   public void testUpdatingGroovySpecificGeneratedSourcesOnFoldersUpdate() {
     try {
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<build>" +
-                    "  <plugins>" +
-                    "    <plugin>" +
-                    "      <groupId>org.codehaus.groovy.maven</groupId>" +
-                    "      <artifactId>gmaven-plugin</artifactId>" +
-                    "      <executions>" +
-                    "        <execution>" +
-                    "          <goals>" +
-                    "            <goal>generateStubs</goal>" +
-                    "            <goal>generateTestStubs</goal>" +
-                    "          </goals>" +
-                    "        </execution>" +
-                    "      </executions>" +
-                    "    </plugin>" +
-                    "  </plugins>" +
-                    "</build>");
+      importProject("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      <build>
+                        <plugins>
+                          <plugin>
+                            <groupId>org.codehaus.groovy.maven</groupId>
+                            <artifactId>gmaven-plugin</artifactId>
+                            <executions>
+                              <execution>
+                                <goals>
+                                  <goal>generateStubs</goal>
+                                  <goal>generateTestStubs</goal>
+                                </goals>
+                              </execution>
+                            </executions>
+                          </plugin>
+                        </plugins>
+                      </build>
+                      """);
 
       ApplicationManager.getApplication().runWriteAction(() -> {
-        MavenRootModelAdapter a = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(getProjectsTree().findProject(myProjectPom),
-                                                                                                getModule("project"),
-                                                                                                new ModifiableModelsProviderProxyWrapper(
-                                                                                                  myProject)));
+        MavenRootModelAdapter a = new MavenRootModelAdapter(
+          new MavenRootModelAdapterLegacyImpl(getProjectsTree().findProject(myProjectPom),
+                                              getModule("project"),
+                                              ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)));
         a.unregisterAll(getProjectPath() + "/target", true, true);
         a.getRootModel().commit();
       });
@@ -792,29 +804,30 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                          "target/generated-sources/groovy-stubs/main/foo",
                          "target/generated-sources/groovy-stubs/test/bar");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.gmaven</groupId>" +
-                  "      <artifactId>gmaven-plugin</artifactId>" +
-                  "      <version>1.2</version>" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <goals>" +
-                  "            <goal>generateStubs</goal>" +
-                  "            <goal>compile</goal>" +
-                  "            <goal>generateTestStubs</goal>" +
-                  "            <goal>testCompile</goal>" +
-                  "          </goals>" +
-                  "        </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.codehaus.gmaven</groupId>
+                          <artifactId>gmaven-plugin</artifactId>
+                          <version>1.2</version>
+                          <executions>
+                            <execution>
+                              <goals>
+                                <goal>generateStubs</goal>
+                                <goal>compile</goal>
+                                <goal>generateTestStubs</goal>
+                                <goal>testCompile</goal>
+                              </goals>
+                            </execution>
+                          </executions>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertModules("project");
 

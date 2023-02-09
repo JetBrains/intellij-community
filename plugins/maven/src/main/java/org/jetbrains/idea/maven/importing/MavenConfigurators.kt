@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.util.stream.Stream
 
 @ApiStatus.Experimental
@@ -123,7 +125,7 @@ interface MavenWorkspaceConfigurator {
     val modules: List<ModuleWithType<M>>
   }
 
-  interface Context<S : EntityStorage> : UserDataHolder {
+  interface Context<S : EntityStorage> : UserDataHolderEx {
     val project: Project
     val storage: S
     val mavenProjectsTree: MavenProjectsTree
@@ -154,6 +156,7 @@ interface MavenAfterImportConfigurator {
   interface Context : UserDataHolder {
     val project: Project
     val mavenProjectsWithModules: Sequence<MavenWorkspaceConfigurator.MavenProjectWithModules<Module>>
+    val mavenProgressIndicator: MavenProgressIndicator
   }
 }
 

@@ -1,7 +1,5 @@
 package com.intellij.xdebugger.impl.ui.attach.dialog
 
-import com.intellij.execution.ExecutionException
-import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
@@ -14,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.AnActionButton
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.JBColor
@@ -32,15 +29,17 @@ import com.intellij.xdebugger.attach.XAttachDebugger
 import com.intellij.xdebugger.attach.XAttachDebuggerProvider
 import com.intellij.xdebugger.attach.XAttachHost
 import com.intellij.xdebugger.attach.XAttachHostProvider
-import com.intellij.xdebugger.impl.actions.AttachToProcessActionBase
 import com.intellij.xdebugger.impl.actions.AttachToProcessActionBase.AttachToProcessItem
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogUiInvisibleDebuggerProvider
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.getActionPresentation
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessItemsListBase
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayoutService
 import com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStatisticsCollector
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Container
+import java.awt.Dimension
 import java.awt.event.*
 import javax.swing.*
 import javax.swing.event.DocumentEvent
@@ -60,7 +59,7 @@ open class AttachToProcessDialog(
     border = JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0)
 
     val editor: JBTextField = textEditor
-    editor.border = JBUI.Borders.empty(0, 0, 0, 0)
+    editor.border = JBUI.Borders.empty()
     editor.isOpaque = true
 
     textEditor.addKeyListener(object : KeyListener {
@@ -95,16 +94,17 @@ open class AttachToProcessDialog(
 
   private var filteringPattern: String = ""
 
-  private val localAttachView = AttachToLocalProcessView(project, state, attachDebuggerProviders)
-  private val remoteAttachView = AttachToRemoteProcessView(project, state, attachHostProviders, attachDebuggerProviders)
+  private val columnsLayout = application.getService(AttachDialogColumnsLayoutService::class.java).getColumnsLayout()
+
+  private val localAttachView = AttachToLocalProcessView(project, state, columnsLayout, attachDebuggerProviders)
+  private val remoteAttachView = AttachToRemoteProcessView(project, state, columnsLayout, attachHostProviders, attachDebuggerProviders)
   private val allViews = listOf(localAttachView, remoteAttachView)
   private var currentAttachView = AtomicLazyProperty<AttachToProcessView> { localAttachView }
 
   private val viewsPanel = panel { row { segmentedButton(allViews) { it.getName() }.bind(currentAttachView) } }
 
-
   private val viewPanel = JPanel(MigLayout("ins 0, fill, gap 0, novisualpadding")).apply {
-    minimumSize = AttachToProcessView.DEFAULT_DIMENSION
+    minimumSize = Dimension(columnsLayout.getMinimumViewWidth(), JBUI.scale(400))
     border = JBUI.Borders.customLine(JBColor.border(), 1, 1, 1, 1)
   }
 
@@ -174,14 +174,7 @@ open class AttachToProcessDialog(
   override fun getPreferredFocusedComponent(): JComponent = filterTextField.textEditor
 
   protected open fun attach(debugger: XAttachDebugger, item: AttachToProcessItem) {
-    AttachToProcessActionBase.addToRecent(project, item)
-    try {
-      debugger.attachDebugSession(project, item.host, item.processInfo)
-    }
-    catch (e: ExecutionException) {
-      val message = XDebuggerBundle.message("xdebugger.attach.pid", item.processInfo.pid)
-      ExecutionUtil.handleExecutionError(project, ToolWindowId.DEBUG, message, e)
-    }
+    attachToProcessWithDebugger(debugger, item, project)
     super.doOKAction()
   }
 
@@ -202,7 +195,7 @@ open class AttachToProcessDialog(
     }
   }
 
-  private fun updateProblemStripe(text: String? = null) {
+  private fun updateProblemStripe(@Nls text: String? = null) {
     if (text == null) {
       setErrorInfoAll(emptyList())
       return
@@ -258,7 +251,7 @@ open class AttachToProcessDialog(
     list.getFocusedComponent().addKeyListener(keyListener)
   }
 
-  private fun updateProcesses() {
+  fun updateProcesses() {
     currentAttachView.get().updateProcesses()
   }
 
@@ -292,6 +285,7 @@ open class AttachToProcessDialog(
     actions.add(RefreshActionButton())
     actions.add(SelectedViewAction())
     actions.add(DebuggerFilterComboBox())
+    actions.add(ActionManager.getInstance().getAction("XDebugger.Attach.Dialog.Settings"))
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.ATTACH_DIALOG_TOOLBAR, DefaultActionGroup(actions), true)
   }
@@ -574,5 +568,9 @@ open class AttachToProcessDialog(
         state.searchFieldValue.get().isNotBlank())
       attach(debugger, item)
     }
+  }
+
+  override fun getHelpId(): String? {
+    return "debugging.AttachToProcessDialog"
   }
 }

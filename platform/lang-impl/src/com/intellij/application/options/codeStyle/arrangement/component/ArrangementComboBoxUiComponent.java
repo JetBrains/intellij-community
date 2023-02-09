@@ -31,9 +31,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementComboBoxUiComponent extends AbstractArrangementUiComponent {
   
   private final JComboBox<ArrangementSettingsToken> myComboBox;

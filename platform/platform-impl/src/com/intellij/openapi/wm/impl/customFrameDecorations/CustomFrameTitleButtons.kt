@@ -6,12 +6,12 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyle
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyleState
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.StyleManager
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.JBUI.CurrentTheme
-import net.miginfocom.swing.MigLayout
 import java.awt.*
 import javax.accessibility.AccessibleContext
 import javax.swing.*
@@ -90,11 +90,17 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
       icon = closeInactive
     }.build()
 
-  protected val panel = JPanel(MigLayout("top, ins 0 0 0 0, gap 0, hidemode 3, novisualpadding")).apply {
-    isOpaque = false
-  }
+  private val panel = TitleButtonsPanel()
 
   val closeButton: JButton = createButton("Close", myCloseAction)
+
+  internal var isCompactMode: Boolean
+    set(value) {
+      panel.isCompactMode = value
+    }
+    get() {
+      return panel.isCompactMode
+    }
 
   var isSelected = false
     set(value) {
@@ -128,9 +134,7 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
   }
 
   protected fun addComponent(component: JComponent) {
-    val size = UIManager.getDimension("TitlePane.Button.preferredSize") ?: Dimension(47, 28)
-    component.preferredSize = Dimension((size.width * UISettings.defFontScale).toInt(), (size.height * UISettings.defFontScale).toInt())
-    panel.add(component, "top")
+    panel.addComponent(component)
   }
 
   protected fun getStyle(icon: Icon, hoverIcon : Icon): ComponentStyle<JComponent> {
@@ -164,4 +168,41 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
     button.text = null
     return button
   }
+
+  private class TitleButtonsPanel : JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)) {
+    var isCompactMode = false
+      set(value) {
+        field = value
+        updateScaledPreferredSize()
+      }
+
+    init {
+      isOpaque = false
+    }
+
+    fun addComponent(component: JComponent) {
+      component.setScaledPreferredSize()
+      add(component, "top")
+    }
+
+    private fun updateScaledPreferredSize() {
+      components.forEach { (it as? JComponent)?.setScaledPreferredSize() }
+    }
+
+    private fun JComponent.setScaledPreferredSize() {
+      val size = CurrentTheme.TitlePane.buttonPreferredSize().clone() as Dimension
+      if (isCompactMode) size.height = JBUIScale.scale(30)
+      preferredSize = Dimension((size.width * UISettings.defFontScale).toInt(), (size.height * UISettings.defFontScale).toInt())
+    }
+
+    override fun updateUI() {
+      super.updateUI()
+      components?.forEach { component ->
+        if (component is JComponent) {
+          component.setScaledPreferredSize()
+        }
+      }
+    }
+  }
+
 }

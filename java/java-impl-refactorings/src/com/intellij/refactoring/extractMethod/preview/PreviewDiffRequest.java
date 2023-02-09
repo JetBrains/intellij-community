@@ -23,9 +23,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/**
- * @author Pavel.Dolgov
- */
 class PreviewDiffRequest extends SimpleDiffRequest {
   private static final Logger LOG = Logger.getInstance(PreviewDiffRequest.class);
 

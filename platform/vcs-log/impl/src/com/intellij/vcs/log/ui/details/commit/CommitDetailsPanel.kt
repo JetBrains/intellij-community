@@ -70,9 +70,21 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
       layout = MigLayout(LC().gridGap("0", "0").insets("0").fill().flowY())
       isOpaque = false
 
-      val metadataPanel = BorderLayoutPanel().apply {
+      val metadataPanel = object: BorderLayoutPanel() {
+        init {
+          updateBorder()
+        }
+
+        override fun updateUI() {
+          super.updateUI()
+          updateBorder()
+        }
+
+        private fun updateBorder() {
+          border = JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER, INTERNAL_BORDER, 0)
+        }
+      }.apply {
         isOpaque = false
-        border = JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER, INTERNAL_BORDER, 0)
         addToLeft(rootPanel)
         addToCenter(hashAndAuthorPanel)
       }
@@ -87,7 +99,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
 
     add(mainPanel, CC().grow().push())
     //show at most 4 icons
-    val maxHeight = JBUIScale.scale(22 * 4)
+    val maxHeight = 22 * 4
     add(statusesToolbar.component, CC().hideMode(3).alignY("top").maxHeight("$maxHeight"))
 
     updateStatusToolbar(false)
@@ -187,6 +199,14 @@ private class CommitMessagePanel(private val navigate: (CommitId) -> Unit) : Htm
   }
 
   init {
+    updateBorder()
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    updateBorder()
+  }
+  private fun updateBorder() {
     border = JBUI.Borders.empty(CommitDetailsPanel.EXTERNAL_BORDER, CommitDetailsPanel.SIDE_BORDER, CommitDetailsPanel.INTERNAL_BORDER, 0)
   }
 
@@ -210,8 +230,17 @@ private class ContainingBranchesPanel : HtmlPanel() {
   private var expanded = false
 
   init {
-    border = JBUI.Borders.empty(0, CommitDetailsPanel.SIDE_BORDER, CommitDetailsPanel.EXTERNAL_BORDER, 0)
+    updateBorder()
     isVisible = false
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    updateBorder()
+  }
+
+  private fun updateBorder() {
+    border = JBUI.Borders.empty(0, CommitDetailsPanel.SIDE_BORDER, CommitDetailsPanel.EXTERNAL_BORDER, 0)
   }
 
   override fun setBounds(x: Int, y: Int, w: Int, h: Int) {

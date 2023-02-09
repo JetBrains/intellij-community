@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax")
 
 package com.intellij.toolWindow
@@ -25,7 +25,8 @@ private fun init(project: Project,
                  layoutCustomizer: ((DesktopLayout) -> Unit) = {}): ToolWindowManagerImpl {
   val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
   val buttonManager = if (isNewUi) ToolWindowPaneNewButtonManager(paneId) else ToolWindowPaneOldButtonManager(paneId)
-  val manager = object: ToolWindowManagerImpl(project, isNewUi = isNewUi, isEdtRequired = false) {
+  @Suppress("DEPRECATION")
+  val manager = object: ToolWindowManagerImpl(project, isNewUi = isNewUi, isEdtRequired = false, project.coroutineScope) {
     override fun getButtonManager(toolWindow: ToolWindow): ToolWindowButtonManager = buttonManager
   }
 
@@ -78,7 +79,8 @@ object ToolWindowManagerTestHelper {
 fun testDefaultLayout(isNewUi: Boolean, project: Project) {
   val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
   val buttonManager = if (isNewUi) ToolWindowPaneNewButtonManager(paneId) else ToolWindowPaneOldButtonManager(paneId)
-  val manager = object: ToolWindowManagerImpl(project, isNewUi = isNewUi, isEdtRequired = false) {
+  @Suppress("DEPRECATION")
+  val manager = object: ToolWindowManagerImpl(project, isNewUi = isNewUi, isEdtRequired = false, project.coroutineScope) {
     override fun getButtonManager(toolWindow: ToolWindow): ToolWindowButtonManager = buttonManager
   }
 

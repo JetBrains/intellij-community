@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer
 import java.awt.BorderLayout
 import java.awt.Color
+import java.time.LocalDateTime
 import javax.swing.*
 
 private val TEXT_BORDER = JBUIScale.scale(5)
@@ -18,7 +19,15 @@ enum class ProgressStatus {
   RUNNING, STOPPED_OK, STOPPED_ERROR
 }
 
-data class InlayProgressStatus(val progress: ProgressStatus, @Nls val statusText: String = "")
+/**
+ * @param previousStatusDateTime - date time, when previous status was set
+ * @param statusStartDateTime - date time, when status was set
+ */
+data class StatusDateTimeStamp(val previousStatusDateTime: LocalDateTime? = null, val statusStartDateTime: LocalDateTime)
+
+data class InlayProgressStatus(val progress: ProgressStatus,
+                               @Nls val statusText: String = "",
+                               val statusDateTimeStamp: StatusDateTimeStamp? = null)
 
 fun buildProgressStatusComponent(progressStatus: InlayProgressStatus, editor: Editor): JComponent? {
   if (progressStatus.progress == ProgressStatus.STOPPED_OK && progressStatus.statusText.isEmpty()) return null
@@ -45,7 +54,7 @@ fun buildProgressStatusComponent(progressStatus: InlayProgressStatus, editor: Ed
 }
 
 class InlayProgressBarUI(private val status: ProgressStatus) : DarculaProgressBarUI() {
-  override fun getFinishedColor(): Color {
+  override fun getFinishedColor(c: JComponent): Color {
     if (status == ProgressStatus.STOPPED_OK) {
       return JBColor.GRAY
     }

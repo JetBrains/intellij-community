@@ -64,6 +64,8 @@ import com.intellij.xml.util.XmlStringUtil;
 import kotlin.text.StringsKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.io.File;
@@ -255,7 +257,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     if (config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.DO_NOTHING_SILENTLY ||
         config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.SHOW_CONFIRMATION &&
         ApplicationManager.getApplication().isUnitTestMode()) {
-      listsToBeDeleted.clear();
+      listsToBeDeleted = Collections.emptyList();
     }
 
     ChangeListRemoveConfirmation.deleteEmptyInactiveLists(myProject, listsToBeDeletedSilently, toAsk -> true);
@@ -369,7 +371,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @Override
   public void freeze(@NotNull String reason) {
-    assert ApplicationManager.getApplication().isHeadlessEnvironment() || !ApplicationManager.getApplication().isDispatchThread();
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
+    }
 
     myUpdater.setIgnoreBackgroundOperation(true);
     Semaphore sem = new Semaphore(1);
@@ -396,6 +400,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     CountDownLatch waiter = new CountDownLatch(1);
     invokeAfterUpdate(false, waiter::countDown);
     awaitWithCheckCanceled(waiter);
+  }
+
+  @Override
+  public @NotNull Promise<?> promiseWaitForUpdate() {
+    AsyncPromise<Boolean> promise = new AsyncPromise<>();
+    invokeAfterUpdate(false, () -> promise.setResult(true));
+    return promise;
   }
 
   @Override
@@ -480,6 +491,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       final boolean wasEverythingDirty = invalidated.isEverythingDirty();
       final List<VcsDirtyScope> scopes = invalidated.getScopes();
 
+      boolean isInitialUpdate;
       ChangesViewEx changesView = ChangesViewManager.getInstanceEx(myProject);
       try {
         if (myUpdater.isStopped()) return true;
@@ -503,13 +515,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
                       "\nunversioned: " + myComposite.getUnversionedFileHolder().getFiles().size() +
                       "\ncurrent changes: " + myWorker);
           }
+
+          isInitialUpdate = myInitialUpdate;
+          myInitialUpdate = false;
         }
         changesView.setBusy(true);
         changesView.scheduleRefresh();
 
         SensitiveProgressWrapper vcsIndicator = new SensitiveProgressWrapper(ProgressManager.getInstance().getProgressIndicator());
-        if (!myInitialUpdate) invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
-        myInitialUpdate = false;
+        if (!isInitialUpdate) invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
 
         try {
           ProgressManager.getInstance().executeProcessUnderProgress(() -> {
@@ -1225,7 +1239,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @Override
   public void addUnversionedFiles(@Nullable final LocalChangeList list, @NotNull final List<? extends VirtualFile> files) {
-    ScheduleForAdditionAction.addUnversionedFilesToVcs(myProject, list, files);
+    ScheduleForAdditionAction.Manager.addUnversionedFilesToVcs(myProject, list, files);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
@@ -26,10 +26,9 @@ public final class ControlFlowGraph {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof Edge)) {
+      if (!(o instanceof Edge edge)) {
         return false;
       }
-      Edge edge = (Edge) o;
       return from == edge.from && to == edge.to;
     }
 

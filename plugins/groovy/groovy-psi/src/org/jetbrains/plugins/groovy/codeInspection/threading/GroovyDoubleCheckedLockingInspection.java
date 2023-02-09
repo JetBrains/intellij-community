@@ -15,12 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.threading;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -35,7 +34,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
 
@@ -51,11 +51,9 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createGroovyOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(GroovyBundle.message("checkbox.ignore.double.checked.locking.on.volatile.fields"), this,
-                                          "ignoreOnVolatileVariables"
-    );
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(
+      checkbox("ignoreOnVolatileVariables", GroovyBundle.message("checkbox.ignore.double.checked.locking.on.volatile.fields")));
   }
 
   @NotNull
@@ -82,11 +80,9 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
         return;
       }
       thenBranch = ControlFlowUtils.stripBraces(thenBranch);
-      if (!(thenBranch instanceof GrSynchronizedStatement)) {
+      if (!(thenBranch instanceof GrSynchronizedStatement syncStatement)) {
         return;
       }
-      final GrSynchronizedStatement syncStatement =
-          (GrSynchronizedStatement) thenBranch;
       final GrCodeBlock body = syncStatement.getBody();
       if (body == null) {
         return;
@@ -95,10 +91,9 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
       if (statements.length != 1) {
         return;
       }
-      if (!(statements[0] instanceof GrIfStatement)) {
+      if (!(statements[0] instanceof GrIfStatement innerIf)) {
         return;
       }
-      final GrIfStatement innerIf = (GrIfStatement) statements[0];
       final GrExpression innerCondition = innerIf.getCondition();
       if (innerCondition == null) {
         return;
@@ -117,24 +112,19 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
         GrIfStatement statement) {
       GrStatement innerThen = statement.getThenBranch();
       innerThen = ControlFlowUtils.stripBraces(innerThen);
-      if (!(innerThen instanceof GrAssignmentExpression)) {
+      if (!(innerThen instanceof GrAssignmentExpression assignmentExpression)) {
         return false;
       }
-      final GrAssignmentExpression assignmentExpression =
-          (GrAssignmentExpression) innerThen;
       final GrExpression lhs =
           assignmentExpression.getLValue();
-      if (!(lhs instanceof GrReferenceExpression)) {
+      if (!(lhs instanceof GrReferenceExpression referenceExpression)) {
         return false;
       }
-      final GrReferenceExpression referenceExpression =
-          (GrReferenceExpression) lhs;
       final PsiElement element =
           referenceExpression.resolve();
-      if (!(element instanceof PsiField)) {
+      if (!(element instanceof PsiField field)) {
         return false;
       }
-      final PsiField field = (PsiField) element;
       return field.hasModifierProperty(PsiModifier.VOLATILE);
     }
   }

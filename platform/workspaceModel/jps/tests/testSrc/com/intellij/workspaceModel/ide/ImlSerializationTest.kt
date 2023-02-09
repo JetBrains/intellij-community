@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -46,7 +47,7 @@ class ImlSerializationTest {
     checkSerializationSize(bytes, expectedSize, 2_000)
 
     assertTrue("This assertion is a reminder. Have you updated the serializer? Update the serializer version!",
-               "v44" == EntityStorageSerializerImpl.SERIALIZER_VERSION)
+               "v47" == EntityStorageSerializerImpl.SERIALIZER_VERSION)
   }
 
   @Test
@@ -78,7 +79,7 @@ class ImlSerializationTest {
 
   private fun loadProjectAndCheck(projectFile: File): ByteArray {
     val storageBuilder = MutableEntityStorage.create()
-    loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, virtualFileManager)
+    loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, storageBuilder, virtualFileManager)
     return serializationRoundTrip(storageBuilder)
   }
 

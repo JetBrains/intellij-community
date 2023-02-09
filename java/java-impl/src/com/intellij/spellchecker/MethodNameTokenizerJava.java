@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class MethodNameTokenizerJava extends NamedElementTokenizer<PsiMethod> {
 
   @Override
-  public void tokenize(@NotNull PsiMethod element, TokenConsumer consumer) {
+  public void tokenize(@NotNull PsiMethod element, @NotNull TokenConsumer consumer) {
     if (element.isConstructor() || element.findDeepestSuperMethods().length > 0) return;
 
     super.tokenize(element, consumer);

@@ -21,9 +21,6 @@ import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.psi.PsiElement
 import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenPomXmlDocumentationTest extends MavenDomTestCase {
 
   @Test

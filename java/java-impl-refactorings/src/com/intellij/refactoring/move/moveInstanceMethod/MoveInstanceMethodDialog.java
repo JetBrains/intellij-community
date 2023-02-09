@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -27,9 +27,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author ven
- */
 public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
   private static final String KEY = "#com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialog";
 
@@ -93,8 +90,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     }
 
     final Object variable = myVariables[selectedIndex];
-    if (variable instanceof PsiField) {
-      final PsiField field = (PsiField)variable;
+    if (variable instanceof PsiField field) {
       final PsiClass hisClass = field.getContainingClass();
       final Set<PsiMember> members = myThisClassesMap.get(hisClass);
       if (members != null && members.size() == 1 && members.contains(field)) {  //Just the field is referenced

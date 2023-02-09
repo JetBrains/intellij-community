@@ -90,7 +90,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection implem
         PsiType[] parameterTypes = signature.getParameterTypes();
         if (method.isConstructor() && "java.io.PrintWriter".equals(aClass.getQualifiedName()) && parameterTypes.length == 1 &&
             parameterTypes[0].equalsToText("java.io.OutputStream")) {
-          parameterTypes = ArrayUtil.append(parameterTypes, PsiType.BOOLEAN);
+          parameterTypes = ArrayUtil.append(parameterTypes, PsiTypes.booleanType());
           args = FALSE_AND_UTF_8_ARG;
         }
         MethodSignature newSignature = MethodSignatureUtil

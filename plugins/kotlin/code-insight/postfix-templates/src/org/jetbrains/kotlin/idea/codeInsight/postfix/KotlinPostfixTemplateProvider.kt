@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvid
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 
+// K2 PostfixTemplateProvider
 internal class KotlinPostfixTemplateProvider : PostfixTemplateProvider {
     private val templateSet: Set<PostfixTemplate> by lazy {
         setOf(
@@ -18,6 +19,10 @@ internal class KotlinPostfixTemplateProvider : PostfixTemplateProvider {
             KotlinSpreadPostfixTemplate(this),
             KotlinForPostfixTemplate(this),
             KotlinIterPostfixTemplate(this),
+            KotlinForReversedPostfixTemplate(this),
+            KotlinForWithIndexPostfixTemplate(this),
+            KotlinForLoopNumbersPostfixTemplate(this),
+            KotlinForLoopReverseNumbersPostfixTemplate(this),
             KotlinWrapIntoListPostfixTemplate(this),
             KotlinWrapIntoSetPostfixTemplate(this),
             KotlinWrapIntoArrayPostfixTemplate(this),

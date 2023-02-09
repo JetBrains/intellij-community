@@ -90,8 +90,7 @@ public class GroovyGotoSuperHandler extends GotoTargetHandler implements Languag
   }
 
   private static PsiElement @NotNull [] findTargets(@NotNull PsiMember e) {
-    if (e instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)e;
+    if (e instanceof PsiClass aClass) {
       List<PsiClass> allSupers = new ArrayList<>(Arrays.asList(aClass.getSupers()));
       for (Iterator<PsiClass> iterator = allSupers.iterator(); iterator.hasNext(); ) {
         PsiClass superClass = iterator.next();

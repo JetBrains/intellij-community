@@ -175,15 +175,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     if (isSixWithMetaclassCall(expression)) {
       final PyExpression[] arguments = ((PyCallExpression)expression).getArguments();
       if (arguments.length > 1) {
-        return ContainerUtil.newArrayList(arguments, 1, arguments.length);
+        return ContainerUtil.subArrayAsList(arguments, 1, arguments.length);
       }
       else {
         return Collections.emptyList();
       }
     }
     // Heuristic: unfold Foo[Bar] to Foo for subscription expressions for superclasses
-    else if (expression instanceof PySubscriptionExpression) {
-      final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)expression;
+    else if (expression instanceof PySubscriptionExpression subscriptionExpr) {
       return Collections.singletonList(subscriptionExpr.getOperand());
     }
 
@@ -1038,8 +1037,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
     List<PyTargetExpression> result = new ArrayList<>();
     for (PsiElement psiElement : getStatementList().getChildren()) {
-      if (psiElement instanceof PyAssignmentStatement) {
-        final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)psiElement;
+      if (psiElement instanceof PyAssignmentStatement assignmentStatement) {
         final PyExpression[] targets = assignmentStatement.getTargets();
         for (PyExpression target : targets) {
           if (target instanceof PyTargetExpression) {
@@ -1482,8 +1480,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     else {
       final QualifiedName name = getMetaClassQName();
       final PsiFile file = getContainingFile();
-      if (file instanceof PyFile) {
-        final PyFile pyFile = (PyFile)file;
+      if (file instanceof PyFile pyFile) {
         if (name != null) {
           return classTypeFromQName(name, pyFile, context);
         }
@@ -1492,8 +1489,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     final LanguageLevel level = LanguageLevel.forElement(this);
     if (level.isPython2()) {
       final PsiFile file = getContainingFile();
-      if (file instanceof PyFile) {
-        final PyFile pyFile = (PyFile)file;
+      if (file instanceof PyFile pyFile) {
         final PsiElement element = pyFile.getElementNamed(PyNames.DUNDER_METACLASS);
         if (element instanceof PyTypedElement) {
           return context.getType((PyTypedElement)element);
@@ -1585,8 +1581,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     if (!level.isPython2()) {
       // Requires AST access
       for (PyExpression expression : getSuperClassExpressions()) {
-        if (expression instanceof PyKeywordArgument) {
-          final PyKeywordArgument argument = (PyKeywordArgument)expression;
+        if (expression instanceof PyKeywordArgument argument) {
           if (PyNames.METACLASS.equals(argument.getKeyword())) {
             return argument.getValueExpression();
           }
@@ -1660,8 +1655,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     final List<PyClass> classes = new ArrayList<>();
     classes.add(this);
     for (PyClassLikeType ancestorType : ancestorTypes) {
-      if (ancestorType instanceof PyClassType) {
-        final PyClassType classType = (PyClassType)ancestorType;
+      if (ancestorType instanceof PyClassType classType) {
         classes.add(classType.getPyClass());
       }
     }

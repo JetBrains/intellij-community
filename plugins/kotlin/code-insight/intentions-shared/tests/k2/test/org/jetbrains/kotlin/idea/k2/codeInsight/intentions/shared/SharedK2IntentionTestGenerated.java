@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared;
 
@@ -181,6 +181,21 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             runTest("../testData/intentions/addBraces/ifElseWithComment.kt");
         }
 
+        @TestMetadata("ifElseWithComment2.kt")
+        public void testIfElseWithComment2() throws Exception {
+            runTest("../testData/intentions/addBraces/ifElseWithComment2.kt");
+        }
+
+        @TestMetadata("ifElseWithComment3.kt")
+        public void testIfElseWithComment3() throws Exception {
+            runTest("../testData/intentions/addBraces/ifElseWithComment3.kt");
+        }
+
+        @TestMetadata("ifElseWithComment4.kt")
+        public void testIfElseWithComment4() throws Exception {
+            runTest("../testData/intentions/addBraces/ifElseWithComment4.kt");
+        }
+
         @TestMetadata("ifWithComment.kt")
         public void testIfWithComment() throws Exception {
             runTest("../testData/intentions/addBraces/ifWithComment.kt");
@@ -300,6 +315,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
                 runTest("../testData/intentions/addBracesToAllBranches/ifThen.kt");
             }
 
+            @TestMetadata("ifWithComment.kt")
+            public void testIfWithComment() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/ifWithComment.kt");
+            }
+
             @TestMetadata("ifWithNoElse.kt")
             public void testIfWithNoElse() throws Exception {
                 runTest("../testData/intentions/addBracesToAllBranches/ifWithNoElse.kt");
@@ -334,94 +354,600 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/convertToForEachFunctionCall")
-    public static class ConvertToForEachFunctionCall extends AbstractSharedK2IntentionTest {
+    public abstract static class ConvertToForEachFunctionCall extends AbstractSharedK2IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/convertToForEachFunctionCall/array")
+        public static class Array extends AbstractSharedK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("array.kt")
+            public void testArray() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/array/array.kt");
+            }
+
+            @TestMetadata("booleanArray.kt")
+            public void testBooleanArray() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/array/booleanArray.kt");
+            }
+
+            @TestMetadata("byteArray.kt")
+            public void testByteArray() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/array/byteArray.kt");
+            }
+
+            @TestMetadata("charArray.kt")
+            public void testCharArray() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/array/charArray.kt");
+            }
+
+            @TestMetadata("doubleArray.kt")
+            public void testDoubleArray() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/array/doubleArray.kt");
+            }
+
+            @TestMetadata("floatArray.kt")
+            public void testFloatArray() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/array/floatArray.kt");
+            }
+
+            @TestMetadata("intArray.kt")
+            public void testIntArray() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/array/intArray.kt");
+            }
+
+            @TestMetadata("longArray.kt")
+            public void testLongArray() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/array/longArray.kt");
+            }
+
+            @TestMetadata("shortArray.kt")
+            public void testShortArray() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/array/shortArray.kt");
+            }
+
+            @TestMetadata("uByteArray.kt")
+            public void testUByteArray() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/array/uByteArray.kt");
+            }
+
+            @TestMetadata("uIntArray.kt")
+            public void testUIntArray() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/array/uIntArray.kt");
+            }
+
+            @TestMetadata("uLongArray.kt")
+            public void testULongArray() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/array/uLongArray.kt");
+            }
+
+            @TestMetadata("uShortArray.kt")
+            public void testUShortArray() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/array/uShortArray.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/convertToForEachFunctionCall")
+        public static class Uncategorized extends AbstractSharedK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("binaryExpressionLoopRange.kt")
+            public void testBinaryExpressionLoopRange() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/binaryExpressionLoopRange.kt");
+            }
+
+            @TestMetadata("blockBodyExpression.kt")
+            public void testBlockBodyExpression() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/blockBodyExpression.kt");
+            }
+
+            @TestMetadata("blockCommentOnly.kt")
+            public void testBlockCommentOnly() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/blockCommentOnly.kt");
+            }
+
+            @TestMetadata("commentsInBody.kt")
+            public void testCommentsInBody() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/commentsInBody.kt");
+            }
+
+            @TestMetadata("commentsInBody2.kt")
+            public void testCommentsInBody2() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/commentsInBody2.kt");
+            }
+
+            @TestMetadata("commentsOutsideBody.kt")
+            public void testCommentsOutsideBody() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/commentsOutsideBody.kt");
+            }
+
+            @TestMetadata("continueToReturnWithLabel.kt")
+            public void testContinueToReturnWithLabel() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/continueToReturnWithLabel.kt");
+            }
+
+            @TestMetadata("continueToReturnWithoutLabel.kt")
+            public void testContinueToReturnWithoutLabel() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/continueToReturnWithoutLabel.kt");
+            }
+
+            @TestMetadata("emptyBody.kt")
+            public void testEmptyBody() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/emptyBody.kt");
+            }
+
+            @TestMetadata("endOfLineComment1.kt")
+            public void testEndOfLineComment1() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/endOfLineComment1.kt");
+            }
+
+            @TestMetadata("endOfLineComment2.kt")
+            public void testEndOfLineComment2() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/endOfLineComment2.kt");
+            }
+
+            @TestMetadata("endOfLineComment3.kt")
+            public void testEndOfLineComment3() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/endOfLineComment3.kt");
+            }
+
+            @TestMetadata("iterativeElementTypeSpecified.kt")
+            public void testIterativeElementTypeSpecified() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/iterativeElementTypeSpecified.kt");
+            }
+
+            @TestMetadata("noCurlyBraces.kt")
+            public void testNoCurlyBraces() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/noCurlyBraces.kt");
+            }
+
+            @TestMetadata("noStatements.kt")
+            public void testNoStatements() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/noStatements.kt");
+            }
+
+            @TestMetadata("notIterableClass.kt")
+            public void testNotIterableClass() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/notIterableClass.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/simple.kt");
+            }
+
+            @TestMetadata("typeAnnotatedWithNonBlockBody.kt")
+            public void testTypeAnnotatedWithNonBlockBody() throws Exception {
+                runTest("../testData/intentions/convertToForEachFunctionCall/typeAnnotatedWithNonBlockBody.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/operatorToFunction")
+    public static class OperatorToFunction extends AbstractSharedK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("binaryExpressionLoopRange.kt")
-        public void testBinaryExpressionLoopRange() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/binaryExpressionLoopRange.kt");
+        @TestMetadata("arrayAccessMultipleIndex.kt")
+        public void testArrayAccessMultipleIndex() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/arrayAccessMultipleIndex.kt");
         }
 
-        @TestMetadata("blockBodyExpression.kt")
-        public void testBlockBodyExpression() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/blockBodyExpression.kt");
+        @TestMetadata("arrayAccessOneIndex.kt")
+        public void testArrayAccessOneIndex() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/arrayAccessOneIndex.kt");
         }
 
-        @TestMetadata("blockCommentOnly.kt")
-        public void testBlockCommentOnly() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/blockCommentOnly.kt");
+        @TestMetadata("arrayAssignmentMultipleIndex.kt")
+        public void testArrayAssignmentMultipleIndex() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/arrayAssignmentMultipleIndex.kt");
         }
 
-        @TestMetadata("commentsInBody.kt")
-        public void testCommentsInBody() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/commentsInBody.kt");
+        @TestMetadata("assignment.kt")
+        public void testAssignment() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/assignment.kt");
         }
 
-        @TestMetadata("commentsInBody2.kt")
-        public void testCommentsInBody2() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/commentsInBody2.kt");
+        @TestMetadata("binarayNotEqNullable.kt")
+        public void testBinarayNotEqNullable() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binarayNotEqNullable.kt");
         }
 
-        @TestMetadata("commentsOutsideBody.kt")
-        public void testCommentsOutsideBody() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/commentsOutsideBody.kt");
+        @TestMetadata("binaryEqEqNonNullable.kt")
+        public void testBinaryEqEqNonNullable() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryEqEqNonNullable.kt");
         }
 
-        @TestMetadata("continueToReturnWithLabel.kt")
-        public void testContinueToReturnWithLabel() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/continueToReturnWithLabel.kt");
+        @TestMetadata("binaryEqEqNotNullInLeftSide.kt")
+        public void testBinaryEqEqNotNullInLeftSide() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryEqEqNotNullInLeftSide.kt");
         }
 
-        @TestMetadata("continueToReturnWithoutLabel.kt")
-        public void testContinueToReturnWithoutLabel() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/continueToReturnWithoutLabel.kt");
+        @TestMetadata("binaryEqEqNotNullInRightSide.kt")
+        public void testBinaryEqEqNotNullInRightSide() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryEqEqNotNullInRightSide.kt");
         }
 
-        @TestMetadata("emptyBody.kt")
-        public void testEmptyBody() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/emptyBody.kt");
+        @TestMetadata("binaryEqEqNullInLeftSide.kt")
+        public void testBinaryEqEqNullInLeftSide() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryEqEqNullInLeftSide.kt");
         }
 
-        @TestMetadata("endOfLineComment1.kt")
-        public void testEndOfLineComment1() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/endOfLineComment1.kt");
+        @TestMetadata("binaryEqEqNullInRightSide.kt")
+        public void testBinaryEqEqNullInRightSide() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryEqEqNullInRightSide.kt");
         }
 
-        @TestMetadata("endOfLineComment2.kt")
-        public void testEndOfLineComment2() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/endOfLineComment2.kt");
+        @TestMetadata("binaryEqEqNullable.kt")
+        public void testBinaryEqEqNullable() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryEqEqNullable.kt");
         }
 
-        @TestMetadata("endOfLineComment3.kt")
-        public void testEndOfLineComment3() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/endOfLineComment3.kt");
+        @TestMetadata("binaryNotEqNonNullable.kt")
+        public void testBinaryNotEqNonNullable() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryNotEqNonNullable.kt");
         }
 
-        @TestMetadata("iterativeElementTypeSpecified.kt")
-        public void testIterativeElementTypeSpecified() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/iterativeElementTypeSpecified.kt");
+        @TestMetadata("binaryNotIn.kt")
+        public void testBinaryNotIn() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryNotIn.kt");
         }
 
-        @TestMetadata("noCurlyBraces.kt")
-        public void testNoCurlyBraces() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/noCurlyBraces.kt");
+        @TestMetadata("binaryPlus.kt")
+        public void testBinaryPlus() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryPlus.kt");
         }
 
-        @TestMetadata("noStatements.kt")
-        public void testNoStatements() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/noStatements.kt");
+        @TestMetadata("binaryPlusEquals.kt")
+        public void testBinaryPlusEquals() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryPlusEquals.kt");
         }
 
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/simple.kt");
+        @TestMetadata("binaryPlusEqualsNotResolved.kt")
+        public void testBinaryPlusEqualsNotResolved() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryPlusEqualsNotResolved.kt");
         }
 
-        @TestMetadata("typeAnnotatedWithNonBlockBody.kt")
-        public void testTypeAnnotatedWithNonBlockBody() throws Exception {
-            runTest("../testData/intentions/convertToForEachFunctionCall/typeAnnotatedWithNonBlockBody.kt");
+        @TestMetadata("binaryRangeTo.kt")
+        public void testBinaryRangeTo() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryRangeTo.kt");
+        }
+
+        @TestMetadata("binaryRangeUntil.kt")
+        public void testBinaryRangeUntil() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryRangeUntil.kt");
+        }
+
+        @TestMetadata("binaryTimesEquals.kt")
+        public void testBinaryTimesEquals() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryTimesEquals.kt");
+        }
+
+        @TestMetadata("binaryTimesEqualsNotResolved.kt")
+        public void testBinaryTimesEqualsNotResolved() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryTimesEqualsNotResolved.kt");
+        }
+
+        @TestMetadata("compoundAssignment.kt")
+        public void testCompoundAssignment() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/compoundAssignment.kt");
+        }
+
+        @TestMetadata("compoundAssignment2.kt")
+        public void testCompoundAssignment2() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/compoundAssignment2.kt");
+        }
+
+        @TestMetadata("emptyInvoke.kt")
+        public void testEmptyInvoke() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/emptyInvoke.kt");
+        }
+
+        @TestMetadata("functionCallCaretOnCall.kt")
+        public void testFunctionCallCaretOnCall() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/functionCallCaretOnCall.kt");
+        }
+
+        @TestMetadata("functionCallMultipleArgument.kt")
+        public void testFunctionCallMultipleArgument() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/functionCallMultipleArgument.kt");
+        }
+
+        @TestMetadata("functionCallWithMultipleArgumentsAndSingleLambda.kt")
+        public void testFunctionCallWithMultipleArgumentsAndSingleLambda() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/functionCallWithMultipleArgumentsAndSingleLambda.kt");
+        }
+
+        @TestMetadata("functionCallWithSingleLambda.kt")
+        public void testFunctionCallWithSingleLambda() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/functionCallWithSingleLambda.kt");
+        }
+
+        @TestMetadata("inRightSideOfAssignment.kt")
+        public void testInRightSideOfAssignment() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/inRightSideOfAssignment.kt");
+        }
+
+        @TestMetadata("incompleteBinaryExpression.kt")
+        public void testIncompleteBinaryExpression() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/incompleteBinaryExpression.kt");
+        }
+
+        @TestMetadata("incompleteUnaryExpression.kt")
+        public void testIncompleteUnaryExpression() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/incompleteUnaryExpression.kt");
+        }
+
+        @TestMetadata("invokeOnAnonymousFunction.kt")
+        public void testInvokeOnAnonymousFunction() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/invokeOnAnonymousFunction.kt");
+        }
+
+        @TestMetadata("invokeOnAnonymousFunctionWithReceiver.kt")
+        public void testInvokeOnAnonymousFunctionWithReceiver() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/invokeOnAnonymousFunctionWithReceiver.kt");
+        }
+
+        @TestMetadata("invokeOnAnonymousFunctionWithReceiver2.kt")
+        public void testInvokeOnAnonymousFunctionWithReceiver2() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/invokeOnAnonymousFunctionWithReceiver2.kt");
+        }
+
+        @TestMetadata("keepComments.kt")
+        public void testKeepComments() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/keepComments.kt");
+        }
+
+        @TestMetadata("notApplicableAssignment.kt")
+        public void testNotApplicableAssignment() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/notApplicableAssignment.kt");
+        }
+
+        @TestMetadata("notApplicableCallWithInvokeMethod.kt")
+        public void testNotApplicableCallWithInvokeMethod() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/notApplicableCallWithInvokeMethod.kt");
+        }
+
+        @TestMetadata("notApplicableFunctionCallWithCallableReference.kt")
+        public void testNotApplicableFunctionCallWithCallableReference() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/notApplicableFunctionCallWithCallableReference.kt");
+        }
+
+        @TestMetadata("notApplicableNewClassObject.kt")
+        public void testNotApplicableNewClassObject() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/notApplicableNewClassObject.kt");
+        }
+
+        @TestMetadata("notApplicablePostfixPlusPlusInIfExpression.kt")
+        public void testNotApplicablePostfixPlusPlusInIfExpression() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/notApplicablePostfixPlusPlusInIfExpression.kt");
+        }
+
+        @TestMetadata("notApplicablePostfixPlusPlusInNestedIfExpression.kt")
+        public void testNotApplicablePostfixPlusPlusInNestedIfExpression() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/notApplicablePostfixPlusPlusInNestedIfExpression.kt");
+        }
+
+        @TestMetadata("notApplicablePostfixPlusPlusInProperty.kt")
+        public void testNotApplicablePostfixPlusPlusInProperty() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/notApplicablePostfixPlusPlusInProperty.kt");
+        }
+
+        @TestMetadata("notApplicablePostfixPlusPlusInWhenExpression.kt")
+        public void testNotApplicablePostfixPlusPlusInWhenExpression() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/notApplicablePostfixPlusPlusInWhenExpression.kt");
+        }
+
+        @TestMetadata("pluPlus.kt")
+        public void testPluPlus() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/pluPlus.kt");
+        }
+
+        @TestMetadata("postfixMinusMinus.kt")
+        public void testPostfixMinusMinus() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/postfixMinusMinus.kt");
+        }
+
+        @TestMetadata("postfixPlusPlusInIfExpression.kt")
+        public void testPostfixPlusPlusInIfExpression() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/postfixPlusPlusInIfExpression.kt");
+        }
+
+        @TestMetadata("postfixPlusPlusInLoop.kt")
+        public void testPostfixPlusPlusInLoop() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/postfixPlusPlusInLoop.kt");
+        }
+
+        @TestMetadata("postfixPlusPlusInWhenExpression.kt")
+        public void testPostfixPlusPlusInWhenExpression() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/postfixPlusPlusInWhenExpression.kt");
+        }
+
+        @TestMetadata("prefixPlus.kt")
+        public void testPrefixPlus() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/prefixPlus.kt");
+        }
+
+        @TestMetadata("prefixPlusPlus.kt")
+        public void testPrefixPlusPlus() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/prefixPlusPlus.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/putCallsOnSeparateLines")
+    public static class PutCallsOnSeparateLines extends AbstractSharedK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("doNotWrapFirstElement.kt")
+        public void testDoNotWrapFirstElement() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/doNotWrapFirstElement.kt");
+        }
+
+        @TestMetadata("doNotWrapFirstElement2.kt")
+        public void testDoNotWrapFirstElement2() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/doNotWrapFirstElement2.kt");
+        }
+
+        @TestMetadata("doNotWrapFirstElement3.kt")
+        public void testDoNotWrapFirstElement3() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/doNotWrapFirstElement3.kt");
+        }
+
+        @TestMetadata("dotChain.kt")
+        public void testDotChain() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/dotChain.kt");
+        }
+
+        @TestMetadata("dotChainWithParenthesis.kt")
+        public void testDotChainWithParenthesis() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/dotChainWithParenthesis.kt");
+        }
+
+        @TestMetadata("import.kt")
+        public void testImport() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/import.kt");
+        }
+
+        @TestMetadata("mixWithMultilineBody.kt")
+        public void testMixWithMultilineBody() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/mixWithMultilineBody.kt");
+        }
+
+        @TestMetadata("mixWithMultilineBodyInFirstPosition.kt")
+        public void testMixWithMultilineBodyInFirstPosition() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/mixWithMultilineBodyInFirstPosition.kt");
+        }
+
+        @TestMetadata("safeChain.kt")
+        public void testSafeChain() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/safeChain.kt");
+        }
+
+        @TestMetadata("safeChainWithLineBreaks.kt")
+        public void testSafeChainWithLineBreaks() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/safeChainWithLineBreaks.kt");
+        }
+
+        @TestMetadata("safeChainWithOneLineBreak.kt")
+        public void testSafeChainWithOneLineBreak() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/safeChainWithOneLineBreak.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/putExpressionsOnSeparateLines")
+    public static class PutExpressionsOnSeparateLines extends AbstractSharedK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("andAndAssignee.kt")
+        public void testAndAndAssignee() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/andAndAssignee.kt");
+        }
+
+        @TestMetadata("assignee.kt")
+        public void testAssignee() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/assignee.kt");
+        }
+
+        @TestMetadata("longExpression1.kt")
+        public void testLongExpression1() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpression1.kt");
+        }
+
+        @TestMetadata("longExpression2.kt")
+        public void testLongExpression2() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpression2.kt");
+        }
+
+        @TestMetadata("longExpression3.kt")
+        public void testLongExpression3() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpression3.kt");
+        }
+
+        @TestMetadata("longExpression4.kt")
+        public void testLongExpression4() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpression4.kt");
+        }
+
+        @TestMetadata("longExpressionWithLineBreaks.kt")
+        public void testLongExpressionWithLineBreaks() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithLineBreaks.kt");
+        }
+
+        @TestMetadata("longExpressionWithOneLineBreak.kt")
+        public void testLongExpressionWithOneLineBreak() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithOneLineBreak.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis1.kt")
+        public void testLongExpressionWithParenthesis1() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis1.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis10.kt")
+        public void testLongExpressionWithParenthesis10() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis10.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis11.kt")
+        public void testLongExpressionWithParenthesis11() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis11.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis12.kt")
+        public void testLongExpressionWithParenthesis12() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis12.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis2.kt")
+        public void testLongExpressionWithParenthesis2() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis2.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis3.kt")
+        public void testLongExpressionWithParenthesis3() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis3.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis4.kt")
+        public void testLongExpressionWithParenthesis4() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis4.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis5.kt")
+        public void testLongExpressionWithParenthesis5() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis5.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis6.kt")
+        public void testLongExpressionWithParenthesis6() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis6.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis7.kt")
+        public void testLongExpressionWithParenthesis7() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis7.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis8.kt")
+        public void testLongExpressionWithParenthesis8() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis8.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis9.kt")
+        public void testLongExpressionWithParenthesis9() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis9.kt");
         }
     }
 
@@ -1003,6 +1529,44 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
         @TestMetadata("unnecessaryParenthesesWithComment.kt")
         public void testUnnecessaryParenthesesWithComment() throws Exception {
             runTest("../testData/intentions/removeUnnecessaryParentheses/unnecessaryParenthesesWithComment.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/renameClassToContainingFileName")
+    public static class RenameClassToContainingFileName extends AbstractSharedK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("Basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../testData/intentions/renameClassToContainingFileName/Basic.kt");
+        }
+
+        @TestMetadata("Basic2.kt")
+        public void testBasic2() throws Exception {
+            runTest("../testData/intentions/renameClassToContainingFileName/Basic2.kt");
+        }
+
+        @TestMetadata("HasSameNameClass.kt")
+        public void testHasSameNameClass() throws Exception {
+            runTest("../testData/intentions/renameClassToContainingFileName/HasSameNameClass.kt");
+        }
+
+        @TestMetadata("HasSameNameObject.kt")
+        public void testHasSameNameObject() throws Exception {
+            runTest("../testData/intentions/renameClassToContainingFileName/HasSameNameObject.kt");
+        }
+
+        @TestMetadata("SameName.kt")
+        public void testSameName() throws Exception {
+            runTest("../testData/intentions/renameClassToContainingFileName/SameName.kt");
+        }
+
+        @TestMetadata("startWithLowerCase.kt")
+        public void testStartWithLowerCase() throws Exception {
+            runTest("../testData/intentions/renameClassToContainingFileName/startWithLowerCase.kt");
         }
     }
 

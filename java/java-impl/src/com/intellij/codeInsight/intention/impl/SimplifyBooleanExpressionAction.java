@@ -63,7 +63,7 @@ public class SimplifyBooleanExpressionAction implements IntentionAction{
     PsiElement parent = expression;
     while (parent instanceof PsiExpression &&
            !(parent instanceof PsiAssignmentExpression) &&
-           (PsiType.BOOLEAN.equals(((PsiExpression)parent).getType()) || parent instanceof PsiConditionalExpression)) {
+           (PsiTypes.booleanType().equals(((PsiExpression)parent).getType()) || parent instanceof PsiConditionalExpression)) {
       expression = (PsiExpression)parent;
       parent = parent.getParent();
     }

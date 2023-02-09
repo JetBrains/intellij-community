@@ -499,10 +499,9 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
       }
     }
 
-    if (component instanceof RadContainer) {
+    if (component instanceof RadContainer container) {
       component.refresh();
 
-      final RadContainer container = (RadContainer)component;
       for (int i = container.getComponentCount() - 1; i >= 0; i--) {
         refreshImpl(container.getComponent(i));
       }
@@ -686,8 +685,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
       final RadComponent radComponent = (RadComponent)component;
       boolean componentModified = false;
       for (IProperty prop : component.getModifiedProperties()) {
-        if (prop instanceof IntroStringProperty) {
-          IntroStringProperty strProp = (IntroStringProperty)prop;
+        if (prop instanceof IntroStringProperty strProp) {
           componentModified = strProp.refreshValue(radComponent) || componentModified;
         }
       }
@@ -905,8 +903,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   private Map<String, String> saveTabbedPaneSelectedTabs() {
     final Map<String, String> result = new HashMap<>();
     FormEditingUtil.iterate(getRootContainer(), component -> {
-      if (component instanceof RadTabbedPane) {
-        RadTabbedPane tabbedPane = (RadTabbedPane)component;
+      if (component instanceof RadTabbedPane tabbedPane) {
         RadComponent c = tabbedPane.getSelectedTab();
         if (c != null) {
           result.put(tabbedPane.getId(), c.getId());
@@ -919,8 +916,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
   private void restoreTabbedPaneSelectedTabs(final Map<String, String> tabbedPaneSelectedTabs) {
     FormEditingUtil.iterate(getRootContainer(), component -> {
-      if (component instanceof RadTabbedPane) {
-        RadTabbedPane tabbedPane = (RadTabbedPane)component;
+      if (component instanceof RadTabbedPane tabbedPane) {
         String selectedTabId = tabbedPaneSelectedTabs.get(tabbedPane.getId());
         if (selectedTabId != null) {
           for (RadComponent c : tabbedPane.getComponents()) {
@@ -1095,6 +1091,11 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     public void actionPerformed(@NotNull final AnActionEvent e) {
       myProcessor.cancelOperation();
       myQuickFixManager.hideIntentionHint();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

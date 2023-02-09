@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,119 +15,124 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class WaitForContributorsListenerWrapper extends BufferingListenerWrapper {
+public class WaitForContributorsListenerWrapper implements SearchListener, Disposable {
 
   private static final Logger LOG = Logger.getInstance(WaitForContributorsListenerWrapper.class);
 
-  private static final long DEFAULT_TIMEOUT = 3000;
+  static final long DEFAULT_WAIT_TIMEOUT_MS = 3000;
+  static final long DEFAULT_THROTTLING_TIMEOUT_MS = 100;
 
   private final Map<SearchEverywhereContributor<?>, Boolean> contributorsMap = new HashMap<>();
   private final ScheduledExecutorService executorService = EdtExecutorService.getScheduledExecutorInstance();
   private final SearchListModel listModel;
   private Future<?> flushFuture;
-  private boolean useBuffer = true;
-  private final long timeout;
+  private final long waitTimeoutMs;
+  private final long throttlingTimeoutMs;
+  private final Supplier<String> mySearchPattern;
+  private final SearchListener delegateListener;
+  private final SearchEventsBuffer buffer = new SearchEventsBuffer();
 
-  public WaitForContributorsListenerWrapper(SearchListener delegate, SearchListModel model, long timeout) {
-    super(delegate);
+  public WaitForContributorsListenerWrapper(@NotNull SearchListener delegate, @NotNull SearchListModel model,
+                                            long waitTimeoutMs, long throttlingTimeoutMs,
+                                            @NotNull Supplier<String> searchPattern) {
+    delegateListener = delegate;
     listModel = model;
-    this.timeout = timeout;
-  }
-
-  public WaitForContributorsListenerWrapper(SearchListener delegate, SearchListModel model) {
-    this(delegate, model, DEFAULT_TIMEOUT);
-  }
-
-  @Override
-  public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
-    if (useBuffer) {
-      super.elementsAdded(list);
-    }
-    else {
-      myDelegateListener.elementsAdded(list);
-    }
+    this.waitTimeoutMs = waitTimeoutMs;
+    this.throttlingTimeoutMs = throttlingTimeoutMs;
+    mySearchPattern = searchPattern;
   }
 
   @Override
-  public void elementsRemoved(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
-    if (useBuffer) {
-      super.elementsRemoved(list);
-    }
-    else {
-      myDelegateListener.elementsRemoved(list);
-    }
+  public void dispose() {
+    cancelScheduledFlush();
   }
 
   @Override
-  public void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
-    super.searchStarted(contributors);
+  public void searchStarted(@NotNull String pattern, @NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
     resetState(contributors);
-    if (useBuffer) {
-      flushFuture = scheduleFlash();
-    }
+    delegateListener.searchStarted(pattern, contributors);
+    long timeout = contributors.size() > 1 ? waitTimeoutMs : throttlingTimeoutMs;
+    scheduleFlush(timeout);
   }
 
   @Override
   public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
     cancelScheduledFlush();
-    super.searchFinished(hasMoreContributors);
+    buffer.flushBuffer(delegateListener);
+    delegateListener.searchFinished(hasMoreContributors);
+  }
+
+  @Override
+  public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
+    buffer.addElements(list);
+    scheduleFlush(throttlingTimeoutMs);
+  }
+
+  @Override
+  public void elementsRemoved(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
+    buffer.removeElements(list);
+    scheduleFlush(throttlingTimeoutMs);
   }
 
   @Override
   public void contributorFinished(@NotNull SearchEverywhereContributor<?> contributor, boolean hasMore) {
+    buffer.contributorFinished(contributor, hasMore);
     markContributorAndCheckFlush(contributor);
   }
 
   @Override
   public void contributorWaits(@NotNull SearchEverywhereContributor<?> contributor) {
+    buffer.contributorWaits(contributor);
     markContributorAndCheckFlush(contributor);
-    super.contributorWaits(contributor);
   }
 
   private void markContributorAndCheckFlush(@NotNull SearchEverywhereContributor<?> contributor) {
-    if (contributorsMap.get(contributor) != null && useBuffer) {
+    if (contributorsMap.get(contributor) != null) {
       contributorsMap.put(contributor, true);
       if (ContainerUtil.and(contributorsMap.values(), Boolean::booleanValue)) {
         cancelScheduledFlush();
-        flushBuffer();
-        useBuffer = false;
+        buffer.flushBuffer(delegateListener);
         listModel.freezeElements();
       }
     }
   }
 
   private void cancelScheduledFlush() {
-    if (flushFuture == null) return;
-    flushFuture.cancel(false);
+    if (flushFuture != null) flushFuture.cancel(false);
   }
 
-  private Future<?> scheduleFlash() {
+  private void scheduleFlush(long timeoutMs) {
+    if (flushFuture != null && !flushFuture.isDone()) return;
+
     Runnable command = () -> {
       logNonFinished();
-      flushBuffer();
-      useBuffer = false;
+      buffer.flushBuffer(delegateListener);
       listModel.freezeElements();
     };
 
-    return executorService.schedule(command, timeout, TimeUnit.MILLISECONDS);
+    flushFuture = executorService.schedule(command, timeoutMs, TimeUnit.MILLISECONDS);
   }
 
   private void logNonFinished() {
     contributorsMap.forEach((contributor, finished) -> {
-      if (!finished) LOG.warn(String.format("Contributor (%s) did not finish search in timeout (%d). Maybe it should implement PossibleSlowContributor interface", contributor.getSearchProviderId(), timeout));
+      if (!finished) {
+        LOG.warn("Contributor '" + contributor.getSearchProviderId() +
+                 "' did not finish search for '" + mySearchPattern.get() + "'" +
+                 " in " + waitTimeoutMs +"ms. Maybe it should implement PossibleSlowContributor interface?");
+      }
     });
   }
 
   private void resetState(Collection<? extends SearchEverywhereContributor<?>> contributors) {
     cancelScheduledFlush();
-    clearBuffer();
+    buffer.clearBuffer();
     Map<? extends SearchEverywhereContributor<?>, Boolean> map = contributors.stream()
       .filter(c -> !PossibleSlowContributor.checkSlow(c))
       .collect(Collectors.toMap(Function.identity(), c -> false));
     contributorsMap.clear();
     contributorsMap.putAll(map);
-    useBuffer = contributors.size() > 1;
   }
 }

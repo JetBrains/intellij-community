@@ -13,7 +13,6 @@ import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
 import org.intellij.plugins.markdown.editor.tables.TableUtils
-import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 internal class MarkdownSetColumnAlignmentIntention: PsiElementBaseIntentionAction() {
   override fun getFamilyName() = text
@@ -23,9 +22,6 @@ internal class MarkdownSetColumnAlignmentIntention: PsiElementBaseIntentionActio
   }
 
   override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
-    if (!MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
-      return false
-    }
     val cell = TableUtils.findCell(element)
     return cell != null && editor != null && cell.parentTable?.hasCorrectBorders() == true
   }

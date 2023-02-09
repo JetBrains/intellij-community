@@ -8,8 +8,8 @@ import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.indicatorRunBlockingCancellable
 import com.intellij.openapi.progress.runBackgroundableTask
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.IntRef
@@ -50,7 +50,7 @@ object VcsLogNavigationUtil {
 
     val progressTitle = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.asString())
     runBackgroundableTask(progressTitle, project, true) { indicator ->
-      runBlockingCancellable(indicator) {
+      indicatorRunBlockingCancellable(indicator) {
         resultFuture.computeResult {
           withContext(Dispatchers.EDT) {
             jumpToRevision(project, root, hash, filePath)
@@ -352,7 +352,7 @@ object VcsLogNavigationUtil {
     val commitIndex = storage.getCommitIndex(hash, root)
     val visibleGraph = visiblePack.visibleGraph
     if (visibleGraph is VisibleGraphImpl<*>) {
-      val nodeId = (visibleGraph as VisibleGraphImpl<Int?>).permanentGraph.permanentCommitsInfo.getNodeId(commitIndex)
+      val nodeId = (visibleGraph as VisibleGraphImpl<Int>).permanentGraph.permanentCommitsInfo.getNodeId(commitIndex)
       if (nodeId == VcsLogUiEx.COMMIT_NOT_FOUND) return VcsLogUiEx.COMMIT_NOT_FOUND
       if (nodeId < 0) return VcsLogUiEx.COMMIT_DOES_NOT_MATCH
       return visibleGraph.linearGraph.getNodeIndex(nodeId) ?: VcsLogUiEx.COMMIT_DOES_NOT_MATCH

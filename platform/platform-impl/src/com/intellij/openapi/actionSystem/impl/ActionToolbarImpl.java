@@ -17,7 +17,10 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -51,11 +54,14 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickActionProvider, AlphaAnimated {
   private static final Logger LOG = Logger.getInstance(ActionToolbarImpl.class);
@@ -126,6 +132,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   /** @see #calculateBounds(Dimension, List) */
   private final List<Rectangle> myComponentBounds = new ArrayList<>();
+  private Supplier<? extends Dimension> myMinimumButtonSizeFunction = Dimension::new;
   private JBDimension myMinimumButtonSize = JBUI.emptySize();
 
   /** @see ActionToolbar#getLayoutPolicy() */
@@ -258,6 +265,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     for (Component component : getComponents()) {
       tweakActionComponentUI(component);
     }
+    updateMinimumButtonSize();
   }
 
   @Override
@@ -520,29 +528,22 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private @NotNull Border getActionButtonBorder() {
-    return myActionButtonBorder != null ? myActionButtonBorder : new JBEmptyBorder(0) {
-      @Override
-      public Insets getBorderInsets(Component c, Insets insets) {
-        Insets x = getBorderInsets();
-        insets.left = x.left;
-        insets.top = x.top;
-        insets.right = x.right;
-        insets.bottom = x.bottom;
-        return insets;
-      }
-
-      @Override
-      public Insets getBorderInsets() {
-        return myOrientation == SwingConstants.VERTICAL ? JBUI.insets(2, 1) : JBUI.insets(1, 2);
-      }
-    };
+    return myActionButtonBorder != null ? myActionButtonBorder : new ActionButtonBorder(2, 1);
   }
 
   protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
-                                                      final ActionButtonLook look,
+                                                      @Nullable ActionButtonLook look,
                                                       @NotNull String place,
                                                       @NotNull Presentation presentation,
                                                       @NotNull Dimension minimumSize) {
+    return createToolbarButton(action, look, place, presentation, () -> minimumSize);
+  }
+
+  protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
+                                                      @Nullable ActionButtonLook look,
+                                                      @NotNull String place,
+                                                      @NotNull Presentation presentation,
+                                                      Supplier<? extends @NotNull Dimension> minimumSize) {
     if (action.displayTextInToolbar()) {
       int mnemonic = action.getTemplatePresentation().getMnemonic();
 
@@ -556,21 +557,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       return buttonWithText;
     }
 
-    ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
-      @Override
-      protected DataContext getDataContext() {
-        return getToolbarDataContext();
-      }
-
-      @Override
-      protected @NotNull Icon getFallbackIcon(boolean enabled) {
-        Presentation p = getAction().getTemplatePresentation();
-        Icon icon = Objects.requireNonNullElse(p.getIcon(), AllIcons.Toolbar.Unknown);
-        if (enabled) return icon;
-        if (p.getDisabledIcon() != null) return p.getDisabledIcon();
-        return IconLoader.getDisabledIcon(icon);
-      }
-    };
+    ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize);
 
     applyToolbarLook(look, presentation, actionButton);
     return actionButton;
@@ -590,7 +577,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       action,
       getActionButtonLook(),
       myPlace, myPresentationFactory.getPresentation(action),
-      myMinimumButtonSize.size());
+      myMinimumButtonSizeFunction);
   }
 
   @Nullable
@@ -1070,6 +1057,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myActionButtonBorder = actionButtonBorder;
   }
 
+  public final void setActionButtonBorder(int directionalGap, int orthogonalGap) {
+    setActionButtonBorder(new ActionButtonBorder(directionalGap, orthogonalGap));
+  }
+
   public final void setSeparatorCreator(@NotNull Function<? super String, ? extends Component> separatorCreator) {
     mySeparatorCreator = separatorCreator;
   }
@@ -1235,12 +1226,24 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public void setMinimumButtonSize(final @NotNull Dimension size) {
-    myMinimumButtonSize = JBDimension.create(size, true);
+    setMinimumButtonSize(() -> size);
+  }
+
+  public void setMinimumButtonSize(final Supplier<? extends @NotNull Dimension> size) {
+    myMinimumButtonSizeFunction = size;
+    updateMinimumButtonSize();
+    revalidate();
+  }
+
+  private void updateMinimumButtonSize() {
+    if (myMinimumButtonSizeFunction == null) {
+      return; // called from the superclass constructor through updateUI()
+    }
+    myMinimumButtonSize = JBDimension.create(myMinimumButtonSizeFunction.get(), true);
     for (int i = getComponentCount() - 1; i >= 0; i--) {
       final Component component = getComponent(i);
-      if (component instanceof ActionButton) {
-        final ActionButton button = (ActionButton)component;
-        button.setMinimumButtonSize(size);
+      if (component instanceof ActionButton button) {
+        button.setMinimumButtonSize(myMinimumButtonSizeFunction);
       }
       else if (component instanceof JLabel && LOADING_LABEL.equals(component.getName())) {
         Dimension dimension = new Dimension();
@@ -1250,7 +1253,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         component.setPreferredSize(dimension);
       }
     }
-    revalidate();
   }
 
   @Override
@@ -1851,5 +1853,32 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   public interface SecondaryGroupUpdater {
     void update(@NotNull AnActionEvent e);
+  }
+
+  private class ActionButtonBorder extends JBEmptyBorder {
+    private final int myDirectionalGap;
+    private final int myOrthogonalGap;
+
+    ActionButtonBorder(int directionalGap, int orthogonalGap) {
+      super(0);
+      myDirectionalGap = directionalGap;
+      myOrthogonalGap = orthogonalGap;
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c, Insets insets) {
+      Insets x = getBorderInsets();
+      insets.left = x.left;
+      insets.top = x.top;
+      insets.right = x.right;
+      insets.bottom = x.bottom;
+      return insets;
+    }
+
+    @Override
+    public Insets getBorderInsets() {
+      return myOrientation == SwingConstants.VERTICAL ?
+             JBUI.insets(myDirectionalGap, myOrthogonalGap) : JBUI.insets(myOrthogonalGap, myDirectionalGap);
+    }
   }
 }

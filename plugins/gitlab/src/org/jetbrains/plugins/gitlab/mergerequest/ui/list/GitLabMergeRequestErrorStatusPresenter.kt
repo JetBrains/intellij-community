@@ -21,7 +21,7 @@ internal class GitLabMergeRequestErrorStatusPresenter(
   private val scope: CoroutineScope,
   private val account: GitLabAccount,
   private val accountManager: GitLabAccountManager
-) : ErrorStatusPresenter {
+) : ErrorStatusPresenter<Throwable> {
   override fun getErrorTitle(error: Throwable): @Nls String = GitLabBundle.message("merge.request.list.error")
 
   override fun getErrorDescription(error: Throwable): @Nls String {
@@ -35,7 +35,7 @@ internal class GitLabMergeRequestErrorStatusPresenter(
   override fun getErrorAction(error: Throwable): Action? {
     val httpStatusError = parseHttpStatusError(error) ?: return null
     return when (httpStatusError.statusErrorType) {
-      HttpStatusErrorType.INVALID_TOKEN -> GitLabHttpStatusErrorAction.RefreshToken(project, scope, account, accountManager)
+      HttpStatusErrorType.INVALID_TOKEN -> GitLabHttpStatusErrorAction.LogInAgain(project, scope, account, accountManager)
       HttpStatusErrorType.UNKNOWN -> null
     }
   }

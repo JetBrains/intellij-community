@@ -6,6 +6,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
@@ -60,6 +61,7 @@ class LearningItems(private val project: Project) : JPanel() {
       it.foreground = JBUI.CurrentTheme.Link.Foreground.ENABLED
     }
     val clickAction: () -> Unit = l@{
+      if (!enableLessonsAndPromoters) return@l
       val cantBeOpenedInDumb = DumbService.getInstance(project).isDumb && !lesson.properties.canStartInDumbMode
       if (cantBeOpenedInDumb && !LessonManager.instance.lessonShouldBeOpenedCompleted(lesson)) {
         val balloon = createBalloon(LearnBundle.message("indexing.message"))
@@ -68,7 +70,7 @@ class LearningItems(private val project: Project) : JPanel() {
       }
       CourseManager.instance.openLesson(project, lesson, LessonStartingWay.LEARN_TAB)
     }
-    val result = LearningItemPanel(clickAction)
+    val result = if (!enableLessonsAndPromoters) NonOpaquePanel() else LearningItemPanel(clickAction)
     result.layout = BoxLayout(result, BoxLayout.X_AXIS)
     result.alignmentX = LEFT_ALIGNMENT
     result.border = EmptyBorder(JBUI.scale(7), JBUI.scale(7), JBUI.scale(6), JBUI.scale(7))
@@ -84,6 +86,11 @@ class LearningItems(private val project: Project) : JPanel() {
       result.add(NewContentLabel())
     }
     result.add(Box.createHorizontalGlue())
+
+    if (!enableLessonsAndPromoters) {
+      checkmarkIconLabel.isEnabled = false
+      name.foreground = JBUI.CurrentTheme.Link.Foreground.DISABLED
+    }
 
     return result
   }

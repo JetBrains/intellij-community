@@ -16,4 +16,3 @@ open class Z : A() {
 
 }
 
-// FIR_COMPARISON

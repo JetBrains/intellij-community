@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.ide.lightEdit.LightEdit
@@ -9,26 +9,31 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.indexing.AdditionalIndexableFileSet
+import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
+import com.intellij.util.indexing.roots.IndexingRootsCollectionUtil.*
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
+import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Predicate
 
 internal class DefaultProjectIndexableFilesContributor : IndexableFilesContributor {
   override fun getIndexableFiles(project: Project): List<IndexableFilesIterator> {
+    assert(!IndexableFilesIndex.isEnabled()) { "Shouldn't be used with IndexableFilesIndex fully enabled" }
     val providers: List<IndexableFilesIterator>
     if (shouldIndexProjectBasedOnIndexableEntityProviders()) {
       val builders: MutableList<IndexableEntityProvider.IndexableIteratorBuilder> = mutableListOf()
-      val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+      val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
       for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
         if (provider is IndexableEntityProvider.Existing) {
           addIteratorBuildersFromProvider(provider, entityStorage, project, builders)
@@ -77,12 +82,20 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
 
   override fun getOwnFilePredicate(project: Project): Predicate<VirtualFile> {
     val projectFileIndex: ProjectFileIndex = ProjectFileIndex.getInstance(project)
+    val indexableFilesIndex: IndexableFilesIndex? = if (IndexableFilesIndex.isEnabled())
+      IndexableFilesIndex.getInstance(project)
+    else null
 
     return Predicate {
       if (LightEdit.owns(project)) {
         return@Predicate false
       }
-      if (projectFileIndex.isInContent(it) || projectFileIndex.isInLibrary(it)) {
+
+      if (indexableFilesIndex != null) {
+        return@Predicate indexableFilesIndex.shouldBeIndexed(it)
+      }
+
+      return@Predicate if (projectFileIndex.isInContent(it) || projectFileIndex.isInLibrary(it)) {
         !FileTypeManager.getInstance().isFileIgnored(it)
       }
       else false
@@ -147,6 +160,28 @@ internal class AdditionalLibraryRootsContributor : IndexableFilesContributor {
                                rootsToIndex: List<VirtualFile>,
                                libraryNameForDebug: String): IndexableFilesIterator =
       AdditionalLibraryIndexableAddedFilesIterator(presentableLibraryName, rootsToIndex, libraryNameForDebug)
+  }
+}
+
+internal class WorkspaceFileIndexContributorBasedContributor : IndexableFilesContributor {
+  override fun getIndexableFiles(project: Project): List<IndexableFilesIterator> {
+    if (!shouldIndexProjectBasedOnIndexableEntityProviders()) {
+      return emptyList()
+    }
+    assert(!IndexableFilesIndex.isEnabled()) { "Shouldn't be used with IndexableFilesIndex fully enabled" }
+
+    val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+    val settings = IndexingRootsCollectionSettings()
+    settings.retainCondition = Condition { contributor -> contributor !is PlatformInternalWorkspaceFileIndexContributor }
+    val roots = collectRootsFromWorkspaceFileIndexContributors(project, entityStorage, settings)
+    val result = mutableListOf<IndexableFilesIterator>()
+    addIteratorsFromRootsDescriptions(roots, result, mutableSetOf(), entityStorage)
+    return result
+  }
+
+  override fun getOwnFilePredicate(project: Project): Predicate<VirtualFile> {
+    return Predicate { false }
+    //served in DefaultProjectIndexableFilesContributor
   }
 }
 

@@ -7,15 +7,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.ResolveScopeProvider
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ucache.*
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
  * @see KotlinScriptResolveScopeProvider
@@ -42,8 +38,8 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
         }
 
         if (scriptsAsEntities) {
-            val scripts = file.findUsedInScripts(project) ?: return null
-            val dependencies = scripts.flatMap { it.listDependencies(KotlinScriptLibraryRootTypeId.COMPILED) }.distinct()
+            val scripts = file.findDependentScripts(project) ?: return null
+            val dependencies = scripts.flatMap { it.listDependencies(project, KotlinScriptLibraryRootTypeId.COMPILED) }.distinct()
 
             var searchScope = GlobalSearchScope.union(
                 arrayOf(
@@ -68,25 +64,4 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
 
         return KotlinScriptSearchScope(project, scope)
     }
-}
-
-private fun VirtualFile?.findUsedInScripts(project: Project): List<KotlinScriptEntity>? {
-    val index = WorkspaceModel.getInstance(project).entityStorage.current.getVirtualFileUrlIndex()
-    val fileUrlManager = VirtualFileUrlManager.getInstance(project)
-
-    var currentFile = this
-    @Suppress("SENSELESS_COMPARISON")
-    while (currentFile != null) {
-        val entities = index.findEntitiesByUrl(fileUrlManager.fromUrl(currentFile.url))
-        if (entities.none()) {
-            currentFile = currentFile.parent
-            continue
-        }
-
-        return entities
-            .mapNotNull { it.first.safeAs<KotlinScriptLibraryEntity>() }
-            .map { it.kotlinScript }
-            .toList()
-    }
-    return null
 }

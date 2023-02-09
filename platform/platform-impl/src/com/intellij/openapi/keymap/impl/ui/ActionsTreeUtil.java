@@ -141,7 +141,7 @@ public final class ActionsTreeUtil {
     final ActionShortcutRestrictions shortcutRestrictions = ActionShortcutRestrictions.getInstance();
     return action -> {
       if (action == null) return false;
-      final String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
+      final String id = actionManager.getId(action);
       if (id != null) {
         if (!Registry.is("keymap.show.alias.actions")) {
           String binding = KeymapManagerEx.getInstanceEx().getActionBinding(id);
@@ -194,12 +194,11 @@ public final class ActionsTreeUtil {
       return name;
     }
     else {
-      @NlsSafe final String id = action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action);
+      @NlsSafe final String id = ActionManager.getInstance().getId(action);
       if (id != null) {
         return id;
       }
-      if (action instanceof DefaultActionGroup) {
-        final DefaultActionGroup group = (DefaultActionGroup)action;
+      if (action instanceof DefaultActionGroup group) {
         if (group.getChildrenCount() == 0) return IdeBundle.message("action.empty.group.text");
         final AnAction[] children = group.getChildActionsOrStubs();
         for (AnAction child : children) {
@@ -238,8 +237,7 @@ public final class ActionsTreeUtil {
         LOG.error(groupName + " contains null actions");
         continue;
       }
-      if (action instanceof ActionGroup) {
-        ActionGroup childGroup = (ActionGroup)action;
+      if (action instanceof ActionGroup childGroup) {
         Group subGroup = createGroup(childGroup, getName(action), null, null, forceAsPopup, filtered, normalizeSeparators);
         if (forceAsPopup || childGroup.isPopup() || StringUtil.isNotEmpty(childGroup.getTemplateText())) {
           if (subGroup.getSize() > 0 ||
@@ -257,7 +255,7 @@ public final class ActionsTreeUtil {
         }
       }
       else {
-        String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
+        String id = actionManager.getId(action);
         if (id != null) {
           if (filtered == null || filtered.value(action)) {
             group.addActionId(id);
@@ -279,7 +277,7 @@ public final class ActionsTreeUtil {
     ActionManager actionManager = ActionManager.getInstance();
     String groupId = actionManager.getId(actionGroup);
     Group group = new Group(groupName, groupId, actionGroup.getTemplatePresentation().getIcon());
-    List<AnAction> children = ContainerUtil.newArrayList(getActions(actionGroup, actionManager));
+    List<AnAction> children = new ArrayList<>(Arrays.asList(getActions(actionGroup, actionManager)));
 
     for (ActionUrl actionUrl : actionUrls) {
       Object component = actionUrl.getComponent();
@@ -319,7 +317,7 @@ public final class ActionsTreeUtil {
         group.addSeparator();
       }
       else {
-        String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
+        String id = actionManager.getId(action);
         if (id != null) {
           group.addActionId(id);
         }
@@ -369,7 +367,7 @@ public final class ActionsTreeUtil {
         addEditorActions(filtered, (DefaultActionGroup)editorAction, ids);
       }
       else {
-        String actionId = editorAction instanceof ActionStub ? ((ActionStub)editorAction).getId() : actionManager.getId(editorAction);
+        String actionId = actionManager.getId(editorAction);
         if (actionId == null) continue;
         if (filtered == null || filtered.value(editorAction)) {
           ids.add(actionId);
@@ -485,7 +483,12 @@ public final class ActionsTreeUtil {
     result.removeAll(groupIds);
 
     for (String id : ContainerUtil.sorted(result, Comparator.comparing(o -> getTextToCompare(o)))) {
-      if (filtered == null || filtered.value(actionManager.getActionOrStub(id))) group.addActionId(id);
+      AnAction actionOrStub = actionManager.getActionOrStub(id);
+      if (actionOrStub == null || isSearchable(actionOrStub)) {
+        if (filtered == null || filtered.value(actionOrStub)) {
+          group.addActionId(id);
+        }
+      }
     }
     return group;
   }
@@ -519,11 +522,10 @@ public final class ActionsTreeUtil {
     }
     ActionManager actionManager = ActionManager.getInstance();
     AnAction action = actionManager.getActionOrStub(groupId);
-    if (action instanceof DefaultActionGroup) {
-      DefaultActionGroup group = (DefaultActionGroup)action;
+    if (action instanceof DefaultActionGroup group) {
       AnAction[] children = group.getChildActionsOrStubs();
       for (AnAction child : children) {
-        String childId = child instanceof ActionStub ? ((ActionStub)child).getId() : actionManager.getId(child);
+        String childId = actionManager.getId(child);
         if (childId == null) {
           // SCR 35149
           continue;
@@ -582,8 +584,7 @@ public final class ActionsTreeUtil {
       final ArrayList<Object> list = mainGroup.getChildren();
       for (Iterator<Object> i = list.iterator(); i.hasNext(); ) {
         final Object o = i.next();
-        if (o instanceof Group) {
-          final Group group = (Group)o;
+        if (o instanceof Group group) {
           if (group.getSize() == 0) {
             if (!SearchUtil.isComponentHighlighted(group.getName(), filter, forceFiltering, null)) {
               i.remove();
@@ -608,7 +609,7 @@ public final class ActionsTreeUtil {
       for (Supplier<String> synonym : action.getSynonyms()) {
         options.add(synonym.get());
       }
-      String id = action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action);
+      String id = ActionManager.getInstance().getId(action);
       if (id != null) {
         options.add(id);
         options.addAll(AbbreviationManager.getInstance().getAbbreviations(id));
@@ -638,8 +639,7 @@ public final class ActionsTreeUtil {
                                                      final Condition<? super Shortcut> predicat) {
     return action -> {
       if (action == null) return false;
-      final Shortcut[] actionShortcuts =
-        keymap.getShortcuts(action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action));
+      final Shortcut[] actionShortcuts = keymap.getShortcuts(actionManager.getId(action));
       for (Shortcut actionShortcut : actionShortcuts) {
         if (predicat.value(actionShortcut)) {
           return true;
@@ -700,16 +700,30 @@ public final class ActionsTreeUtil {
     }
     else {
       if (filtered == null || filtered.value(action)) {
-        String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
+        String id = actionManager.getId(action);
         if (id != null) group.addActionId(id);
       }
     }
   }
 
+  private static boolean isSearchable(@NotNull AnAction action) {
+    if (action instanceof ActionGroup) {
+      return ((ActionGroup)action).isSearchable();
+    }
+    return true;
+  }
+
   public static AnAction @NotNull [] getActions(@NonNls String actionGroup) {
     ActionManager actionManager = ActionManager.getInstance();
     AnAction group = actionManager.getActionOrStub(actionGroup);
-    LOG.assertTrue(group instanceof ActionGroup, actionGroup + " is " + (group == null ? "not found" : "not a group"));
+    if (group == null) {
+      LOG.error(actionGroup + " not found");
+      return AnAction.EMPTY_ARRAY;
+    }
+    else if (!(group instanceof ActionGroup)) {
+      PluginException.logPluginError(LOG, actionGroup + " is not a group", null, group.getClass());
+      return AnAction.EMPTY_ARRAY;
+    }
     return getActions((ActionGroup)group, actionManager);
   }
 

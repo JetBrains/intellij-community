@@ -2,10 +2,10 @@
 package com.intellij.html.webSymbols.elements
 
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor
 import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
 import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator.HtmlElementDescriptorBasedSymbol
 import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator.StandardHtmlSymbol
-import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl
 import com.intellij.psi.impl.source.xml.XmlDescriptorUtil
@@ -13,9 +13,13 @@ import com.intellij.psi.impl.source.xml.XmlDescriptorUtil.wrapInDelegating
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
+import com.intellij.webSymbols.SymbolKind
+import com.intellij.webSymbols.SymbolNamespace
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
+import com.intellij.webSymbols.utils.nameSegments
 import com.intellij.xml.*
 import com.intellij.xml.impl.XmlElementDescriptorEx
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
@@ -32,16 +36,34 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
 
   }
 
-  fun runNameMatchQuery(path: List<String>,
+  fun runNameMatchQuery(namespace: SymbolNamespace,
+                        kind: SymbolKind,
+                        name: String,
                         virtualSymbols: Boolean = true,
                         abstractSymbols: Boolean = false,
                         strictScope: Boolean = false): List<WebSymbol> =
-    WebSymbolsQueryExecutorFactory.create(tag).runNameMatchQuery(path, virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
+    runNameMatchQuery(listOf(WebSymbolQualifiedName(namespace, kind, name)), virtualSymbols, abstractSymbols, strictScope)
 
-  fun runCodeCompletionQuery(path: List<String>,
+  fun runNameMatchQuery(path: List<WebSymbolQualifiedName>,
+                        virtualSymbols: Boolean = true,
+                        abstractSymbols: Boolean = false,
+                        strictScope: Boolean = false): List<WebSymbol> =
+    WebSymbolsQueryExecutorFactory.create(tag)
+      .runNameMatchQuery(path, virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
+
+  fun runCodeCompletionQuery(namespace: SymbolNamespace,
+                             kind: SymbolKind,
+                             name: String,
+                             /** Position to complete at in the last segment of the path **/
                              position: Int,
                              virtualSymbols: Boolean = true): List<WebSymbolCodeCompletionItem> =
-    WebSymbolsQueryExecutorFactory.create(tag).runCodeCompletionQuery(path, position, virtualSymbols, listOf(symbol))
+    runCodeCompletionQuery(listOf(WebSymbolQualifiedName(namespace, kind, name)), position, virtualSymbols)
+
+  private fun runCodeCompletionQuery(path: List<WebSymbolQualifiedName>,
+                                     position: Int,
+                                     virtualSymbols: Boolean = true): List<WebSymbolCodeCompletionItem> =
+    WebSymbolsQueryExecutorFactory.create(tag)
+      .runCodeCompletionQuery(path, position, virtualSymbols, listOf(symbol))
 
   override fun getQualifiedName(): String {
     return name

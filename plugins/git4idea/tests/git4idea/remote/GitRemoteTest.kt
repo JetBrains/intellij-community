@@ -5,7 +5,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.UriUtil
 import com.intellij.util.io.URLUtil
-import com.intellij.xml.util.XmlStringUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.GitHttpAuthService
 import git4idea.commands.GitHttpAuthenticator
@@ -50,6 +49,9 @@ class GitRemoteTest : GitPlatformTest() {
   override fun tearDown() {
     try {
       authTestService.cleanup()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
       super.tearDown()

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 /**
- * @author Dmitry Avdeev
+ * Named characteristic of a project, e.g. `ProjectType("Android")` for projects with Android SDK.
  */
 public final class ProjectType {
 

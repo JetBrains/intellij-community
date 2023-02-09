@@ -2,13 +2,12 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBUI;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -17,7 +16,8 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.*;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.dropdown;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspection {
   private static final CallMatcher COLLECTION_TO_ARRAY =
@@ -51,22 +51,10 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
   @SuppressWarnings("PublicField")
   public PreferEmptyArray myMode = DEFAULT_MODE;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false));
-    panel.add(new JLabel(InspectionGadgetsBundle.message("prefer.empty.array.options.title")));
-
-    ButtonGroup group = new ButtonGroup();
-    for (PreferEmptyArray mode : PreferEmptyArray.values()) {
-      JRadioButton radioButton = new JRadioButton(mode.getMessage(), mode == myMode);
-      radioButton.setBorder(JBUI.Borders.emptyLeft(20));
-      radioButton.addActionListener(e -> myMode = mode);
-      panel.add(radioButton);
-      group.add(radioButton);
-    }
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(dropdown("myMode", InspectionGadgetsBundle.message("prefer.empty.array.options.title"),
+                         PreferEmptyArray.class, PreferEmptyArray::getMessage));
   }
 
   @Override
@@ -153,8 +141,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) return;
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) return;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

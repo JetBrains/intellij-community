@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
@@ -57,8 +58,7 @@ public class PyJoinIfIntention extends PyBaseIntentionAction {
       PyStatement firstStatement = getFirstStatement(outer);
       PyStatementList outerStList = outer.getIfPart().getStatementList();
       if (outerStList.getStatements().length != 1) return false;
-      if (firstStatement instanceof PyIfStatement) {
-        final PyIfStatement inner = (PyIfStatement)firstStatement;
+      if (firstStatement instanceof PyIfStatement inner) {
         if (inner.getElsePart() != null || inner.getElifParts().length > 0) return false;
         PyStatementList stList = inner.getIfPart().getStatementList();
         if (stList.getStatements().length != 0) return true;
@@ -104,9 +104,9 @@ public class PyJoinIfIntention extends PyBaseIntentionAction {
     PyStatementList innerStatementList = innerIfStatement.getIfPart().getStatementList();
     PyStatementList outerStatementList = outerIfStatement.getIfPart().getStatementList();
     List<PsiComment> comments = PsiTreeUtil.getChildrenOfTypeAsList(outerIfStatement.getIfPart(), PsiComment.class);
-    comments.addAll(PsiTreeUtil.getChildrenOfTypeAsList(innerIfStatement.getIfPart(), PsiComment.class));
-    comments.addAll(PsiTreeUtil.getChildrenOfTypeAsList(outerStatementList, PsiComment.class));
-    comments.addAll(PsiTreeUtil.getChildrenOfTypeAsList(innerStatementList, PsiComment.class));
+    comments = ContainerUtil.concat(comments, PsiTreeUtil.getChildrenOfTypeAsList(innerIfStatement.getIfPart(), PsiComment.class));
+    comments = ContainerUtil.concat(comments, PsiTreeUtil.getChildrenOfTypeAsList(outerStatementList, PsiComment.class));
+    comments = ContainerUtil.concat(comments, PsiTreeUtil.getChildrenOfTypeAsList(innerStatementList, PsiComment.class));
 
     for (PsiElement comm : comments) {
       outerIfStatement.getIfPart().addBefore(comm, outerStatementList);

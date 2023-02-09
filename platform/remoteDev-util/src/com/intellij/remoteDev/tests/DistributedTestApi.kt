@@ -1,7 +1,8 @@
 package com.intellij.remoteDev.tests
 
 import com.intellij.openapi.application.Application
+import com.intellij.remoteDev.tests.impl.DistributedTestHost
 
 val Application.isDistributedTestMode by lazy {
-  System.getenv(AgentConstants.protocolPortEnvVar)?.toIntOrNull() != null
+  DistributedTestHost.getDistributedTestPort() != null
 }

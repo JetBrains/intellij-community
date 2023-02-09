@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.collaboration.async.disposingScope
@@ -12,7 +12,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -21,8 +21,7 @@ import org.jetbrains.plugins.github.api.data.GithubPullRequestMergeMethod
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.util.GHEnterpriseServerMetadataLoader
 
-object GHPRStatisticsCollector {
-
+internal object GHPRStatisticsCollector {
   private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 2)
 
   class Counters : CounterUsagesCollector() {
@@ -92,9 +91,9 @@ private class GHServerVersionsCollector(private val project: Project) : Disposab
     }
   }
 
-  class Initializer : StartupActivity.Background {
-    override fun runActivity(project: Project) {
-      //init service to start version checks
+  class Initializer : ProjectActivity {
+    override suspend fun execute(project: Project) {
+      // init service to start version checks
       project.service<GHServerVersionsCollector>()
     }
   }

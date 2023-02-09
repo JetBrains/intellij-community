@@ -26,9 +26,6 @@ import java.util.Collection;
 
 import static com.intellij.openapi.vcs.Executor.cd;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgConfigTest extends HgPlatformTest {
 
   @Override

@@ -330,7 +330,7 @@ final class FindInProjectTask {
       deque.addAll(withSubdirs ? List.of(myDirectory) : List.of(myDirectory.getChildren()));
     }
     else if (myModule != null) {
-      EntityStorage storage = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
+      EntityStorage storage = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
       ModuleEntity moduleEntity = Objects.requireNonNull(storage.resolve(new ModuleId(myModule.getName())));
       deque.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, myProject));
     }
@@ -360,8 +360,7 @@ final class FindInProjectTask {
           return true;
         });
       }
-      else if (obj instanceof VirtualFile) {
-        VirtualFile file = (VirtualFile)obj;
+      else if (obj instanceof VirtualFile file) {
         if (file instanceof VirtualFileWithId && visitedFiles.set(((VirtualFileWithId)file).getId())) {
           return true;
         }

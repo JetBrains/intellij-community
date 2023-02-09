@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.util.io.exists
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
@@ -18,6 +17,7 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.reflect.full.staticProperties
 
 @TestRoot("idea/tests")
@@ -45,7 +45,7 @@ class IndexKotlinTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.createFile("1.kt", "fun foo() = Unit")
     }
 
-    @Bombed(year = 2023, month = 1, day = 31, user = "Yuriy Artamonov")
+    @Bombed(year = 2023, month = 4, day = 3, user = "Yuriy Artamonov")
     fun testKotlinFileIsKnownDuplicatedIdViolation() {
         assertFalse("KtStubElementTypes must not declare FILE field",
                     KtStubElementTypes::class.staticProperties.any { it.name == "FILE" })

@@ -1,5 +1,3 @@
-from typing import Any
-
 from .base import *
 from .sequence import Sequence as Sequence
 
@@ -9,5 +7,5 @@ class MetaStrict(type):
 class MetaSerialisable(type):
     def __new__(cls, clsname, bases, methods): ...
 
-Strict: Any
-_Serialiasable = Any
+class Strict(metaclass=MetaStrict): ...
+class _Serialiasable(metaclass=MetaSerialisable): ...

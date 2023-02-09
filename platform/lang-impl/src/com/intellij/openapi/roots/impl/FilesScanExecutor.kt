@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
 import com.intellij.concurrency.SensitiveProgressWrapper
-import com.intellij.concurrency.resetThreadContext
 import com.intellij.model.ModelBranchImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationEx
@@ -32,6 +31,7 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
 import com.intellij.util.indexing.roots.kind.SyntheticLibraryOrigin
+import com.intellij.util.indexing.roots.origin.ExternalEntityOrigin
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.Future
@@ -49,6 +49,9 @@ object FilesScanExecutor {
   @JvmStatic
   fun runOnAllThreads(runnable: Runnable) {
     val progress = ProgressIndicatorProvider.getGlobalProgressIndicator()
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      checkNotNull(progress) { "progress indicator is required" }
+    }
     val results = ArrayList<Future<*>>()
     for (i in 0 until THREAD_COUNT) {
       results.add(ourExecutor.submit { ProgressManager.getInstance().runProcess(runnable, ProgressWrapper.wrap(progress)) })
@@ -158,7 +161,8 @@ object FilesScanExecutor {
   private fun isLibOrigin(origin: IndexableSetOrigin): Boolean {
     return origin is LibraryOrigin ||
            origin is SyntheticLibraryOrigin ||
-           origin is SdkOrigin
+           origin is SdkOrigin ||
+           origin is ExternalEntityOrigin
   }
 
   @JvmStatic

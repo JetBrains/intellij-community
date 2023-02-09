@@ -8,12 +8,14 @@ import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.ide.util.PsiClassListCellRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
@@ -220,22 +222,23 @@ object ExtractMethodPipeline {
   fun withForcedStatic(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions? {
     val targetClass = PsiTreeUtil.getParentOfType(extractOptions.anchor, PsiClass::class.java)!!
     if (PsiUtil.isLocalOrAnonymousClass(targetClass) || PsiUtil.isInnerClass(targetClass)) return null
-    val localUsages = analyzer.findInstanceMemberUsages(targetClass, extractOptions.elements)
-    val (violatedUsages, fieldUsages) = localUsages
-      .partition { localUsage -> PsiUtil.isAccessedForWriting(localUsage.reference) || localUsage.member !is PsiField }
-
-    if (violatedUsages.isNotEmpty()) return null
-
-    val fieldInputParameters =
-      fieldUsages.groupBy { it.member }.entries.map { (field, fieldUsages) ->
-        field as PsiField
-        InputParameter(
-          references = fieldUsages.map { it.reference },
-          name = field.name,
-          type = field.type
-        )
+    val memberUsages = analyzer.findInstanceMemberUsages(targetClass, extractOptions.elements)
+    if (memberUsages.any { usage -> PsiUtil.isAccessedForWriting(usage.reference)}) return null
+    val addedParameters = memberUsages.groupBy(MemberUsage::member).entries
+      .map { (member: PsiMember, usages: List<MemberUsage>) ->
+        createInputParameter(member, usages.map(MemberUsage::reference)) ?: return null
       }
-    return extractOptions.copy(inputParameters = extractOptions.inputParameters + fieldInputParameters, isStatic = true)
+    return extractOptions.copy(inputParameters = extractOptions.inputParameters + addedParameters, isStatic = true)
+  }
+
+  private fun createInputParameter(member: PsiMember, usages: List<PsiExpression>): InputParameter? {
+    val name = member.name ?: return null
+    val type = when (member) {
+      is PsiField -> member.type
+      is PsiClass -> PsiTypesUtil.getClassType(member)
+      else -> return null
+    }
+    return InputParameter(usages, StringUtil.decapitalize(name), type)
   }
 
   fun canBeConstructor(analyzer: CodeFragmentAnalyzer): Boolean {

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.searching.usages
 
 import com.intellij.psi.PsiPackage
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinUsageTypeProvider
@@ -20,7 +19,7 @@ internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
         val reference = refExpr.mainReference
         check(reference is KtSimpleReference<*>) { "Reference should be KtSimpleReference but not ${reference::class}" }
 
-        fun KtAnalysisSession.getFunctionUsageType(functionSymbol: KtFunctionLikeSymbol): UsageTypeEnum? {
+        fun getFunctionUsageType(functionSymbol: KtFunctionLikeSymbol): UsageTypeEnum? {
             when (reference) {
                 is KtArrayAccessReference ->
                     return when ((functionSymbol as KtFunctionSymbol).name) {
@@ -58,8 +57,9 @@ internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
                         }
                         else -> getClassUsageType(refExpr)
                     }
-                is KtPackageSymbol -> //TODO FIR Implement package symbol type
-                    if (targetElement is PsiPackage) getPackageUsageType(refExpr) else getClassUsageType(refExpr)
+                is KtPackageSymbol ->
+                    if (targetElement.psi is PsiPackage) getPackageUsageType(refExpr) else getClassUsageType(refExpr)
+
                 is KtVariableLikeSymbol -> getVariableUsageType(refExpr)
                 is KtFunctionLikeSymbol -> getFunctionUsageType(targetElement)
                 else -> null

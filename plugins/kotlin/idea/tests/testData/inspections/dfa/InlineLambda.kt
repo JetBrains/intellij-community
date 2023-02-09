@@ -109,3 +109,15 @@ class NestedLetWithDivision {
         x?.let { ratio -> y = z?.let { (it / ratio).toInt() } }
     }
 }
+fun flushThisInRun() {
+    // KTIJ-23772
+    var x = false
+    var y = false
+
+    for(line in 1..2) {
+        line.run {
+            if (this == 1) x = true else y = true
+        }
+    }
+    println(x && y)
+}

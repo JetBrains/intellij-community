@@ -182,7 +182,7 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     for (beforeClickEntry in beforeClickEntries) {
       if ((beforeClickEntry as TextInlayPresentationEntry).text == clickPlace) {
         if (occurence == occurenceIndex) {
-          beforeClickEntry.handleClick(myFixture.editor, presentationList)
+          beforeClickEntry.handleClick(myFixture.editor, presentationList, true)
           break
         }
         occurence++
@@ -254,7 +254,8 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     val presentationList = InlayPresentationList(root.complete(), true, false)
     val beforeClickEntries = presentationList.getEntries().toList()
     TestCase.assertEquals(beforeClick, toText(beforeClickEntries))
-    beforeClickEntries.find { (it as TextInlayPresentationEntry).text == click }!!.handleClick(myFixture.editor, presentationList)
+    beforeClickEntries.find { (it as TextInlayPresentationEntry).text == click }!!.handleClick(myFixture.editor, presentationList,
+                                                                                               true)
     val afterClickEntries = presentationList.getEntries().toList()
     TestCase.assertEquals(afterClick, toText(afterClickEntries))
   }

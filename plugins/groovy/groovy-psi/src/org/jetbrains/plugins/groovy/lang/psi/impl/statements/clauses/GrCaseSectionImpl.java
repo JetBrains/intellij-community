@@ -26,9 +26,6 @@ import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processLocals;
 
-/**
- * @author ven
- */
 public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSection {
   public GrCaseSectionImpl(@NotNull ASTNode node) {
     super(node);
@@ -114,8 +111,7 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
   private boolean mayUseNewLinesAsSeparators() {
     PsiElement parent = this;
     while (parent != null) {
-      if (parent instanceof GrString) {
-        GrString grString = (GrString) parent;
+      if (parent instanceof GrString grString) {
         return !grString.isPlainString();
       }
       parent = parent.getParent();

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ModuleRootManager
@@ -14,6 +13,7 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
+import com.intellij.workspaceModel.ide.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.CodeGeneratorVersions
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.JavaSourceRootPropertiesEntity
@@ -140,7 +140,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
         val genFolderVirtualFile = VfsUtil.createDirectories("${sourceRoot.contentRoot.url.presentableUrl}/${WorkspaceModelGenerator.GENERATED_FOLDER_NAME}")
         val javaSourceRoot = sourceRoot.javaSourceRoots.first()
         val result = storage.addEntity(
-          SourceRootEntity(virtualFileManager.fromPath(genFolderVirtualFile.path), sourceRoot.rootType, sourceRoot.entitySource) {
+          SourceRootEntity(genFolderVirtualFile.toVirtualFileUrl(virtualFileManager), sourceRoot.rootType, sourceRoot.entitySource) {
             contentRoot = sourceRoot.contentRoot
             javaSourceRoots = listOf(JavaSourceRootPropertiesEntity(true, javaSourceRoot.packagePrefix, javaSourceRoot.entitySource))
           })
@@ -176,9 +176,12 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
 
   private suspend fun loadProjectIntellijProject(): Pair<MutableEntityStorage, JpsProjectSerializers> {
     val mutableEntityStorage = MutableEntityStorage.create()
-    val jpsProjectSerializer = JpsProjectEntitiesLoader.loadProject(configLocation = createProjectConfigLocation(), builder = mutableEntityStorage,
-                                                                externalStoragePath = Paths.get("/tmp"), errorReporter = TestErrorReporter,
-                                                                virtualFileManager = virtualFileManager)
+    val jpsProjectSerializer = JpsProjectEntitiesLoader.loadProject(configLocation = createProjectConfigLocation(),
+                                                                    builder = mutableEntityStorage,
+                                                                    orphanage = mutableEntityStorage,
+                                                                    externalStoragePath = Paths.get("/tmp"),
+                                                                    errorReporter = TestErrorReporter,
+                                                                    virtualFileManager = virtualFileManager)
     return mutableEntityStorage to jpsProjectSerializer
   }
 

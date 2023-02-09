@@ -118,3 +118,11 @@ public class AutoUnboxing {
     if ((switch(0) {default -> false;})) {}
   }
 }
+class Foo {
+  void test(Object obj, Boolean flag) {
+    switch (obj) {
+      case String s when <warning descr="Auto-unboxing 'flag'">flag</warning> -> System.out.println(1);
+      default -> System.out.println(2);
+    }
+  }
+}

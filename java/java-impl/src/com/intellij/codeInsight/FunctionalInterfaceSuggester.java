@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.java.JavaBundle;
@@ -226,7 +226,7 @@ public final class FunctionalInterfaceSuggester {
           }
 
           List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(((PsiLambdaExpression)expression));
-          left[parameters.length] = returnExpressions.isEmpty() ? PsiType.VOID : returnExpressions.get(0).getType();
+          left[parameters.length] = returnExpressions.isEmpty() ? PsiTypes.voidType() : returnExpressions.get(0).getType();
           right[parameters.length] = returnType;
 
           final PsiSubstitutor substitutor = PsiResolveHelper.getInstance(project)
@@ -238,15 +238,13 @@ public final class FunctionalInterfaceSuggester {
             return Collections.singletonList(type);
           }
         }
-        else if (expression instanceof PsiMethodReferenceExpression) {
+        else if (expression instanceof PsiMethodReferenceExpression referenceExpression) {
           List<PsiType> types = new ArrayList<>();
-          final PsiMethodReferenceExpression referenceExpression = (PsiMethodReferenceExpression) expression;
           for (JavaResolveResult result : referenceExpression.multiResolve(true)) {
             final PsiElement element = result.getElement();
             if (element == null) continue;
 
-            if (element instanceof PsiMethod) {
-              PsiMethod method = (PsiMethod)element;
+            if (element instanceof PsiMethod method) {
               int offset = hasOffset(referenceExpression, method) ? 1 : 0;
               final PsiParameter[] targetMethodParameters = method.getParameterList().getParameters();
               if (targetMethodParameters.length + offset == parameters.length) {

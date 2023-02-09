@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
-import com.intellij.codeInsight.hints.declarative.InlayActionData
 import com.intellij.codeInsight.hints.declarative.CollapseState
 import com.intellij.codeInsight.hints.declarative.CollapsiblePresentationTreeBuilder
+import com.intellij.codeInsight.hints.declarative.InlayActionData
 import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 
@@ -58,7 +58,7 @@ class PresentationTreeBuilderImpl private constructor(
     val tag = when (state) {
       CollapseState.Expanded -> InlayTags.COLLAPSIBLE_LIST_IMPLICITLY_EXPANDED_TAG
       CollapseState.Collapsed -> InlayTags.COLLAPSIBLE_LIST_IMPLICITLY_COLLAPSED_TAG
-      CollapseState.NoPreference -> InlayTags.COLLAPSIBLE_LIST_IMPLICITLY_EXPANDED_TAG
+      CollapseState.NoPreference -> if (context.depth < 1) InlayTags.COLLAPSIBLE_LIST_IMPLICITLY_EXPANDED_TAG else InlayTags.COLLAPSIBLE_LIST_IMPLICITLY_COLLAPSED_TAG
     }
     val listIndex = context.addNode(
       parent = index,
@@ -75,8 +75,13 @@ class PresentationTreeBuilderImpl private constructor(
                                          data = null)
     val expandedChildrenBuilder = PresentationTreeBuilderImpl(expandedIndex, context)
     val collapsedChildrenBuilder = PresentationTreeBuilderImpl(collapsedIndex, context)
-    expandedState(expandedChildrenBuilder)
-    collapsedState(collapsedChildrenBuilder)
+    context.depth++
+    try {
+      expandedState(expandedChildrenBuilder)
+      collapsedState(collapsedChildrenBuilder)
+    } finally {
+      context.depth--
+    }
   }
 
   override fun text(text: String, actionData: InlayActionData?) {
@@ -116,6 +121,7 @@ private class InlayTreeBuildingContext {
   private var nodeCount = 1
   private var limitReached = false
   var textElementCount = 0
+  var depth: Int = 0
 
   // the tree in data may contain String, Icon or Byte (in case of collapse button, which means )
   val tree: TinyTree<Any?> = TinyTree(InlayTags.LIST_TAG, null)

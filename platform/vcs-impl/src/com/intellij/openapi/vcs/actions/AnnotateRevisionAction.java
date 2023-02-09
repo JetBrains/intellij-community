@@ -59,9 +59,6 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
     super.update(e);
   }
 
-  @Nullable
-  protected abstract VcsFileRevision getRevision(int lineNumber);
-
   @Override
   @Nullable
   protected AbstractVcs getVcs(@NotNull AnActionEvent e) {
@@ -78,18 +75,6 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
     FilePath filePath =
       (revision instanceof VcsFileRevisionEx ? ((VcsFileRevisionEx)revision).getPath() : VcsUtil.getFilePath(myAnnotation.getFile()));
     return new MyVcsVirtualFile(filePath, revision, currentFileType);
-  }
-
-  @Nullable
-  @Override
-  protected VcsFileRevision getFileRevision(@NotNull AnActionEvent e) {
-    int currentLine = getAnnotatedLine(e);
-    return getRevision(currentLine);
-  }
-
-  @Override
-  protected int getAnnotatedLine(@NotNull AnActionEvent e) {
-    return ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.getDataContext());
   }
 
   @Nullable

@@ -32,6 +32,6 @@ abstract class SavedPatchesEditorDiffPreview(diffProcessor: SavedPatchesDiffPrev
 
   override fun updateDiffAction(event: AnActionEvent) {
     event.presentation.isVisible = true
-    event.presentation.isEnabled = changeViewProcessor.iterateAllChanges().any()
+    event.presentation.isEnabled = event.getData(SavedPatchesUi.SAVED_PATCH_CHANGES)?.any() == true
   }
 }

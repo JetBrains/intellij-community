@@ -47,6 +47,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
   public static final boolean is4OrBetter = gradleBaseVersion >= GradleVersion.version("4.0")
   public static final boolean is51OrBetter = is4OrBetter && gradleBaseVersion >= GradleVersion.version("5.1")
+  public static final boolean is67OrBetter = gradleBaseVersion >= GradleVersion.version("6.7")
   public static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
 
   static final DataProvider<ConcurrentMap<Project, ExternalProject>> PROJECTS_PROVIDER = new DataProvider<ConcurrentMap<Project, ExternalProject>>() {
@@ -271,6 +272,18 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
       def javaCompileTask = project.tasks.findByName(sourceSet.compileJavaTaskName)
       if (javaCompileTask instanceof JavaCompile) {
+        if (is67OrBetter) {
+          def compiler = javaCompileTask.javaCompiler
+          if (compiler.present) {
+            try {
+              def metadata = compiler.get().metadata
+              externalSourceSet.jdkInstallationPath = metadata.installationPath.asFile.canonicalPath
+            } catch (Throwable e) {
+              project.logger.warn("Skipping java toolchain information for $javaCompileTask.path : $e.message")
+              project.logger.info("Failed to resolve java toolchain info for $javaCompileTask.path", e)
+            }
+          }
+        }
         externalSourceSet.sourceCompatibility = javaCompileTask.sourceCompatibility ?: projectSourceCompatibility
         externalSourceSet.preview = javaCompileTask.options.compilerArgs.contains("--enable-preview")
         externalSourceSet.targetCompatibility = javaCompileTask.targetCompatibility ?: projectTargetCompatibility

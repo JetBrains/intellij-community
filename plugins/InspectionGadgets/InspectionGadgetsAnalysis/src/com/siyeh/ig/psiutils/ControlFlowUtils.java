@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public final class ControlFlowUtils {
     }
     else if (statement instanceof PsiExpressionListStatement || statement instanceof PsiEmptyStatement ||
              statement instanceof PsiAssertStatement || statement instanceof PsiDeclarationStatement ||
-             statement instanceof PsiSwitchLabelStatement || statement instanceof PsiForeachStatement) {
+             statement instanceof PsiSwitchLabelStatement || statement instanceof PsiForeachStatementBase) {
       return true;
     }
     else if (statement instanceof final PsiExpressionStatement expressionStatement) {
@@ -196,13 +196,13 @@ public final class ControlFlowUtils {
       return true;
     }
     int numCases = 0;
-    boolean hasDefaultCase = false, hasTotalPattern = false;
+    boolean hasDefaultCase = false, hasUnconditionalPattern = false;
     for (PsiStatement statement : statements) {
       if (statement instanceof PsiSwitchLabelStatementBase switchLabelStatement) {
         if (statement instanceof PsiSwitchLabelStatement) {
           numCases++;
         }
-        if (hasDefaultCase || hasTotalPattern) {
+        if (hasDefaultCase || hasUnconditionalPattern) {
           continue;
         }
         if (switchLabelStatement.isDefaultCase()) {
@@ -210,7 +210,7 @@ public final class ControlFlowUtils {
           continue;
         }
         // this information doesn't exist in spec draft (14.22) for pattern in switch as expected
-        // but for now javac considers the switch statement containing at least either case default label element or total pattern "incomplete normally"
+        // but for now javac considers the switch statement containing at least either case default label element or an unconditional pattern "incomplete normally"
         PsiCaseLabelElementList labelElementList = switchLabelStatement.getCaseLabelElementList();
         if (labelElementList == null) {
           continue;
@@ -220,7 +220,7 @@ public final class ControlFlowUtils {
             hasDefaultCase = true;
           }
           else if (labelElement instanceof PsiPattern) {
-            hasTotalPattern = JavaPsiPatternUtil.isTotalForType(labelElement, selectorType);
+            hasUnconditionalPattern = JavaPsiPatternUtil.isUnconditionalForType(labelElement, selectorType);
           }
         }
       }
@@ -231,10 +231,10 @@ public final class ControlFlowUtils {
     // todo actually there is no information about an impact of enum constants on switch statements being complete normally in spec (Unreachable statements)
     // todo comparing to javac that produces some false-negative highlighting in enum switch statements containing all possible constants
     final boolean isEnum = isEnumSwitch(switchStatement);
-    if (!hasDefaultCase && !hasTotalPattern && !isEnum) {
+    if (!hasDefaultCase && !hasUnconditionalPattern && !isEnum) {
       return true;
     }
-    if (!hasDefaultCase && !hasTotalPattern) {
+    if (!hasDefaultCase && !hasUnconditionalPattern) {
       final PsiClass aClass = ((PsiClassType)selectorType).resolve();
       if (aClass == null) {
         return true;
@@ -397,6 +397,12 @@ public final class ControlFlowUtils {
     return systemExitFinder.exitFound();
   }
 
+  public static boolean containsYield(@NotNull PsiElement element){
+    final YieldFinder returnFinder = new YieldFinder();
+    element.accept(returnFinder);
+    return returnFinder.yieldFound();
+  }
+
   public static boolean elementContainsCallToMethod(PsiElement context, @NonNls String containingClassName, PsiType returnType,
     @NonNls String methodName, PsiType... parameterTypes) {
     final MethodCallFinder methodCallFinder = new MethodCallFinder(containingClassName, returnType, methodName, parameterTypes);
@@ -413,23 +419,18 @@ public final class ControlFlowUtils {
     return PsiTreeUtil.isAncestor(body, element, true);
   }
 
-  public static boolean isInFinallyBlock(@NotNull PsiElement element) {
-    PsiElement currentElement = element;
-    while (true) {
-      final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(currentElement, PsiTryStatement.class, true, PsiClass.class, PsiLambdaExpression.class);
-      if (tryStatement == null) {
-        return false;
-      }
-      final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-      if (finallyBlock != null) {
-        if (PsiTreeUtil.isAncestor(finallyBlock, currentElement, true)) {
-          final PsiMethod elementMethod = PsiTreeUtil.getParentOfType(currentElement, PsiMethod.class);
-          final PsiMethod finallyMethod = PsiTreeUtil.getParentOfType(finallyBlock, PsiMethod.class);
-          return elementMethod != null && elementMethod.equals(finallyMethod);
+  public static boolean isInFinallyBlock(@NotNull PsiElement element, @Nullable PsiElement stopAt) {
+    PsiElement parent = element.getParent();
+    while (parent != null && parent != stopAt && !(parent instanceof PsiMember) && !(parent instanceof PsiLambdaExpression)) {
+      if (parent instanceof PsiTryStatement tryStatement) {
+        final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+        if (finallyBlock != null && PsiTreeUtil.isAncestor(finallyBlock, element, true)) {
+          return true;
         }
       }
-      currentElement = tryStatement;
+      parent = parent.getParent();
     }
+    return false;
   }
 
   public static boolean isInCatchBlock(@NotNull PsiElement element) {
@@ -1108,6 +1109,11 @@ public final class ControlFlowUtils {
     }
 
     @Override
+    public void visitForeachPatternStatement(@NotNull PsiForeachPatternStatement statement) {
+      // don't drill down
+    }
+
+    @Override
     public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       // don't drill down
     }
@@ -1150,6 +1156,11 @@ public final class ControlFlowUtils {
 
     @Override
     public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
+      // don't drill down
+    }
+
+    @Override
+    public void visitForeachPatternStatement(@NotNull PsiForeachPatternStatement statement) {
       // don't drill down
     }
 
@@ -1221,6 +1232,52 @@ public final class ControlFlowUtils {
       stopWalking();
     }
   }
+
+  private static class YieldFinder extends JavaRecursiveElementWalkingVisitor {
+    private boolean myFound;
+
+    private boolean yieldFound() {
+      return myFound;
+    }
+
+    @Override
+    public void visitExpression(@NotNull PsiExpression expression) {
+      // don't drill down
+    }
+
+    @Override
+    public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
+      myFound = true;
+      stopWalking();
+    }
+
+    @Override
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
+      if (myFound) {
+        return;
+      }
+      final PsiExpression condition = statement.getCondition();
+      final Object value = ExpressionUtils.computeConstantExpression(condition);
+      if (Boolean.FALSE != value) {
+        final PsiStatement thenBranch = statement.getThenBranch();
+        if (thenBranch != null) {
+          thenBranch.accept(this);
+        }
+      }
+      if (Boolean.TRUE != value) {
+        final PsiStatement elseBranch = statement.getElseBranch();
+        if (elseBranch != null) {
+          elseBranch.accept(this);
+        }
+      }
+    }
+
+    @Override
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
+      // don't drill down
+    }
+  }
+
 
   private static class BreakFinder extends JavaRecursiveElementWalkingVisitor {
 

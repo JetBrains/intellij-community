@@ -20,12 +20,7 @@ import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.MutableProperty
-import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
-import com.intellij.ui.dsl.builder.toNullableProperty
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
 import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
 import javax.swing.DefaultComboBoxModel
@@ -37,7 +32,7 @@ private val codeInsightSettings: CodeInsightSettings
 
 private val cbSmartHome
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.smart.home"),
-                             PropertyBinding(editorSettings::isSmartHome, editorSettings::setSmartHome))
+                             editorSettings::isSmartHome, editorSettings::setSmartHome)
 private val cbSmartEnd
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.smart.end.on.blank.line"),
                              codeInsightSettings::SMART_END_ACTION)
@@ -52,7 +47,7 @@ private val cbReformatBlockOnTypingRBrace
                              codeInsightSettings::REFORMAT_BLOCK_ON_RBRACE)
 private val cbCamelWords
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.camelhumps.words"),
-                             PropertyBinding(editorSettings::isCamelWords, editorSettings::setCamelWords))
+                             editorSettings::isCamelWords, editorSettings::setCamelWords)
 private val cbSurroundSelectionOnTyping
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.surround.selection.on.typing.quote.or.brace"),
                              codeInsightSettings::SURROUND_SELECTION_ON_QUOTE_TYPED)
@@ -62,7 +57,7 @@ private val cbTabExistsBracketsAndQuotes
 private val cbEnableAddingCaretsOnDoubleCtrlArrows
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.enable.double.ctrl",
                                                        KeyEvent.getKeyText(ModifierKeyDoubleClickHandler.getMultiCaretActionModifier())),
-                             PropertyBinding(editorSettings::addCaretsOnDoubleCtrl, editorSettings::setAddCaretsOnDoubleCtrl))
+                             editorSettings::addCaretsOnDoubleCtrl, editorSettings::setAddCaretsOnDoubleCtrl)
 private val cbSmartIndentOnEnter
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.smart.indent"), codeInsightSettings::SMART_INDENT_ON_ENTER)
 private val cbInsertPairCurlyBraceOnEnter
@@ -77,8 +72,7 @@ private val cbInsertJavadocStubOnEnter
                              codeInsightSettings::JAVADOC_STUB_ON_ENTER)
 internal val cbHonorCamelHumpsWhenSelectingByClicking
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.honor.camelhumps.words.settings.on.double.click"),
-                             PropertyBinding(editorSettings::isMouseClickSelectionHonorsCamelWords,
-                                             editorSettings::setMouseClickSelectionHonorsCamelWords))
+                             editorSettings::isMouseClickSelectionHonorsCamelWords, editorSettings::setMouseClickSelectionHonorsCamelWords)
 
 internal val editorSmartKeysOptionDescriptors: List<BooleanOptionDescription>
   get() = listOf(
@@ -118,7 +112,7 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
   ID
 ), SearchableConfigurable.Parent {
   override fun createPanel(): DialogPanel {
-    lateinit var checkBoxCloseBlockComment: com.intellij.ui.dsl.builder.Cell<JBCheckBox>
+    lateinit var checkBoxCloseBlockComment: Cell<JBCheckBox>
     return panel {
       row {
         checkBox(cbSmartHome)
@@ -169,27 +163,28 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
       row(ApplicationBundle.message("combobox.smart.backspace")) {
         comboBox(
           EnumComboBoxModel(SmartBackspaceMode::class.java),
-          renderer = listCellRenderer { value, _, _ ->
-            setText(when(value) {
+          renderer = listCellRenderer {
+            text = when (it) {
               SmartBackspaceMode.OFF -> ApplicationBundle.message("combobox.smart.backspace.off")
               SmartBackspaceMode.INDENT -> ApplicationBundle.message("combobox.smart.backspace.simple")
               SmartBackspaceMode.AUTOINDENT -> ApplicationBundle.message("combobox.smart.backspace.smart")
-              else -> ""
-            })
+            }
           })
           .bindItem(MutableProperty(codeInsightSettings::getBackspaceMode, codeInsightSettings::setBackspaceMode).toNullableProperty())
       }
       row(ApplicationBundle.message("combobox.paste.reformat")) {
         comboBox(
-          DefaultComboBoxModel(arrayOf(CodeInsightSettings.NO_REFORMAT, CodeInsightSettings.INDENT_BLOCK, CodeInsightSettings.INDENT_EACH_LINE, CodeInsightSettings.REFORMAT_BLOCK)),
-          renderer = listCellRenderer { value, _, _ ->
-            setText(when(value) {
-                      CodeInsightSettings.NO_REFORMAT -> ApplicationBundle.message("combobox.paste.reformat.none")
-                      CodeInsightSettings.INDENT_BLOCK -> ApplicationBundle.message("combobox.paste.reformat.indent.block")
-                      CodeInsightSettings.INDENT_EACH_LINE -> ApplicationBundle.message("combobox.paste.reformat.indent.each.line")
-                      CodeInsightSettings.REFORMAT_BLOCK -> ApplicationBundle.message("combobox.paste.reformat.reformat.block")
+          DefaultComboBoxModel(
+            arrayOf(CodeInsightSettings.NO_REFORMAT, CodeInsightSettings.INDENT_BLOCK, CodeInsightSettings.INDENT_EACH_LINE,
+                    CodeInsightSettings.REFORMAT_BLOCK)),
+          renderer = listCellRenderer {
+            text = when (it) {
+              CodeInsightSettings.NO_REFORMAT -> ApplicationBundle.message("combobox.paste.reformat.none")
+              CodeInsightSettings.INDENT_BLOCK -> ApplicationBundle.message("combobox.paste.reformat.indent.block")
+              CodeInsightSettings.INDENT_EACH_LINE -> ApplicationBundle.message("combobox.paste.reformat.indent.each.line")
+              CodeInsightSettings.REFORMAT_BLOCK -> ApplicationBundle.message("combobox.paste.reformat.reformat.block")
               else -> ""
-            })
+            }
           }
         ).bindItem(codeInsightSettings::REFORMAT_ON_PASTE.toNullableProperty())
       }

@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NonNls;
 import java.io.PrintWriter;
 import java.util.StringTokenizer;
 
-/**
- * @author dsl
- */
 public class CodeWriter extends PrintWriter {
   private final int myIndent;
   private int myIndentLevel = 0;

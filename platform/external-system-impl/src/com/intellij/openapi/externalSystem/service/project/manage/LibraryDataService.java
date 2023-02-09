@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -16,13 +17,11 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
@@ -36,13 +35,13 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 
-/**
- * @author Denis Zhdanov
- */
 @Order(ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER)
 public final class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
   private static final Logger LOG = Logger.getInstance(LibraryDataService.class);
   public static final @NotNull NotNullFunction<String, File> PATH_TO_FILE = File::new;
+
+  public static final ExtensionPointName<LibraryDataServiceExtension> EP_NAME =
+    ExtensionPointName.create("com.intellij.libraryDataServiceExtension");
 
   @Override
   public @NotNull Key<LibraryData> getTargetDataKey() {
@@ -73,18 +72,40 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
   }
 
   private void importLibrary(final @NotNull LibraryData toImport, final @NotNull IdeModifiableModelsProvider modelsProvider) {
-    Map<OrderRootType, Collection<File>> libraryFiles = prepareLibraryFiles(toImport);
 
     final String libraryName = toImport.getInternalName();
     Library library = modelsProvider.getLibraryByName(libraryName);
+    ProjectModelExternalSource source = ExternalSystemApiUtil.toExternalSource(toImport.getOwner());
     if (library != null) {
+      if (library.getExternalSource() == null) {
+        ((LibraryEx.ModifiableModelEx)modelsProvider.getModifiableLibraryModel(library)).setExternalSource(source);
+      }
       syncPaths(toImport, library, modelsProvider);
       return;
     }
-    library = modelsProvider.createLibrary(libraryName, ExternalSystemApiUtil.toExternalSource(toImport.getOwner()));
+    LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
+    library = librariesModel.createLibrary(libraryName, getLibraryKind(toImport), source);
     Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
-    Set<String> excludedPaths = toImport.getPaths(LibraryPathType.EXCLUDED);
-    registerPaths(toImport.isUnresolved(), libraryFiles, excludedPaths, libraryModel, libraryName);
+    prepareNewLibrary(toImport, libraryName, libraryModel);
+  }
+
+  private void prepareNewLibrary(@NotNull LibraryData libraryData,
+                                 @NotNull String libraryName,
+                                 @NotNull Library.ModifiableModel libraryModel) {
+    Map<OrderRootType, Collection<File>> libraryFiles = prepareLibraryFiles(libraryData);
+    Set<String> excludedPaths = libraryData.getPaths(LibraryPathType.EXCLUDED);
+    registerPaths(libraryData.isUnresolved(), libraryFiles, excludedPaths, libraryModel, libraryName);
+    EP_NAME.forEachExtensionSafe(extension -> extension.prepareNewLibrary(libraryData, libraryModel));
+  }
+
+  private static PersistentLibraryKind<?> getLibraryKind(LibraryData anImport) {
+    for (LibraryDataServiceExtension extension : EP_NAME.getExtensionList()) {
+      PersistentLibraryKind<?> kind = extension.getLibraryKind(anImport);
+      if (kind != null) {
+        return kind;
+      }
+    }
+    return null;
   }
 
   private static void refreshVfsFiles(Collection<? extends File> files) {
@@ -161,8 +182,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       }
     }
 
-    if (model instanceof LibraryEx.ModifiableModelEx) {
-      LibraryEx.ModifiableModelEx modelEx = (LibraryEx.ModifiableModelEx)model;
+    if (model instanceof LibraryEx.ModifiableModelEx modelEx) {
       for (String excludedPath : excludedPaths) {
         String url = VfsUtil.getUrlForLibraryRoot(new File(excludedPath));
         String[] urls = modelEx.getExcludedRootUrls();

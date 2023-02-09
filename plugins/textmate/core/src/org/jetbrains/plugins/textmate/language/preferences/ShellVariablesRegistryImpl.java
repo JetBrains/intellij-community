@@ -19,7 +19,10 @@ public class ShellVariablesRegistryImpl implements ShellVariablesRegistry {
 
   /**
    * Append table with new variables
+   *
+   * @deprecated use {@link this#addVariable(TextMateShellVariable)} instead
    */
+  @Deprecated(forRemoval = true)
   public void fillVariablesFromPlist(@NotNull CharSequence scopeName, @NotNull Plist plist) {
     final PListValue shellVariables = plist.getPlistValue(Constants.SHELL_VARIABLES_KEY);
     if (shellVariables != null) {
@@ -27,10 +30,14 @@ public class ShellVariablesRegistryImpl implements ShellVariablesRegistry {
         Plist variablePlist = variable.getPlist();
         String name = variablePlist.getPlistValue(Constants.NAME_KEY, "").getString();
         String value = variablePlist.getPlistValue(Constants.VALUE_KEY, "").getString();
-        if (!name.isEmpty()) {
-          myVariables.computeIfAbsent(name, (key) -> new ArrayList<>()).add(new TextMateShellVariable(scopeName, name, value));
-        }
+        addVariable(new TextMateShellVariable(scopeName, name, value));
       }
+    }
+  }
+
+  public void addVariable(@NotNull TextMateShellVariable variable) {
+    if (!variable.name.isEmpty()) {
+      myVariables.computeIfAbsent(variable.name, (key) -> new ArrayList<>()).add(variable);
     }
   }
 

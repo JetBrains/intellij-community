@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
@@ -45,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.transformations.impl.GroovyObjectTransformationSupport;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -92,7 +92,7 @@ public class CodeBlockGenerator extends Generator {
     if (GroovyObjectTransformationSupport.isGroovyObjectSupportMethod(method)) {
       shouldInsertReturnNull = !(returnType instanceof PsiPrimitiveType);
     }
-    else if (!method.isConstructor() && !PsiType.VOID.equals(returnType)) {
+    else if (!method.isConstructor() && !PsiTypes.voidType().equals(returnType)) {
       myExitPoints.addAll(ControlFlowUtils.collectReturns(block));
       shouldInsertReturnNull = block != null &&
                                !(returnType instanceof PsiPrimitiveType) &&
@@ -114,8 +114,7 @@ public class CodeBlockGenerator extends Generator {
   @Override
   public void visitOpenBlock(@NotNull GrOpenBlock block) {
     GrParameter[] parameters;
-    if (block.getParent() instanceof GrMethod) {
-      GrMethod method = (GrMethod)block.getParent();
+    if (block.getParent() instanceof GrMethod method) {
       parameters = method.getParameters();
     }
     else {
@@ -324,9 +323,9 @@ public class CodeBlockGenerator extends Generator {
       private boolean isRealExpression(GrExpression expression) {
         final PsiType type = expression.getType();
 
-        if (PsiType.VOID.equals(type)) return false; //statement
+        if (PsiTypes.voidType().equals(type)) return false; //statement
 
-        if (type == PsiType.NULL) return !org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isVoidMethodCall(expression);
+        if (type == PsiTypes.nullType()) return !org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isVoidMethodCall(expression);
 
         return true;
       }
@@ -337,7 +336,7 @@ public class CodeBlockGenerator extends Generator {
     builder.append("return ");
 
     final PsiType expectedReturnType = PsiImplUtil.inferReturnType(expression);
-    final PsiType nnReturnType = expectedReturnType == null || PsiType.VOID.equals(expectedReturnType)
+    final PsiType nnReturnType = expectedReturnType == null || PsiTypes.voidType().equals(expectedReturnType)
                                  ? TypesUtil.getJavaLangObject(expression) : expectedReturnType;
     GenerationUtil.wrapInCastIfNeeded(builder, nnReturnType, expression.getNominalType(), expression, context, new StatementWriter() {
       @Override
@@ -369,7 +368,7 @@ public class CodeBlockGenerator extends Generator {
         builder.append("if (");
         if (condition != null) {
           final PsiType type = condition.getType();
-          if (PsiType.BOOLEAN.equals(TypesUtil.unboxPrimitiveTypeWrapper(type))) {
+          if (PsiTypes.booleanType().equals(TypesUtil.unboxPrimitiveTypeWrapper(type))) {
             writeExpression(condition, builder, context);
           }
           else {
@@ -406,8 +405,7 @@ public class CodeBlockGenerator extends Generator {
         writeExpression(expression, builder, context);
       }
     }
-    else if (clause instanceof GrTraditionalForClause) {
-      final GrTraditionalForClause cl = (GrTraditionalForClause)clause;
+    else if (clause instanceof GrTraditionalForClause cl) {
       final GrCondition initialization = cl.getInitialization();
       final GrExpression condition = cl.getCondition();
       final GrExpressionList update = cl.getUpdate();

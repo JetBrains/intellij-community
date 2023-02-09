@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SyntaxTraverser
+import org.jetbrains.annotations.Nls
 import java.awt.event.MouseEvent
 
 abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
@@ -32,6 +33,7 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
   /**
    * @return text that user sees for a given element as a code lens
    */
+  @Nls
   abstract fun getHint(element: PsiElement, file: PsiFile): String?
 
   /**
@@ -40,6 +42,7 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
   open fun logClickToFUS(element: PsiElement, hint: String) {}
 
   override fun computeForEditor(editor: Editor, file: PsiFile): List<Pair<TextRange, CodeVisionEntry>> {
+    if (file.project.isDefault) return emptyList()
     if (!acceptsFile(file)) return emptyList()
 
     // we want to let this provider work only in tests dedicated for code vision, otherwise they harm performance

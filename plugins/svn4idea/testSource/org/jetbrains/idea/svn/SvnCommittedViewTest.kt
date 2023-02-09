@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.directoryContent
-import com.intellij.util.io.exists
 import org.jetbrains.idea.svn.history.SvnChangeList
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation
 import org.junit.Assert.assertEquals
@@ -20,6 +19,7 @@ import org.junit.Test
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.exists
 import kotlin.test.fail
 
 class SvnCommittedViewTest : SvnTestCase() {

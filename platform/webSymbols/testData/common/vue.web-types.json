@@ -837,6 +837,7 @@
               "items": {
                 "path": "attributes",
                 "filter": "match-with-target-list",
+                "includeVirtual": false,
                 "target-list": "/js/events",
                 "prefix": "update:"
               }

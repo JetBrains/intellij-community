@@ -6,7 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class RemoteSdkCredentialsBuilder {
   private String myInterpreterPath = null;
-  private static final String myHelpersPath = null;
   private RemoteCredentials myRemoteCredentials = null;
   private static final String myHelpersDefaultDirName = ".idea_helpers";
 
@@ -20,10 +19,6 @@ public class RemoteSdkCredentialsBuilder {
 
     if (myInterpreterPath != null) {
       result.setInterpreterPath(myInterpreterPath);
-    }
-
-    if (myHelpersPath != null) {
-      result.setHelpersPath(myHelpersPath);
     }
 
     return result;

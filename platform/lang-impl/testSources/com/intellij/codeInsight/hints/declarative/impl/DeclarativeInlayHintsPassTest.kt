@@ -29,8 +29,6 @@ class DeclarativeInlayHintsPassTest : LightPlatformCodeInsightFixture4TestCase()
           }
         }
       }
-
-      override fun createCollectorForPreview(file: PsiFile, editor: Editor): InlayHintsCollector? = null
     }, "test.inlay.provider", emptyMap())
     val pass = DeclarativeInlayHintsPass(myFixture.file, myFixture.editor, listOf(passInfo), false)
 
@@ -167,7 +165,5 @@ class DeclarativeInlayHintsPassTest : LightPlatformCodeInsightFixture4TestCase()
         }
       }
     }
-
-    override fun createCollectorForPreview(file: PsiFile, editor: Editor): InlayHintsCollector? = null
   }
 }

@@ -12,14 +12,19 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.util.PsiIconUtil
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtParameterDefaultValueRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtTypeParametersRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KtSuperTypesFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
-import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
+import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
 import org.jetbrains.kotlin.psi.*
 import javax.swing.Icon
 
@@ -31,6 +36,22 @@ internal class KotlinFirStructureElementPresentation(
     ktElement : KtElement,
     pointer: KtSymbolPointer<*>?
 ) : ColoredItemPresentation, LocationPresentation {
+    companion object {
+        private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+            annotationRenderer = annotationRenderer.with {
+                annotationFilter = KtRendererAnnotationsFilter.NONE
+            }
+
+            modifiersRenderer = modifiersRenderer.with {
+                modifierFilter = KtRendererModifierFilter.NONE
+            }
+
+            superTypesFilter = KtSuperTypesFilter.NONE
+            parameterDefaultValueRenderer = KtParameterDefaultValueRenderer.THREE_DOTS
+            typeParametersRenderer = KtTypeParametersRenderer.NO_TYPE_PARAMETERS
+        }
+    }
+
     private val attributesKey = getElementAttributesKey(isInherited, navigatablePsiElement)
     private val elementText = getElementText(navigatablePsiElement, ktElement, pointer)
     private val locationString = getElementLocationString(isInherited, ktElement, pointer)
@@ -92,21 +113,33 @@ internal class KotlinFirStructureElementPresentation(
             analyze(ktElement) {
                 val symbol = pointer.restoreSymbol()
                 if (symbol is KtDeclarationSymbol) {
-                    return symbol.render(KtDeclarationRendererForSource.WITH_SHORT_NAMES)
+                    return symbol.render(renderer)
                 }
             }
         }
 
-        val text = navigatablePsiElement.name
-        if (!text.isNullOrEmpty()) {
-            return text
-        }
+        navigatablePsiElement.name.takeUnless { it.isNullOrEmpty() }?.let { return it }
 
-        if (navigatablePsiElement is KtAnonymousInitializer) {
-            return KotlinCodeInsightBundle.message("class.initializer")
-        }
+        return when (navigatablePsiElement) {
+            is KtScriptInitializer -> {
+                val nameReferenceExpression: KtNameReferenceExpression? =
+                    navigatablePsiElement.referenceExpression()
 
-        return null
+                val referencedNameAsName = nameReferenceExpression?.getReferencedNameAsName()
+                referencedNameAsName?.asString() ?: KotlinCodeInsightBundle.message("class.initializer")
+            }
+            is KtAnonymousInitializer -> KotlinCodeInsightBundle.message("class.initializer")
+            else -> null
+        }
+    }
+
+    private fun KtScriptInitializer.referenceExpression(): KtNameReferenceExpression? {
+        val body = body
+        return when (body) {
+            is KtCallExpression -> body.calleeExpression
+            is KtExpression -> body.firstChild
+            else -> null
+        } as? KtNameReferenceExpression
     }
 
     private fun getElementLocationString(isInherited: Boolean, ktElement: KtElement, pointer: KtSymbolPointer<*>?): String? {

@@ -6,7 +6,6 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.laf.darcula.ui.MainToolbarComboBoxButtonUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -25,10 +24,7 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
-import com.intellij.util.ui.UIUtil
 import java.awt.*
-import java.awt.image.RGBImageFilter
-import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -69,6 +65,8 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   // as part of EDT task scheduled in a start-up activity, do fill it. That's to avoid flickering due to resizing.
   @RequiresEdt
   fun init(actionGroups: List<Pair<ActionGroup, String>>) {
+    removeAll()
+
     mainMenuButton?.let {
       addWidget(it.button, HorizontalLayout.LEFT)
     }
@@ -98,7 +96,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     toolbar.setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
     toolbar.setCustomButtonLook(HeaderToolbarButtonLook())
 
-    toolbar.setMinimumButtonSize(ActionToolbar.EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE)
+    toolbar.setMinimumButtonSize { ActionToolbar.experimentalToolbarMinimumButtonSize() }
     toolbar.targetComponent = null
     toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     val component = toolbar.component
@@ -108,18 +106,19 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   }
 }
 
-private val lightThemeDarkHeaderDisableFilter: Supplier<RGBImageFilter> = Supplier {
-  if (isDarkHeader()) UIUtil.GrayFilter(-70, -70, 100) else UIUtil.getGrayFilter()
-}
-
 private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
+
+  init {
+    updateFont()
+  }
+
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
     super.calculateBounds(size2Fit, bounds)
     for (i in 0 until bounds.size) fitRectangle(bounds[i], getComponent(i))
   }
 
   private fun fitRectangle(rect: Rectangle, cmp: Component) {
-    val minSize = EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE
+    val minSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
     if (!isSeparator(cmp)) rect.width = Integer.max(rect.width, minSize.width)
     rect.height = Integer.max(rect.height, minSize.height)
     rect.y = 0
@@ -148,10 +147,23 @@ private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(Action
     return null
   }
 
-  override fun applyToolbarLook(look: ActionButtonLook?, presentation: Presentation, component: JComponent) {
-    presentation.putClientProperty(Presentation.DISABLE_ICON_FILTER, lightThemeDarkHeaderDisableFilter)
-    super.applyToolbarLook(look, presentation, component)
+  override fun updateUI() {
+    super.updateUI()
+    updateFont()
   }
+
+  override fun addImpl(comp: Component, constraints: Any?, index: Int) {
+    super.addImpl(comp, constraints, index)
+    comp.font = font
+  }
+
+  private fun updateFont() {
+    font = JBUI.CurrentTheme.Toolbar.experimentalToolbarFont()
+    for (component in components) {
+      component.font = font
+    }
+  }
+
 }
 
 internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance) : Boolean {

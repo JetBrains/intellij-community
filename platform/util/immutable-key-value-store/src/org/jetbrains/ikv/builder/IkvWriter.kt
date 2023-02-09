@@ -1,9 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ikv.builder
 
-import org.jetbrains.ikv.RecSplitSettings
-import org.jetbrains.ikv.UniversalHash
-import org.jetbrains.xxh3.Xxh3
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.Path
@@ -11,43 +8,54 @@ import java.nio.file.StandardOpenOption
 import java.util.*
 
 fun sizeUnawareIkvWriter(file: Path): IkvWriter {
-  return IkvWriter(channel = FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)),
-                   writeSize = false)
+  return IkvWriter(channel = FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)), writeSize = false)
 }
 
-class IkvWriter(private val channel: FileChannel,
-                settings: RecSplitSettings = RecSplitSettings.DEFAULT_SETTINGS,
-                writeSize: Boolean = true) : AutoCloseable {
-  private class Entry(@JvmField val key: Int, override val offset: Int, override val size: Int) : IkvIndexEntry {
-    override fun equals(other: Any?) = key == (other as? Entry)?.key
+fun sizeAwareIkvWriter(file: Path): IkvWriter {
+  return IkvWriter(channel = FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)), writeSize = true)
+}
 
-    override fun hashCode() = key
-  }
+class IkvWriter(private val channel: FileChannel, writeSize: Boolean = true) : AutoCloseable {
+  private val indexBuilder = IkvIndexBuilder(writeSize)
+  private var position = 0L
 
-  private class EntryHash : UniversalHash<Entry> {
-    override fun universalHash(key: Entry, index: Long) = Xxh3.hashInt(key.key, index)
-  }
+  private var lastEntry: IkvIndexEntry? = null
 
-  private val indexBuilder = IkvIndexBuilder(hash = EntryHash(), writeSize = writeSize, settings = settings)
-  private var position = 0
+  fun entry(key: Int): IkvIndexEntry = IntKeyedEntry(intKey = key, offset = position)
 
-  fun write(key: Int, data: ByteArray) {
-    indexBuilder.add(Entry(key, position, data.size))
+  fun entry(key: Long): IkvIndexEntry = LongKeyedEntry(longKey = key, offset = position)
+
+  fun write(entry: IkvIndexEntry, data: ByteArray) {
     writeBuffer(ByteBuffer.wrap(data))
+    addEntry(entry)
   }
 
-  fun write(key: Int, data: ByteBuffer) {
-    indexBuilder.add(Entry(key, position, data.remaining()))
-    var currentPosition = position.toLong()
+  fun write(entry: IkvIndexEntry, data: ByteBuffer) {
+    var currentPosition = position
     do {
       currentPosition += channel.write(data, currentPosition)
     }
     while (data.hasRemaining())
-    position = currentPosition.toInt()
+    position = currentPosition
+    addEntry(entry)
   }
 
+  fun write(entry: IkvIndexEntry, writer: (FileChannel, position: Long) -> Long) {
+    position = writer(channel, position)
+    addEntry(entry)
+  }
+
+  private fun addEntry(entry: IkvIndexEntry) {
+    indexBuilder.add(entry)
+    entry.size = Math.toIntExact(position - entry.offset)
+  }
+
+  @Suppress("DuplicatedCode")
   override fun close() {
     channel.use {
+      lastEntry?.let {
+        it.size = Math.toIntExact(position - it.offset)
+      }
       indexBuilder.write(::writeBuffer)
     }
   }
@@ -55,7 +63,7 @@ class IkvWriter(private val channel: FileChannel,
   private fun writeBuffer(value: ByteBuffer) {
     var currentPosition = position
     do {
-      currentPosition += channel.write(value, currentPosition.toLong())
+      currentPosition += channel.write(value, currentPosition)
     }
     while (value.hasRemaining())
     position = currentPosition

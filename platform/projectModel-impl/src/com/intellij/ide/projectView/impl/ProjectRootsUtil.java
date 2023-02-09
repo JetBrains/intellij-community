@@ -4,8 +4,6 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDirectory;
@@ -103,22 +101,16 @@ public final class ProjectRootsUtil {
 
   public static String findUnloadedModuleByContentRoot(@NotNull final VirtualFile root, @NotNull Project project) {
     if (project.isDefault()) return null;
-    final DirectoryInfo info = DirectoryIndex.getInstance(project).getInfoForFile(root);
-    if (info.isExcluded(root) && root.equals(info.getContentRoot()) && info.getUnloadedModuleName() != null) {
-      return info.getUnloadedModuleName();
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+    if (fileIndex.isExcluded(root) && root.equals(fileIndex.getContentRootForFile(root, false))) {
+      return fileIndex.getUnloadedModuleNameForFile(root);
     }
     return null;
   }
 
   public static String findUnloadedModuleByFile(@NotNull final VirtualFile file, @NotNull Project project) {
     if (project.isDefault()) return null;
-    DirectoryInfo info = DirectoryIndex.getInstance(project).getInfoForFile(file);
-    VirtualFile contentRoot = info.getContentRoot();
-    if (info.isExcluded(file) && contentRoot != null) {
-      DirectoryInfo rootInfo = DirectoryIndex.getInstance(project).getInfoForFile(contentRoot);
-      return rootInfo.getUnloadedModuleName();
-    }
-    return null;
+    return ProjectFileIndex.getInstance(project).getUnloadedModuleNameForFile(file);
   }
 
   public static boolean isProjectHome(@NotNull PsiDirectory psiDirectory) {
@@ -136,7 +128,7 @@ public final class ProjectRootsUtil {
   /**
    * @deprecated use {@link #getModuleSourceRoot} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static SourceFolder findSourceFolder(@NotNull Module module, @NotNull VirtualFile root) {
     return getModuleSourceRoot(root, module.getProject());

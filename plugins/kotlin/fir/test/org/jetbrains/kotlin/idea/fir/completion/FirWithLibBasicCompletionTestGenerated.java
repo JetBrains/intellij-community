@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.completion;
 
@@ -31,6 +31,11 @@ public class FirWithLibBasicCompletionTestGenerated extends AbstractFirWithLibBa
     @TestMetadata("NamedArgumentsKotlin.kt")
     public void testNamedArgumentsKotlin() throws Exception {
         runTest("../completion/testData/basic/withLib/NamedArgumentsKotlin.kt");
+    }
+
+    @TestMetadata("OverrideJava.kt")
+    public void testOverrideJava() throws Exception {
+        runTest("../completion/testData/basic/withLib/OverrideJava.kt");
     }
 
     @TestMetadata("SamAdapter.kt")

@@ -2,6 +2,7 @@
 
 package com.intellij.execution;
 
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -21,7 +22,6 @@ import javax.swing.*;
  * a configuration using this executor.
  *
  * @see ExecutorRegistry
- * @author spleaner
  */
 public abstract class Executor {
   public static final ExtensionPointName<Executor> EXECUTOR_EXTENSION_NAME = new ExtensionPointName<>("com.intellij.executor");
@@ -99,8 +99,13 @@ public abstract class Executor {
   /**
    * @return text of the action specialized for given configuration name
    * in {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format.
+   * 
+   * @implNote The default implementation incorrectly assumes that the configuration name
+   * is concatenated to the end of the action text. For internationalization purposes, 
+   * it's highly desired to override this method and provide a separate template.
+   * E.g., see {@link DefaultRunExecutor#getStartActionText(String)}
    */
-  public @NotNull @NlsSafe String getStartActionText(@NlsSafe @NotNull String configurationName) {
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getStartActionText(@NlsSafe @NotNull String configurationName) {
     String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeeded(configurationName) + "'";
     return TextWithMnemonic.parse(getStartActionText()).append(configName).toString();
   }

@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.dependencies
 
+import com.intellij.java.workspaceModel.fileIndex.JvmPackageRootData
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -8,14 +9,17 @@ import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider.LibraryRoots
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleOrLibrarySourceRootData
+import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.workspaceModel.storage.EntityStorage
-import org.jetbrains.deft.annotations.Child
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeId
 import org.jetbrains.kotlin.idea.core.script.ucache.scriptsAsEntities
@@ -25,27 +29,52 @@ import javax.swing.Icon
  * See recommendations for custom entities indexing
  * [here](https://youtrack.jetbrains.com/articles/IDEA-A-239/Integration-of-custom-workspace-entities-with-platform-functionality)
  */
-class KotlinScriptProjectModelInfoProvider : CustomEntityProjectModelInfoProvider<KotlinScriptEntity> {
-    override fun getEntityClass(): Class<KotlinScriptEntity> = KotlinScriptEntity::class.java
+
+fun indexSourceRootsEagerly() = Registry.`is`("kotlin.scripting.index.dependencies.sources", false)
+
+class KotlinScriptProjectModelInfoProvider : CustomEntityProjectModelInfoProvider<KotlinScriptLibraryEntity> {
+    override fun getEntityClass(): Class<KotlinScriptLibraryEntity> = KotlinScriptLibraryEntity::class.java
 
     override fun getLibraryRoots(
-        entities: Sequence<KotlinScriptEntity>,
+        entities: Sequence<KotlinScriptLibraryEntity>,
         entityStorage: EntityStorage
-    ): Sequence<LibraryRoots<KotlinScriptEntity>> =
-        if (!scriptsAsEntities) { // see KotlinScriptDependenciesLibraryRootProvider
+    ): Sequence<LibraryRoots<KotlinScriptLibraryEntity>> =
+        if (!scriptsAsEntities || useWorkspaceFileContributor()) { // see KotlinScriptDependenciesLibraryRootProvider
             emptySequence()
         } else {
-            entities.flatMap { scriptEntity ->
-                scriptEntity.dependencies.map<@Child KotlinScriptLibraryEntity, LibraryRoots<KotlinScriptEntity>> { libEntity ->
-                    val (classes, sources) = libEntity.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
-                    val classFiles = classes.mapNotNull { it.url.virtualFile }
-                    val sourceFiles = sources.mapNotNull { it.url.virtualFile }
-                    LibraryRoots(scriptEntity, sourceFiles, classFiles, emptyList(), null)
-                }
+            entities.map { libEntity ->
+                val (classes, sources) = libEntity.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
+                val classFiles = classes.mapNotNull { it.url.virtualFile }
+                val sourceFiles = sources.mapNotNull { it.url.virtualFile }
+                val includeSources = indexSourceRootsEagerly() || libEntity.indexSourceRoots
+                LibraryRoots(libEntity, if (includeSources) sourceFiles else emptyList(), classFiles, emptyList(), null)
             }
         }
 }
 
+fun useWorkspaceFileContributor() = Registry.`is`("kotlin.script.use.workspace.file.index.contributor.api")
+
+class KotlinScriptWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<KotlinScriptLibraryEntity> {
+    override val entityClass: Class<KotlinScriptLibraryEntity>
+        get() = KotlinScriptLibraryEntity::class.java
+
+    override fun registerFileSets(entity: KotlinScriptLibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+        if (!scriptsAsEntities || !useWorkspaceFileContributor()) return // see KotlinScriptDependenciesLibraryRootProvider
+        val (classes, sources) = entity.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
+        classes.forEach {
+            registrar.registerFileSet(it.url, WorkspaceFileKind.EXTERNAL, entity, RootData)
+        }
+
+        if (indexSourceRootsEagerly() || entity.indexSourceRoots) {
+            sources.forEach {
+                registrar.registerFileSet(it.url, WorkspaceFileKind.EXTERNAL_SOURCE, entity, RootSourceData)
+            }
+        }
+    }
+
+    private object RootData : JvmPackageRootData
+    private object RootSourceData : JvmPackageRootData, ModuleOrLibrarySourceRootData
+}
 
 class KotlinScriptDependenciesLibraryRootProvider : AdditionalLibraryRootsProvider() {
 
@@ -77,7 +106,11 @@ class KotlinScriptDependenciesLibraryRootProvider : AdditionalLibraryRootsProvid
         ScriptConfigurationManager.allExtraRoots(project).filterValid()
     }
 
-    abstract class AbstractDependenciesLibrary(private val id: String, val classes: Collection<VirtualFile>, val sources: Collection<VirtualFile>) :
+    abstract class AbstractDependenciesLibrary(
+        private val id: String,
+        val classes: Collection<VirtualFile>,
+        val sources: Collection<VirtualFile>
+    ) :
         SyntheticLibrary(id, null), ItemPresentation {
 
         protected val gradle: Boolean by lazy { classes.hasGradleDependency() }

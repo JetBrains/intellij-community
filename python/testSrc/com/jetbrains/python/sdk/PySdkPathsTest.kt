@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -67,7 +68,10 @@ class PySdkPathsTest {
   fun userAddedIsModuleRoot() {
     val (module, moduleRoot) = createModule()
 
-    val sdk = PythonMockSdk.create().also { module.pythonSdk = it }
+    val sdk = PythonMockSdk.create().also {
+      registerSdk(it)
+      module.pythonSdk = it
+    }
     mockPythonPluginDisposable()
     runWriteActionAndWait { sdk.getOrCreateAdditionalData() }.apply { setAddedPathsFromVirtualFiles(setOf(moduleRoot)) }
 
@@ -81,7 +85,10 @@ class PySdkPathsTest {
   fun sysPathEntryIsModuleRoot() {
     val (module, moduleRoot) = createModule()
 
-    val sdk = PythonMockSdk.create().also { module.pythonSdk = it }
+    val sdk = PythonMockSdk.create().also {
+      registerSdk(it)
+      module.pythonSdk = it
+    }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, moduleRoot.path))
 
     mockPythonPluginDisposable()
@@ -99,7 +106,10 @@ class PySdkPathsTest {
 
     val userAddedPath = createSubdir(moduleRoot)
 
-    val sdk = PythonMockSdk.create(sdkPath).also { module.pythonSdk = it }
+    val sdk = PythonMockSdk.create(sdkPath).also {
+      registerSdk(it)
+      module.pythonSdk = it
+    }
     mockPythonPluginDisposable()
     runWriteActionAndWait { sdk.getOrCreateAdditionalData() }.apply { setAddedPathsFromVirtualFiles(setOf(userAddedPath)) }
 
@@ -127,6 +137,8 @@ class PySdkPathsTest {
 
     val userAddedPath = createSubdir(moduleRoot)
 
+    mockPythonPluginDisposable()
+
     val pythonVersion = LanguageLevel.getDefault().toPythonVersion()
     val sdk = ProjectJdkImpl(
       "Mock ${PyNames.PYTHON_SDK_ID_NAME} $pythonVersion",
@@ -134,12 +146,12 @@ class PySdkPathsTest {
       "$sdkPath/bin/python",
       pythonVersion
     )
-      .also { module.pythonSdk = it }
+      .also {
+        runWriteActionAndWait { it.getOrCreateAdditionalData() }
+        registerSdk(it)
+        module.pythonSdk = it
+      }
     sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
-
-    mockPythonPluginDisposable()
-    runWriteActionAndWait { sdk.getOrCreateAdditionalData() }
-    runWriteActionAndWait { ProjectJdkTable.getInstance().addJdk(sdk, projectModel.disposableRule.disposable) }
 
     val editableSdk = PyConfigurableInterpreterList.getInstance(projectModel.project).model.findSdk(sdk.name)
     editableSdk!!.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
@@ -187,9 +199,11 @@ class PySdkPathsTest {
       "$sdkPath/bin/python",
       pythonVersion
     )
-      .also { module.pythonSdk = it }
+      .also {
+        registerSdk(it)
+        module.pythonSdk = it
+      }
     sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
-    runWriteActionAndWait { ProjectJdkTable.getInstance().addJdk(sdk, projectModel.disposableRule.disposable) }
 
     val editableSdk = PyConfigurableInterpreterList.getInstance(projectModel.project).model.findSdk(sdk.name)
     editableSdk!!.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
@@ -234,7 +248,10 @@ class PySdkPathsTest {
 
     val entryPath = createSubdir(moduleRoot)
 
-    val sdk = PythonMockSdk.create(sdkPath).also { module.pythonSdk = it }
+    val sdk = PythonMockSdk.create(sdkPath).also {
+      registerSdk(it)
+      module.pythonSdk = it
+    }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
 
     mockPythonPluginDisposable()
@@ -263,7 +280,10 @@ class PySdkPathsTest {
 
     val userAddedPath = createSubdir(sdkDir)
 
-    val sdk = PythonMockSdk.create(sdkDir.path).also { module.pythonSdk = it }
+    val sdk = PythonMockSdk.create(sdkDir.path).also {
+      registerSdk(it)
+      module.pythonSdk = it
+    }
     mockPythonPluginDisposable()
     runWriteActionAndWait { sdk.getOrCreateAdditionalData() }.apply { setAddedPathsFromVirtualFiles(setOf(userAddedPath)) }
 
@@ -280,7 +300,10 @@ class PySdkPathsTest {
 
     val entryPath = createSubdir(sdkDir)
 
-    val sdk = PythonMockSdk.create(sdkDir.path).also { module.pythonSdk = it }
+    val sdk = PythonMockSdk.create(sdkDir.path).also {
+      registerSdk(it)
+      module.pythonSdk = it
+    }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
 
     updateSdkPaths(sdk)
@@ -298,9 +321,12 @@ class PySdkPathsTest {
     val entryPath1 = createSubdir(moduleRoot1)
     val entryPath2 = createSubdir(moduleRoot2)
 
-    val sdk = PythonMockSdk.create(sdkDir.path).also {
-      module1.pythonSdk = it
-      module2.pythonSdk = it
+    val sdk = PythonMockSdk.create().let {
+      val properSdk = PythonMockSdk.create("Mock SDK without path", sdkDir.path, it.sdkType, LanguageLevel.getLatest())
+      registerSdk(properSdk)
+      module1.pythonSdk = properSdk
+      module2.pythonSdk = properSdk
+      return@let properSdk
     }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath1.path, entryPath2.path))
 
@@ -311,6 +337,7 @@ class PySdkPathsTest {
     checkRoots(sdk, module2, listOf(moduleRoot2, entryPath1, entryPath2), emptyList())
 
     val simpleSdk = PythonMockSdk.create().also {
+      registerSdk(it)
       removeTransferredRoots(module1, sdk)
       module1.pythonSdk = it
 
@@ -322,6 +349,12 @@ class PySdkPathsTest {
 
     checkRoots(simpleSdk, module1, listOf(moduleRoot1), emptyList())
     checkRoots(simpleSdk, module2, listOf(moduleRoot2), emptyList())
+  }
+
+  private fun registerSdk(it: Sdk) {
+    WriteAction.runAndWait<RuntimeException> {
+      ProjectJdkTable.getInstance().addJdk(it, projectModel.disposableRule.disposable)
+    }
   }
 
   private fun createModule(name: String = "module"): Pair<Module, VirtualFile> {

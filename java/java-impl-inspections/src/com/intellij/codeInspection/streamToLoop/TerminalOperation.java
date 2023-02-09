@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.ResultKind;
@@ -79,10 +65,10 @@ abstract class TerminalOperation extends Operation {
       return TemplateBasedOperation.summing(resultType);
     }
     if(name.equals("average") && args.length == 0) {
-      if(elementType.equals(PsiType.DOUBLE)) {
+      if(elementType.equals(PsiTypes.doubleType())) {
         return new AverageTerminalOperation(true, true);
       }
-      else if(elementType.equals(PsiType.INT) || elementType.equals(PsiType.LONG)) {
+      else if(elementType.equals(PsiTypes.intType()) || elementType.equals(PsiTypes.longType())) {
         return new AverageTerminalOperation(false, true);
       }
     }
@@ -157,8 +143,7 @@ abstract class TerminalOperation extends Operation {
   @Nullable
   private static TerminalOperation fromCollector(@NotNull PsiType elementType, @NotNull PsiType resultType, PsiExpression expr) {
     expr = PsiUtil.skipParenthesizedExprDown(expr);
-    if (!(expr instanceof PsiMethodCallExpression)) return null;
-    PsiMethodCallExpression collectorCall = (PsiMethodCallExpression)expr;
+    if (!(expr instanceof PsiMethodCallExpression collectorCall)) return null;
     PsiExpression[] collectorArgs = collectorCall.getArgumentList().getExpressions();
     PsiMethod collector = collectorCall.resolveMethod();
     if (collector == null) return null;
@@ -351,8 +336,7 @@ abstract class TerminalOperation extends Operation {
     }
     for (PsiTypeParameter baseParameter : superClass.getTypeParameters()) {
       PsiClass substitution = PsiUtil.resolveClassInClassTypeOnly(superClassSubstitutor.substitute(baseParameter));
-      if(substitution instanceof PsiTypeParameter) {
-        PsiTypeParameter subClassParameter = (PsiTypeParameter)substitution;
+      if(substitution instanceof PsiTypeParameter subClassParameter) {
         PsiType origType = origSubstitutor.substitute(subClassParameter);
         PsiType replacedType = GenericsUtil.eliminateWildcards(origType, false, true);
         replacedType = downstreamCorrectors.getOrDefault(subClassParameter.getName(), Function.identity()).apply(replacedType);
@@ -483,13 +467,13 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     String generate(ChainVariable inVar, StreamToLoopReplacementContext context) {
-      String sum = context.declareResult("sum", myDoubleAccumulator ? PsiType.DOUBLE : PsiType.LONG, "0", ResultKind.UNKNOWN);
+      String sum = context.declareResult("sum", myDoubleAccumulator ? PsiTypes.doubleType() : PsiTypes.longType(), "0", ResultKind.UNKNOWN);
       String count = context.declare("count", "long", "0");
       String seenCheck = count + ">0";
       String result = (myDoubleAccumulator ? "" : "(double)") + sum + "/" + count;
       ConditionalExpression conditionalExpression = myUseOptional ?
-                                                    new ConditionalExpression.Optional(PsiType.DOUBLE, seenCheck, result) :
-                                                    new ConditionalExpression.Plain(PsiType.DOUBLE, seenCheck, result, "0.0");
+                                                    new ConditionalExpression.Optional(PsiTypes.doubleType(), seenCheck, result) :
+                                                    new ConditionalExpression.Plain(PsiTypes.doubleType(), seenCheck, result, "0.0");
       context.setFinisher(conditionalExpression);
       return sum + "+=" + inVar + ";\n" + count + "++;\n";
     }
@@ -745,7 +729,7 @@ abstract class TerminalOperation extends Operation {
 
     @NotNull
     static TemplateBasedOperation counting() {
-      return new TemplateBasedOperation("count", PsiType.LONG, "0L", "{acc}++;");
+      return new TemplateBasedOperation("count", PsiTypes.longType(), "0L", "{acc}++;");
     }
   }
 
@@ -840,20 +824,20 @@ abstract class TerminalOperation extends Operation {
     }
 
     Number getExtremeValue() {
-      if (PsiType.INT.equals(myType)) {
+      if (PsiTypes.intType().equals(myType)) {
         return myMax ? Integer.MIN_VALUE : Integer.MAX_VALUE;
       }
-      if (PsiType.LONG.equals(myType)) {
+      if (PsiTypes.longType().equals(myType)) {
         return myMax ? Long.MIN_VALUE : Long.MAX_VALUE;
       }
       return null;
     }
 
     String getExtremeValueExpression() {
-      if (PsiType.INT.equals(myType)) {
+      if (PsiTypes.intType().equals(myType)) {
         return CommonClassNames.JAVA_LANG_INTEGER + (myMax ? ".MIN_VALUE" : ".MAX_VALUE");
       }
-      if (PsiType.LONG.equals(myType)) {
+      if (PsiTypes.longType().equals(myType)) {
         return CommonClassNames.JAVA_LANG_LONG + (myMax ? ".MIN_VALUE" : ".MAX_VALUE");
       }
       return null;
@@ -888,10 +872,10 @@ abstract class TerminalOperation extends Operation {
     static MinMaxTerminalOperation create(@Nullable PsiExpression comparator, PsiType elementType, boolean max) {
       String sign = max ? ">" : "<";
       if(comparator == null) {
-        if (PsiType.INT.equals(elementType) || PsiType.LONG.equals(elementType)) {
+        if (PsiTypes.intType().equals(elementType) || PsiTypes.longType().equals(elementType)) {
           return new MinMaxTerminalOperation(elementType, "{item}" + sign + "{best}", null, max);
         }
-        if (PsiType.DOUBLE.equals(elementType)) {
+        if (PsiTypes.doubleType().equals(elementType)) {
           return new MinMaxTerminalOperation(elementType, "java.lang.Double.compare({item},{best})" + sign + "0", null, max);
         }
       }
@@ -952,23 +936,19 @@ abstract class TerminalOperation extends Operation {
         return "if("+map+".put("+myKeyExtractor.getText()+","+myValueExtractor.getText()+")!=null) {\n"+
                "throw new java.lang.IllegalStateException(\"Duplicate key\");\n}\n";
       }
-      if(myMerger instanceof PsiLambdaExpression) {
-        PsiLambdaExpression lambda = (PsiLambdaExpression)myMerger;
+      if(myMerger instanceof PsiLambdaExpression lambda) {
         PsiParameter[] parameters = lambda.getParameterList().getParameters();
         if(parameters.length == 2) {
           PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-          if(body instanceof PsiReferenceExpression) {
-            PsiReferenceExpression ref = (PsiReferenceExpression)body;
-            if(ref.getQualifierExpression() == null) {
-              // cannot use isReferenceTo here as lambda could be detached from PsiFile
-              if (Objects.equals(parameters[0].getName(), ref.getReferenceName())) {
-                // like (a, b) -> a
-                return map + ".putIfAbsent(" + myKeyExtractor.getText() + "," + myValueExtractor.getText() + ");\n";
-              }
-              else if (Objects.equals(parameters[1].getName(), ref.getReferenceName())) {
-                // like (a, b) -> b
-                return map + ".put(" + myKeyExtractor.getText() + "," + myValueExtractor.getText() + ");\n";
-              }
+          if (body instanceof PsiReferenceExpression ref && ref.getQualifierExpression() == null) {
+            // cannot use isReferenceTo here as lambda could be detached from PsiFile
+            if (Objects.equals(parameters[0].getName(), ref.getReferenceName())) {
+              // like (a, b) -> a
+              return map + ".putIfAbsent(" + myKeyExtractor.getText() + "," + myValueExtractor.getText() + ");\n";
+            }
+            else if (Objects.equals(parameters[1].getName(), ref.getReferenceName())) {
+              // like (a, b) -> b
+              return map + ".put(" + myKeyExtractor.getText() + "," + myValueExtractor.getText() + ");\n";
             }
           }
         }

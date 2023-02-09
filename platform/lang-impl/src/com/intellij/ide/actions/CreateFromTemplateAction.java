@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -29,18 +29,22 @@ import javax.swing.*;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnAction implements WriteActionAware {
+
   protected static final Logger LOG = Logger.getInstance(CreateFromTemplateAction.class);
 
+  protected CreateFromTemplateAction() {
+  }
+
   public CreateFromTemplateAction(@NlsActions.ActionText String text,
-                                  @NlsActions.ActionDescription String description, Icon icon) {
+                                  @NlsActions.ActionDescription String description,
+                                  @Nullable Icon icon) {
     super(text, description, icon);
   }
 
-  public CreateFromTemplateAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon) {
+  public CreateFromTemplateAction(@NotNull Supplier<String> dynamicText,
+                                  @NotNull Supplier<String> dynamicDescription,
+                                  @Nullable Icon icon) {
     super(dynamicText, dynamicDescription, icon);
   }
 
@@ -94,9 +98,9 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
                      if (offset != -1 && editor != null && !editor.isDisposed()) {
                        editor.getCaretModel().moveToOffset(offset);
                      }
-                     SlowOperations.allowSlowOperations(
-                       () -> postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties())
-                     );
+                     try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+                       postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties());
+                     }
                    }
                  });
   }

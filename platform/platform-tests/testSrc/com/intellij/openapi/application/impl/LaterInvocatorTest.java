@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -7,9 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.*;
@@ -30,7 +28,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 
+import static com.intellij.openapi.application.impl.UtilKt.assertReferenced;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotEquals;
 
@@ -703,6 +703,39 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
         UIUtil.dispatchAllInvocationEvents();
         assertTrue(executed.get());
       }
+    });
+  }
+
+  public void testInvokeAndWaitIsCancellable() {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      AtomicBoolean executed = new AtomicBoolean();
+      Runnable testRunnable = () -> {
+        executed.set(true);
+      };
+      AtomicBoolean gotPCE = new AtomicBoolean();
+      LaterInvocator.enterModal(myWindow1);
+      var indicator = new EmptyProgressIndicator(ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        ProgressManager.getInstance().runProcess(() -> {
+          try {
+            // this should schedule the runnable with NON_MODAL
+            ApplicationManager.getApplication().invokeAndWait(testRunnable);
+          }
+          catch (ProcessCanceledException pce) {
+            gotPCE.set(true);
+            throw pce;
+          }
+        }, indicator);
+      });
+      LockSupport.parkNanos(50_000_000); // give chance to schedule testRunnable
+      assertReferenced(LaterInvocator.class, testRunnable); // ensure testRunnable in the queue
+      UIUtil.dispatchAllInvocationEvents();
+      assertReferenced(LaterInvocator.class, testRunnable); // ensure testRunnable is still in the queue
+      indicator.cancel();
+      LockSupport.parkNanos(50_000_000); // give chance to loop and call checkCanceled
+      assertFalse(executed.get());
+      assertTrue(gotPCE.get());
+      LeakHunter.checkLeak(LaterInvocator.class, testRunnable.getClass());
     });
   }
 }

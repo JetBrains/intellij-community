@@ -43,7 +43,6 @@ import javax.swing.*;
 import java.util.*;
 
 /**
- * @author ilyas
  * Same logic as for Java LMP
  */
 final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {

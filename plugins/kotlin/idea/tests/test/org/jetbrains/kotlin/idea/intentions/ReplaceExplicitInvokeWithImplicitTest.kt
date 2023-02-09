@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.util.descendantsOfType
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -70,7 +71,7 @@ class ReplaceExplicitInvokeWithImplicitTest27 : KotlinLightCodeInsightFixtureTes
             it.selectorExpression?.safeAs<KtCallExpression>()?.calleeExpression?.text == "invoke"
         } ?: error("Invoke call not found")
 
-        val expressionAfterTransformation = OperatorToFunctionIntention.replaceExplicitInvokeCallWithImplicit(qualifiedExpression)
+        val expressionAfterTransformation = OperatorToFunctionConverter.replaceExplicitInvokeCallWithImplicit(qualifiedExpression)
             ?: error("impossible convert explicit to implicit")
 
         val actualExpressionToCheck = expressionAfterTransformation.parentsWithSelf.takeWhile { it !is KtProperty }.last()

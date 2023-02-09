@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Defines contract for the {@link ConsoleView#createConsoleActions() console actions} customization.
- * 
- * @author Denis Zhdanov
  */
 public abstract class ConsoleActionsPostProcessor {
 

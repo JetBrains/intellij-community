@@ -7,7 +7,10 @@ import org.jetbrains.kotlin.testGenerator.model.*
 internal fun MutableTWorkspace.generateK2LineMarkerTests() {
     testGroup("code-insight/line-markers") {
         testClass<AbstractLineMarkerTest> {
-            model(".", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
+            model("recursive", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
+            model("suspend", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
+            model("../../../idea/tests/testData/codeInsight/lineMarker/overrideImplement", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
+            model("../../../idea/tests/testData/codeInsight/lineMarker/dslMarker", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
         }
     }
 }

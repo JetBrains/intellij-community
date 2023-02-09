@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.*;
+import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.TraceSettings;
@@ -79,8 +80,7 @@ public class CallTracer implements OverheadProducer {
 
   private void accept(Event event) {
     OverheadTimings.add(myDebugProcess, this, 1, null);
-    if (event instanceof MethodEntryEvent) {
-      MethodEntryEvent methodEntryEvent = (MethodEntryEvent)event;
+    if (event instanceof MethodEntryEvent methodEntryEvent) {
       try {
         ThreadReference thread = methodEntryEvent.thread();
         ThreadRequest request = myThreadRequests.get(thread);
@@ -97,26 +97,34 @@ public class CallTracer implements OverheadProducer {
           StringBuilder res = new StringBuilder("\n");
           res.append(indentString).append(method.declaringType().name()).append('.').append(method.name()).append('(');
           if (Registry.is("debugger.call.tracing.arguments")) {
-            StackFrame frame = thread.frame(0);
-            boolean first = true;
-            for (Value value : DebuggerUtilsEx.getArgumentValues(frame)) {
-              if (!first) {
-                res.append(", ");
+            try {
+              boolean first = true;
+              for (Value value : DebuggerUtilsEx.getArgumentValues(thread.frame(0))) {
+                if (!first) {
+                  res.append(", ");
+                }
+                first = false;
+                if (value == null) {
+                  res.append("null");
+                }
+                else if (value instanceof StringReference stringReference) {
+                  res.append(stringReference.value());
+                }
+                else if (value instanceof ObjectReference objectReference) {
+                  res.append(StringUtil.getShortName(objectReference.referenceType().name())).append("@")
+                    .append(objectReference.uniqueID());
+                }
+                else {
+                  res.append(value);
+                }
               }
-              first = false;
-              if (value == null) {
-                res.append("null");
+            }
+            catch (InternalException e) {
+              if (e.errorCode() != JvmtiError.INVALID_SLOT) { // ignore
+                throw e;
               }
-              else if (value instanceof StringReference) {
-                res.append(((StringReference)value).value());
-              }
-              else if (value instanceof ObjectReference) {
-                ObjectReference objectReference = (ObjectReference)value;
-                res.append(StringUtil.getShortName(objectReference.referenceType().name())).append("@").append(objectReference.uniqueID());
-              }
-              else {
-                res.append(value);
-              }
+            }
+            catch (InvalidStackFrameException ignored) {
             }
           }
           else {

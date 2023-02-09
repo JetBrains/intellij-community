@@ -110,6 +110,7 @@ internal object Weighers {
             )
             .weighAfter(PlatformWeighersIds.STATS, VariableOrFunctionWeigher.Weigher)
             .weighBefore(ExpectedTypeWeigher.WEIGHER_ID, CompletionContributorGroupWeigher.Weigher)
+            .weighBefore(PlatformWeighersIds.PREFIX, VariableOrParameterNameWithTypeWeigher.Weigher)
 
     private object PlatformWeighersIds {
         const val PREFIX = "prefix"

@@ -34,8 +34,7 @@ public class ClashingTraitMethodsInspection extends ClashingTraitMethodsInspecti
     public void applyFix(@NotNull Project project, @NotNull final ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       PsiElement parent = element.getParent();
-      if (parent instanceof GrTypeDefinition && ((GrTypeDefinition)parent).getNameIdentifierGroovy() == element) {
-        final GrTypeDefinition aClass = (GrTypeDefinition)parent;
+      if (parent instanceof GrTypeDefinition aClass && ((GrTypeDefinition)parent).getNameIdentifierGroovy() == element) {
 
         final List<ClashingMethod> clashingMethods = collectClassingMethods(aClass);
 

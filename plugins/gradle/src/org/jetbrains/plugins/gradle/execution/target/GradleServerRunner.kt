@@ -30,6 +30,7 @@ import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.gradle.tooling.internal.provider.action.BuildActionSerializer
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationProvider
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -38,7 +39,8 @@ import java.net.InetAddress
 import java.util.concurrent.Future
 
 internal class GradleServerRunner(private val connection: TargetProjectConnection,
-                                  private val consumerOperationParameters: ConsumerOperationParameters) {
+                                  private val consumerOperationParameters: ConsumerOperationParameters,
+                                  private val prepareTaskState: Boolean) {
 
   fun run(classpathInferer: GradleServerClasspathInferer,
           targetBuildParametersBuilder: TargetBuildParameters.Builder,
@@ -46,8 +48,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     val project: Project = connection.taskId?.findProject() ?: return
     val progressIndicator = GradleServerProgressIndicator(connection.taskId, connection.taskListener)
     consumerOperationParameters.cancellationToken.addCallback(progressIndicator::cancel)
-    val environmentConfigurationProvider = connection.environmentConfigurationProvider
-    val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, classpathInferer, environmentConfigurationProvider)
+    val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, classpathInferer, connection, prepareTaskState)
     val commandLine = serverEnvironmentSetup.prepareEnvironment(targetBuildParametersBuilder, consumerOperationParameters,
                                                                 progressIndicator)
     runTargetProcess(commandLine, serverEnvironmentSetup, progressIndicator, resultHandler,classpathInferer)
@@ -257,7 +258,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     }
   }
 
-  private class GradleServerProcessListener(private val appStartedMessage: String?,
+  private class GradleServerProcessListener(private val appStartedMessage: @Nls String?,
                                             private val targetProgressIndicator: TargetProgressIndicator,
                                             private val resultHandler: ResultHandler<Any?>,
                                             private val gradleServerEventsListener: GradleServerEventsListener) : ProcessListener {

@@ -17,9 +17,6 @@ import java.util.Iterator;
 
 import static com.intellij.psi.util.PsiUtil.hasDefaultConstructor;
 
-/**
- *  @author dsl
- */
 public class PsiUtilTest extends LightJavaCodeInsightFixtureTestCase {
   public void testTypeParameterIterator() {
     PsiClass classA = createClass("class A<T> {}");

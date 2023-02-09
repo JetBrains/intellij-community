@@ -3,6 +3,7 @@ package com.intellij.warmup.util
 
 import com.intellij.application.subscribe
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.util.Disposer
@@ -48,21 +49,21 @@ suspend fun <Y> withLoggingProgresses(action: suspend (ProgressIndicator) -> Y):
 
 private fun trimProgressTextAndNullize(s: String?) = s?.trim()?.trimEnd('.', '\u2026', ' ')?.takeIf { it.isNotBlank() }
 
-private fun progressIndicatorText(progressIndicator: ProgressIndicator): String? {
-  val text = trimProgressTextAndNullize(progressIndicator.text)
-  val text2 = trimProgressTextAndNullize(progressIndicator.text2)
+internal fun progressStateText(state: ProgressState): String? {
+  val text = trimProgressTextAndNullize(state.text)
+  val text2 = trimProgressTextAndNullize(state.details)
   if (text.isNullOrBlank() && text2.isNullOrBlank()) {
     return null
   }
 
   val message = (text ?: "") + (text2?.let { " ($it)" } ?: "")
-  if (message.isBlank() || progressIndicator.isIndeterminate) {
+  if (message.isBlank() || state.fraction < 0.0) {
     return message.takeIf { it.isNotBlank() }
   }
 
-  val v = (100.0 * progressIndicator.fraction).toInt()
+  val v = (100.0 * state.fraction).toInt()
   val total = 18
-  val completed = (total * progressIndicator.fraction).toInt().coerceAtLeast(0)
+  val completed = (total * state.fraction).toInt().coerceAtLeast(0)
   val d = ".".repeat(completed).padEnd(total, ' ')
   return message.take(75).padEnd(79) + "$d $v%"
 }
@@ -90,8 +91,11 @@ private class LoggingProgressIndicator(private val messages: SendChannel<String>
   }
 
   private fun offerState() {
-    messages.trySend(progressIndicatorText(this@LoggingProgressIndicator) ?: return).onClosed {
+    messages.trySend(progressStateText(this@LoggingProgressIndicator.dumpProgressState()) ?: return).onClosed {
       throw IllegalStateException(it)
     }
   }
 }
+
+private fun ProgressIndicator.dumpProgressState() : ProgressState =
+  ProgressState(text = text, details = text2, fraction = if (isIndeterminate) -1.0 else fraction)

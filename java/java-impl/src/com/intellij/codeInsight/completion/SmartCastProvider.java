@@ -78,7 +78,7 @@ final class SmartCastProvider {
         type = ((PsiWildcardType)type).getBound();
       }
 
-      if (type == null || PsiType.VOID.equals(type)) {
+      if (type == null || PsiTypes.voidType().equals(type)) {
         continue;
       }
 

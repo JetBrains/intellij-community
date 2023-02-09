@@ -49,8 +49,7 @@ public class UnnecessaryInitCauseInspection extends BaseInspection implements Cl
     if (expression instanceof PsiNewExpression) {
       return (PsiNewExpression)expression;
     }
-    else if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+    else if (expression instanceof PsiReferenceExpression referenceExpression) {
       final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, null);
       if (!(definition instanceof PsiNewExpression)) {
         return null;
@@ -72,10 +71,9 @@ public class UnnecessaryInitCauseInspection extends BaseInspection implements Cl
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent().getParent();
-      if (!(element instanceof PsiMethodCallExpression)) {
+      if (!(element instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression argument = ExpressionUtils.getFirstExpressionInList(argumentList);
       if (argument == null) {

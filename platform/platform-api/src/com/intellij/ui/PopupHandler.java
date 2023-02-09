@@ -149,16 +149,7 @@ public abstract class PopupHandler extends MouseAdapter {
   public static @NotNull PopupHandler installFollowingSelectionTreePopup(@NotNull JTree tree,
                                                                          @NotNull ActionGroup group,
                                                                          @NotNull String place) {
-    return (PopupHandler)installFollowingSelectionTreePopup(tree, group, place, null);
-  }
-
-  /** @deprecated use {@link #installFollowingSelectionTreePopup(JTree, ActionGroup, String)} instead */
-  @Deprecated(forRemoval = true)
-  public static @NotNull MouseListener installFollowingSelectionTreePopup(@NotNull JTree tree,
-                                                                          @NotNull ActionGroup group,
-                                                                          @NotNull String place,
-                                                                          @Nullable ActionManager actionManager) {
-    return installConditionalPopup(tree, group, place, actionManager, (comp, x, y) -> {
+    return installConditionalPopup(tree, group, place, null, (comp, x, y) -> {
       return tree.getPathForLocation(x, y) != null &&
              Arrays.binarySearch(Objects.requireNonNull(tree.getSelectionRows()), tree.getRowForLocation(x, y)) > -1;
     });

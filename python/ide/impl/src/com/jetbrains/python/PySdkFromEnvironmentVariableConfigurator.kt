@@ -10,21 +10,21 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.EnvironmentUtil
+import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.switchToSdk
 
-class PySdkFromEnvironmentVariableConfigurator : StartupActivity.Background {
+internal class PySdkFromEnvironmentVariableConfigurator(private val project: Project) : JpsProjectLoadedListener {
 
   companion object {
     private val LOGGER: Logger = logger<PySdkFromEnvironmentVariableConfigurator>()
     const val PYCHARM_PYTHON_PATH_ENVIRONMENT_VARIABLE = "PYCHARM_PYTHON_PATH"
   }
 
-  override fun runActivity(project: Project) {
+  override fun loaded() {
     val pycharmPythonPathEnvVariable = EnvironmentUtil.getValue(PYCHARM_PYTHON_PATH_ENVIRONMENT_VARIABLE)
     if (Strings.isEmptyOrSpaces(pycharmPythonPathEnvVariable)) {
       LOGGER.debug("$PYCHARM_PYTHON_PATH_ENVIRONMENT_VARIABLE is null or empty")

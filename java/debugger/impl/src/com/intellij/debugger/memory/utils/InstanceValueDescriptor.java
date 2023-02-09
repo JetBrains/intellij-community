@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.utils;
 
 import com.intellij.debugger.DebuggerContext;
@@ -19,9 +19,8 @@ public class InstanceValueDescriptor extends ValueDescriptorImpl {
 
   @Override
   public String calcValueName() {
-    ObjectReference ref = ((ObjectReference) getValue());
-    if (ref instanceof ArrayReference) {
-      ArrayReference arrayReference = (ArrayReference) ref;
+    ObjectReference ref = ((ObjectReference)getValue());
+    if (ref instanceof ArrayReference arrayReference) {
       return NamesUtils.getArrayUniqueName(arrayReference);
     }
     return NamesUtils.getUniqueName(ref);

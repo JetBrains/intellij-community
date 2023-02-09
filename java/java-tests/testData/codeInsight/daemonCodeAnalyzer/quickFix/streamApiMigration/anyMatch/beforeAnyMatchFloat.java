@@ -1,4 +1,4 @@
-// "Replace with anyMatch()" "false"
+// "Collapse loop with stream 'anyMatch()'" "false"
 
 import java.util.List;
 

@@ -107,24 +107,7 @@ final class ITNProxy {
     });
   }
 
-  static class ErrorBean {
-    final IdeaLoggingEvent event;
-    final String comment;
-    final String pluginId;
-    final String pluginName;
-    final String pluginVersion;
-    final String lastActionId;
-    final int previousException;
-
-    ErrorBean(IdeaLoggingEvent event, String comment, String pluginId, String pluginName, String pluginVersion, String lastActionId, int previousException) {
-      this.event = event;
-      this.comment = comment;
-      this.pluginId = pluginId;
-      this.pluginName = pluginName;
-      this.pluginVersion = pluginVersion;
-      this.lastActionId = lastActionId;
-      this.previousException = previousException;
-    }
+  record ErrorBean(IdeaLoggingEvent event, String comment, String pluginId, String pluginName, String pluginVersion, String lastActionId, int previousException) {
   }
 
   static void sendError(@Nullable Project project,
@@ -257,8 +240,7 @@ final class ITNProxy {
       append(builder, "error.redacted", Boolean.toString(true));
     }
 
-    if (eventData instanceof AbstractMessage) {
-      AbstractMessage messageObj = (AbstractMessage)eventData;
+    if (eventData instanceof AbstractMessage messageObj) {
       for (Attachment attachment : messageObj.getIncludedAttachments()) {
         append(builder, "attachment.name", attachment.getName());
         append(builder, "attachment.value", attachment.getEncodedBytes());
@@ -357,7 +339,7 @@ final class ITNProxy {
             byte[] digest = DigestUtil.sha1().digest(ca.getEncoded());
             StringBuilder fp = new StringBuilder(2 * digest.length);
             for (byte b : digest) fp.append(Integer.toHexString(b & 0xFF));
-            if (JB_CA_CN.equals(cn) && JB_CA_FP.equals(fp.toString())) {
+            if (JB_CA_CN.equals(cn) && JB_CA_FP.contentEquals(fp)) {
               return true;
             }
           }

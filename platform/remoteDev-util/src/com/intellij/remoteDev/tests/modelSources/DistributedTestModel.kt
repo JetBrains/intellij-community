@@ -38,14 +38,15 @@ object DistributedTestModel : Ext(TestRoot) {
 
   private val RdTestSession = classdef {
     field("agentId", RdAgentId)
-    field("testClassName", string)
-    field("testMethodName", string)
+    field("testClassName", string.nullable)
+    field("testMethodName", string.nullable)
     field("traceCategories", immutableList(string))
     property("ready", bool.nullable)
     signal("sendException", RdTestSessionException)
     signal("shutdown", void)
     signal("dumpThreads", void).async
     call("runNextAction", void, bool)
+    call("makeScreenshot", string, bool)
   }
 
   init {

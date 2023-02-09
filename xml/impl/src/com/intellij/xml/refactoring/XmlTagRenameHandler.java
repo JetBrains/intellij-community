@@ -34,10 +34,9 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
     final PsiElement element = getElement(dataContext);
     if (element == null || PsiElementRenameHandler.isVetoed(element)) return false;
     PsiElement parent = element.getParent();
-    if (!(parent instanceof XmlTag)) {
+    if (!(parent instanceof XmlTag tag)) {
       return false;
     }
-    XmlTag tag = (XmlTag)parent;
     String prefix = tag.getNamespacePrefix();
     if (StringUtil.isNotEmpty(prefix)) {
       Editor editor = getEditor(dataContext);

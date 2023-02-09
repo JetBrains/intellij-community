@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class HierarchicalMethodSignatureImpl extends HierarchicalMethodSignature {
   private List<HierarchicalMethodSignature> mySupers;
   private List<HierarchicalMethodSignature> myInaccessibleSupers;

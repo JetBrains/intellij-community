@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.lang.jvm.actions.ChangeParametersRequest
 import com.intellij.lang.jvm.actions.ExpectedParameter
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
@@ -27,7 +26,7 @@ internal class ChangeMethodParameters(
 
   override fun getFamilyName(): String = QuickFixBundle.message("change.method.parameters.family")
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, file: PsiFile, target: PsiMethod) {
     val factory = PsiElementFactory.getInstance(project)
     val helper = JvmPsiConversionHelper.getInstance(target.project)
 
@@ -60,5 +59,4 @@ internal class ChangeMethodParameters(
     }
     updateParameters(target.parameterList.parameters.toList(), request.expectedParameters)
   }
-
 }

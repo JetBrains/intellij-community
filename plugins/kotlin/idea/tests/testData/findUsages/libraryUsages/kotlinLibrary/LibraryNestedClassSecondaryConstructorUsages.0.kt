@@ -18,4 +18,3 @@ fun test() {
     val aa = A.T(1)
 }
 
-// FIR_COMPARISON

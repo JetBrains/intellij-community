@@ -6,14 +6,13 @@ import com.intellij.ui.CellRendererPanel
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import java.awt.*
-import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 
 open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNodeRenderer) : CellRendererPanel(), TreeCellRenderer {
-  private val component = ThreeStateCheckBox()
+  private val checkBox = ThreeStateCheckBox()
 
   init {
     buildLayout()
@@ -22,7 +21,7 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
   private fun buildLayout() {
     layout = BorderLayout()
 
-    add(component, BorderLayout.WEST)
+    add(checkBox, BorderLayout.WEST)
     add(textRenderer, BorderLayout.CENTER)
   }
 
@@ -38,7 +37,8 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
     tree as ChangesTree
     value as ChangesBrowserNode<*>
 
-    customize(this, selected)
+    background = null
+    isSelected = selected
 
     textRenderer.apply {
       isOpaque = false
@@ -46,16 +46,20 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
       toolTipText = null
       getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
     }
-    component.apply {
+    checkBox.apply {
       background = null
       isOpaque = false
 
       isVisible = tree.isShowCheckboxes &&
-                  (value is ChangesTree.FixedHeightSampleChangesBrowserNode || // assume checkbox is visible for the sample node
+                  (value is FixedHeightSampleChangesBrowserNode || // assume checkbox is visible for the sample node
                    tree.isInclusionVisible(value))
       if (isVisible) {
         state = tree.getNodeStatus(value)
         isEnabled = tree.run { isEnabled && isInclusionEnabled(value) }
+      }
+      else {
+        state = ThreeStateCheckBox.State.NOT_SELECTED
+        isEnabled = false
       }
     }
 
@@ -63,10 +67,8 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
   }
 
   override fun getAccessibleContext(): AccessibleContext {
-    val accessibleComponent = component as? Accessible ?: return super.getAccessibleContext()
-
     if (accessibleContext == null) {
-      accessibleContext = object : AccessibleContextDelegateWithContextMenu(accessibleComponent.accessibleContext) {
+      accessibleContext = object : AccessibleContextDelegateWithContextMenu(checkBox.accessibleContext) {
         override fun doShowContextMenu() {
           ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true)
         }
@@ -74,8 +76,8 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
         override fun getDelegateParent(): Container? = parent
 
         override fun getAccessibleName(): String? {
-          accessibleComponent.accessibleContext.accessibleName = textRenderer.accessibleContext.accessibleName
-          return accessibleComponent.accessibleContext.accessibleName
+          checkBox.accessibleContext.accessibleName = textRenderer.accessibleContext.accessibleName
+          return checkBox.accessibleContext.accessibleName
         }
 
         override fun getAccessibleRole(): AccessibleRole {
@@ -110,11 +112,4 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
   override fun getPreferredSize(): Dimension = layout.preferredLayoutSize(this)
 
   override fun getToolTipText(): String? = textRenderer.toolTipText
-
-  companion object {
-    fun customize(panel: CellRendererPanel, selected: Boolean) {
-      panel.background = null
-      panel.isSelected = selected
-    }
-  }
 }

@@ -23,9 +23,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author ilyas
- */
 public final class GroovyNameSuggestionUtil {
 
   private GroovyNameSuggestionUtil() {
@@ -39,7 +36,7 @@ public final class GroovyNameSuggestionUtil {
     Set<String> possibleNames = new LinkedHashSet<>();
     PsiType type = expr.getType();
     generateNameByExpr(expr, possibleNames, validator, forStaticVariable);
-    if (type != null && !PsiType.VOID.equals(type)) {
+    if (type != null && !PsiTypes.voidType().equals(type)) {
       generateVariableNameByTypeInner(type, possibleNames,validator);
     }
 
@@ -77,14 +74,13 @@ public final class GroovyNameSuggestionUtil {
   }
 
   private static void generateNameByExpr(GrExpression expr, Set<String> possibleNames, NameValidator validator, boolean forStaticVariable) {
-    if (expr instanceof GrReferenceExpression && ((GrReferenceExpression) expr).getReferenceName() != null) {
+    if (expr instanceof GrReferenceExpression refExpr && ((GrReferenceExpression) expr).getReferenceName() != null) {
       if (PsiUtil.isThisReference(expr)) {
         possibleNames.add(validator.validateName("thisInstance", true));
       }
       if (PsiUtil.isSuperReference(expr)) {
         possibleNames.add(validator.validateName("superInstance", true));
       }
-      GrReferenceExpression refExpr = (GrReferenceExpression) expr;
       String name = refExpr.getReferenceName();
       if (name != null && StringUtil.toUpperCase(name).equals(name)) {
         possibleNames.add(validator.validateName(StringUtil.toLowerCase(name), true));
@@ -196,8 +192,7 @@ public final class GroovyNameSuggestionUtil {
     assert collectionName != null;
 
     String componentName = cleanTypeName(componentType.getPresentableText());
-    if (componentType instanceof PsiClassType) {
-      PsiClassType classType = (PsiClassType) componentType;
+    if (componentType instanceof PsiClassType classType) {
       PsiClass psiClass = classType.resolve();
       if (psiClass == null) return;
       componentName = psiClass.getName();
@@ -255,8 +250,7 @@ public final class GroovyNameSuggestionUtil {
 
   @Nullable
   private static PsiType getCollectionComponentType(PsiType type, Project project) {
-    if (!(type instanceof PsiClassType)) return null;
-    PsiClassType classType = (PsiClassType) type;
+    if (!(type instanceof PsiClassType classType)) return null;
     PsiClassType.ClassResolveResult result = classType.resolveGenerics();
     PsiClass clazz = result.getElement();
     if (clazz == null) return null;

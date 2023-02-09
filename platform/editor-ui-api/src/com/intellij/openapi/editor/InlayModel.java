@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -12,10 +12,19 @@ import java.util.EventListener;
 import java.util.List;
 
 /**
- * Provides an ability to introduce custom visual elements into editor's representation.
- * Such elements are not reflected in document contents. Elements are 'anchored' to a certain document offset at creation,
- * this offset behaves similar to a zero-range {@link RangeMarker} with respect to document changes.
+ * Keeps track of all inlays of a single editor.
  * <p>
+ * Inlays are visual additions to the editor that are not reflected in the editor's document,
+ * such as parameter hints or author attributions.
+ * <p>
+ * There are two kinds of inlays:
+ * <ul>
+ * <li>inline inlays are inserted horizontally into a line of text and move the remaining text of the line further to the end of the line.
+ * <li>block inlays are inserted vertically between lines of text and move the remaining lines of the file further down.
+ * </ul>
+ * The elements are 'anchored' to a certain document offset at creation,
+ * this offset behaves similar to a zero-range {@link RangeMarker} with respect to document changes.
+ *
  * @see Editor#getInlayModel()
  */
 public interface InlayModel {

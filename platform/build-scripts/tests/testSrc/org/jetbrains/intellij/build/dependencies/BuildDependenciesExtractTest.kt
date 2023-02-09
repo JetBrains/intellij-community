@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
@@ -14,6 +13,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.hamcrest.BaseMatcher
 import org.hamcrest.Description
 import org.junit.Assert
+import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
@@ -24,6 +24,7 @@ import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
+import kotlin.io.path.exists
 
 @RunWith(Parameterized::class)
 class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
@@ -36,6 +37,7 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     private val isWindows = System.getProperty("os.name").lowercase().startsWith("windows")
   }
 
+  @Suppress("DEPRECATION")
   @Rule
   @JvmField
   val thrown: ExpectedException = ExpectedException.none()
@@ -49,11 +51,11 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     val testArchive = createTestFile(archiveType, listOf(TestFile("top-level/test.txt")))
 
     val root1 = BuildDependenciesDownloader.extractFileToCacheLocation(
-      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+      BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
     Assert.assertEquals("top-level/test.txt", Files.readString(root1.resolve("top-level/test.txt")))
 
     val root2 = BuildDependenciesDownloader.extractFileToCacheLocation(
-      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive,
+      BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive,
       BuildDependenciesExtractOptions.STRIP_ROOT)
     Assert.assertEquals("top-level/test.txt", Files.readString(root2.resolve("test.txt")))
 
@@ -61,13 +63,13 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
 
     assertUpToDate {
       val root1_copy = BuildDependenciesDownloader.extractFileToCacheLocation(
-        BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+        BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
       Assert.assertEquals(root1.toString(), root1_copy.toString())
     }
 
     assertUpToDate {
       val root2_copy = BuildDependenciesDownloader.extractFileToCacheLocation(
-        BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive, BuildDependenciesExtractOptions.STRIP_ROOT)
+        BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive, BuildDependenciesExtractOptions.STRIP_ROOT)
       Assert.assertEquals(root2.toString(), root2_copy.toString())
     }
   }
@@ -80,7 +82,7 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     ))
 
     val root = BuildDependenciesDownloader.extractFileToCacheLocation(
-      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+      BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
 
     val symlinkFile = root.resolve("top-level/dir/test.symlink")
     if (SystemInfo.isWindows) {
@@ -100,7 +102,7 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     ))
 
     val root = BuildDependenciesDownloader.extractFileToCacheLocation(
-      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+      BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
 
     val symlinkFile = root.resolve("top-level/dir/test.symlink")
     if (SystemInfo.isWindows) {
@@ -114,13 +116,15 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
 
   @Test
   fun `extractFileToCacheLocation - executable bit`() {
+    Assume.assumeFalse(isWindows)
+
     val testArchive = createTestFile(archiveType, listOf(
       TestFile("exec", executable = true),
       TestFile("no-exec", executable = false),
     ))
 
     val root = BuildDependenciesDownloader.extractFileToCacheLocation(
-      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+      BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
 
     Assert.assertTrue(Files.getPosixFilePermissions(root.resolve("exec")).contains(PosixFilePermission.OWNER_EXECUTE))
     Assert.assertFalse(Files.getPosixFilePermissions(root.resolve("no-exec")).contains(PosixFilePermission.OWNER_EXECUTE))
@@ -134,7 +138,7 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     ))
 
     val root = BuildDependenciesDownloader.extractFileToCacheLocation(
-      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+      BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
 
     // will be skipped
     Assert.assertFalse(root.resolve("dir/test.symlink").exists())
@@ -149,7 +153,7 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     ))
 
     val root = BuildDependenciesDownloader.extractFileToCacheLocation(
-      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+      BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
 
     val target = root.resolve("dir/test.symlink/test.file")
 
@@ -167,7 +171,7 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     val testArchive = createTestFile(archiveType, listOf(TestFile("top-level1/test1.txt"), TestFile("top-level2/test2.txt")))
 
     BuildDependenciesDownloader.extractFileToCacheLocation(
-      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+      BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
 
     thrown.expectMessage(object : BaseMatcher<String>() {
       val prefix = "should start with previously found prefix"
@@ -183,7 +187,7 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     })
 
     BuildDependenciesDownloader.extractFileToCacheLocation(
-      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive,
+      BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive,
       BuildDependenciesExtractOptions.STRIP_ROOT)
   }
 
@@ -191,13 +195,13 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   fun `extractFileToCacheLocation - up-to-date`() {
     val testArchive = createTestFile(archiveType, listOf(TestFile("a")))
 
-    val root = BuildDependenciesDownloader.extractFileToCacheLocation(BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(),
-                                                                      testArchive)
+    val root = BuildDependenciesDownloader.extractFileToCacheLocation(
+      BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
     Assert.assertEquals("a", Files.readString(root.resolve("a")))
 
     assertUpToDate {
       val root2 = BuildDependenciesDownloader.extractFileToCacheLocation(
-        BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+        BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
       Assert.assertEquals(root.toString(), root2.toString())
     }
 
@@ -205,7 +209,7 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
 
     assertSomethingWasExtracted {
       val root3 = BuildDependenciesDownloader.extractFileToCacheLocation(
-        BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+        BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
       Assert.assertEquals(root.toString(), root3.toString())
     }
   }
@@ -215,20 +219,20 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     val testArchive = createTestFile(archiveType, listOf(TestFile("a"), TestFile("b")))
     val extractRoot = temp.newFolder().toPath()
 
-    BuildDependenciesDownloader.extractFile(testArchive, extractRoot, BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+    BuildDependenciesDownloader.extractFile(testArchive, extractRoot, BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory)
     Assert.assertEquals("a", Files.readString(extractRoot.resolve("a")))
     Assert.assertEquals("b", Files.readString(extractRoot.resolve("b")))
 
     assertUpToDate {
       BuildDependenciesDownloader.extractFile(testArchive, extractRoot,
-                                              BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+                                              BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory)
     }
 
     Files.delete(extractRoot.resolve("a"))
 
     assertSomethingWasExtracted {
       BuildDependenciesDownloader.extractFile(testArchive, extractRoot,
-                                              BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+                                              BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory)
     }
   }
 
@@ -237,7 +241,7 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     val testArchive = createTestFile(archiveType, listOf(TestFile("a"), TestFile("b")))
     val extractRoot = temp.newFolder().toPath()
 
-    BuildDependenciesDownloader.extractFile(testArchive, extractRoot, BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+    BuildDependenciesDownloader.extractFile(testArchive, extractRoot, BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory)
     Assert.assertEquals("a", Files.readString(extractRoot.resolve("a")))
     Assert.assertEquals("b", Files.readString(extractRoot.resolve("b")))
 
@@ -245,14 +249,14 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
       val otherPresentation = testArchive.parent.resolve(".").resolve(testArchive.fileName)
       Assert.assertNotEquals(testArchive, otherPresentation)
       BuildDependenciesDownloader.extractFile(otherPresentation, extractRoot,
-                                              BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+                                              BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory)
     }
 
     assertUpToDate {
       val otherPresentation2 = testArchive.resolve("..").resolve("..").resolve(testArchive.parent.fileName).resolve(testArchive.fileName)
       Assert.assertNotEquals(testArchive, otherPresentation2)
       BuildDependenciesDownloader.extractFile(otherPresentation2, extractRoot,
-                                              BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+                                              BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory)
     }
   }
 
@@ -261,17 +265,17 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     val testArchive = createTestFile(archiveType, emptyList())
     val extractRoot = temp.newFolder().toPath()
 
-    BuildDependenciesDownloader.extractFile(testArchive, extractRoot, BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+    BuildDependenciesDownloader.extractFile(testArchive, extractRoot, BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory)
     assertUpToDate {
       BuildDependenciesDownloader.extractFile(testArchive, extractRoot,
-                                              BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+                                              BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory)
     }
 
     Files.writeString(extractRoot.resolve("new"), "xx")
 
     assertSomethingWasExtracted {
       BuildDependenciesDownloader.extractFile(testArchive, extractRoot,
-                                              BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+                                              BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory)
     }
   }
 

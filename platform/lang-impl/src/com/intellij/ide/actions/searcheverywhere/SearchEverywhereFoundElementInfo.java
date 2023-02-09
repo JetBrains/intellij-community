@@ -32,6 +32,11 @@ public class SearchEverywhereFoundElementInfo {
     return contributor;
   }
 
+  public String getDescription() {
+    return "contributor: " + (contributor != null ? contributor.getSearchProviderId() : "null") + "\n" +
+           "weight: " + priority + "\n";
+  }
+
   public static final Comparator<SearchEverywhereFoundElementInfo> COMPARATOR = (o1, o2) -> {
     int res = Integer.compare(o1.priority, o2.priority);
     if (res != 0) return res;

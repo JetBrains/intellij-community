@@ -30,7 +30,7 @@ public interface JpsModel {
   /**
    * @deprecated modifications of JpsModel were never fully supported, and they won't be since JpsModel will be superseded by {@link com.intellij.workspaceModel.storage.WorkspaceEntityStorage the workspace model}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull JpsModel createModifiableModel(@NotNull JpsEventDispatcher eventDispatcher);
 
   void registerExternalReference(@NotNull JpsElementReference<?> reference);

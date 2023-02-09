@@ -24,7 +24,6 @@ import com.jetbrains.packagesearch.intellij.plugin.util.dumbService
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.messageBusFlow
 import org.jetbrains.idea.maven.project.MavenImportListener
-import com.jetbrains.packagesearch.intellij.plugin.util.trySend
 import java.nio.file.Paths
 
 internal class MavenSyncSignalProvider : FlowModuleChangesSignalProvider {
@@ -34,7 +33,7 @@ internal class MavenSyncSignalProvider : FlowModuleChangesSignalProvider {
             project.dumbService.awaitSmart()
             MavenImportListener { _, _ ->
                 logDebug("MavenModuleChangesSignalProvider#registerModuleChangesListener#ProjectDataImportListener")
-                trySend()
+                trySend(Unit)
             }
         }
 }

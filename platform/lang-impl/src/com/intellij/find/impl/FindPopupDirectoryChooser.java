@@ -55,8 +55,7 @@ public class FindPopupDirectoryChooser extends JPanel {
     myDirectoryComboBox.setEditable(true);
 
     Component editorComponent = myDirectoryComboBox.getEditor().getEditorComponent();
-    if (editorComponent instanceof JTextField) {
-      JTextField field = (JTextField)editorComponent;
+    if (editorComponent instanceof JTextField field) {
       field.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {

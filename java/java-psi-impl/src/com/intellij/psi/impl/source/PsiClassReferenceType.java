@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.light.LightClassTypeReference;
+import com.intellij.psi.infos.PatternCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -163,6 +164,11 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
       PsiElement element = myDelegate.getElement();
       return element instanceof PsiClass ? (PsiClass)element : null;
     }
+
+    @Override
+    public @Nullable String getInferenceError() {
+      return myDelegate instanceof PatternCandidateInfo ? ((PatternCandidateInfo)myDelegate).getInferenceError() : null;
+    }
   }
 
   @Override
@@ -204,12 +210,32 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
   @Override
   public PsiType @NotNull [] getParameters() {
-    return getReference().getTypeParameters();
+    PsiJavaCodeReferenceElement reference = getReference();
+    if (reference.getTypeParameterCount() == 0 &&
+        reference.getParent() instanceof PsiTypeElement &&
+        reference.getParent().getParent() instanceof PsiDeconstructionPattern) {
+      ClassResolveResult result = resolveGenerics();
+      PsiClass cls = result.getElement();
+      if (cls != null && result.getInferenceError() == null) {
+        return ContainerUtil.map2Array(cls.getTypeParameters(), PsiType.EMPTY_ARRAY, result.getSubstitutor().getSubstitutionMap()::get);
+      }
+    }
+    return reference.getTypeParameters();
   }
 
   @Override
   public int getParameterCount() {
-    return getReference().getTypeParameterCount();
+    PsiJavaCodeReferenceElement reference = getReference();
+    if (reference.getTypeParameterCount() == 0 &&
+        reference.getParent() instanceof PsiTypeElement &&
+        reference.getParent().getParent() instanceof PsiDeconstructionPattern) {
+      ClassResolveResult result = resolveGenerics();
+      PsiClass cls = result.getElement();
+      if (cls != null && result.getInferenceError() == null) {
+        return cls.getTypeParameters().length;
+      }
+    }
+    return reference.getTypeParameterCount();
   }
 
   @Override

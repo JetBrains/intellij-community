@@ -547,8 +547,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       if (desc instanceof ProblemDescriptor) {
         lineNumber = ((ProblemDescriptor)desc).getLineNumber();
       }
-      if (desc instanceof ProblemDescriptorBase) {
-        final ProblemDescriptorBase descriptorBase = (ProblemDescriptorBase)desc;
+      if (desc instanceof ProblemDescriptorBase descriptorBase) {
         file = descriptorBase.getContainingFile();
         final TextRange textRange = descriptorBase.getTextRange();
         position = textRange != null ? textRange.getStartOffset() : 0;

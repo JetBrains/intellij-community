@@ -21,9 +21,6 @@ import com.intellij.openapi.util.NlsContexts;
 
 import javax.swing.*;
 
-/**
- *  @author dsl
- */
 public class NonFocusableCheckBox extends JCheckBox {
   public NonFocusableCheckBox(@NlsContexts.Checkbox String text) {
     super(text);

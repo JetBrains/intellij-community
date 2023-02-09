@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -21,7 +21,6 @@ import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.UIUtil;
@@ -318,7 +317,10 @@ public class CustomizableActionsPanel {
             append("   ", SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
             append(description, SimpleTextAttributes.GRAY_ATTRIBUTES);
           }
-          setIcon(icon);
+          // do not show the icon for the top groups
+          if (((DefaultMutableTreeNode)value).getLevel() > 1) {
+            setIcon(icon);
+          }
         });
         setForeground(UIUtil.getTreeForeground(selected, hasFocus));
       }
@@ -393,8 +395,10 @@ public class CustomizableActionsPanel {
 
     AnAction reuseFrom = actionManager.getAction(path);
     if (reuseFrom != null) {
-      node.setUserObject(Pair.create(value, reuseFrom.getTemplatePresentation().getIcon()));
-      schema.addIconCustomization(actionId, path);
+      Icon toSet = CustomizationUtil.getOriginalIconFrom(reuseFrom);
+      Icon defaultIcon = CustomizationUtil.getOriginalIconFrom(action);
+      node.setUserObject(Pair.create(value, toSet));
+      schema.addIconCustomization(actionId, toSet != defaultIcon ? path : null);
     }
     else {
       Icon icon;
@@ -449,8 +453,7 @@ public class CustomizableActionsPanel {
     @Override
     protected void doOKAction() {
       Object selectedItem = myComboBox.getSelectedItem();
-      if (selectedItem instanceof ActionIconInfo) {
-        ActionIconInfo selectedInfo = (ActionIconInfo)selectedItem;
+      if (selectedItem instanceof ActionIconInfo selectedInfo) {
         if (setCustomIcon(mySelectedSchema, myNode, selectedInfo, getContentPane())) {
           myActionsTree.repaint();
           CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
@@ -526,7 +529,11 @@ public class CustomizableActionsPanel {
               int newActionPosition = isGroupSelected ? node.getChildCount() : node.getParent().getIndex(node) + ind + 1;
               ActionUrl url = new ActionUrl(getGroupPath(new TreePath(node.getPath()), true), action, ADDED, newActionPosition);
               addCustomizedAction(url);
-              changePathInActionsTree(myActionsTree, url);
+              DefaultMutableTreeNode newNode = addPathToActionsTree(myActionsTree, url);
+              if (newNode != null && action instanceof String) {
+                Icon icon = CustomizationUtil.getIconForPath(ActionManager.getInstance(),mySelectedSchema.getIconPath((String)action));
+                newNode.setUserObject(Pair.create(action, icon));
+              }
             }
 
             ((DefaultTreeModel)myActionsTree.getModel()).reload();
@@ -657,9 +664,9 @@ public class CustomizableActionsPanel {
         ActionUrl addUrl = CustomizationUtil.getActionUrl(targetPath, ADDED);
         if (position == INTO) {
           addUrl.setAbsolutePosition(((DefaultMutableTreeNode)targetPath.getLastPathComponent()).getChildCount());
-          ObjectUtils.consumeIfCast(TreeUtil.getUserObject(targetPath.getLastPathComponent()), Group.class, group -> {
+          if (TreeUtil.getUserObject(targetPath.getLastPathComponent()) instanceof Group group) {
             addUrl.getGroupPath().add(group.getName());
-          });
+          }
         }
         addUrl.setComponent(removeUrl.getComponent());
         changePathInActionsTree(myActionsTree, addUrl);

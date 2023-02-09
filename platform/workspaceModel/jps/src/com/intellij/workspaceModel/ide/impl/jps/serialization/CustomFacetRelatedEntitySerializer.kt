@@ -2,13 +2,14 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.serialization.facet.FacetState
+import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
 
 /**
  * Originally, [com.intellij.facet.Facet] were made to support custom setting for the module, but this solution is not
@@ -21,13 +22,13 @@ import org.jetbrains.jps.model.serialization.facet.FacetState
  *  the changes of your custom entity this extension point should be implemented.
  *
  * If you want to use your custom module setting entity under the hood of your facet you also need to implement
- * [com.intellij.workspaceModel.ide.legacyBridge.FacetBridge] to be properly updated.
+ * [com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetBridge] to be properly updated.
  *
  * **N.B. Most of the time you need to implement them all to have a correct support all functionality relying on Facets.**
  */
 @ApiStatus.Internal
 @ApiStatus.OverrideOnly
-interface CustomFacetRelatedEntitySerializer<T: WorkspaceEntity> {
+interface CustomFacetRelatedEntitySerializer<T: ModuleSettingsBase> {
   /**
    * Declare class for the main entity associated with [com.intellij.facet.Facet].
    */
@@ -42,29 +43,50 @@ interface CustomFacetRelatedEntitySerializer<T: WorkspaceEntity> {
   /**
    * Method for deserialization [org.jetbrains.jps.model.serialization.facet.FacetState] read from external source. Facet state is
    * an intermediate representation to avoid core communication with tags directly.
-   * @param builder storage to add read from facet state entities
    * @param moduleEntity module to which these settings belong
    * @param facetState intermediate representation of facet related data read out from external sources
-   * @param evaluateExternalSystemIdAndEntitySource function which should be invoked to get [com.intellij.workspaceModel.storage.EntitySource]
+   * @param evaluateEntitySource function which should be invoked to get [com.intellij.workspaceModel.storage.EntitySource]
    * for your entities and externalSystemId which should be stored somewhere in your entities
    */
-  fun loadEntitiesFromFacetState(builder: MutableEntityStorage, moduleEntity: ModuleEntity, facetState: FacetState,
-                                 evaluateExternalSystemIdAndEntitySource: (FacetState) -> Pair<String?, EntitySource>)
+  fun loadEntitiesFromFacetState(moduleEntity: ModuleEntity, facetState: FacetState, evaluateEntitySource: (FacetState) -> EntitySource)
 
   /**
    * Create intermediate representation from entities of declared at [rootEntityType] type which will be used for serialization on disk.
    * @param entities list of certain type entities
    * @param storeExternally indicator which tells where this data will be store, under `.idea` or in external system folder
    */
-  fun createFacetStateFromEntities(entities: List<T>, storeExternally: Boolean): List<FacetState>
+  fun createFacetStateFromEntities(entities: List<T>, storeExternally: Boolean): List<FacetState> {
+    return entities.map { settingsEntity ->
+      val state = FacetState().apply {
+        name = settingsEntity.name
+        facetType = supportedFacetType
+        configuration = Element(JpsFacetSerializer.CONFIGURATION_TAG)
+        val externalSystemIdValue = (settingsEntity.entitySource as? JpsImportedEntitySource)?.externalSystemId
+        if (storeExternally) {
+          externalSystemId = externalSystemIdValue
+        }
+        else {
+          externalSystemIdInInternalStorage = externalSystemIdValue
+        }
+      }
+      state.configuration = serializeIntoXml(settingsEntity)
+      return@map state
+    }
+  }
 
   /**
    * Method for creation facet XML tag from root type entity passed as a parameter
+   * Default implementation creates "configuration" root element and calls [serialize] method
    */
-  fun serializeIntoXml(entity: T): Element
+  fun serializeIntoXml(entity: T): Element = serialize(entity, Element(JpsFacetSerializer.CONFIGURATION_TAG))
+
+  /**
+   * Method for creation facet XML tag from root type entity and root element passed as parameters
+   */
+  fun serialize(entity: T, rootElement: Element): Element
 
   companion object {
-    val EP_NAME: ExtensionPointName<CustomFacetRelatedEntitySerializer<WorkspaceEntity>> =
+    val EP_NAME: ExtensionPointName<CustomFacetRelatedEntitySerializer<ModuleSettingsBase>> =
       ExtensionPointName.create("com.intellij.workspaceModel.customFacetRelatedEntitySerializer")
   }
 }

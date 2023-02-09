@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle;
 
-public class KotlinStepActionFactory {
+public final class KotlinStepActionFactory {
     private final static Logger LOG = Logger.getInstance(KotlinStepActionFactory.class);
 
     @NotNull

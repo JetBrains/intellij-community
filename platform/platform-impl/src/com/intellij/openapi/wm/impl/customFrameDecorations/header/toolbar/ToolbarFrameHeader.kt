@@ -1,18 +1,25 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
+import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.AdjustableSizeCardLayout
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.HorizontalGaps
+import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
@@ -34,15 +41,34 @@ private enum class ShowMode {
 
 internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val myMenuBar = ideMenu
+  private val menuBarHeaderTitle = SimpleCustomDecorationPath(frame, true).apply {
+    isOpaque = false
+  }
+  private val menuBarContainer = createMenuBarContainer()
   private val mainMenuButton = MainMenuButton()
   private var toolbar : MainToolbar? = null
   private val myToolbarPlaceholder = createToolbarPlaceholder()
   private val myHeaderContent = createHeaderContent()
+  private val toolbarHeaderTitle = SimpleCustomDecorationPath(frame).apply {
+    isOpaque = false
+  }
 
-  private fun createToolbarPlaceholder(): NonOpaquePanel {
-    val borderWidth = JBUI.scale(4)
-    val panel = NonOpaquePanel()
-    panel.border = JBUI.Borders.empty(0, borderWidth)
+  private fun createToolbarPlaceholder(): JPanel {
+    val panel = JPanel(CardLayout())
+    panel.isOpaque = false
+    panel.layout = AdjustableSizeCardLayout()
+    panel.border = JBUI.Borders.empty(0, JBUI.scale(4))
+    return panel
+  }
+
+  private fun createMenuBarContainer(): JPanel {
+    val panel = JPanel(GridLayout())
+    panel.isOpaque = false
+    RowsGridBuilder(panel)
+      .row(resizable = true)
+      .cell(component = myMenuBar, resizableColumn = true)
+      .cell(menuBarHeaderTitle, resizableColumn = true)
+      .columnsGaps(listOf(HorizontalGaps.EMPTY, HorizontalGaps(44)))
     return panel
   }
 
@@ -53,6 +79,10 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
   }
 
   private var mode = ShowMode.MENU
+  private val isCompact: Boolean
+    get() = ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()
+  private fun toolbarCardName(isCompact: Boolean = this.isCompact): String =
+    if (isCompact) "PATH" else "TOOLBAR"
 
   init {
     layout = GridBagLayout()
@@ -67,6 +97,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     add(buttonsView, gb.next().anchor(EAST))
 
     setCustomFrameTopBorder({ false }, {true})
+    updateToolbarAppearanceFromMode()
   }
 
   private fun wrap(comp: JComponent) = object : NonOpaquePanel(comp) {
@@ -91,8 +122,12 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     toolbar.isOpaque = false
     toolbar.addComponentListener(contentResizeListener)
     this.toolbar = toolbar
+    myToolbarPlaceholder.add(toolbar, toolbarCardName(false))
 
-    myToolbarPlaceholder.add(this.toolbar)
+    toolbarHeaderTitle.updateBorders(0)
+    myToolbarPlaceholder.add(toolbarHeaderTitle, toolbarCardName(true))
+
+    (myToolbarPlaceholder.layout as CardLayout).show(myToolbarPlaceholder, toolbarCardName())
     myToolbarPlaceholder.revalidate()
   }
 
@@ -100,6 +135,21 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     toolbar?.removeComponentListener(contentResizeListener)
     myToolbarPlaceholder.removeAll()
     myToolbarPlaceholder.revalidate()
+  }
+
+  private fun updateMenuButtonMinimumSize() {
+    mainMenuButton.button.setMinimumButtonSize(
+      if (isCompact) Dimension(toolbarHeaderTitle.expectedHeight, toolbarHeaderTitle.expectedHeight)
+      else ActionToolbar.experimentalToolbarMinimumButtonSize()
+    )
+  }
+
+  private fun updateMenuBarAppearance() {
+    menuBarHeaderTitle.isVisible = (isCompact && mode == ShowMode.MENU)
+  }
+
+  private fun updateTitleButtonsMode() {
+    buttonPanes.isCompactMode = isCompact
   }
 
   override fun installListeners() {
@@ -122,10 +172,29 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     updateLayout(uiSettings)
+    updateToolbarFromMode()
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    if (parent != null) {
+      updateToolbarFromMode()
+    }
+  }
+
+  private fun updateToolbarFromMode() {
     when (mode) {
       ShowMode.TOOLBAR -> updateToolbar()
       ShowMode.MENU -> removeToolbar()
     }
+
+    updateToolbarAppearanceFromMode()
+  }
+
+  private fun updateToolbarAppearanceFromMode() {
+    updateTitleButtonsMode()
+    updateMenuButtonMinimumSize()
+    if (mode == ShowMode.MENU) updateMenuBarAppearance()
   }
 
   override fun getHitTestSpots(): Sequence<Pair<RelativeRectangle, Int>> {
@@ -162,7 +231,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
 
     val menuPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
-      add(myMenuBar, gb.next().insetLeft(JBUI.scale(16)).fillCellVertically().weighty(1.0))
+      add(menuBarContainer, gb.next().insetLeft(JBUI.scale(16)).fillCellVertically().weighty(1.0))
       add(Box.createHorizontalGlue(), gb.next().weightx(1.0).fillCell())
     }
     val toolbarPnl = NonOpaquePanel(GridBagLayout()).apply {

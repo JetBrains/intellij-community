@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -21,7 +22,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import java.util.ArrayList;
 import java.util.List;
 
-abstract class AbstractUseDPIAwareBorderInspection extends DevKitUastInspectionBase {
+abstract class AbstractUseDPIAwareBorderInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
   private static final String JB_UI_CLASS_NAME = JBUI.class.getName();
   private static final Integer ZERO = Integer.valueOf(0);
 
@@ -93,7 +94,7 @@ abstract class AbstractUseDPIAwareBorderInspection extends DevKitUastInspectionB
     }
     List<UExpression> params = expression.getValueArguments();
     for (UExpression param : params) {
-      if (!PsiType.INT.equals(param.getExpressionType())) {
+      if (!PsiTypes.intType().equals(param.getExpressionType())) {
         return false;
       }
     }

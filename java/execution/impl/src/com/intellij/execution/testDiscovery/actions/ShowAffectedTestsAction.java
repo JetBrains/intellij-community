@@ -222,7 +222,8 @@ public class ShowAffectedTestsAction extends AnAction {
         .map(m -> UastContextKt.toUElement(m))
         .filter(Objects::nonNull)
         .map(m -> ObjectUtils.tryCast(m.getJavaPsi(), PsiMethod.class))
-        .filter(Objects::nonNull)
+        .filter(m -> Objects.nonNull(m) && !ContainerUtil.exists(m.getParameterList().getParameters(), p -> p.getType() ==
+                                                                                                            PsiTypes.nullType()))
         .toArray(PsiMethod.ARRAY_FACTORY::create);
     });
   }
@@ -479,7 +480,7 @@ public class ShowAffectedTestsAction extends AnAction {
     List<Location<PsiMethod>> testMethods = Arrays.stream(tree.getTestMethods())
       .map(TestMethodUsage::calculateLocation)
       .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+      .toList();
 
     getRunConfigurationProducers(project).stream()
       .map(producer -> pair(producer, ContainerUtil.filter(testMethods, producer::isApplicable)))

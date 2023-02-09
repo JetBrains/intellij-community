@@ -39,7 +39,7 @@ final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
     myVcs = vcs;
     myProjectSettings = projectSettings;
 
-    project.getMessageBus().connect(this).subscribe(HgVcs.STATUS_TOPIC, (p, root) -> updateLater());
+    myConnection.subscribe(HgVcs.STATUS_TOPIC, (p, root) -> updateLater());
   }
 
   @Override
@@ -48,8 +48,8 @@ final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   }
 
   @Override
-  public StatusBarWidget copy() {
-    return new HgStatusWidget(myVcs, myProject, myProjectSettings);
+  public @NotNull StatusBarWidget copy() {
+    return new HgStatusWidget(myVcs, getProject(), myProjectSettings);
   }
 
   @Override
@@ -69,8 +69,9 @@ final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   }
 
   @Override
-  protected @NotNull JBPopup getWidgetPopup(@NotNull Project project, @NotNull HgRepository repository) {
-    return HgBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar.getComponent())).asListPopup();
+  protected JBPopup getWidgetPopup(@NotNull Project project, @NotNull HgRepository repository) {
+    StatusBar statusBar = myStatusBar;
+    return statusBar == null ? null : HgBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(statusBar.getComponent())).asListPopup();
   }
 
   @Override
@@ -110,11 +111,6 @@ final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
     @Override
     public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
       return new HgStatusWidget(Objects.requireNonNull(HgVcs.getInstance(project)), project, HgProjectSettings.getInstance(project));
-    }
-
-    @Override
-    public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
-      return true;
     }
   }
 }

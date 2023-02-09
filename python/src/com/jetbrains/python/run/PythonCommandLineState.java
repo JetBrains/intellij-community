@@ -326,8 +326,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     // Python script that may be the debugger script that runs the original script
     PythonExecution realPythonExecution = builder.build(helpersAwareTargetRequest, pythonScript);
 
-    if (myConfig instanceof PythonRunConfiguration) {
-      PythonRunConfiguration pythonConfig = (PythonRunConfiguration)myConfig;
+    if (myConfig instanceof PythonRunConfiguration pythonConfig) {
       String inputFilePath = pythonConfig.getInputFile();
       if (pythonConfig.isRedirectInput() && !StringUtil.isEmptyOrSpaces(inputFilePath)) {
         realPythonExecution.withInputFile(new File(inputFilePath));
@@ -341,7 +340,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     List<String> interpreterParameters = getConfiguredInterpreterParameters();
     TargetedCommandLine targetedCommandLine =
-      PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, sdk, interpreterParameters);
+      PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, sdk, interpreterParameters, myRunWithPty);
 
     // TODO [Targets API] `myConfig.isPassParentEnvs` must be handled (at least for the local case)
     ProcessHandler processHandler = doStartProcess(targetEnvironment, targetedCommandLine, progressIndicator);
@@ -820,7 +819,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                     boolean passParentEnvs,
                                     @NotNull List<Function<TargetEnvironment, String>> pathList,
                                     @NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
-    TargetedPythonPaths.initPythonPath(pythonScript.getEnvs(), passParentEnvs, pathList, targetEnvironmentRequest);
+    TargetedPythonPaths.initPythonPath(pythonScript.getEnvs(), passParentEnvs, pathList, targetEnvironmentRequest, true);
   }
 
   @NotNull

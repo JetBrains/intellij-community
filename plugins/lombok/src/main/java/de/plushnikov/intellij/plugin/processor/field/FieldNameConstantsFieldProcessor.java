@@ -12,10 +12,9 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Inspect and validate @FieldNameConstants lombok annotation on a field
@@ -33,18 +32,16 @@ public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcess
 
   @Override
   protected boolean supportAnnotationVariant(@NotNull PsiAnnotation psiAnnotation) {
-    // old version of @FieldNameConstants has a attributes "prefix" and "suffix", the new one not
+    // old version of @FieldNameConstants has attributes "prefix" and "suffix", the new one not
     return null != psiAnnotation.findAttributeValue("prefix");
   }
 
   @Override
-  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
-                                                   @NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField) {
-    if (null == nameHint) {
-      return true;
-    }
+  protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass,
+                                                                   @NotNull PsiAnnotation psiAnnotation,
+                                                                   @NotNull PsiField psiField) {
     final String generatedElementName = calcFieldConstantName(psiField, psiAnnotation, psiClass);
-    return Objects.equals(nameHint, generatedElementName);
+    return List.of(generatedElementName);
   }
 
   @Override

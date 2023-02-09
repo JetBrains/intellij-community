@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.util.io.DataInputOutputUtil;
@@ -21,15 +21,13 @@ public final class HashImpl implements Hash {
   private final byte @NotNull [] myData;
   private final int myHashCode;
 
-  @NotNull
-  public static Hash build(@NotNull String inputStr) {
+  public static @NotNull Hash build(@NotNull String inputStr) {
     byte[] data = buildData(inputStr);
     assert data.length > 0 : "Can not build hash for string " + inputStr;
     return new HashImpl(data);
   }
 
-  @NotNull
-  public static Hash read(@NotNull DataInput in) throws IOException {
+  public static @NotNull Hash read(@NotNull DataInput in) throws IOException {
     int length = DataInputOutputUtil.readINT(in);
     if (length == 0) throw new IOException("Can not read hash: data length is zero");
     byte[] buf = new byte[length];
@@ -72,9 +70,8 @@ public final class HashImpl implements Hash {
     myHashCode = Arrays.hashCode(hash);
   }
 
-  @NotNull
   @Override
-  public String asString() {
+  public @NotNull String asString() {
     assert myData.length > 0 : "bad length Hash.data";
     byte even = myData[0];
     StringBuilder sb = new StringBuilder();
@@ -111,9 +108,8 @@ public final class HashImpl implements Hash {
     return asString();
   }
 
-  @NotNull
   @Override
-  public String toShortString() {
+  public @NotNull String toShortString() {
     return VcsLogUtil.getShortHash(asString());
   }
 }

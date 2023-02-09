@@ -71,6 +71,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
    * @see JBPopupFactory#guessBestPopupLocation(Editor)
    */
   public static final Key<Point> ANCHOR_POPUP_POINT = Key.create("popup.anchor.point");
+  public static final Key<Boolean> DISABLE_ICON_IN_LIST = Key.create("popup.disable.icon.in.list");
 
   private static final Logger LOG = Logger.getInstance(PopupFactoryImpl.class);
 
@@ -465,8 +466,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   public @NotNull RelativePoint guessBestPopupLocation(@NotNull JComponent component) {
     Point popupMenuPoint = null;
     final Rectangle visibleRect = component.getVisibleRect();
-    if (component instanceof JList) { // JList
-      JList<?> list = (JList<?>)component;
+    if (component instanceof JList<?> list) { // JList
       int firstVisibleIndex = list.getFirstVisibleIndex();
       int lastVisibleIndex = list.getLastVisibleIndex();
       int[] selectedIndices = list.getSelectedIndices();
@@ -478,8 +478,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         }
       }
     }
-    else if (component instanceof JTree) { // JTree
-      JTree tree = (JTree)component;
+    else if (component instanceof JTree tree) { // JTree
       TreePath[] paths = tree.getSelectionPaths();
       if (paths != null && paths.length > 0) {
         TreePath pathFound = null;
@@ -501,8 +500,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         }
       }
     }
-    else if (component instanceof JTable) {
-      JTable table = (JTable)component;
+    else if (component instanceof JTable table) {
       int column = table.getColumnModel().getSelectionModel().getLeadSelectionIndex();
       int row = Math.max(table.getSelectionModel().getLeadSelectionIndex(), table.getSelectionModel().getAnchorSelectionIndex());
       Rectangle rect = table.getCellRect(row, column, false);
@@ -511,8 +509,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
       popupMenuPoint = new Point(rect.x, rect.y + rect.height - 1);
     }
-    else if (component instanceof PopupOwner) {
-      PopupOwner popupOwner = (PopupOwner)component;
+    else if (component instanceof PopupOwner popupOwner) {
       JComponent popupComponent = popupOwner.getPopupComponent();
       if (popupComponent == null || popupComponent == popupOwner) {
         popupMenuPoint = ((PopupOwner)component).getBestPopupPosition();
@@ -686,7 +683,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
 
       if (icon == null) icon = selectedIcon != null ? selectedIcon : EmptyIcon.create(myMaxIconWidth, myMaxIconHeight);
-      myIcon = icon;
+      boolean disableIcon = Boolean.TRUE.equals(presentation.getClientProperty(DISABLE_ICON_IN_LIST));
+
+      myIcon = disableIcon ? null : icon;
       mySelectedIcon = selectedIcon;
       myText = presentation.getText();
     }
@@ -816,7 +815,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
 
       if (icon == null) icon = selectedIcon != null ? selectedIcon : EmptyIcon.create(myMaxIconWidth, myMaxIconHeight);
-      myIcon = icon;
+
+      boolean disableIcon = Boolean.TRUE.equals(presentation.getClientProperty(DISABLE_ICON_IN_LIST));
+
+      myIcon = disableIcon ? null : icon;
       mySelectedIcon = selectedIcon;
 
       myValue = presentation.getClientProperty(Presentation.PROP_VALUE);

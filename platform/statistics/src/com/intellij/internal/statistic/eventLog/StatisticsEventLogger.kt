@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 
 interface StatisticsEventLogger {
@@ -32,6 +33,7 @@ interface StatisticsEventLogger {
 
   fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void>
   fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<Void>
+  fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit)
   fun getActiveLogFile(): EventLogFile?
   fun getLogFilesProvider(): EventLogFilesProvider
   fun cleanup()
@@ -91,7 +93,11 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     }
   }
 
-  open val logger: StatisticsEventLogger by lazy { createLogger() }
+  private val emptyLogger: StatisticsEventLogger by lazy { EmptyStatisticsEventLogger() }
+  private val actualLogger: StatisticsEventLogger by lazy { createLogger() }
+
+  open val logger: StatisticsEventLogger
+    get() = if (isRecordEnabled()) actualLogger else emptyLogger
 
   abstract fun isRecordEnabled() : Boolean
   abstract fun isSendEnabled() : Boolean
@@ -115,15 +121,11 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
   }
 
   private fun createLogger(): StatisticsEventLogger {
-    if (!isRecordEnabled()) {
-      return EmptyStatisticsEventLogger()
-    }
-
     val app = ApplicationManager.getApplication()
     val isEap = app != null && app.isEAP
     val isHeadless = app != null && app.isHeadlessEnvironment
     // Use `String?` instead of boolean flag for future expansion with other IDE modes
-    val ideMode = if(AppMode.isIsRemoteDevHost()) "RDH" else null
+    val ideMode = if(AppMode.isRemoteDevHost()) "RDH" else null
     val eventLogConfiguration = EventLogConfiguration.getInstance()
     val config = eventLogConfiguration.getOrCreate(recorderId)
     val writer = StatisticsEventLogFileWriter(recorderId, maxFileSizeInBytes, isEap, eventLogConfiguration.build)
@@ -158,6 +160,7 @@ internal class EmptyStatisticsEventLogger : StatisticsEventLogger {
     CompletableFuture.completedFuture(null)
   override fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<Void> =
     CompletableFuture.completedFuture(null)
+  override fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit) {}
 }
 
 object EmptyEventLogFilesProvider: EventLogFilesProvider {

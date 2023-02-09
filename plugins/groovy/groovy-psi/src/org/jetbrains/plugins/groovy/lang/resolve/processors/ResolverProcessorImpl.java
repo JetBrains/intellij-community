@@ -51,8 +51,7 @@ public class ResolverProcessorImpl extends ResolverProcessor<GroovyResolveResult
         substitutor = substitutor.putAll((PsiClass)namedElement, myTypeArguments);
       }
 
-      if (namedElement instanceof PsiClass  && !(namedElement instanceof PsiTypeParameter)) {
-        final PsiClass aClass = (PsiClass)namedElement;
+      if (namedElement instanceof PsiClass aClass && !(namedElement instanceof PsiTypeParameter)) {
         if (myProcessedClasses == null) myProcessedClasses = new HashSet<>();
         if (!myProcessedClasses.add(aClass.getQualifiedName())) {
           return true;

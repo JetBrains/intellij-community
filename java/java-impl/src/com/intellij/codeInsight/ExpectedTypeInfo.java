@@ -20,9 +20,6 @@ import com.intellij.psi.PsiType;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public interface ExpectedTypeInfo {
   /**
    * Exactly the same type is expected

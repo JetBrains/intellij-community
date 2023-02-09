@@ -127,6 +127,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
     if (includingClasses) {
       VirtualFile[] libraryUrls = moduleRootManager.orderEntries().getAllLibrariesAndSdkClassesRoots();
       for (VirtualFile file : libraryUrls) {
+        if (!file.isValid()) continue;
         PsiDirectory directory = psiManager.findDirectory(file);
         if (directory != null) {
           result.add(directory);
@@ -138,6 +139,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
       .withoutSdk().withoutLibraries()
       .sources().usingCache().getRoots();
     for (VirtualFile root : sourceRoots) {
+      if (!root.isValid()) continue;
       final PsiDirectory directory = psiManager.findDirectory(root);
       if (directory != null) {
         final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);

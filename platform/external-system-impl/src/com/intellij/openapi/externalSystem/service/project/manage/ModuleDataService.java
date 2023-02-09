@@ -27,8 +27,6 @@ import java.util.*;
 
 /**
  * Encapsulates functionality of importing external system module to the intellij project.
- *
- * @author Denis Zhdanov
  */
 @Order(ExternalSystemConstants.BUILTIN_MODULE_DATA_SERVICE_ORDER)
 public final class ModuleDataService extends AbstractModuleDataService<ModuleData> {

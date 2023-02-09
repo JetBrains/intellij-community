@@ -46,7 +46,7 @@ object HttpClientUtil {
    * It is usually better to read the response directly from stream to avoid creating too many strings,
    * but when tracing is enabled we need to read the response to string first to log it
    */
-  fun responseReaderWithLogging(logger: Logger, requestName: String, stream: InputStream): Reader {
+  private fun responseReaderWithLogging(logger: Logger, requestName: String, stream: InputStream): Reader {
     if (logger.isTraceEnabled) {
       val body = stream.reader().readText()
       logger.trace("$requestName : Response body: $body")

@@ -6,17 +6,16 @@ import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.ui.LabeledComponent
-import com.intellij.ui.EditorTextField
-import org.intellij.lang.regexp.RegExpFileType
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptionController
+import com.intellij.codeInspection.options.RegexValidator
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.quickfix.getAddExclExclCallFix
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -27,11 +26,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isNullabilityFlexible
 import org.jetbrains.kotlin.types.isNullable
-import java.awt.BorderLayout
 import java.util.regex.PatternSyntaxException
-import javax.swing.JPanel
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class PlatformExtensionReceiverOfInlineInspection : AbstractKotlinInspection() {
 
@@ -88,24 +83,10 @@ class PlatformExtensionReceiverOfInlineInspection : AbstractKotlinInspection() {
             }
         }
 
-    override fun createOptionsPanel() = OptionsPanel(this)
+    override fun getOptionsPane(): OptPane = OptPane.pane(OptPane.string("namePattern", KotlinBundle.message("text.pattern"), 30, RegexValidator()))
 
-    class OptionsPanel internal constructor(owner: PlatformExtensionReceiverOfInlineInspection) : JPanel() {
-        init {
-            layout = BorderLayout()
-
-            val regexField = EditorTextField(owner.namePattern, null, RegExpFileType.INSTANCE).apply {
-                setOneLineMode(true)
-            }
-            regexField.document.addDocumentListener(object : DocumentListener {
-                override fun documentChanged(e: DocumentEvent) {
-                    owner.namePattern = regexField.text
-                }
-            })
-            val labeledComponent = LabeledComponent.create(regexField, KotlinBundle.message("text.pattern"), BorderLayout.WEST)
-            add(labeledComponent, BorderLayout.NORTH)
-        }
-    }
+    override fun getOptionController(): OptionController = OptionController.empty()
+        .onValue("namePattern", this::namePattern)
 
     companion object {
         const val defaultNamePattern = "(toBoolean)|(content.*)"

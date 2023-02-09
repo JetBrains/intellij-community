@@ -138,7 +138,8 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             ?.returnedExpression
             ?.unpackedReferenceToProperty()
             ?.takeIf {
-                it.type() == (type() ?: return@takeIf false)
+                it.containingClass() == containingClass() &&
+                        it.type() == (type() ?: return@takeIf false)
             }
         return RealGetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
     }
@@ -160,7 +161,8 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
                     expression.left?.unpackedReferenceToProperty()
                 } else null
             }?.takeIf {
-                it.type() == valueParameters.single().type()
+                it.containingClass() == containingClass() &&
+                        it.type() == valueParameters.single().type()
             }
         return RealSetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
     }

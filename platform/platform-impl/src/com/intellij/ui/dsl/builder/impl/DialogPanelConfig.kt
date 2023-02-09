@@ -23,8 +23,8 @@ internal class DialogPanelConfig {
   val validationsOnApply = linkedMapOf<JComponent, MutableList<DialogValidation>>()
 }
 
-fun <T> MutableMap<JComponent?, MutableList<() -> T>>.register(component: JComponent?, callback: () -> T) {
-  getOrPut(component) { SmartList() }.add(callback)
+internal fun <C: JComponent?, T> MutableMap<C, MutableList<T>>.list(component: C): MutableList<T> {
+  return getOrPut(component) { SmartList() }
 }
 
 internal class Context {

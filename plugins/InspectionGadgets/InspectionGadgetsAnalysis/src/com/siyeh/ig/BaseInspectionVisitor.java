@@ -81,13 +81,11 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
 
   protected final void registerClassError(@NotNull PsiClass aClass, Object... infos) {
     final PsiElement nameIdentifier;
-    if (aClass instanceof PsiEnumConstantInitializer) {
-      final PsiEnumConstantInitializer enumConstantInitializer = (PsiEnumConstantInitializer)aClass;
+    if (aClass instanceof PsiEnumConstantInitializer enumConstantInitializer) {
       final PsiEnumConstant enumConstant = enumConstantInitializer.getEnumConstant();
       nameIdentifier = enumConstant.getNameIdentifier();
     }
-    else if (aClass instanceof PsiAnonymousClass) {
-      final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)aClass;
+    else if (aClass instanceof PsiAnonymousClass anonymousClass) {
       nameIdentifier = anonymousClass.getBaseClassReference();
     }
     else {

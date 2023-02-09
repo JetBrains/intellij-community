@@ -25,29 +25,23 @@ class ReplaceAssignmentWithPostfixExpressionPredicate implements PsiElementPredi
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiAssignmentExpression)) {
+    if (!(element instanceof PsiAssignmentExpression assignmentExpression)) {
       return false;
     }
-    final PsiAssignmentExpression assignmentExpression =
-      (PsiAssignmentExpression)element;
     final PsiExpression lhs = assignmentExpression.getLExpression();
     final PsiExpression strippedLhs =
       PsiUtil.skipParenthesizedExprDown(lhs);
-    if (!(strippedLhs instanceof PsiReferenceExpression)) {
+    if (!(strippedLhs instanceof PsiReferenceExpression referenceExpression)) {
       return false;
     }
-    final PsiReferenceExpression referenceExpression =
-      (PsiReferenceExpression)strippedLhs;
     final PsiElement target = referenceExpression.resolve();
-    if (!(target instanceof PsiVariable)) {
+    if (!(target instanceof PsiVariable variable)) {
       return false;
     }
-    final PsiVariable variable = (PsiVariable)target;
     final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression());
-    if (!(rhs instanceof PsiBinaryExpression)) {
+    if (!(rhs instanceof PsiBinaryExpression binaryExpression)) {
       return false;
     }
-    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)rhs;
     final PsiExpression lOperand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
     final PsiExpression rOperand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
     final IElementType tokenType = binaryExpression.getOperationTokenType();

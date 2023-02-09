@@ -17,9 +17,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrMetho
 
 import static com.intellij.psi.util.PsiTreeUtil.getChildrenOfTypeAsList;
 
-/**
- * @author ilyas
- */
 public class GrMethodCallExpressionImpl extends GrMethodCallImpl implements GrMethodCallExpression, GrCallExpression {
 
   public GrMethodCallExpressionImpl(@NotNull ASTNode node) {

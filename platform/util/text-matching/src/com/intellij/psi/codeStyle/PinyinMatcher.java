@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
@@ -6,7 +6,7 @@ import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PinyinMatcher extends MinusculeMatcher {
+public final class PinyinMatcher extends MinusculeMatcher {
   static final int BASE_CODE_POINT = 0x3400;
   static final char BASE_CHAR = '!';
 

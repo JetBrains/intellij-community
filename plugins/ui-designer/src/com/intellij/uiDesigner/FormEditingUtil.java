@@ -136,8 +136,7 @@ public final class FormEditingUtil {
       public boolean visit(final IComponent component) {
         RadComponent rc = (RadComponent)component;
         for (IProperty p : component.getModifiedProperties()) {
-          if (p instanceof IntroComponentProperty) {
-            IntroComponentProperty icp = (IntroComponentProperty)p;
+          if (p instanceof IntroComponentProperty icp) {
             final String value = icp.getValue(rc);
             if (deletedComponentIds.contains(value)) {
               try {
@@ -465,11 +464,9 @@ public final class FormEditingUtil {
       return false;
     }
 
-    if (!(component instanceof IContainer)) {
+    if (!(component instanceof IContainer container)) {
       return true;
     }
-
-    final IContainer container = (IContainer)component;
 
     for (int i = 0; i < container.getComponentCount(); i++) {
       final IComponent c = container.getComponent(i);
@@ -783,10 +780,8 @@ public final class FormEditingUtil {
   @Nullable
   public static IButtonGroup findGroupForComponent(final IRootContainer radRootContainer, @NotNull final IComponent component) {
     for (IButtonGroup group : radRootContainer.getButtonGroups()) {
-      for (String id : group.getComponentIds()) {
-        if (component.getId().equals(id)) {
+      if (ArrayUtil.contains(component.getId(), group.getComponentIds())) {
           return group;
-        }
       }
     }
     return null;
@@ -879,11 +874,10 @@ public final class FormEditingUtil {
     if (id.equals(component.getId())) {
       return component;
     }
-    if (!(component instanceof IContainer)) {
+    if (!(component instanceof IContainer uiContainer)) {
       return null;
     }
 
-    final IContainer uiContainer = (IContainer)component;
     for (int i = 0; i < uiContainer.getComponentCount(); i++) {
       final IComponent found = findComponent(uiContainer.getComponent(i), id);
       if (found != null) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import org.jetbrains.intellij.build.JetBrainsRuntimeDistribution
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import java.nio.file.Path
@@ -17,5 +18,5 @@ interface BundledRuntime {
 
   fun archiveName(prefix: String, arch: JvmArchitecture, os: OsFamily, forceVersionWithUnderscores: Boolean = false): String
 
-  fun executableFilesPatterns(os: OsFamily): List<String>
+  fun executableFilesPatterns(os: OsFamily, distribution: JetBrainsRuntimeDistribution): List<String>
 }

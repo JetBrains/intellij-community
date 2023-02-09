@@ -20,8 +20,6 @@ import com.intellij.ui.ToolbarUtil;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.CustomWindowDecoration;
-import com.jetbrains.JBR;
 import com.sun.jna.Native;
 import com.sun.jna.platform.mac.CoreFoundation;
 import org.jetbrains.annotations.NotNull;
@@ -62,13 +60,12 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   private final EventDispatcher<FSListener> myDispatcher = EventDispatcher.create(FSListener.class);
   private final MacWinTabsHandler myTabsHandler;
   private boolean myInFullScreen;
-  private boolean myIsInit;
-  private boolean myCallSetFullScreenAfterInit;
 
   public MacMainFrameDecorator(@NotNull IdeFrameImpl frame, @NotNull IdeGlassPane glassPane, @NotNull Disposable parentDisposable) {
     super(frame);
 
-    myTabsHandler = new MacWinTabsHandler(frame, parentDisposable);
+    myTabsHandler =
+      MacWinTabsHandler.isVersion2() ? new MacWinTabsHandlerV2(frame, parentDisposable) : new MacWinTabsHandler(frame, parentDisposable);
 
     if (toggleFullScreenMethod != null) {
       FullScreenUtilities.setWindowCanFullScreen(frame, true);
@@ -115,16 +112,14 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           }
           enterFullScreen();
           frame.validate();
+          notifyFrameComponents(true);
         }
 
         @Override
         public void windowExitedFullScreen(FullScreenEvent event) {
           // We can get the notification when the frame has been disposed
           JRootPane rootPane = frame.getRootPane();
-          if (ExperimentalUI.isNewUI() && MainToolbarKt.isToolbarInHeader(UISettings.getShadowInstance())) {
-            ToolbarUtil.removeMacSystemTitleBar(rootPane);
-          }
-          else {
+          if (!ExperimentalUI.isNewUI() || !MainToolbarKt.isToolbarInHeader(UISettings.getShadowInstance())) {
             ToolbarUtil.setCustomTitleBar(frame, rootPane, runnable -> {
               if (!Disposer.isDisposed(parentDisposable)) {
                 Disposer.register(parentDisposable, runnable::run);
@@ -135,53 +130,44 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           exitFullScreen();
           ActiveWindowsWatcher.addActiveWindow(frame);
           frame.validate();
+          notifyFrameComponents(false);
         }
       });
+    }
+
+    if (ExperimentalUI.isNewUI()) {
+      return;
     }
 
     glassPane.addMousePreprocessor(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 2 && e.getY() <= UIUtil.getTransparentTitleBarHeight(frame.getRootPane())) {
-          int hitTestSpot = CustomWindowDecoration.NO_HIT_SPOT;
-          if (JBR.isCustomWindowDecorationSupported()) {
-            var spots = JBR.getCustomWindowDecoration().getCustomDecorationHitTestSpots(frame);
-            if (spots != null) {
-              for (var spot : spots) {
-                if (spot.getKey().contains(e.getPoint())) {
-                  hitTestSpot = spot.getValue();
-                  break;
-                }
-              }
-            }
-          }
-          if (hitTestSpot != CustomWindowDecoration.NO_HIT_SPOT) {
-            CoreFoundation.CFStringRef appleActionOnDoubleClick = CoreFoundation.CFStringRef.createCFString("AppleActionOnDoubleClick");
-            CoreFoundation.CFStringRef apple_global_domain = CoreFoundation.CFStringRef.createCFString("Apple Global Domain");
-            CoreFoundation.CFStringRef res = MyCoreFoundation.INSTANCE.CFPreferencesCopyAppValue(
-              appleActionOnDoubleClick,
-              apple_global_domain);
-            if (res != null && !res.stringValue().equals("Maximize")) {
-              if (frame.getExtendedState() == Frame.ICONIFIED) {
-                frame.setExtendedState(Frame.NORMAL);
-              }
-              else {
-                frame.setExtendedState(Frame.ICONIFIED);
-              }
+          CoreFoundation.CFStringRef appleActionOnDoubleClick = CoreFoundation.CFStringRef.createCFString("AppleActionOnDoubleClick");
+          CoreFoundation.CFStringRef apple_global_domain = CoreFoundation.CFStringRef.createCFString("Apple Global Domain");
+          CoreFoundation.CFStringRef res = MyCoreFoundation.INSTANCE.CFPreferencesCopyAppValue(
+            appleActionOnDoubleClick,
+            apple_global_domain);
+          if (res != null && !res.stringValue().equals("Maximize")) {
+            if (frame.getExtendedState() == Frame.ICONIFIED) {
+              frame.setExtendedState(Frame.NORMAL);
             }
             else {
-              if (frame.getExtendedState() == Frame.MAXIMIZED_BOTH) {
-                frame.setExtendedState(Frame.NORMAL);
-              }
-              else {
-                frame.setExtendedState(Frame.MAXIMIZED_BOTH);
-              }
+              frame.setExtendedState(Frame.ICONIFIED);
             }
-            apple_global_domain.release();
-            appleActionOnDoubleClick.release();
-            if (res != null) {
-              res.release();
+          }
+          else {
+            if (frame.getExtendedState() == Frame.MAXIMIZED_BOTH) {
+              frame.setExtendedState(Frame.NORMAL);
             }
+            else {
+              frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+            }
+          }
+          apple_global_domain.release();
+          appleActionOnDoubleClick.release();
+          if(res != null) {
+            res.release();
           }
         }
         super.mouseClicked(e);
@@ -210,24 +196,6 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   private void storeFullScreenStateIfNeeded() {
     // todo should we really check that frame has not null project as it was implemented previously?
     frame.doLayout();
-  }
-
-  @Override
-  public void frameInit() {
-    myIsInit = true;
-    myTabsHandler.frameInit();
-    if (myCallSetFullScreenAfterInit) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Sets full screen after init frame: " + frame);
-      }
-      myCallSetFullScreenAfterInit = false;
-      toggleFullScreen(true);
-    }
-  }
-
-  @Override
-  public void frameShow() {
-    myTabsHandler.frameShow();
   }
 
   @Override
@@ -265,14 +233,6 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         promise.complete(null);
       }
       else {
-        if (!myIsInit && !frame.isValid()) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Sets full screen before init frame: " + frame);
-          }
-          myCallSetFullScreenAfterInit = true;
-          promise.complete(false);
-          return;
-        }
         AtomicBoolean preEventReceived = new AtomicBoolean();
         FSAdapter listener = new FSAdapter() {
           @Override
@@ -304,6 +264,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
             if (LOG.isDebugEnabled()) {
               LOG.debug("entered full screen: " + frame);
             }
+            notifyFrameComponents(true);
             promise.complete(true);
           }
         };

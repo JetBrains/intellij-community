@@ -39,9 +39,9 @@ class MessageBusTest : MessageBusOwner {
 
   override fun createListener(descriptor: ListenerDescriptor): Any = throw UnsupportedOperationException()
 
-  override fun isDisposed() = parentDisposable!!.isDisposed
+  override fun isDisposed(): Boolean = parentDisposable!!.isDisposed
 
-  override fun isParentLazyListenersIgnored() = true
+  override fun isParentLazyListenersIgnored(): Boolean = true
 
   interface T1Listener {
     fun t11()
@@ -75,7 +75,7 @@ class MessageBusTest : MessageBusOwner {
 
   @Before
   fun setUp() {
-    bus = RootBus(this)
+    bus = MessageBusFactoryImpl.createRootBus(this)
     Disposer.register(parentDisposable!!, bus)
   }
 
@@ -225,15 +225,15 @@ class MessageBusTest : MessageBusOwner {
   @Test
   fun postingPerformanceWithLowListenerDensityInHierarchy() {
     // simulating a million fileWithNoDocumentChanged events on refresh in a thousand-module project
-    val childBus = CompositeMessageBus(owner = this, parentBus = bus)
+    val childBus = MessageBusFactoryImpl().createMessageBus(this, bus)
     childBus.connect().subscribe(TOPIC1, object : T1Listener {
       override fun t11() {}
       override fun t12() {}
     })
     for (i in 0 until 1000) {
-      MessageBusImpl(this, childBus)
+      MessageBusFactoryImpl().createMessageBus(this, childBus)
     }
-    PlatformTestUtil.assertTiming("Too long", 3000) {
+    PlatformTestUtil.assertTiming("post listener", 3000) {
       val publisher = bus.syncPublisher(TOPIC1)
       for (i in 0 until 1000000) {
         publisher.t11()
@@ -244,10 +244,10 @@ class MessageBusTest : MessageBusOwner {
   @Test
   fun manyChildrenCreationDeletionPerformance() {
     PlatformTestUtil.startPerformanceTest("Child bus creation/deletion", 1000) {
-      val children = ArrayList<MessageBusImpl>()
+      val children = ArrayList<MessageBus>()
       val count = 10000
       for (i in 0 until count) {
-        children.add(MessageBusImpl(this, bus))
+        children.add(MessageBusFactoryImpl().createMessageBus(this, bus))
       }
       // reverse iteration to avoid O(n^2) while deleting from list's beginning
       for (i in count - 1 downTo 0) {
@@ -261,7 +261,7 @@ class MessageBusTest : MessageBusOwner {
     val threadsNumber = 10
     val exception = AtomicReference<Throwable?>()
     val latch = CountDownLatch(threadsNumber)
-    val parentBus = RootBus(createSimpleMessageBusOwner("parent"))
+    val parentBus = MessageBusFactoryImpl.createRootBus(createSimpleMessageBusOwner("parent"))
     Disposer.register(parentDisposable!!, parentBus)
     val threads = ArrayList<Future<*>>()
     val iterationsNumber = 100
@@ -316,7 +316,7 @@ class MessageBusTest : MessageBusOwner {
 
   @Test
   fun hasUndeliveredEventsInChildBus() {
-    val childBus = MessageBusImpl(this, bus)
+    val childBus = MessageBusFactoryImpl().createMessageBus(this, bus)
     bus.connect().subscribe(RUNNABLE_TOPIC, Runnable {
       assertThat(bus.hasUndeliveredEvents(RUNNABLE_TOPIC)).isTrue()
     })
@@ -385,7 +385,7 @@ class MessageBusTest : MessageBusOwner {
 
   @Test
   fun disposingBusInsideEvent() {
-    val child = MessageBusImpl(this, bus)
+    val child = MessageBusFactoryImpl().createMessageBus(this, bus)
     bus.connect().subscribe(TOPIC1, object : T1Listener {
       override fun t11() {
         log.add("root 11")
@@ -423,7 +423,7 @@ class MessageBusTest : MessageBusOwner {
   @Test
   fun subscriberCacheClearedOnChildBusDispose() {
     // ensure that subscriber cache is cleared on child bus dispose
-    val child = MessageBusImpl(this, bus)
+    val child = MessageBusFactoryImpl().createMessageBus(this, bus)
     val isDisposed = Ref(false)
     child.connect().subscribe(RUNNABLE_TOPIC, Runnable { check(!isDisposed.get()) { "already disposed" } })
     bus.syncPublisher(RUNNABLE_TOPIC).run()
@@ -434,7 +434,7 @@ class MessageBusTest : MessageBusOwner {
 
   @Test
   fun publishToAnotherBus() {
-    val childBus = CompositeMessageBus(this, bus)
+    val childBus = MessageBusFactoryImpl().createMessageBus(this, bus)
     Disposer.register(parentDisposable!!, childBus)
     var counter = 0
     childBus.simpleConnect().subscribe(TOPIC1, object : T1Listener {
@@ -453,7 +453,7 @@ class MessageBusTest : MessageBusOwner {
   @Test
   fun subscriberCacheClearedOnConnectionToParentBusForChildBusTopic() {
     // ensure that subscriber cache is cleared on connection to app level bus for topic that published to project level bus with TO_PARENT direction.
-    val child = CompositeMessageBus(this, bus)
+    val child = MessageBusFactoryImpl().createMessageBus(this, bus)
     // call to compute cache
     child.syncPublisher(TO_PARENT_TOPIC).run()
     val isCalled = Ref(false)
@@ -465,7 +465,7 @@ class MessageBusTest : MessageBusOwner {
   @Test
   fun subscriberCacheClearedOnConnectionToChildrenBusFoRootBusTopic() {
     // child must be created before to ensure that cache is not cleared on a new child
-    val child = CompositeMessageBus(this, bus)
+    val child = MessageBusFactoryImpl().createMessageBus(this, bus)
     // call to compute cache
     bus.syncPublisher(RUNNABLE_TOPIC).run()
     var isCalled = false
@@ -477,7 +477,7 @@ class MessageBusTest : MessageBusOwner {
   @Test
   fun disconnectOnPluginUnload() {
     // child must be created before to ensure that cache is not cleared on a new child
-    val child: MessageBus = CompositeMessageBus(this, bus)
+    val child: MessageBus = MessageBusFactoryImpl().createMessageBus(this, bus)
     // call to compute cache
     bus.syncPublisher(RUNNABLE_TOPIC).run()
     var callCounter = 0

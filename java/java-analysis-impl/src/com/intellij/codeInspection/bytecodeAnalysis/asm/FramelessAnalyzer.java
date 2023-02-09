@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -111,8 +111,7 @@ public class FramelessAnalyzer extends SubroutineFinder {
             }
             myEdgeCreator.newControlFlowEdge(insn, jump);
           }
-          else if (insnNode instanceof LookupSwitchInsnNode) {
-            LookupSwitchInsnNode lsi = (LookupSwitchInsnNode)insnNode;
+          else if (insnNode instanceof LookupSwitchInsnNode lsi) {
             int jump = insns.indexOf(lsi.dflt);
             merge(jump, subroutine);
             myEdgeCreator.newControlFlowEdge(insn, jump);
@@ -123,8 +122,7 @@ public class FramelessAnalyzer extends SubroutineFinder {
               myEdgeCreator.newControlFlowEdge(insn, jump);
             }
           }
-          else if (insnNode instanceof TableSwitchInsnNode) {
-            TableSwitchInsnNode tsi = (TableSwitchInsnNode)insnNode;
+          else if (insnNode instanceof TableSwitchInsnNode tsi) {
             int jump = insns.indexOf(tsi.dflt);
             merge(jump, subroutine);
             myEdgeCreator.newControlFlowEdge(insn, jump);

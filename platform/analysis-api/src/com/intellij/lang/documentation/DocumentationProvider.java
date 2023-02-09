@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
@@ -18,6 +18,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Consumer;
+
+import static org.jetbrains.annotations.ApiStatus.Obsolete;
 
 /**
  * <b>PSA</b>
@@ -48,6 +50,7 @@ import java.util.function.Consumer;
  * @see ExternalDocumentationProvider
  * @see ExternalDocumentationHandler
  */
+@Obsolete
 public interface DocumentationProvider {
   /**
    * Please use {@code com.intellij.lang.documentationProvider} instead of this for language-specific documentation.

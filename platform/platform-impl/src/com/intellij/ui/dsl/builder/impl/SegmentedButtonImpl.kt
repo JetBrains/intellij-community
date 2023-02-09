@@ -10,30 +10,37 @@ import com.intellij.openapi.observable.util.whenItemSelectedFromUi
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.SpacingConfiguration
+import com.intellij.ui.dsl.builder.components.NO_TOOLTIP_RENDERER
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.bind
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelected
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelectedFromUi
 import com.intellij.ui.dsl.gridLayout.Constraints
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.validation.CellValidation
+import com.intellij.ui.dsl.validation.impl.CompoundCellValidation
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
 
 @ApiStatus.Internal
-internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T) -> String) :
-  PlaceholderBaseImpl<SegmentedButton<T>>(parent), SegmentedButton<T> {
+internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig,
+                                      parent: RowImpl,
+                                      private val renderer: (T) -> @Nls String,
+                                      tooltipRenderer: (T) -> @Nls String? = NO_TOOLTIP_RENDERER
+) : PlaceholderBaseImpl<SegmentedButton<T>>(parent), SegmentedButton<T> {
 
   private var items: Collection<T> = emptyList()
   private var property: ObservableProperty<T>? = null
   private var maxButtonsCount = SegmentedButton.DEFAULT_MAX_BUTTONS_COUNT
 
   private val comboBox = ComboBox<T>()
-  private val segmentedButtonComponent = SegmentedButtonComponent(items, renderer)
+  private val segmentedButtonComponent = SegmentedButtonComponent(items, renderer, tooltipRenderer)
+
+  private val cellValidation = CompoundCellValidation(
+    CellValidationImpl(dialogPanelConfig, this, comboBox),
+    CellValidationImpl(dialogPanelConfig, this, segmentedButtonComponent))
 
   override var selectedItem: T?
     get() {
@@ -58,21 +65,9 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
     }
 
   init {
-    comboBox.renderer = listCellRenderer { value, _, _ -> text = renderer(value) }
+    comboBox.renderer = listCellRenderer { text = renderer(it) }
     segmentedButtonComponent.isOpaque = false
     rebuild()
-  }
-
-  @Deprecated("Use align method instead")
-  override fun horizontalAlign(horizontalAlign: HorizontalAlign): SegmentedButton<T> {
-    super.horizontalAlign(horizontalAlign)
-    return this
-  }
-
-  @Deprecated("Use align method instead")
-  override fun verticalAlign(verticalAlign: VerticalAlign): SegmentedButton<T> {
-    super.verticalAlign(verticalAlign)
-    return this
   }
 
   override fun align(align: Align): SegmentedButton<T> {
@@ -134,6 +129,11 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
   override fun maxButtonsCount(value: Int): SegmentedButton<T> {
     maxButtonsCount = value
     rebuild()
+    return this
+  }
+
+  override fun validation(init: CellValidation<SegmentedButton<T>>.() -> Unit): SegmentedButton<T> {
+    cellValidation.init()
     return this
   }
 

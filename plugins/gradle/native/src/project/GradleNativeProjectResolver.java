@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.Task;
 import org.gradle.tooling.model.cpp.CppExecutable;
@@ -67,13 +66,13 @@ public final class GradleNativeProjectResolver extends AbstractProjectResolverEx
   @NotNull
   @Override
   public Set<Class<?>> getExtraProjectModelClasses() {
-    return ContainerUtil.set(org.gradle.tooling.model.cpp.CppProject.class, CppProject.class);
+    return Set.of(org.gradle.tooling.model.cpp.CppProject.class, CppProject.class);
   }
 
   @NotNull
   @Override
   public Set<Class<?>> getToolingExtensionsClasses() {
-    return ContainerUtil.set(
+    return Set.of(
       // native-gradle-tooling jar
       CppModelBuilder.class
     );
@@ -81,7 +80,7 @@ public final class GradleNativeProjectResolver extends AbstractProjectResolverEx
 
   @Override
   public Set<Class<?>> getTargetTypes() {
-    return ContainerUtil.set(
+    return Set.of(
       org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppExecutable.class,
       org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppSharedLibrary.class,
       org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppStaticLibrary.class

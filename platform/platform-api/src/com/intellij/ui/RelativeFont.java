@@ -184,8 +184,7 @@ public final class RelativeFont implements PropertyChangeListener {
 
   @Override
   public void propertyChange(PropertyChangeEvent event) {
-    if (!(event.getNewValue() instanceof MyFont) && (event.getSource() instanceof Component) && PROPERTY.equals(event.getPropertyName())) {
-      Component component = (Component)event.getSource();
+    if (!(event.getNewValue() instanceof MyFont) && (event.getSource() instanceof Component component) && PROPERTY.equals(event.getPropertyName())) {
       Font font = derive(event.getNewValue() instanceof Font ? (Font)event.getNewValue() : component.getFont());
       if (font != null) {
         component.setFont(new MyFont(font));

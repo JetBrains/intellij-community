@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.jetbrains.python.actions.PyExecuteInConsole;
 import com.jetbrains.python.actions.PyRunFileInConsoleAction;
@@ -240,20 +239,9 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   protected ProcessHandler doCreateProcess(GeneralCommandLine commandLine) throws ExecutionException {
     if (emulateTerminal()) {
       return new OSProcessHandler(commandLine) {
-        @NotNull
         @Override
-        protected BaseOutputReader.Options readerOptions() {
-          return new BaseOutputReader.Options() {
-            @Override
-            public BaseDataReader.SleepingPolicy policy() {
-              return BaseDataReader.SleepingPolicy.BLOCKING;
-            }
-
-            @Override
-            public boolean splitToLines() {
-              return false;
-            }
-          };
+        protected @NotNull BaseOutputReader.Options readerOptions() {
+          return BaseOutputReader.Options.forTerminalPtyProcess();
         }
       };
     }
@@ -269,20 +257,9 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
                                                          @NotNull TargetedCommandLine commandLine) {
     if (emulateTerminal()) {
       return new OSProcessHandler(process, commandLineString, commandLine.getCharset()) {
-        @NotNull
         @Override
-        protected BaseOutputReader.Options readerOptions() {
-          return new BaseOutputReader.Options() {
-            @Override
-            public BaseDataReader.SleepingPolicy policy() {
-              return BaseDataReader.SleepingPolicy.BLOCKING;
-            }
-
-            @Override
-            public boolean splitToLines() {
-              return false;
-            }
-          };
+        protected @NotNull BaseOutputReader.Options readerOptions() {
+          return BaseOutputReader.Options.forTerminalPtyProcess();
         }
       };
     }

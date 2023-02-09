@@ -79,7 +79,6 @@ import java.util.function.Supplier;
 
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.util.ui.ConfirmationDialog.requestForConfirmation;
-import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitExecutors;
 import static java.text.MessageFormat.format;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
@@ -218,9 +217,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   @Override
   public boolean commitChanges(@NotNull Collection<? extends Change> changes, @NotNull LocalChangeList initialChangeList,
                                @NotNull String commitMessage, @Nullable CommitResultHandler customResultHandler) {
-    return CommitChangeListDialog
-      .commitChanges(myProject, changes, initialChangeList, getCommitExecutors(myProject, changes), true, commitMessage,
-                     customResultHandler);
+    return CommitChangeListDialog.commitVcsChanges(myProject, changes, initialChangeList, commitMessage, customResultHandler);
   }
 
   private static void addDirectMessages(VcsErrorViewPanel vcsErrorViewPanel, List<? extends VcsException> abstractVcsExceptions) {

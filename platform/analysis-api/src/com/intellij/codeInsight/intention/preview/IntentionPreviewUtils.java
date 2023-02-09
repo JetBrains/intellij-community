@@ -16,12 +16,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Utils to support intention preview feature
  */
-public class IntentionPreviewUtils {
+public final class IntentionPreviewUtils {
   private static final Key<Boolean> PREVIEW_MARKER = Key.create("PREVIEW_MARKER");
   private static final ThreadLocal<Editor> PREVIEW_EDITOR = new ThreadLocal<>();
 
   /**
-   * This method is a part of internal implementation of intention preview mechanism.
+   * This method is a part of the internal implementation of an intention preview mechanism.
    * It's not intended to be called in the client code.
    * 
    * @param file file to get the preview copy
@@ -36,7 +36,7 @@ public class IntentionPreviewUtils {
 
   /**
    * @param element element to check
-   * @return true if given element is a copy created for preview
+   * @return true if a given element is a copy created for preview
    */
   public static boolean isPreviewElement(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
@@ -44,10 +44,10 @@ public class IntentionPreviewUtils {
   }
 
   /**
-   * Prepares element for writing, taking into account that it could be a preview element
+   * Prepares an element for writing, taking into account that it could be a preview element
    *
    * @param element element to prepare
-   * @return true if element can be written
+   * @return true if an element can be written
    */
   public static boolean prepareElementForWrite(@NotNull PsiElement element) {
     if (isPreviewElement(element)) return true;
@@ -86,7 +86,7 @@ public class IntentionPreviewUtils {
   }
 
   /**
-   * Start preview session with given editor (generatePreview call should be wrapped)
+   * Start a preview session with given editor (generatePreview call should be wrapped)
    * @param editor preview editor to use
    * @param runnable action to execute
    */

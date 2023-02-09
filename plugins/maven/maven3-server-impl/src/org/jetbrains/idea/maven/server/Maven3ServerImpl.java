@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
@@ -22,7 +21,7 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
       return result;
     }
     catch (RemoteException e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -40,7 +39,7 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
       return result;
     }
     catch (RemoteException e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -52,7 +51,7 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
       return Maven3XServerEmbedder.interpolateAndAlignModel(model, basedir);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -63,7 +62,7 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
       return Maven3XServerEmbedder.assembleInheritance(model, parentModel);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -77,7 +76,7 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
       return Maven3ServerEmbedderImpl.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -90,7 +89,7 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
       return result;
     }
     catch (RemoteException e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -103,7 +102,7 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
       return result;
     }
     catch (RemoteException e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 

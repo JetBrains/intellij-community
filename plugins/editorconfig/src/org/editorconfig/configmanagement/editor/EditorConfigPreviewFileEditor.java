@@ -43,7 +43,7 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
     editorSettings.setGutterIconsShown(false);
     editorSettings.setLineNumbersShown(false);
     updateEditor();
-    CodeStyleSettingsManager.getInstance(myEditor.getProject()).addListener(this);
+    CodeStyleSettingsManager.getInstance(myEditor.getProject()).subscribe(this, this);
   }
 
   private static JComponent getHeaderComponent() {
@@ -106,7 +106,6 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
 
   @Override
   public void dispose() {
-    CodeStyleSettingsManager.removeListener(myEditor.getProject(), this);
     EditorFactory.getInstance().releaseEditor(myEditor);
   }
 

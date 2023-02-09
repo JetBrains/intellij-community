@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.jarFinder;
 
 import com.intellij.jarFinder.FindJarFix;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiQualifiedReferenceElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -12,16 +13,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author Sergey Evdokimov
- */
-public class GroovyFindJarFix extends FindJarFix<GrReferenceElement> {
-  public GroovyFindJarFix(GrReferenceElement ref) {
+class GroovyFindJarFix extends FindJarFix {
+  GroovyFindJarFix(@NotNull GrReferenceElement<?> ref) {
     super(ref);
   }
 
   @Override
-  protected Collection<String> getFqns(@NotNull GrReferenceElement ref) {
+  protected Collection<String> getFqns(@NotNull PsiQualifiedReferenceElement ref) {
     GrImportStatement importStatement = PsiTreeUtil.getParentOfType(ref.getElement(), GrImportStatement.class);
 
     //from static imports

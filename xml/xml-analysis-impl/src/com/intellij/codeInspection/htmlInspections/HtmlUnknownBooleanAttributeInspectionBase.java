@@ -55,17 +55,6 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
   }
 
   @Override
-  protected String getCheckboxTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.boolean.attribute.checkbox.title");
-  }
-
-  @NotNull
-  @Override
-  protected String getPanelTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.boolean.attribute.title");
-  }
-
-  @Override
   @NotNull
   protected Logger getLogger() {
     return LOG;

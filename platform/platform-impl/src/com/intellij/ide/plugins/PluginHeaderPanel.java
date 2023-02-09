@@ -62,8 +62,7 @@ public class PluginHeaderPanel {
     myCategory.setText(plugin.getCategory() == null ? IdeBundle.message("label.category.unknown") : StringUtil.toUpperCase(plugin.getCategory())); //NON-NLS
     String versionText;
     boolean showVersion = !plugin.isBundled() || plugin.allowBundledUpdate();
-    if (plugin instanceof PluginNode) {
-      final PluginNode node = (PluginNode)plugin;
+    if (plugin instanceof PluginNode node) {
       myRating.setRate(node.getRating());
       myDownloads.setText(IdeBundle.message("label.plugin.0.downloads", node.getDownloads()));
       versionText = showVersion ? "v" + node.getVersion() : null; //NON-NLS

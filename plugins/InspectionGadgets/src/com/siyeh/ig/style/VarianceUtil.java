@@ -132,8 +132,7 @@ final class VarianceUtil {
   // 3) wildcardization of "X<T>" to "X<? extends T>" is useless iff the method returns ("T" or something which doesn't contain "T") and
   //   (the "X<T>" is the only parameter)
   static boolean wildCardIsUseless(@NotNull VarianceCandidate candidate, boolean isExtends) {
-    if (!(candidate.type instanceof PsiClassType)) return false;
-    PsiClassType type = (PsiClassType)candidate.type;
+    if (!(candidate.type instanceof PsiClassType type)) return false;
     PsiClassType.ClassResolveResult resolve = type.resolveGenerics();
     PsiClass typeParameter = resolve.getElement();
     if (!(typeParameter instanceof PsiTypeParameter)) return false;

@@ -36,6 +36,7 @@ import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.vcs.commit.PartialCommitChangeNodeDecorator;
 import com.intellij.vcs.commit.PartialCommitInclusionModel;
+import com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY;
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
@@ -69,7 +71,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   private final List<Change> myChanges = new ArrayList<>();
   private final List<FilePath> myUnversioned = new ArrayList<>();
 
-  @Nullable private Runnable mySelectedListChangeListener;
+  @Nullable private SingleChangeListCommitWorkflowUi.ChangeListListener mySelectedListChangeListener;
   private final RollbackDialogAction myRollbackDialogAction;
 
   MultipleLocalChangeListsBrowser(@NotNull Project project,
@@ -202,7 +204,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     myBottomDiffComponent = value;
   }
 
-  public void setSelectedListChangeListener(@Nullable Runnable runnable) {
+  public void setSelectedListChangeListener(@Nullable SingleChangeListCommitWorkflowUi.ChangeListListener runnable) {
     mySelectedListChangeListener = runnable;
   }
 
@@ -216,17 +218,18 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     myChangeListChooser.setSelectedChangeList(list);
   }
 
-  private void updateSelectedChangeList(@NotNull LocalChangeList list) {
-    boolean isListChanged = !myChangeList.getId().equals(list.getId());
+  private void updateSelectedChangeList(@NotNull LocalChangeList newChangeList) {
+    LocalChangeList oldChangeList = myChangeList;
+    boolean isListChanged = !oldChangeList.getId().equals(newChangeList.getId());
     if (isListChanged) {
       LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
     }
-    myChangeList = list;
-    myChangeListChooser.setToolTipText(list.getName());
+    myChangeList = newChangeList;
+    myChangeListChooser.setToolTipText(newChangeList.getName());
     updateDisplayedChanges();
-    if (isListChanged && mySelectedListChangeListener != null) mySelectedListChangeListener.run();
+    if (isListChanged && mySelectedListChangeListener != null) mySelectedListChangeListener.changeListChanged(oldChangeList, newChangeList);
 
-    myInclusionModel.setChangeLists(List.of(myChangeList));
+    myInclusionModel.setChangeLists(List.of(newChangeList));
   }
 
   @Override
@@ -277,7 +280,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @Override
   public Object getData(@NotNull String dataId) {
     if (UNVERSIONED_FILE_PATHS_DATA_KEY.is(dataId)) {
-      return ChangesListView.getSelectedUnversionedFiles(myViewer);
+      return VcsTreeModelData.selectedUnderTag(myViewer, UNVERSIONED_FILES_TAG)
+        .iterateUserObjects(FilePath.class);
     }
     else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteProvider;
@@ -286,7 +290,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       return new ChangeList[]{myChangeList};
     }
     else if (EXACTLY_SELECTED_FILES_DATA_KEY.is(dataId)) {
-      return ChangesListView.getExactlySelectedVirtualFiles(myViewer);
+      return VcsTreeModelData.mapToExactVirtualFile(VcsTreeModelData.exactlySelected(myViewer));
     }
     return super.getData(dataId);
   }

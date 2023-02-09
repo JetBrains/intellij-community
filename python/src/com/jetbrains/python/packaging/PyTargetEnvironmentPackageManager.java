@@ -230,8 +230,9 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest = getPythonTargetInterpreter();
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
 
-    PythonScriptExecution pythonExecution =
-      PythonScripts.prepareHelperScriptExecution(PythonHelper.VIRTUALENV_ZIPAPP, helpersAwareTargetRequest);
+    PythonScriptExecution pythonExecution = PythonScripts.prepareHelperScriptExecution(
+      languageLevel.isPython2() ? PythonHelper.PY2_VIRTUALENV_ZIPAPP : PythonHelper.VIRTUALENV_ZIPAPP,
+      helpersAwareTargetRequest);
     if (useGlobalSite) {
       pythonExecution.addParameter("--system-site-packages");
     }

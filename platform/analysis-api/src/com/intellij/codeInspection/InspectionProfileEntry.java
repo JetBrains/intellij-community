@@ -3,10 +3,15 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptRegularComponent;
+import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -23,7 +28,6 @@ import com.intellij.serialization.SerializationException;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.annotations.Property;
@@ -332,14 +336,38 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   }
 
   /**
-   * This method is called each time UI is shown.
-   * To get correct spacing, return a JComponent with empty insets using Kotlin UI DSL
-   * or {@link com.intellij.codeInspection.ui.InspectionOptionsPanel}.
+   * Old and discouraged way to create inspection options. Override {@link #getOptionsPane()} instead.
+   * If you need to render options, use {@link InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project)}.
    *
    * @return {@code null} if no UI options required.
    */
   public @Nullable JComponent createOptionsPanel() {
-    return null;
+    OptPane pane = getOptionsPane();
+    if (pane.equals(OptPane.EMPTY)) return null;
+    return InspectionOptionPaneRenderer.getInstance().render(this, getOptionsPane(), null, null);
+  }
+
+  /**
+   * @return declarative representation of the inspection options. If this method returns a non-empty pane, then
+   * {@link #createOptionsPanel()} is not used.
+   * 
+   * @see OptPane#pane(OptRegularComponent...) 
+   * @see InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project)
+   * @see #getOptionController() if you need custom logic to read/write options
+   */
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.EMPTY;
+  }
+
+  /**
+   * @return a controller to process inspection options specified by {@link #getOptionsPane()}. 
+   * The default implementation finds a field with the corresponding name and uses/updates its value.
+   * If you need to process some options specially, you can override this method in particular inspection
+   * and compose a new controller using methods like {@link OptionController#onPrefix} and
+   * {@link OptionController#onValue}.
+   */
+  public @NotNull OptionController getOptionController() {
+    return OptionController.fieldsOf(this);
   }
 
   /**

@@ -5,9 +5,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.enhancedSwitch.RedundantLabeledSwitchRuleCodeBlockInspection
 
-/**
- * @author Pavel.Dolgov
- */
 class RedundantLabeledSwitchRuleCodeBlockFixTest  : LightQuickFixParameterizedTestCase() {
   override fun configureLocalInspectionTools(): Array<LocalInspectionTool> = arrayOf(
     RedundantLabeledSwitchRuleCodeBlockInspection())

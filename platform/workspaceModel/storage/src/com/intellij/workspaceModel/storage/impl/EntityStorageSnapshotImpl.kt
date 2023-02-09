@@ -19,6 +19,7 @@ import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMa
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -29,6 +30,10 @@ internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: Ent
   override fun resolve(storage: EntityStorage): E? {
     @Suppress("UNCHECKED_CAST")
     return (storage as AbstractEntityStorage).entityDataById(id)?.createEntity(storage) as? E
+  }
+
+  override fun isReferenceTo(entity: WorkspaceEntity): Boolean {
+    return id == (entity as? WorkspaceEntityBase)?.id
   }
 
   override fun equals(other: Any?): Boolean {
@@ -170,11 +175,16 @@ internal class MutableEntityStorageImpl(
   override fun <T : WorkspaceEntity> addEntity(entity: T): T {
     try {
       lockWrite()
-
-      entity as ModifiableWorkspaceEntityBase<T, *>
-
-      entity.applyToBuilder(this)
-      entity.changedProperty.clear()
+      val entityToAdd = if (entity is ModifiableWorkspaceEntityBase<*, *>) {
+        entity as ModifiableWorkspaceEntityBase<T, *>
+      }
+      else {
+        @Suppress("USELESS_CAST") //this is needed to work around a bug in Kotlin compiler (KT-55555)
+        entity.createEntityTreeCopy(true) as ModifiableWorkspaceEntityBase<T, *>
+      }
+      
+      entityToAdd.applyToBuilder(this)
+      entityToAdd.changedProperty.clear()
     }
     finally {
       unlockWrite()
@@ -519,7 +529,7 @@ internal class MutableEntityStorageImpl(
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T> {
+  override fun <T> getMutableExternalMapping(identifier: @NonNls String): MutableExternalEntityMapping<T> {
     try {
       lockWrite()
       val mapping = indexes.externalMappings.computeIfAbsent(
@@ -787,7 +797,7 @@ internal sealed class AbstractEntityStorage : EntityStorage {
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T> {
+  override fun <T> getExternalMapping(identifier: @NonNls String): ExternalEntityMapping<T> {
     val index = indexes.externalMappings[identifier] as? ExternalEntityMappingImpl<T>
     if (index == null) return EmptyExternalEntityMapping as ExternalEntityMapping<T>
     index.setTypedEntityStorage(this)

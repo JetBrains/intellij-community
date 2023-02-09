@@ -5,7 +5,7 @@ import ${sharedModuleName}
 
 #if (${sharedModuleName})
 func greet() -> String {
-    return Greeting().greeting()
+    return Greeting().greet()
 }
 #end
 

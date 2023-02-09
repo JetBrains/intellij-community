@@ -39,9 +39,6 @@ import java.util.Map;
 
 import static org.jetbrains.idea.maven.server.MavenServerEmbedder.MAVEN_EMBEDDER_VERSION;
 
-/**
- * @author Sergey Evdokimov
- */
 @Component(role = ModelInterpolator.class, hint = "ide")
 public class CustomMaven3ModelInterpolator2 extends StringSearchModelInterpolator {
 

@@ -110,9 +110,8 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
 
     @Override
     public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-      if (!(element instanceof PsiMethod)) return true;
+      if (!(element instanceof PsiMethod method)) return true;
 
-      PsiMethod method = (PsiMethod)element;
       if (!myIgnoreCondition.value(method)) return true;
 
       PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);

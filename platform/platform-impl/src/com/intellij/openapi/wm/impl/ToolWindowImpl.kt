@@ -1,10 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.*
+import com.intellij.ide.actions.ContextHelpAction
+import com.intellij.ide.actions.ToggleToolbarAction
+import com.intellij.ide.actions.ToolWindowMoveAction
+import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -52,7 +55,6 @@ import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
-import java.util.*
 import javax.swing.*
 import kotlin.math.abs
 
@@ -311,6 +313,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     callLater(runnable)
   }
 
+  fun setSideToolAndAnchor(anchor: ToolWindowAnchor, split: Boolean, order: Int) {
+    toolWindowManager.setSideToolAndAnchor(id, WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID, anchor, order, split)
+  }
+
   override fun setAutoHide(value: Boolean) {
     toolWindowManager.setToolWindowAutoHide(id, value)
   }
@@ -404,7 +410,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   fun getComponentIfInitialized(): JComponent? {
-    return if (contentManager.isInitialized()) contentManager.value.component else null
+    return if (contentManager.isInitialized()) contentManager.value.takeIf { !it.isDisposed }?.component else null
   }
 
   override fun getContentManagerIfCreated(): ContentManager? {
@@ -529,7 +535,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     createContentIfNeeded()
   }
 
-  internal fun createContentIfNeeded() {
+  private fun createContentIfNeeded() {
     val currentContentFactory = contentFactory ?: return
     // clear it first to avoid SOE
     this.contentFactory = null
@@ -560,7 +566,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   @JvmOverloads
   fun createPopupGroup(skipHideAction: Boolean = false): ActionGroup {
-    val group = GearActionGroup(this)
+    val group = GearActionGroup()
     if (!skipHideAction) {
       group.addSeparator()
       group.add(HideAction())
@@ -600,7 +606,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     decorator?.background = color
   }
 
-  private inner class GearActionGroup(toolWindow: ToolWindowImpl) : DefaultActionGroup(), DumbAware {
+  private inner class GearActionGroup : DefaultActionGroup(), DumbAware {
     init {
       templatePresentation.icon = AllIcons.General.GearPlain
       if (toolWindowManager.isNewUi) {
@@ -626,7 +632,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       addAction(toggleToolbarGroup).setAsSecondary(true)
       add(ActionManager.getInstance().getAction("TW.ViewModeGroup"))
       if (toolWindowManager.isNewUi) {
-        add(SquareStripeButton.createMoveGroup(toolWindow))
+        add(SquareStripeButton.createMoveGroup())
       }
       else {
         add(ToolWindowMoveAction.Group())
@@ -657,24 +663,20 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
-  private inner class ResizeActionGroup : ActionGroup(ActionsBundle.groupText("ResizeToolWindowGroup"), true), DumbAware {
-    private val children by lazy<Array<AnAction>> {
-      // force creation
-      createContentIfNeeded()
-      val component = decorator
-      val toolWindow = this@ToolWindowImpl
-      arrayOf(
-        ResizeToolWindowAction.Left(toolWindow, component),
-        ResizeToolWindowAction.Right(toolWindow, component),
-        ResizeToolWindowAction.Up(toolWindow, component),
-        ResizeToolWindowAction.Down(toolWindow, component),
-        ActionManager.getInstance().getAction("MaximizeToolWindow")
+  private inner class ResizeActionGroup : DefaultActionGroup(
+    ActionsBundle.groupText("ResizeToolWindowGroup"),
+    ActionManager.getInstance().let { actionManager ->
+      listOf(
+        actionManager.getAction("ResizeToolWindowLeft"),
+        actionManager.getAction("ResizeToolWindowRight"),
+        actionManager.getAction("ResizeToolWindowUp"),
+        actionManager.getAction("ResizeToolWindowDown"),
+        actionManager.getAction("MaximizeToolWindow")
       )
+    }) {
+    init {
+      isPopup = true
     }
-
-    override fun getChildren(e: AnActionEvent?) = children
-
-    override fun isDumbAware() = true
   }
 
   private inner class RemoveStripeButtonAction :

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -67,12 +67,15 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class DebuggerUtilsImpl extends DebuggerUtilsEx{
+public class DebuggerUtilsImpl extends DebuggerUtilsEx {
   public static final Key<PsiType> PSI_TYPE_KEY = Key.create("PSI_TYPE_KEY");
   private static final Logger LOG = Logger.getInstance(DebuggerUtilsImpl.class);
 
   @Override
-  public PsiExpression substituteThis(PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue, StackFrameContext context)
+  public PsiExpression substituteThis(PsiExpression expressionWithThis,
+                                      PsiExpression howToEvaluateThis,
+                                      Value howToEvaluateThisValue,
+                                      StackFrameContext context)
     throws EvaluateException {
     return DebuggerTreeNodeExpression.substituteThis(expressionWithThis, howToEvaluateThis, howToEvaluateThisValue);
   }
@@ -98,7 +101,8 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     String text = element.getAttributeValue("text");
     if ("expression".equals(element.getAttributeValue("type"))) {
       return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, text);
-    } else {
+    }
+    else {
       return new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, text);
     }
   }
@@ -231,7 +235,8 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     LOG.error(e);
   }
 
-  public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<? extends T, ? extends E> supplier, T defaultValue) throws E {
+  public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<? extends T, ? extends E> supplier,
+                                                              T defaultValue) throws E {
     return suppressExceptions(supplier, defaultValue, true, null);
   }
 
@@ -247,8 +252,12 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
         throw e;
       }
     }
-    catch (VMDisconnectedException | ObjectCollectedException e) {throw e;}
-    catch (InternalException e) {LOG.info(e);}
+    catch (VMDisconnectedException | ObjectCollectedException e) {
+      throw e;
+    }
+    catch (InternalException e) {
+      LOG.info(e);
+    }
     catch (Exception | AssertionError e) {
       if (rethrow != null && rethrow.isInstance(e)) {
         throw e;
@@ -295,7 +304,8 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   public static Stream<? extends ReferenceType> supertypes(ReferenceType type) {
     if (type instanceof InterfaceType) {
       return ((InterfaceType)type).superinterfaces().stream();
-    } else if (type instanceof ClassType) {
+    }
+    else if (type instanceof ClassType) {
       return StreamEx.<ReferenceType>ofNullable(((ClassType)type).superclass()).prepend(((ClassType)type).interfaces());
     }
     return StreamEx.empty();
@@ -490,8 +500,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
 
   @Nullable
   public static Range<Location> getLocalVariableBorders(@NotNull LocalVariable variable) {
-    if (!(variable instanceof LocalVariableImpl)) return null;
-    LocalVariableImpl variableImpl = (LocalVariableImpl)variable;
+    if (!(variable instanceof LocalVariableImpl variableImpl)) return null;
     return new Range<>(variableImpl.getScopeStart(), variableImpl.getScopeEnd());
   }
 }

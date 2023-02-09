@@ -86,8 +86,8 @@ class NestedModuleRootsInProjectFileIndex {
     PsiTestUtil.addContentRoot(outerModule, outerFile.parent)
     PsiTestUtil.addContentRoot(innerModule, innerFile.parent)
     val moduleFileIndex = ModuleRootManager.getInstance(outerModule).fileIndex
-    DirectoryIndexTestCase.assertIteratedContent(moduleFileIndex, outerFile.parent,
-                                                 listOf(outerFile, outerFile.parent), listOf(innerFile, innerFile.parent))
+    assertIteratedContent(moduleFileIndex, outerFile.parent, 
+                          listOf(outerFile, outerFile.parent), listOf(innerFile, innerFile.parent))
   }
 
   /**

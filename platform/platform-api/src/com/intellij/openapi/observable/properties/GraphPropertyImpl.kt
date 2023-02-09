@@ -9,8 +9,16 @@ import org.jetbrains.annotations.ApiStatus
 class GraphPropertyImpl<T>(private val propertyGraph: PropertyGraph, initial: () -> T)
   : GraphProperty<T>, AtomicLazyProperty<T>(initial) {
 
+  init {
+    propertyGraph.registerIfNeeded(this)
+  }
+
   override fun dependsOn(parent: ObservableProperty<*>, update: () -> T) {
-    propertyGraph.dependsOn(this, parent, update)
+    propertyGraph.dependsOn(this, parent, update = update)
+  }
+
+  override fun dependsOn(parent: ObservableProperty<*>, deleteWhenModified: Boolean, update: () -> T) {
+    propertyGraph.dependsOn(this, parent, deleteWhenModified, update = update)
   }
 
   override fun afterPropagation(listener: () -> Unit) {
@@ -19,10 +27,6 @@ class GraphPropertyImpl<T>(private val propertyGraph: PropertyGraph, initial: ()
 
   override fun afterPropagation(parentDisposable: Disposable?, listener: () -> Unit) {
     propertyGraph.afterPropagation(parentDisposable, listener)
-  }
-
-  init {
-    propertyGraph.register(this)
   }
 
   @Deprecated("Use set instead")

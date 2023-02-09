@@ -28,7 +28,7 @@ class OverridesCompletionLookupElementDecorator(
     private val text: String,
     private val isImplement: Boolean,
     private val icon: RowIcon,
-    private val baseClassName: String,
+    private val baseClassName: String?,
     private val baseClassIcon: Icon?,
     private val isConstructorParameter: Boolean,
     private val isSuspend: Boolean,

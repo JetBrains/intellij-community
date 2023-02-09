@@ -72,6 +72,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EDT;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -283,6 +285,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         // clear all caches, reindex
         WriteAction.run(() -> {
           ModuleDependencyIndex.getInstance(project).reset();
+          ((WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project)).reset();
           ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(),
                                                                       RootsChangeRescanningInfo.TOTAL_RESCAN);
         });

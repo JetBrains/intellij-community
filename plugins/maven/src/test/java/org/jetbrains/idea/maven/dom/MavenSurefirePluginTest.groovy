@@ -6,9 +6,6 @@ import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
 import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenSurefirePluginTest extends MavenDomWithIndicesTestCase {
 
   @Override

@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryTypeServiceImpl;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChangeLibraryLevelDialog;
@@ -30,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import javax.swing.*;
 import java.io.File;
@@ -90,6 +92,15 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
     final Library copied = provider.getModifiableModel().createLibrary(StringUtil.nullize(dialog.getLibraryName()), library.getKind());
     final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)copied.getModifiableModel();
     LibraryEditingUtil.copyLibrary(library, copiedFiles, model);
+
+    /* Verification and bind JAR repositories are prohibited for global libraries */
+    if (isConvertingToApplicationLibrary() && model.getProperties() instanceof RepositoryLibraryProperties repositoryLibraryProperties) {
+      model.setProperties(repositoryLibraryProperties.cloneAndChange(properties -> {
+        properties.disableVerification();
+        properties.unbindRemoteRepository();
+      }));
+    }
+
     WriteAction.run(() -> model.commit());
     return copied;
   }
@@ -173,6 +184,10 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
 
   protected boolean isConvertingToModuleLibrary() {
     return myTargetTableLevel.equals(LibraryTableImplUtil.MODULE_LEVEL);
+  }
+
+  private boolean isConvertingToApplicationLibrary() {
+    return myTargetTableLevel.equals(LibraryTablesRegistrar.APPLICATION_LEVEL);
   }
 
   protected abstract boolean isEnabled();

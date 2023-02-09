@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context
 
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer
+import com.intellij.openapi.fileEditor.impl.EditorSplitterState
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.tasks.TaskBundle
 import com.intellij.ui.docking.DockManager
@@ -25,9 +26,8 @@ private class OpenEditorsContextProvider : WorkingContextProvider() {
   override fun loadContext(project: Project, element: Element) {
     val fileEditorManager = getFileEditorManager(project)
     if (fileEditorManager != null) {
-      runBlockingModal(project, TaskBundle.message("open.editors.and.positions")) {
-        fileEditorManager.loadState(element)
-        fileEditorManager.mainSplitters.restoreEditors(onStartup = false)
+      runBlockingModalWithRawProgressReporter(project, TaskBundle.message("open.editors.and.positions")) {
+        fileEditorManager.mainSplitters.restoreEditors(state = EditorSplitterState(element), onStartup = false)
       }
     }
     val dockState = element.getChild("state")

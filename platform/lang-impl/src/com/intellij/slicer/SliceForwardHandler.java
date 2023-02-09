@@ -38,7 +38,7 @@ class SliceForwardHandler extends SliceHandler {
     BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(dialogTitle, LangBundle.message("separator.analyze.scope"), myProject,
                                                                    items, analysisUIOptions, true) {
       @Override
-      protected JComponent getAdditionalActionSettings(Project project) {
+      protected JComponent getAdditionalActionSettings(@NotNull Project project) {
         return ui.getPanel();
       }
     };

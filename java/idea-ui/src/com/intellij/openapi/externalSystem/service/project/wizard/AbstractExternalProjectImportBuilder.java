@@ -50,8 +50,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.refres
 
 /**
  * GoF builder for external system backed projects.
- *
- * @author Denis Zhdanov
  */
 public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImportFromExternalSystemControl>
   extends ProjectImportBuilder<DataNode<ProjectData>>

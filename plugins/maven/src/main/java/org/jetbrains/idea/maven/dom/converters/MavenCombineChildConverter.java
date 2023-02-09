@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Collection;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenCombineChildConverter extends MavenConstantListConverter {
   @Override
   protected Collection<String> getValues(@NotNull ConvertContext context) {

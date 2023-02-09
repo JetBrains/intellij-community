@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.icons.AllIcons;
@@ -91,15 +91,8 @@ class ItemElement extends LibraryTableTreeContentElement<ItemElement> {
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ItemElement)) return false;
-
-    final ItemElement itemElement = (ItemElement)o;
-
-    if (!getParent().equals(itemElement.getParent())) return false;
-    if (!myRootType.equals(itemElement.myRootType)) return false;
-    if (!myUrl.equals(itemElement.myUrl)) return false;
-
-    return true;
+    if (!(o instanceof ItemElement itemElement)) return false;
+    return getParent().equals(itemElement.getParent()) && myRootType.equals(itemElement.myRootType) && myUrl.equals(itemElement.myUrl);
   }
 
   @NotNull

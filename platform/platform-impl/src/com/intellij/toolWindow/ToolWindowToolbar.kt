@@ -9,7 +9,9 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.LayoutData
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.ui.ComponentUtil
@@ -33,7 +35,9 @@ internal abstract class ToolWindowToolbar : JPanel() {
     isOpaque = true
     background = JBUI.CurrentTheme.ToolWindow.background()
 
-    val topWrapper = JPanel(BorderLayout())
+    val topWrapper = JPanel(BorderLayout()).apply {
+      border = JBUI.Borders.customLineTop(getBorderColor())
+    }
     border = createBorder()
     topStripe.background = JBUI.CurrentTheme.ToolWindow.background()
     bottomStripe.background = JBUI.CurrentTheme.ToolWindow.background()
@@ -57,22 +61,13 @@ internal abstract class ToolWindowToolbar : JPanel() {
     if (!isShowing) {
       return null
     }
-    val topRect = Rectangle(locationOnScreen, size).also {
-      it.width = it.width.coerceAtLeast(SHADOW_WIDTH)
-      it.height = (it.height / 2).coerceAtLeast(SHADOW_WIDTH)
+    if (topStripe.containsPoint(screenPoint)) {
+      return topStripe
     }
-    val bottomRect = Rectangle(topRect).also {
-      it.y += topRect.height
+    if (bottomStripe.containsPoint(screenPoint)) {
+      return bottomStripe
     }
-    return if (topRect.contains(screenPoint)) {
-      topStripe
-    }
-    else if (bottomRect.contains(screenPoint)) {
-      bottomStripe
-    }
-    else {
-      null
-    }
+    return null
   }
 
   fun removeStripeButton(toolWindow: ToolWindow, anchor: ToolWindowAnchor) {
@@ -104,8 +99,6 @@ internal abstract class ToolWindowToolbar : JPanel() {
   }
 
   companion object {
-    val SHADOW_WIDTH = JBUI.scale(40)
-
     fun updateButtons(panel: JComponent) {
       ComponentUtil.findComponentsOfType(panel, SquareStripeButton::class.java).forEach { it.update() }
       panel.revalidate()
@@ -130,6 +123,88 @@ internal abstract class ToolWindowToolbar : JPanel() {
                           override val split: Boolean = false) : AbstractDroppableStripe(paneId, VerticalFlowLayout(0, 0)) {
     override val isNewStripes: Boolean
       get() = true
+
+    override fun getDropToSide(): Boolean {
+      if (split) {
+        return true
+      }
+      val dropToSide = super.getDropToSide()
+      if (dropToSide == null) {
+        return false
+      }
+      return dropToSide
+    }
+
+    override fun containsPoint(screenPoint: Point): Boolean {
+      if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
+        val bounds = Rectangle(toolBar.locationOnScreen, toolBar.size)
+        bounds.height /= 2
+
+        val toolWindowWidth = getFirstVisibleToolWindowSize(true)
+
+        bounds.width += toolWindowWidth
+        if (anchor == ToolWindowAnchor.RIGHT) {
+          bounds.x -= toolWindowWidth
+        }
+        return bounds.contains(screenPoint)
+      }
+      if (anchor == ToolWindowAnchor.BOTTOM) {
+        val rootBounds = Rectangle(rootPane.locationOnScreen, rootPane.size)
+        val toolWindowHeight = getFirstVisibleToolWindowSize(false)
+        val bounds = Rectangle(rootBounds.x, rootBounds.y + rootBounds.height - toolWindowHeight - getStatusBarHeight(),
+                               rootBounds.width / 2, toolWindowHeight)
+        if (split) {
+          bounds.x += bounds.width
+        }
+        return bounds.contains(screenPoint)
+      }
+      return super.containsPoint(screenPoint)
+    }
+
+    private fun getFirstVisibleToolWindowSize(width: Boolean): Int {
+      for (button in getButtons()) {
+        if (button.toolWindow.isVisible) {
+          if (width) {
+            return (rootPane.width * button.windowDescriptor.weight).toInt()
+          }
+          return (rootPane.height * button.windowDescriptor.weight).toInt()
+        }
+      }
+
+      return JBUI.scale(350)
+    }
+
+    private fun getStatusBarHeight(): Int {
+      val statusBar = WindowManager.getInstance().getStatusBar(this, null)
+      if (statusBar != null) {
+        val component = statusBar.component
+        if (component != null && component.isVisible) {
+          return component.height
+        }
+      }
+      return 0
+    }
+
+    override fun getToolWindowDropAreaScreenBounds(): Rectangle {
+      val size = toolBar.size
+
+      if (anchor == ToolWindowAnchor.LEFT) {
+        val locationOnScreen = toolBar.locationOnScreen
+        return Rectangle(locationOnScreen.x + size.width, locationOnScreen.y, getFirstVisibleToolWindowSize(true), size.height)
+      }
+      if (anchor == ToolWindowAnchor.RIGHT) {
+        val locationOnScreen = toolBar.locationOnScreen
+        val toolWindowSize = getFirstVisibleToolWindowSize(true)
+        return Rectangle(locationOnScreen.x  - toolWindowSize, locationOnScreen.y, toolWindowSize, size.height)
+      }
+      if (anchor == ToolWindowAnchor.BOTTOM) {
+        val rootPane = (rootPane as IdeRootPane).getToolWindowPane()
+        val rootBounds = Rectangle(rootPane.locationOnScreen, rootPane.size)
+        val toolWindowHeight = getFirstVisibleToolWindowSize(false)
+        return Rectangle(rootBounds.x, rootBounds.y + rootBounds.height - toolWindowHeight, rootBounds.width, toolWindowHeight)
+      }
+      return super.getToolWindowDropAreaScreenBounds()
+    }
 
     override fun getButtonFor(toolWindowId: String) = toolBar.getButtonFor(toolWindowId)
 

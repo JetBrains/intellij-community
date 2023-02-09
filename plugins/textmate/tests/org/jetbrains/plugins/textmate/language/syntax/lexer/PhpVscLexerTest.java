@@ -3,7 +3,6 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer;
 import org.jetbrains.plugins.textmate.TestUtil;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class PhpVscLexerTest extends LexerTestCase {

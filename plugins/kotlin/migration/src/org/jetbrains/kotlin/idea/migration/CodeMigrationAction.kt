@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.migration
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-class CodeMigrationAction : CodeInspectionAction(
+class CodeMigrationAction : CodeInspectionMigrationAction(
     KotlinMigrationBundle.message("inspection.migration.title"),
     KotlinMigrationBundle.message("inspection.migration.title")
 ) {
@@ -13,7 +13,7 @@ class CodeMigrationAction : CodeInspectionAction(
 
         val project = e.project
         if (project != null) {
-            e.presentation.isEnabledAndVisible = CodeMigrationToggleAction.isEnabled(project)
+            e.presentation.isEnabledAndVisible = CodeMigrationToggleAction.Manager.isEnabled(project)
         }
     }
 

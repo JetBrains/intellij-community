@@ -3,10 +3,11 @@ name: Run mypy_primer
 on:
   # Only run on PR, since we diff against master
   pull_request:
-    # Since modular typeshed, mypy primer doesn't check third party stubs. Till that is changed,
-    # only run it on stdlib changes to avoid false confidence and wasted CI minutes.
     paths:
     - 'stdlib/**'
+    - 'stubs/**'
+    - '.github/workflows/mypy_primer.yml'
+    - '.github/workflows/mypy_primer_comment.yml'
 
 jobs:
   mypy_primer:
@@ -20,11 +21,11 @@ jobs:
         shard-index: [0, 1, 2, 3]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           path: typeshed_to_test
           fetch-depth: 0
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
       - name: Install dependencies
@@ -53,7 +54,7 @@ jobs:
             | tee diff_${{ matrix.shard-index }}.txt
           ) || [ $? -eq 1 ]
       - name: Upload mypy_primer diff
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: mypy_primer_diffs
           path: diff_${{ matrix.shard-index }}.txt
@@ -63,7 +64,7 @@ jobs:
           echo ${{ github.event.pull_request.number }} | tee pr_number.txt
       - if: ${{ matrix.shard-index }} == 0
         name: Upload PR number
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: mypy_primer_diffs
           path: pr_number.txt

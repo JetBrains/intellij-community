@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.analysis.AnalysisScope;
@@ -6,8 +6,10 @@ import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptRegularComponent;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -31,10 +33,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
 
 public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private static final ExtensionPointName<VisibilityExtension> EP_NAME = new ExtensionPointName<>("com.intellij.visibility");
@@ -47,55 +51,28 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private final Map<String, Boolean> myExtensions = new TreeMap<>();
   @NonNls public static final String SHORT_NAME = "WeakerAccess";
 
-  private final class OptionsPanel extends InspectionOptionsPanel {
-    private final JCheckBox myPackageLocalForMembersCheckbox;
-    private final JCheckBox myPrivateForInnersCheckbox;
-    private final JCheckBox myPackageLocalForTopClassesCheckbox;
-    private final JCheckBox mySuggestForConstantsCheckbox;
-
-    private OptionsPanel() {
-      myPackageLocalForMembersCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.visibility.option.package.private.members"));
-      myPackageLocalForMembersCheckbox.setSelected(SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS);
-      myPackageLocalForMembersCheckbox.getModel().addItemListener(
-        e -> SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = myPackageLocalForMembersCheckbox.isSelected());
-
-      add(myPackageLocalForMembersCheckbox);
-
-      myPackageLocalForTopClassesCheckbox = new JCheckBox(JavaAnalysisBundle.message(
-        "inspection.visibility.package.private.top.level.classes"));
-      myPackageLocalForTopClassesCheckbox.setSelected(SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES);
-      myPackageLocalForTopClassesCheckbox.getModel().addItemListener(
-        e -> SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = myPackageLocalForTopClassesCheckbox.isSelected());
-
-      add(myPackageLocalForTopClassesCheckbox);
-
-      myPrivateForInnersCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.visibility.private.inner.members"));
-      myPrivateForInnersCheckbox.setSelected(SUGGEST_PRIVATE_FOR_INNERS);
-      myPrivateForInnersCheckbox.getModel().addItemListener(e -> SUGGEST_PRIVATE_FOR_INNERS = myPrivateForInnersCheckbox.isSelected());
-
-      add(myPrivateForInnersCheckbox);
-
-      mySuggestForConstantsCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.visibility.option.constants"));
-      mySuggestForConstantsCheckbox.setSelected(SUGGEST_FOR_CONSTANTS);
-      mySuggestForConstantsCheckbox.getModel().addItemListener(
-        e -> SUGGEST_FOR_CONSTANTS = mySuggestForConstantsCheckbox.isSelected());
-
-      add(mySuggestForConstantsCheckbox);
-
-      for (EntryPoint entryPoint : EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensions()) {
-        if (entryPoint instanceof EntryPointWithVisibilityLevel) {
-          final JCheckBox checkBox = new JCheckBox(((EntryPointWithVisibilityLevel)entryPoint).getTitle());
-          checkBox.setSelected(isEntryPointEnabled((EntryPointWithVisibilityLevel)entryPoint));
-          checkBox.addActionListener(e -> myExtensions.put(((EntryPointWithVisibilityLevel)entryPoint).getId(), checkBox.isSelected()));
-          add(checkBox);
-        }
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    List<OptRegularComponent> checkboxes = new ArrayList<>(List.of(
+      checkbox("SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS", JavaAnalysisBundle.message("inspection.visibility.option.package.private.members")),
+      checkbox("SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES", JavaAnalysisBundle.message(
+        "inspection.visibility.package.private.top.level.classes")),
+      checkbox("SUGGEST_PRIVATE_FOR_INNERS", JavaAnalysisBundle.message("inspection.visibility.private.inner.members")),
+      checkbox("SUGGEST_FOR_CONSTANTS", JavaAnalysisBundle.message("inspection.visibility.option.constants"))
+    ));
+    for (EntryPoint entryPoint : EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensions()) {
+      if (entryPoint instanceof EntryPointWithVisibilityLevel epWithLevel) {
+        checkboxes.add(checkbox(epWithLevel.getId(), epWithLevel.getTitle()).prefix("ep"));
       }
     }
+    return new OptPane(checkboxes);
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new OptionsPanel();
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onPrefix(
+      "ep", bindId -> myExtensions.getOrDefault(bindId, true),
+      (bindId, value) -> myExtensions.put(bindId, (Boolean)value));
   }
 
   @NotNull
@@ -122,10 +99,9 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
                                                            @NotNull final InspectionManager manager,
                                                            @NotNull final GlobalInspectionContext globalContext,
                                                            @NotNull final ProblemDescriptionsProcessor processor) {
-    if (!(refEntity instanceof RefJavaElement)) {
+    if (!(refEntity instanceof RefJavaElement refElement)) {
       return null;
     }
-    final RefJavaElement refElement = (RefJavaElement)refEntity;
 
     if (refElement instanceof RefParameter) return null;
     if (refElement.isSyntheticJSP()) return null;
@@ -158,8 +134,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     if (refElement instanceof RefImplicitConstructor) return null;
 
     //ignore library override methods.
-    if (refElement instanceof RefMethod) {
-      RefMethod refMethod = (RefMethod) refElement;
+    if (refElement instanceof RefMethod refMethod) {
       if (refMethod.isExternalOverride() || refMethod.isRecordAccessor()) return null;
     }
 
@@ -271,13 +246,10 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     if (isAbstractMethod(refElement)) {
       weakestAccess = PsiModifier.PROTECTED;
     }
-    if (refElement instanceof RefMethod) {
-      final RefMethod refMethod = (RefMethod)refElement;
-      if (refMethod.isConstructor()) {
-        final RefClass ownerClass = refMethod.getOwnerClass();
-        if (ownerClass != null && ownerClass.isRecord()) {
-          weakestAccess = ownerClass.getAccessModifier();
-        }
+    if (refElement instanceof RefMethod refMethod && refMethod.isConstructor()) {
+      final RefClass ownerClass = refMethod.getOwnerClass();
+      if (ownerClass != null && ownerClass.isRecord()) {
+        weakestAccess = ownerClass.getAccessModifier();
       }
     }
 
@@ -330,9 +302,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       if (!isAccessibleFrom(refElement, to, accessModifier)) return false;
     }
 
-    if (to instanceof RefMethod) {
-      RefMethod refMethod = (RefMethod) to;
-
+    if (to instanceof RefMethod refMethod) {
       if (refMethod.isAbstract() && (refMethod.getDerivedMethods().isEmpty() || PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()))) return false;
 
       for (RefMethod refOverride : refMethod.getDerivedMethods()) {
@@ -345,8 +315,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       }
     }
 
-    if (to instanceof RefClass) {
-      RefClass refClass = (RefClass) to;
+    if (to instanceof RefClass refClass) {
       for (RefClass subClass : refClass.getSubClasses()) {
         if (!isAccessibleFrom(subClass, to, accessModifier)) return false;
       }
@@ -526,8 +495,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private static void ignoreElement(@NotNull ProblemDescriptionsProcessor processor, @NotNull RefEntity refElement){
     processor.ignoreElement(refElement);
 
-    if (refElement instanceof RefClass) {
-      RefClass refClass = (RefClass) refElement;
+    if (refElement instanceof RefClass refClass) {
       RefMethod defaultConstructor = refClass.getDefaultConstructor();
       if (defaultConstructor != null) {
         processor.ignoreElement(defaultConstructor);
@@ -631,8 +599,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
         LOG.assertTrue(list != null);
 
-        if (element instanceof PsiMethod) {
-          PsiMethod psiMethod = (PsiMethod)element;
+        if (element instanceof PsiMethod psiMethod) {
           PsiClass containingClass = psiMethod.getContainingClass();
           if (containingClass != null && containingClass.getParent() instanceof PsiFile &&
               PsiModifier.PRIVATE.equals(myHint) &&

@@ -129,18 +129,9 @@ internal class MainMenuButton {
     }
   }
 
-  private inner class ShowMenuAction : DumbAwareAction() {
-
-    private val icon = IconManager.getInstance().getIcon("expui/general/windowsMenu@20x20.svg", AllIcons::class.java)
-
-    override fun update(e: AnActionEvent) {
-      e.presentation.icon = icon
-      e.presentation.text = IdeBundle.message("main.toolbar.menu.button")
-    }
-
-    override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.BGT
-    }
+  private inner class ShowMenuAction : DumbAwareAction(
+    IdeBundle.messagePointer("main.toolbar.menu.button"),
+    IconManager.getInstance().getIcon("expui/general/windowsMenu@20x20.svg", AllIcons::class.java)) {
 
     override fun actionPerformed(e: AnActionEvent) = showPopup(e.dataContext)
 
@@ -182,13 +173,13 @@ internal class MainMenuButton {
 
 private fun createMenuButton(action: AnAction): ActionButton {
   val button = object : ActionButton(action, PresentationFactory().getPresentation(action),
-                                     ActionPlaces.MAIN_MENU, Dimension(40, 40)) {
+                                     ActionPlaces.MAIN_MENU, {ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
     override fun getDataContext(): DataContext {
       return DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200) ?: super.getDataContext()
     }
   }
 
-  button.setLook(HeaderToolbarButtonLook())
+  button.setLook(HeaderToolbarButtonLook(iconSize = { JBUI.CurrentTheme.Toolbar.burgerMenuButtonIconSize() }))
   return button
 }
 

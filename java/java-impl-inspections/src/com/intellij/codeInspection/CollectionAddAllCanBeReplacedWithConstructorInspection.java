@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -6,6 +6,8 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.TextRange;
@@ -25,7 +27,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
@@ -47,10 +48,14 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
     mySettings.writeSettings(node);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return mySettings.createOptionsPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return mySettings.getOptionPane();
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return mySettings.getOptionController();
   }
 
   @Override
@@ -144,12 +149,11 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
                                                       @NotNull PsiLocalVariable referent,
                                                       @NotNull String previousMethodName) {
     final PsiElement sibling = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
-    if (sibling instanceof PsiExpressionStatement) {
-      final PsiExpression siblingExpression = ((PsiExpressionStatement)sibling).getExpression();
-      if (siblingExpression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression siblingMethodCall = (PsiMethodCallExpression)siblingExpression;
+    if (sibling instanceof PsiExpressionStatement expressionStatement) {
+      final PsiExpression siblingExpression = expressionStatement.getExpression();
+      if (siblingExpression instanceof PsiMethodCallExpression siblingMethodCall) {
         final PsiExpression qualifier = siblingMethodCall.getMethodExpression().getQualifierExpression();
-        if (qualifier instanceof PsiReferenceExpression && referent.isEquivalentTo(((PsiReferenceExpression)qualifier).resolve())) {
+        if (qualifier instanceof PsiReferenceExpression ref && referent.isEquivalentTo(ref.resolve())) {
           final PsiMethod method = siblingMethodCall.resolveMethod();
           if (method != null && method.getName().equals(previousMethodName)) {
             return true;
@@ -161,10 +165,9 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
   }
 
   private boolean isCollectionConstructor(PsiExpression initializer) {
-    if (!(initializer instanceof PsiNewExpression)) {
+    if (!(initializer instanceof PsiNewExpression newExpression)) {
       return false;
     }
-    final PsiNewExpression newExpression = (PsiNewExpression)initializer;
     final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
     if (classReference == null) {
       return false;
@@ -288,7 +291,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
           if (scope != null &&
               ReferencesSearch.search(variable).allMatch(ref -> PsiTreeUtil.isAncestor(scope, ref.getElement(), true))) {
             PsiDeclarationStatement newDeclaration =
-              JavaPsiFacade.getElementFactory(project).createVariableDeclarationStatement("x", PsiType.INT, null, methodCallExpression);
+              JavaPsiFacade.getElementFactory(project).createVariableDeclarationStatement("x", PsiTypes.intType(), null, methodCallExpression);
             PsiVariable newVariable = (PsiVariable)newDeclaration.getDeclaredElements()[0].replace(variable);
             ct.delete(variable);
             ct.replace(Objects.requireNonNull(newVariable.getInitializer()), replacement);

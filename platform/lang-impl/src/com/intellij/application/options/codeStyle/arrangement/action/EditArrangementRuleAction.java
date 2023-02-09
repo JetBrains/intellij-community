@@ -11,9 +11,6 @@ import com.intellij.util.IconUtil;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class EditArrangementRuleAction extends AbstractArrangementRuleAction implements DumbAware, Toggleable {
   public EditArrangementRuleAction() {
     getTemplatePresentation().setText(ApplicationBundle.messagePointer("arrangement.action.rule.edit.text"));

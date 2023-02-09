@@ -7,35 +7,30 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.sh.ShFileType;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.util.function.Function;
+
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.shellcheck.ShShellcheckUtil.isValidPath;
 
-public class ShellcheckSetupNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
-  private static final Key<EditorNotificationPanel> KEY = Key.create("sh.shellcheck.installation");
-
-  @NotNull
+public class ShellcheckSetupNotificationProvider implements EditorNotificationProvider {
   @Override
-  public Key<EditorNotificationPanel> getKey() {
-    return KEY;
-  }
+  public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+                                                                                                                 @NotNull VirtualFile file) {
+    if (!(file.getFileType() instanceof ShFileType) || isValidPath(ShSettings.getShellcheckPath())) return null;
 
-  @Nullable
-  @Override
-  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file,
-                                                         @NotNull FileEditor fileEditor,
-                                                         @NotNull Project project) {
-    if (file.getFileType() instanceof ShFileType && !isValidPath(ShSettings.getShellcheckPath())) {
+    return fileEditor -> {
       EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info);
       panel.setText(message("sh.shellcheck.install.question"));
       Runnable onSuccess = () -> {
@@ -55,7 +50,6 @@ public class ShellcheckSetupNotificationProvider extends EditorNotifications.Pro
         EditorNotifications.getInstance(project).updateAllNotifications();
       });
       return panel;
-    }
-    return null;
+    };
   }
 }

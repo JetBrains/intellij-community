@@ -1,6 +1,5 @@
 internal class A // this is a primary constructor
-// this is a secondary constructor 1
-// end of primary constructor body
+// this is a secondary constructor 1 // end of primary constructor body
 @JvmOverloads constructor(p: Int = 1) {
     private val v = 1
 
@@ -9,13 +8,12 @@ internal class A // this is a primary constructor
     constructor(s: String) : this(s.length) // end of secondary constructor 2 body
 }
 
-internal class B    // this constructor will disappear
-// end of constructor body
+internal class B // this constructor will disappear // end of constructor body
     (private val x: Int) {
     fun foo() {}
 }
 
-internal class CtorComment    /*
+internal class CtorComment /*
      * The magic of comments
      */
 // single line magic comments

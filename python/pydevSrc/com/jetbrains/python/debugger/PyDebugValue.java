@@ -429,8 +429,7 @@ public class PyDebugValue extends XNamedValue {
     List<PyFrameAccessor.PyAsyncValue<String>> variables = new ArrayList<>();
     for (int i = 0; i < childrenList.size(); i++) {
       XValue value = childrenList.getValue(i);
-      if (value instanceof PyDebugValue) {
-        PyDebugValue debugValue = (PyDebugValue)value;
+      if (value instanceof PyDebugValue debugValue) {
         if (debugValue.getLoadValuePolicy() == ValuesPolicy.ASYNC) {
           variables.add(new PyFrameAccessor.PyAsyncValue<>(debugValue, debugValue.createDebugValueCallback()));
         }
@@ -473,8 +472,7 @@ public class PyDebugValue extends XNamedValue {
 
   private void setConfigureTypeRenderersLink(@NotNull XValueNode node) {
     String typeRendererId = getTypeRendererId();
-    if (node instanceof XValueNodeImpl) {
-      XValueNodeImpl valueNode = (XValueNodeImpl)node;
+    if (node instanceof XValueNodeImpl valueNode) {
       valueNode.clearAdditionalHyperlinks();
       if (typeRendererId != null) {
         XDebuggerTreeNodeHyperlink link = myFrameAccessor.getUserTypeRenderersLink(typeRendererId);
@@ -499,7 +497,7 @@ public class PyDebugValue extends XNamedValue {
             values = processLargeCollection(values);
           }
           if (myFrameAccessor.isSimplifiedView()) {
-            extractChildrenToGroup(PROTECTED_ATTRS_NAME, AllIcons.Nodes.C_protected, node, values, (String name) -> name.startsWith("_"),
+            extractChildrenToGroup(PydevBundle.message("pydev.value.protected.attributes.group.name"), AllIcons.Nodes.C_protected, node, values, (String name) -> name.startsWith("_"),
                                    getPROTECTED_ATTRS_EXCLUDED());
           }
           else {
@@ -704,8 +702,7 @@ public class PyDebugValue extends XNamedValue {
     if (values == null) return;
 
     for (int i = 0; i < values.size(); i++) {
-      if (values.getValue(i) instanceof PyDebugValue) {
-        PyDebugValue value = (PyDebugValue) values.getValue(i);
+      if (values.getValue(i) instanceof PyDebugValue value) {
         descriptor = childrenDescriptors.getOrDefault(value.getName(), null);
         if (descriptor == null) {
           descriptor = new PyDebugValueDescriptor();

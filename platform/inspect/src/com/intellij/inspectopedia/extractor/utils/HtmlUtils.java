@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.inspectopedia.extractor.utils;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class HtmlUtils {
+public final class HtmlUtils {
     public static final Safelist SAFELIST = new Safelist();
 
     static {
@@ -130,11 +129,10 @@ public class HtmlUtils {
     }
 
     private static boolean isBlockElement(@NotNull Node node) {
-        if (!(node instanceof Element))
+        if (!(node instanceof Element element))
             return false;
 
-        final Element element = (Element) node;
-        return element.tagName().equals("list") ||
+      return element.tagName().equals("list") ||
                 (element.tagName().equals("code") && element.attr("style").equals("block")) ||
                 isBr(node);
     }

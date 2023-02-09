@@ -136,7 +136,8 @@ public final class ActionUrl implements JDOMExternalizable {
       group.setForceShowAsPopup(Boolean.parseBoolean(element.getAttributeValue(FORCE_POPUP)));
       myComponent = group;
     }
-    myActionType = Integer.parseInt(element.getAttributeValue(ACTION_TYPE));
+    String actionTypeString = element.getAttributeValue(ACTION_TYPE);
+    myActionType = actionTypeString == null ? -1 : Integer.parseInt(actionTypeString);
     myAbsolutePosition = Integer.parseInt(element.getAttributeValue(POSITION));
     DefaultJDOMExternalizer.readExternal(this, element);
   }
@@ -179,19 +180,23 @@ public final class ActionUrl implements JDOMExternalizable {
     }
   }
 
-  private static void addPathToActionsTree(JTree tree, ActionUrl url) {
+  public static @Nullable DefaultMutableTreeNode addPathToActionsTree(JTree tree, ActionUrl url) {
     final TreePath treePath = CustomizationUtil.getTreePath(tree, url);
-    if (treePath == null) return;
+    if (treePath == null) return null;
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
     final int absolutePosition = url.getAbsolutePosition();
     if (node.getChildCount() >= absolutePosition && absolutePosition >= 0) {
+      DefaultMutableTreeNode newNode;
       if (url.getComponent() instanceof Group) {
-        node.insert(ActionsTreeUtil.createNode((Group)url.getComponent()), absolutePosition);
+        newNode = ActionsTreeUtil.createNode((Group)url.getComponent());
       }
       else {
-        node.insert(new DefaultMutableTreeNode(url.getComponent()), absolutePosition);
+        newNode = new DefaultMutableTreeNode(url.getComponent());
       }
+      node.insert(newNode, absolutePosition);
+      return newNode;
     }
+    return null;
   }
 
   private static void removePathFromActionsTree(JTree tree, ActionUrl url) {
@@ -202,7 +207,8 @@ public final class ActionUrl implements JDOMExternalizable {
     final int absolutePosition = url.getAbsolutePosition();
     if (node.getChildCount() > absolutePosition && absolutePosition >= 0) {
       DefaultMutableTreeNode child = (DefaultMutableTreeNode)node.getChildAt(absolutePosition);
-      if (child.getUserObject().equals(url.getComponent())) {
+      Object userObj = child.getUserObject();
+      if (url.getComponent().equals(userObj instanceof Pair<?, ?> pair ? pair.first : userObj)) {
         node.remove(child);
       }
     }
@@ -218,7 +224,8 @@ public final class ActionUrl implements JDOMExternalizable {
         if (parent.getChildCount() > absolutePosition && absolutePosition >= 0) {
           if (parent.getChildCount() > initialPosition && initialPosition >= 0) {
             final DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getChildAt(initialPosition);
-            if (child.getUserObject().equals(url.getComponent())) {
+            Object userObj = child.getUserObject();
+            if (url.getComponent().equals(userObj instanceof Pair<?, ?> pair ? pair.first : userObj)) {
               parent.remove(child);
               parent.insert(child, absolutePosition);
             }
@@ -242,10 +249,9 @@ public final class ActionUrl implements JDOMExternalizable {
 
   @Override
   public boolean equals(Object object) {
-    if (!(object instanceof ActionUrl)) {
+    if (!(object instanceof ActionUrl url)) {
       return false;
     }
-    ActionUrl url = (ActionUrl)object;
     Object comp = myComponent instanceof Pair ? ((Pair<?, ?>)myComponent).first : myComponent;
     Object thatComp = url.myComponent instanceof Pair ? ((Pair<?, ?>)url.myComponent).first : url.myComponent;
     return Comparing.equal(comp, thatComp)

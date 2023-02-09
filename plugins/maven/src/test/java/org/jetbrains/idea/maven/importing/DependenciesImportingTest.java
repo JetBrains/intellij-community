@@ -18,6 +18,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -47,6 +48,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
+    assertProjectLibraryCoordinates("Maven: junit:junit:4.0", "junit", "junit", "4.0");
   }
 
   @Test
@@ -61,9 +63,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                   "    <artifactId>junit</artifactId>\n" +
                   "    <version>4.0</version>\n" +
                   "    <scope>system</scope>\n" +
-                  "    <systemPath>" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar</systemPath>\n" +
+                  "    <systemPath>\n" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar</systemPath>\n" +
                   "  </dependency>\n" +
-                  "</dependencies>");
+                  "</dependencies>\n");
 
     assertModules("project");
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
@@ -91,6 +93,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-tests.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-test-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-test-javadoc.jar!/");
+    assertProjectLibraryCoordinates("Maven: junit:junit:test-jar:tests:4.0", "junit", "junit", "tests", "jar", "4.0");
   }
 
   @Test
@@ -112,6 +115,8 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-bar.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
+    assertProjectLibraryCoordinates("Maven: junit:junit:bar:4.0", "junit", "junit", "bar", "jar", "4.0");
+
   }
 
   @Test
@@ -210,17 +215,18 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     importProject();
     assertModuleLibDeps("project", "Maven: group:lib:1");
 
-    createProjectPom("<groupId>test</groupId>\n" +
-                     "<artifactId>project</artifactId>\n" +
-                     "<version" + // incomplete tag
-
-                     "<dependencies>\n" +
-                     "  <dependency>\n" +
-                     "    <groupId>group</groupId>\n" +
-                     "    <artifactId>lib</artifactId>\n" +
-                     "    <version>1</version>\n" +
-                     "  </dependency>\n" +
-                     "</dependencies>");
+    // incomplete tag
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version<dependencies>
+                         <dependency>
+                           <groupId>group</groupId>
+                           <artifactId>lib</artifactId>
+                           <version>1</version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     importProjectWithErrors();
     assertModuleLibDeps("project", "Maven: group:lib:1");
@@ -968,7 +974,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                      "    <scope>system</scope>\n" +
                      "    <systemPath>${env." + getEnvVar() + "}/lib/tools.jar</systemPath>\n" +
                      "  </dependency>\n" +
-                     "</dependencies>");
+                     "</dependencies>\n");
     importProjectWithErrors();
 
     assertModules("project");
@@ -1283,7 +1289,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                            "      <mirrorOf>*</mirrorOf>\n" +
                            "    </mirror>\n" +
                            "  </mirrors>\n" +
-                           "</settings>");
+                           "</settings>\n");
 
     importProject("""
                     <groupId>test</groupId>
@@ -1515,9 +1521,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                           "    <artifactId>yyy</artifactId>\n" +
                           "    <version>1</version>\n" +
                           "    <scope>system</scope>\n" +
-                          "    <systemPath>" + getRoot() + "/m1/foo.jar</systemPath>\n" +
+                          "    <systemPath>\n" + getRoot() + "/m1/foo.jar</systemPath>\n" +
                           "  </dependency>\n" +
-                          "</dependencies>");
+                          "</dependencies>\n");
     createModulePom("m2", "<groupId>test</groupId>\n" +
                           "<artifactId>m2</artifactId>\n" +
                           "<version>1</version>\n" +
@@ -1528,9 +1534,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                           "    <artifactId>yyy</artifactId>\n" +
                           "    <version>1</version>\n" +
                           "    <scope>system</scope>\n" +
-                          "    <systemPath>" + getRoot() + "/m2/foo.jar</systemPath>\n" +
+                          "    <systemPath>\n" + getRoot() + "/m2/foo.jar</systemPath>\n" +
                           "  </dependency>\n" +
-                          "</dependencies>");
+                          "</dependencies>\n");
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -1658,9 +1664,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                      "    <artifactId>yyy</artifactId>\n" +
                      "    <version>1</version>\n" +
                      "    <scope>system</scope>\n" +
-                     "    <systemPath>" + getRoot() + "/foo/bar.jar</systemPath>\n" +
+                     "    <systemPath>\n" + getRoot() + "/foo/bar.jar</systemPath>\n" +
                      "  </dependency>\n" +
-                     "</dependencies>");
+                     "</dependencies>\n");
     importProjectWithErrors();
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
@@ -1691,9 +1697,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                      "    <artifactId>yyy</artifactId>\n" +
                      "    <version>1</version>\n" +
                      "    <scope>system</scope>\n" +
-                     "    <systemPath>" + getRoot() + "/foo/bar.jar</systemPath>\n" +
+                     "    <systemPath>\n" + getRoot() + "/foo/bar.jar</systemPath>\n" +
                      "  </dependency>\n" +
-                     "</dependencies>");
+                     "</dependencies>\n");
     importProjectWithErrors();
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
@@ -1711,9 +1717,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                      "    <artifactId>yyy</artifactId>\n" +
                      "    <version>1</version>\n" +
                      "    <scope>system</scope>\n" +
-                     "    <systemPath>" + getRoot() + "/foo/xxx.jar</systemPath>\n" +
+                     "    <systemPath>\n" + getRoot() + "/foo/xxx.jar</systemPath>\n" +
                      "  </dependency>\n" +
-                     "</dependencies>");
+                     "</dependencies>\n");
 
     importProjectWithErrors();
 
@@ -2051,6 +2057,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
     assertModules("project");
     assertModuleLibDeps("project", "Maven: foo:foo:ejb:1", "Maven: foo:bar:ejb-client:client:1");
+    assertProjectLibraryCoordinates("Maven: foo:foo:ejb:1", "foo", "foo", null, "ejb", "1");
+    assertProjectLibraryCoordinates("Maven: foo:bar:ejb-client:client:1", "foo", "bar", "client", "ejb", "1");
+
   }
 
   @Test
@@ -2102,7 +2111,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                   "    <id>central</id>\n" +
                   "    <url>file://localhost/" + repoPath + "</url>\n" +
                   "  </repository>\n" +
-                  "</repositories>");
+                  "</repositories>\n");
 
     assertModuleLibDeps("project", "Maven: junit:junit:3.8.2");
     assertModuleLibDep("project", "Maven: junit:junit:3.8.2",
@@ -2526,7 +2535,6 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
   @Test
   public void testAttachedJarDependency() throws IOException {
     // IDEA-86815 Recognize attached jar as library dependency
-    //  @author Sergey Evdokimov
 
     createModulePom("m1", """
       <groupId>test</groupId>
@@ -2570,7 +2578,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                           "            <configuration>\n" +
                           "              <artifacts>\n" +
                           "                <artifact>\n" +
-                          "                  <file>" + jarPath + "</file>\n" +
+                          "                  <file>\n" + jarPath + "</file>\n" +
                           "                  <type>jar</type>\n" +
                           "                </artifact>\n" +
                           "              </artifacts>\n" +
@@ -2579,7 +2587,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                           "        </executions>\n" +
                           "      </plugin>\n" +
                           "    </plugins>\n" +
-                          "  </build>");
+                          "  </build>\n");
 
     importProject("""
                     <groupId>test</groupId>

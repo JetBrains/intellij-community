@@ -43,10 +43,9 @@ public final class BoolUtils {
   private BoolUtils() {}
 
   public static boolean isNegation(@NotNull PsiExpression expression) {
-    if (!(expression instanceof PsiPrefixExpression)) {
+    if (!(expression instanceof PsiPrefixExpression prefixExp)) {
       return false;
     }
-    final PsiPrefixExpression prefixExp = (PsiPrefixExpression)expression;
     final IElementType tokenType = prefixExp.getOperationTokenType();
     return JavaTokenType.EXCL.equals(tokenType);
   }
@@ -63,10 +62,9 @@ public final class BoolUtils {
 
   @Nullable
   public static PsiExpression getNegated(PsiExpression expression) {
-    if (!(expression instanceof PsiPrefixExpression)) {
+    if (!(expression instanceof PsiPrefixExpression prefixExpression)) {
       return null;
     }
-    final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
     final IElementType tokenType = prefixExpression.getOperationTokenType();
     if (!JavaTokenType.EXCL.equals(tokenType)) {
       return null;
@@ -94,14 +92,13 @@ public final class BoolUtils {
    */
   public static int getLogicalOperandCount(@Nullable PsiExpression condition) {
     PsiExpression unparenthesizedExpression = PsiUtil.skipParenthesizedExprDown(condition);
-    if (!(unparenthesizedExpression instanceof PsiPolyadicExpression)) {
+    if (!(unparenthesizedExpression instanceof PsiPolyadicExpression infixExpression)) {
       return 1;
     }
-    PsiPolyadicExpression infixExpression= (PsiPolyadicExpression) unparenthesizedExpression;
     if (!ANDAND.equals(infixExpression.getOperationTokenType())
         && !OROR.equals(infixExpression.getOperationTokenType())
-        && (PsiType.BOOLEAN.equals(infixExpression.getOperands()[0].getType())
-            || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(infixExpression.getOperands()[0].getType()))
+        && (PsiTypes.booleanType().equals(infixExpression.getOperands()[0].getType())
+            || PsiTypes.booleanType().equals(PsiPrimitiveType.getUnboxedType(infixExpression.getOperands()[0].getType()))
             || !Arrays.asList(AND, OR).contains(infixExpression.getOperationTokenType()))) {
       return 1;
     }
@@ -149,8 +146,7 @@ public final class BoolUtils {
   }
 
   private static String findSmartMethodNegation(PsiExpression expression) {
-    if (!(expression instanceof PsiMethodCallExpression)) return null;
-    PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (!(expression instanceof PsiMethodCallExpression call)) return null;
     PsiMethodCallExpression copy = (PsiMethodCallExpression)call.copy();
     for (PredicatedReplacement predicatedReplacement : ourReplacements) {
       if (predicatedReplacement.predicate.test(call)) {
@@ -172,8 +168,7 @@ public final class BoolUtils {
       String smartNegation = findSmartMethodNegation(expression);
       if (smartNegation != null) return smartNegation;
     }
-    if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+    if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
       PsiExpression operand = parenthesizedExpression.getExpression();
       if (operand != null) {
         return '(' + getNegatedExpressionText(operand, tracker) + ')';
@@ -194,8 +189,7 @@ public final class BoolUtils {
                getNegatedExpressionText(((PsiAssignmentExpression)expression).getRExpression());
       }
     }
-    if (expression instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
+    if (expression instanceof PsiConditionalExpression conditionalExpression) {
       final boolean needParenthesis = ParenthesesUtils.getPrecedence(conditionalExpression) >= precedence;
       final String text = tracker.text(conditionalExpression.getCondition()) +
                           '?' + getNegatedExpressionText(conditionalExpression.getThenExpression(), tracker) +
@@ -208,8 +202,7 @@ public final class BoolUtils {
         return ParenthesesUtils.getText(tracker.markUnchanged(negated), precedence);
       }
     }
-    if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    if (expression instanceof PsiPolyadicExpression polyadicExpression) {
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
       final PsiExpression[] operands = polyadicExpression.getOperands();
       if (ComparisonUtils.isComparison(polyadicExpression)) {
@@ -275,8 +268,7 @@ public final class BoolUtils {
       ancestor = (PsiExpression)parent;
       parent = ancestor.getParent();
     }
-    if (parent instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixAncestor = (PsiPrefixExpression)parent;
+    if (parent instanceof PsiPrefixExpression prefixAncestor) {
       if (JavaTokenType.EXCL.equals(prefixAncestor.getOperationTokenType())) {
         return prefixAncestor;
       }
@@ -287,10 +279,9 @@ public final class BoolUtils {
   @Contract("null -> false")
   public static boolean isBooleanLiteral(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(expression instanceof PsiLiteralExpression)) {
+    if (!(expression instanceof PsiLiteralExpression literalExpression)) {
       return false;
     }
-    final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
     @NonNls final String text = literalExpression.getText();
     return PsiKeyword.TRUE.equals(text) || PsiKeyword.FALSE.equals(text);
   }
@@ -332,15 +323,13 @@ public final class BoolUtils {
     if (isNegation(expression2)) {
       return equivalence.expressionsAreEquivalent(getNegated(expression2), expression1);
     }
-    if (expression1 instanceof PsiBinaryExpression && expression2 instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binOp1 = (PsiBinaryExpression)expression1;
-      PsiBinaryExpression binOp2 = (PsiBinaryExpression)expression2;
+    if (expression1 instanceof PsiBinaryExpression binOp1 && expression2 instanceof PsiBinaryExpression binOp2) {
       RelationType rel1 = DfaPsiUtil.getRelationByToken(binOp1.getOperationTokenType());
       RelationType rel2 = DfaPsiUtil.getRelationByToken(binOp2.getOperationTokenType());
       if (rel1 == null || rel2 == null) return false;
       PsiType type = binOp1.getLOperand().getType();
       // a > b and a <= b are not strictly opposite due to NaN semantics
-      if (type == null || type.equals(PsiType.FLOAT) || type.equals(PsiType.DOUBLE)) return false;
+      if (type == null || type.equals(PsiTypes.floatType()) || type.equals(PsiTypes.doubleType())) return false;
       if (rel1 == rel2.getNegated()) {
         return equivalence.expressionsAreEquivalent(binOp1.getLOperand(), binOp2.getLOperand()) &&
                equivalence.expressionsAreEquivalent(binOp1.getROperand(), binOp2.getROperand());

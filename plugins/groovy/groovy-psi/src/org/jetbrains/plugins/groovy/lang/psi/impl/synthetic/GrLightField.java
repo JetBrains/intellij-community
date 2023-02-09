@@ -29,9 +29,6 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * @author sergey.evdokimov
- */
 public class GrLightField extends GrLightVariable implements GrField {
 
   private PsiClass myContainingClass;
@@ -175,8 +172,7 @@ public class GrLightField extends GrLightVariable implements GrField {
   public boolean isEquivalentTo(PsiElement another) {
     if (super.isEquivalentTo(another)) return true;
 
-    if (another instanceof GrLightField) {
-      GrLightField otherField = (GrLightField)another;
+    if (another instanceof GrLightField otherField) {
       return otherField.myContainingClass == myContainingClass && getName().equals(otherField.getName());
     }
 

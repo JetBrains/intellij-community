@@ -45,9 +45,7 @@ public class CharTailType extends TailType {
 
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof CharTailType)) return false;
-
-    final CharTailType that = (CharTailType)o;
+    if (!(o instanceof CharTailType that)) return false;
 
     if (myChar != that.myChar) return false;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -42,7 +42,7 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
           if (element == null) return;
           PsiIfStatement ifStatement = (PsiIfStatement)statements[1];
           if(checkAndExtractCondition(declaration, ifStatement) == null) return;
-          registerProblem(statement, endToken);
+          registerProblem(statement);
         }
         else if (statements.length == 1 && statements[0] instanceof PsiIfStatement){
           PsiIfStatement ifStatement = (PsiIfStatement)statements[0];
@@ -50,16 +50,15 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
           if (condition == null) return;
           PsiElement ref = declaration.findOnlyIteratorRef(condition);
           if (ref != null && declaration.isIteratorMethodCall(ref.getParent().getParent(), "next") && isAlwaysExecuted(condition, ref)) {
-            registerProblem(statement, endToken);
+            registerProblem(statement);
           }
         }
       }
 
-      private boolean isAlwaysExecuted(PsiExpression condition, PsiElement ref) {
+      private static boolean isAlwaysExecuted(PsiExpression condition, PsiElement ref) {
         while(ref != condition) {
           PsiElement parent = ref.getParent();
-          if(parent instanceof PsiPolyadicExpression) {
-            PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+          if(parent instanceof PsiPolyadicExpression polyadicExpression) {
             IElementType type = polyadicExpression.getOperationTokenType();
             if ((type.equals(JavaTokenType.ANDAND) || type.equals(JavaTokenType.OROR)) && polyadicExpression.getOperands()[0] != ref) {
               return false;
@@ -73,14 +72,14 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
         return true;
       }
 
-      private void registerProblem(PsiLoopStatement statement, PsiJavaToken endToken) {
+      private void registerProblem(PsiLoopStatement statement) {
         holder.registerProblem(statement.getFirstChild(),
                                QuickFixBundle.message("java.8.collection.removeif.inspection.description"),
                                new ReplaceWithRemoveIfQuickFix());
       }
 
       @Nullable
-      private PsiExpression checkAndExtractCondition(IterableTraversal traversal, PsiIfStatement ifStatement) {
+      private static PsiExpression checkAndExtractCondition(IterableTraversal traversal, PsiIfStatement ifStatement) {
         PsiExpression condition = ifStatement.getCondition();
         if (condition == null || ifStatement.getElseBranch() != null) return null;
         PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
@@ -118,7 +117,7 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
         if (condition == null) return;
         PsiJavaToken endToken = statement.getRParenth();
         if (endToken == null) return;
-        registerProblem(statement, endToken);
+        registerProblem(statement);
       }
     };
   }
@@ -134,8 +133,7 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getStartElement().getParent();
-      if(!(element instanceof PsiLoopStatement)) return;
-      PsiLoopStatement loop = (PsiLoopStatement)element;
+      if(!(element instanceof PsiLoopStatement loop)) return;
       PsiStatement[] statements = ControlFlowUtils.unwrapBlock(loop.getBody());
       PsiIfStatement ifStatement = tryCast(ArrayUtil.getLastElement(statements), PsiIfStatement.class);
       if (ifStatement == null) return;

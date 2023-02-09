@@ -50,12 +50,6 @@ public final class RegisteredIndexes {
     myFileDocumentManager = fileDocumentManager;
     myFileBasedIndex = fileBasedIndex;
     myStateFuture = IndexDataInitializer.submitGenesisTask(new FileBasedIndexDataInitialization(fileBasedIndex, this));
-
-    if (!IndexDataInitializer.ourDoAsyncIndicesInitialization) {
-      ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        waitUntilIndicesAreInitialized();
-      });
-    }
   }
 
   boolean performShutdown() {

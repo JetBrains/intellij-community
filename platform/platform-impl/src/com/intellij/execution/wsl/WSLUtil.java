@@ -7,14 +7,11 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +38,6 @@ import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
  */
 public final class WSLUtil {
   public static final Logger LOG = Logger.getInstance("#com.intellij.execution.wsl");
-  private final static String WSL_PATH_TO_REMOVE = "wsl://";
 
   /**
    * @deprecated use {@link WslDistributionManager#getInstalledDistributions()} instead.
@@ -94,7 +90,7 @@ public final class WSLUtil {
    * @deprecated Use {@link WslDistributionManager#getOrCreateDistributionByMsId(String)}
    */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static WSLDistribution getDistributionByMsId(@Nullable String name) {
     if (name == null) {
       return null;
@@ -220,21 +216,6 @@ public final class WSLUtil {
     catch (Exception e) {
       LOG.warn(e);
       return null;
-    }
-  }
-
-  /**
-   * Change old (wsl://) prefix to the new one (\\wsl$\)
-   *
-   * @deprecated remove after everyone migrates to the new prefix
-   */
-  @Deprecated
-  public static void fixWslPrefix(@NotNull Sdk sdk) {
-    if (sdk instanceof ProjectJdkImpl) {
-      var path = sdk.getHomePath();
-      if (path != null && path.startsWith(WSL_PATH_TO_REMOVE)) {
-        ((ProjectJdkImpl)sdk).setHomePath(WslConstants.UNC_PREFIX + path.substring(WSL_PATH_TO_REMOVE.length()));
-      }
     }
   }
 }

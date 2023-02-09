@@ -3,12 +3,15 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
+import com.intellij.openapi.vfs.newvfs.AttributeOutputStreamBase;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.RepresentableAsByteArraySequence;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.io.storage.Storage;
@@ -25,7 +28,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  *
  */
-public class AttributesStorageOld extends AbstractAttributesStorage {
+public class AttributesStorageOld implements AbstractAttributesStorage {
 
   /**
    * RC: this flag influences storage layout, but used nowhere. Seems like it is an unfinished effort to
@@ -69,7 +72,7 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
   }
 
   @Override
-  public @Nullable AttributeInputStream readAttribute(final PersistentFSConnection connection,
+  public @Nullable AttributeInputStream readAttribute(final @NotNull PersistentFSConnection connection,
                                                       final int fileId,
                                                       final @NotNull FileAttribute attribute) throws IOException {
     lock.readLock().lock();
@@ -124,7 +127,7 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
   }
 
   @Override
-  public boolean hasAttributePage(final PersistentFSConnection connection,
+  public boolean hasAttributePage(final @NotNull PersistentFSConnection connection,
                                   final int fileId,
                                   final @NotNull FileAttribute attribute) throws IOException {
     lock.readLock().lock();
@@ -141,17 +144,17 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
    */
   @Override
   @NotNull
-  public AttributeOutputStream writeAttribute(final PersistentFSConnection connection,
+  public AttributeOutputStream writeAttribute(final @NotNull PersistentFSConnection connection,
                                               final int fileId,
                                               final @NotNull FileAttribute attribute) {
-    return new AttributeOutputStream(
+    return new AttributeOutputStreamBase(
       new AttributeOutputStreamImpl(connection, fileId, attribute),
       connection.getEnumeratedAttributes()
     );
   }
 
   @Override
-  public void deleteAttributes(final PersistentFSConnection connection,
+  public void deleteAttributes(final @NotNull PersistentFSConnection connection,
                                final int fileId) throws IOException {
     lock.writeLock().lock();
     try {
@@ -189,7 +192,7 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
 
 
   @Override
-  public void checkAttributesStorageSanity(final PersistentFSConnection connection,
+  public void checkAttributesStorageSanity(final @NotNull PersistentFSConnection connection,
                                            final int fileId,
                                            final @NotNull IntList usedAttributeRecordIds,
                                            final @NotNull IntList validAttributeIds) throws IOException {
@@ -223,7 +226,7 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
   }
   /* ==================================== implementation =================================================================== */
 
-  private final class AttributeOutputStreamImpl extends DataOutputStream {
+  private final class AttributeOutputStreamImpl extends DataOutputStream implements RepresentableAsByteArraySequence {
     private final PersistentFSConnection connection;
     @NotNull
     private final FileAttribute myAttribute;
@@ -277,8 +280,7 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
         modCount.incrementAndGet();
       }
       catch (Throwable t) {
-        FSRecords.handleError(t);
-        throw new RuntimeException(t);
+        throw FSRecords.handleError(t);
       }
       finally {
         lock.writeLock().unlock();
@@ -404,6 +406,12 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
           directoryStream.write(newAttributeInlinableValue.getInternalBuffer(), 0, newAttributeInlinableValue.size());
         }
       }
+    }
+
+    @NotNull
+    @Override
+    public ByteArraySequence asByteArraySequence() {
+      return ((BufferExposingByteArrayOutputStream)out).asByteArraySequence();
     }
   }
 

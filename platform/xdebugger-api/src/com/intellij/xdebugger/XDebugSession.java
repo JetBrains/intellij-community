@@ -119,12 +119,6 @@ public interface XDebugSession extends AbstractDebuggerSession {
                             @NotNull XSuspendContext suspendContext);
 
   /**
-   * @deprecated use {@link #breakpointReached(XBreakpoint, String, XSuspendContext)} instead
-   */
-  @Deprecated(forRemoval = true)
-  boolean breakpointReached(@NotNull XBreakpoint<?> breakpoint, @NotNull XSuspendContext suspendContext);
-
-  /**
    * Call this method when the position is reached (e.g. after "Run to cursor" or "Step over" command)
    */
   void positionReached(@NotNull XSuspendContext suspendContext);

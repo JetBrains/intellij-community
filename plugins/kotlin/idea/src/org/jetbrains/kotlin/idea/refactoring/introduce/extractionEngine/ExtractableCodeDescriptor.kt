@@ -571,7 +571,10 @@ class AnalysisResult(
                 }
             )
 
-            return additionalInfo?.let { "$message\n\n${it.joinToString("\n") { msg -> StringUtil.htmlEmphasize(msg) }}" } ?: message
+            return additionalInfo?.let { "$message\n\n${it.joinToString("\n") { msg ->
+                @Suppress("HardCodedStringLiteral")
+                StringUtil.htmlEmphasize(msg)
+            }}" } ?: message
         }
     }
 }

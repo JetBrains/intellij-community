@@ -183,7 +183,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
         return null;
       }
       case TRUE_VALUE, FALSE_VALUE -> {
-        if (!PsiType.BOOLEAN.equals(type) && !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
+        if (!PsiTypes.booleanType().equals(type) && !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
           return JavaAnalysisBundle.message("inspection.contract.checker.boolean.condition.for.nonboolean.parameter",
                                             parameter.getName(), type.getPresentableText());
         }

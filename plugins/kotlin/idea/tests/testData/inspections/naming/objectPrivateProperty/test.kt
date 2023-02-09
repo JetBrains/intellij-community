@@ -1,4 +1,4 @@
-
+private var FOO: Int = 0
 object Foo {
     private val _Foo: String = ""
 

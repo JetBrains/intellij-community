@@ -27,8 +27,11 @@ class TextComponentCaretModel implements CaretModel {
   public void moveCaretRelatively(final int columnShift,
                                   final int lineShift,
                                   final boolean withSelection, final boolean blockSelection, final boolean scrollToCaret) {
-    if (lineShift == 0 && !withSelection && !blockSelection && !scrollToCaret) {
+    if (lineShift == 0 && !withSelection && !blockSelection) {
       moveToOffset(getOffset() + columnShift);
+      if (scrollToCaret) {
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      }
       return;
     }
     throw new UnsupportedOperationException("Not implemented");

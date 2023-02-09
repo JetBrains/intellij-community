@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.java.i18n.JavaI18nBundle;
@@ -26,7 +27,6 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.util.occurrences.BaseOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.IncorrectOperationException;
@@ -42,10 +42,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.util.*;
 import java.util.stream.Stream;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final int MAX_FILES_TO_ON_THE_FLY_SEARCH = 10;
@@ -120,8 +120,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     List<PsiLiteralExpression> foundExpr = new SmartList<>();
     LowLevelSearchUtil.processTexts(text, 0, text.length(), searcher, offset -> {
       PsiElement element = file.findElementAt(offset);
-      if (element == null || !(element.getParent() instanceof PsiLiteralExpression)) return true;
-      PsiLiteralExpression expression = (PsiLiteralExpression)element.getParent();
+      if (element == null || !(element.getParent() instanceof PsiLiteralExpression expression)) return true;
       if (Comparing.equal(stringToFind, expression.getValue()) && shouldCheck(expression, ignorePropertyKeys)) {
         foundExpr.add(expression);
       }
@@ -182,9 +181,8 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
 
   private PsiExpression @NotNull [] getDuplicateLiterals(@NotNull Project project, @NotNull PsiLiteralExpression place, boolean isOnTheFly) {
     Object value = place.getValue();
-    if (!(value instanceof String)) return PsiExpression.EMPTY_ARRAY;
+    if (!(value instanceof String stringToFind)) return PsiExpression.EMPTY_ARRAY;
     if (!shouldCheck(place, IGNORE_PROPERTY_KEYS)) return PsiExpression.EMPTY_ARRAY;
-    String stringToFind = (String)value;
     if (stringToFind.isEmpty()) return PsiExpression.EMPTY_ARRAY;
     Map<StringLiteralSearchQuery, PsiExpression[]> map = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       Map<StringLiteralSearchQuery, PsiExpression[]> duplicates = ConcurrentFactoryMap.createMap(
@@ -206,8 +204,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     for (PsiExpression expr : foundExpr) {
       if (expr == originalExpression) continue;
       PsiElement parent = expr.getParent();
-      if (parent instanceof PsiField) {
-        final PsiField field = (PsiField)parent;
+      if (parent instanceof PsiField field) {
         if (field.getInitializer() == expr && field.hasModifierProperty(PsiModifier.STATIC)) {
           final PsiClass containingClass = field.getContainingClass();
           if (containingClass == null) continue;
@@ -236,29 +233,11 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final OptionsPanel optionsPanel = new OptionsPanel();
-    optionsPanel.myIgnorePropertyKeyExpressions.addActionListener(
-      e -> IGNORE_PROPERTY_KEYS = optionsPanel.myIgnorePropertyKeyExpressions.isSelected());
-    optionsPanel.myMinStringLengthField.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(@NotNull final DocumentEvent e) {
-        try {
-          MIN_STRING_LENGTH = Integer.parseInt(optionsPanel.myMinStringLengthField.getText());
-        }
-        catch (NumberFormatException ignored) {
-        }
-      }
-    });
-    optionsPanel.myIgnorePropertyKeyExpressions.setSelected(IGNORE_PROPERTY_KEYS);
-    optionsPanel.myMinStringLengthField.setText(Integer.toString(MIN_STRING_LENGTH));
-    return optionsPanel.myPanel;
-  }
-
-  public static class OptionsPanel {
-     private JTextField myMinStringLengthField;
-     private JPanel myPanel;
-     private JCheckBox myIgnorePropertyKeyExpressions;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("MIN_STRING_LENGTH", JavaI18nBundle.message("inspection.duplicates.option"), 1, 10_000),
+      checkbox("IGNORE_PROPERTY_KEYS", JavaI18nBundle.message("inspection.duplicates.option.report.propertykey.expressions"))
+    );
   }
 
   private class IntroduceLiteralConstantFix extends IntroduceConstantFix {
@@ -403,35 +382,8 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     }
   }
 
-  private static final class StringLiteralSearchQuery {
-    @NotNull
-    private final String stringToFind;
-    private final boolean ignorePropertyKeys;
-    private final int minStringLength;
-    private final boolean isOnFlySearch;
-
-    private StringLiteralSearchQuery(@NotNull String stringToFind, boolean ignorePropertyKeys, int minStringLength, boolean isOnFlySearch) {
-      this.stringToFind = stringToFind;
-      this.ignorePropertyKeys = ignorePropertyKeys;
-      this.minStringLength = minStringLength;
-      this.isOnFlySearch = isOnFlySearch;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      StringLiteralSearchQuery query = (StringLiteralSearchQuery)o;
-      return ignorePropertyKeys == query.ignorePropertyKeys &&
-             minStringLength == query.minStringLength &&
-             isOnFlySearch == query.isOnFlySearch &&
-             Objects.equals(stringToFind, query.stringToFind);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(stringToFind, ignorePropertyKeys, minStringLength, isOnFlySearch);
-    }
+  private record StringLiteralSearchQuery(@NotNull String stringToFind, boolean ignorePropertyKeys, int minStringLength,
+                                          boolean isOnFlySearch) {
   }
 
   private PsiExpression @Nullable [] getDuplicateLiteralsUnderProgress(@NotNull PsiElement literalExpression) {

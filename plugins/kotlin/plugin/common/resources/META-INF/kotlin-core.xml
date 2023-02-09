@@ -206,6 +206,11 @@
             description="Sink down Flow.collect method in auto completion list"
             defaultValue="true"
             restartRequired="false"/>
+
+    <registryKey key="kotlin.create.sealed.templates.enabled"
+                 defaultValue="false"
+                 description="Enables dedicated Sealed class/interface templates in File-New-Kotlin File"/>
+
     <iconMapper mappingFile="KotlinIconMappings.json"/>
   </extensions>
 
@@ -477,12 +482,6 @@
   <actions>
     <action id="Kotlin.NewFile" class="org.jetbrains.kotlin.idea.actions.NewKotlinFileAction">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewGroup1"/>
-    </action>
-    <action id="Kotlin.NewScript" class="org.jetbrains.kotlin.idea.actions.NewKotlinScriptAction">
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
-    </action>
-    <action id="Kotlin.NewWorksheet" class="org.jetbrains.kotlin.idea.actions.NewKotlinWorksheetAction">
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
     </action>
 
     <group id="KotlinToolsGroup" popup="true" icon="/org/jetbrains/kotlin/idea/icons/kotlin13.svg"

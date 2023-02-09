@@ -110,12 +110,11 @@ public class DataPointHolderConversionIntention extends PsiElementBaseIntentionA
   }
 
   private static boolean isConvertible(@NotNull final PsiMember member) {
-    if (!(member instanceof PsiMethod)) {
+    if (!(member instanceof PsiMethod method)) {
       return ((PsiField)member).getInitializer() != null;
     }
-    final PsiMethod method = (PsiMethod)member;
     final PsiType returnType = method.getReturnType();
-    if (returnType == null || returnType.equals(PsiType.VOID) || !method.getParameterList().isEmpty()) {
+    if (returnType == null || returnType.equals(PsiTypes.voidType()) || !method.getParameterList().isEmpty()) {
       return false;
     }
     final PsiCodeBlock body = method.getBody();

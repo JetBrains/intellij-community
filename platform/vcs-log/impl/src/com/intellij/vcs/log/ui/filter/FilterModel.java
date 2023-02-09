@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.vcs.log.VcsLogFilter;
@@ -15,10 +15,10 @@ import java.util.Objects;
 import java.util.function.Function;
 
 public abstract class FilterModel<Filter> {
-  @NotNull protected final MainVcsLogUiProperties myUiProperties;
-  @NotNull private final Collection<Runnable> mySetFilterListeners = new ArrayList<>();
+  protected final @NotNull MainVcsLogUiProperties myUiProperties;
+  private final @NotNull Collection<Runnable> mySetFilterListeners = new ArrayList<>();
 
-  @Nullable protected Filter myFilter;
+  protected @Nullable Filter myFilter;
 
   FilterModel(@NotNull MainVcsLogUiProperties uiProperties) {
     myUiProperties = uiProperties;
@@ -46,8 +46,7 @@ public abstract class FilterModel<Filter> {
 
   protected abstract void saveFilterToProperties(@Nullable Filter filter);
 
-  @Nullable
-  protected abstract Filter getFilterFromProperties();
+  protected abstract @Nullable Filter getFilterFromProperties();
 
   void addSetFilterListener(@NotNull Runnable runnable) {
     mySetFilterListeners.add(runnable);
@@ -74,8 +73,8 @@ public abstract class FilterModel<Filter> {
     return !Objects.equals(oldFilter, newFilter);
   }
 
-  public static abstract class SingleFilterModel<Filter extends VcsLogFilter> extends FilterModel<Filter> {
-    @NotNull private final VcsLogFilterCollection.FilterKey<? extends Filter> myFilterKey;
+  public abstract static class SingleFilterModel<Filter extends VcsLogFilter> extends FilterModel<Filter> {
+    private final @NotNull VcsLogFilterCollection.FilterKey<? extends Filter> myFilterKey;
 
     SingleFilterModel(@NotNull VcsLogFilterCollection.FilterKey<? extends Filter> filterKey,
                       @NotNull MainVcsLogUiProperties uiProperties,
@@ -99,11 +98,9 @@ public abstract class FilterModel<Filter> {
       super.setFilter(filter);
     }
 
-    @Nullable
-    protected abstract Filter createFilter(@NotNull List<String> values);
+    protected abstract @Nullable Filter createFilter(@NotNull List<String> values);
 
-    @NotNull
-    protected abstract List<String> getFilterValues(@NotNull Filter filter);
+    protected abstract @NotNull List<String> getFilterValues(@NotNull Filter filter);
 
     @Override
     protected void saveFilterToProperties(@Nullable Filter filter) {
@@ -111,8 +108,7 @@ public abstract class FilterModel<Filter> {
     }
 
     @Override
-    @Nullable
-    protected Filter getFilterFromProperties() {
+    protected @Nullable Filter getFilterFromProperties() {
       List<String> values = myUiProperties.getFilterValues(myFilterKey.getName());
       if (values != null) {
         return createFilter(values);
@@ -121,10 +117,10 @@ public abstract class FilterModel<Filter> {
     }
   }
 
-  public static abstract class PairFilterModel<Filter1 extends VcsLogFilter, Filter2 extends VcsLogFilter>
+  public abstract static class PairFilterModel<Filter1 extends VcsLogFilter, Filter2 extends VcsLogFilter>
     extends FilterModel<FilterPair<Filter1, Filter2>> {
-    @NotNull private final VcsLogFilterCollection.FilterKey<? extends Filter1> myFilterKey1;
-    @NotNull private final VcsLogFilterCollection.FilterKey<? extends Filter2> myFilterKey2;
+    private final @NotNull VcsLogFilterCollection.FilterKey<? extends Filter1> myFilterKey1;
+    private final @NotNull VcsLogFilterCollection.FilterKey<? extends Filter2> myFilterKey2;
 
     PairFilterModel(@NotNull VcsLogFilterCollection.FilterKey<? extends Filter1> filterKey1,
                     @NotNull VcsLogFilterCollection.FilterKey<? extends Filter2> filterKey2,
@@ -182,9 +178,8 @@ public abstract class FilterModel<Filter> {
       }
     }
 
-    @Nullable
     @Override
-    protected FilterPair<Filter1, Filter2> getFilterFromProperties() {
+    protected @Nullable FilterPair<Filter1, Filter2> getFilterFromProperties() {
       List<String> values1 = myUiProperties.getFilterValues(myFilterKey1.getName());
       Filter1 filter1 = null;
       if (values1 != null) {
@@ -201,30 +196,24 @@ public abstract class FilterModel<Filter> {
       return new FilterPair<>(filter1, filter2);
     }
 
-    @Nullable
-    public Filter1 getFilter1() {
+    public @Nullable Filter1 getFilter1() {
       FilterPair<Filter1, Filter2> filterPair = getFilter();
       if (filterPair == null) return null;
       return filterPair.getFilter1();
     }
 
-    @Nullable
-    public Filter2 getFilter2() {
+    public @Nullable Filter2 getFilter2() {
       FilterPair<Filter1, Filter2> filterPair = getFilter();
       if (filterPair == null) return null;
       return filterPair.getFilter2();
     }
 
-    @NotNull
-    protected abstract List<String> getFilter1Values(@NotNull Filter1 filter1);
+    protected abstract @NotNull List<String> getFilter1Values(@NotNull Filter1 filter1);
 
-    @NotNull
-    protected abstract List<String> getFilter2Values(@NotNull Filter2 filter2);
+    protected abstract @NotNull List<String> getFilter2Values(@NotNull Filter2 filter2);
 
-    @Nullable
-    protected abstract Filter1 createFilter1(@NotNull List<String> values);
+    protected abstract @Nullable Filter1 createFilter1(@NotNull List<String> values);
 
-    @Nullable
-    protected abstract Filter2 createFilter2(@NotNull List<String> values);
+    protected abstract @Nullable Filter2 createFilter2(@NotNull List<String> values);
   }
 }

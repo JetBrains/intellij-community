@@ -16,7 +16,10 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Observable;
 import java.util.stream.Stream;
 
 public abstract class ListTableWithButtons<T> extends Observable {
@@ -140,6 +143,9 @@ public abstract class ListTableWithButtons<T> extends Observable {
     else if (selectedIndex < myElements.size()) {
       myTableView.getComponent().getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
     }
+
+    myTableView.getComponent().revalidate();
+    myTableView.getComponent().repaint();
   }
 
   @NotNull
@@ -244,7 +250,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
   @NotNull
   protected List<T> getSelection() {
     int[] selection = myTableView.getComponent().getSelectedRows();
-    if (selection.length == 0) {
+    if (selection.length == 0 || myElements.isEmpty()) {
       return Collections.emptyList();
     }
     else {

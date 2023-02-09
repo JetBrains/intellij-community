@@ -16,6 +16,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractOneParentOfChild
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
@@ -113,12 +116,7 @@ open class ChildSingleSecondEntityImpl(val dataSource: ChildSingleSecondEntityDa
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.commonData != dataSource.commonData) this.commonData = dataSource.commonData
       if (this.secondData != dataSource.secondData) this.secondData = dataSource.secondData
-      if (parents != null) {
-        val parentEntityNew = parents.filterIsInstance<ParentSingleAbEntity>().single()
-        if ((this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id) {
-          this.parentEntity = parentEntityNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -222,7 +220,7 @@ class ChildSingleSecondEntityData : WorkspaceEntityData<ChildSingleSecondEntity>
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ChildSingleSecondEntity(commonData, secondData, entitySource) {
-      this.parentEntity = parents.filterIsInstance<ParentSingleAbEntity>().single()
+      parents.filterIsInstance<ParentSingleAbEntity>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

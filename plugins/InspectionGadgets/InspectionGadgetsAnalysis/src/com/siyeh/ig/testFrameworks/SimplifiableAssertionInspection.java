@@ -62,12 +62,11 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
       return false;
     }
     final PsiType type = expression2.getType();
-    return PsiType.BOOLEAN.equals(type);
+    return PsiTypes.booleanType().equals(type);
   }
 
   static boolean isEqualityComparison(PsiExpression expression) {
-    if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+    if (expression instanceof PsiBinaryExpression binaryExpression) {
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.EQEQ)) {
         return false;
@@ -89,10 +88,9 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
   }
 
   static boolean isIdentityComparison(PsiExpression expression) {
-    if (!(expression instanceof PsiBinaryExpression)) {
+    if (!(expression instanceof PsiBinaryExpression binaryExpression)) {
       return false;
     }
-    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
     if (!ComparisonUtils.isEqualityComparison(binaryExpression)) {
       return false;
     }
@@ -207,8 +205,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
       final PsiExpression firstArgument = assertHint.getFirstArgument();
       PsiExpression lhs = null;
       PsiExpression rhs = null;
-      if (firstArgument instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)firstArgument;
+      if (firstArgument instanceof PsiBinaryExpression binaryExpression) {
         lhs = binaryExpression.getLOperand();
         rhs = binaryExpression.getROperand();
       }
@@ -279,7 +276,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
     }
 
     private boolean isPrimitiveAndBoxedWithOverloads(PsiType lhsType, PsiType rhsType) {
-      if (lhsType instanceof PsiPrimitiveType && !PsiType.FLOAT.equals(lhsType) && !PsiType.DOUBLE.equals(lhsType)) {
+      if (lhsType instanceof PsiPrimitiveType && !PsiTypes.floatType().equals(lhsType) && !PsiTypes.doubleType().equals(lhsType)) {
         return rhsType instanceof PsiClassType;
       }
       return false;
@@ -468,10 +465,9 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
     }
 
     private boolean isEqEqExpression(PsiExpression argument) {
-      if (!(argument instanceof PsiBinaryExpression)) {
+      if (!(argument instanceof PsiBinaryExpression binaryExpression)) {
         return false;
       }
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)argument;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       return JavaTokenType.EQEQ.equals(tokenType);
     }

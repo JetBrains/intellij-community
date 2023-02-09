@@ -11,25 +11,26 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
+import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.hash.ContentHashEnumerator;
-import com.intellij.util.io.*;
+import com.intellij.util.io.ScannableDataEnumeratorEx;
+import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.RefCountingContentStorage;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-final class PersistentFSConnection {
+@ApiStatus.Internal
+final public class PersistentFSConnection {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnection.class);
 
   static final int RESERVED_ATTR_ID = FSRecords.bulkAttrReadSupport ? 1 : 0;
@@ -76,7 +77,8 @@ final class PersistentFSConnection {
                          @Nullable ContentHashEnumerator contentHashesEnumerator,
                          @NotNull SimpleStringPersistentEnumerator enumeratedAttributes,
                          @NotNull IntList freeRecords,
-                         boolean markDirty) throws IOException {
+                         boolean markDirty,
+                         @NotNull List<ConnectionInterceptor> interceptors) throws IOException {
     if (!(names instanceof Forceable) || !(names instanceof Closeable)) {
       //RC: there is no simple way to specify type like DataEnumerator & Forceable & Closeable in java,
       //    hence the runtime check here (and in methods below calling Forceable/Closeable methods).
@@ -84,10 +86,10 @@ final class PersistentFSConnection {
       //    different names impls -- after we'll decide which impl is the best, explicit type could be specified here
       throw new IllegalArgumentException("names(" + names + ") must implement Forceable & Closeable");
     }
-    myRecords = records;
+    myRecords = wrapRecords(records, interceptors);
     myNames = names;
-    myAttributesStorage = attributes;
-    myContents = contents;
+    myAttributesStorage = wrapAttributes(attributes, interceptors);
+    myContents = wrapContents(contents, interceptors);
     myContentHashesEnumerator = contentHashesEnumerator;
     myPersistentFSPaths = paths;
     myFreeRecords = freeRecords;
@@ -115,6 +117,30 @@ final class PersistentFSConnection {
     else {
       myFlushingFuture = null;
     }
+  }
+
+  private static RefCountingContentStorage wrapContents(RefCountingContentStorage contents, List<ConnectionInterceptor> interceptors) {
+    var contentInterceptors = interceptors.stream()
+      .filter(ContentsInterceptor.class::isInstance)
+      .map(ContentsInterceptor.class::cast)
+      .toList();
+    return InterceptorInjection.INSTANCE.injectInContents(contents, contentInterceptors);
+  }
+
+  private static AbstractAttributesStorage wrapAttributes(AbstractAttributesStorage attributes, List<ConnectionInterceptor> interceptors) {
+    var attributesInterceptors = interceptors.stream()
+      .filter(AttributesInterceptor.class::isInstance)
+      .map(AttributesInterceptor.class::cast)
+      .toList();
+    return InterceptorInjection.INSTANCE.injectInAttributes(attributes, attributesInterceptors);
+  }
+
+  private static PersistentFSRecordsStorage wrapRecords(PersistentFSRecordsStorage records, List<ConnectionInterceptor> interceptors) {
+    var recordsInterceptors = interceptors.stream()
+      .filter(RecordsInterceptor.class::isInstance)
+      .map(RecordsInterceptor.class::cast)
+      .toList();
+    return InterceptorInjection.INSTANCE.injectInRecords(records, recordsInterceptors);
   }
 
   @NotNull("Vfs must be initialized")
@@ -212,7 +238,7 @@ final class PersistentFSConnection {
       myAttributesStorage.force();
       myContents.force();
       if (myContentHashesEnumerator != null) myContentHashesEnumerator.force();
-      markClean();      //TODO RC: shouldn't markClean() be _after_ myRecords.close()?
+      markClean();      //TODO RC: shouldn't markClean() be _after_ myRecords.force()?
       myRecords.force();
     }
   }
@@ -253,6 +279,8 @@ final class PersistentFSConnection {
     return myPersistentFSPaths;
   }
 
+  //TODO RC: we use it to mark file record modified there something derived is modified -- i.e. children attribute
+  //         or content. This looks suspicious to me: why we need to update _file_ record version in those cases?
   public void markRecordAsModified(int fileId) throws IOException {
     getRecords().markRecordAsModified(fileId);
     markDirty();

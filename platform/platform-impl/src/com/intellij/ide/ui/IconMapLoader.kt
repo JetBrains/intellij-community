@@ -22,7 +22,7 @@ import java.util.function.BiFunction
 class IconMapLoader {
   private val cachedResult = AtomicReference<Map<ClassLoader, Map<String, String>>>()
 
-  suspend fun preloadIconMapping() {
+  internal suspend fun preloadIconMapping() {
     val size = IconMapperBean.EP_NAME.point.size()
     if (size == 0) {
       cachedResult.compareAndSet(null, emptyMap())

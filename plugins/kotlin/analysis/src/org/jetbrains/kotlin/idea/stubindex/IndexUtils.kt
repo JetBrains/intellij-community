@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.stubindex
 import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.NamedStub
+import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -145,17 +146,21 @@ fun indexJvmNameAnnotation(stub: KotlinAnnotationEntryStub, sink: IndexSink) {
     if (stub.getShortName() != JvmFileClassUtil.JVM_NAME_SHORT) return
 
     val jvmName = JvmFileClassUtil.stringFromAnnotation(stub.psi) ?: return
-    val annotatedElementName = when (val grandParentStub = stub.parentStub.parentStub) {
-        is KotlinFileStub -> grandParentStub.psi.name
-        is NamedStub -> grandParentStub.getName() ?: ""
-        is KotlinPropertyAccessorStub -> grandParentStub.parentStub.safeAs<KotlinPropertyStub>()?.name ?: ""
-        else -> return
-    }
+    val annotatedElementName = stub.parentStub.parentStub.annotatedJvmNameElementName ?: return
 
     if (annotatedElementName != jvmName) {
         sink.occurrence(KotlinJvmNameAnnotationIndex.key, jvmName)
     }
 }
+
+private val StubElement<*>.annotatedJvmNameElementName: String?
+    get() = when (this) {
+        is KotlinFileStub -> psi.name
+        is NamedStub -> name ?: ""
+        is KotlinPropertyAccessorStub -> parentStub.safeAs<KotlinPropertyStub>()?.name ?: ""
+        is KotlinPlaceHolderStub -> parentStub?.annotatedJvmNameElementName
+        else -> null
+    }
 
 private val KotlinStubWithFqName<*>.modifierList: KotlinModifierListStub?
     get() = findChildStubByType(KtStubElementTypes.MODIFIER_LIST)

@@ -21,9 +21,6 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
 import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenRedundantGroupIdTest extends MavenDomTestCase {
 
   @Override

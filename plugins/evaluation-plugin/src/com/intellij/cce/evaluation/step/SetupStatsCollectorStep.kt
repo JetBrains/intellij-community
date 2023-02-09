@@ -16,14 +16,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.stats.completion.sender.StatisticSender
 import com.intellij.stats.completion.storage.FilePathProvider
 import com.intellij.stats.completion.storage.UniqueFilesProvider
 import java.io.File
 import java.nio.file.Paths
-import java.util.*
 
 class SetupStatsCollectorStep(private val project: Project,
                               private val experimentGroup: Int?,
@@ -31,7 +29,7 @@ class SetupStatsCollectorStep(private val project: Project,
                               private val isHeadless: Boolean) : UndoableEvaluationStep {
   companion object {
     private val LOG = Logger.getInstance(SetupStatsCollectorStep::class.java)
-    private const val SEND_LOGS_REGISTRY = "completion.stats.send.logs"
+    private const val SEND_LOGS_KEY = "completion.stats.send.logs"
     private const val STATS_COLLECTOR_ID = "com.intellij.stats.completion"
     private const val COLLECT_LOGS_HEADLESS_KEY = "completion.evaluation.headless"
     fun statsCollectorLogsDirectory(): String = Paths.get(PathManager.getSystemPath(), "completion-stats-data").toString()
@@ -71,12 +69,8 @@ class SetupStatsCollectorStep(private val project: Project,
     val statisticSender = object : StatisticSender {
       override fun sendStatsData(url: String) = Unit
     }
-    try {
-      initSendLogsValue = Registry.`is`(SEND_LOGS_REGISTRY)
-      Registry.get(SEND_LOGS_REGISTRY).setValue(false)
-    } catch (e: MissingResourceException) {
-      LOG.warn("No registry for not sending logs", e)
-    }
+    initSendLogsValue = java.lang.Boolean.parseBoolean(System.getProperty(SEND_LOGS_KEY, "true"))
+    System.setProperty(SEND_LOGS_KEY, "false")
     if (isHeadless) {
       initCollectLogsInHeadlessValue = java.lang.Boolean.getBoolean(COLLECT_LOGS_HEADLESS_KEY)
       System.setProperty(COLLECT_LOGS_HEADLESS_KEY, "true")
@@ -114,12 +108,7 @@ class SetupStatsCollectorStep(private val project: Project,
           serviceManager.replaceRegularServiceInstance(StatisticSender::class.java, initStatisticSender)
         if (initExperimentStatus != null)
           serviceManager.replaceRegularServiceInstance(ExperimentStatus::class.java, initExperimentStatus)
-        try {
-          Registry.get(SEND_LOGS_REGISTRY).setValue(initSendLogsValue)
-        }
-        catch (e: MissingResourceException) {
-          LOG.warn("No registry for not sending logs", e)
-        }
+        System.setProperty(SEND_LOGS_KEY, initSendLogsValue.toString())
         if (isHeadless) {
           System.setProperty(COLLECT_LOGS_HEADLESS_KEY, initCollectLogsInHeadlessValue.toString())
         }

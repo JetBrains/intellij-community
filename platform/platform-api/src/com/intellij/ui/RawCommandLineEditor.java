@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.execution.ui.FragmentWrapper;
@@ -20,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.util.Function;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +32,7 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor, Fragme
     myEditor = new ExpandableTextField(lineParser, lineJoiner);
     add(myEditor, BorderLayout.CENTER);
     setDescriptor(null);
-    putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true);
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, myEditor);
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, toGaps(myEditor.getInsets()));
   }
@@ -53,7 +40,7 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor, Fragme
   public void setDescriptor(FileChooserDescriptor descriptor) {
     setDescriptor(descriptor, true);
   }
-  
+
   public void setDescriptor(FileChooserDescriptor descriptor, boolean insertSystemDependentPaths) {
     InsertPathAction.addTo(myEditor, descriptor, insertSystemDependentPaths);
   }

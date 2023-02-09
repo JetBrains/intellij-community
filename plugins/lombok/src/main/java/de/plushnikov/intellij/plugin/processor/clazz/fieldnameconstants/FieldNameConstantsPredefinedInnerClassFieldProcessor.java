@@ -27,8 +27,7 @@ public class FieldNameConstantsPredefinedInnerClassFieldProcessor extends Abstra
   @NotNull
   @Override
   public List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
-    if (psiClass.getParent() instanceof PsiClass) {
-      PsiClass parentClass = (PsiClass) psiClass.getParent();
+    if (psiClass.getParent() instanceof PsiClass parentClass) {
       PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(parentClass, getSupportedAnnotationClasses());
       if (null != psiAnnotation && supportAnnotationVariant(psiAnnotation)) {
         ProblemProcessingSink problemBuilder = new ProblemProcessingSink();

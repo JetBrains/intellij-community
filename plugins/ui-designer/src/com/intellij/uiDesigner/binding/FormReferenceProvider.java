@@ -57,8 +57,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
 
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
-    if (element instanceof PsiPlainTextFile) {
-      PsiPlainTextFile plainTextFile = (PsiPlainTextFile) element;
+    if (element instanceof PsiPlainTextFile plainTextFile) {
       if (plainTextFile.getFileType().equals(GuiFormFileType.INSTANCE)) {
         return getCachedData(plainTextFile).myReferences;
       }
@@ -274,8 +273,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
           PsiMethod getter = PropertyUtilBase.findPropertyGetter(psiClass, tag.getName(), false, true);
           if (getter != null) {
             final PsiType returnType = getter.getReturnType();
-            if (returnType instanceof PsiClassType) {
-              PsiClassType propClassType = (PsiClassType)returnType;
+            if (returnType instanceof PsiClassType propClassType) {
               PsiClass propClass = propClassType.resolve();
               if (propClass != null) {
                 if (propClass.isEnum()) {
@@ -336,8 +334,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
           final PsiReferenceProcessor.CollectElements processor = new PsiReferenceProcessor.CollectElements() {
             @Override
             public boolean execute(PsiReference ref) {
-              if (ref instanceof FieldFormReference) {
-                final FieldFormReference fieldRef = ((FieldFormReference)ref);
+              if (ref instanceof FieldFormReference fieldRef) {
                 final String componentClassName = fieldRef.getComponentClassName();
                 if (componentClassName != null) {
                   final PsiClassType type = JavaPsiFacade.getInstance(element.getProject()).getElementFactory()

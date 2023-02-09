@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.ShellTerminalWidget;
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory;
-import org.jetbrains.plugins.terminal.TerminalView;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
 import java.io.IOException;
@@ -32,7 +32,7 @@ final class ShTerminalRunner implements ShRunner {
                   @NotNull String workingDirectory,
                   @NotNull @NlsContexts.TabTitle String title,
                   boolean activateToolWindow) {
-    TerminalView terminalView = TerminalView.getInstance(project);
+    TerminalToolWindowManager terminalToolWindowManager = TerminalToolWindowManager.getInstance(project);
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
     if (window == null) {
       return;
@@ -42,7 +42,7 @@ final class ShTerminalRunner implements ShRunner {
     Pair<Content, ShellTerminalWidget> pair = getSuitableProcess(contentManager, workingDirectory);
     try {
       if (pair == null) {
-        terminalView.createLocalShellWidget(workingDirectory, title, activateToolWindow, activateToolWindow).executeCommand(command);
+        terminalToolWindowManager.createLocalShellWidget(workingDirectory, title, activateToolWindow, activateToolWindow).executeCommand(command);
         return;
       }
       if (activateToolWindow) {
@@ -80,17 +80,16 @@ final class ShTerminalRunner implements ShRunner {
 
   private static @Nullable Pair<Content, ShellTerminalWidget> getSuitableProcess(@NotNull Content content,
                                                                                  @NotNull String workingDirectory) {
-    JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
-    if (!(widget instanceof ShellTerminalWidget)) {
+    JBTerminalWidget widget = TerminalToolWindowManager.getWidgetByContent(content);
+    if (!(widget instanceof ShellTerminalWidget shellTerminalWidget)) {
       return null;
     }
 
-    ShellTerminalWidget shellTerminalWidget = (ShellTerminalWidget)widget;
     if (!shellTerminalWidget.getTypedShellCommand().isEmpty() || shellTerminalWidget.hasRunningCommands()) {
       return null;
     }
 
-    String currentWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(shellTerminalWidget, null);
+    String currentWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(shellTerminalWidget.asNewWidget(), null);
     if (!FileUtil.pathsEqual(workingDirectory, currentWorkingDirectory)) {
       return null;
     }

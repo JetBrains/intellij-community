@@ -3,5 +3,6 @@
   "classId": "/A",
   "oldName": "unaryMinus",
   "newName": "foo",
-  "mainFile": "unaryMinus.kt"
+  "mainFile": "unaryMinus.kt",
+  "enabledInK2": true
 }

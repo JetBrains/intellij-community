@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import org.jetbrains.annotations.ApiStatus;
@@ -11,31 +10,26 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 public abstract class PerformanceWatcher implements Disposable {
   public static final String DUMP_PREFIX = "threadDump-";
 
-  protected static @Nullable PerformanceWatcher ourInstance = CachedSingletonsRegistry.markCachedField(PerformanceWatcher.class);
+  private static final Supplier<@Nullable PerformanceWatcher> ourInstance = CachedSingletonsRegistry.lazy(() -> {
+    return ApplicationManager.getApplication().getService(PerformanceWatcher.class);
+  });
 
   @ApiStatus.Internal
   public static @Nullable PerformanceWatcher getInstanceOrNull() {
-    PerformanceWatcher watcher = ourInstance;
-    if (watcher == null && LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()) {
-      Application app = ApplicationManager.getApplication();
-      if (app != null) {
-        watcher = app.getServiceIfCreated(PerformanceWatcher.class);
-      }
-    }
-    return watcher;
+    return LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() ? ourInstance.get() : null;
   }
 
   public static @NotNull PerformanceWatcher getInstance() {
     LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
-    return ourInstance != null ?
-           ourInstance :
-           ApplicationManager.getApplication().getService(PerformanceWatcher.class);
+    return Objects.requireNonNull(ourInstance.get());
   }
 
   public interface Snapshot {

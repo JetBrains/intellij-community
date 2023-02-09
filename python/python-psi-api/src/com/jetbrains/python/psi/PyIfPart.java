@@ -18,7 +18,6 @@ package com.jetbrains.python.psi;
 /**
  * Branches of an 'if' statement.
  * @see PyElsePart
- * User: dcheryasov
  */
 public interface PyIfPart extends PyConditionalStatementPart {
   PyIfPart[] EMPTY_ARRAY = new PyIfPart[0];

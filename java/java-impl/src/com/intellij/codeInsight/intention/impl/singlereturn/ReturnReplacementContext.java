@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.singlereturn;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -95,20 +95,18 @@ final class ReturnReplacementContext {
       }
       break;
     }
-    if (!(parent instanceof PsiStatement)) {
+    if (!(parent instanceof PsiStatement currentContext)) {
       throw new RuntimeExceptionWithAttachments("Unexpected structure: " + parent.getClass(),
                                                 new Attachment("body.txt", myBlock.getText()),
                                                 new Attachment("context.txt", parent.getText()));
     }
-    PsiStatement currentContext = (PsiStatement)parent;
     PsiStatement loopOrSwitch = PsiTreeUtil.getNonStrictParentOfType(currentContext, PsiLoopStatement.class, PsiSwitchStatement.class);
     if (loopOrSwitch != null && PsiTreeUtil.isAncestor(myBlock, loopOrSwitch, true)) {
       myReplacements.add("break;");
       return loopOrSwitch;
     }
     while (true) {
-      if (currentContext instanceof PsiIfStatement) {
-        PsiIfStatement ifStatement = (PsiIfStatement)currentContext;
+      if (currentContext instanceof PsiIfStatement ifStatement) {
         boolean inThen = PsiTreeUtil.isAncestor(ifStatement.getThenBranch(), myReturnStatement, false);
         PsiElement ifParent = currentContext.getParent();
         if (ifParent instanceof PsiCodeBlock) {

@@ -5,9 +5,6 @@ import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 
-/**
- * @author Nadya Zabrodina
- */
 @State(
   name = "HgRememberedInputs",
   storages = {

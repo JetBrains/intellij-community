@@ -9,9 +9,6 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Irina.Chernushina on 3/31/2016.
- */
 public abstract class JsonSchemaBaseReference<T extends PsiElement> extends PsiReferenceBase<T> {
   public JsonSchemaBaseReference(T element, TextRange textRange) {
     super(element, textRange, true);

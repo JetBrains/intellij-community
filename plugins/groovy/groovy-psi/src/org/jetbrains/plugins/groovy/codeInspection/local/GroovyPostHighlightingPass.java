@@ -47,9 +47,6 @@ import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImportUtil.unusedImports;
 
-/**
- * @author ilyas
- */
 public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
 
   private final @NotNull GroovyFile myFile;
@@ -113,8 +110,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
               builder.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(unusedDefKey), null, unusedDefKey);
               ContainerUtil.addIfNotNull(unusedDeclarations, builder.create());
             }
-            else if (element instanceof GrMethod) {
-              GrMethod method = (GrMethod)element;
+            else if (element instanceof GrMethod method) {
               if (SpockUtils.isUnusedInSpock(method, usageHelper)) {
                 usageHelper.shouldCheckContributors = false;
               }
@@ -160,8 +156,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
         if (usedParams.get(parameter)) continue;
 
         PsiElement scope = parameter.getDeclarationScope();
-        if (scope instanceof GrMethod) {
-          GrMethod method = (GrMethod)scope;
+        if (scope instanceof GrMethod method) {
           if (methodMayHaveUnusedParameters(method)) {
             PsiElement identifier = parameter.getNameIdentifierGroovy();
             HighlightInfo.Builder builder = UnusedSymbolUtil

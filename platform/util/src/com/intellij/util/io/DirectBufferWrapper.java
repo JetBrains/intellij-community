@@ -94,6 +94,11 @@ public final class DirectBufferWrapper {
   }
 
   public ByteBuffer copy() {
+    //TODO RC: do we really need call to Allocator here? .duplicate() only creates a wrapper,
+    //         main buffer content (native memory chunk for direct buffer) is not allocated anew,
+    //         but shared with myBuffer -- hence neither caching, nor 'IDEA-222358 linux native memory
+    //         leak' are not applicable. Seems like plain call to .duplicate().order(...) should be
+    //         enough:
     return DirectByteBufferAllocator.allocate(() -> {
       ByteBuffer duplicate = myBuffer.duplicate();
       duplicate.order(myBuffer.order());
@@ -227,15 +232,15 @@ public final class DirectBufferWrapper {
   }
 
   public int getLength() {
-    return myFile.myPageSize;
+    return myFile.getPageSize();
   }
 
   
 
   private ByteBuffer allocateAndLoadFileContent() throws IOException {
-    final int bufferSize = myFile.myPageSize;
+    final int bufferSize = myFile.getPageSize();
     final ByteBuffer buffer = DirectByteBufferAllocator.ALLOCATOR.allocate(bufferSize);
-    buffer.order(myFile.useNativeByteOrder() ? ByteOrder.nativeOrder() : ByteOrder.BIG_ENDIAN);
+    buffer.order(myFile.isNativeBytesOrder() ? ByteOrder.nativeOrder() : ByteOrder.BIG_ENDIAN);
     assert buffer.limit() > 0;
     return myFile.useChannel(ch -> {
       int readBytes = ch.read(buffer, myPosition);
@@ -292,6 +297,6 @@ public final class DirectBufferWrapper {
 
   @Override
   public String toString() {
-    return "Buffer for " + myFile + ", offset:" + myPosition + ", size: " + myFile.myPageSize;
+    return "Buffer for " + myFile + ", offset:" + myPosition + ", size: " + myFile.getPageSize();
   }
 }

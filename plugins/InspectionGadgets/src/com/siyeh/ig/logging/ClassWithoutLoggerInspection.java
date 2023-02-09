@@ -16,31 +16,28 @@
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBTabbedPane;
-import com.intellij.util.ui.JBUI;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.JavaLoggingUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class ClassWithoutLoggerInspection extends BaseInspection {
 
@@ -63,28 +60,21 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final JPanel loggerPanel = UiUtils.createTreeClassChooserList(loggerNames, InspectionGadgetsBundle.message("logger.class.name"),
-                                                                 InspectionGadgetsBundle.message("choose.logger.class"));
-    final JPanel annotationsListControl =
-      SpecialAnnotationsUtil.createSpecialAnnotationsListControl(annotations,
-                                                                 InspectionGadgetsBundle.message("ignore.classes.annotated.by"));
-    final JPanel ignoredClassesPanel =
-      UiUtils.createTreeClassChooserList(ignoredClasses, InspectionGadgetsBundle.message("ignored.class.hierarchies.border.title"),
-                                         InspectionGadgetsBundle.message("choose.class.hierarchy.to.ignore.title"));
-
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.add(ignoredClassesPanel, "growx, wrap");
-    panel.addCheckbox(InspectionGadgetsBundle.message("super.class.logger.option"), "ignoreSuperLoggers");
-
-    loggerPanel.setBorder(JBUI.Borders.emptyTop(5));
-    panel.setBorder(JBUI.Borders.emptyTop(5));
-    annotationsListControl.setBorder(JBUI.Borders.emptyTop(5));
-    final JBTabbedPane tabs = new JBTabbedPane(SwingConstants.TOP);
-    tabs.add(InspectionGadgetsBundle.message("class.without.logger.loggers.tab"), ScrollPaneFactory.createScrollPane(loggerPanel, true));
-    tabs.add(InspectionGadgetsBundle.message("options.title.ignored.classes"), ScrollPaneFactory.createScrollPane(panel, true));
-    tabs.add(InspectionGadgetsBundle.message("class.without.logger.annotations.tab"), ScrollPaneFactory.createScrollPane(annotationsListControl, true));
-    return tabs;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      tabs(
+        tab(InspectionGadgetsBundle.message("class.without.logger.loggers.tab"),
+            stringList("loggerNames", InspectionGadgetsBundle.message("logger.class.name"),
+                       new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.logger.class")))),
+        tab(InspectionGadgetsBundle.message("options.title.ignored.classes"),
+            stringList("ignoredClasses", InspectionGadgetsBundle.message("ignored.class.hierarchies.border.title"),
+                       new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.class.hierarchy.to.ignore.title"))),
+            checkbox("ignoreSuperLoggers", InspectionGadgetsBundle.message("super.class.logger.option"))),
+        tab(InspectionGadgetsBundle.message("class.without.logger.annotations.tab"),
+            stringList("annotations", InspectionGadgetsBundle.message("ignore.classes.annotated.by"),
+                       new JavaClassValidator().annotationsOnly()))
+      )
+    );
   }
 
   @Override

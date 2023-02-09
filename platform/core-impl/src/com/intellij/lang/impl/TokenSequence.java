@@ -155,7 +155,7 @@ public class TokenSequence implements TokenList {
       int quoteEnd = Math.min(tokenStart + 256, myText.length());
       sb.append("\n  quote: [").append(quoteStart).append(':').append(quoteEnd)
         .append("] '").append(myText.subSequence(quoteStart, quoteEnd)).append('\'');
-      LOG.error(sb);
+      LOG.error(sb.toString());
     }
 
     private void resizeLexemes(final int newSize) {

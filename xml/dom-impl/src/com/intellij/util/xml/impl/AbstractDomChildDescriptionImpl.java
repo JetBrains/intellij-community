@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.presentation.Presentation;
@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomExtensionImpl;
@@ -29,7 +29,7 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
 
   @Nullable
   private ElementPresentationTemplate calcPresentationTemplate() {
-    Class<?> clazz = ReflectionUtil.getRawType(getType());
+    Class<?> clazz = ClassUtil.getRawType(getType());
     Presentation presentation = DomApplicationComponent.getInstance().getInvocationCache(clazz).getClassAnnotation(Presentation.class);
     return presentation == null ? null : new ElementPresentationTemplateImpl(presentation, clazz);
   }
@@ -116,7 +116,7 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
   @Override
   @NotNull
   public DomNameStrategy getDomNameStrategy(@NotNull DomElement parent) {
-    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(getType()), false);
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ClassUtil.getRawType(getType()), false);
     return strategy == null ? parent.getNameStrategy() : strategy;
   }
 

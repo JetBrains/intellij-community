@@ -17,9 +17,6 @@ package com.intellij.refactoring.inheritanceToDelegation.usageInfo;
 
 import com.intellij.psi.*;
 
-/**
- * @author dsl
- */
 public class FieldAccessibility {
   public static final FieldAccessibility INVISIBLE = new FieldAccessibility(false, null);
 

@@ -2,9 +2,7 @@
 package org.jetbrains.intellij.build.io
 
 import com.intellij.util.lang.ImmutableZipFile
-import org.jetbrains.ikv.UniversalHash
 import org.jetbrains.ikv.builder.IkvIndexBuilder
-import org.jetbrains.ikv.builder.IkvIndexEntry
 import org.jetbrains.xxh3.Xxh3
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -15,7 +13,7 @@ import java.nio.channels.WritableByteChannel
 import java.util.zip.CRC32
 import java.util.zip.ZipEntry
 
-private const val INDEX_FORMAT_VERSION: Byte = 3
+private const val INDEX_FORMAT_VERSION: Byte = 4
 
 const val INDEX_FILENAME = "__index__"
 
@@ -28,10 +26,11 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
   private var entryCount = 0
 
   private var metadataBuffer = ByteBuffer.allocateDirect(2 * 1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
-  // 1 MB should be enough for end of central directory record
+  // 1 MB should be enough for the end of the central directory record
   private val buffer = ByteBuffer.allocateDirect(1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
 
-  private val indexWriter = IkvIndexBuilder(hash = IndexEntryHash())
+  private val names = mutableListOf<ByteArray>()
+  private val indexWriter = IkvIndexBuilder()
 
   private var channelPosition = 0L
 
@@ -85,7 +84,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     }
 
     val offset = channelPosition
-    val dataOffset = offset.toInt() + header.remaining()
+    val dataOffset = offset + header.remaining()
     entryCount++
     assert(method != -1)
 
@@ -105,7 +104,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     assert(method != -1)
 
     writeBuffer(content)
-    writeCentralFileHeader(size, compressedSize, method, crc, name, offset, dataOffset = offset.toInt() + headerSize)
+    writeCentralFileHeader(size, compressedSize, method, crc, name, offset, dataOffset = offset + headerSize)
   }
 
   fun writeEntryHeaderAt(name: ByteArray, header: ByteBuffer, position: Long, size: Int, compressedSize: Int, crc: Long, method: Int) {
@@ -113,7 +112,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
       throw IOException("Stream has already been finished")
     }
 
-    val dataOffset = position.toInt() + header.remaining()
+    val dataOffset = position + header.remaining()
 
     if (fileChannel == null) {
       val c = channel as SeekableByteChannel
@@ -134,7 +133,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
 
     entryCount++
 
-    assert(channelPosition == (dataOffset + compressedSize).toLong())
+    assert(channelPosition == dataOffset + compressedSize)
     writeCentralFileHeader(size = size,
                            compressedSize = compressedSize,
                            method = method,
@@ -146,7 +145,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
 
   private fun writeIndex(crc32: CRC32): Int {
     // write one by one to channel to avoid buffer overflow
-    val entries = indexWriter.write {
+    indexWriter.write {
       crc32.update(it)
       it.flip()
       writeBuffer(it)
@@ -180,37 +179,21 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
           it.put(resourcePackages)
         }
       }
-
-      // write fingerprint count
-      buffer.putInt(entries.size)
-    }
-
-    // write fingerprints
-    // entryCount must be not used here - index contains some dirs, but not zip (see addDirsToIndex)
-    for (chunk in entries.asSequence().chunked(16 * 1024)) {
-      writeData { buffer ->
-        useAsLongBuffer(buffer) { longBuffer ->
-          // bloom filter is not an option - false positive leads to error like "wrong class name" on class define
-          for (entry in chunk) {
-            longBuffer.put(entry.keyHash)
-          }
-        }
-      }
     }
 
     // write names
     writeData { buffer ->
       val shortBuffer = buffer.asShortBuffer()
-      for (entry in entries) {
-        shortBuffer.put(entry.key.size.toShort())
+      for (name in names) {
+        shortBuffer.put(name.size.toShort())
       }
       buffer.position(buffer.position() + (shortBuffer.position() * Short.SIZE_BYTES))
     }
 
-    for (list in entries.asSequence().chunked(1024)) {
+    for (list in names.asSequence().chunked(1024)) {
       writeData { buffer ->
-        for (indexEntry in list) {
-          buffer.put(indexEntry.key)
+        for (name in list) {
+          buffer.put(name)
         }
       }
     }
@@ -261,7 +244,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
 
     buffer.clear()
     if (entryCount < 65_535) {
-      // write end of central directory record (EOCD)
+      // write an end of central directory record (EOCD)
       buffer.clear()
       buffer.putInt(ImmutableZipFile.EOCD)
       // write 0 to clear reused buffer content
@@ -273,7 +256,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
       // total number of central directory records
       buffer.putShort(shortEntryCount)
       buffer.putInt(centralDirectoryLength)
-      // Offset of start of central directory, relative to start of archive
+      // central directory start offset, relative to start of archive
       buffer.putInt((centralDirectoryOffset and 0xffffffffL).toInt())
 
       // comment length
@@ -307,9 +290,9 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     buffer.putShort(0)
     // Version needed to extract (minimum)
     buffer.putShort(0)
-    // Number of this disk
+    // Disk number
     buffer.putInt(0)
-    // Disk where central directory starts
+    // Disk where the central directory starts
     buffer.putInt(0)
     // Number of central directory records on this disk
     buffer.putLong(entryCount.toLong())
@@ -317,7 +300,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     buffer.putLong(entryCount.toLong())
     // Size of central directory (bytes)
     buffer.putLong(centralDirectoryLength.toLong())
-    // Offset of start of central directory, relative to start of archive
+    // central directory start offset, relative to start of archive
     buffer.putLong(centralDirectoryOffset)
 
     // comment length
@@ -331,7 +314,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
 
     // Zip64 end of central directory locator
     buffer.putInt(0x07064b50)
-    // number of the disk with the start of the zip64 end of central directory
+    // disk number with the start of the zip64 end of central directory
     buffer.putInt(0)
     // relative offset of the zip64 end of central directory record
     buffer.putLong(eocd64Position)
@@ -340,9 +323,9 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
 
     // write EOCD (EOCD is required even if we write EOCD64)
     buffer.putInt(0x06054b50)
-    // number of this disk (short)
+    // disk number (short)
     buffer.putShort(0xffff.toShort())
-    // disk where central directory starts (short)
+    // disk where the central directory starts (short)
     buffer.putShort(0xffff.toShort())
     // number of central directory records on this disk
     buffer.putShort(0xffff.toShort())
@@ -350,7 +333,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     buffer.putShort(0xffff.toShort())
     // Size of central directory (bytes) (or 0xffffffff for ZIP64)
     buffer.putInt(0xffffffff.toInt())
-    // Offset of start of central directory, relative to start of archive
+    // central directory offset start, relative to start of archive
     buffer.putInt(0xffffffff.toInt())
     // comment length
     buffer.putShort(0)
@@ -400,26 +383,12 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     }
   }
 
-  private class IndexEntry(@JvmField val key: ByteArray,
-                           override val offset: Int,
-                           override val size: Int,
-                           val keyHash: Long) : IkvIndexEntry {
-    override fun equals(other: Any?) = key.contentEquals((other as? IndexEntry)?.key)
-
-    override fun toString() = "IndexEntryHash(key=${key.toString(Charsets.UTF_8)}, keyHash=$keyHash)"
-
-    override fun hashCode() = keyHash.toInt()
-  }
-
-  private class IndexEntryHash : UniversalHash<IndexEntry> {
-    override fun universalHash(key: IndexEntry, index: Long) = Xxh3.seededHash(key.key, index)
-  }
-
   fun addDirsToIndex(dirNames: Collection<String>) {
     assert(withOptimizedMetadataEnabled)
     for (dirName in dirNames) {
-      val key = dirName.toByteArray(Charsets.UTF_8)
-      indexWriter.add(IndexEntry(key = key, offset = -1, size = 0, keyHash = Xxh3.hash(key)))
+      val nameBytes = dirName.toByteArray(Charsets.UTF_8)
+      indexWriter.add(indexWriter.entry(key = Xxh3.hash(nameBytes), offset = 0, size = -1))
+      names.add(nameBytes)
     }
   }
 
@@ -429,7 +398,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
                                      crc: Long,
                                      name: ByteArray,
                                      offset: Long,
-                                     dataOffset: Int,
+                                     dataOffset: Long,
                                      normalName: ByteArray = name) {
     var buffer = metadataBuffer
     if (buffer.remaining() < (46 + name.size)) {
@@ -452,7 +421,8 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     buffer.putInt(headerOffset + 24, size)
 
     if (withOptimizedMetadataEnabled) {
-      indexWriter.add(IndexEntry(key = normalName, offset = dataOffset, size = size, keyHash = Xxh3.hash(normalName)))
+      indexWriter.add(indexWriter.entry(offset = dataOffset, size = size, key = Xxh3.hash(normalName)))
+      names.add(normalName)
     }
 
     // file name length

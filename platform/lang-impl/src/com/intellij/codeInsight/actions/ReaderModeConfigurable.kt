@@ -1,14 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
-import com.intellij.application.options.codeStyle.CodeStyleSchemesModel
 import com.intellij.application.options.colors.ReaderModeStatsCollector
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
-import com.intellij.application.options.schemes.SchemesCombo
-import com.intellij.formatting.visualLayer.VisualFormattingLayerService
 import com.intellij.ide.DataManager
-import com.intellij.ide.IdeBundle
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -18,7 +14,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import com.intellij.psi.codeStyle.CodeStyleSchemes
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.PlatformUtils
@@ -27,18 +24,8 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
   LangBundle.message("configurable.reader.mode"), "editor.reader.mode") {
   private val settings get() = ReaderModeSettings.getInstance(project)
 
-  private val codeStyleSchemesModel = CodeStyleSchemesModel(project)
-  private val comboVisualFormattingLayerScheme
-    get() = object : SchemesCombo<CodeStyleScheme>() {
-      override fun supportsProjectSchemes(): Boolean = true
-
-      override fun isProjectScheme(scheme: CodeStyleScheme): Boolean = codeStyleSchemesModel.isProjectScheme(scheme)
-
-      override fun getSchemeAttributes(scheme: CodeStyleScheme?): SimpleTextAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES
-
-    }
-  private val cdVisualFormattingLayer
-    get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.visual.formatting.layer"), settings::useVisualFormattingLayer)
+  private val cdVisualFormatting
+    get() = CheckboxDescriptor(LangBundle.message("checkbox.reader.mode.show.visual.formatting.layer"), settings::enableVisualFormatting)
   private val cdInlays get() = CheckboxDescriptor(LangBundle.message("checkbox.inlays"), settings::showInlaysHints)
   private val cdRenderedDocs get() = CheckboxDescriptor(LangBundle.message("checkbox.rendered.docs"), settings::showRenderedDocs)
   private val cdLigatures get() = CheckboxDescriptor(LangBundle.message("checkbox.ligatures"), settings::showLigatures)
@@ -85,36 +72,35 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
           row {
             checkBox(cdInlays).visible(PlatformUtils.isIntelliJ())
           }
-          lateinit var visualFormattingLayer: Cell<JBCheckBox>
-          row {
-            visualFormattingLayer = checkBox(cdVisualFormattingLayer)
-          }
-          indent {
-            row(IdeBundle.message("combobox.label.visual.formatting.layer.scheme")) {
-              val combo = comboVisualFormattingLayerScheme
-              cell(combo)
-                .onReset {
-                  combo.resetSchemes(codeStyleSchemesModel.allSortedSchemes)
-                  combo.selectScheme(getVisualFormattingLayerScheme())
-                }
-                .onIsModified {
-                  val selected = combo.selectedScheme
-                  selected == null ||
-                  selected.name != settings.visualFormattingLayerScheme.name ||
-                  codeStyleSchemesModel.isProjectScheme(selected)!= settings.visualFormattingLayerScheme.isProjectLevel
-                }
-                .onApply {
-                  settings.visualFormattingLayerScheme = ReaderModeSettings.State.SchemeState().apply {
-                    val selected = combo.selectedScheme
-                    if (selected != null) {
-                      name = selected.name
-                      isProjectLevel = codeStyleSchemesModel.isProjectScheme(selected)
-                    }
-                  }
-                }
-            }
-          }.enabledIf(visualFormattingLayer.selected)
         }
+        lateinit var visualFormattingEnabled: Cell<JBCheckBox>
+        row {
+          visualFormattingEnabled = checkBox(cdVisualFormatting)
+        }
+        buttonsGroup(indent = true) {
+          row {
+            radioButton("", true).apply {
+              onReset {
+                component.text = (LangBundle.message("radio.reader.mode.use.active.scheme.visual.formatting",
+                                                     getCurrentCodeStyleSchemeName(project)))
+              }
+            }
+            // ensure label is updated when active code style scheme changes
+            val listener = { e: CodeStyleSettingsChangeEvent -> if (e.virtualFile == null) reset() }
+            CodeStyleSettingsManager.getInstance(project).subscribe(listener, disposable!!)
+          }
+          row {
+            val radio = radioButton(LangBundle.message("radio.reader.mode.choose.visual.formatting.scheme"), false)
+              .gap(RightGap.SMALL)
+            val combo = VisualFormattingSchemesCombo(project)
+            cell(combo)
+              .onReset { combo.onReset(settings) }
+              .onIsModified { combo.onIsModified(settings) }
+              .onApply { combo.onApply(settings) }
+              .enabledIf(radio.selected)
+          }
+        }.bind(settings::useActiveSchemeForVisualFormatting)
+          .enabledIf(visualFormattingEnabled.selected)
       }.enabledIf(enabled.selected)
     }
   }
@@ -134,9 +120,10 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
       }
     }
   }
-
-  private fun getVisualFormattingLayerScheme(): CodeStyleScheme = codeStyleSchemesModel.schemes.find {
-      settings.visualFormattingLayerScheme.name == it.name &&
-      settings.visualFormattingLayerScheme.isProjectLevel == codeStyleSchemesModel.isProjectScheme(it)
-    } ?: CodeStyleSchemes.getInstance().defaultScheme
 }
+
+private fun getCurrentCodeStyleSchemeName(project: Project) =
+  CodeStyleSettingsManager.getInstance(project).run {
+    if (USE_PER_PROJECT_SETTINGS) CodeStyleScheme.PROJECT_SCHEME_NAME
+    else CodeStyleSchemes.getInstance().findPreferredScheme(PREFERRED_PROJECT_CODE_STYLE).displayName
+  }

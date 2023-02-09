@@ -67,16 +67,14 @@ public class ErrorRethrownInspection extends BaseInspection {
     }
 
     private static boolean hasJavaLangErrorType(PsiType type) {
-      if (type instanceof PsiDisjunctionType) {
-        final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)type;
+      if (type instanceof PsiDisjunctionType disjunctionType) {
         for (PsiType disjunction : disjunctionType.getDisjunctions()) {
           if (hasJavaLangErrorType(disjunction)) {
             return true;
           }
         }
       }
-      else if (type instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)type;
+      else if (type instanceof PsiClassType classType) {
         final PsiClass aClass = classType.resolve();
         if (InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_ERROR) &&
             !InheritanceUtil.isInheritor(aClass, "java.lang.ThreadDeath")) {

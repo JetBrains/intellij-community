@@ -88,7 +88,6 @@ public class GradleResourceCompilerConfigurationGenerator {
 
     final BuildManager buildManager = BuildManager.getInstance();
     final File projectSystemDir = buildManager.getProjectSystemDirectory(myProject);
-    if (projectSystemDir == null) return;
 
     final File gradleConfigFile = new File(projectSystemDir, GradleProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
 

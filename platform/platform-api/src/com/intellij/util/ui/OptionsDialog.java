@@ -22,9 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-/**
- * author: lesya
- */
+/** A dialog that includes a "Do not ask again" checkbox. */
 public abstract class OptionsDialog extends DialogWrapper {
   protected final Project myProject;
 

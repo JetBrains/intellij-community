@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class JavaPatternCompletionUtil {
+public final class JavaPatternCompletionUtil {
   /**
    * @param psiFile file (=element.getContainingFile())
    * @param element element where completion is invoked

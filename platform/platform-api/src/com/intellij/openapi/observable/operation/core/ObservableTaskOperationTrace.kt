@@ -2,6 +2,7 @@
 package com.intellij.openapi.observable.operation.core
 
 import com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+import com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2
 import com.intellij.openapi.observable.operation.OperationExecutionId
 import com.intellij.openapi.observable.operation.OperationExecutionStatus
 import org.jetbrains.annotations.ApiStatus
@@ -12,11 +13,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.NonExtendable
 interface ObservableTaskOperationTrace: ObservableOperationTrace {
 
-  val scheduleTaskObservable: SingleEventDispatcher.Observable1<OperationExecutionId>
+  val state: ObservableOperationState
 
-  val startTaskObservable: SingleEventDispatcher.Observable1<OperationExecutionId>
+  val scheduleTaskObservable: SingleEventDispatcher<OperationExecutionId>
 
-  val finishTaskObservable: SingleEventDispatcher.Observable2<OperationExecutionId, OperationExecutionStatus>
+  val startTaskObservable: SingleEventDispatcher<OperationExecutionId>
 
-  val detachTaskObservable: SingleEventDispatcher.Observable1<OperationExecutionId>
+  val finishTaskObservable: SingleEventDispatcher2<OperationExecutionId, OperationExecutionStatus>
+
+  val detachTaskObservable: SingleEventDispatcher<OperationExecutionId>
 }

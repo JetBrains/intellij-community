@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * Author: Alexey.Ivanov
- */
 public class RemovePrefixQuickFix implements LocalQuickFix {
   private final String myPrefix;
 

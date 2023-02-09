@@ -47,7 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-public class IntroduceVariableUtil {
+public final class IntroduceVariableUtil {
 
   public static final Logger LOG = Logger.getInstance(IntroduceVariableUtil.class);
   public static final Key<Boolean> NEED_PARENTHESIS = Key.create("NEED_PARENTHESIS");

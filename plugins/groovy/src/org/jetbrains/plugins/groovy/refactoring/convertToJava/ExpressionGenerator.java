@@ -343,7 +343,7 @@ public class ExpressionGenerator extends Generator {
       var = null;
     }
     final PsiType type = condition.getType();
-    if (type == null || PsiType.BOOLEAN.equals(TypesUtil.unboxPrimitiveTypeWrapper(type))) {
+    if (type == null || PsiTypes.booleanType().equals(TypesUtil.unboxPrimitiveTypeWrapper(type))) {
       if (elvis) {
         builder.append(var);
       }
@@ -685,7 +685,7 @@ public class ExpressionGenerator extends Generator {
   }
 
   private static boolean isBooleanType(PsiType type) {
-    return PsiType.BOOLEAN.equals(type) || type != null && type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN);
+    return PsiTypes.booleanType().equals(type) || type != null && type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN);
   }
 
   private void writeSimpleBinaryExpression(PsiElement opToken, GrExpression left, GrExpression right) {
@@ -756,8 +756,7 @@ public class ExpressionGenerator extends Generator {
     final GroovyResolveResult resolveResult = rValueReference == null ? EmptyGroovyResolveResult.INSTANCE
                                                                       : rValueReference.advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
-    if (resolved instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)resolved)) {
-      final PsiMethod getter = (PsiMethod)resolved;
+    if (resolved instanceof PsiMethod getter && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)resolved)) {
       final String propertyName = GroovyPropertyUtils.getPropertyNameByGetter(getter);
       final PsiType type;
       if (qualifier == null) {
@@ -861,7 +860,7 @@ public class ExpressionGenerator extends Generator {
 
     boolean isChar = false;
     for (TypeConstraint constraint : constraints) {
-      if (constraint instanceof SubtypeConstraint && PsiType.CHAR.equals(TypesUtil.unboxPrimitiveTypeWrapper(constraint.getDefaultType()))) {
+      if (constraint instanceof SubtypeConstraint && PsiTypes.charType().equals(TypesUtil.unboxPrimitiveTypeWrapper(constraint.getDefaultType()))) {
         isChar = true;
       }
     }
@@ -1523,7 +1522,7 @@ public class ExpressionGenerator extends Generator {
     LOG.assertTrue(type instanceof GrRangeType);
     final PsiClass resolved = ((GrRangeType)type).resolve();
     builder.append("new ");
-    if (resolved == null || resolved.getQualifiedName() == GroovyCommonClassNames.GROOVY_LANG_RANGE) {
+    if (resolved == null || GroovyCommonClassNames.GROOVY_LANG_RANGE.equals(resolved.getQualifiedName())) {
       builder.append(GroovyCommonClassNames.GROOVY_LANG_OBJECT_RANGE);
     }
     else {

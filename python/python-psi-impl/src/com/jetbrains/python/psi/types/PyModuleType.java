@@ -577,8 +577,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof PyModuleType)) return false;
-    PyModuleType type = (PyModuleType)o;
+    if (!(o instanceof PyModuleType type)) return false;
     return myModule.equals(type.myModule);
   }
 

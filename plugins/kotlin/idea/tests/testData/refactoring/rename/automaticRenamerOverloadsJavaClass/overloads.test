@@ -3,5 +3,6 @@
   "classId": "/JavaSuper",
   "methodSignature": "void foo()",
   "newName": "bar",
-  "mainFile": "JavaSuper.java"
+  "mainFile": "JavaSuper.java",
+  "enabledInK2": true
 }

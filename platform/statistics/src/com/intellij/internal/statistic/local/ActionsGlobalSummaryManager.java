@@ -21,8 +21,8 @@ public final class ActionsGlobalSummaryManager {
   private static final Logger LOG = Logger.getInstance(ActionsGlobalSummaryManager.class);
   private static final @NotNull CharFilter QUOTE_FILTER = ch -> ch != '"';
 
-  private static final int DEFAULT_STATISTICS_VERSION = 2;
-  private static final int UPDATED_STATISTICS_VERSION = 3;
+  private static final int DEFAULT_STATISTICS_VERSION = 3;
+  private static final int UPDATED_STATISTICS_VERSION = 4;
 
   private final Map<String, ActionGlobalUsageInfo> myStatisticsMap;
   private final Map<String, ActionGlobalUsageInfo> myUpdatedStatisticsMap;
@@ -32,8 +32,8 @@ public final class ActionsGlobalSummaryManager {
 
 
   public ActionsGlobalSummaryManager() {
-    myStatisticsMap = loadStatistics("/statistics/actionsUsagesV2.csv");
-    myUpdatedStatisticsMap = loadStatistics("/statistics/actionsUsagesV3.csv");
+    myStatisticsMap = loadStatistics("/statistics/actionsUsagesV3.csv");
+    myUpdatedStatisticsMap = loadStatistics("/statistics/actionsUsagesV4.csv");
     mySummary = calculateTotalSummary(myStatisticsMap);
     myUpdatedSummary = calculateTotalSummary(myUpdatedStatisticsMap);
   }
@@ -102,21 +102,6 @@ public final class ActionsGlobalSummaryManager {
     return res;
   }
 
-  public static class ActionsGlobalTotalSummary {
-    private final long maxUsageCount;
-    private final long minUsageCount;
-
-    public ActionsGlobalTotalSummary(long maxUsageCount, long minUsageCount) {
-      this.maxUsageCount = maxUsageCount;
-      this.minUsageCount = minUsageCount;
-    }
-
-    public long getMaxUsageCount() {
-      return maxUsageCount;
-    }
-
-    public long getMinUsageCount() {
-      return minUsageCount;
-    }
+  public record ActionsGlobalTotalSummary(long maxUsageCount, long minUsageCount) {
   }
 }

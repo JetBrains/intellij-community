@@ -23,9 +23,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(AutomaticUsageRenamingDialog.class);
   private static final int CHECK_COLUMN = 0;

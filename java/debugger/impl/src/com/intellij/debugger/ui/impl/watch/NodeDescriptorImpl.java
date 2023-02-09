@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -26,7 +26,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   public static final String UNKNOWN_VALUE_MESSAGE = "";
   public boolean myIsExpanded = false;
   public boolean myIsSelected = false;
-  public boolean myIsVisible  = false;
+  public boolean myIsVisible = false;
 
   private EvaluateException myEvaluateException;
   private @NlsContexts.Label String myLabel = UNKNOWN_VALUE_MESSAGE;
@@ -49,13 +49,13 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
 
   @Override
   public <T> void putUserData(@NotNull Key<T> key, T value) {
-    if(myUserData == null) {
+    if (myUserData == null) {
       myUserData = new HashMap<>();
     }
     myUserData.put(key, value);
   }
 
-  public void updateRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener){
+  public void updateRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) {
     updateRepresentationNoNotify(context, labelListener);
     labelListener.labelChanged();
   }
@@ -100,11 +100,10 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
 
   @Override
   public void displayAs(NodeDescriptor descriptor) {
-    if (descriptor instanceof NodeDescriptorImpl) {
-      final NodeDescriptorImpl that = (NodeDescriptorImpl)descriptor;
+    if (descriptor instanceof NodeDescriptorImpl that) {
       myIsExpanded = that.myIsExpanded;
       myIsSelected = that.myIsSelected;
-      myIsVisible  = that.myIsVisible;
+      myIsVisible = that.myIsVisible;
       myUserData = that.myUserData != null ? new HashMap<>(that.myUserData) : null;
 
       // TODO introduce unified way to handle this

@@ -167,8 +167,8 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     linkPanel.add(myLinkLabel, BorderLayout.CENTER);
     CustomShortcutSet shortcutSet = KeymapUtil.getShortcutsForMnemonicCode(TextWithMnemonic.parse(message).getMnemonicCode());
     if (shortcutSet != null) {
-      List<String> list = ContainerUtil.map(shortcutSet.getShortcuts(), shortcut -> KeymapUtil.getShortcutText(shortcut));
-      list.sort(Comparator.comparingInt(String::length));
+      List<String> list = ContainerUtil.sorted(ContainerUtil.map(shortcutSet.getShortcuts(), shortcut -> KeymapUtil.getShortcutText(shortcut)),
+      Comparator.comparingInt(String::length));
       JLabel shortcutLabel = new JLabel(list.get(0));
       shortcutLabel.setEnabled(false);
       shortcutLabel.setBorder(JBUI.Borders.empty(0, 5));
@@ -316,7 +316,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     ArrayList<SettingsEditorFragment<Settings, ?>> result = new ArrayList<>();
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
       String group = fragment.getGroup();
-      int last = ContainerUtil.lastIndexOf(result, f -> f.getGroup() == group);
+      int last = ContainerUtil.lastIndexOf(result, f -> Objects.equals(f.getGroup(), group));
       result.add(last >= 0 ? last + 1 : result.size(), fragment);
     }
     return result;

@@ -20,6 +20,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.tabs.impl.TabLabel
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import java.awt.datatransfer.StringSelection
 
 abstract class CopyPathProvider : AnAction() {
@@ -113,8 +115,14 @@ class CopyContentRootPathProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project,
                                 virtualFile: VirtualFile?,
                                 editor: Editor?): String? {
-    return virtualFile?.let {
-      ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile, false)?.let { module ->
+    if (virtualFile == null) return null
+    
+    if (WorkspaceFileIndexEx.IS_ENABLED) {
+      val root = WorkspaceFileIndex.getInstance(project).getContentFileSetRoot(virtualFile, false) ?: return null
+      return VfsUtilCore.getRelativePath(virtualFile, root)
+    }
+    else {
+      return ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile, false)?.let { module ->
         ModuleRootManager.getInstance(module).contentRoots.mapNotNull { root ->
           VfsUtilCore.getRelativePath(virtualFile, root)
         }.singleOrNull()

@@ -239,9 +239,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
 
   @Override
   public void update() {
-    if (ApplicationManager.getApplication().isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.error("Reading Git repository information should not be done on the EDT");
-    }
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     GitRepoInfo previousInfo = myInfo;
     myInfo = readRepoInfo();
     notifyIfRepoChanged(this, previousInfo, myInfo);

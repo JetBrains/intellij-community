@@ -159,14 +159,18 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
       List<Object> usages = selectedUsages.get();
       if (usages != null) {
         for (Object usage : usages) {
-          if (usage instanceof UsageInfo) {
-            UsageInfo usageInfo = (UsageInfo)usage;
+          if (usage instanceof UsageInfo usageInfo) {
             UsageViewUtil.navigateTo(usageInfo, true);
 
             PsiElement element = usageInfo.getElement();
             if (element != null) {
+              String recentSearchText = speedSearch.getComparator().getRecentSearchText();
+              int numberOfLettersTyped = recentSearchText != null ? recentSearchText.length() : 0;
               UsageViewStatisticsCollector.logItemChosen(element.getProject(), myUsageView, CodeNavigateSource.ShowUsagesPopup,
-                                                         element.getLanguage());
+                                                         getSelectedRow(),
+                                                         getRowCount(),
+                                                         numberOfLettersTyped,
+                                                         element.getLanguage(), false);
             }
           }
           else if (usage instanceof Navigatable) {
@@ -242,8 +246,7 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
 
     @Override
     protected String getElementText(@NotNull Object element) {
-      if (!(element instanceof UsageNode)) return element.toString();
-      UsageNode node = (UsageNode)element;
+      if (!(element instanceof UsageNode node)) return element.toString();
       if (node instanceof ShowUsagesAction.StringNode) return "";
       Usage usage = node.getUsage();
       if (usage == getTable().MORE_USAGES_SEPARATOR || usage == getTable().USAGES_OUTSIDE_SCOPE_SEPARATOR || usage == getTable().USAGES_FILTERED_OUT_SEPARATOR) return "";

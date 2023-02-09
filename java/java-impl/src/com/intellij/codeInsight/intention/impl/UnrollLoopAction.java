@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -99,8 +99,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
         PsiArrayInitializerExpression initializer = ((PsiNewExpression)expression).getArrayInitializer();
         return initializer == null ? Collections.emptyList() : Arrays.asList(initializer.getInitializers());
       }
-      if (expression instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      if (expression instanceof PsiMethodCallExpression call) {
         if (Holder.SINGLETON_CONSTRUCTOR.test(call)) {
           return Arrays.asList(call.getArgumentList().getExpressions());
         }
@@ -155,7 +154,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
         if (!(to instanceof Integer) && !(to instanceof Long)) return Collections.emptyList();
         long toValue = ((Number)to).longValue();
         long diff = multiplier * (toValue - fromValue);
-        String suffix = PsiType.LONG.equals(countingLoop.getCounter().getType()) ? "L" : "";
+        String suffix = PsiTypes.longType().equals(countingLoop.getCounter().getType()) ? "L" : "";
         if (countingLoop.isIncluding()) {
           diff++; // overflow is ok: diff will become negative and we will exit
         }
@@ -233,8 +232,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
       }
       for(PsiElement child : children) {
         PsiElement added = anchor.getParent().addBefore(child, anchor);
-        if (added instanceof PsiIfStatement && isLoopBreak((PsiStatement)added)) {
-          PsiIfStatement ifStatement = (PsiIfStatement)added;
+        if (added instanceof PsiIfStatement ifStatement && isLoopBreak((PsiStatement)added)) {
           PsiExpression condition = Objects.requireNonNull(ifStatement.getCondition());
           PsiStatement thenBranch = Objects.requireNonNull(ifStatement.getThenBranch());
           String negated = BoolUtils.getNegatedExpressionText(condition, ct);
@@ -253,8 +251,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
   }
 
   private static boolean isLoopBreak(PsiStatement statement) {
-    if (!(statement instanceof PsiIfStatement)) return false;
-    PsiIfStatement ifStatement = (PsiIfStatement)statement;
+    if (!(statement instanceof PsiIfStatement ifStatement)) return false;
     if (ifStatement.getElseBranch() != null || ifStatement.getCondition() == null) return false;
     PsiStatement thenBranch = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
     return thenBranch instanceof PsiBreakStatement && ((PsiBreakStatement)thenBranch).getLabelIdentifier() == null;

@@ -9,6 +9,8 @@ import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestObject;
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -22,8 +24,10 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -109,11 +113,11 @@ public class JUnitConfigurationModel {
     final String testObject = getTestObject();
     final String className = getJUnitTextValue(CLASS);
     data.TEST_OBJECT = testObject;
-    if (testObject != JUnitConfiguration.TEST_PACKAGE &&
-        testObject != JUnitConfiguration.TEST_PATTERN &&
-        testObject != JUnitConfiguration.TEST_DIRECTORY &&
-        testObject != JUnitConfiguration.TEST_CATEGORY  &&
-        testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
+    if (!JUnitConfiguration.TEST_PACKAGE.equals(testObject) &&
+        !JUnitConfiguration.TEST_PATTERN.equals(testObject) &&
+        !JUnitConfiguration.TEST_DIRECTORY.equals(testObject) &&
+        !JUnitConfiguration.TEST_CATEGORY.equals(testObject) &&
+        !JUnitConfiguration.BY_SOURCE_CHANGES.equals(testObject)) {
       data.METHOD_NAME = getJUnitTextValue(METHOD);
       if (!className.equals(replaceRuntimeClassName(data.getMainClassName()))) {
         try {
@@ -138,14 +142,14 @@ public class JUnitConfigurationModel {
         }
       }
     }
-    else if (testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
-      if (testObject == JUnitConfiguration.TEST_PACKAGE) {
+    else if (!JUnitConfiguration.BY_SOURCE_CHANGES.equals(testObject)) {
+      if (JUnitConfiguration.TEST_PACKAGE.equals(testObject)) {
         data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
       }
-      else if (testObject == JUnitConfiguration.TEST_DIRECTORY) {
+      else if (JUnitConfiguration.TEST_DIRECTORY.equals(testObject)) {
         data.setDirName(getJUnitTextValue(DIR));
       }
-      else if (testObject == JUnitConfiguration.TEST_CATEGORY) {
+      else if (JUnitConfiguration.TEST_CATEGORY.equals(testObject)) {
         data.setCategoryName(getJUnitTextValue(CATEGORY));
       }
       else {
@@ -261,35 +265,42 @@ public class JUnitConfigurationModel {
     });
   }
 
-  public void reloadTestKindModel(JComboBox<Integer> comboBox, Module module) {
+  public void reloadTestKindModel(JComboBox<Integer> comboBox, Module module, @Nullable Runnable onDone) {
     int selectedIndex = comboBox.getSelectedIndex();
-    final DefaultComboBoxModel<Integer> aModel = new DefaultComboBoxModel<>();
-    aModel.addElement(ALL_IN_PACKAGE);
-    aModel.addElement(DIR);
-    aModel.addElement(PATTERN);
-    aModel.addElement(CLASS);
-    aModel.addElement(METHOD);
+    ReadAction.nonBlocking(() -> {
+      final DefaultComboBoxModel<Integer> aModel = new DefaultComboBoxModel<>();
+      aModel.addElement(ALL_IN_PACKAGE);
+      aModel.addElement(DIR);
+      aModel.addElement(PATTERN);
+      aModel.addElement(CLASS);
+      aModel.addElement(METHOD);
 
-    GlobalSearchScope searchScope = module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
-                                                   : GlobalSearchScope.allScope(myProject);
+      GlobalSearchScope searchScope = module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
+                                                     : GlobalSearchScope.allScope(myProject);
 
-    if (myProject.isDefault() || JavaPsiFacade.getInstance(myProject).findPackage("org.junit") != null) {
-      aModel.addElement(CATEGORY);
-    }
+      if (myProject.isDefault() || JavaPsiFacade.getInstance(myProject).findPackage("org.junit") != null) {
+        aModel.addElement(CATEGORY);
+      }
 
-    if (myProject.isDefault() ||
-        JUnitUtil.isJUnit5(searchScope, myProject) ||
-        TestObject.hasJUnit5EnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
-      aModel.addElement(UNIQUE_ID);
-      aModel.addElement(TAGS);
-    }
+      if (myProject.isDefault() ||
+          JUnitUtil.isJUnit5(searchScope, myProject) ||
+          TestObject.hasJUnit5EnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
+        aModel.addElement(UNIQUE_ID);
+        aModel.addElement(TAGS);
+      }
 
-    if (Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
-      aModel.addElement(BY_SOURCE_POSITION);
-      aModel.addElement(BY_SOURCE_CHANGES);
-    }
-    comboBox.setModel(aModel);
-    comboBox.setSelectedIndex(selectedIndex);
+      if (Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
+        aModel.addElement(BY_SOURCE_POSITION);
+        aModel.addElement(BY_SOURCE_CHANGES);
+      }
+      return aModel;
+    }).finishOnUiThread(ModalityState.any(), model -> {
+      comboBox.setModel(model);
+      comboBox.setSelectedIndex(selectedIndex == -1 ? myType : selectedIndex);
+      if (onDone != null) {
+        onDone.run();
+      }
+    }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   public boolean disableModuleClasspath(boolean wholeProjectSelected) {

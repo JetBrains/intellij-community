@@ -388,7 +388,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
           .range(minElement).create();
       }
       Number maxValue = null;
-      if (maxElement != null) {
+      if (maxElement != null && minElement != maxElement) {
         maxValue= myLanguageHosts.getQuantifierValue(maxElement);
         if (maxValue == null) myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.repetition.value.too.large"))
           .range(maxElement).create();

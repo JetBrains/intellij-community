@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.find.impl;
 
 import com.intellij.find.*;
@@ -68,7 +67,6 @@ public final class FindInProjectUtil {
   private FindInProjectUtil() {}
 
   public static void setDirectoryName(@NotNull FindModel model, @NotNull DataContext dataContext) {
-    PsiElement psiElement = null;
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
@@ -76,6 +74,7 @@ public final class FindInProjectUtil {
       EditorSearchSession session = EditorSearchSession.SESSION_KEY.getData(dataContext);
       if (session != null) editor = session.getEditor();
     }
+    PsiElement psiElement = null;
     if (project != null && editor == null && !DumbServiceImpl.getInstance(project).isDumb()) {
       try {
         psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
@@ -251,12 +250,12 @@ public final class FindInProjectUtil {
     if (virtualFile.getFileType().isBinary()) return true; // do not decompile .class files
     Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
     if (document == null) return true;
-    int[] offsetRef = {0};
     ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
     if (current == null) throw new IllegalStateException("must find usages under progress");
     ProgressIndicator indicator = ProgressWrapper.unwrapAll(current);
     TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(indicator);
     int before;
+    int[] offsetRef = {0};
     do {
       tooManyUsagesStatus.pauseProcessingIfTooManyUsages(); // wait for user out of read action
       before = offsetRef[0];
@@ -387,17 +386,14 @@ public final class FindInProjectUtil {
     presentation.setUsageTypeFilteringAvailable(true);
     if (findModel.isReplaceState() && findModel.isRegularExpressions()) {
       presentation.setSearchPattern(findModel.compileRegExp());
-      try {
-        presentation.setReplacePattern(Pattern.compile(findModel.getStringToReplace()));
-      }
-      catch (Exception e) {
-        presentation.setReplacePattern(null);
-      }
+      presentation.setReplaceString(findModel.getStringToReplace());
     }
     else {
       presentation.setSearchPattern(null);
-      presentation.setReplacePattern(null);
+      presentation.setReplaceString(null);
     }
+    presentation.setCaseSensitive(findModel.isCaseSensitive());
+    presentation.setPreserveCase(findModel.isPreserveCase());
     presentation.setReplaceMode(findModel.isReplaceState());
   }
 

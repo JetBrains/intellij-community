@@ -6,6 +6,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.PathUtil;
 import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
@@ -19,7 +20,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Alexei Orischenko
- * @author vlan
  */
 public final class PythonStringUtil {
 
@@ -55,7 +55,7 @@ public final class PythonStringUtil {
       s = FileUtil.toSystemIndependentName(s);
       final List<String> components = StringUtil.split(s, "/");
       for (String name : components) {
-        if (name == components.get(0) && SystemInfo.isWindows && name.endsWith(":")) {
+        if (Strings.areSameInstance(name, components.get(0)) && SystemInfo.isWindows && name.endsWith(":")) {
           continue;
         }
         if (!PathUtil.isValidFileName(name)) {

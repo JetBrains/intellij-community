@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -21,21 +22,18 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInspectionTool {
 
   public boolean disableForNonIntegralTypes = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(JavaBundle.message("inspection.manual.min.max.calculation.disable.for.non.integral"),
-                      "disableForNonIntegralTypes");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("disableForNonIntegralTypes", JavaBundle.message("inspection.manual.min.max.calculation.disable.for.non.integral")));
   }
 
   @NotNull
@@ -75,6 +73,8 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
         if (!equivalenceChecker.expressionsAreEquivalent(right, useMathMin ? model.getThenExpression() : model.getElseExpression())) return;
         IElementType tokenType = condition.getOperationTokenType();
         useMathMin ^= JavaTokenType.LT.equals(tokenType) || JavaTokenType.LE.equals(tokenType);
+        PsiClass containingClass = ClassUtils.getContainingClass(element);
+        if (containingClass != null && CommonClassNames.JAVA_LANG_MATH.equals(containingClass.getQualifiedName())) return;
         holder.registerProblem(element,
                                JavaBundle.message("inspection.manual.min.max.calculation.description", useMathMin ? "min" : "max"),
                                new ReplaceWithMinMaxFix(useMathMin));

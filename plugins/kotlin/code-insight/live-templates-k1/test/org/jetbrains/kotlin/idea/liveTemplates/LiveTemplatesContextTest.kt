@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.liveTemplates
 
@@ -6,8 +6,8 @@ import com.intellij.codeInsight.template.impl.TemplateContextTypes
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.*
 import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.*
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -100,7 +100,7 @@ class LiveTemplatesContextTest : NewLightKotlinCodeInsightFixtureTestCase() {
     }
 
     private fun assertInContexts(vararg expectedContexts: java.lang.Class<out KotlinTemplateContextType>) {
-        myFixture.configureByMainPath()
+        myFixture.configureByDefaultFile()
         val allContexts = TemplateContextTypes.getAllContextTypes().filterIsInstance<KotlinTemplateContextType>()
         val enabledContexts = allContexts.filter { it.isInContext(myFixture.file, myFixture.caretOffset) }.map { it::class.java }
         UsefulTestCase.assertSameElements(enabledContexts, *expectedContexts)

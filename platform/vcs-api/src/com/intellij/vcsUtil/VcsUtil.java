@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcsUtil;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ThrowableConvertor;
@@ -47,8 +46,8 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 @ApiStatus.NonExtendable
-public class VcsUtil {
-  protected static final char[] ourCharsToBeChopped = {'/', '\\'};
+public final class VcsUtil {
+  private static final char[] ourCharsToBeChopped = {'/', '\\'};
   private static final Logger LOG = Logger.getInstance(VcsUtil.class);
 
   public static final @NonNls String MAX_VCS_LOADED_SIZE_KB = "idea.max.vcs.loaded.size.kb";
@@ -259,23 +258,11 @@ public class VcsUtil {
   }
 
   /**
-   * @deprecated use {@link StatusBar.Info#set(String, Project)} directly.
-   */
-  @Deprecated(forRemoval = true)
-  public static void showStatusMessage(@NotNull Project project, @Nullable @Nls String message) {
-    SwingUtilities.invokeLater(() -> {
-      if (project.isOpen()) {
-        StatusBar.Info.set(message, project);
-      }
-    });
-  }
-
-  /**
    * @return Return true if the "Change" object is created for "Rename" operation:
    * in this case name of files for "before" and "after" revisions must not coincide.
    * @deprecated See {@link Change#getType()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isRenameChange(Change change) {
     boolean isRenamed = false;
     ContentRevision before = change.getBeforeRevision();
@@ -293,7 +280,7 @@ public class VcsUtil {
    * "before" revision is NULL, while "after" revision is NOT NULL.
    * @deprecated See {@link Change#getType()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isChangeForNew(Change change) {
     return change.getBeforeRevision() == null && change.getAfterRevision() != null;
   }
@@ -303,7 +290,7 @@ public class VcsUtil {
    * "before" revision is NOT NULL, while "after" revision is NULL.
    * @deprecated See {@link Change#getType()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isChangeForDeleted(Change change) {
     return change.getBeforeRevision() != null && change.getAfterRevision() == null;
   }

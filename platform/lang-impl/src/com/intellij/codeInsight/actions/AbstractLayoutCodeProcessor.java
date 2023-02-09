@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.actions;
 
@@ -286,7 +286,7 @@ public abstract class AbstractLayoutCodeProcessor {
       );
       return;
     }
-    
+
     Consumer<@NotNull ProgressIndicator> runnable = (indicator) -> {
       indicator.setText(myProgressText);
         try {
@@ -300,8 +300,6 @@ public abstract class AbstractLayoutCodeProcessor {
           ApplicationManager.getApplication().invokeLater(myPostRunnable);
         }
     };
-
-    
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       ProgressManager.getInstance().run(new Task.Modal(myProject, getProgressTitle(), true) {

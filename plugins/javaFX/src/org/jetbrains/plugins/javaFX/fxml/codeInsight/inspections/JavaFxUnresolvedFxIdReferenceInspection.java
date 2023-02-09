@@ -157,7 +157,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
         return;
       }
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      PsiField field = factory.createField(reference.getCanonicalText(), PsiType.INT);
+      PsiField field = factory.createField(reference.getCanonicalText(), PsiTypes.intType());
       final PsiModifierList modifierList = field.getModifierList();
       if (modifierList != null) {
         @PsiModifier.ModifierConstant

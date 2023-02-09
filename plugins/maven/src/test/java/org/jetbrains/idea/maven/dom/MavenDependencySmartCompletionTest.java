@@ -6,23 +6,21 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestCase {
 
 
   @Test
   public void testCompletion() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    ju<caret>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           ju<caret>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "junit:junit");
   }
@@ -176,9 +174,11 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
 
   @Test
   public void testCompletionArtifactIdThenVersion() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -217,9 +217,11 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
 
   @Test
   public void testCompletionArtifactIdThenGroupIdThenInsertVersion() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -256,9 +258,11 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
 
   @Test
   public void testCompletionArtifactIdNonExactmatch() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -280,9 +284,11 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
 
   @Test
   public void testCompletionArtifactIdInsideManagedDependency() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>

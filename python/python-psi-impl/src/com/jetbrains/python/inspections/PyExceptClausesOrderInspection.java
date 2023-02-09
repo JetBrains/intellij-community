@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyExceptClausesOrderInspection extends PyInspection {
 
   @NotNull
@@ -54,8 +51,7 @@ public class PyExceptClausesOrderInspection extends PyInspection {
           PyExpression exceptClass = exceptPart.getExceptClass();
           if (exceptClass instanceof PyReferenceExpression) {
             PsiElement element = ((PyReferenceExpression) exceptClass).followAssignmentsChain(getResolveContext()).getElement();
-            if (element instanceof PyClass) {
-              PyClass pyClass = (PyClass)element;
+            if (element instanceof PyClass pyClass) {
               if (exceptClasses.contains(pyClass)) {
                 registerProblem(exceptClass, PyPsiBundle.message("INSP.bad.except.exception.class.already.caught", pyClass.getName()));
               } else {

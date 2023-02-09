@@ -15,13 +15,11 @@ import org.jetbrains.annotations.NotNull;
 class ThemeJsonNamedColorPsiReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-    if (!(element instanceof JsonLiteral)) return PsiReference.EMPTY_ARRAY;
+    if (!(element instanceof JsonLiteral literal)) return PsiReference.EMPTY_ARRAY;
 
-    JsonLiteral literal = (JsonLiteral)element;
     PsiElement parent = literal.getParent();
-    if (!(parent instanceof JsonProperty)) return PsiReference.EMPTY_ARRAY;
+    if (!(parent instanceof JsonProperty property)) return PsiReference.EMPTY_ARRAY;
 
-    JsonProperty property = (JsonProperty)parent;
     if (property.getValue() != literal) return PsiReference.EMPTY_ARRAY;
 
     return new PsiReference[]{new ThemeJsonNamedColorPsiReference(literal)};

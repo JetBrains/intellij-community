@@ -44,7 +44,7 @@ class EditorHistoryManagerTest {
   val disposable = DisposableRule()
 
   @Test
-  fun testSavingStateForNotOpenedEditors() {
+  fun savingStateForNotOpenedEditors() {
     val dir = tempDir.newPath("foo")
     val file = dir.resolve("some.txt")
     file.write("first line\nsecond line")
@@ -84,7 +84,6 @@ class EditorHistoryManagerTest {
       }
     }
   }
-
 }
 
 internal fun overrideFileEditorManagerImplementation(implementation: Class<out FileEditorManager>, disposable: Disposable) {

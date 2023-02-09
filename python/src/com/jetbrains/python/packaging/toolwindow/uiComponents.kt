@@ -232,7 +232,7 @@ internal class PyPackagingTableGroup<T: DisplayablePackage>(val repository: PyPa
   private var expanded = false
   private val label = JLabel(name).apply { icon = AllIcons.General.ArrowDown }
   private val header: JPanel = headerPanel(label, table)
-  internal var itemsCount: Int? = null
+  private var itemsCount: Int? = null
 
 
   internal var items: List<T>

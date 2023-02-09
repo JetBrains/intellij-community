@@ -2,6 +2,7 @@
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -35,7 +36,7 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
 
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.is(dataId)) {
+    if (PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId)) {
       return mySearchField.getText();
     }
     return null;

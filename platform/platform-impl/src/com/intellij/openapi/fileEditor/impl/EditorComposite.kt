@@ -4,24 +4,17 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.codeWithMe.ClientId.Companion.current
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
-import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.Companion.logAlternativeFileEditorSelected
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.DataValidators
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignClientId
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
@@ -29,49 +22,49 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
-import com.intellij.ui.TabbedPaneWrapper.AsJBTabs
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.EventDispatcher
+import com.intellij.util.ui.EDT
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
-import java.awt.EventQueue
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.function.Supplier
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingConstants
-import javax.swing.event.ChangeEvent
-import javax.swing.event.ChangeListener
 
 /**
  * An abstraction over one or several file editors opened in the same tab (e.g. designer and code-behind).
- * It's a composite what can be pinned in the tabs list or opened as a preview, not concrete file editors.
+ * It's a composite that can be pinned in the tab list or opened as a preview, not concrete file editors.
  * It also manages the internal UI structure: bottom and top components, panels, labels, actions for navigating between editors it owns.
  */
 @Suppress("LeakingThis")
 open class EditorComposite internal constructor(
   val file: VirtualFile,
   editorsWithProviders: List<FileEditorWithProvider>,
-  private val fileEditorManagerImpl: FileEditorManagerEx,
-) : UserDataHolderBase(), Disposable, FileEditorComposite {
+  private val project: Project,
+) : FileEditorComposite, Disposable {
   private val clientId: ClientId
-  val project: Project
 
   private var tabbedPaneWrapper: TabbedPaneWrapper? = null
   private var compositePanel: EditorCompositePanel
   private val focusWatcher: FocusWatcher?
 
   /**
-   * Currently selected myEditor
+   * Currently selected editor
    */
-  private var selectedEditorWithProvider: FileEditorWithProvider?
+  protected val selectedEditorWithProviderMutable: MutableStateFlow<FileEditorWithProvider?> = MutableStateFlow(null)
+  internal val selectedEditorWithProvider: StateFlow<FileEditorWithProvider?> = selectedEditorWithProviderMutable.asStateFlow()
+
   private val topComponents = HashMap<FileEditor, JComponent>()
   private val bottomComponents = HashMap<FileEditor, JComponent>()
   private val displayNames = HashMap<FileEditor, String>()
@@ -79,14 +72,13 @@ open class EditorComposite internal constructor(
   /**
    * Editors opened in the composite
    */
-  private val editorsWithProviders: MutableList<FileEditorWithProvider>
+  private val editorsWithProviders = CopyOnWriteArrayList(editorsWithProviders)
   private val dispatcher = EventDispatcher.create(EditorCompositeListener::class.java)
   private var selfBorder = false
 
   init {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    clientId = current
-    this.editorsWithProviders = CopyOnWriteArrayList(editorsWithProviders)
+    EDT.assertIsEdt()
+    clientId = ClientId.current
     for (editorWithProvider in editorsWithProviders) {
       val editor = editorWithProvider.fileEditor
       FileEditor.FILE_KEY.set(editor, file)
@@ -94,50 +86,26 @@ open class EditorComposite internal constructor(
         assignClientId(editor, clientId)
       }
     }
-    project = fileEditorManagerImpl.project
-    Disposer.register(project, this)
-    if (editorsWithProviders.size > 1) {
-      tabbedPaneWrapper = createTabbedPaneWrapper(null)
-      val component = tabbedPaneWrapper!!.component
-      compositePanel = EditorCompositePanel(component, this, Supplier { component })
+
+    when {
+      editorsWithProviders.size > 1 -> {
+        tabbedPaneWrapper = createTabbedPaneWrapper(component = null)
+        val component = tabbedPaneWrapper!!.component
+        compositePanel = EditorCompositePanel(realComponent = component, composite = this, focusComponent = { component })
+      }
+      editorsWithProviders.size == 1 -> {
+        tabbedPaneWrapper = null
+        val editor = editorsWithProviders[0].fileEditor
+        compositePanel = EditorCompositePanel(realComponent = createEditorComponent(editor),
+                                              composite = this,
+                                              focusComponent = { editor.preferredFocusedComponent })
+      }
+      else -> throw IllegalArgumentException("editor array cannot be empty")
     }
-    else if (editorsWithProviders.size == 1) {
-      tabbedPaneWrapper = null
-      val editor = editorsWithProviders[0].fileEditor
-      compositePanel = EditorCompositePanel(createEditorComponent(editor), this, Supplier { editor.preferredFocusedComponent })
-    }
-    else {
-      throw IllegalArgumentException("editors array cannot be empty")
-    }
-    selectedEditorWithProvider = editorsWithProviders[0]
+
+    selectedEditorWithProviderMutable.value = editorsWithProviders[0]
     focusWatcher = FocusWatcher()
     focusWatcher.install(compositePanel)
-    project.messageBus.connect(this).subscribe(
-      FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-      override fun selectionChanged(event: FileEditorManagerEvent) {
-        val oldFile = event.oldFile
-        val newFile = event.newFile
-        if (oldFile == newFile && file == newFile) {
-          val runnable = Runnable {
-            event.oldEditor?.deselectNotify()
-            val newEditor = event.newEditor
-            if (newEditor != null) {
-              newEditor.selectNotify()
-              logAlternativeFileEditorSelected(project, newFile, newEditor)
-            }
-            (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).providerSelected(this@EditorComposite)
-            (IdeDocumentHistory.getInstance(project) as IdeDocumentHistoryImpl).onSelectionChanged()
-          }
-          if (ApplicationManager.getApplication().isDispatchThread) {
-            CommandProcessor.getInstance().executeCommand(project, runnable,
-                                                          IdeBundle.message("command.switch.active.editor"), null)
-          }
-          else {
-            runnable.run() // not invoked by user
-          }
-        }
-      }
-    })
   }
 
   companion object {
@@ -179,8 +147,7 @@ open class EditorComposite internal constructor(
             return scheme.defaultBackground
           }
           else {
-            val result = scheme.getColor(EditorColors.TEARLINE_COLOR)
-            return result ?: JBColor.BLACK
+            return scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.BLACK
           }
         }
       }
@@ -199,16 +166,16 @@ open class EditorComposite internal constructor(
     }
   }
 
-  @get:Deprecated("use {@link #getAllEditorsWithProviders()}", ReplaceWith("allProviders"))
+  @get:Deprecated("use {@link #getAllEditorsWithProviders()}", ReplaceWith("allProviders"), level = DeprecationLevel.ERROR)
   val providers: Array<FileEditorProvider>
     get() = allProviders.toTypedArray()
 
   override val allProviders: List<FileEditorProvider>
     get() = allEditorsWithProviders.map { it.provider }
 
-  private fun createTabbedPaneWrapper(component: EditorCompositePanel?): AsJBTabs {
+  private fun createTabbedPaneWrapper(component: EditorCompositePanel?): TabbedPaneWrapper {
     val descriptor = PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_EDITOR_TAB, IdeActions.ACTION_PREVIOUS_EDITOR_TAB)
-    val wrapper = AsJBTabs(project, SwingConstants.BOTTOM, descriptor, this)
+    val wrapper = TabbedPaneWrapper.createJbTabs(project, SwingConstants.BOTTOM, descriptor, this)
     var firstEditor = true
     for (editorWithProvider in editorsWithProviders) {
       val editor = editorWithProvider.fileEditor
@@ -218,21 +185,27 @@ open class EditorComposite internal constructor(
       )
       firstEditor = false
     }
-    wrapper.addChangeListener(MyChangeListener())
+
+    // handles changes of selected editor
+    wrapper.addChangeListener {
+      val selectedIndex = tabbedPaneWrapper!!.selectedIndex
+      require(selectedIndex != -1)
+      selectedEditorWithProviderMutable.value = editorsWithProviders.get(selectedIndex)
+    }
     return wrapper
   }
 
   private fun createEditorComponent(editor: FileEditor): JComponent {
     val component = JPanel(BorderLayout())
-    var comp = editor.component
+    var editorComponent = editor.component
     if (!FileEditorManagerImpl.isDumbAware(editor)) {
-      comp = DumbService.getInstance(project).wrapGently(comp, editor)
+      editorComponent = DumbService.getInstance(project).wrapGently(editorComponent, editor)
     }
-    component.add(comp, BorderLayout.CENTER)
+    component.add(editorComponent, BorderLayout.CENTER)
     val topPanel = TopBottomPanel()
     topComponents.put(editor, topPanel)
     component.add(topPanel, BorderLayout.NORTH)
-    val bottomPanel: JPanel = TopBottomPanel()
+    val bottomPanel = TopBottomPanel()
     bottomComponents.put(editor, bottomPanel)
     component.add(bottomPanel, BorderLayout.SOUTH)
     return component
@@ -257,7 +230,7 @@ open class EditorComposite internal constructor(
     }
 
   /**
-   * Whether the composite is opened as preview tab or not
+   * Whether the composite is opened as a preview tab or not
    */
   override var isPreview: Boolean = false
     set(preview) {
@@ -267,43 +240,33 @@ open class EditorComposite internal constructor(
       }
     }
 
-  protected fun fireSelectedEditorChanged(oldEditorWithProvider: FileEditorWithProvider?, newEditorWithProvider: FileEditorWithProvider?) {
-    if ((EventQueue.isDispatchThread() && fileEditorManagerImpl.isInsideChange) || oldEditorWithProvider == newEditorWithProvider) {
-      return
-    }
-
-    fileEditorManagerImpl.notifyPublisher {
-      val event = FileEditorManagerEvent(fileEditorManagerImpl, oldEditorWithProvider, newEditorWithProvider)
-      project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).selectionChanged(event)
-    }
-
-    val component = newEditorWithProvider!!.fileEditor.component
-    val holder = ComponentUtil.getParentOfType(
-      EditorWindowHolder::class.java as Class<out EditorWindowHolder?>, component as Component)
-    if (holder != null) {
-      (fileEditorManagerImpl as FileEditorManagerImpl).addSelectionRecord(file, holder.editorWindow)
-    }
-  }
-
   fun addListener(listener: EditorCompositeListener, disposable: Disposable?) {
     dispatcher.addListener(listener, disposable!!)
   }
 
+  /**
+   * @return preferred focused component inside myEditor composite. Composite uses FocusWatcher to track focus movement inside the editor.
+   */
   open val preferredFocusedComponent: JComponent?
-    /**
-     * @return preferred focused component inside myEditor composite. Composite uses FocusWatcher to
-     * track focus movement inside the myEditor.
-     */
     get() {
-      if (selectedEditorWithProvider == null) return null
-      val component = focusWatcher!!.focusedComponent
-      return if (component !is JComponent || !component.isShowing() || !component.isEnabled() || !component.isFocusable()) {
-        selectedEditor.preferredFocusedComponent
+      if (selectedEditorWithProvider.value == null) {
+        return null
       }
-      else component
+
+      val component = focusWatcher!!.focusedComponent
+      if (component !is JComponent || !component.isShowing() || !component.isEnabled() || !component.isFocusable()) {
+        return selectedEditor?.preferredFocusedComponent
+      }
+      else {
+        return component
+      }
     }
+
+  @Deprecated(message = "Use FileEditorManager.getInstance()",
+              replaceWith = ReplaceWith("FileEditorManager.getInstance()"),
+              level = DeprecationLevel.ERROR)
   val fileEditorManager: FileEditorManager
-    get() = fileEditorManagerImpl
+    get() = FileEditorManager.getInstance(project)
 
   @get:Deprecated("use {@link #getAllEditors()}", ReplaceWith("allEditors"), level = DeprecationLevel.ERROR)
   val editors: Array<FileEditor>
@@ -319,8 +282,12 @@ open class EditorComposite internal constructor(
     return topComponents.get(editor)!!.components.mapNotNull { (it as? NonOpaquePanel)?.targetComponent }
   }
 
+  internal fun containsFileEditor(editor: FileEditor): Boolean {
+    return editorsWithProviders.any { it.fileEditor === editor }
+  }
+
   open val tabs: JBTabs?
-    get() = if (tabbedPaneWrapper == null) null else (tabbedPaneWrapper as AsJBTabs).tabs
+    get() = tabbedPaneWrapper?.let { (it.tabbedPane as JBTabsPaneImpl).tabs }
 
   fun addTopComponent(editor: FileEditor, component: JComponent) {
     manageTopOrBottomComponent(editor = editor, component = component, top = true, remove = false)
@@ -353,7 +320,7 @@ open class EditorComposite internal constructor(
     }
     else {
       val wrapper = NonOpaquePanel(component)
-      if (java.lang.Boolean.TRUE != component.getClientProperty(FileEditorManager.SEPARATOR_DISABLED)) {
+      if (component.getClientProperty(FileEditorManager.SEPARATOR_DISABLED) != true) {
         val border = ClientProperty.get(component, FileEditorManager.SEPARATOR_BORDER)
         selfBorder = border != null
         wrapper.border = border ?: createTopBottomSideBorder(top = top,
@@ -372,9 +339,7 @@ open class EditorComposite internal constructor(
     container.revalidate()
   }
 
-  fun selfBorder(): Boolean {
-    return selfBorder
-  }
+  fun selfBorder(): Boolean = selfBorder
 
   fun setDisplayName(editor: FileEditor, name: @NlsContexts.TabTitle String) {
     val index = editorsWithProviders.indexOfFirst { it.fileEditor == editor }
@@ -387,31 +352,21 @@ open class EditorComposite internal constructor(
   @Suppress("HardCodedStringLiteral")
   protected fun getDisplayName(editor: FileEditor): @NlsContexts.TabTitle String = displayNames.get(editor) ?: editor.name
 
-  val selectedEditor: FileEditor
-    get() = selectedWithProvider.fileEditor
+  internal fun deselectNotify() {
+    val selected = selectedEditorWithProvider.value ?: return
+    selectedEditorWithProviderMutable.value = null
+    selected.fileEditor.deselectNotify()
+  }
 
-  open val selectedWithProvider: FileEditorWithProvider
-    get() {
-      if (editorsWithProviders.size == 1) {
-        LOG.assertTrue(tabbedPaneWrapper == null)
-        return editorsWithProviders.get(0)
-      }
-      else {
-        // we have to get myEditor from tabbed pane
-        LOG.assertTrue(tabbedPaneWrapper != null)
-        var index = tabbedPaneWrapper!!.selectedIndex
-        if (index == -1) {
-          index = 0
-        }
+  val selectedEditor: FileEditor?
+    get() = selectedWithProvider?.fileEditor
 
-        LOG.assertTrue(index >= 0, index)
-        LOG.assertTrue(index < editorsWithProviders.size, index)
-        return editorsWithProviders.get(index)
-      }
-    }
+  val selectedWithProvider: FileEditorWithProvider?
+    get() = selectedEditorWithProvider.value
 
   fun setSelectedEditor(providerId: String) {
-    editorsWithProviders.firstOrNull { it.provider.editorTypeId == providerId }?.let { setSelectedEditor(it) }
+    val fileEditorWithProvider = editorsWithProviders.firstOrNull { it.provider.editorTypeId == providerId } ?: return
+    setSelectedEditor(fileEditorWithProvider)
   }
 
   fun setSelectedEditor(editor: FileEditor) {
@@ -435,7 +390,7 @@ open class EditorComposite internal constructor(
 
   open val component: JComponent
     /**
-     * @return component which represents set of file editors in the UI
+     * @return component which represents a set of file editors in the UI
      */
     get() = compositePanel
 
@@ -443,7 +398,7 @@ open class EditorComposite internal constructor(
     /**
      * @return component which represents the component that is supposed to be focusable
      */
-    get() = compositePanel.focusComponent.get()
+    get() = compositePanel.focusComponent()
 
   val isModified: Boolean
     /**
@@ -451,20 +406,8 @@ open class EditorComposite internal constructor(
      */
     get() = allEditors.any { it.isModified }
 
-  /**
-   * Handles changes of selected myEditor
-   */
-  private inner class MyChangeListener : ChangeListener {
-    override fun stateChanged(e: ChangeEvent) {
-      val oldSelectedEditorWithProvider = selectedEditorWithProvider
-      val selectedIndex = tabbedPaneWrapper!!.selectedIndex
-      LOG.assertTrue(selectedIndex != -1)
-      selectedEditorWithProvider = editorsWithProviders.get(selectedIndex)
-      fireSelectedEditorChanged(oldSelectedEditorWithProvider, selectedEditorWithProvider)
-    }
-  }
-
   override fun dispose() {
+    selectedEditorWithProviderMutable.value = null
     for (editor in editorsWithProviders) {
       @Suppress("DEPRECATION")
       if (!Disposer.isDisposed(editor.fileEditor)) {
@@ -498,7 +441,7 @@ open class EditorComposite internal constructor(
   fun currentStateAsHistoryEntry(): HistoryEntry {
     val editors = allEditors
     val states = editors.map { it.getState(FileEditorStateLevel.FULL) }
-    val selectedProviderIndex = editors.indexOf(selectedEditor)
+    val selectedProviderIndex = editors.indexOf(selectedEditorWithProvider.value?.fileEditor)
     LOG.assertTrue(selectedProviderIndex != -1)
     val providers = allProviders
     return HistoryEntry.createLight(file, providers, states, providers.get(selectedProviderIndex), isPreview)
@@ -507,7 +450,7 @@ open class EditorComposite internal constructor(
 
 private class EditorCompositePanel(realComponent: JComponent,
                                    private val composite: EditorComposite,
-                                   var focusComponent: Supplier<JComponent?>) : JPanel(BorderLayout()), DataProvider {
+                                   var focusComponent: () -> JComponent?) : JPanel(BorderLayout()), DataProvider {
   init {
     isFocusable = false
     add(realComponent, BorderLayout.CENTER)
@@ -515,13 +458,13 @@ private class EditorCompositePanel(realComponent: JComponent,
 
   fun setComponent(newComponent: JComponent) {
     add(newComponent, BorderLayout.CENTER)
-    focusComponent = Supplier { newComponent }
+    focusComponent = { newComponent }
   }
 
-  override fun requestFocusInWindow(): Boolean = focusComponent.get()?.requestFocusInWindow() ?: false
+  override fun requestFocusInWindow(): Boolean = focusComponent()?.requestFocusInWindow() ?: false
 
   override fun requestFocus() {
-    val focusComponent = focusComponent.get() ?: return
+    val focusComponent = focusComponent() ?: return
     val focusManager = IdeFocusManager.getGlobalInstance()
     focusManager.doWhenFocusSettlesDown {
       focusManager.requestFocus(focusComponent, true)
@@ -529,25 +472,17 @@ private class EditorCompositePanel(realComponent: JComponent,
   }
 
   @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
-  override fun requestDefaultFocus(): Boolean {
-    return focusComponent.get()?.requestDefaultFocus() ?: return false
-  }
+  override fun requestDefaultFocus(): Boolean = focusComponent()?.requestDefaultFocus() ?: false
 
   override fun getData(dataId: String): Any? {
     return when {
-      CommonDataKeys.PROJECT.`is`(dataId) -> composite.project
       PlatformCoreDataKeys.FILE_EDITOR.`is`(dataId) -> composite.selectedEditor
       CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> composite.file
       CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> arrayOf(composite.file)
-      PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.`is`(dataId) -> {
-        val window = FileEditorManagerEx.getInstanceEx(composite.project).currentWindow
-        val composite = window?.getSelectedComposite(true)
-        composite?.selectedEditor
-      }
       else -> {
         val component = composite.preferredFocusedComponent
         if (component is DataProvider && component !== this) {
-          val data = (component as DataProvider).getData(dataId)
+          val data = component.getData(dataId)
           if (data == null) null else DataValidators.validOrNull(data, dataId, component)
         }
         else {

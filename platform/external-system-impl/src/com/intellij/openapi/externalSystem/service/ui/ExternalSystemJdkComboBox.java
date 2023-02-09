@@ -38,7 +38,6 @@ import java.util.Map;
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 /**
- * @author Sergey Evdokimov
  * @deprecated use {@link com.intellij.openapi.roots.ui.configuration.SdkComboBox}
  * with {@link com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel} instead
  */

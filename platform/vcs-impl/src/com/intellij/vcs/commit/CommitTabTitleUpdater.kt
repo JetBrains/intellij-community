@@ -12,10 +12,11 @@ import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown
+import org.jetbrains.annotations.Nls
 
 open class CommitTabTitleUpdater(val tree: ChangesTree,
                                  val tabName: String,
-                                 val defaultTitle: () -> String?,
+                                 val defaultTitle: () -> @Nls String?,
                                  pathsProvider: () -> Iterable<FilePath>) : Disposable {
   private val branchComponent = CurrentBranchComponent(tree, pathsProvider).also {
     Disposer.register(this, it)

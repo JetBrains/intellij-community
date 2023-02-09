@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
@@ -9,7 +9,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ConstructionUtils;
@@ -30,13 +29,12 @@ import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
 public final class HardcodedContracts {
-  private static final List<MethodContract> ARRAY_RANGE_CONTRACTS = ContainerUtil.immutableList(
+  private static final List<MethodContract> ARRAY_RANGE_CONTRACTS = List.of(
     singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH),
                             fail()),
     singleConditionContract(ContractValue.argument(2), RelationType.GT, ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH),
                             fail()),
-    singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(2), fail())
-  );
+    singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(2), fail()));
 
   private static final CallMatcher QUEUE_POLL = anyOf(
     instanceCall(JAVA_UTIL_QUEUE, "poll").parameterCount(0),
@@ -197,7 +195,56 @@ public final class HardcodedContracts {
       singleConditionContract(ContractValue.qualifier(), RelationType.EQ, ContractValue.argument(0), returnFalse())
     ))
     //for propagation CONSUMED_STREAM
-    .register(ConsumedStreamUtils.getSkipStreamMatchers(), ContractProvider.of(trivialContract(returnThis())));
+    .register(ConsumedStreamUtils.getSkipStreamMatchers(), ContractProvider.of(trivialContract(returnThis())))
+    .register(staticCall(JAVA_LANG_CHARACTER, "isSurrogate").parameterCount(1),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(0), RelationType.LT, ContractValue.constant(Character.MIN_SURROGATE,
+                                                                                                           PsiTypes.charType()), returnFalse()),
+                singleConditionContract(ContractValue.argument(0), RelationType.GT, ContractValue.constant(Character.MAX_SURROGATE,
+                                                                                                           PsiTypes.charType()), returnFalse()),
+                trivialContract(returnTrue())))
+    .register(staticCall(JAVA_LANG_CHARACTER, "isHighSurrogate").parameterCount(1),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(0), RelationType.LT, ContractValue.constant(Character.MIN_HIGH_SURROGATE,
+                                                                                                           PsiTypes.charType()), returnFalse()),
+                singleConditionContract(ContractValue.argument(0), RelationType.GT, ContractValue.constant(Character.MAX_HIGH_SURROGATE,
+                                                                                                           PsiTypes.charType()), returnFalse()),
+                trivialContract(returnTrue())))
+    .register(staticCall(JAVA_LANG_CHARACTER, "isLowSurrogate").parameterCount(1),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(0), RelationType.LT, ContractValue.constant(Character.MIN_LOW_SURROGATE,
+                                                                                                           PsiTypes.charType()), returnFalse()),
+                singleConditionContract(ContractValue.argument(0), RelationType.GT, ContractValue.constant(Character.MAX_LOW_SURROGATE,
+                                                                                                           PsiTypes.charType()), returnFalse()),
+                trivialContract(returnTrue())))
+    .register(staticCall(JAVA_LANG_CHARACTER, "isSupplementaryCodePoint").parameterCount(1),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(0), RelationType.LT, ContractValue.constant(Character.MIN_SUPPLEMENTARY_CODE_POINT,
+                                                                                                           PsiTypes.intType()), returnFalse()),
+                singleConditionContract(ContractValue.argument(0), RelationType.GT, ContractValue.constant(Character.MAX_CODE_POINT,
+                                                                                                           PsiTypes.intType()), returnFalse()),
+                trivialContract(returnTrue())))
+    .register(staticCall(JAVA_LANG_CHARACTER, "isValidCodePoint").parameterCount(1),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(0), RelationType.LT, ContractValue.constant(Character.MIN_CODE_POINT,
+                                                                                                           PsiTypes.intType()), returnFalse()),
+                singleConditionContract(ContractValue.argument(0), RelationType.GT, ContractValue.constant(Character.MAX_CODE_POINT,
+                                                                                                           PsiTypes.intType()), returnFalse()),
+                trivialContract(returnTrue())))
+    .register(staticCall(JAVA_LANG_CHARACTER, "isBmpCodePoint").parameterCount(1),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(0), RelationType.LT, ContractValue.constant(Character.MIN_CODE_POINT,
+                                                                                                           PsiTypes.intType()), returnFalse()),
+                singleConditionContract(ContractValue.argument(0), RelationType.GE, ContractValue.constant(Character.MIN_SUPPLEMENTARY_CODE_POINT,
+                                                                                                           PsiTypes.intType()), returnFalse()),
+                trivialContract(returnTrue())))
+    .register(staticCall("org.springframework.util.CollectionUtils", "isEmpty").parameterCount(1),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(0), RelationType.EQ, ContractValue.nullValue(), returnTrue()),
+                singleConditionContract(ContractValue.argument(0).specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(), returnTrue()),
+                trivialContract(returnFalse())
+              ))
+    ;
 
   private static @NotNull ContractProvider getArraycopyContract() {
     ContractValue src = ContractValue.argument(0);
@@ -237,7 +284,7 @@ public final class HardcodedContracts {
         return List.of(singleConditionContract(ContractValue.argument(0), RelationType.LT,
                                                ContractValue.argument(2).specialField(SpecialField.COLLECTION_SIZE), fail()),
                        singleConditionContract(ContractValue.argument(0), RelationType.LE,
-                                               ContractValue.constant(0, PsiType.INT), fail()));
+                                               ContractValue.constant(0, PsiTypes.intType()), fail()));
       }
     }
 
@@ -262,7 +309,7 @@ public final class HardcodedContracts {
         ValueConstraint[] constraints = createConstraintArray(paramCount);
         constraints[0] = NULL_VALUE;
         StandardMethodContract contract = new StandardMethodContract(constraints, fail());
-        if (PsiType.VOID.equals(method.getReturnType())) {
+        if (PsiTypes.voidType().equals(method.getReturnType())) {
           return Collections.singletonList(contract);
         }
         else {
@@ -377,11 +424,11 @@ public final class HardcodedContracts {
     int checkedParam = testng || isJunit5(className) ? 0 : paramCount - 1;
     PsiType type = Objects.requireNonNull(method.getParameterList().getParameter(checkedParam)).getType();
     ValueConstraint[] constraints = createConstraintArray(paramCount);
-    if (("assertTrue".equals(methodName) || "assumeTrue".equals(methodName)) && PsiType.BOOLEAN.equals(type)) {
+    if (("assertTrue".equals(methodName) || "assumeTrue".equals(methodName)) && PsiTypes.booleanType().equals(type)) {
       constraints[checkedParam] = FALSE_VALUE;
       return Collections.singletonList(new StandardMethodContract(constraints, fail()));
     }
-    if (("assertFalse".equals(methodName) || "assumeFalse".equals(methodName)) && PsiType.BOOLEAN.equals(type)) {
+    if (("assertFalse".equals(methodName) || "assumeFalse".equals(methodName)) && PsiTypes.booleanType().equals(type)) {
       constraints[checkedParam] = TRUE_VALUE;
       return Collections.singletonList(new StandardMethodContract(constraints, fail()));
     }

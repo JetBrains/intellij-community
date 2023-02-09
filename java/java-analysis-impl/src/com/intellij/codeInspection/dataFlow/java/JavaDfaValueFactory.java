@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -38,7 +38,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * Utility class to help producing values for Java DFA
  */
-public class JavaDfaValueFactory {
+public final class JavaDfaValueFactory {
 
   private JavaDfaValueFactory() {
   }
@@ -119,8 +119,7 @@ public class JavaDfaValueFactory {
 
   private static DfaValue createReferenceValue(DfaValueFactory factory, @NotNull PsiReferenceExpression refExpr) {
     PsiElement target = refExpr.resolve();
-    if (target instanceof PsiVariable) {
-      PsiVariable variable = (PsiVariable)target;
+    if (target instanceof PsiVariable variable) {
       if (!PsiUtil.isAccessedForWriting(refExpr)) {
         DfaValue constValue = getConstantFromVariable(factory, variable);
         if (constValue != null && !maybeUninitializedConstant(constValue, refExpr, variable)) return constValue;
@@ -201,8 +200,7 @@ public class JavaDfaValueFactory {
     if (target instanceof PsiVariable) {
       return new PlainDescriptor((PsiVariable)target);
     }
-    if (target instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)target;
+    if (target instanceof PsiMethod method) {
       // Assume that methods returning stream always return a new one
       if (InheritanceUtil.isInheritor(method.getReturnType(), JAVA_UTIL_STREAM_BASE_STREAM)) return null;
       if (method.getParameterList().isEmpty() &&
@@ -288,7 +286,7 @@ public class JavaDfaValueFactory {
    * @return true if variable initializer should be ignored by analysis
    */
   public static boolean ignoreInitializer(PsiVariable variable) {
-    if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.FINAL) && variable.getType().equals(PsiType.BOOLEAN)) {
+    if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.FINAL) && variable.getType().equals(PsiTypes.booleanType())) {
       // Skip boolean constant fields as they usually used as control knobs to modify program logic
       // it's better to analyze both true and false values even if it's predefined
       PsiLiteralExpression initializer = tryCast(PsiUtil.skipParenthesizedExprDown(variable.getInitializer()), PsiLiteralExpression.class);

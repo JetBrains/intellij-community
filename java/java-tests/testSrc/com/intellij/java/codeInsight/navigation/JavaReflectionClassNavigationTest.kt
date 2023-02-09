@@ -19,9 +19,6 @@ import com.intellij.psi.PsiClass
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class JavaReflectionClassNavigationTest : JavaReflectionClassNavigationTestBase() {
 
   fun testPublicClass() {

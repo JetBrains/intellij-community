@@ -20,34 +20,23 @@ import com.intellij.openapi.extensions.AreaInstance
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.jetbrains.packagesearch.intellij.plugin.util.asCoroutine
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 
 /**
- * Extension point used to register [Module]s transformations to [ProjectModule]s.
+ * Extension point used to register [Module]s transformations to [PackageSearchModule]s using coroutines.
  */
-@Deprecated(
-    "Use the async version instead",
-    ReplaceWith("AsyncModuleTransformer"),
-    DeprecationLevel.WARNING
-)
-@ScheduledForRemoval
 interface ModuleTransformer {
 
     companion object {
+        private val extensionPointName = ExtensionPointName<ModuleTransformer>("com.intellij.packagesearch.moduleTransformer")
 
-        private val extensionPointName: ExtensionPointName<ModuleTransformer> =
-            ExtensionPointName.create("com.intellij.packagesearch.moduleTransformer")
-
-        internal fun extensions(areaInstance: AreaInstance) =
-            extensionPointName.getExtensionList(areaInstance).asSequence().map { it.asCoroutine() }.toList()
+        internal fun extensions(areaInstance: AreaInstance) = extensionPointName.getExtensionList(areaInstance)
     }
 
     /**
      * IMPORTANT: This function is NOT invoked inside a read action.
      *
-     * Transforms [nativeModules] in a [ProjectModule] module if possible, else returns an empty list.
-     * Its implementation should use the IntelliJ platform APIs for a given build system (eg.
+     * Transforms [nativeModules] in a [PackageSearchModule] module if possible, else returns an empty list.
+     * Its implementation should use the IntelliJ platform APIs for a given build system (e.g.
      * Gradle or Maven), detect if and which [nativeModules] are controlled by said build system
      * and transform them accordingly.
      *
@@ -55,7 +44,8 @@ interface ModuleTransformer {
      * handle any exceptions and filter out the ones not working.
      *
      * @param nativeModules The native [Module]s that will be transformed.
-     * @return [ProjectModule]s wrapping [nativeModules] or an empty list.
+     * @return [PackageSearchModule]s wrapping [nativeModules] or an empty list.
      */
-    fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule>
+    suspend fun transformModules(project: Project, nativeModules: List<Module>): List<PackageSearchModule>
 }
+

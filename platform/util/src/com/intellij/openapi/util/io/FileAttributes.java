@@ -192,17 +192,13 @@ public final class FileAttributes {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-
     sb.append("[type:").append(getType());
-
     if (isSet(flags, SYM_LINK)) sb.append(" l");
     if (isSet(flags, HIDDEN)) sb.append(" .");
     if (isSet(flags, READ_ONLY)) sb.append(" ro");
-
     sb.append(" length:").append(length);
-
     sb.append(" modified:").append(lastModified);
-    sb.append(" case sensitive: ").append(areChildrenCaseSensitive());
+    sb.append(" case-sensitive: ").append(areChildrenCaseSensitive());
     sb.append(']');
     return sb.toString();
   }

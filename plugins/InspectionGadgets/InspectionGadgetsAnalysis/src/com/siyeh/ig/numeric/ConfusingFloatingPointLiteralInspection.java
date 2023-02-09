@@ -17,13 +17,14 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -34,7 +35,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ConfusingFloatingPointLiteralInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -47,11 +49,10 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection impl
     return InspectionGadgetsBundle.message("confusing.floating.point.literal.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("confusing.floating.point.literal.option"), this,
-                                          "ignoreScientificNotation");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreScientificNotation", InspectionGadgetsBundle.message("confusing.floating.point.literal.option")));
   }
 
   @Override
@@ -142,7 +143,7 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection impl
       super.visitLiteralExpression(literal);
       final PsiType type = literal.getType();
       final String literalText = literal.getText();
-      if ((!PsiType.FLOAT.equals(type) && !PsiType.DOUBLE.equals(type)) || !isConfusing(literalText)) {
+      if ((!PsiTypes.floatType().equals(type) && !PsiTypes.doubleType().equals(type)) || !isConfusing(literalText)) {
         return;
       }
       if (ignoreScientificNotation && StringUtil.containsAnyChar(literalText, "EePp")) {

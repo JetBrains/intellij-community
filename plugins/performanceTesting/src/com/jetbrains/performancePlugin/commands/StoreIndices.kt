@@ -58,7 +58,7 @@ class StoreIndices(text: String, line: Int) : AbstractCommand(text, line) {
       switcher.turnOn(null)
 
       if (error != null) {
-        LOG.error(error)
+        LOG.error(error!!)
         actionCallback.reject(error!!.message)
       }
       else {

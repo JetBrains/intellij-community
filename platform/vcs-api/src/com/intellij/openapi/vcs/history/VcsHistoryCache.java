@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -15,10 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author irengrig
- */
-public class VcsHistoryCache {
+public final class VcsHistoryCache {
   private final Object myLock;
   private final SLRUMap<HistoryCacheBaseKey, CachedHistory> myHistoryCache;
   private final SLRUMap<HistoryCacheWithRevisionKey, Object> myAnnotationCache;
@@ -28,12 +25,8 @@ public class VcsHistoryCache {
     myLock = new Object();
     // increase cache size when preload enabled
     boolean preloadEnabled = AdvancedSettings.getBoolean("vcs.annotations.preload") || Registry.is("vcs.code.author.inlay.hints");
-    myHistoryCache = new SLRUMap<>(
-      preloadEnabled ? 50 : 10,
-      preloadEnabled ? 50 : 10);
-    myAnnotationCache = new SLRUMap<>(
-      preloadEnabled ? 50 : 10,
-      preloadEnabled ? 50 : 5);
+    myHistoryCache = new SLRUMap<>(preloadEnabled ? 50 : 10, preloadEnabled ? 50 : 10);
+    myAnnotationCache = new SLRUMap<>(preloadEnabled ? 50 : 10, preloadEnabled ? 50 : 5);
     myLastRevisionCache = new SLRUMap<>(50, 50);
   }
 
@@ -61,8 +54,7 @@ public class VcsHistoryCache {
     }
   }
 
-  @Nullable
-  public <C extends Serializable, T extends VcsAbstractHistorySession> T getFull(
+  public @Nullable <C extends Serializable, T extends VcsAbstractHistorySession> T getFull(
     @NotNull FilePath filePath,
     @NotNull VcsKey vcsKey,
     @NotNull VcsCacheableHistorySessionFactory<C, T> factory
@@ -79,8 +71,7 @@ public class VcsHistoryCache {
     }
   }
 
-  @Nullable
-  public <C extends Serializable, T extends VcsAbstractHistorySession> T getMaybePartial(
+  public @Nullable <C extends Serializable, T extends VcsAbstractHistorySession> T getMaybePartial(
     @NotNull FilePath filePath,
     @NotNull VcsKey vcsKey,
     @NotNull VcsCacheableHistorySessionFactory<C, T> factory
@@ -122,8 +113,7 @@ public class VcsHistoryCache {
     }
   }
 
-  @Nullable
-  public Object getAnnotation(@NotNull FilePath filePath, @NotNull VcsKey vcsKey, @NotNull VcsRevisionNumber number) {
+  public @Nullable Object getAnnotation(@NotNull FilePath filePath, @NotNull VcsKey vcsKey, @NotNull VcsRevisionNumber number) {
     synchronized (myLock) {
       return myAnnotationCache.get(new HistoryCacheWithRevisionKey(filePath, vcsKey, number));
     }
@@ -142,8 +132,7 @@ public class VcsHistoryCache {
     }
   }
 
-  @Nullable
-  public VcsRevisionNumber getLastRevision(@NotNull FilePath filePath, @NotNull VcsKey vcsKey, @NotNull VcsRevisionNumber currentRevision) {
+  public @Nullable VcsRevisionNumber getLastRevision(@NotNull FilePath filePath, @NotNull VcsKey vcsKey, @NotNull VcsRevisionNumber currentRevision) {
     synchronized (myLock) {
       return myLastRevisionCache.get(new HistoryCacheWithRevisionKey(filePath, vcsKey, currentRevision));
     }
@@ -155,14 +144,14 @@ public class VcsHistoryCache {
     }
   }
 
-  public static class CachedHistory {
+  private static final class CachedHistory {
     private final FilePath myPath;
     private final List<VcsFileRevision> myRevisions;
     private final VcsRevisionNumber myCurrentRevision;
     private final Object myCustomData;
     private final boolean myIsFull;
 
-    public CachedHistory(FilePath path,
+    CachedHistory(FilePath path,
                          List<VcsFileRevision> revisions,
                          VcsRevisionNumber currentRevision,
                          Object customData,

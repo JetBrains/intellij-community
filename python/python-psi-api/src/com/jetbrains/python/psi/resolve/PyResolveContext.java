@@ -48,16 +48,6 @@ public final class PyResolveContext {
   }
 
   /**
-   * @deprecated Please use {@link PyResolveContext#implicitContext(TypeEvalContext)}
-   * to explicitly specify type evaluation context.
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public static PyResolveContext implicitContext() {
-    return new PyResolveContext(true, true, false, TypeEvalContext.codeInsightFallback(null));
-  }
-
-  /**
    * Allow searching for dynamic usages based on duck typing and guesses during resolve.
    *
    * Note that this resolve context is slower than the default one. Use it only for one-off user actions.

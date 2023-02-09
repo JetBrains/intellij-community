@@ -20,9 +20,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * @author Denis Fokin
- */
 public final class ApplicationActivationStateManager {
   private static final Logger LOG = Logger.getInstance(ApplicationActivationStateManager.class);
 

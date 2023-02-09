@@ -54,10 +54,9 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiJavaFile)) {
+      if (!(element instanceof PsiJavaFile file)) {
         return;
       }
-      final PsiJavaFile file = (PsiJavaFile)element;
       file.setPackageName(myPackageName);
     }
   }

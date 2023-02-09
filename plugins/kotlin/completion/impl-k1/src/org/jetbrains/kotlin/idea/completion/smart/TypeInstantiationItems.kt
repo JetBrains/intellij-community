@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeInsight.collectSyntheticStaticMembersAndConstructors
@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -52,6 +53,11 @@ class TypeInstantiationItems(
   private val forOrdinaryCompletion: Boolean,
   val indicesHelper: KotlinIndicesHelper
 ) {
+    companion object {
+        private val FUNCTIONS_OR_CLASSIFIERS_MASK =
+            DescriptorKindFilter(DescriptorKindFilter.FUNCTIONS_MASK or DescriptorKindFilter.CLASSIFIERS_MASK)
+    }
+
     fun addTo(
         items: MutableCollection<LookupElement>,
         inheritanceSearchers: MutableCollection<InheritanceItemsSearcher>,
@@ -243,8 +249,9 @@ class TypeInstantiationItems(
             }
 
             insertHandler = InsertHandler { context, item ->
-                context.document.replaceString(context.startOffset, context.tailOffset, typeText)
-                context.tailOffset = context.startOffset + typeText.length
+                val insertText = FqName(typeText).withRootPrefixIfNeeded(null).asString()
+                context.document.replaceString(context.startOffset, context.tailOffset, insertText)
+                context.tailOffset = context.startOffset + insertText.length
 
                 baseInsertHandler.handleInsert(context, item)
 
@@ -321,7 +328,7 @@ class TypeInstantiationItems(
                 }
                 scope.collectSyntheticStaticMembersAndConstructors(
                     resolutionFacade,
-                    DescriptorKindFilter.FUNCTIONS
+                    FUNCTIONS_OR_CLASSIFIERS_MASK
                 ) { classifier.name == it }
                     .filterIsInstance<SamConstructorDescriptor>()
                     .singleOrNull() ?: return

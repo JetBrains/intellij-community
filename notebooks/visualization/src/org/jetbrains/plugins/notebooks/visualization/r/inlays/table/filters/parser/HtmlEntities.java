@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * Class to encode all the possible HTML entities
  */
-class HtmlEntities {
+final class HtmlEntities {
 
 	/**
 	 * Returns the integer value associated to the given entity, or -1 if

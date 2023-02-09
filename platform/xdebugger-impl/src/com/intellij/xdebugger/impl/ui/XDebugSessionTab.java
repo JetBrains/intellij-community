@@ -10,13 +10,13 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
-import com.intellij.ide.ui.customization.CustomActionsListener;
-import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.execution.ui.layout.impl.ViewImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.ui.customization.CustomActionsListener;
+import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +31,6 @@ import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -43,14 +42,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class XDebugSessionTab extends DebuggerSessionTabBase {
   public static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
 
   protected XWatchesViewImpl myWatchesView;
   private boolean myWatchesInVariables = Registry.is("debugger.watches.in.variables");
-  private final LinkedHashMap<String, XDebugView> myViews = new LinkedHashMap<>();
+  private final Map<String, XDebugView> myViews = new LinkedHashMap<>();
 
   @Nullable
   protected XDebugSessionImpl mySession;
@@ -75,9 +76,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XDebugSessionTab tab;
     if (Registry.is("debugger.new.tool.window.layout")) {
       tab = new XDebugSessionTab3(session, icon, environment);
-    }
-    else if (Registry.is("debugger.new.debug.tool.window.view")) {
-      tab = new XDebugSessionTab2(session, icon, environment);
     }
     else {
       if (DebuggerUIExperimentCollector.startExperiment()) {
@@ -157,6 +155,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     addVariablesAndWatches(session);
+
+    CustomActionsListener.subscribe(this, () -> initToolbars(session));
   }
 
   protected void initListeners(RunnerLayoutUi ui) {
@@ -303,8 +303,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     consoleContent.setHelpId(DefaultDebugExecutor.getDebugExecutorInstance().getHelpId());
     initToolbars(session);
-
-    CustomActionsListener.subscribe(this, () -> initToolbars(session));
 
     if (myEnvironment != null) {
       initLogConsoles(myEnvironment.getRunProfile(), myRunContentDescriptor, myConsole);

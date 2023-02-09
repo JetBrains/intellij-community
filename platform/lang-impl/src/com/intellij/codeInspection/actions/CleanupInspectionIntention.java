@@ -28,12 +28,13 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
-  private final InspectionToolWrapper myToolWrapper;
+  @NotNull
+  private final InspectionToolWrapper<?,?> myToolWrapper;
   private final FileModifier myQuickfix;
   @Nullable private final PsiFile myFile;
   private final String myText;
 
-  public CleanupInspectionIntention(@NotNull InspectionToolWrapper toolWrapper,
+  public CleanupInspectionIntention(@NotNull InspectionToolWrapper<?,?> toolWrapper,
                                     @NotNull FileModifier quickFix,
                                     @Nullable PsiFile file,
                                     String text) {
@@ -41,10 +42,6 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     myQuickfix = quickFix;
     myFile = file;
     myText = text;
-  }
-
-  public InspectionToolWrapper getToolWrapper() {
-    return myToolWrapper;
   }
 
   @Override

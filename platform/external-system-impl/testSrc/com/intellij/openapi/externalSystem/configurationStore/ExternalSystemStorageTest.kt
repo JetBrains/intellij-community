@@ -26,10 +26,7 @@ import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
-import com.intellij.openapi.project.ExternalStorageConfigurationManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.doNotEnableExternalStorageByDefaultInTests
-import com.intellij.openapi.project.getProjectCacheFileName
+import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
@@ -230,7 +227,7 @@ class ExternalSystemStorageTest {
   fun `check mavenized will be applied to the single diff`() {
     loadProjectAndCheckResults("twoRegularModules") { project ->
       val moduleManager = ModuleManager.getInstance(project)
-      val initialStorage = getInstance(project).entityStorage.current
+      val initialStorage = getInstance(project).currentSnapshot
       val storageBuilder = from(initialStorage)
       for (module in moduleManager.modules) {
         val modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module)
@@ -846,14 +843,15 @@ class ExternalSystemStorageTest {
 
     val expectedDir = tempDirManager.newPath("expectedStorage")
     FileUtil.copyDir(testDataRoot.resolve("common").toFile(), expectedDir.toFile())
-    FileUtil.copyDir(testDataRoot.resolve(dataDirNameToCompareWith).toFile(), expectedDir.toFile())
+    val originalExpectedDir = testDataRoot.resolve(dataDirNameToCompareWith)
+    FileUtil.copyDir(originalExpectedDir.toFile(), expectedDir.toFile())
 
     val projectDir = project.stateStore.directoryStorePath!!.parent
-    projectDir.toFile().assertMatches(directoryContentOf(expectedDir.resolve("project")))
+    projectDir.toFile().assertMatches(directoryContentOf(expectedDir.resolve("project"), originalExpectedDir.resolve("project")))
 
     val expectedCacheDir = expectedDir.resolve("cache")
     if (Files.exists(expectedCacheDir)) {
-      cacheDir.toFile().assertMatches(directoryContentOf(expectedCacheDir), FileTextMatcher.ignoreBlankLines())
+      cacheDir.toFile().assertMatches(directoryContentOf(expectedCacheDir, originalExpectedDir.resolve("cache")), FileTextMatcher.ignoreBlankLines())
     }
     else {
       assertTrue("$cacheDir doesn't exist", !Files.exists(cacheDir) || isFolderWithoutFiles(cacheDir.toFile()))
@@ -881,7 +879,7 @@ class ExternalSystemStorageTest {
       }
       val testCacheFilesDir = testDataRoot.resolve(testDataDirName).resolve("cache").toFile()
       if (testCacheFilesDir.exists()) {
-        val cachePath = appSystemDir.resolve("external_build_system").resolve(getProjectCacheFileName(dir.toNioPath()))
+        val cachePath = getProjectDataPathRoot(dir.toNioPath()).resolve("external_build_system")
         FileUtil.copyDir(testCacheFilesDir, cachePath.toFile())
       }
       VfsUtil.markDirtyAndRefresh(false, true, true, dir)

@@ -27,9 +27,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
 public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionTool {
 
   @Override
@@ -49,6 +46,10 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
     // should be overridden
   }
 
+  protected void checkText(@NotNull final XmlText text, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    // should be overridden
+  }
+
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
@@ -63,12 +64,16 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
           if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_START_TAG_START) {
             PsiElement parent = element.getParent();
 
-            if (parent instanceof XmlTag && !(token.getNextSibling() instanceof OuterLanguageElement)) {
-              XmlTag tag = (XmlTag)parent;
+            if (parent instanceof XmlTag tag && !(token.getNextSibling() instanceof OuterLanguageElement)) {
               checkTag(tag, holder, isOnTheFly);
             }
           }
         }
+      }
+
+      @Override
+      public void visitXmlText(@NotNull XmlText text) {
+        checkText(text, holder, isOnTheFly);
       }
 
       @Override

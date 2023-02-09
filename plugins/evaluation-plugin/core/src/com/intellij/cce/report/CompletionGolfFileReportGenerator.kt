@@ -4,11 +4,13 @@ import com.intellij.cce.actions.selectedWithoutPrefix
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.core.SuggestionKind
+import com.intellij.cce.metric.*
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.apache.commons.lang.StringEscapeUtils
+import java.text.DecimalFormat
 
 class CompletionGolfFileReportGenerator(
   filterName: String,
@@ -19,29 +21,43 @@ class CompletionGolfFileReportGenerator(
 
   override fun getHtml(fileEvaluations: List<FileEvaluationInfo>, fileName: String, resourcePath: String, text: String): String {
     return createHTML().body {
-      if (fileEvaluations.size > 1) {
+      div("cg") {
         div {
-          label("labelText") { +"For session:" }
-        }
-        div("tab") {
-          fileEvaluations.forEachIndexed { index, info ->
-            tabButton(info.evaluationType, index == 0)
+          style = "display: flex; gap: 12px;"
+          div {
+            label("labelText") { +"With delimiter:" }
+            select("delimiter-pick") {
+              delOption("cg-delimiter-integral", "&int;")
+              delOption("cg-delimiter-box-small", "&#10073;")
+              delOption("cg-delimiter-box-big", "&#10074;")
+              delOption("cg-delimiter-underscore", "_")
+              delOption("cg-delimiter-none", "none")
+            }
+          }
+          div("thresholds") {
+            label("labelText") { +"Threshold grades:" }
+            Threshold.values().forEach {
+              val statsClass = Threshold.getClass(it)
+              span(statsClass) {
+                button(classes = "stats-value") {
+                  onClick = "invertRows(event, '$statsClass')"
+                  +((it.value * 100).format() + "%")
+                }
+              }
+            }
+          }
+          if (fileEvaluations.size > 1) {
+            div("cg-evaluations") {
+              label("labelText") { +"Evaluations:" }
+              fileEvaluations.forEachIndexed { i, info ->
+                span("cg-evaluation-title") { +"${i + 1}. ${info.evaluationType}" }
+              }
+            }
           }
         }
-      }
-      div {
-        label("labelText") { +"With delimiter:" }
-        select("delimiter-pick") {
-          delOption("delimiter", "&int;")
-          delOption("del-box-small", "&#10073;")
-          delOption("del-box-big", "&#10074;")
-          delOption("del-none", "empty")
-        }
-      }
-      code {
-        table {
-          fileEvaluations.forEach {
-            getTable(it.sessionsInfo.sessions, text, it.evaluationType)
+        code("cg-file cg-delimiter-integral") {
+          table {
+            getTable(fileEvaluations, text)
           }
         }
       }
@@ -67,29 +83,45 @@ class CompletionGolfFileReportGenerator(
     }
   }
 
-  private fun TABLE.getTable(sessions: List<Session>, fullText: String, evaluationId: String) {
+  private fun TABLE.getTable(infos: List<FileEvaluationInfo>, fullText: String) {
     tbody("evalContent") {
-      id = evaluationId
       var offset = 0
       var lineNumbers = 0
-      sessions.forEach { session ->
+      val firstInfo = infos.first()
+      for (sessionIndex in firstInfo.sessionsInfo.sessions.indices) {
+        val session = firstInfo.sessionsInfo.sessions[sessionIndex]
         val text = fullText.substring(offset, session.offset)
         val tab = text.lines().last().dropWhile { it == '\n' }
         val tail = fullText.drop(session.offset + session.expectedText.length).takeWhile { it != '\n' }
 
         lineNumbers += defaultText(text, lineNumbers)
 
-        tr {
-          td("line-numbers") {
-            attributes["data-line-numbers"] = lineNumbers.toString()
+        val curSessions = infos.map { it.sessionsInfo.sessions[sessionIndex] }
+        val movesNormalizedAll = curSessions.map { MovesCountNormalised().evaluate(listOf(it)) }
+        for ((curSession, movesNormalised) in curSessions.zip(movesNormalizedAll)) {
+          var rowClasses = Threshold.getClass(movesNormalised)
+          if (curSessions.size > 1 && movesNormalizedAll.distinct().size == 1) {
+            rowClasses = "$rowClasses duplicate"
           }
-          td("code-line") {
-            prepareLine(session.expectedText, session.lookups, tab, session.id)
-            if (tail.isNotEmpty()) {
-              span { +tail }
+          tr(rowClasses) {
+            td("line-numbers") {
+              attributes["data-line-numbers"] = lineNumbers.toString()
+            }
+            td("code-line") {
+              prepareLine(curSession, tab, movesNormalised)
+              if (tail.isNotEmpty()) {
+                pre("ib") { +tail }
+              }
             }
           }
         }
+        if (curSessions.size > 1) {
+          tr("tr-delimiter") {
+            td()
+            td("line-code") { hr() }
+          }
+        }
+
         offset = session.offset + session.expectedText.length
         lineNumbers++
       }
@@ -100,22 +132,65 @@ class CompletionGolfFileReportGenerator(
     }
   }
 
-  private fun FlowContent.prepareLine(expectedText: String, lookups: List<Lookup>, tab: String, id: String) {
-    consumer.onTagContentUnsafe { +StringEscapeUtils.escapeHtml(tab) }
+  private fun FlowContent.prepareLine(session: Session, tab: String, movesNormalised: Double) {
+    val expectedText = session.expectedText
+    val lookups = session.lookups
+
     var offset = 0
 
-    lookups.dropLast(1).forEachIndexed { index, lookup ->
-      offset = prepareSpan(expectedText, lookup, id, index, offset, "delimiter")
+    div("line-code") {
+      pre("ib") { +StringEscapeUtils.escapeHtml(tab) }
+      lookups.forEachIndexed { i, lookup ->
+        val currentChar = expectedText[offset]
+        val delimiter = mutableListOf<String>().apply {
+          if (lookups.size > 1 && i != 0) {
+            add("delimiter")
+          }
+          if (currentChar.isWhitespace()) {
+            consumer.onTagContentUnsafe { +currentChar.toString() }
+            offset++
+            add("delimiter-pre")
+          }
+        }.joinToString(" ")
+        offset = prepareSpan(expectedText, lookup, session.id, i, offset, delimiter)
+      }
     }
-    prepareSpan(expectedText, lookups.last(), id, lookups.size - 1, offset)
+
+    div("line-stats") {
+      val movesCount = MovesCount().evaluate(listOf(session))
+      val totalLatency = TotalLatencyMetric().evaluate(listOf(session))
+
+      val info = mutableListOf<String>().apply {
+        add((movesNormalised * 100).format() + "%")
+        add("$movesCount act")
+        add((totalLatency / 1000).format() + "s")
+      }
+
+      if (info.isNotEmpty()) {
+        i {
+          style = "display: flex;"
+          pre("no-select") { +"    #  " }
+          pre("stats-value") {
+            style = "padding-inline: 4px;"
+            +StringEscapeUtils.escapeHtml(
+              info.joinToString(separator = "\t", prefix = "", postfix = "\t") {
+                it.padEnd(4, ' ')
+              }
+            )
+          }
+        }
+      }
+    }
   }
 
-  private fun FlowContent.prepareSpan(expectedText: String,
-                                      lookup: Lookup,
-                                      uuid: String,
-                                      columnId: Int,
-                                      offset: Int,
-                                      delimiter: String = ""): Int {
+  private fun FlowContent.prepareSpan(
+    expectedText: String,
+    lookup: Lookup,
+    uuid: String,
+    columnId: Int,
+    offset: Int,
+    delimiter: String = "",
+  ): Int {
     val kinds = lookup.suggestions.map { suggestion -> suggestion.kind }
     val kindClass = when {
       SuggestionKind.LINE in kinds -> "cg-line"
@@ -126,7 +201,6 @@ class CompletionGolfFileReportGenerator(
     val text = lookup.selectedWithoutPrefix() ?: expectedText[offset].toString()
 
     span("completion $kindClass $delimiter") {
-      id = uuid
       attributes["data-cl"] = "$columnId"
       attributes["data-id"] = uuid
       +text
@@ -140,13 +214,43 @@ class CompletionGolfFileReportGenerator(
       .onEachIndexed { i, line ->
         tr {
           td("line-numbers") {
-            attributes["data-line-numbers"] = lineNumbers.toString()
+            attributes["data-line-numbers"] = (lineNumbers + i).toString()
           }
           td("code-line") {
-            span { +line }
+            style = "white-space: normal;"
+            pre("ib") { +line }
           }
           lineNumbers + i
         }
       }.size
+  }
+
+  private fun Double.format() = DecimalFormat("0.##").format(this)
+
+  companion object {
+    private enum class Threshold(val value: Double) {
+      EXCELLENT(System.getenv("CG_THRESHOLD_EXCELLENT")?.toDouble() ?: 0.15),
+      GOOD(System.getenv("CG_THRESHOLD_GOOD")?.toDouble() ?: 0.25),
+      SATISFACTORY(System.getenv("CG_THRESHOLD_SATISFACTORY")?.toDouble() ?: 0.5),
+      BAD(System.getenv("CG_THRESHOLD_BAD")?.toDouble() ?: 0.8),
+      VERY_BAD(System.getenv("CG_THRESHOLD_VERY_BAD")?.toDouble() ?: 1.0);
+
+      operator fun Double.compareTo(t: Threshold) = compareTo(t.value)
+      operator fun compareTo(d: Double) = value.compareTo(d)
+
+      companion object {
+        fun getClass(threshold: Threshold) = getClass(threshold.value)
+        fun getClass(value: Double?) = value?.let {
+          when {
+            EXCELLENT >= value -> "stats-excellent"
+            GOOD >= value -> "stats-good"
+            SATISFACTORY >= value -> "stats-satisfactory"
+            BAD >= value -> "stats-bad"
+            VERY_BAD >= value -> "stats-very_bad"
+            else -> "stats-unknown"
+          }
+        } ?: "stats-unknown"
+      }
+    }
   }
 }

@@ -8,9 +8,6 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 public class ExtractMethodDiffViewerCustomizer extends DiffExtension {
   @RequiresEdt
   @Override

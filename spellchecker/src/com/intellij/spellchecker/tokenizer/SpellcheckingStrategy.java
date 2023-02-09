@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -9,7 +9,7 @@ import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel;
+import com.intellij.spellchecker.DictionaryLevel;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.quickfixes.ChangeTo;
 import com.intellij.spellchecker.quickfixes.RenameTo;
@@ -35,7 +35,7 @@ public class SpellcheckingStrategy {
     new ExtensionPointName<>("com.intellij.spellchecker.support");
   public static final Tokenizer EMPTY_TOKENIZER = new Tokenizer() {
     @Override
-    public void tokenize(@NotNull PsiElement element, TokenConsumer consumer) {
+    public void tokenize(@NotNull PsiElement element, @NotNull TokenConsumer consumer) {
     }
 
     @Override
@@ -57,7 +57,7 @@ public class SpellcheckingStrategy {
     if (element instanceof PsiWhiteSpace) {
       return EMPTY_TOKENIZER;
     }
-    if (element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) {
+    if (isInjectedLanguageFragment(element)) {
       return EMPTY_TOKENIZER;
     }
     if (element instanceof PsiNameIdentifierOwner) return PsiIdentifierOwnerTokenizer.INSTANCE;
@@ -80,6 +80,11 @@ public class SpellcheckingStrategy {
       return TEXT_TOKENIZER;
     }
     return EMPTY_TOKENIZER;
+  }
+
+  protected static boolean isInjectedLanguageFragment(@Nullable PsiElement element) {
+    return element instanceof PsiLanguageInjectionHost
+           && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element);
   }
 
   public LocalQuickFix[] getRegularFixes(PsiElement element,

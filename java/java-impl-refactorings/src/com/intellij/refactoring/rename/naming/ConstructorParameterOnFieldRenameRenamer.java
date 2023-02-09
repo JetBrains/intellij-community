@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NonNls;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author ven
- */
 public class ConstructorParameterOnFieldRenameRenamer extends AutomaticRenamer {
   @Override
   @NonNls

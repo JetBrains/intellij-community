@@ -15,9 +15,6 @@ import java.util.*;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.postOrder;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.reversedPostOrder;
 
-/**
- * @author ven
- */
 public final class DFAEngine<E> {
   private final Instruction[] myFlow;
   private final DfaInstance<E> myDfa;

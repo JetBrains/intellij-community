@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.config.ApiVersion
@@ -26,7 +27,7 @@ class NumberConversionFix(
     toType: KotlinType,
     private val disableIfAvailable: IntentionAction? = null,
     private val enableNullableType: Boolean = false,
-    private val intentionText: (String) -> String = { KotlinBundle.message("convert.expression.to.0", it) }
+    private val intentionText: (String) -> @IntentionName String = { KotlinBundle.message("convert.expression.to.0", it) }
 ) : KotlinQuickFixAction<KtExpression>(element) {
     private val isConversionAvailable = fromType != toType && fromType.isNumberType() && toType.isNumberType()
 

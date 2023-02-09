@@ -442,7 +442,7 @@ public final class ArrangementEngine {
 
     public static boolean isSectionEntry(@NotNull ArrangementEntry entry, @NotNull String sectionText) {
       if (entry instanceof TypeAwareArrangementEntry && entry instanceof TextAwareArrangementEntry) {
-        final Set<ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)entry).getTypes();
+        final Set<? extends ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)entry).getTypes();
         if (types.size() == 1) {
           final ArrangementSettingsToken type = types.iterator().next();
           if (type.equals(START_SECTION) || type.equals(END_SECTION)) {
@@ -634,7 +634,7 @@ public final class ArrangementEngine {
 
     private boolean isTypeOf(@Nullable E element, @NotNull ArrangementSettingsToken token) {
       if (element instanceof TypeAwareArrangementEntry) {
-        Set<ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)element).getTypes();
+        Set<? extends ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)element).getTypes();
         return types.size() == 1 && token.equals(types.iterator().next());
       }
       return false;

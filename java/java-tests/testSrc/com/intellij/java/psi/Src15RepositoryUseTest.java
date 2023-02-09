@@ -23,9 +23,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author dsl
- */
 @HeavyPlatformTestCase.WrapInCommand
 public class Src15RepositoryUseTest extends JavaPsiTestCase {
   @Override

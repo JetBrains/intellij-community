@@ -32,7 +32,7 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
   protected final MavenImportingSettings myImportingSettings;
 
   protected final IdeModifiableModelsProvider myIdeModifiableModelsProvider;
-  protected final ModifiableModelsProviderProxy myModelsProvider;
+  protected final IdeModifiableModelsProvider myModelsProvider;
 
   public MavenProjectImporterBase(Project project,
                                   MavenProjectsTree projectsTree,
@@ -44,7 +44,7 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     myImportingSettings = importingSettings;
 
     myIdeModifiableModelsProvider = modelsProvider;
-    myModelsProvider = new ModifiableModelsProviderProxyWrapper(myIdeModifiableModelsProvider);
+    myModelsProvider = myIdeModifiableModelsProvider;
   }
 
   protected Set<MavenProject> selectProjectsToImport(Collection<MavenProject> originalProjects) {
@@ -70,6 +70,7 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
 
     if (extensionImporters.isEmpty()) return;
 
+    long beforeBridgesCreation = System.nanoTime();
     IdeModifiableModelsProvider provider;
     if (modifiableModelsProvider instanceof IdeUIModifiableModelsProvider) {
       provider = modifiableModelsProvider; // commit does nothing for this provider, so it should be reused
@@ -77,6 +78,7 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     else {
       provider = ProjectDataManager.getInstance().createModifiableModelsProvider(project);
     }
+    long afterBridgesCreation = System.nanoTime();
 
     try {
       Map<Class<? extends MavenImporter>, MavenLegacyModuleImporter.ExtensionImporter.CountAndTime> counters = new HashMap<>();
@@ -96,11 +98,20 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
       }
     }
     finally {
+      long beforeCommit = System.nanoTime();
       MavenUtil.invokeAndWaitWriteAction(project, () -> {
         ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(() -> {
           provider.commit();
         });
       });
+      long afterCommit = System.nanoTime();
+
+      MavenImportCollector.LEGACY_IMPORTERS_STATS.log(project,
+                                                      MavenImportCollector.ACTIVITY_ID.with(activity),
+                                                      MavenImportCollector.DURATION_OF_LEGACY_BRIDGES_CREATION_MS.with(
+                                                TimeUnit.NANOSECONDS.toMillis(afterBridgesCreation - beforeBridgesCreation)),
+                                                      MavenImportCollector.DURATION_OF_LEGACY_BRIDGES_COMMIT_MS.with(
+                                                TimeUnit.NANOSECONDS.toMillis(afterCommit - beforeCommit)));
     }
   }
 

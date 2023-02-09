@@ -35,12 +35,6 @@ public final class ToolbarUtil {
     }
   }
 
-  public static void removeMacSystemTitleBar(@NotNull JRootPane rootPane) {
-    rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
-    rootPane.putClientProperty("apple.awt.fullWindowContent", true);
-    rootPane.putClientProperty("apple.awt.transparentTitleBar", true);
-  }
-
   private static void setCustomTitleForToolbar(@NotNull Window window,
                                                @NotNull JRootPane rootPane,
                                                @NotNull Consumer<? super Runnable> onDispose) {

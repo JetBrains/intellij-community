@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -28,7 +28,8 @@ import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class LocalVariableHidingMemberVariableInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
@@ -61,11 +62,10 @@ public class LocalVariableHidingMemberVariableInspection extends BaseInspection 
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("field.name.hides.in.superclass.ignore.option"), "m_ignoreInvisibleFields");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("local.variable.hides.member.variable.ignore.option"), "m_ignoreStaticMethods");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreInvisibleFields", InspectionGadgetsBundle.message("field.name.hides.in.superclass.ignore.option")),
+      checkbox("m_ignoreStaticMethods", InspectionGadgetsBundle.message("local.variable.hides.member.variable.ignore.option")));
   }
 
   @Nullable

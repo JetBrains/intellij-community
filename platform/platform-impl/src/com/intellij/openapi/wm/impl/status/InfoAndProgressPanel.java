@@ -58,7 +58,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
 
-public final class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget, UISettingsListener, Disposable {
+public final class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget, UISettingsListener {
   @ApiStatus.Internal
   public enum AutoscrollLimit {
     NOT_ALLOWED, ALLOW_ONCE, UNLIMITED
@@ -134,7 +134,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   };
 
-  InfoAndProgressPanel(UISettings uiSettings) {
+  InfoAndProgressPanel(@NotNull UISettings uiSettings) {
     setOpaque(false);
     setBorder(JBUI.Borders.empty());
 
@@ -206,10 +206,6 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     return null;
   }
 
-  @Override
-  public void install(@NotNull StatusBar statusBar) {
-  }
-
   @ApiStatus.Experimental
   public void setCentralComponent(@Nullable JComponent component) {
     if (myShowNavBar) {
@@ -251,13 +247,14 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
   @NotNull List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {
     synchronized (myOriginals) {
-      if (myOriginals.isEmpty()) return Collections.emptyList();
+      if (myOriginals.isEmpty()) {
+        return Collections.emptyList();
+      }
 
       List<Pair<TaskInfo, ProgressIndicator>> result = new ArrayList<>(myOriginals.size());
       for (int i = 0; i < myOriginals.size(); i++) {
-        result.add(Pair.create(myInfos.get(i), myOriginals.get(i)));
+        result.add(new Pair<>(myInfos.get(i), myOriginals.get(i)));
       }
-
       return Collections.unmodifiableList(result);
     }
   }
@@ -1137,7 +1134,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
-  private static class InlineLayout extends AbstractLayoutManager {
+  private static final class InlineLayout extends AbstractLayoutManager {
     @Override
     public Dimension preferredLayoutSize(Container parent) {
       Dimension result = new Dimension();

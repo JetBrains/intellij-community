@@ -7,6 +7,8 @@ import com.intellij.ide.dnd.DnDEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -18,6 +20,7 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.IgnoredViewDialog
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.allUnder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
@@ -76,7 +79,7 @@ abstract class GitStageTree(project: Project,
       val hoverIcon = createHoverIcon(node)
       if (hoverIcon != null) return hoverIcon
     }
-    val statusNode = VcsTreeModelData.children(node).iterateUserObjects(GitFileStatusNode::class.java).first()
+    val statusNode = allUnder(node).iterateUserObjects(GitFileStatusNode::class.java).first()
                      ?: return null
     val operation = operations.find { it.matches(statusNode) } ?: return null
     if (operation.icon == null) return null
@@ -109,13 +112,23 @@ abstract class GitStageTree(project: Project,
       GitStageDataKeys.GIT_STAGE_UI_SETTINGS.`is`(dataId) -> settings
       GitStageDataKeys.GIT_FILE_STATUS_NODES.`is`(dataId) -> selectedStatusNodes()
       VcsDataKeys.FILE_PATHS.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
-      VcsDataKeys.VIRTUAL_FILES.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
-      CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
-        .toList().toTypedArray()
-      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
-        .map { OpenFileDescriptor(project, it!!) }.toList().toTypedArray()
       PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> if (!selectedStatusNodes().isEmpty) VirtualFileDeleteProvider() else null
+      PlatformCoreDataKeys.BGT_DATA_PROVIDER.`is`(dataId) -> {
+        val selectedNodes = selectedStatusNodes()
+        return DataProvider { slowId -> getSlowData(selectedNodes, slowId) }
+      }
       else -> super.getData(dataId)
+    }
+  }
+
+  private fun getSlowData(selectedNodes: JBIterable<GitFileStatusNode>, slowId: String): Any? {
+    return when {
+      VcsDataKeys.VIRTUAL_FILES.`is`(slowId) -> selectedNodes.map { it.filePath.virtualFile }.filterNotNull()
+      CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(slowId) -> selectedNodes.map { it.filePath.virtualFile }.filterNotNull()
+        .toList().toTypedArray()
+      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(slowId) -> selectedNodes.map { it.filePath.virtualFile }.filterNotNull()
+        .map { OpenFileDescriptor(project, it) }.toList().toTypedArray()
+      else -> null
     }
   }
 
@@ -158,7 +171,7 @@ abstract class GitStageTree(project: Project,
   private inner class GitStageHoverIcon(val operation: StagingAreaOperation)
     : HoverIcon(operation.icon!!, operation.actionText.get()) {
     override fun invokeAction(node: ChangesBrowserNode<*>) {
-      val nodes = VcsTreeModelData.children(node).userObjects(GitFileStatusNode::class.java)
+      val nodes = allUnder(node).userObjects(GitFileStatusNode::class.java)
       performStageOperation(nodes, operation)
     }
 
@@ -275,7 +288,7 @@ abstract class GitStageTree(project: Project,
                         Runnable {
                           val conflictedFiles = traverseObjectsUnder().filter(GitFileStatusNode::class.java).map {
                             it.filePath.virtualFile
-                          }.filter { it != null }.toList() as List<VirtualFile>
+                          }.filterNotNull().toList()
                           showMergeDialog(conflictedFiles)
                         })
       }

@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.Cell
@@ -69,7 +69,7 @@ internal fun createRepositoryListEditor(icsManager: IcsManager): DialogPanel {
 
 private fun deleteRepository(icsManager: IcsManager) {
   // as two tasks, - user should be able to cancel syncing before delete and continue to delete
-  runBlockingModal(ModalTaskOwner.guess(), IcsBundle.message("progress.syncing.before.deleting.repository")) {
+  runBlockingModalWithRawProgressReporter(ModalTaskOwner.guess(), IcsBundle.message("progress.syncing.before.deleting.repository")) {
     val repositoryManager = icsManager.repositoryManager
 
     // attempt to fetch, merge and push to ensure that latest changes in the deleted user repository will be not lost
@@ -77,7 +77,7 @@ private fun deleteRepository(icsManager: IcsManager) {
     // It is user responsibility later to delete git repository or do whatever user want. Our responsibility is to not loose user changes.
     if (!repositoryManager.canCommit()) {
       LOG.info("Commit on repository delete skipped: repository is not committable")
-      return@runBlockingModal
+      return@runBlockingModalWithRawProgressReporter
     }
 
     catchAndLog(asWarning = true) {

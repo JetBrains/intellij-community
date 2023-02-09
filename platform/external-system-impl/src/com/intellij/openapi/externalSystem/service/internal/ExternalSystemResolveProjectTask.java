@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.indexing.UnindexedFilesScannerExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,8 +49,6 @@ import static com.intellij.openapi.externalSystem.statistics.ExternalSystemUsage
 
 /**
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask {
 
@@ -152,7 +151,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     String title = ExternalSystemBundle.message("progress.refresh.text", myProjectName, getExternalSystemId().getReadableName());
     Ref<DataNode<ProjectData>> projectRef = new Ref<>();
 
-    DumbService.getInstance(getIdeProject()).suspendIndexingAndRun(title, () -> {
+    UnindexedFilesScannerExecutor.getInstance(getIdeProject()).suspendScanningAndIndexingThenRun(title, () -> {
       try {
         projectRef.set(resolver.resolveProjectInfo(id, myProjectPath, myIsPreviewMode, settings, myResolverPolicy));
       }

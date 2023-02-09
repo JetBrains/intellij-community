@@ -8,9 +8,6 @@ import com.intellij.psi.PsiMirrorElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public interface GrGdkMethod extends PsiMethod, PsiMirrorElement {
 
   @NotNull

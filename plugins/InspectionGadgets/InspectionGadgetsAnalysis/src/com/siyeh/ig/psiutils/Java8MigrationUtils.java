@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -60,13 +60,11 @@ public final class Java8MigrationUtils {
   @Nullable
   @Contract("_, null -> null")
   private static PsiMethodCallExpression tryExtractMapGetCall(PsiReferenceExpression target, PsiElement element) {
-    if (element instanceof PsiDeclarationStatement) {
-      PsiDeclarationStatement declaration = (PsiDeclarationStatement)element;
+    if (element instanceof PsiDeclarationStatement declaration) {
       PsiElement[] elements = declaration.getDeclaredElements();
       if (elements.length > 0) {
         PsiElement lastDeclaration = elements[elements.length - 1];
-        if (lastDeclaration instanceof PsiLocalVariable && target.isReferenceTo(lastDeclaration)) {
-          PsiLocalVariable var = (PsiLocalVariable)lastDeclaration;
+        if (lastDeclaration instanceof PsiLocalVariable var && target.isReferenceTo(lastDeclaration)) {
           return extractMapMethodCall(var.getInitializer(), "get");
         }
       }
@@ -90,8 +88,7 @@ public final class Java8MigrationUtils {
   @Contract("null, _ -> null")
   public static PsiMethodCallExpression extractMapMethodCall(PsiExpression expression, @NotNull @NonNls String expectedName) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(expression instanceof PsiMethodCallExpression)) return null;
-    PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+    if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) return null;
     if (!expectedName.equals(methodCallExpression.getMethodExpression().getReferenceName())) return null;
     final PsiMethod method = methodCallExpression.resolveMethod();
     if (method == null) return null;
@@ -262,12 +259,10 @@ public final class Java8MigrationUtils {
 
     @Contract("null, _ -> null")
     public static Java8MigrationUtils.MapCheckCondition fromConditional(PsiElement conditional, boolean treatGetNullAsContainsKey) {
-      if (conditional instanceof PsiIfStatement) {
-        PsiIfStatement ifStatement = (PsiIfStatement)conditional;
+      if (conditional instanceof PsiIfStatement ifStatement) {
         return tryExtract(ifStatement.getCondition(), ifStatement, treatGetNullAsContainsKey);
       }
-      if (conditional instanceof PsiConditionalExpression) {
-        PsiConditionalExpression ternary = (PsiConditionalExpression)conditional;
+      if (conditional instanceof PsiConditionalExpression ternary) {
         PsiElement parent = ternary.getParent().getParent();
         return tryExtract(ternary.getCondition(), parent instanceof PsiStatement ? (PsiStatement)parent : null, treatGetNullAsContainsKey);
       }

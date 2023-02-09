@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
@@ -50,6 +50,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
     public static class OverrideImplement extends AbstractLineMarkersTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("AbstractClass.kt")
+        public void testAbstractClass() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/AbstractClass.kt");
         }
 
         @TestMetadata("BadCodeNoExceptions.kt")
@@ -117,6 +122,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/overrideImplement/FakeOverridesForInterfaceFunWithImpl.kt");
         }
 
+        @TestMetadata("ImplementedAndOverriddenPropertiesInCtr.kt")
+        public void testImplementedAndOverriddenPropertiesInCtr() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/ImplementedAndOverriddenPropertiesInCtr.kt");
+        }
+
         @TestMetadata("Interface.kt")
         public void testInterface() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/Interface.kt");
@@ -177,6 +187,16 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/overrideImplement/PrimaryConstructorOverride.kt");
         }
 
+        @TestMetadata("PropertiesImplementedInCtr.kt")
+        public void testPropertiesImplementedInCtr() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/PropertiesImplementedInCtr.kt");
+        }
+
+        @TestMetadata("PropertiesOverriddenInCtr.kt")
+        public void testPropertiesOverriddenInCtr() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/PropertiesOverriddenInCtr.kt");
+        }
+
         @TestMetadata("PropertyOverride.kt")
         public void testPropertyOverride() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/PropertyOverride.kt");
@@ -190,6 +210,16 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
         @TestMetadata("ToStringInInterface.kt")
         public void testToStringInInterface() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/ToStringInInterface.kt");
+        }
+
+        @TestMetadata("WithJavaInheritor.kt")
+        public void testWithJavaInheritor() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/WithJavaInheritor.kt");
+        }
+
+        @TestMetadata("WithJavaInheritorProperty.kt")
+        public void testWithJavaInheritorProperty() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/WithJavaInheritorProperty.kt");
         }
     }
 

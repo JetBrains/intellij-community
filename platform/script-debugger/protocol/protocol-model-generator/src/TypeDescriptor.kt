@@ -15,9 +15,7 @@ internal class TypeDescriptor(val type: BoxableType, private val descriptor: Ite
 
     if (asRawString) {
       out.append("@org.jetbrains.jsonProtocol.JsonField(")
-      if (asRawString) {
-        out.append("allowAnyPrimitiveValue=true")
-      }
+      out.append("allowAnyPrimitiveValue=true")
       out.append(")").newLine()
     }
   }

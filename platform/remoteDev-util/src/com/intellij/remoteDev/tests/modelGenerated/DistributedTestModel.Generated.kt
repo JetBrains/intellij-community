@@ -9,6 +9,7 @@ import com.jetbrains.rd.util.lifetime.*
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.*
 import com.jetbrains.rd.util.*
+import kotlin.time.Duration
 import kotlin.reflect.KClass
 import kotlin.jvm.JvmStatic
 
@@ -51,7 +52,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = 8735956575571861475L
+        const val serializationHash = 1821782107515716912L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -161,14 +162,15 @@ data class RdAgentId (
  */
 class RdTestSession private constructor(
     val agentId: RdAgentId,
-    val testClassName: String,
-    val testMethodName: String,
+    val testClassName: String?,
+    val testMethodName: String?,
     val traceCategories: List<String>,
     private val _ready: RdProperty<Boolean?>,
     private val _sendException: RdSignal<RdTestSessionException>,
     private val _shutdown: RdSignal<Unit>,
     private val _dumpThreads: RdSignal<Unit>,
-    private val _runNextAction: RdCall<Unit, Boolean>
+    private val _runNextAction: RdCall<Unit, Boolean>,
+    private val _makeScreenshot: RdCall<String, Boolean>
 ) : RdBindableBase() {
     //companion
     
@@ -179,28 +181,30 @@ class RdTestSession private constructor(
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTestSession  {
             val _id = RdId.read(buffer)
             val agentId = RdAgentId.read(ctx, buffer)
-            val testClassName = buffer.readString()
-            val testMethodName = buffer.readString()
+            val testClassName = buffer.readNullable { buffer.readString() }
+            val testMethodName = buffer.readNullable { buffer.readString() }
             val traceCategories = buffer.readList { buffer.readString() }
             val _ready = RdProperty.read(ctx, buffer, __BoolNullableSerializer)
             val _sendException = RdSignal.read(ctx, buffer, RdTestSessionException)
             val _shutdown = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
             val _dumpThreads = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
             val _runNextAction = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            return RdTestSession(agentId, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _dumpThreads, _runNextAction).withId(_id)
+            val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
+            return RdTestSession(agentId, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _dumpThreads, _runNextAction, _makeScreenshot).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
             value.rdid.write(buffer)
             RdAgentId.write(ctx, buffer, value.agentId)
-            buffer.writeString(value.testClassName)
-            buffer.writeString(value.testMethodName)
+            buffer.writeNullable(value.testClassName) { buffer.writeString(it) }
+            buffer.writeNullable(value.testMethodName) { buffer.writeString(it) }
             buffer.writeList(value.traceCategories) { v -> buffer.writeString(v) }
             RdProperty.write(ctx, buffer, value._ready)
             RdSignal.write(ctx, buffer, value._sendException)
             RdSignal.write(ctx, buffer, value._shutdown)
             RdSignal.write(ctx, buffer, value._dumpThreads)
             RdCall.write(ctx, buffer, value._runNextAction)
+            RdCall.write(ctx, buffer, value._makeScreenshot)
         }
         
         private val __BoolNullableSerializer = FrameworkMarshallers.Bool.nullable()
@@ -212,6 +216,7 @@ class RdTestSession private constructor(
     val shutdown: ISignal<Unit> get() = _shutdown
     val dumpThreads: IAsyncSignal<Unit> get() = _dumpThreads
     val runNextAction: RdCall<Unit, Boolean> get() = _runNextAction
+    val makeScreenshot: RdCall<String, Boolean> get() = _makeScreenshot
     //methods
     //initializer
     init {
@@ -228,13 +233,14 @@ class RdTestSession private constructor(
         bindableChildren.add("shutdown" to _shutdown)
         bindableChildren.add("dumpThreads" to _dumpThreads)
         bindableChildren.add("runNextAction" to _runNextAction)
+        bindableChildren.add("makeScreenshot" to _makeScreenshot)
     }
     
     //secondary constructor
     constructor(
         agentId: RdAgentId,
-        testClassName: String,
-        testMethodName: String,
+        testClassName: String?,
+        testMethodName: String?,
         traceCategories: List<String>
     ) : this(
         agentId,
@@ -245,7 +251,8 @@ class RdTestSession private constructor(
         RdSignal<RdTestSessionException>(RdTestSessionException),
         RdSignal<Unit>(FrameworkMarshallers.Void),
         RdSignal<Unit>(FrameworkMarshallers.Void),
-        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
+        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
+        RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool)
     )
     
     //equals trait
@@ -263,6 +270,7 @@ class RdTestSession private constructor(
             print("shutdown = "); _shutdown.print(printer); println()
             print("dumpThreads = "); _dumpThreads.print(printer); println()
             print("runNextAction = "); _runNextAction.print(printer); println()
+            print("makeScreenshot = "); _makeScreenshot.print(printer); println()
         }
         printer.print(")")
     }
@@ -277,7 +285,8 @@ class RdTestSession private constructor(
             _sendException.deepClonePolymorphic(),
             _shutdown.deepClonePolymorphic(),
             _dumpThreads.deepClonePolymorphic(),
-            _runNextAction.deepClonePolymorphic()
+            _runNextAction.deepClonePolymorphic(),
+            _makeScreenshot.deepClonePolymorphic()
         )
     }
     //contexts

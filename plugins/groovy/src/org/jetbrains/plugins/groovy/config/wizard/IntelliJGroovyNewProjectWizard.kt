@@ -10,10 +10,9 @@ import com.intellij.ide.projectWizard.generators.IntelliJNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.EditorHelper
 import com.intellij.ide.util.projectWizard.ModuleBuilder
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.ide.wizard.chain
+import com.intellij.ide.wizard.setupProjectFromBuilder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
@@ -28,9 +27,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiManager
-import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
-import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.GroovyAwareModuleBuilder
 import org.jetbrains.plugins.groovy.config.GroovyLibraryDescription
 import java.awt.KeyboardFocusManager
@@ -43,21 +40,27 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
   override val ordinal = 0
 
-  override fun createStep(parent: GroovyNewProjectWizard.Step): NewProjectWizardStep = Step(parent).chain(::AssetsStep)
+  override fun createStep(parent: GroovyNewProjectWizard.Step): NewProjectWizardStep =
+    Step(parent)
+      .nextStep(::AssetsStep)
 
   class Step(parent: GroovyNewProjectWizard.Step) :
     IntelliJNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent),
     BuildSystemGroovyNewProjectWizardData by parent {
 
-    override fun Panel.customOptions() {
-      row(GroovyBundle.message("label.groovy.sdk")) {
-        groovySdkComboBox(context, groovySdkProperty)
-      }.bottomGap(BottomGap.SMALL)
+    override fun setupSettingsUI(builder: Panel) {
+      setupJavaSdkUI(builder)
+      setupGroovySdkUI(builder)
+      setupSampleCodeUI(builder)
+    }
+
+    override fun setupAdvancedSettingsUI(builder: Panel) {
+      setupModuleNameUI(builder)
+      setupModuleContentRootUI(builder)
+      setupModuleFileLocationUI(builder)
     }
 
     override fun setupProject(project: Project) {
-      super.setupProject(project)
-
       val groovyModuleBuilder = GroovyAwareModuleBuilder().apply {
         val contentRoot = FileUtil.toSystemDependentName(contentRoot)
         contentEntryPath = contentRoot
@@ -79,7 +82,7 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         }
       })
 
-      groovyModuleBuilder.commit(project)
+      setupProjectFromBuilder(project, groovyModuleBuilder)
       if (addSampleCode) {
         openSampleCodeInEditorLater(project, contentRoot)
       }
@@ -128,8 +131,8 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   }
 
   private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+
     override fun setupAssets(project: Project) {
-      outputDirectory = "$path/$name"
       addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
     }
   }

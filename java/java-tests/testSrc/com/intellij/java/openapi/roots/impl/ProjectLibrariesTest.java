@@ -32,9 +32,6 @@ import com.intellij.testFramework.JavaProjectTestCase;
 
 import java.util.Arrays;
 
-/**
- * @author dsl
- */
 public class ProjectLibrariesTest extends JavaProjectTestCase {
   private VirtualFile myRoot;
   private Library myLib;

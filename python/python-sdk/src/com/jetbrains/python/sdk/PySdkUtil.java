@@ -43,7 +43,6 @@ import java.util.Map;
  * A more flexible cousin of SdkVersionUtil.
  * Needs not to be instantiated and only holds static methods.
  *
- * @author dcheryasov
  * @see PythonSdkUtil for Pyhton SDK utilities with no run-time dependencies
  */
 //TODO: rename to PySdkExecuteUtil or PySdkRuntimeUtil

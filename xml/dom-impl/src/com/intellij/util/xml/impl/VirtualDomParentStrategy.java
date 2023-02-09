@@ -95,9 +95,7 @@ public class VirtualDomParentStrategy implements DomParentStrategy {
 
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof VirtualDomParentStrategy)) return false;
-
-    final VirtualDomParentStrategy that = (VirtualDomParentStrategy)o;
+    if (!(o instanceof VirtualDomParentStrategy that)) return false;
 
     if (!myParentHandler.equals(that.myParentHandler)) return false;
 

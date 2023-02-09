@@ -1,6 +1,6 @@
 class ImplicitType {
   void test() {
-    var x = someMethod();
+    var x<# : ImplicitType #> = someMethod();
   }
 
   ImplicitType someMethod() {

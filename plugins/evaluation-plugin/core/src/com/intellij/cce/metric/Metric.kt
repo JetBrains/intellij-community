@@ -7,4 +7,6 @@ interface Metric {
   val value: Double
   val name: String
   val valueType: MetricValueType
+  val showByDefault: Boolean
+    get() = true
 }

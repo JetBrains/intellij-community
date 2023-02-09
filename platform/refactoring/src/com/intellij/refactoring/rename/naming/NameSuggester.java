@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public final class NameSuggester {
   private static final Logger LOG = Logger.getInstance(NameSuggester.class);
   private final String[] myOldClassName;
@@ -261,16 +258,7 @@ public final class NameSuggester {
     }
   }
 
-  private static class Match {
-    final int oldClassNameIndex;
-    final int propertyNameIndex;
-    final String propertyWord;
-
-    Match(int oldClassNameIndex, int propertyNameIndex, String propertyWord) {
-      this.oldClassNameIndex = oldClassNameIndex;
-      this.propertyNameIndex = propertyNameIndex;
-      this.propertyWord = propertyWord;
-    }
+  private record Match(int oldClassNameIndex, int propertyNameIndex, String propertyWord) {
   }
 
   @Nullable

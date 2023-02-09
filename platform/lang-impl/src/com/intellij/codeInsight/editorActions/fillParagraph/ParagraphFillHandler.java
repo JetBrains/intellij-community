@@ -2,10 +2,10 @@ package com.intellij.codeInsight.editorActions.fillParagraph;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormatterTagHandler;
+import com.intellij.formatting.LineWrappingUtil;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.util.EditorFacade;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.CharFilter;
@@ -58,11 +58,11 @@ public class ParagraphFillHandler {
       FormatterTagHandler formatterTagHandler = new FormatterTagHandler(CodeStyle.getSettings(file));
       List<TextRange> enabledRanges = formatterTagHandler.getEnabledRanges(file.getNode(), TextRange.create(0, document.getTextLength()));
 
-      EditorFacade.getInstance().doWrapLongLinesIfNecessary(editor, element.getProject(), document,
-                                                            textRange.getStartOffset(),
+      LineWrappingUtil.doWrapLongLinesIfNecessary(editor, element.getProject(), document,
+                                                  textRange.getStartOffset(),
                                                             textRange.getStartOffset() + replacementText.length() + 1,
-                                                            enabledRanges,
-                                                            CodeStyle.getSettings(file).getRightMargin(element.getLanguage()));
+                                                  enabledRanges,
+                                                  CodeStyle.getSettings(file).getRightMargin(element.getLanguage()));
     }, null, document);
 
   }
@@ -92,8 +92,7 @@ public class ParagraphFillHandler {
   private int getStartOffset(@NotNull final PsiElement element, @NotNull final Editor editor) {
     if (isBunchOfElement(element)) {
       final PsiElement firstElement = getFirstElement(element);
-      return firstElement != null? firstElement.getTextRange().getStartOffset()
-                                        : element.getTextRange().getStartOffset();
+      return firstElement.getTextRange().getStartOffset();
     }
     final int offset = editor.getCaretModel().getOffset();
     final int elementTextOffset = element.getTextOffset();
@@ -124,8 +123,7 @@ public class ParagraphFillHandler {
   private int getEndOffset(@NotNull final PsiElement element, @NotNull final Editor editor) {
     if (isBunchOfElement(element)) {
       final PsiElement next = getLastElement(element);
-      return next != null? next.getTextRange().getEndOffset()
-                         : element.getTextRange().getEndOffset();
+      return next.getTextRange().getEndOffset();
     }
     final int offset = editor.getCaretModel().getOffset();
     final int elementTextOffset = element.getTextRange().getEndOffset();

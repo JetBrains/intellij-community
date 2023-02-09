@@ -3,7 +3,9 @@ package com.intellij.testFramework.observable
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.PlatformTestUtil.waitForPromise
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.await
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -18,4 +20,10 @@ fun <R> Promise<R>.waitForPromise(
   }
   @Suppress("UNCHECKED_CAST")
   return result as R
+}
+
+suspend fun <R> Promise<R>.awaitPromise(timeout: Duration): R {
+  return withTimeout(timeout) {
+    await()
+  }
 }

@@ -124,7 +124,7 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
       ToolWindowAnchor.LEFT -> left
       ToolWindowAnchor.BOTTOM -> if (isSplit) right else left
       ToolWindowAnchor.RIGHT -> right
-      else -> throw IllegalArgumentException("Anchor=$anchor")
+      else -> left
     }
 
   override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager {

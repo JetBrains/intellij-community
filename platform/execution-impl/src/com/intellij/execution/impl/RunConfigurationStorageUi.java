@@ -379,11 +379,15 @@ public class RunConfigurationStorageUi {
   }
 
   public void apply(@NotNull RunnerAndConfigurationSettings settings) {
+    apply(settings, true);
+  }
+
+  public void apply(@NotNull RunnerAndConfigurationSettings settings, boolean checkPathValidity) {
     switch (myRCStorageType) {
       case Workspace -> settings.storeInLocalWorkspace();
       case DotIdeaFolder -> settings.storeInDotIdeaFolder();
       case ArbitraryFileInProject -> {
-        if (getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, myFolderPathIfStoredInArbitraryFile) != null) {
+        if (checkPathValidity && getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, myFolderPathIfStoredInArbitraryFile) != null) {
           // don't apply incorrect UI to the model
         }
         else {

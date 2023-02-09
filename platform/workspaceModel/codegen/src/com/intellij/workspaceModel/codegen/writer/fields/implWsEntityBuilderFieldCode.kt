@@ -341,7 +341,7 @@ private fun ValueType<*>.addVirtualFileIndex(field: ObjProperty<*, *>): String {
   return when {
     this is ValueType.Blob && javaClassName == VirtualFileUrl::class.java.name ->
       """val _diff = diff
-|                    if (_diff != null) index(this, "${field.javaName}", value.toHashSet())
+|                    if (_diff != null) index(this, "${field.javaName}", value)
         """.trimMargin()
     this is ValueType.JvmClass && javaClassName == LibraryRoot::class.java.name -> """
                     val _diff = diff

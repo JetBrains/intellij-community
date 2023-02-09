@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
+import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -47,8 +48,6 @@ import java.util.*;
 import java.util.stream.Stream;
 
 /**
- * @author vlan
- * <p>
  * TODO: Merge it with {@link ScopeUtil}
  */
 public final class PyResolveUtil {
@@ -293,7 +292,9 @@ public final class PyResolveUtil {
         .map(context::getType)
         .nonNull()
         .flatMap(type -> {
-          final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
+          // An instance type has access to instance attributes defined in __init__, a class type does not.
+          final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
+          final List<? extends RatedResolveResult> results = instanceType.resolveMember(name, null, AccessDirection.READ, resolveContext);
           return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
         }));
 
@@ -375,8 +376,7 @@ public final class PyResolveUtil {
     }
     // Forward references are allowed in annotations according to PEP 563
     PsiFile file = element.getContainingFile();
-    if (file instanceof PyFile) {
-      final PyFile pyFile = (PyFile)file;
+    if (file instanceof PyFile pyFile) {
       return pyFile.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON37) &&
              pyFile.hasImportFromFuture(FutureFeature.ANNOTATIONS) &&
              PsiTreeUtil.getParentOfType(element, PyAnnotation.class) != null;

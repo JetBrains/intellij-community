@@ -23,7 +23,6 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.StatusText
-import com.intellij.vcs.commit.CommitModeManager
 import javax.swing.JPanel
 
 private val IS_CONTENT_CREATED = Key.create<Boolean>("ToolWindow.IsContentCreated")
@@ -35,7 +34,6 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
       AppUIExecutor.onUiThread().expireWith(window.disposable).execute {
         updateState(window)
-        window.contentManagerIfCreated?.selectFirstContent()
       }
     })
     connection.subscribe(ProjectLevelVcsManagerEx.VCS_ACTIVATED, VcsActivationListener {
@@ -46,12 +44,6 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     connection.subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
       override fun toolWindowMappingChanged() {
         updateState(window)
-      }
-    })
-    CommitModeManager.subscribeOnCommitModeChange(connection, object : CommitModeManager.CommitModeListener {
-      override fun commitModeChanged() {
-        updateState(window)
-        window.contentManagerIfCreated?.selectFirstContent()
       }
     })
     ChangesViewContentEP.EP_NAME.addExtensionPointListener(window.project, ExtensionListener(window), window.disposable)

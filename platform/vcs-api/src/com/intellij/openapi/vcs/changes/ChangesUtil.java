@@ -332,7 +332,7 @@ public final class ChangesUtil {
   }
 
   public static void markInternalOperation(@NotNull VirtualFile file, boolean set) {
-    file.putUserData(INTERNAL_OPERATION_KEY, set);
+    file.putUserData(INTERNAL_OPERATION_KEY, set ? Boolean.TRUE : null);
   }
 
   public static boolean isInternalOperation(@NotNull VirtualFile file) {

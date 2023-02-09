@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, Read, Write};
 use std::path::{Path, PathBuf};
-use std::process::{Command, ExitStatus, Output};
+use std::process::{Command, ExitStatus, Output, Stdio};
 use std::sync::Once;
 use log::{debug};
 use utils::{get_path_from_env_var, PathExt};
@@ -72,9 +72,10 @@ fn prepare_test_env_impl(layout_kind: &LayoutSpec) -> Result<TestEnvironment> {
     )?;
 
     let launcher_dir = resolve_launcher_dir(&temp_dir_path, layout_kind);
+    let launcher_file = resolve_launcher_filename(layout_kind);
     env::set_current_dir(&launcher_dir)?;
 
-    let launcher_path = launcher_dir.join("xplat-launcher");
+    let launcher_path = launcher_dir.join(launcher_file);
 
     let result = TestEnvironment {
         launcher_path,
@@ -201,12 +202,13 @@ pub fn get_child_dir(parent: &Path, prefix: &str) -> io::Result<PathBuf> {
 }
 
 pub struct LayoutSpec {
-    pub(crate) launcher_location: LauncherLocation,
-    pub(crate) java_type: JavaType,
+    pub launcher_location: LauncherLocation,
+    pub java_type: JavaType,
 }
 
 pub enum LauncherLocation {
     MainBin,
+    MainBinRemoteDev,
     PluginsBin,
 }
 
@@ -229,6 +231,7 @@ pub fn layout_launcher(
     // .
     // ├── bin/
     // │   └── xplat-launcher
+    // │   └── remote-dev-server
     // │   └── idea64.vmoptions
     // │   └── idea.properties
     // ├── lib/
@@ -255,6 +258,7 @@ pub fn layout_launcher(
         ],
         vec![
             (launcher.as_path(), "bin/xplat-launcher"),
+            (launcher.as_path(), "bin/remote-dev-server"),
             (launcher.as_path(), "plugins/remote-dev-server/bin/xplat-launcher"),
             (intellij_main_mock_jar, "lib/app.jar"),
             (product_info_absolute_path, "product-info.json"),
@@ -281,6 +285,7 @@ pub fn layout_launcher(
     // └── Contents
     //     ├── bin/
     //     │   └── xplat-launcher
+    //     │   └── remote-dev-server
     //     │   └── idea.vmoptions
     //     │   └── idea.properties
     //     ├── Resources/
@@ -308,6 +313,7 @@ pub fn layout_launcher(
         ],
         vec![
             (launcher.as_path(), "Contents/bin/xplat-launcher"),
+            (launcher.as_path(), "Contents/bin/remote-dev-server"),
             (launcher.as_path(), "Contents/plugins/remote-dev-server/bin/xplat-launcher"),
             (intellij_main_mock_jar, "Contents/lib/app.jar"),
             (product_info_absolute_path, "Contents/Resources/product-info.json"),
@@ -332,7 +338,8 @@ pub fn layout_launcher(
     // windows:
     // .
     // ├── bin/
-    // │   └── xplat-launcher
+    // │   └── xplat-launcher.exe
+    // │   └── remote-dev-server.exe
     // │   └── idea64.exe.vmoptions
     // │   └── idea.properties
     // ├── lib/
@@ -359,6 +366,7 @@ pub fn layout_launcher(
         ],
         vec![
             (launcher.as_path(), "bin/xplat-launcher.exe"),
+            (launcher.as_path(), "bin/remote-dev-server.exe"),
             (launcher.as_path(), "plugins/remote-dev-server/bin/xplat-launcher.exe"),
             (intellij_main_mock_jar, "lib/app.jar"),
             (product_info_absolute_path, "product-info.json"),
@@ -443,9 +451,16 @@ pub fn resolve_launcher_dir(test_dir: &Path, layout_kind: &LayoutSpec) -> PathBu
     };
 
     match layout_kind.launcher_location {
-        LauncherLocation::MainBin => root.join("bin"),
+        LauncherLocation::MainBin | LauncherLocation::MainBinRemoteDev => root.join("bin"),
 
         LauncherLocation::PluginsBin => root.join("plugins/remote-dev-server/bin")
+    }
+}
+
+pub fn resolve_launcher_filename(layout_kind: &LayoutSpec) -> &str {
+    match layout_kind.launcher_location {
+        LauncherLocation::MainBin | LauncherLocation::PluginsBin => "xplat-launcher",
+        LauncherLocation::MainBinRemoteDev => "remote-dev-server"
     }
 }
 
@@ -515,7 +530,8 @@ pub fn get_custom_user_file_with_java_path() -> Result<PathBuf> {
 
 pub struct LauncherRunResult {
     pub exit_status: ExitStatus,
-    pub dump: Option<IntellijMainDumpedLaunchParameters>
+    pub dump: Option<IntellijMainDumpedLaunchParameters>,
+    pub stdout: String,
 }
 
 #[allow(non_snake_case)]
@@ -527,42 +543,17 @@ pub struct IntellijMainDumpedLaunchParameters {
     pub systemProperties: HashMap<String, String>
 }
 
-pub fn run_launcher_with_default_args_and_env(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>) -> LauncherRunResult {
-    let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
-    let output_args = ["dump-launch-parameters", "--output", &output_file.to_string_lossy()];
-    let full_args = &mut output_args.to_vec();
-    full_args.append(&mut args.to_vec());
-    let default_env_var: HashMap<&str, &str> = HashMap::from([(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")]);
-    let full_env_vars = default_env_var.into_iter().chain(envs).collect();
-
-    let result = match run_launcher_impl(test, full_args, full_env_vars, &output_file) {
-        Ok(x) => x,
-        Err(e) => {
-            panic!("Failed to get launcher run result: {e:?}")
-        }
-    };
-
-    result
-}
-
-pub fn run_launcher(test: &TestEnvironment, args: &[&str], output_file: &Path) -> LauncherRunResult {
-    let default_env_var = HashMap::from([(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")]);
-    let result = match run_launcher_impl(test, args, default_env_var, output_file) {
-        Ok(x) => x,
-        Err(e) => {
-            panic!("Failed to get launcher run result: {e:?}")
-        }
-    };
-
-    result
-}
-
 pub const TEST_OUTPUT_FILE_NAME: &str = "output.json";
 
 fn run_launcher_impl(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>, output_file: &Path) -> Result<LauncherRunResult> {
+    let stdout_file_path = test.test_root_dir.path().join("out.txt");
+    let stdout_file = File::create(&stdout_file_path)?;
+    let stdio = Stdio::from(stdout_file);
+
     let mut launcher_process = Command::new(&test.launcher_path)
         .current_dir(&test.test_root_dir)
         .args(args)
+        .stdout(stdio)
         .envs(envs)
         .spawn()
         .context("Failed to spawn launcher process")?;
@@ -585,7 +576,8 @@ fn run_launcher_impl(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, 
                     dump: match es.success() {
                         true => Some(read_launcher_run_result(&output_file)?),
                         false => None
-                    }
+                    },
+                    stdout: fs::read_to_string(&stdout_file_path).context("can't open stdout file")?
                 }),
             },
             Err(e) => {
@@ -607,38 +599,159 @@ fn read_launcher_run_result(path: &Path) -> Result<IntellijMainDumpedLaunchParam
     println!("read {len} bytes from {path:?}, content: {text}");
 
     let dump: IntellijMainDumpedLaunchParameters = serde_json::from_str(text.as_str())?;
+
     Ok(dump)
 }
 
-pub fn run_launcher_and_get_dump(layout_kind: &LayoutSpec) -> IntellijMainDumpedLaunchParameters {
-    let test = prepare_test_env(layout_kind);
-    let result = run_launcher_with_default_args_and_env(&test, &[], HashMap::from([(" ", "")]));
+/// Run launcher with command line arguments and environment variables and return `LauncherRunResult` which contains:
+/// - exit status of launched application;
+/// - dump of launch parameters;
+/// - std_out of launcher;
+pub fn run_launcher(layout_specification: &LayoutSpec) -> LauncherRunResult {
+    let test = prepare_test_env(layout_specification);
+    let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
+    let output_args = ["--output", &output_file.to_string_lossy()];
+    let default_env_var: HashMap<&str, &str> = HashMap::from([(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")]);
+
+    let result = match run_launcher_impl(&test, &output_args, default_env_var, &output_file) {
+        Ok(launcher_run_result) => launcher_run_result,
+        Err(e) => {
+            panic!("Failed to get launcher run result: {e:?}")
+        }
+    };
+
+    result
+}
+
+/// Run launcher with command line arguments and environment variables and return dump of launch parameters
+fn run_launcher_and_get_dump(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>) -> IntellijMainDumpedLaunchParameters {
+    let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
+
+    let output_args = ["dump-launch-parameters", "--output", &output_file.to_string_lossy()];
+    let full_args = &mut output_args.to_vec();
+    full_args.append(&mut args.to_vec());
+
+    let default_env_var: HashMap<&str, &str> = HashMap::from([(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")]);
+    let full_env_vars: HashMap<&str, &str> = default_env_var.into_iter().chain(envs).collect();
+
+    let result = match run_launcher_impl(&test, full_args, full_env_vars, &output_file) {
+            Ok(launcher_dump) => launcher_dump,
+            Err(e) => {
+                panic!("Failed to get launcher run result: {e:?}")
+            }
+    };
     assert!(result.exit_status.success(), "Launcher didn't exit successfully");
     result.dump.expect("Launcher exited successfully, but there is no output")
 }
 
-pub fn run_launcher_and_get_dump_with_args(layout_kind: &LayoutSpec, args: &[&str]) -> IntellijMainDumpedLaunchParameters {
-    let test = prepare_test_env(layout_kind);
-    let result = run_launcher_with_default_args_and_env(&test, args, HashMap::from([(" ", "")]));
-    assert!(result.exit_status.success(), "Launcher didn't exit successfully");
-    result.dump.expect("Launcher exited successfully, but there is no output")
+pub fn run_launcher_and_get_dump_default(test: &TestEnvironment) -> IntellijMainDumpedLaunchParameters {
+    run_launcher_and_get_dump(test, &[], HashMap::from([(" ", "")]))
 }
 
-pub fn run_launcher_and_get_dump_with_java_env(layout_specification: &LayoutSpec, java_env_var: &str) -> IntellijMainDumpedLaunchParameters {
+/// Run launcher and get dump, with custom command line arguments
+pub fn run_launcher_and_get_dump_with_args(test: &TestEnvironment, args: &[&str]) -> IntellijMainDumpedLaunchParameters {
+    run_launcher_and_get_dump(test, args, HashMap::from([(" ", "")]))
+}
+
+/// Run launcher and get dump, with custom environment variables
+pub fn run_launcher_and_get_dump_with_env_vars(test: &TestEnvironment, env_vars: HashMap<&str, &str>) -> IntellijMainDumpedLaunchParameters {
+    run_launcher_and_get_dump(test, &[], env_vars)
+}
+
+/// Run launcher and get dump, with java environment variables
+pub fn run_launcher_and_get_dump_with_java_env(test: &TestEnvironment, java_env_var: &str) -> IntellijMainDumpedLaunchParameters {
     let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let launcher_jdk = get_jbrsdk_from_project_root(&project_root).expect("Can't get jbrsdk from project root");
 
-    run_launcher_and_get_dump_with_env_vars(layout_specification, HashMap::from([(java_env_var, launcher_jdk.to_str().unwrap())]))
+    run_launcher_and_get_dump_with_env_vars(test, HashMap::from([(java_env_var, launcher_jdk.to_str().unwrap())]))
 }
 
-pub fn run_launcher_and_get_dump_with_env_vars(layout_specification: &LayoutSpec, env_vars: HashMap<&str, &str>) -> IntellijMainDumpedLaunchParameters {
-    let test = prepare_test_env(layout_specification);
-    let result = run_launcher_with_default_args_and_env(
-        &test,
-        &[],
-        env_vars
-    );
-    let dump = result.dump
-        .expect("Launcher exited successfully, but there is no output");
-    dump
+/// Run remote-development launcher with command line arguments and environment variables and return `LauncherRunResult` which contains:
+/// - exit status of launched application;
+/// - dump of launch parameters;
+/// - std_out of launcher;
+fn run_remote_dev(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>) -> LauncherRunResult {
+    let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
+
+    let default_env_var: HashMap<&str, &str> = HashMap::from([
+        (xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1"),
+        ("CWM_NO_PASSWORD", "1"),
+        ("CWM_HOST_PASSWORD", "1"),
+        ("REMOTE_DEV_NON_INTERACTIVE", "1")
+    ]);
+    let full_env_vars: HashMap<&str, &str> = default_env_var.into_iter().chain(envs).collect();
+
+    let result = match run_launcher_impl(&test, args, full_env_vars, &output_file) {
+        Ok(launcher_dump) => launcher_dump,
+        Err(e) => {
+            panic!("Failed to get launcher run result: {e:?}")
+        }
+    };
+
+    result
+}
+
+/// Run remote-dev launcher with command line arguments and environment variables and return dump of launch parameters
+fn run_remote_dev_and_get_dump(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>) -> IntellijMainDumpedLaunchParameters {
+    let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
+    let project_dir = &test.test_root_dir.path().to_string_lossy();
+
+    let output_args = ["dumpLaunchParameters", &project_dir, "--output", &output_file.to_string_lossy()];
+    let full_args = &mut output_args.to_vec();
+    full_args.append(&mut args.to_vec());
+
+    let launcher_run_result = run_remote_dev(test, full_args, envs);
+    assert!(launcher_run_result.exit_status.success(), "Launcher didn't exit successfully");
+
+    launcher_run_result.dump.expect("Launcher exited successfully, but there is no output")
+}
+
+pub fn run_remote_dev_and_get_dump_default(test: &TestEnvironment,) -> IntellijMainDumpedLaunchParameters {
+    run_remote_dev_and_get_dump(test, &[], HashMap::from([(" ", "")]))
+}
+
+/// Run remote-dev launcher and get dump, with custom command line arguments
+pub fn run_remote_dev_and_get_dump_with_args(test: &TestEnvironment, args: &[&str]) -> IntellijMainDumpedLaunchParameters {
+    run_remote_dev_and_get_dump(test, args, HashMap::from([(" ", "")]))
+}
+
+/// Run remote-dev launcher and get dump, with custom environment variables
+pub fn run_remote_dev_and_get_dump_with_env_vars(test: &TestEnvironment, env_vars: HashMap<&str, &str>) -> IntellijMainDumpedLaunchParameters {
+    run_remote_dev_and_get_dump(test, &[], env_vars)
+}
+
+/// Run remote-dev launcher and get dump, with java environment variables
+pub fn run_remote_dev_and_get_dump_with_java_env(test: &TestEnvironment, java_env_var: &str) -> IntellijMainDumpedLaunchParameters {
+    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let launcher_jdk = get_jbrsdk_from_project_root(&project_root).expect("Can't get jbrsdk from project root");
+
+    run_remote_dev_and_get_dump_with_env_vars(test, HashMap::from([(java_env_var, launcher_jdk.to_str().unwrap())]))
+}
+
+pub fn run_remote_dev_and_get_output(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>) -> String {
+    let launcher_run_result = run_remote_dev(test, args, envs);
+
+    launcher_run_result.stdout
+}
+
+pub fn run_remote_dev_and_get_output_default(test: &TestEnvironment,) -> String {
+    run_remote_dev_and_get_output(test, &[], HashMap::from([(" ", "")]))
+}
+
+/// Run remote-dev launcher and get std_out, with custom command line arguments
+pub fn run_remote_dev_and_get_output_with_args(test: &TestEnvironment, args: &[&str]) -> String {
+    run_remote_dev_and_get_output(test, args, HashMap::from([(" ", "")]))
+}
+
+/// Run remote-dev launcher and get std_out, with custom environment variables
+pub fn run_remote_dev_and_get_output_with_env_vars(test: &TestEnvironment, env_vars: HashMap<&str, &str>) -> String {
+    run_remote_dev_and_get_output(test, &[], env_vars)
+}
+
+/// Run remote-dev launcher and get std_out, with java environment variables
+pub fn run_remote_dev_and_get_output_with_java_env(test: &TestEnvironment, java_env_var: &str) -> String {
+    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let launcher_jdk = get_jbrsdk_from_project_root(&project_root).expect("Can't get jbrsdk from project root");
+
+    run_remote_dev_and_get_output_with_env_vars(test, HashMap::from([(java_env_var, launcher_jdk.to_str().unwrap())]))
 }

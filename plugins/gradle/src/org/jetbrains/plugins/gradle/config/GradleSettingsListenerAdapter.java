@@ -9,9 +9,6 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class GradleSettingsListenerAdapter implements ExternalSystemSettingsListener<GradleProjectSettings>,
                                                                GradleSettingsListener {
   @Override

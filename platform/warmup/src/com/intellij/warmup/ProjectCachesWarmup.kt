@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup
 
 import com.intellij.openapi.application.ApplicationManager
@@ -43,13 +43,16 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
   override suspend fun start(args: List<String>) {
     val commandArgs = try {
       val parser = ArgsParser(args)
-      val commandArgs = OpenProjectArgsImpl(parser)
+      val commandArgs = WarmupProjectArgsImpl(parser)
       parser.tryReadAll()
+      if (commandArgs.build && commandArgs.rebuild) {
+        throw InvalidWarmupArgumentsException("Only one of --build and --rebuild can be specified")
+      }
       commandArgs
     }
     catch (t: Throwable) {
       val argsParser = ArgsParser(listOf())
-      runCatching { OpenProjectArgsImpl(argsParser) }
+      runCatching { WarmupProjectArgsImpl(argsParser) }
       ConsoleLog.error(
 """Failed to parse commandline: ${t.message}
   Usage:
@@ -59,7 +62,7 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
       exitProcess(2)
     }
 
-    val buildMode = System.getenv()["IJ_WARMUP_BUILD"]
+    val buildMode = getBuildMode(commandArgs)
     val builders = System.getenv()["IJ_WARMUP_BUILD_BUILDERS"]?.split(";")?.toHashSet()
 
     val application = ApplicationManager.getApplication()
@@ -84,8 +87,7 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
       waitForCachesSupports(project)
 
       if (buildMode != null) {
-        val rebuild = buildMode == "REBUILD"
-        waitForBuilders(project, rebuild, builders)
+        waitForBuilders(project, buildMode, builders)
       }
       project
     } ?: return
@@ -105,6 +107,25 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
     withContext(Dispatchers.EDT) {
       application.exit(false, true, false)
     }
+  }
+}
+
+private class InvalidWarmupArgumentsException(errorMessage: String) : Exception(errorMessage)
+
+private enum class BuildMode {
+  BUILD,
+  REBUILD
+}
+
+private fun getBuildMode(args: WarmupProjectArgs) : BuildMode? {
+  return if (args.build) {
+    BuildMode.BUILD
+  } else if (args.rebuild) {
+    BuildMode.REBUILD
+  } else when (System.getenv("IJ_WARMUP_BUILD")) {
+    null -> null
+    "REBUILD" -> BuildMode.REBUILD
+    else -> BuildMode.BUILD
   }
 }
 
@@ -131,7 +152,7 @@ private suspend fun waitForCachesSupports(project: Project) {
   ConsoleLog.info("All ProjectIndexesWarmupSupport.waitForCaches completed")
 }
 
-private suspend fun waitForBuilders(project: Project, rebuild: Boolean, builders: Set<String>?) {
+private suspend fun waitForBuilders(project: Project, rebuild: BuildMode, builders: Set<String>?) {
   fun isBuilderEnabled(id: String): Boolean = if (builders.isNullOrEmpty()) true else builders.contains(id)
 
   val projectBuildWarmupSupports = ProjectBuildWarmupSupport.EP_NAME.getExtensions(project).filter { builder ->
@@ -145,7 +166,7 @@ private suspend fun waitForBuilders(project: Project, rebuild: Boolean, builders
           launch {
             try {
               ConsoleLog.info("Starting builder $builder for id ${builder.getBuilderId()}")
-              val status = builder.buildProject(rebuild)
+              val status = builder.buildProject(rebuild == BuildMode.REBUILD)
               ConsoleLog.info("Builder $builder finished with status: $status")
             }
             catch (e: CancellationException) {

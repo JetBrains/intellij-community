@@ -81,8 +81,8 @@ public final class ModalityStateEx extends ModalityState {
       else if (entity instanceof ProgressIndicator) {
         ((ProgressIndicator)entity).cancel();
       }
-      else if (entity instanceof Job) {
-        ((Job)entity).cancel(new CancellationException("force leave modal"));
+      else if (entity instanceof JobProvider) {
+        ((JobProvider)entity).getJob().cancel(new CancellationException("force leave modal"));
       }
     }
   }

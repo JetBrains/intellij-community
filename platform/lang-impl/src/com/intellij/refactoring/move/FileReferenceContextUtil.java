@@ -52,8 +52,7 @@ public final class FileReferenceContextUtil {
   private static boolean encodeFileReference(PsiElement element, PsiFileReference ref, Map<String, PsiFileSystemItem> map, int refIndex) {
     final ResolveResult[] results = ref.multiResolve(false);
     for (ResolveResult result : results) {
-      if (result.getElement() instanceof PsiFileSystemItem) {
-        PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)result.getElement();
+      if (result.getElement() instanceof PsiFileSystemItem fileSystemItem) {
         element.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, Pair.create(fileSystemItem, refIndex));
         map.put(element.getText(), fileSystemItem);
         return true;

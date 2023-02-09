@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ui.VcsCloneComponent;
 import com.intellij.openapi.vcs.ui.VcsCloneComponentStub;
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -33,7 +34,10 @@ public interface CheckoutProvider {
   @Nls @NotNull String getVcsName();
 
   interface Listener {
+    @RequiresBackgroundThread
     void directoryCheckedOut(File directory, VcsKey vcs);
+
+    @RequiresBackgroundThread
     void checkoutCompleted();
   }
 

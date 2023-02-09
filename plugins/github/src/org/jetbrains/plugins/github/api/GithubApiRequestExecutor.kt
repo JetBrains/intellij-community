@@ -156,7 +156,7 @@ sealed class GithubApiRequestExecutor {
           if (jsonError?.containsReasonMessage("API rate limit exceeded") == true) {
             GithubRateLimitExceededException(jsonError.presentableError)
           }
-          else GithubAuthenticationException("Request response: " + (jsonError?.presentableError ?: errorText ?: statusLine))
+          else GithubAuthenticationException("Request response: ${jsonError?.presentableError ?: errorText ?: statusLine}.")
         }
 
         else -> {

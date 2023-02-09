@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.project.Project
@@ -31,7 +31,7 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
       if (builder.dependencyChecked) {
         idsToIndex.add(libraryId)
       }
-      rootMap[libraryId] = merge(getLibraryId(builder.root), rootMap[libraryId])
+      rootMap[libraryId] = merge(getRoot(builder), rootMap[libraryId])
     }
 
     val dependencyChecker = DependencyChecker(entityStorage, idsToIndex)
@@ -61,23 +61,27 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
       is RootList -> when (first) {
         AllRoots -> AllRoots
         is RootList -> {
-          first.addAll(second)
+          first.roots.addAll(second.roots)
+          first.sourceRoots.addAll(second.sourceRoots)
           first
         }
       }
     }
   }
 
-  private fun getLibraryId(root: VirtualFile?): Root = root?.let { RootList(it) } ?: AllRoots
+  private fun getRoot(builder: LibraryIdIteratorBuilder): Root {
+    if (builder.roots == null && builder.sourceRoots == null) return AllRoots
+    return RootList(builder)
+  }
 
   private fun createLibraryIterator(libraryId: LibraryId,
                                     root: Root,
                                     entityStorage: EntityStorage,
                                     project: Project): LibraryIndexableFilesIterator? {
     return libraryId.findLibraryBridge(entityStorage, project)?.let {
-      when(root){
+      when (root) {
         AllRoots -> LibraryIndexableFilesIteratorImpl.createIterator(it)
-        is RootList -> LibraryIndexableFilesIteratorImpl.createIterator(it, root)
+        is RootList -> LibraryIndexableFilesIteratorImpl.createIterator(it, root.roots, root.sourceRoots)
       }
     }
   }
@@ -86,9 +90,13 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
 
   private object AllRoots : Root
 
-  private class RootList() : ArrayList<VirtualFile>(), Root {
-    constructor(file: VirtualFile) : this() {
-      add(file)
+  private class RootList() : Root {
+    val roots = mutableListOf<VirtualFile>()
+    val sourceRoots = mutableListOf<VirtualFile>()
+
+    constructor(builder: LibraryIdIteratorBuilder) : this() {
+      builder.roots?.also { roots.addAll(it) }
+      builder.sourceRoots?.also { sourceRoots.addAll(it) }
     }
   }
 

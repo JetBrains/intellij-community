@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.openapi.Disposable;
@@ -25,9 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Pavel.Dolgov
- */
 class PreviewTree implements Disposable {
   private final Project myProject;
   private final Tree myTree;
@@ -111,8 +108,7 @@ class PreviewTree implements Disposable {
     if (component instanceof FragmentNode) {
       return Collections.singletonList((FragmentNode)component);
     }
-    if (component instanceof TreeNode) {
-      TreeNode node = (TreeNode)component;
+    if (component instanceof TreeNode node) {
       return IntStreamEx.range(0, node.getChildCount())
                         .mapToObj(node::getChildAt)
                         .select(FragmentNode.class)

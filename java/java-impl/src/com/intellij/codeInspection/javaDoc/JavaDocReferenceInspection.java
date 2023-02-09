@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -9,7 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.FQNameCellRenderer;
@@ -31,8 +31,10 @@ import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class JavaDocReferenceInspection extends LocalInspectionTool {
   private static final String SHORT_NAME = "JavadocReference";
@@ -41,9 +43,9 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
   public boolean REPORT_INACCESSIBLE = true;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      JavaBundle.message("checkbox.html.report.inaccessible.symbols"), this, "REPORT_INACCESSIBLE");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("REPORT_INACCESSIBLE", JavaBundle.message("checkbox.html.report.inaccessible.symbols")));
   }
 
   @Override
@@ -197,8 +199,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
 
     if (isOnTheFly && "param".equals(tagName)) {
       PsiDocCommentOwner commentOwner = PsiTreeUtil.getParentOfType(tag, PsiDocCommentOwner.class);
-      if (commentOwner instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)commentOwner;
+      if (commentOwner instanceof PsiMethod method) {
         PsiParameter[] parameters = method.getParameterList().getParameters();
         PsiDocTag[] tags = tag.getContainingComment().getTags();
         Set<String> unboundParams = new HashSet<>();

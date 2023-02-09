@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -15,7 +15,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,15 +35,15 @@ public final class VfsImplUtil {
   private VfsImplUtil() { }
 
   public static @Nullable NewVirtualFile findFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    Pair<NewVirtualFile, Iterable<String>> data = prepare(vfs, path);
-    if (data == null) return null;
+    var rootAndPath = prepare(vfs, path);
+    if (rootAndPath == null) return null;
 
-    NewVirtualFile file = data.first;
-    for (String pathElement : data.second) {
+    var file = rootAndPath.first;
+    for (var pathElement : rootAndPath.second) {
       if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
       if ("..".equals(pathElement)) {
         if (file.is(VFileProperty.SYMLINK)) {
-          final NewVirtualFile canonicalFile = file.getCanonicalFile();
+          var canonicalFile = file.getCanonicalFile();
           file = canonicalFile != null ? canonicalFile.getParent() : null;
         }
         else {
@@ -66,18 +65,18 @@ public final class VfsImplUtil {
   }
 
   public static @NotNull Pair<NewVirtualFile, NewVirtualFile> findCachedFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    Pair<NewVirtualFile, Iterable<String>> data = prepare(vfs, path);
-    if (data == null) return Pair.empty();
+    var rootAndPath = prepare(vfs, path);
+    if (rootAndPath == null) return Pair.empty();
 
-    NewVirtualFile file = data.first;
-    for (String pathElement : data.second) {
+    var file = rootAndPath.first;
+    for (var pathElement : rootAndPath.second) {
       if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
 
-      NewVirtualFile last = file;
+      var last = file;
       if ("..".equals(pathElement)) {
         if (file.is(VFileProperty.SYMLINK)) {
-          String canonicalPath = file.getCanonicalPath();
-          NewVirtualFile canonicalFile = canonicalPath != null ? findCachedFileByPath(vfs, canonicalPath).first : null;
+          var canonicalPath = file.getCanonicalPath();
+          var canonicalFile = canonicalPath != null ? findCachedFileByPath(vfs, canonicalPath).first : null;
           file = canonicalFile != null ? canonicalFile.getParent() : null;
         }
         else {
@@ -97,16 +96,16 @@ public final class VfsImplUtil {
   }
 
   public static @Nullable NewVirtualFile refreshAndFindFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    Pair<NewVirtualFile, Iterable<String>> data = prepare(vfs, path);
-    if (data == null) return null;
+    var rootAndPath = prepare(vfs, path);
+    if (rootAndPath == null) return null;
 
-    NewVirtualFile file = data.first;
-    for (String pathElement : data.second) {
+    var file = rootAndPath.first;
+    for (var pathElement : rootAndPath.second) {
       if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
       if ("..".equals(pathElement)) {
         if (file.is(VFileProperty.SYMLINK)) {
-          final String canonicalPath = file.getCanonicalPath();
-          final NewVirtualFile canonicalFile = canonicalPath != null ? refreshAndFindFileByPath(vfs, canonicalPath) : null;
+          var canonicalPath = file.getCanonicalPath();
+          var canonicalFile = canonicalPath != null ? refreshAndFindFileByPath(vfs, canonicalPath) : null;
           file = canonicalFile != null ? canonicalFile.getParent() : null;
         }
         else {
@@ -123,6 +122,57 @@ public final class VfsImplUtil {
     return file;
   }
 
+  /** An experimental refresh-and-find routine that does not require a write-lock (and hence EDT). */
+  @ApiStatus.Experimental
+  public static void refreshAndFindFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path, @NotNull Consumer<@Nullable NewVirtualFile> consumer) {
+    ProcessIOExecutorService.INSTANCE.execute(() -> {
+      var rootAndPath = prepare(vfs, path);
+      if (rootAndPath == null) {
+        consumer.accept(null);
+      }
+      else {
+        refreshAndFindFileByPath(rootAndPath.first, rootAndPath.second.iterator(), consumer);
+      }
+    });
+  }
+
+  private static void refreshAndFindFileByPath(@Nullable NewVirtualFile file, Iterator<String> path, Consumer<@Nullable NewVirtualFile> consumer) {
+    if (file == null || !path.hasNext()) {
+      consumer.accept(file);
+      return;
+    }
+
+    var pathElement = path.next();
+    if (pathElement.isEmpty() || ".".equals(pathElement)) {
+      refreshAndFindFileByPath(file, path, consumer);
+    }
+    else if ("..".equals(pathElement)) {
+      if (file.is(VFileProperty.SYMLINK)) {
+        var canonicalPath = file.getCanonicalPath();
+        if (canonicalPath != null) {
+          refreshAndFindFileByPath(file.getFileSystem(), canonicalPath, canonicalFile -> refreshAndFindFileByPath(canonicalFile, path, consumer));
+        }
+        else {
+          consumer.accept(null);
+        }
+      }
+      else {
+        refreshAndFindFileByPath(file.getParent(), path, consumer);
+      }
+    }
+    else {
+      var child = file.findChild(pathElement);
+      if (child != null) {
+        refreshAndFindFileByPath(child, path, consumer);
+      }
+      else {
+        file.refresh(true, false, () -> ProcessIOExecutorService.INSTANCE.execute(() -> {
+          refreshAndFindFileByPath(file.findChild(pathElement), path, consumer);
+        }));
+      }
+    }
+  }
+
   private static @Nullable Pair<NewVirtualFile, Iterable<String>> prepare(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     Pair<NewVirtualFile, String> pair = extractRootFromPath(vfs, path);
     if (pair == null) return null;
@@ -136,32 +186,29 @@ public final class VfsImplUtil {
    * {@code extractRootFromPath(JarFileSystem.getInstance, "/temp/temp.jar!/com/foo/bar")} -> ("/temp/temp.jar!/", "/com/foo/bar")
    */
   public static Pair<NewVirtualFile, String> extractRootFromPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    String normalizedPath = vfs.normalize(path);
+    var normalizedPath = vfs.normalize(path);
     if (normalizedPath == null || normalizedPath.isBlank()) {
       return null;
     }
 
-    String rootPath = vfs.extractRootPath(normalizedPath);
+    var rootPath = vfs.extractRootPath(normalizedPath);
     if (rootPath.isBlank() || rootPath.length() > normalizedPath.length()) {
       LOG.warn(vfs + " has extracted incorrect root '" + rootPath + "' from '" + normalizedPath + "' (original '" + path + "')");
       return null;
     }
 
-    NewVirtualFile root = ManagingFS.getInstance().findRoot(rootPath, vfs);
+    var root = ManagingFS.getInstance().findRoot(rootPath, vfs);
     if (root == null || !root.exists()) {
       return null;
     }
 
-    int i = rootPath.length();
-    if (i < normalizedPath.length() && normalizedPath.charAt(i) == '/') {
-      i++;
-    }
-    String relativePath = normalizedPath.substring(i);
-    return pair(root, relativePath);
+    var restPathStart = rootPath.length();
+    if (restPathStart < normalizedPath.length() && normalizedPath.charAt(restPathStart) == '/') restPathStart++;
+    return pair(root, normalizedPath.substring(restPathStart));
   }
 
   public static void refresh(@NotNull NewVirtualFileSystem vfs, boolean asynchronous) {
-    VirtualFile[] roots = ManagingFS.getInstance().getRoots(vfs);
+    var roots = ManagingFS.getInstance().getRoots(vfs);
     if (roots.length > 0) {
       RefreshQueue.getInstance().refresh(asynchronous, true, null, roots);
     }
@@ -171,7 +218,7 @@ public final class VfsImplUtil {
    * Guru method for force synchronous file refresh.
    * <p>
    * Refreshing files via {@link #refresh(NewVirtualFileSystem, boolean)} doesn't work well if the file was changed
-   * twice in short time and content length wasn't changed (for example file modification timestamp for HFS+ works per seconds).
+   * twice in short time and content length wasn't changed (for example, file modification timestamp for HFS+ works per seconds).
    * <p>
    * If you're sure that a file is changed twice in a second, and you have to get the latest file's state - use this method.
    * <p>
@@ -183,7 +230,7 @@ public final class VfsImplUtil {
    * </pre></code>
    */
   public static void forceSyncRefresh(@NotNull VirtualFile file) {
-    VFileContentChangeEvent event = new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true);
+    var event = new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true);
     RefreshQueue.getInstance().processEvents(false, List.of(event));
   }
 
@@ -226,10 +273,10 @@ public final class VfsImplUtil {
     return handler;
   }
 
-  private static void forEachDirectoryComponent(@NotNull String rootPath, @NotNull Consumer<? super String> consumer) {
-    int index = rootPath.lastIndexOf('/');
+  private static void forEachDirectoryComponent(String rootPath, Consumer<String> consumer) {
+    var index = rootPath.lastIndexOf('/');
     while (index > 0) {
-      String containingDirectoryPath = rootPath.substring(0, index);
+      var containingDirectoryPath = rootPath.substring(0, index);
       consumer.accept(containingDirectoryPath);
       index = rootPath.lastIndexOf('/', index - 1);
     }
@@ -238,34 +285,30 @@ public final class VfsImplUtil {
   private static void checkSubscription() {
     if (ourSubscribed.getAndSet(true)) return;
 
-    Application app = ApplicationManager.getApplication();
-    if (app.isDisposed()) {
-      // we might perform a shutdown activity that includes visiting archives (IDEA-181620)
-      return;
-    }
-    MessageBusConnection connection = app.getMessageBus().connect(app);
+    var app = ApplicationManager.getApplication();
+    if (app.isDisposed()) return;  // we might perform a shutdown activity that includes visiting archives (IDEA-181620)
+
+    var connection = app.getMessageBus().connect(app);
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         InvalidationState state = null;
 
         synchronized (ourLock) {
-          for (VFileEvent event : events) {
+          for (var event : events) {
             if (!(event.getFileSystem() instanceof LocalFileSystem)) continue;
+            if (!(event instanceof VFileContentChangeEvent contentChangeEvent)) continue;
 
-            if (!(event instanceof VFileContentChangeEvent)) continue;
-
-            String path = event.getPath();
-
-            VirtualFile file = event.getFile();
-            if (file == null || !file.isDirectory()) {
+            var path = contentChangeEvent.getPath();
+            var file = contentChangeEvent.getFile();
+            if (!file.isDirectory()) {
               state = invalidate(state, path);
             }
             else {
               Collection<String> affectedPaths = ourDominatorsMap.get(path);
               if (affectedPaths != null) {
                 affectedPaths = new ArrayList<>(affectedPaths);  // defensive copying; original may be updated on invalidation
-                for (String affectedPath : affectedPaths) {
+                for (var affectedPath : affectedPaths) {
                   state = invalidate(state, affectedPath);
                 }
               }
@@ -289,19 +332,19 @@ public final class VfsImplUtil {
 
   // must be called under ourLock
   private static @Nullable InvalidationState invalidate(@Nullable InvalidationState state, @NotNull String path) {
-    Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlerCache.remove(path);
-    if (handlerPair != null) {
-      handlerPair.second.clearCaches();
+    var fsAndHandler = ourHandlerCache.remove(path);
+    if (fsAndHandler != null) {
+      fsAndHandler.second.clearCaches();
 
       forEachDirectoryComponent(path, containingDirectoryPath -> {
-        Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
+        var handlers = ourDominatorsMap.get(containingDirectoryPath);
         if (handlers != null && handlers.remove(path) && handlers.isEmpty()) {
           ourDominatorsMap.remove(containingDirectoryPath);
         }
       });
 
       if (state == null) state = new InvalidationState();
-      state.registerPathToRefresh(path, handlerPair.first);
+      state.registerPathToRefresh(path, fsAndHandler.first);
     }
 
     return state;
@@ -317,13 +360,14 @@ public final class VfsImplUtil {
 
     private void scheduleRefresh() {
       if (myRootsToRefresh != null) {
-        List<NewVirtualFile> rootsToRefresh = ContainerUtil.mapNotNull(myRootsToRefresh, pathAndFs ->
-          ManagingFS.getInstance().findRoot(pathAndFs.second.composeRootPath(pathAndFs.first), pathAndFs.second));
-        for (NewVirtualFile root : rootsToRefresh) {
+        var rootsToRefresh = ContainerUtil.mapNotNull(
+          myRootsToRefresh,
+          pathAndFs -> ManagingFS.getInstance().findRoot(pathAndFs.second.composeRootPath(pathAndFs.first), pathAndFs.second));
+        for (var root : rootsToRefresh) {
           root.markDirtyRecursively();
         }
-        boolean async = !ApplicationManager.getApplication().isUnitTestMode();
-        RefreshQueue.getInstance().refresh(async, true, null, rootsToRefresh);
+        var synchronous = ApplicationManager.getApplication().isUnitTestMode();
+        RefreshQueue.getInstance().refresh(!synchronous, true, null, rootsToRefresh);
       }
     }
   }
@@ -332,7 +376,7 @@ public final class VfsImplUtil {
   public static void releaseHandler(@NotNull String localPath) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
     synchronized (ourLock) {
-      InvalidationState state = invalidate(null, localPath);
+      var state = invalidate(null, localPath);
       if (state == null) throw new IllegalArgumentException(localPath + " not in " + ourHandlerCache.keySet());
     }
   }
@@ -351,25 +395,22 @@ public final class VfsImplUtil {
   public static @NotNull List<VFileEvent> getJarInvalidationEvents(@NotNull VFileEvent event, @NotNull List<? super Runnable> outApplyActions) {
     if (!(event instanceof VFileDeleteEvent ||
           event instanceof VFileMoveEvent ||
-          event instanceof VFilePropertyChangeEvent && VirtualFile.PROP_NAME.equals(((VFilePropertyChangeEvent)event).getPropertyName()))) {
+          event instanceof VFilePropertyChangeEvent propertyChangeEvent && VirtualFile.PROP_NAME.equals(propertyChangeEvent.getPropertyName()))) {
       return Collections.emptyList();
     }
 
     String path;
-    if (event instanceof VFilePropertyChangeEvent) {
-      path = ((VFilePropertyChangeEvent)event).getOldPath();
+    if (event instanceof VFilePropertyChangeEvent propertyChangeEvent) {
+      path = propertyChangeEvent.getOldPath();
     }
-    else if (event instanceof VFileMoveEvent) {
-      path = ((VFileMoveEvent)event).getOldPath();
+    else if (event instanceof VFileMoveEvent moveEvent) {
+      path = moveEvent.getOldPath();
     }
     else {
       path = event.getPath();
     }
 
     VirtualFile file = event.getFile();
-    if (file == null) {
-      return Collections.emptyList();
-    }
     VirtualFileSystem entryFileSystem = file.getFileSystem();
     VirtualFile local = null;
     if (entryFileSystem instanceof ArchiveFileSystem) {

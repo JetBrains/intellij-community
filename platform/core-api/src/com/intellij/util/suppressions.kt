@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Suppressions")
 
 package com.intellij.util
@@ -12,7 +12,7 @@ fun runSuppressing(vararg blocks: () -> Unit) =
   runSuppressing(blocks.asSequence())
 
 /** A Java-friendly overload of [runSuppressing]. */
-fun runSuppressing(vararg runnables: Runnable) =
+fun runSuppressing(vararg runnables: ThrowableRunnable<Throwable>) =
   runSuppressing(runnables.asSequence().map { r -> { r.run() } })
 
 private fun runSuppressing(blocks: Sequence<() -> Unit>) {
@@ -23,12 +23,7 @@ private fun runSuppressing(blocks: Sequence<() -> Unit>) {
       block()
     }
     catch (t: Throwable) {
-      if (first == null) {
-        first = t
-      }
-      else {
-        first.addSuppressed(t)
-      }
+      first = addSuppressed(first, t)
     }
   }
 
@@ -36,3 +31,6 @@ private fun runSuppressing(blocks: Sequence<() -> Unit>) {
     throw first
   }
 }
+
+fun <T: Throwable> addSuppressed(first: T?, next: T): T =
+  first?.also { it.addSuppressed(next) } ?: next

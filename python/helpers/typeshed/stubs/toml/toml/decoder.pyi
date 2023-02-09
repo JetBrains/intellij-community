@@ -1,7 +1,8 @@
 from _typeshed import SupportsRead
 from collections.abc import Callable, MutableMapping
 from pathlib import PurePath
-from typing import Any, Generic, Pattern, TypeVar, overload
+from re import Pattern
+from typing import Any, Generic, TypeVar, overload
 from typing_extensions import TypeAlias
 
 _MutableMappingT = TypeVar("_MutableMappingT", bound=MutableMapping[str, Any])

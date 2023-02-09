@@ -4,6 +4,7 @@ package com.intellij.util.containers
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.stream.Stream
 import kotlin.collections.ArrayDeque
@@ -33,7 +34,8 @@ fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
 )
 fun Collection<*>?.isNullOrEmpty(): Boolean = this == null || isEmpty()
 
-@Deprecated("use tail()", ReplaceWith("tail()"), DeprecationLevel.ERROR)
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated("use tail()", ReplaceWith("tail()"), DeprecationLevel.ERROR)
 val <T> List<T>.tail: List<T>
   get() = tail()
 

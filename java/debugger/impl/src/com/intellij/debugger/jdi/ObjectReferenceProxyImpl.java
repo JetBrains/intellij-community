@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -33,7 +33,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   }
 
   public VirtualMachineProxyImpl getVirtualMachineProxy() {
-    return (VirtualMachineProxyImpl) myTimer;
+    return (VirtualMachineProxyImpl)myTimer;
   }
 
   public ReferenceType referenceType() {
@@ -55,7 +55,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   @NonNls
   public String toString() {
     final ObjectReference objectReference = getObjectReference();
-    final String objRefString = objectReference != null? objectReference.toString() : "[referenced object collected]";
+    final String objRefString = objectReference != null ? objectReference.toString() : "[referenced object collected]";
     return "ObjectReferenceProxyImpl: " + objRefString + " " + super.toString();
   }
 
@@ -103,7 +103,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     if (!(o instanceof ObjectReferenceProxyImpl)) {
       return false;
     }
-    if(this == o) return true;
+    if (this == o) return true;
 
     return myObjectReference.equals(((ObjectReferenceProxyImpl)o).myObjectReference);
   }

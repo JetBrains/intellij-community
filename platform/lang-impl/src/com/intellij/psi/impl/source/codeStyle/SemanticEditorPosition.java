@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.HighlighterIteratorWrapper;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -234,9 +235,7 @@ public final class SemanticEditorPosition {
   public boolean isAtAnyOf(SyntaxElement @NotNull ... syntaxElements) {
     if (!myIterator.atEnd()) {
       SyntaxElement currElement = map(myIterator.getTokenType());
-      for (SyntaxElement element : syntaxElements) {
-        if (element.equals(currElement)) return true;
-      }
+      return ArrayUtil.contains(currElement, syntaxElements);
     }
     return false;
   }

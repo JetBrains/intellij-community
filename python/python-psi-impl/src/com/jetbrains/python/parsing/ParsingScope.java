@@ -17,9 +17,6 @@ package com.jetbrains.python.parsing;
 
 import java.util.Objects;
 
-/**
- * @author vlan
- */
 public class ParsingScope {
   private boolean myFunction = false;
   private boolean myClass = false;
@@ -88,9 +85,8 @@ public class ParsingScope {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (!(o instanceof ParsingScope)) return false;
+    if (!(o instanceof ParsingScope scope)) return false;
 
-    final ParsingScope scope = (ParsingScope)o;
     return myFunction == scope.myFunction &&
            myClass == scope.myClass &&
            mySuite == scope.mySuite &&

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +87,7 @@ public class GroovyTrivialConditionalInspection extends BaseInspection {
       super.visitConditionalExpression(exp);
       final GrExpression condition = exp.getCondition();
       final PsiType type = condition.getType();
-      if (type == null || !(PsiType.BOOLEAN.isAssignableFrom(type))) {
+      if (type == null || !(PsiTypes.booleanType().isAssignableFrom(type))) {
         return;
       }
 

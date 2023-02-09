@@ -5,6 +5,7 @@ import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.xdebugger.attach.XAttachPresentationGroup
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogDebuggersFilter
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogElementNode
 
 class AttachToProcessElementsFilters(private val selectedFilter: AtomicLazyProperty<AttachDialogDebuggersFilter>) {
 
@@ -12,9 +13,9 @@ class AttachToProcessElementsFilters(private val selectedFilter: AtomicLazyPrope
     updatePattern("")
   }
 
-  private val cache = mutableMapOf<AttachToProcessElement, Boolean>()
+  private val cache = mutableMapOf<AttachDialogElementNode, Boolean>()
 
-  fun matches(node: AttachToProcessElement): Boolean {
+  fun matches(node: AttachDialogElementNode): Boolean {
     val cachedValue = cache[node]
     if (cachedValue != null) {
       return cachedValue
@@ -33,7 +34,7 @@ class AttachToProcessElementsFilters(private val selectedFilter: AtomicLazyPrope
   }
 
   fun accept(item: AttachDialogProcessItem): Boolean {
-    return accept(item.getGroups()) && speedSearch.shouldBeShowing(item.indexedString)
+    return accept(item.getGroups()) && (speedSearch.shouldBeShowing(item.indexedString) || item.commandLineText.contains(speedSearch.filter ?: "", ignoreCase = true))
   }
 
   fun accept(item: Set<XAttachPresentationGroup<*>>): Boolean {

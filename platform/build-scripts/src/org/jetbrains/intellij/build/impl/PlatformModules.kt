@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.impl
@@ -55,7 +55,7 @@ private val PLATFORM_API_MODULES = persistentListOf(
 )
 
 /**
- * List of modules which are included into lib/app.jar in all IntelliJ based IDEs.
+ * List of modules which are included in lib/app.jar in all IntelliJ based IDEs.
  */
 private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.analysis.impl",
@@ -114,6 +114,8 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.ml.impl",
   "intellij.platform.tips",
 )
+
+private const val UTIL_8 = "util-8.jar"
 
 object PlatformModules {
   const val PRODUCT_JAR = "product.jar"
@@ -188,8 +190,9 @@ object PlatformModules {
     // used only in modules that packed into Java
     layout.withoutProjectLibrary("jps-javac-extension")
     layout.withoutProjectLibrary("Eclipse")
-    for (platformLayoutCustomizer in productLayout.platformLayoutCustomizers) {
-      platformLayoutCustomizer.accept(layout, context)
+    val layoutSpec = PlatformLayout.Spec(layout)
+    for (platformLayoutSpec in productLayout.platformLayoutSpec) {
+      platformLayoutSpec(layoutSpec, context)
     }
 
     val alreadyPackedModules = HashSet<String>()
@@ -234,20 +237,26 @@ object PlatformModules {
       "intellij.platform.util.trove",
     ), productLayout, layout)
 
-    jar(UTIL_JAR, listOf(
+    jar(UTIL_8, listOf(
       "intellij.platform.util.rt.java8",
-      "intellij.platform.util.zip",
       "intellij.platform.util.classLoader",
+      "intellij.platform.util.jdom",
+      "intellij.platform.util.xmlDom",
+    ), productLayout, layout)
+    // fastutil-min cannot be in libsThatUsedInJps - guava is used by JPS and also in this JAR,
+    // but it leads to conflict in some old 3rd-party JDBC driver, so, pack fastutil-min into another JAR
+    layout.projectLibrariesToUnpack.putValue(UTIL_8, "fastutil-min")
+
+    jar(UTIL_JAR, listOf(
+      "intellij.platform.util.zip",
       "intellij.platform.util",
       "intellij.platform.util.text.matching",
       "intellij.platform.util.base",
       "intellij.platform.util.diff",
-      "intellij.platform.util.xmlDom",
-      "intellij.platform.util.jdom",
       "intellij.platform.extensions",
       "intellij.platform.tracing.rt",
       "intellij.platform.core",
-      // GeneralCommandLine is used by Scala in JPS plugin
+      // Scala uses GeneralCommandLine in JPS plugin
       "intellij.platform.ide.util.io",
       "intellij.platform.boot",
     ), productLayout, layout)
@@ -289,7 +298,8 @@ object PlatformModules {
       "intellij.platform.icons",
       "intellij.platform.resources",
       "intellij.platform.resources.en",
-      "intellij.platform.colorSchemes",
+
+      "intellij.platform.sqlite",
     ), productLayout, layout)
 
     jar("stats.jar", listOf(

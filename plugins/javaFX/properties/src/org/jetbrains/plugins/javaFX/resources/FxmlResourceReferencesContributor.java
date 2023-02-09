@@ -12,9 +12,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import static com.intellij.patterns.PlatformPatterns.virtualFile;
 import static com.intellij.patterns.StandardPatterns.string;
 
-/**
- * @author Pavel.Dolgov
- */
 public class FxmlResourceReferencesContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {

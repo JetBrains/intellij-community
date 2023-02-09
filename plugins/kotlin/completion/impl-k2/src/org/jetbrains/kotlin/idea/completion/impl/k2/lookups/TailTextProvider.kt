@@ -4,6 +4,9 @@ package org.jetbrains.kotlin.idea.completion.lookups
 
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtTypeParametersRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
@@ -39,10 +42,20 @@ internal object TailTextProvider {
         }
     }
 
-    fun KtAnalysisSession.getTailText(symbol: KtClassLikeSymbol): String = buildString {
+    fun KtAnalysisSession.getTailText(
+        symbol: KtClassLikeSymbol,
+        usePackageFqName: Boolean = false,
+        addTypeParameters: Boolean = true
+    ): String = buildString {
         symbol.classIdIfNonLocal?.let { classId ->
+            if (addTypeParameters && symbol.typeParameters.isNotEmpty()) {
+                append(symbol.typeParameters.joinToString(", ", "<", ">") { it.render(typeParameterRenderer) })
+            }
+
+            val fqName = if (usePackageFqName) classId.packageFqName else classId.asSingleFqName().parent()
+
             append(" (")
-            append(classId.asSingleFqName().parent().asStringForTailText())
+            append(fqName.asStringForTailText())
             append(")")
         }
     }
@@ -58,5 +71,10 @@ internal object TailTextProvider {
     fun KtAnalysisSession.insertLambdaBraces(symbol: KtFunctionalType): Boolean {
         val singleParam = symbol.parameterTypes.singleOrNull()
         return singleParam != null && singleParam is KtFunctionalType
+    }
+
+    private val typeParameterRenderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+        modifiersRenderer = modifiersRenderer.with { modifierFilter = KtRendererModifierFilter.NONE }
+        typeParametersRenderer = KtTypeParametersRenderer.WIHTOUT_BOUNDS
     }
 }

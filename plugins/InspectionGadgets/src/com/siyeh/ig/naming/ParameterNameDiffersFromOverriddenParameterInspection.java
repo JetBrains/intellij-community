@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -30,7 +30,8 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseInspection {
 
@@ -44,13 +45,12 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
   public boolean m_ignoreOverridesOfLibraryMethods = false;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.name.differs.from.overridden.parameter.ignore.character.option"),
-                             "m_ignoreSingleCharacterNames");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.name.differs.from.overridden.parameter.ignore.library.option"),
-                             "m_ignoreOverridesOfLibraryMethods");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreSingleCharacterNames",
+               InspectionGadgetsBundle.message("parameter.name.differs.from.overridden.parameter.ignore.character.option")),
+      checkbox("m_ignoreOverridesOfLibraryMethods",
+               InspectionGadgetsBundle.message("parameter.name.differs.from.overridden.parameter.ignore.library.option")));
   }
 
   @Override
@@ -84,8 +84,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
       if (superMethod == null) {
         return;
       }
-      final PsiParameter[] parameters = parameterList.getParameters();
-      checkParameters(superMethod, parameters);
+      checkParameters(superMethod, parameterList.getParameters());
     }
 
     @Override
@@ -96,59 +95,51 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
         return;
       }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final boolean constructorCall;
-      if (!JavaPsiConstructorUtil.isConstructorCall(expression)) {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true);
-        if (method == null) {
-          return;
-        }
-        final String name = methodExpression.getReferenceName();
-        if (!method.getName().equals(name)) {
-          return;
-        }
-        constructorCall = false;
-      }
-      else {
-        constructorCall = true;
+      final boolean constructorCall = JavaPsiConstructorUtil.isConstructorCall(expression);
+      final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true);
+      if (method == null || !constructorCall && !method.getName().equals(methodExpression.getReferenceName())) {
+        return;
       }
       final PsiMethod targetMethod = expression.resolveMethod();
       if (targetMethod == null) {
         return;
       }
-      if (m_ignoreOverridesOfLibraryMethods && constructorCall) {
-        if (targetMethod instanceof PsiCompiledElement) {
-          return;
-        }
+      final PsiClass containingClass = targetMethod.getContainingClass();
+      final PsiClass aClass = method.getContainingClass();
+      if (containingClass == null || aClass == null || containingClass != aClass && !aClass.isInheritor(containingClass, true)) {
+        return;
+      }
+      if (m_ignoreOverridesOfLibraryMethods && targetMethod instanceof PsiCompiledElement) {
+        return;
       }
       final PsiParameter[] parameters = targetMethod.getParameterList().getParameters();
       final PsiExpression[] arguments = argumentList.getExpressions();
       for (int i = 0, length = Math.min(arguments.length, parameters.length); i < length; i++) {
-        PsiExpression argument = arguments[i];
-        argument = PsiUtil.skipParenthesizedExprDown(argument);
-        if (!(argument instanceof PsiReferenceExpression)) {
+        final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[i]);
+        if (!(argument instanceof PsiReferenceExpression referenceExpression)) {
           continue;
         }
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)argument;
         if (referenceExpression.getQualifierExpression() != null) {
           continue;
         }
         final PsiElement target = referenceExpression.resolve();
-        if (!(target instanceof PsiParameter)) {
+        if (!(target instanceof PsiParameter targetParameter) || !(targetParameter.getDeclarationScope() instanceof PsiMethod)) {
           continue;
         }
-        final String parameterName = parameters[i].getName();
+        final PsiParameter parameter = parameters[i];
+        final String parameterName = parameter.getName();
         if (m_ignoreSingleCharacterNames && parameterName.length() == 1) {
           continue;
         }
-        final PsiParameter targetParameter = (PsiParameter)target;
-        if (!targetParameter.getName().equals(parameterName)) {
-          int type = constructorCall
-                     ? PsiUtil.isJavaToken(methodExpression.getReferenceNameElement(), JavaTokenType.SUPER_KEYWORD)
-                       ? SUPER_CONSTRUCTOR
-                       : OVERLOADED_CONSTRUCTOR
-                     : OVERLOADED_METHOD;
-          registerVariableError(targetParameter, parameterName, type);
+        if (targetParameter.getName().equals(parameterName) || !targetParameter.getType().equals(parameter.getType())) {
+          continue;
         }
+        int type = constructorCall
+                   ? PsiUtil.isJavaToken(methodExpression.getReferenceNameElement(), JavaTokenType.SUPER_KEYWORD)
+                     ? SUPER_CONSTRUCTOR
+                     : OVERLOADED_CONSTRUCTOR
+                   : OVERLOADED_METHOD;
+        registerVariableError(targetParameter, parameterName, type);
       }
     }
 
@@ -163,12 +154,15 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
       final PsiParameter[] superParameters = superParameterList.getParameters();
       for (int i = 0; i < parameters.length; i++) {
         final PsiParameter parameter = parameters[i];
-        final String parameterName = parameter.getName();
-        final String superParameterName = superParameters[i].getName();
-        if (superParameterName.equals(parameterName)) {
+        final PsiParameter superParameter = superParameters[i];
+        final String superParameterName = superParameter.getName();
+        if (superParameterName.equals(parameter.getName())) {
           continue;
         }
         if (m_ignoreSingleCharacterNames && superParameterName.length() == 1) {
+          continue;
+        }
+        if (!parameter.getType().equals(superParameter.getType())) {
           continue;
         }
         registerVariableError(parameter, superParameterName, SUPER_METHOD);

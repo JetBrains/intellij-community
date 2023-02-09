@@ -2,8 +2,8 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.impl.TrustStateListener;
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjectsListener;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -47,6 +47,9 @@ import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.function.Predicate;
+
+import static org.jetbrains.idea.maven.server.DummyMavenServerConnector.isDummy;
 
 public final class MavenServerManager implements Disposable {
   public static final String BUNDLED_MAVEN_2 = "Bundled (Maven 2)";
@@ -76,6 +79,26 @@ public final class MavenServerManager implements Disposable {
     synchronized (myMultimoduleDirToConnectorMap) {
       myMultimoduleDirToConnectorMap.entrySet().removeIf(e -> e.getValue() == connector);
     }
+  }
+
+  public void restartMavenConnectors(Project project, boolean wait, Predicate<MavenServerConnector> condition) {
+    List<MavenServerConnector> connectorsToShutDown = new ArrayList<>();
+    synchronized (myMultimoduleDirToConnectorMap) {
+      getAllConnectors().forEach(it -> {
+        if (project.equals(it.getProject()) && condition.test(it)) {
+          connectorsToShutDown.add(removeConnector(it));
+        }
+      });
+    }
+    MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, SyncBundle.message("maven.sync.restarting"), false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        connectorsToShutDown.forEach(it -> {
+          it.stop(wait);
+        });
+      }
+    });
   }
 
   public static MavenServerManager getInstance() {
@@ -115,12 +138,20 @@ public final class MavenServerManager implements Disposable {
       }
     });
 
-    connection.subscribe(TrustStateListener.TOPIC, new TrustStateListener() {
+    connection.subscribe(TrustedProjectsListener.TOPIC, new TrustedProjectsListener() {
       @Override
       public void onProjectTrusted(@NotNull Project project) {
         MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
         if (manager.isMavenizedProject()) {
-          MavenUtil.restartMavenConnectors(project, true);
+          MavenUtil.restartMavenConnectors(project, true, it -> isDummy(it));
+        }
+      }
+
+      @Override
+      public void onProjectUntrusted(@NotNull Project project) {
+        MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+        if (manager.isMavenizedProject()) {
+          MavenUtil.restartMavenConnectors(project, true, it -> !isDummy(it));
         }
       }
 
@@ -304,7 +335,6 @@ public final class MavenServerManager implements Disposable {
 
     shutdownConnector(myIndexingConnector, wait);
     values.forEach(c -> shutdownConnector(c, wait));
-
   }
 
   public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {

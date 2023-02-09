@@ -22,8 +22,10 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.hover.TableHoverListener
 import com.jetbrains.packagesearch.intellij.plugin.looksLikeGradleVariable
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageOperations
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.get
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -34,9 +36,11 @@ import javax.swing.table.TableCellRenderer
 internal class PackageVersionTableCellRenderer : TableCellRenderer {
 
     private var onlyStable = false
+    private var targetModules: TargetModules = TargetModules.None
 
-    fun updateData(onlyStable: Boolean) {
+    fun updateData(onlyStable: Boolean, targetModules: TargetModules) {
         this.onlyStable = onlyStable
+        this.targetModules = targetModules
     }
 
     override fun getTableCellRendererComponent(
@@ -55,7 +59,7 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
 
         val viewModel = checkNotNull(value as? UiPackageModel<*>)
         val labelText = when (viewModel) {
-            is UiPackageModel.Installed -> versionMessage(viewModel.packageModel, viewModel.packageOperations)
+            is UiPackageModel.Installed -> versionMessage(viewModel)
             is UiPackageModel.SearchResult -> viewModel.selectedVersion.displayName
         }
 
@@ -78,21 +82,22 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
     }
 
     @Nls
-    private fun versionMessage(packageModel: PackageModel.Installed, packageOperations: PackageOperations): String {
-        val installedVersions = packageModel.usageInfo.asSequence()
+    private fun versionMessage(packageModel: UiPackageModel<PackageModel.Installed>): String {
+        val installedVersions = targetModules.modules.asSequence()
+            .flatMap { packageModel.packageModel.usagesByModule[it] ?: emptyList() }
+            .filter { it.scope == packageModel.selectedScope }
             .map { it.declaredVersion }
             .distinct()
             .sorted()
             .joinToString { if (looksLikeGradleVariable(it)) "[${it.displayName}]" else it.displayName }
 
-        require(installedVersions.isNotBlank()) { "An installed package cannot produce an empty installed versions list" }
-
         @Suppress("HardCodedStringLiteral") // Composed of @Nls components
         return buildString {
             append(installedVersions)
 
-            if (packageOperations.canUpgradePackage) {
-                val upgradeVersion = packageOperations.targetVersion ?: return@buildString
+            if (packageModel.packageOperations.hasUpgrade) {
+                val upgradeVersion = packageModel.packageOperations.targetVersion.takeIf { it !is NormalizedPackageVersion.Garbage }
+                    ?: return@buildString
                 append(" → ")
                 append(upgradeVersion.displayName)
             }

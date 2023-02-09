@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.findUsages;
 
@@ -31,6 +31,11 @@ public class KotlinGroupUsagesBySimilarityTestGenerated extends AbstractKotlinGr
     @TestMetadata("chainCalls.kt")
     public void testChainCalls() throws Exception {
         runTest("testData/findUsages/similarity/grouping/chainCalls.kt");
+    }
+
+    @TestMetadata("controlStatements.kt")
+    public void testControlStatements() throws Exception {
+        runTest("testData/findUsages/similarity/grouping/controlStatements.kt");
     }
 
     @TestMetadata("declaration.kt")

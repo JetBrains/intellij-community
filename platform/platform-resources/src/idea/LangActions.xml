@@ -10,9 +10,9 @@
       <!-- A dynamic group filled with executor actions -->
       <group id="RunContextGroupInner">
         <group id="RunContextGroupMore" class="com.intellij.ide.actions.SmartPopupActionGroup">
-          <action id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
+          <group id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
           <separator/>
-          <action id="CreateNewRunConfiguration" class="com.intellij.execution.actions.CreateNewConfigurationAction"/>
+          <group id="CreateNewRunConfiguration" class="com.intellij.execution.actions.CreateNewConfigurationAction"/>
         </group>
       </group>
       <separator/>
@@ -266,6 +266,7 @@
                 class="com.intellij.ide.bookmark.actions.GroupCreateAction"/>
         <reference ref="BookmarksView.Rename"/>
         <separator/>
+        <reference ref="SelectInProjectView"/>
         <reference ref="ExpandAll"/>
         <reference ref="CollapseAll"/>
         <action id="BookmarksView.ShowPreview" icon="AllIcons.Actions.PreviewDetails"
@@ -418,6 +419,10 @@
 
     <action id="ViewImportPopups" class="com.intellij.openapi.editor.actions.ToggleShowImportPopupsAction">
       <add-to-group group-id="EditorToggleActions" anchor="after" relative-to-action="EditorToggleShowIndentLines"/>
+    </action>
+
+    <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction">
+      <add-to-group group-id="UIToggleActions" anchor="after" relative-to-action="ViewStatusBarWidgetsGroup"/>
     </action>
 
 
@@ -609,6 +614,10 @@
       <action id="ToggleCompletionHintsAction" class="com.intellij.codeInsight.hints.ToggleCompletionHintsAction"/>
     </group>
 
+    <group id="InlayMenu"  popup="true" >
+      <action id="DisableDeclarativeInlayAction" class="com.intellij.codeInsight.hints.declarative.impl.DisableDeclarativeInlayAction" />
+    </group>
+
     <action id="ToggleInlayHintsGloballyAction" class="com.intellij.codeInsight.hints.ToggleInlayHintsGloballyAction"/>
 
     <!-- Refactor -->
@@ -655,7 +664,7 @@
       <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
       <action id="ManageTargets" class="com.intellij.execution.target.ManageTargetEnvironmentsAction"/>
       <separator/>
-      <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="AllIcons.Actions.Suspend"/>
+      <reference id="Stop"/>
       <action id="StopBackgroundProcesses" class="com.intellij.execution.actions.StopBackgroundProcessesAction"/>
       <action id="ShowLiveRunConfigurations" class="com.intellij.execution.actions.ShowRunningListAction"/>
 
@@ -682,13 +691,13 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-
     <group id="NewGroup" popup="true" searchable="false">
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
       <reference id="NewScratchFile"/>
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
       <group class="com.intellij.ide.fileTemplates.actions.FileTemplateSeparator" id="FileTemplateSeparatorGroup"/>
-      <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
+      <group id="NewWebDevelopment"/>
+      <group id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
 
     <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup" popup="true" searchable="false"/>
@@ -1078,6 +1087,7 @@
         <action id="StepOut" class="com.intellij.xdebugger.impl.actions.StepOutAction" icon="AllIcons.Actions.StepOut"/>
         <action id="RunToCursor" class="com.intellij.xdebugger.impl.actions.RunToCursorAction" icon="AllIcons.Actions.RunToCursor"/>
         <action id="ForceRunToCursor" class="com.intellij.xdebugger.impl.actions.ForceRunToCursorAction" icon="PlatformDebuggerImplIcons.Actions.Force_run_to_cursor"/>
+        <action id="ResetFrame" class="com.intellij.xdebugger.impl.actions.ResetFrameAction" icon="AllIcons.Actions.InlineDropFrame"/>
         <action id="Pause" class="com.intellij.xdebugger.impl.actions.PauseAction" icon="AllIcons.Actions.Pause"/>
         <action id="Resume" class="com.intellij.xdebugger.impl.actions.ResumeAction" icon="AllIcons.Actions.Resume"/>
         <separator/>
@@ -1191,6 +1201,7 @@
       <reference ref="ShowExecutionPoint"/>
       <separator/>
       <reference ref="EvaluateExpression" />
+      <reference ref="ResetFrame" />
     </group>
 
     <group id="XDebugger.ToolWindow.LeftToolbar">
@@ -1226,6 +1237,7 @@
     </group>
 
     <group id="XDebugger.Frames.Tree.Popup">
+      <reference ref="ResetFrame" />
       <action id="Debugger.CopyStack" class="com.intellij.xdebugger.impl.frame.XDebuggerFramesList$CopyStackAction" icon="AllIcons.Actions.Copy"/>
     </group>
 
@@ -1425,9 +1437,9 @@
       <reference ref="FindUsages"/>
       <reference ref="TreeNodeExclusion"/>
       <separator/>
-      <action id="QuickFixes" class="com.intellij.codeInspection.ui.actions.QuickFixesViewActionGroup"/>
+      <group id="QuickFixes" class="com.intellij.codeInspection.ui.actions.QuickFixesViewActionGroup"/>
       <separator/>
-      <action id="SuppressFixes" class="com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper"/>
+      <group id="SuppressFixes" class="com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper"/>
       <separator/>
       <action id="EditInspectionSettings" class="com.intellij.codeInspection.ui.actions.EditSettingsAction"/>
       <action id="DisableInspection" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$DisableInspection"/>
@@ -1625,24 +1637,34 @@
         <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage"/>
       </group>
     </group>
-    
-    <group id="RunToolbarWidgetCustomizableActionGroup">
-      <add-to-group group-id="MainToolbarRight" anchor="first"/>
-      <action class="com.intellij.execution.ui.RunWithDropDownAction" id="RunWithDropDown"/>
-      <action class="com.intellij.execution.ui.RedesignedRunToolbarWrapper" id="RedesignedRunToolbarWrapper"/>
-      <action class="com.intellij.execution.ui.StopWithDropDownAction" id="StopWithDropDown"/>
-    </group>
 
-    <group id="RunToolbarMainActionGroup">
+
+    <action id="NewUiRunWidget" class="com.intellij.execution.ui.RedesignedRunToolbarWrapper">
+      <add-to-group group-id="MainToolbarRight" anchor="first"/>
+    </action>
+
+    <action id="StopWithDropDown" class="com.intellij.execution.ui.StopWithDropDownAction">
+      <add-to-group group-id="MainToolbarRight" relative-to-action="NewUiRunWidget" anchor="after"/>
+    </action>
+
+    <group id="ContrastRunToolbarMainActionGroup">
       <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
       <separator/>
       <group id="RunToolbarTopLevelExecutorActionGroup" class="com.intellij.execution.ui.RunToolbarTopLevelExecutorActionGroup" />
       <action id="MoreRunToolbarActions" class="com.intellij.execution.ui.MoreRunToolbarActions" />
     </group>
 
+    <group id="RunToolbarMainActionGroup">
+      <reference ref="RedesignedRunConfigurationSelector"/>
+      <reference ref="RunToolbarTopLevelExecutorActionGroup"/>
+      <reference ref="Stop"/>
+      <reference ref="MoreRunToolbarActions"/>
+      <action id="InactiveStopActionPlaceholder" class="com.intellij.execution.ui.InactiveStopActionPlaceholder" />
+    </group>
+
     <group id="ExecutionTargetsToolbarGroup" searchable="false" popup="false">
       <reference id="ExecutionTargets"/>
-      <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="RunToolbarWidgetCustomizableActionGroup"/>
+      <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
     </group>
 
     <action id="FileChooser.LightEditGotoOpenedFile"
@@ -1675,7 +1697,6 @@
       <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
       <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
       <action id="DumpConfigurationTypes" internal="true" class="com.intellij.internal.DumpConfigurationTypesAction"/>
-      <action id="DumpDirectoryIndex" internal="true" class="com.intellij.internal.DumpDirectoryInfoAction"/>
       <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"/>
       <action id="DumpScreenConfiguration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
       <action id="DumpIElementTypesAction" internal="true" class="com.intellij.internal.DumpIElementTypesAction"/>

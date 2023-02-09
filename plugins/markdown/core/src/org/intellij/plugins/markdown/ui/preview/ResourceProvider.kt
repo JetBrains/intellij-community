@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.ui.preview
 
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
+import java.nio.file.Path
 import kotlin.reflect.KClass
 
 interface ResourceProvider {
@@ -53,7 +54,7 @@ interface ResourceProvider {
     /**
      * Shared instance of [DefaultResourceProvider].
      */
-    val default: ResourceProvider = DefaultResourceProvider()
+    internal val default: ResourceProvider = DefaultResourceProvider()
 
     fun aggregating(vararg providers: ResourceProvider): ResourceProvider {
       return AggregatingResourceProvider(providers)
@@ -120,6 +121,11 @@ interface ResourceProvider {
       }
       val content = file.inputStream().use { it.readBytes() }
       return Resource(content, contentType)
+    }
+
+    @JvmStatic
+    fun loadExternalResource(path: Path, contentType: String? = null): Resource? {
+      return loadExternalResource(path.toFile())
     }
 
     @ApiStatus.Experimental

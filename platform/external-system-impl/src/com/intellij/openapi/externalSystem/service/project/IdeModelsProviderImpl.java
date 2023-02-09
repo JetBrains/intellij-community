@@ -235,8 +235,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
 
     Map<LibraryOrderEntry, LibraryDependencyData> result = new HashMap<>();
     for (OrderEntry entry : getOrderEntries(ownerIdeModule)) {
-      if (entry instanceof LibraryOrderEntry) {
-        LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+      if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
         if (!libraryOrderEntry.isModuleLevel()) continue;
         final Set<String> entryPaths = ContainerUtil.map2Set(((LibraryOrderEntry)entry).getRootUrls(OrderRootType.CLASSES),
                                                              s -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(s)));
@@ -298,7 +297,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     }
 
     Iterable<String> generate() {
-      List<String> names;
+      List<String> names = new ArrayList<>();
       String prefix = myModule.getGroup();
       File modulePath = new File(myModule.getLinkedExternalProjectPath());
       if (modulePath.isFile()) {
@@ -306,10 +305,11 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
       }
 
       if (prefix == null || startsWith(myModule.getInternalName(), prefix)) {
-        names = ContainerUtil.newArrayList(myModule.getInternalName());
+        names.add(myModule.getInternalName());
       }
       else {
-        names = ContainerUtil.newArrayList(myModule.getInternalName(), prefix + myDelimiter + myModule.getInternalName());
+        names.add(myModule.getInternalName());
+        names.add(prefix + myDelimiter + myModule.getInternalName());
       }
 
       String name = names.get(0);

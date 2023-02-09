@@ -196,8 +196,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
         myRequestedState = state;
         X11UiUtil.toggleFullScreenMode(frame);
 
-        if (frame.getJMenuBar() instanceof IdeMenuBar) {
-          IdeMenuBar frameMenuBar = (IdeMenuBar)frame.getJMenuBar();
+        if (frame.getJMenuBar() instanceof IdeMenuBar frameMenuBar) {
           frameMenuBar.onToggleFullScreen(state);
         }
       }

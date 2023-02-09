@@ -65,15 +65,16 @@ public final class FileNameCache {
   }
 
   @NotNull
-  private static IntObjectLRUMap.MapEntry<CharSequence> cacheData(CharSequence name, int id, int stripe) {
+  private static IntObjectLRUMap.MapEntry<CharSequence> cacheData(CharSequence name, int nameId, int stripe) {
     if (name == null) {
-      FSRecords.handleError(new RuntimeException("VFS name enumerator corrupted"));
+      throw FSRecords.handleError(
+        new RuntimeException("VFS name enumerator corrupted: nameId(=" + nameId + ") is not found in enumerator (=null)"));
     }
 
     IntSLRUCache<CharSequence> cache = ourNameCache[stripe];
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (cache) {
-      return cache.cacheEntry(id, name);
+      return cache.cacheEntry(nameId, name);
     }
   }
 

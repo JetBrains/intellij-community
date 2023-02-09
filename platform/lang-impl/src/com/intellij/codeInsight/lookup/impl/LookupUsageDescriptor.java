@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +49,11 @@ public interface LookupUsageDescriptor {
 
       @Override
       public LookupUsageTracker.FinishType getFinishType() {
+        return null;
+      }
+
+      @Override
+      public @Nullable Language getLanguage() {
         return null;
       }
     };

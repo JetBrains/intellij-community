@@ -47,8 +47,12 @@ public class RedundantCompareToJavaTimeInspection extends AbstractBaseJavaLocalI
         if (qualifierExpression == null) {
           return;
         }
-        final PsiType argumentType = call.getArgumentList().getExpressionTypes()[0];
-        if (!argumentType.equals(qualifierExpression.getType())) {
+        PsiType[] types = call.getArgumentList().getExpressionTypes();
+        if (types.length != 1) {
+          return;
+        }
+        final PsiType argumentType = types[0];
+        if (argumentType == null || !argumentType.equals(qualifierExpression.getType())) {
           return;
         }
 

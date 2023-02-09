@@ -4,14 +4,14 @@ package com.intellij.codeInspection.deprecation;
 import com.intellij.codeInspection.DeprecationUtil;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.uast.UastVisitorAdapter;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class MarkedForRemovalInspection extends DeprecationInspectionBase {
 
@@ -44,9 +44,7 @@ public class MarkedForRemovalInspection extends DeprecationInspectionBase {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    addSameOutermostClassCheckBox(panel);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(getSameOutermostClassCheckBox());
   }
 }

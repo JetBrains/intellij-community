@@ -2,5 +2,6 @@
   "type": "JAVA_METHOD",
   "classId": "testing/JavaClass",
   "methodSignature": "String foo()",
-  "newName": "bar"
+  "newName": "bar",
+  "enabledInK2": true
 }

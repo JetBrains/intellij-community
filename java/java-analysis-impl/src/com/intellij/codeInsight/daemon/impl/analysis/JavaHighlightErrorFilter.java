@@ -1,11 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +22,25 @@ public class JavaHighlightErrorFilter extends HighlightErrorFilter {
         // (see HighlightUtil.checkNotAStatement); it's more visible and provides 
         // more useful fixes.
         return false;
+      }
+      else {
+        // reporting missing semicolons after an unclosed string literal is not useful.
+        PsiElement prevLeaf = PsiTreeUtil.prevCodeLeaf(element);
+        if (prevLeaf instanceof PsiJavaToken token) {
+          IElementType type = token.getTokenType();
+          if (type == JavaTokenType.STRING_LITERAL) {
+            String text = token.getText();
+            if (text.length() == 1 || !StringUtil.endsWithChar(text, '"')) {
+              return false;
+            }
+          }
+          else if (type == JavaTokenType.CHARACTER_LITERAL) {
+            String text = token.getText();
+            if (text.length() == 1 || !StringUtil.endsWithChar(text, '\'')) {
+              return false;
+            }
+          }
+        }
       }
     }
     return true;

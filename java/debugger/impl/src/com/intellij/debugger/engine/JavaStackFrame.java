@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -305,7 +305,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
                   ? EMPTY_USED_VARS
                   : findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition));
         }
-          // add locals
+        // add locals
         if (myAutoWatchMode) {
           List<LocalVariableProxyImpl> localVariables = usedVars.first.stream()
             .map(var -> visibleVariables.get(var))
@@ -353,7 +353,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
   protected void buildLocalVariables(final EvaluationContextImpl evaluationContext, XValueChildrenList children, List<LocalVariableProxyImpl> localVariables) {
     for (LocalVariableProxyImpl variable : localVariables) {
-        children.add(JavaValue.create(myNodeManager.getLocalVariableDescriptor(null, variable), evaluationContext, myNodeManager));
+      children.add(JavaValue.create(myNodeManager.getLocalVariableDescriptor(null, variable), evaluationContext, myNodeManager));
     }
   }
 
@@ -480,46 +480,43 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
     @Override
     public void visitReferenceExpression(final @NotNull PsiReferenceExpression reference) {
-      if (myLineRange.intersects(reference.getTextRange())) {
-        final PsiElement psiElement = reference.resolve();
-        if (psiElement instanceof PsiVariable) {
-          final PsiVariable var = (PsiVariable)psiElement;
-          if (var instanceof PsiField) {
-            if (myCollectExpressions && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(reference, myVisibleLocals)) {
-              /*
-              if (var instanceof PsiEnumConstant && reference.getQualifier() == null) {
-                final PsiClass enumClass = ((PsiEnumConstant)var).getContainingClass();
-                if (enumClass != null) {
-                  final PsiExpression expression = JavaPsiFacade.getInstance(var.getProject()).getParserFacade().createExpressionFromText(enumClass.getName() + "." + var.getName(), var);
-                  final PsiReference ref = expression.getReference();
-                  if (ref != null) {
-                    ref.bindToElement(var);
-                    myExpressions.add(new TextWithImportsImpl(expression));
-                  }
+      if (myLineRange.intersects(reference.getTextRange()) && reference.resolve() instanceof PsiVariable var) {
+        if (var instanceof PsiField) {
+          if (myCollectExpressions && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(reference, myVisibleLocals)) {
+            /*
+            if (var instanceof PsiEnumConstant && reference.getQualifier() == null) {
+              final PsiClass enumClass = ((PsiEnumConstant)var).getContainingClass();
+              if (enumClass != null) {
+                final PsiExpression expression = JavaPsiFacade.getInstance(var.getProject()).getParserFacade().createExpressionFromText(enumClass.getName() + "." + var.getName(), var);
+                final PsiReference ref = expression.getReference();
+                if (ref != null) {
+                  ref.bindToElement(var);
+                  myExpressions.add(new TextWithImportsImpl(expression));
                 }
               }
-              else {
-                myExpressions.add(new TextWithImportsImpl(reference));
-              }
-              */
-              final PsiModifierList modifierList = var.getModifierList();
-              boolean isConstant = (var instanceof PsiEnumConstant) ||
-                                   (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC) && modifierList.hasModifierProperty(PsiModifier.FINAL));
-              if (!isConstant) {
-                myExpressions.add(new TextWithImportsImpl(reference));
-              }
-            }
-          }
-          else {
-            if (myVisibleLocals.contains(var.getName())) {
-              myVars.add(var.getName());
             }
             else {
-              // fix for variables used in inner classes
-              if (!Comparing.equal(PsiTreeUtil.getParentOfType(reference, PsiClass.class),
-                                   PsiTreeUtil.getParentOfType(var, PsiClass.class))) {
-                myExpressions.add(new TextWithImportsImpl(reference));
-              }
+              myExpressions.add(new TextWithImportsImpl(reference));
+            }
+            */
+            final PsiModifierList modifierList = var.getModifierList();
+            boolean isConstant = (var instanceof PsiEnumConstant) ||
+                                 (modifierList != null && 
+                                  modifierList.hasModifierProperty(PsiModifier.STATIC) && modifierList.hasModifierProperty(PsiModifier.FINAL));
+            if (!isConstant) {
+              myExpressions.add(new TextWithImportsImpl(reference));
+            }
+          }
+        }
+        else {
+          if (myVisibleLocals.contains(var.getName())) {
+            myVars.add(var.getName());
+          }
+          else {
+            // fix for variables used in inner classes
+            if (!Comparing.equal(PsiTreeUtil.getParentOfType(reference, PsiClass.class),
+                                 PsiTreeUtil.getParentOfType(var, PsiClass.class))) {
+              myExpressions.add(new TextWithImportsImpl(reference));
             }
           }
         }
@@ -572,7 +569,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     TextRange alreadyChecked = null;
-    for (PsiElement elem = file.findElementAt(_start); elem != null && elem.getTextOffset() <= end && (alreadyChecked == null || !alreadyChecked .contains(elem.getTextRange())); elem = elem.getNextSibling()) {
+    for (PsiElement elem = file.findElementAt(_start); elem != null && elem.getTextOffset() <= end && (alreadyChecked == null || !alreadyChecked.contains(elem.getTextRange())); elem = elem.getNextSibling()) {
       for (PsiElement _elem = elem; _elem.getTextOffset() >= _start; _elem = _elem.getParent()) {
         alreadyChecked = _elem.getTextRange();
 
@@ -682,7 +679,8 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   private static TextRange adjustRange(final PsiElement element, final TextRange originalRange) {
     final Ref<TextRange> rangeRef = new Ref<>(originalRange);
     element.accept(new JavaRecursiveElementVisitor() {
-      @Override public void visitExpressionStatement(final @NotNull PsiExpressionStatement statement) {
+      @Override
+      public void visitExpressionStatement(final @NotNull PsiExpressionStatement statement) {
         final TextRange stRange = statement.getTextRange();
         if (originalRange.intersects(stRange)) {
           final TextRange currentRange = rangeRef.get();

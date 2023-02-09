@@ -4,14 +4,16 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.diagnostic.telemetry.use
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import kotlinx.collections.immutable.persistentListOf
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
-import java.nio.file.*
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFilePermission.*
@@ -121,19 +123,20 @@ class BundledRuntimeImpl(
   /**
    * When changing this list of patterns, also change patch_bin_file in launcher.sh (for remote dev)
    */
-  override fun executableFilesPatterns(os: OsFamily): List<String> {
-    val pathPrefix = if (os == OsFamily.MACOS) "jbr/Contents/Home/" else "jbr/"
+  override fun executableFilesPatterns(os: OsFamily, distribution: JetBrainsRuntimeDistribution): List<String> {
+    val pathPrefix = if (os == OsFamily.MACOS) "jbr/Contents/Home" else "jbr"
     @Suppress("SpellCheckingInspection")
-    var executableFilesPatterns = persistentListOf(
-      pathPrefix + "bin/*",
-      pathPrefix + "lib/jexec",
-      pathPrefix + "lib/jspawnhelper",
-      pathPrefix + "lib/chrome-sandbox"
-    )
-    if (os == OsFamily.LINUX) {
-      executableFilesPatterns = executableFilesPatterns.add("jbr/lib/jcef_helper")
+    return buildList {
+      add("$pathPrefix/bin/*")
+      if (os == OsFamily.LINUX) {
+        add("$pathPrefix/lib/jexec")
+        add("$pathPrefix/lib/jspawnhelper")
+        if (distribution == JetBrainsRuntimeDistribution.JCEF) {
+          add("$pathPrefix/lib/chrome-sandbox")
+          add("$pathPrefix/lib/jcef_helper")
+        }
+      }
     }
-    return executableFilesPatterns
   }
 }
 
@@ -165,7 +168,7 @@ private fun unTar(archive: Path, destination: Path) {
     throw IllegalStateException("Unable to detect root dir of $archive")
   }
 
-  ArchiveUtils.unTar(archive, destination, if (rootDir.startsWith("jbr")) rootDir else null)
+  unTar(archive, destination, if (rootDir.startsWith("jbr")) rootDir else null)
 }
 
 private fun createTarGzInputStream(archive: Path): TarArchiveInputStream {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.psi.*;
@@ -24,7 +24,7 @@ import java.util.List;
 public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
   @Override
   public void createUsageInfoForParameter(@NotNull PsiReference reference,
-                                          @NotNull List<UsageInfo> usages,
+                                          @NotNull List<? super UsageInfo> usages,
                                           @NotNull PsiNamedElement parameter,
                                           int paramIdx, boolean isVararg) {
     final PsiElement element = reference.getElement();
@@ -123,7 +123,7 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
   }
 
   @Override
-  public void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement[] elements2Delete, @NotNull List<UsageInfo> result) {
+  public void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement @NotNull [] elements2Delete, @NotNull List<? super UsageInfo> result) {
     if (overriddenFunction instanceof PsiMethod &&
       JavaSafeDeleteProcessor.canBePrivate((PsiMethod)overriddenFunction, ReferencesSearch.search(overriddenFunction).findAll(), Collections.emptyList(), elements2Delete)) {
       result.add(new SafeDeletePrivatizeMethod((PsiMethod)overriddenFunction, (PsiMethod)overriddenFunction));
@@ -139,8 +139,7 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
     PsiElement parent = element.getParent();
     if (parent instanceof PsiReferenceList && refElement instanceof PsiClass psiClass) {
       final PsiElement pparent = parent.getParent();
-      if (pparent instanceof PsiClass inheritor && element instanceof PsiJavaCodeReferenceElement) {
-        PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement)element;
+      if (pparent instanceof PsiClass inheritor && element instanceof PsiJavaCodeReferenceElement classRef) {
         if (parent.equals(inheritor.getPermitsList())) {
           return new SafeDeletePermitsClassUsageInfo(classRef, psiClass, inheritor, true);
         }

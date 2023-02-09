@@ -24,9 +24,9 @@ import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.*;
 public class DarculaButtonPainter implements Border, UIResource {
   private static final int myOffset = 4;
 
-  private static final Color GOT_IT_BORDER_COLOR_START = JBColor.namedColor("GotItTooltip.startBorderColor",
+  private static final Color GOT_IT_BORDER_COLOR_START = JBColor.namedColor("GotItTooltip.Button.startBorderColor",
                                                                            JBUI.CurrentTheme.Button.buttonOutlineColorStart(false));
-  private static final Color GOT_IT_BORDER_COLOR_END = JBColor.namedColor("GotItTooltip.endBorderColor",
+  private static final Color GOT_IT_BORDER_COLOR_END = JBColor.namedColor("GotItTooltip.Button.endBorderColor",
                                                                           JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false));
 
 
@@ -42,7 +42,7 @@ public class DarculaButtonPainter implements Border, UIResource {
       boolean isSmallComboButton = isSmallVariant(c);
       int diam = HELP_BUTTON_DIAMETER.get();
       float lw = LW.getFloat();
-      float bw = isSmallComboButton || isGotItButton(c) ? 0 : BW.getFloat();
+      float bw = isSmallComboButton ? 0 : BW.getFloat();
       float arc = isTag(c) ? height - bw * 2 - lw * 2: BUTTON_ARC.getFloat();
 
       Rectangle r = new Rectangle(x, y, width, height);
@@ -87,7 +87,9 @@ public class DarculaButtonPainter implements Border, UIResource {
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         border.append(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc), false);
 
-        arc = arc > lw ? arc - lw : 0.0f;
+        if (!isGotItButton(c)) {
+          arc = arc > lw ? arc - lw : 0.0f;
+        }
         border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc, arc), false);
 
         g2.fill(border);

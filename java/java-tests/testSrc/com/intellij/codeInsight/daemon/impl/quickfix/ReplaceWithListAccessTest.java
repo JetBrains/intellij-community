@@ -3,9 +3,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 
-/**
- * @author Danila Ponomarenko
- */
 public class ReplaceWithListAccessTest extends LightQuickFixParameterizedTestCase {
 
   @Override

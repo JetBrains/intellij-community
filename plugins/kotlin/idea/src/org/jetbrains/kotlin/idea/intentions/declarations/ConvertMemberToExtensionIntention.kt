@@ -19,6 +19,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addIfNotNull
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 private val LOG = Logger.getInstance(ConvertMemberToExtensionIntention::class.java)
 
@@ -311,7 +313,8 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
     }
 
     private fun newTypeParameterList(member: KtCallableDeclaration): KtTypeParameterList? {
-        val classElement = member.parent.parent as KtClass
+        val classElement = member.parents.match(KtClassBody::class, last = KtClass::class)
+            ?: error("Can't typeMatch ${member.parent.parent}")
         val classParams = classElement.typeParameters
         if (classParams.isEmpty()) return null
         val allTypeParameters = classParams + member.typeParameters

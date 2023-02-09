@@ -49,8 +49,8 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
     }
 
     return when {
-      Collection::class.java.isAssignableFrom(aClass) -> {
-        CollectionBinding(type as ParameterizedType, this)
+      Collection::class.java.isAssignableFrom(aClass) && type is ParameterizedType -> {
+        CollectionBinding(type, this)
       }
       Map::class.java.isAssignableFrom(aClass) -> {
         if (Int2IntMap::class.java.isAssignableFrom(aClass)) {

@@ -153,7 +153,7 @@ class ModuleRootsInProjectFileIndexTest {
 
     PsiTestUtil.addSourceRoot(module, srcDir)
     assertInContentSource(file)
-    DirectoryIndexTestCase.assertIteratedContent(module, listOf(srcDir, file), listOf(excludedDir))
+    assertIteratedContent(module, listOf(srcDir, file), listOf(excludedDir))
 
     PsiTestUtil.removeSourceRoot(module, srcDir)
     assertExcludedFromModule(file)
@@ -189,12 +189,12 @@ class ModuleRootsInProjectFileIndexTest {
     PsiTestUtil.addSourceRoot(module, contentSourceDir)
     fileIndex.assertInModule(file, module, contentSourceDir, IN_CONTENT or IN_SOURCE)
     assertExcludedFromModule(excludedFile)
-    DirectoryIndexTestCase.assertIteratedContent(module, listOf(file, contentSourceDir), listOf(excludedDir, excludedFile))
+    assertIteratedContent(module, listOf(file, contentSourceDir), listOf(excludedDir, excludedFile))
 
     PsiTestUtil.removeSourceRoot(module, contentSourceDir)
     PsiTestUtil.removeContentEntry(module, contentSourceDir)
     assertExcludedFromModule(file)
-    DirectoryIndexTestCase.assertIteratedContent(module, emptyList(), listOf(file, contentSourceDir, excludedDir, excludedFile))
+    assertIteratedContent(module, emptyList(), listOf(file, contentSourceDir, excludedDir, excludedFile))
   }
 
   @Test
@@ -208,15 +208,15 @@ class ModuleRootsInProjectFileIndexTest {
 
     PsiTestUtil.addSourceRoot(module, excludedSourceDir)
     assertInContentSource(file)
-    DirectoryIndexTestCase.assertIteratedContent(module, listOf(file, excludedSourceDir), listOf(excludedDir))
+    assertIteratedContent(module, listOf(file, excludedSourceDir), listOf(excludedDir))
 
     PsiTestUtil.addExcludedRoot(module, excludedSourceDir)
     assertExcludedFromModule(file)
-    DirectoryIndexTestCase.assertIteratedContent(module, emptyList(), listOf(file, excludedSourceDir, excludedDir))
+    assertIteratedContent(module, emptyList(), listOf(file, excludedSourceDir, excludedDir))
 
     PsiTestUtil.removeExcludedRoot(module, excludedSourceDir)
     assertInContentSource(file)
-    DirectoryIndexTestCase.assertIteratedContent(module, listOf(file, excludedSourceDir), listOf(excludedDir))
+    assertIteratedContent(module, listOf(file, excludedSourceDir), listOf(excludedDir))
   }
 
   @Test
@@ -252,7 +252,7 @@ class ModuleRootsInProjectFileIndexTest {
     assertInModule(moduleDir)
     assertExcludedFromModule(srcDir)
     assertExcludedFromModule(file)
-    DirectoryIndexTestCase.assertIteratedContent(module, listOf(moduleDir), listOf(file, srcDir, excludedDir))
+    assertIteratedContent(module, listOf(moduleDir), listOf(file, srcDir, excludedDir))
   }
 
   @Test
@@ -298,11 +298,11 @@ class ModuleRootsInProjectFileIndexTest {
 
     PsiTestUtil.addExcludedRoot(module, file)
     assertExcludedFromModule(file)
-    DirectoryIndexTestCase.assertIteratedContent(module, listOf(moduleDir), listOf(file))
+    assertIteratedContent(module, listOf(moduleDir), listOf(file))
 
     PsiTestUtil.removeExcludedRoot(module, file)
     assertInModule(file)
-    DirectoryIndexTestCase.assertIteratedContent(module, listOf(moduleDir, file), emptyList())
+    assertIteratedContent(module, listOf(moduleDir, file), emptyList())
   }
 
   @Test
@@ -313,11 +313,11 @@ class ModuleRootsInProjectFileIndexTest {
 
     PsiTestUtil.addExcludedRoot(module, file)
     fileIndex.assertInModule(file, module, file, EXCLUDED)
-    DirectoryIndexTestCase.assertIteratedContent(module, emptyList(), listOf(file))
+    assertIteratedContent(module, emptyList(), listOf(file))
 
     PsiTestUtil.removeExcludedRoot(module, file)
     fileIndex.assertInModule(file, module, file)
-    DirectoryIndexTestCase.assertIteratedContent(module, listOf(file), emptyList())
+    assertIteratedContent(module, listOf(file), emptyList())
   }
 
   @Test

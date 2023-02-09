@@ -8,7 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.java.ide.resources" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.ide.customization" scope="TEST" />
     <orderEntry type="module-library" exported="" scope="RUNTIME">
       <library name="tips-idea-ce" type="repository">
         <properties maven-id="com.jetbrains.intellij.documentation:tips-intellij-idea-community:223.48" />

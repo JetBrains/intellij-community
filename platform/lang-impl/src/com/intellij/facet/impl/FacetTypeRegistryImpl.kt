@@ -25,7 +25,7 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
   private val myTypeRegistrationLock = Object()
 
   @Synchronized
-  override fun registerFacetType(facetType: FacetType<*, *>) {
+  private fun registerFacetType(facetType: FacetType<*, *>) {
     val typeId = facetType.id
     val id = facetType.stringId
     LOG.assertTrue(!id.contains("/"), "Facet type id '$id' contains illegal character '/'")

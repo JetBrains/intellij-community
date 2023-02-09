@@ -67,6 +67,34 @@ class EqualsWithItself {
     c.<warning descr="'compare()' called on itself">compare</warning>(ss, ss);
   }
 
+  void test(String arg) {
+    org.junit.jupiter.api.Assertions.<warning descr="'assertEquals()' called on itself">assertEquals</warning>(arg, arg);
+    org.junit.jupiter.api.Assertions.<warning descr="'assertNotEquals()' called on itself">assertNotEquals</warning>(arg, arg);
+    org.junit.Assert.<warning descr="'assertSame()' called on itself">assertSame</warning>(arg, arg);
+    org.assertj.core.api.Assertions.assertThat(arg).<warning descr="'isEqualTo()' called on itself">isEqualTo</warning>(arg);
+    org.assertj.core.api.Assertions.assertThat(arg).anotherTest(arg).<warning descr="'isEqualTo()' called on itself">isEqualTo</warning>(arg);
+    Object o1 = new Object();
+    Object o2 = new Object();
+    org.junit.Assert.assertSame(o1, o2);
+
+    UpperComplexObject complexObject1 = new UpperComplexObject();
+    UpperComplexObject complexObject2 = new UpperComplexObject();
+
+    org.junit.Assert.<warning descr="'assertSame()' called on itself">assertSame</warning>(complexObject1.a1.i, complexObject1.a1.i);
+    org.junit.Assert.assertSame(complexObject1.a2.i, complexObject1.a1.i);
+    org.junit.Assert.assertSame(complexObject2.a1.i, complexObject1.a1.i);
+    org.assertj.core.api.Assertions.<error descr="Cannot resolve method 'assertArrayEquals' in 'Assertions'">assertArrayEquals</error>(new int[]{1,2}, new int[]{1,2});
+  }
+
+  private static class UpperComplexObject{
+    private ComplexObject a1 = new ComplexObject();
+    private ComplexObject a2 = new ComplexObject();
+  }
+
+  private static class ComplexObject{
+    private int i;
+  }
+
   static class Outer {
     class Inner extends Outer {
       void test() {

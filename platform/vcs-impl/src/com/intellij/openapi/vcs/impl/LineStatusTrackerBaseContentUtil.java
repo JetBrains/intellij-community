@@ -14,7 +14,7 @@ import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LineStatusTrackerBaseContentUtil {
+public final class LineStatusTrackerBaseContentUtil {
   private static final Logger LOG = Logger.getInstance(LineStatusTrackerBaseContentUtil.class);
 
   @Nullable

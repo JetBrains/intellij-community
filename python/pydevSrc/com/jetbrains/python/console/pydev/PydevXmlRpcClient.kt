@@ -100,7 +100,7 @@ constructor(private val process: Process, hostname: String?, port: Int) : IPydev
       progress.checkCanceled()
       val exitValue = process.waitFor(10, TimeUnit.MILLISECONDS)
       if (exitValue) {
-        result[0] = makeError(String.format("Console already exited with value: %s while waiting for an answer.\n", exitValue))
+        result[0] = makeError(String.format("Console already exited with value: %s while waiting for an answer.\n", true))
         break
       }
     }

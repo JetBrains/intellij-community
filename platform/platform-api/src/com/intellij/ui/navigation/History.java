@@ -30,9 +30,7 @@ public final class History {
     if (isNavigatingNow()) return;
 
     final Place place = query();
-    if (place != null) {
-      pushPlace(query());
-    }
+    pushPlace(place);
   }
 
   public void pushPlace(@NotNull Place place) {

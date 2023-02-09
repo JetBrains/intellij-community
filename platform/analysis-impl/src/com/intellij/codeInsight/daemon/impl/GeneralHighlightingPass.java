@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -34,6 +35,7 @@ import com.intellij.psi.impl.search.PsiTodoSearchHelperImpl;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.SmartList;
@@ -54,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
-public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
+public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
   static final Predicate<PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> {
@@ -64,6 +66,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static final Random RESTART_DAEMON_RANDOM = new Random();
 
   final boolean myUpdateAll;
+  @NotNull
   final ProperTextRange myPriorityRange;
 
   final List<HighlightInfo> myHighlights = new ArrayList<>();
@@ -344,7 +347,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         try {
           visitor.visit(element);
         }
-        catch (ProcessCanceledException | IndexNotReadyException e) {
+        catch (ProcessCanceledException | IndexNotReadyException | AlreadyDisposedException e) {
           throw e;
         }
         catch (Exception e) {
@@ -463,15 +466,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       public boolean add(@Nullable HighlightInfo info) {
         boolean added = super.add(info);
         if (info != null && added) {
-          queueInfoToUpdateIncrementally(info);
+          queueInfoToUpdateIncrementally(info, info.getGroup() == 0 ? Pass.UPDATE_ALL : info.getGroup());
         }
         return added;
       }
     };
   }
 
-  protected void queueInfoToUpdateIncrementally(@NotNull HighlightInfo info) {
-    int group = info.getGroup() == 0 ? Pass.UPDATE_ALL : info.getGroup();
+  void queueInfoToUpdateIncrementally(@NotNull HighlightInfo info, int group) {
     if (info.getSeverity() == HighlightSeverity.ERROR) {
       myHasErrorSeverity = true;
     }
@@ -578,7 +580,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @Override
   public String toString() {
-    return super.toString() + " updateAll="+myUpdateAll+" range= "+myRestrictRange;
+    return super.toString() + " updateAll="+myUpdateAll+" range="+myRestrictRange;
   }
 
   private static @Nls String getPresentableNameText() {

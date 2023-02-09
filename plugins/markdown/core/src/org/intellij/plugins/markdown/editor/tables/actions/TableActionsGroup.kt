@@ -4,14 +4,13 @@ package org.intellij.plugins.markdown.editor.tables.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import org.intellij.plugins.markdown.editor.tables.TableUtils
 
 /**
  * Update for actions in this group is expected to be run on the BGT thread.
  */
 internal class TableActionsGroup: DefaultActionGroup() {
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabledAndVisible = TableUtils.isTableSupportEnabled()
+    event.presentation.isEnabledAndVisible = true
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

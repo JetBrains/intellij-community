@@ -46,7 +46,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @ApiStatus.Internal
-  static class VfsDataFlags {
+  static final class VfsDataFlags {
     static final int IS_WRITABLE_FLAG = 0x0100_0000;
     static final int IS_HIDDEN_FLAG = 0x0200_0000;
     static final int IS_OFFLINE = 0x0400_0000;
@@ -402,7 +402,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     parent.removeChild(this);
     getSegment().setNameId(myId, FileNameCache.storeName(newName));
     parent.addChild(this);
-    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
+    ((PersistentFSImpl)getPersistence()).incStructuralModificationCount();
   }
 
   public void setParent(@NotNull VirtualFile newParent) {
@@ -415,7 +415,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     getSegment().changeParent(myId, directory);
     directory.addChild(this);
     updateLinkStatus(directory);
-    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
+    ((PersistentFSImpl)getPersistence()).incStructuralModificationCount();
   }
 
   @Override
@@ -632,7 +632,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       }
 
       @Override
-      @SuppressWarnings("SpellCheckingInspection")
       public @NotNull Iterable<VirtualFile> iterInDbChildren() {
         throw new UnsupportedOperationException();
       }

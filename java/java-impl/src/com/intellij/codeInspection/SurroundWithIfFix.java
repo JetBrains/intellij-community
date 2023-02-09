@@ -12,9 +12,6 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.trivialif.MergeIfAndIntention;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class SurroundWithIfFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(SurroundWithIfFix.class);
   private final String myText;

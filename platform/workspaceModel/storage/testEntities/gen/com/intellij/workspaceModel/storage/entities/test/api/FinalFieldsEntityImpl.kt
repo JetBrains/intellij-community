@@ -15,6 +15,9 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -93,8 +96,7 @@ open class FinalFieldsEntityImpl(val dataSource: FinalFieldsEntityData) : FinalF
       if (this.descriptor != dataSource.descriptor) this.descriptor = dataSource.descriptor
       if (this.description != dataSource.description) this.description = dataSource.description
       if (this.anotherVersion != dataSource.anotherVersion) this.anotherVersion = dataSource.anotherVersion
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

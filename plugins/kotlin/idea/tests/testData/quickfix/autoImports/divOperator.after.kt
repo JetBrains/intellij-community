@@ -1,4 +1,4 @@
-// "Import extension function 'H.div'" "true"
+// "Import operator 'H.div'" "true"
 // ERROR: Unresolved reference: /
 
 package h

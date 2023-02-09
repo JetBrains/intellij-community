@@ -17,9 +17,6 @@ package org.jetbrains.idea.svn.rollback;
 
 import java.io.File;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public class CopiedAsideInfo {
   private final File myParentImmediateReverted;
   private final File myTo;

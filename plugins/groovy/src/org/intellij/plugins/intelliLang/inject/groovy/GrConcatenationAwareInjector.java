@@ -135,8 +135,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
           if (methodName != null && areThereInjectionsWithName(methodName, false)) {
             final GroovyResolveResult result = methodCall.advancedResolve();
             PsiElement element = result.getElement();
-            if (element instanceof PsiMethod) {
-              PsiMethod method = (PsiMethod)element;
+            if (element instanceof PsiMethod method) {
               final PsiParameter[] parameters = method.getParameterList().getParameters();
               int index = GrInjectionUtil.findParameterIndex(expression, methodCall);
               if (index >= 0) {
@@ -160,8 +159,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
             ReferencesSearch.search(variable, searchScope).forEach(psiReference -> {
               final PsiElement element = psiReference.getElement();
-              if (element instanceof GrExpression) {
-                final GrExpression refExpression = (GrExpression)element;
+              if (element instanceof GrExpression refExpression) {
                 places.add(refExpression);
                 if (!myUnparsable) {
                   myUnparsable = checkUnparsableReference(refExpression);
@@ -254,8 +252,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
 
     private static boolean checkUnparsableReference(GrExpression expression) {
       final PsiElement parent = expression.getParent();
-      if (parent instanceof GrAssignmentExpression) {
-        final GrAssignmentExpression assignmentExpression = (GrAssignmentExpression)parent;
+      if (parent instanceof GrAssignmentExpression assignmentExpression) {
         final IElementType operation = assignmentExpression.getOperationTokenType();
         if (assignmentExpression.getLValue() == expression && operation == GroovyTokenTypes.mPLUS_ASSIGN ) {
           return true;

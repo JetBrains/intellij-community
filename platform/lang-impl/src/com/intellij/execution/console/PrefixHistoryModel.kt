@@ -21,7 +21,7 @@ private val MasterModels = ConcurrentFactoryMap.create<String, MasterModel>(
     ContainerUtil.createConcurrentWeakValueMap()
   })
 
-private fun assertWriteThread() = ApplicationManager.getApplication().assertIsWriteThread()
+private fun assertWriteThread() = ApplicationManager.getApplication().assertWriteIntentLockAcquired()
 
 fun createModel(persistenceId: String, console: LanguageConsoleView): ConsoleHistoryModel {
   val masterModel: MasterModel = MasterModels[persistenceId]!!

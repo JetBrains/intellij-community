@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.low.level.api;
 
@@ -26,6 +26,21 @@ public class FirLibraryModuleDeclarationResolveTestGenerated extends AbstractFir
     @TestMetadata("enumEntry.kt")
     public void testEnumEntry() throws Exception {
         runTest("testData/libraryModuleResolve/enumEntry.kt");
+    }
+
+    @TestMetadata("implicitJavaTypes_listOfStrings.kt")
+    public void testImplicitJavaTypes_listOfStrings() throws Exception {
+        runTest("testData/libraryModuleResolve/implicitJavaTypes_listOfStrings.kt");
+    }
+
+    @TestMetadata("implicitJavaTypes_string.kt")
+    public void testImplicitJavaTypes_string() throws Exception {
+        runTest("testData/libraryModuleResolve/implicitJavaTypes_string.kt");
+    }
+
+    @TestMetadata("implicitJavaTypes_stringFun.kt")
+    public void testImplicitJavaTypes_stringFun() throws Exception {
+        runTest("testData/libraryModuleResolve/implicitJavaTypes_stringFun.kt");
     }
 
     @TestMetadata("memberFunctionNoArgs.kt")

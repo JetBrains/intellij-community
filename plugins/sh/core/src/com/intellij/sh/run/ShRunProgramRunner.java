@@ -22,7 +22,7 @@ final class ShRunProgramRunner implements ProgramRunner<RunnerSettings> {
 
   @Override
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
-    return (DefaultRunExecutor.EXECUTOR_ID == executorId || DefaultDebugExecutor.EXECUTOR_ID == executorId)
+    return (DefaultRunExecutor.EXECUTOR_ID.equals(executorId) || DefaultDebugExecutor.EXECUTOR_ID.equals(executorId))
            && profile instanceof ShRunConfiguration;
   }
 

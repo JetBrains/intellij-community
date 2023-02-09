@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -135,12 +136,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
   protected void defaultWriteSettings(@NotNull Element node, final @NonNls String... excludedProperties) throws WriteExternalException {
     DefaultJDOMExternalizer.write(this, node, field -> {
       final String name = field.getName();
-      for (String property : excludedProperties) {
-        if (name.equals(property)) {
-          return false;
-        }
-      }
-      return true;
+      return !ArrayUtil.contains(name, excludedProperties);
     });
   }
 

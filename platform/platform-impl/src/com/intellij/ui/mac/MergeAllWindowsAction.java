@@ -72,7 +72,10 @@ public class MergeAllWindowsAction extends DumbAwareAction {
     Foundation.executeOnMainThread(true, false, () -> {
       ID id = MacUtil.getWindowFromJavaWindow(window);
       Foundation.invoke(id, "mergeAllWindows:", ID.NIL);
-      if (updateTabBars) {
+      if (MacWinTabsHandler.isVersion2()) {
+        ApplicationManager.getApplication().invokeLater(() -> MacWinTabsHandlerV2.updateTabBarsAfterMerge());
+      }
+      else if (updateTabBars) {
         ApplicationManager.getApplication().invokeLater(() -> MacWinTabsHandler.updateTabBars(null));
       }
     });
@@ -83,9 +86,6 @@ public class MergeAllWindowsAction extends DumbAwareAction {
     public void appStarted() {
       if (JdkEx.isTabbingModeAvailable()) {
         IdeFrame[] frames = WindowManager.getInstance().getAllProjectFrames();
-        if (frames.length == 0) {
-          return;
-        }
 
         if (frames.length > 1) {
           for (IdeFrame frame : frames) {
@@ -93,10 +93,10 @@ public class MergeAllWindowsAction extends DumbAwareAction {
               return;
             }
           }
-        }
 
-        if (Foundation.invoke("NSWindow", "userTabbingPreference").intValue() == 2/*NSWindowUserTabbingPreferenceInFullScreen*/) {
-          mergeAllWindows(Objects.requireNonNull(((ProjectFrameHelper)frames[0]).getFrame()), false);
+          if (Foundation.invoke("NSWindow", "userTabbingPreference").intValue() == 2/*NSWindowUserTabbingPreferenceInFullScreen*/) {
+            mergeAllWindows(Objects.requireNonNull(((ProjectFrameHelper)frames[0]).getFrame()), false);
+          }
         }
       }
     }

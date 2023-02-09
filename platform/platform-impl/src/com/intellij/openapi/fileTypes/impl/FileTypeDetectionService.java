@@ -107,9 +107,8 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   @Nullable AsyncFileListener.ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
-    Collection<VirtualFile> files = ContainerUtil.map2Set(events, event -> {
-      if (event instanceof VFileContentChangeEvent) {
-        VFileContentChangeEvent changeEvent = (VFileContentChangeEvent)event;
+    Collection<VirtualFile> files = ContainerUtil.map2SetNotNull(events, event -> {
+      if (event instanceof VFileContentChangeEvent changeEvent) {
         VirtualFile file = changeEvent.getFile();
         if (changeEvent.getOldLength() == 0) {
           // when something is written to the empty file, clear the file detection-from-content cache, because the file type can change from Unknown to e.g., Text
@@ -135,7 +134,6 @@ final class FileTypeDetectionService implements Disposable {
       }
       return filtered;
     });
-    files.remove(null);
     if (toLog()) {
       log("F: after() VFS events: " + events + "; files: " + files);
     }
@@ -149,28 +147,26 @@ final class FileTypeDetectionService implements Disposable {
         finishRedetectionIfEnqueued(file);
       }
 
-      if (!files.isEmpty()) {
-        return new AsyncFileListener.ChangeApplier() {
-          @Override
-          public void beforeVfsChange() {
-            myCanUseCachedDetectedFileType = false;
-          }
+      return new AsyncFileListener.ChangeApplier() {
+        @Override
+        public void beforeVfsChange() {
+          myCanUseCachedDetectedFileType = false;
+        }
 
-          @Override
-          public void afterVfsChange() {
-            try {
-              synchronized (filesToRedetect) {
-                if (filesToRedetect.addAll(files)) {
-                  awakeReDetectExecutor();
-                }
+        @Override
+        public void afterVfsChange() {
+          try {
+            synchronized (filesToRedetect) {
+              if (filesToRedetect.addAll(files)) {
+                awakeReDetectExecutor();
               }
             }
-            finally {
-              myCanUseCachedDetectedFileType = true;
-            }
           }
-        };
-      }
+          finally {
+            myCanUseCachedDetectedFileType = true;
+          }
+        }
+      };
     }
     return null;
   }
@@ -637,7 +633,7 @@ final class FileTypeDetectionService implements Disposable {
         return ByteArraySequence.EMPTY;
       }
       try {
-        return ProgressManager.getInstance().isInNonCancelableSection() || ApplicationManager.getApplication().isWriteThread()
+        return ProgressManager.getInstance().isInNonCancelableSection() || ApplicationManager.getApplication().isWriteIntentLockAcquired()
                ? readFirstBytesFromFile(file, bufferLength)
                : myReadFirstBytesFromFileRelay.accessDiskWithCheckCanceled(new VirtualFileWithLength(file, bufferLength));
       }

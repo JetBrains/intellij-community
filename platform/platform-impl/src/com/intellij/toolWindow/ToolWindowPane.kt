@@ -14,7 +14,10 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
@@ -34,10 +37,12 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import java.awt.*
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Image
 import java.awt.geom.Point2D
 import java.awt.image.BufferedImage
-import java.util.*
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -236,14 +241,7 @@ class ToolWindowPane internal constructor(
     setWeight(anchor, weight)
   }
 
-  fun setWeight(window: ToolWindow, weight: Float) {
-    if (window.type != ToolWindowType.DOCKED) {
-      return
-    }
-    setWeight(window.anchor, normalizeWeight(weight))
-  }
-
-  private fun setWeight(anchor: ToolWindowAnchor, weight: Float) {
+  internal fun setWeight(anchor: ToolWindowAnchor, weight: Float) {
     val size = rootPane.size
     when (anchor) {
       ToolWindowAnchor.TOP -> verticalSplitter.firstSize = (size.getHeight() * weight).toInt()
@@ -251,6 +249,21 @@ class ToolWindowPane internal constructor(
       ToolWindowAnchor.BOTTOM -> verticalSplitter.lastSize = (size.getHeight() * weight).toInt()
       ToolWindowAnchor.RIGHT -> horizontalSplitter.lastSize = (size.getWidth() * weight).toInt()
       else -> LOG.error("unknown anchor: $anchor")
+    }
+  }
+
+  internal fun setSideWeight(window: ToolWindowImpl, sideWeight: Float) {
+    if (window.type != ToolWindowType.DOCKED) {
+      return
+    }
+    val splitter = getComponentAt(window.anchor)
+    if (splitter !is Splitter) {
+      return
+    }
+    if (window.windowInfo.isSplit) {
+      splitter.proportion = normalizeWeight(1.0f - sideWeight)
+    } else {
+      splitter.proportion = normalizeWeight(sideWeight)
     }
   }
 
@@ -270,6 +283,11 @@ class ToolWindowPane internal constructor(
   @RequiresEdt
   fun setDocumentComponent(component: JComponent?) {
     (if (isWideScreen) verticalSplitter else horizontalSplitter).innerComponent = component
+  }
+
+  @RequiresEdt
+  fun getDocumentComponent(): JComponent? {
+    return (if (isWideScreen) verticalSplitter else horizontalSplitter).innerComponent
   }
 
   private fun updateToolStripesVisibility(uiSettings: UISettings) {

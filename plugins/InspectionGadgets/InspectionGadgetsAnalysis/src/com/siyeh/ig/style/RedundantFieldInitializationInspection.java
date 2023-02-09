@@ -17,7 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,9 +30,9 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class RedundantFieldInitializationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -45,10 +45,10 @@ public class RedundantFieldInitializationInspection extends BaseInspection imple
     return InspectionGadgetsBundle.message("redundant.field.initialization.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.redundant.field.initialization.option"), this, "onlyWarnOnNull");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyWarnOnNull", JavaAnalysisBundle.message("inspection.redundant.field.initialization.option")));
   }
 
   @Override
@@ -88,7 +88,7 @@ public class RedundantFieldInitializationInspection extends BaseInspection imple
         return;
       }
       final PsiType type = field.getType();
-      if (PsiType.BOOLEAN.equals(type)) {
+      if (PsiTypes.booleanType().equals(type)) {
         if (onlyWarnOnNull || !ExpressionUtils.isLiteral(PsiUtil.skipParenthesizedExprDown(initializer), false)) {
           return;
         }
@@ -98,7 +98,7 @@ public class RedundantFieldInitializationInspection extends BaseInspection imple
           return;
         }
       }
-      else if (!PsiType.NULL.equals(initializer.getType())) {
+      else if (!PsiTypes.nullType().equals(initializer.getType())) {
         return;
       }
       if (initializer instanceof PsiReferenceExpression ||

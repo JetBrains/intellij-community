@@ -19,7 +19,7 @@ internal class MarkdownTableBackspaceHandler: BackspaceHandlerDelegate() {
   override fun beforeCharDeleted(c: Char, file: PsiFile, editor: Editor) = Unit
 
   override fun charDeleted(char: Char, file: PsiFile, editor: Editor): Boolean {
-    if (!TableUtils.isFormattingEnabledForTables(file) || !file.fileType.isMarkdownType()) {
+    if (!TableUtils.isFormattingOnTypeEnabledForTables(file) || !file.fileType.isMarkdownType()) {
       return false
     }
     val caretOffset = editor.caretModel.currentCaret.offset
@@ -36,7 +36,7 @@ internal class MarkdownTableBackspaceHandler: BackspaceHandlerDelegate() {
     executeCommand(table.project) {
       table.modifyColumn(
         cellIndex,
-        transformSeparator = { updateSeparator(document, it, width) },
+        transformSeparator = { updateSeparator(document, it, width.coerceAtLeast(1)) },
         transformCell = { cell ->
           val range = cell.textRange
           if (range.length > width && text[range.endOffset - 1] == ' ' && text[range.endOffset - 2] == ' ') {

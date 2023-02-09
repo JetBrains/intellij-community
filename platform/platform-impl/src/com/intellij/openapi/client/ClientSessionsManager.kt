@@ -129,6 +129,10 @@ open class ClientProjectSessionsManager(project: Project) : ClientSessionsManage
   init {
     if (project is ProjectImpl) {
       registerSession(project, ClientProjectSessionImpl(ClientId.localId, ClientType.LOCAL, project))
+    } else if (project.isDefault) {
+      (project.actualComponentManager as? ClientAwareComponentManager)?.let { componentManager ->
+        registerSession(project, ClientProjectSessionImpl(ClientId.localId, ClientType.LOCAL, componentManager, project))
+      }
     }
   }
 }

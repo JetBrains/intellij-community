@@ -20,7 +20,7 @@ public class MalformedFormatString {
 
         String good = String.format("%s %s", 1, 2); // this is valid according to the inspector (correct)
         String warn = String.<warning descr="Too few arguments for format string (found: 1, expected: 2)">format</warning>("%s %s", 1); // this is invalid according to the inspector (correct)
-        String invalid = String.format("%s %s" + local, 1); // this is valid according to the inspector (INCORRECT!)
+        String invalid = String.<warning descr="Too few arguments for format string (found: 1, expected at least: 2)">format</warning>("%s %s " + local, 1); // this is valid according to the inspector (INCORRECT!)
         String interesting = String.<warning descr="Too few arguments for format string (found: 1, expected: 2)">format</warning>("%s %s" + "hmm", 1); // this is invalid according to the inspector (correct)
         String intAsChar = String.format("symbol '%1$c' (numeric value %1$d)", 60); // integer->char conversion is ok (correct)
     }
@@ -169,4 +169,38 @@ class A {
         // should be OK
         String.format("%#s", f);
     }
+}
+
+
+class Prefix{
+  void foo(String additionalText){
+    System.out.printf("test" + getSomeText(additionalText), "parameter1");
+    System.out.printf("test" + additionalText, "parameter1");
+    String newString = "test" + additionalText;
+    System.out.printf(newString, "parameter1");
+    System.out.printf("test test" + additionalText, "parameter1");
+
+    System.out.printf("test %s " + getSomeText(additionalText), "parameter1");
+    System.out.printf("test %s " + additionalText, "parameter1");
+    String newString2 = "test %s " + additionalText;
+    System.out.printf(newString2, "parameter1");
+    System.out.printf("test test %s " + additionalText, "parameter1");
+
+    System.out.printf("test test %s %" + additionalText, "parameter1");
+    System.out.printf("test test %s %-1500" + additionalText, "parameter1");
+  }
+
+  void bar(String additionalText){
+    System.out.<warning descr="Too few arguments for format string (found: 1, expected at least: 2)">printf</warning>("test %s %s " + getSomeText(additionalText), "parameter1");
+    System.out.<warning descr="Too few arguments for format string (found: 1, expected at least: 2)">printf</warning>("test %s %s" + getSomeText(additionalText), "parameter1");
+    System.out.<warning descr="Too few arguments for format string (found: 1, expected at least: 2)">printf</warning>("test %s %s " + additionalText, "parameter1");
+    String newString2 = "test %s %s " + additionalText;
+    System.out.printf(newString2, "parameter1");
+    System.out.<warning descr="Too few arguments for format string (found: 1, expected at least: 2)">printf</warning>("test test %s %s " + additionalText, "parameter1");
+    System.out.printf("test test %d " + additionalText, <warning descr="Argument type 'String' does not match the type of the format specifier '%d'">"parameter1"</warning>);
+  }
+
+  String getSomeText(String text){
+    return text;
+  }
 }

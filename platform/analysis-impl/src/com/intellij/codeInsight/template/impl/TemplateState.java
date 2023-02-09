@@ -82,6 +82,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
   public static final Key<Boolean> TEMPLATE_RANGE_HIGHLIGHTER_KEY = Key.create("TemplateState.rangeHighlighterKey");
 
+  public static final Key<Boolean> FORCE_TEMPLATE_RUNNING = Key.create("TemplateState.forTemplateRunning");
+
   TemplateState(@NotNull Project project, @Nullable final Editor editor, @NotNull Document document,
                 @NotNull TemplateStateProcessor processor) {
     super(editor, document);
@@ -554,7 +556,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
   boolean requiresWriteAction() {
     PsiFile file = getPsiFile();
-    return file == null || file.isPhysical();
+    return file == null || file.isPhysical() || FORCE_TEMPLATE_RUNNING.isIn(file);
   }
 
   private LookupElement @NotNull [] getCurrentExpressionLookupItems() {
@@ -669,18 +671,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     }
   }
 
-  private static final class TemplateDocumentChange {
-    public final String newValue;
-    public final int startOffset;
-    public final int endOffset;
-    public final int segmentNumber;
-
-    private TemplateDocumentChange(String newValue, int startOffset, int endOffset, int segmentNumber) {
-      this.newValue = newValue;
-      this.startOffset = startOffset;
-      this.endOffset = endOffset;
-      this.segmentNumber = segmentNumber;
-    }
+  private record TemplateDocumentChange(String newValue, int startOffset, int endOffset, int segmentNumber) {
   }
 
   private void executeChanges(@NotNull List<TemplateDocumentChange> changes) {
@@ -825,6 +816,10 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
   public void nextTab() {
     if (isFinished()) {
+      return;
+    }
+    if (getTemplate() == null) {
+      LOG.error("Template disposed: " + myPrevTemplate);
       return;
     }
 

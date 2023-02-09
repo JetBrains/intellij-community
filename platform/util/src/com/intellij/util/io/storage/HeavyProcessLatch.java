@@ -76,8 +76,8 @@ public final class HeavyProcessLatch {
       runnable.run();
     }
     finally {
-      myEventDispatcher.getMulticaster().processFinished(op);
       myHeavyProcesses.remove(op);
+      myEventDispatcher.getMulticaster().processFinished(op);
       executeHandlers();
     }
   }

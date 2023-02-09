@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package com.intellij.idea
@@ -20,6 +20,8 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
@@ -32,11 +34,7 @@ import com.intellij.ui.AppUIUtil
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import com.intellij.util.ui.accessibility.ScreenReader
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.beans.PropertyChangeListener
+import kotlinx.coroutines.*
 import java.nio.file.Path
 import java.util.*
 import javax.swing.JOptionPane
@@ -60,16 +58,16 @@ open class IdeStarter : ModernApplicationStarter() {
   override val isHeadless: Boolean
     get() = false
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Specify it as `id` for extension definition in a plugin descriptor")
   override val commandName: String?
     get() = null
 
   override suspend fun start(args: List<String>) {
-    val app = ApplicationManagerEx.getApplicationEx()
-    app.assertIsNonDispatchThread()
-
     coroutineScope {
+      val app = ApplicationManagerEx.getApplicationEx()
       val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
-      openProjectIfNeeded(args, app, lifecyclePublisher)
+      openProjectIfNeeded(args = args, app = app, lifecyclePublisher = lifecyclePublisher)
 
       launch { reportPluginErrors() }
 
@@ -77,7 +75,7 @@ open class IdeStarter : ModernApplicationStarter() {
       lifecyclePublisher.appStarted()
 
       if (!app.isHeadlessEnvironment) {
-        postOpenUiTasks(app)
+        postOpenUiTasks()
       }
     }
   }
@@ -99,11 +97,13 @@ open class IdeStarter : ModernApplicationStarter() {
     }
 
     if (app.isInternal) {
+      @Suppress("DEPRECATION")
       app.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         UiInspectorAction.initGlobalInspector()
       }
     }
 
+    @Suppress("DEPRECATION")
     app.coroutineScope.launch {
       LifecycleUsageTriggerCollector.onIdeStart()
     }
@@ -192,55 +192,65 @@ open class IdeStarter : ModernApplicationStarter() {
 }
 
 private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
-  val currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
+  val currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
   @Suppress("SSBasedInspection")
   Logger.getInstance("#com.intellij.idea.ApplicationLoader").info("ApplicationLoader.loadProject (cwd=${currentDirectory})")
   val result = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory)
   if (result.hasError) {
     withContext(Dispatchers.EDT) {
-      result.showErrorIfFailed()
+      result.showError()
       ApplicationManager.getApplication().exit(true, true, false)
     }
   }
   return result.project
 }
 
-private suspend fun postOpenUiTasks(app: Application) {
+private fun CoroutineScope.postOpenUiTasks() {
   if (PluginManagerCore.isRunningFromSources()) {
     AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
   }
 
-  coroutineScope {
-    if (SystemInfoRt.isMac) {
-      launch {
-        runActivity("mac touchbar on app init") {
-          TouchbarSupport.onApplicationLoaded()
-        }
+  if (SystemInfoRt.isMac) {
+    launch {
+      runActivity("mac touchbar on app init") {
+        TouchbarSupport.onApplicationLoaded()
       }
     }
-    else if (SystemInfoRt.isXWindow && SystemInfo.isJetBrainsJvm) {
-      launch {
-        runActivity("input method disabling on Linux") {
-          disableInputMethodsIfPossible()
-        }
+  }
+  else if (SystemInfoRt.isXWindow && SystemInfo.isJetBrainsJvm) {
+    launch {
+      runActivity("input method disabling on Linux") {
+        disableInputMethodsIfPossible()
       }
     }
+  }
 
-    invokeLaterWithAnyModality("ScreenReader") {
-      val generalSettings = GeneralSettings.getInstance()
-      generalSettings.addPropertyChangeListener(GeneralSettings.PROP_SUPPORT_SCREEN_READERS, app, PropertyChangeListener { e ->
-        ScreenReader.setActive(e.newValue as Boolean)
-      })
-      ScreenReader.setActive(generalSettings.isSupportScreenReaders)
-    }
+  launch {
+    // first apply in the scope of IdeStarter
+    service<ScreenReaderStateManager>().apply()
+  }
 
+  launch {
     startSystemHealthMonitor()
   }
 }
 
-private suspend fun invokeLaterWithAnyModality(name: String, task: () -> Unit) {
-  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-    runActivity(name, task = task)
+@Service(Service.Level.APP)
+private class ScreenReaderStateManager(coroutineScope: CoroutineScope) {
+  init {
+    coroutineScope.launch {
+      GeneralSettings.getInstance().propertyChangedFlow.collect {
+        if (it == GeneralSettings.PropertyNames.supportScreenReaders) {
+          apply()
+        }
+      }
+    }
+  }
+
+  suspend fun apply() {
+    withContext(Dispatchers.EDT) {
+      ScreenReader.setActive(GeneralSettings.getInstance().isSupportScreenReaders)
+    }
   }
 }
 

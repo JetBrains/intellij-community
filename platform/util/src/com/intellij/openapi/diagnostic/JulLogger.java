@@ -1,19 +1,35 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
-import com.intellij.util.SystemProperties;
+import com.intellij.openapi.util.ShutDownTracker;
 import org.apache.log4j.Level;
 import org.apache.log4j.Priority;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
+import java.lang.reflect.Field;
 import java.nio.file.Path;
+import java.util.IdentityHashMap;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 
 public class JulLogger extends Logger {
   @SuppressWarnings("NonConstantLogger") protected final java.util.logging.Logger myLogger;
+  private static final boolean CLEANER_DELAYED;
+
+  static {
+    boolean delayed = false;
+    try {
+      delayed = delayCleanerUntilIdeShutdownActivitiesFinished();
+    }
+    catch (Exception e) {
+      //noinspection UseOfSystemOutOrSystemErr
+      System.err.println("Be careful, logger will be shut down earlier than application: " + e.getMessage());
+    }
+    CLEANER_DELAYED = delayed;
+  }
 
   public JulLogger(java.util.logging.Logger delegate) {
     myLogger = delegate;
@@ -151,7 +167,7 @@ public class JulLogger extends Logger {
       }
     }
 
-    boolean logConsole = SystemProperties.getBooleanProperty("idea.log.console", true);
+    boolean logConsole = Boolean.parseBoolean(System.getProperty("idea.log.console", "true"));
 
     java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
     IdeaLogRecordFormatter layout = new IdeaLogRecordFormatter();
@@ -177,5 +193,30 @@ public class JulLogger extends Logger {
         super.publish(record);
       }
     }
+  }
+
+  @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
+  private static boolean delayCleanerUntilIdeShutdownActivitiesFinished() throws Exception {
+    Class<?> logManagerCleanerClass = Class.forName("java.util.logging.LogManager$Cleaner");
+    Class<?> appShutdownHooks = Class.forName("java.lang.ApplicationShutdownHooks");
+    Field hooksField = appShutdownHooks.getDeclaredField("hooks");
+    hooksField.setAccessible(true);
+    IdentityHashMap<?, ?> hooks = (IdentityHashMap<?, ?>) hooksField.get(null);
+    synchronized (appShutdownHooks) {
+      for (Object o : hooks.keySet()) {
+        if (o instanceof Thread && logManagerCleanerClass.isAssignableFrom(o.getClass())) {
+          Thread logCloseThread = (Thread)o;
+          ShutDownTracker.getInstance().registerShutdownTask(logCloseThread);
+          hooks.remove(o);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  @TestOnly
+  public static boolean isJulLoggerCleanerDelayed() {
+    return CLEANER_DELAYED;
   }
 }

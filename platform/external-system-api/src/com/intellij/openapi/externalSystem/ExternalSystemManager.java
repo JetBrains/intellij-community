@@ -29,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
  * dependencies which are configured at external system but not at the ide' etc.
  * <p/>
  * That makes it relatively easy to add a new external system integration.
- *
- * @author Denis Zhdanov
  */
 public interface ExternalSystemManager<
   ProjectSettings extends ExternalProjectSettings,
@@ -41,7 +39,7 @@ public interface ExternalSystemManager<
   extends ParametersEnhancer
 {
 
-  ExtensionPointName<ExternalSystemManager<?, ?, ?, ?, ?>> EP_NAME = ExtensionPointName.create("com.intellij.externalSystemManager");
+  ExtensionPointName<ExternalSystemManager<?, ?, ?, ?, ?>> EP_NAME = new ExtensionPointName<>("com.intellij.externalSystemManager");
 
   /**
    * @return    id of the external system represented by the current manager

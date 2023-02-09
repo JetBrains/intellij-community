@@ -46,15 +46,13 @@ class CallSequencePredicate implements PsiElementPredicate {
 
   @Nullable
   private static PsiVariable getVariable(PsiStatement statement) {
-    if (!(statement instanceof PsiExpressionStatement)) {
+    if (!(statement instanceof PsiExpressionStatement expressionStatement)) {
       return null;
     }
-    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
     final PsiExpression expression = expressionStatement.getExpression();
-    if (!(expression instanceof PsiMethodCallExpression)) {
+    if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
       return null;
     }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
     return getVariable(methodCallExpression);
 }
  @Nullable
@@ -73,8 +71,7 @@ class CallSequencePredicate implements PsiElementPredicate {
    }
    final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
    final PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
-   if (qualifierExpression instanceof PsiMethodCallExpression) {
-     final PsiMethodCallExpression expression = (PsiMethodCallExpression)qualifierExpression;
+   if (qualifierExpression instanceof PsiMethodCallExpression expression) {
      return getVariable(expression);
    }
    else if (!(qualifierExpression instanceof PsiReferenceExpression)) {

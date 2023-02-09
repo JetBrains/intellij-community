@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class WinTerminalExecutor extends TerminalExecutor {
 
   // max available value is 480

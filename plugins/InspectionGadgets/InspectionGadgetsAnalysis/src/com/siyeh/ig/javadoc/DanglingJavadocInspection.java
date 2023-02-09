@@ -3,7 +3,7 @@ package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -17,9 +17,9 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Bas Leijdekkers
@@ -35,9 +35,9 @@ public class DanglingJavadocInspection extends BaseInspection {
   }
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return InspectionOptionsPanel.singleCheckBox(this, InspectionGadgetsBundle.message("dangling.javadoc.ignore.copyright.option"),
-                                                 "ignoreCopyright");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreCopyright", InspectionGadgetsBundle.message("dangling.javadoc.ignore.copyright.option")));
   }
 
   @Override
@@ -67,8 +67,7 @@ public class DanglingJavadocInspection extends BaseInspection {
       final PsiElement docComment = element.getParent();
       final StringBuilder newCommentText = new StringBuilder();
       for (PsiElement child = docComment.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (child instanceof PsiDocToken) {
-          final PsiDocToken docToken = (PsiDocToken)child;
+        if (child instanceof PsiDocToken docToken) {
           final IElementType tokenType = docToken.getTokenType();
           if (JavaDocTokenType.DOC_COMMENT_START.equals(tokenType)) {
             newCommentText.append("/*");

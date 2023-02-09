@@ -16,6 +16,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -37,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class UnnecessaryUnboxingInspection extends BaseInspection {
 
@@ -67,11 +70,10 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
     return true;
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.unboxing.superfluous.option"),
-                                          this, "onlyReportSuperfluouslyUnboxed");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyReportSuperfluouslyUnboxed", InspectionGadgetsBundle.message("unnecessary.unboxing.superfluous.option")));
   }
 
   @Override
@@ -91,10 +93,9 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement grandParent = element.getParent().getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression methodCall)) {
         return;
       }
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)grandParent;
       final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       final PsiExpression strippedQualifier = PsiUtil.skipParenthesizedExprDown(qualifier);
@@ -102,11 +103,9 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
         return;
       }
       CommentTracker commentTracker = new CommentTracker();
-      if (strippedQualifier instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)strippedQualifier;
+      if (strippedQualifier instanceof PsiReferenceExpression referenceExpression) {
         final PsiElement target = referenceExpression.resolve();
-        if (target instanceof PsiField) {
-          final PsiField field = (PsiField)target;
+        if (target instanceof PsiField field) {
           final PsiClass containingClass = field.getContainingClass();
           if (containingClass == null) {
             return;
@@ -162,14 +161,12 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
         expression = (PsiExpression)parent;
         parent = parent.getParent();
       }
-      if (parent instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+      if (parent instanceof PsiPolyadicExpression polyadicExpression) {
         if (isPossibleObjectComparison(expression, polyadicExpression)) {
           return true;
         }
       }
-      if (parent instanceof PsiTypeCastExpression) {
-        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
+      if (parent instanceof PsiTypeCastExpression typeCastExpression) {
         final PsiTypeElement typeElement = typeCastExpression.getCastType();
         if (typeElement == null) {
           return true;
@@ -180,8 +177,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
           return true;
         }
       }
-      else if (parent instanceof PsiConditionalExpression) {
-        final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
+      else if (parent instanceof PsiConditionalExpression conditionalExpression) {
         final PsiExpression thenExpression = conditionalExpression.getThenExpression();
         if (thenExpression == null) {
           return true;
@@ -234,10 +230,9 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
     }
 
     private boolean isUnboxingExpression(PsiExpression expression) {
-      if (!(expression instanceof PsiMethodCallExpression)) {
+      if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {

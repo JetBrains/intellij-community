@@ -17,6 +17,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -90,8 +93,7 @@ open class WithSoftLinkEntityImpl(val dataSource: WithSoftLinkEntityData) : With
       dataSource as WithSoftLinkEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.link != dataSource.link) this.link = dataSource.link
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

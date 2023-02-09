@@ -14,6 +14,8 @@ import org.jetbrains.annotations.Nls
 import javax.swing.AbstractButton
 import javax.swing.ButtonGroup
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl) : RowBuilder by builder.rootRow {
 
   @ApiStatus.ScheduledForRemoval
@@ -24,30 +26,31 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
 
   @Suppress("PropertyName")
   @PublishedApi
-  @get:Deprecated("", replaceWith = ReplaceWith("builder"), level = DeprecationLevel.ERROR)
+  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @get:ApiStatus.ScheduledForRemoval
   internal val `$`: LayoutBuilderImpl
     get() = builder
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
 class CellBuilderWithButtonGroupProperty<T : Any>
 @PublishedApi internal constructor(private val prop: PropertyBinding<T>)
 
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 class RowBuilderWithButtonGroupProperty<T : Any>
 @PublishedApi internal constructor(private val builder: RowBuilder, private val prop: PropertyBinding<T>) : RowBuilder by builder {
 
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun Row.radioButton(@NlsContexts.RadioButton text: String, value: T, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get() == value)
     attachSubRowsEnabled(component)
-    return component(comment = comment).bindValue(value)
+    return component(comment = comment).bindValueToProperty(prop, value)
   }
 
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun CellBuilder<JBRadioButton>.bindValue(value: T): CellBuilder<JBRadioButton> = bindValueToProperty(prop, value)
 }
 
@@ -63,8 +66,7 @@ fun FileChooserDescriptor.chooseFile(event: AnActionEvent, fileChosen: (chosenFi
                          fileChosen)
 }
 
-@Deprecated("Use Kotlin UI DSL Version 2")
-fun Row.attachSubRowsEnabled(component: AbstractButton) {
+private fun Row.attachSubRowsEnabled(component: AbstractButton) {
   subRowsEnabled = component.selected()
   component.selected.addListener { subRowsEnabled = it }
 }

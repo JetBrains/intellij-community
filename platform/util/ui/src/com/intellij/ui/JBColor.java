@@ -152,8 +152,7 @@ public class JBColor extends Color {
   private static Color findPatternMatch(@NotNull String name) {
     Object value = UIManager.get("*");
 
-    if (value instanceof Map) {
-      Map<?, ?> map = (Map<?, ?>)value;
+    if (value instanceof Map<?, ?> map) {
       Object o = UIManager.get("*cache");
       if (!(o instanceof Map)) {
         o = new HashMap<String, Color>();

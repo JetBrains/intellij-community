@@ -8,7 +8,6 @@ import com.intellij.ide.projectWizard.ProjectSettingsStep;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.GitSilentFileAdder;
 import com.intellij.openapi.GitSilentFileAdderProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -27,6 +26,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.Module;
@@ -50,6 +50,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.io.PathKt;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
@@ -60,9 +61,9 @@ import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScri
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.KotlinDslGradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionUtil;
-import org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil;
+import org.jetbrains.plugins.gradle.service.project.wizard.util.GradleWrapperUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
+import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -79,11 +80,8 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.MODAL_SYNC;
-import static com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl.setupCreatedProject;
 
-/**
- * @author Denis Zhdanov
- */
+@SuppressWarnings("unused")
 public abstract class AbstractGradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
   private static final Logger LOG = Logger.getInstance(AbstractGradleModuleBuilder.class);
 
@@ -113,15 +111,16 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   private Path rootProjectPath;
   private boolean myUseKotlinDSL;
   private boolean isCreatingNewProject;
-  private boolean isCreatingNewLinkedProject;
   private GradleVersion gradleVersion;
+  private DistributionType gradleDistributionType;
+  private @Nullable String gradleHome;
 
   private VirtualFile buildScriptFile;
   private GradleBuildScriptBuilder<?> buildScriptBuilder;
   private final List<Consumer<GradleBuildScriptBuilder<?>>> buildScriptConfigurators = new ArrayList<>();
 
   public AbstractGradleModuleBuilder() {
-    super(GradleConstants.SYSTEM_ID, new GradleProjectSettings());
+    super(GradleConstants.SYSTEM_ID, GradleDefaultProjectSettings.createProjectSettings(""));
   }
 
   @NotNull
@@ -168,8 +167,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     setupGradleSettingsFile(
       rootProjectPath, modelContentRootDir, project.getName(),
       myProjectId == null ? module.getName() : myProjectId.getArtifactId(),
-      // TODO: replace with isCreatingNewLinkedProject when GradleModuleBuilder will be removed
-      isCreatingNewProject || myParentProject == null,
+      isCreatingNewLinkedProject(),
       myUseKotlinDSL
     );
 
@@ -203,15 +201,17 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     GradleSettings settings = GradleSettings.getInstance(project);
     GradleProjectSettings projectSettings = getExternalProjectSettings();
 
-    if (isCreatingNewLinkedProject) {
-      GradleProjectImportUtil.setupGradleSettings(settings);
-      GradleProjectImportUtil.setupGradleProjectSettings(projectSettings, project, rootProjectPath);
+    if (isCreatingNewLinkedProject()) {
+      projectSettings.setExternalProjectPath(NioPathUtil.toCanonicalPath(rootProjectPath));
+      projectSettings.setDistributionType(gradleDistributionType);
+      projectSettings.setGradleHome(gradleHome);
       GradleJvmResolutionUtil.setupGradleJvm(project, projectSettings, gradleVersion);
       GradleJvmValidationUtil.validateJavaHome(project, rootProjectPath, gradleVersion);
 
       settings.linkProject(projectSettings);
     }
     if (isCreatingNewProject) {
+      ExternalProjectsManagerImpl.setupCreatedProject(project);
       project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, Boolean.TRUE);
       // Needed to ignore postponed project refresh
       project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, Boolean.TRUE);
@@ -224,14 +224,10 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
         loadPreviewProject(project);
       }
       openBuildScriptFile(project, buildScriptFile);
-      if (isCreatingNewLinkedProject) {
-        createWrapper(project, () -> {
-          reloadProject(project);
-        });
+      if (isCreatingNewLinkedProject() && gradleDistributionType.isWrapped()) {
+        generateGradleWrapper(project);
       }
-      else {
-        reloadProject(project);
-      }
+      reloadProject(project);
     }, ModalityState.NON_MODAL, project.getDisposed());
   }
 
@@ -252,15 +248,13 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     });
   }
 
-  private void createWrapper(@NotNull Project project, @NotNull Runnable callback) {
-    GitSilentFileAdder vcsFileAdder = GitSilentFileAdderProvider.create(project);
-    vcsFileAdder.markFileForAdding(rootProjectPath.resolve("gradle"), true);
-    vcsFileAdder.markFileForAdding(rootProjectPath.resolve("gradlew"), false);
-    vcsFileAdder.markFileForAdding(rootProjectPath.resolve("gradlew.bat"), false);
-    GradleExecutionUtil.ensureInstalledWrapper(project, rootProjectPath, gradleVersion, () -> {
-      vcsFileAdder.finish();
-      callback.run();
-    });
+  private void generateGradleWrapper(@NotNull Project project) {
+    var vcs = GitSilentFileAdderProvider.create(project);
+    vcs.markFileForAdding(rootProjectPath.resolve("gradle"), true);
+    vcs.markFileForAdding(rootProjectPath.resolve("gradlew"), false);
+    vcs.markFileForAdding(rootProjectPath.resolve("gradlew.bat"), false);
+    GradleWrapperUtil.generateGradleWrapper(rootProjectPath, gradleVersion);
+    vcs.finish();
   }
 
   public void configureBuildScript(@NotNull Consumer<GradleBuildScriptBuilder<?>> configure) {
@@ -363,7 +357,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       attributes.put(TEMPLATE_ATTRIBUTE_MODULE_GROUP, myProjectId.getGroupId());
       attributes.put(TEMPLATE_ATTRIBUTE_GRADLE_VERSION, gradleVersion.getVersion());
     }
-    saveFile(file, templateName, attributes);
+    appendToFile(file, templateName, attributes);
     return file;
   }
 
@@ -397,7 +391,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       attributes.put(TEMPLATE_ATTRIBUTE_PROJECT_NAME, projectName);
       attributes.put(TEMPLATE_ATTRIBUTE_MODULE_PATH, moduleDirName);
       attributes.put(TEMPLATE_ATTRIBUTE_MODULE_NAME, moduleName);
-      saveFile(file, templateName, attributes);
+      appendToFile(file, templateName, attributes);
     }
     else {
       String templateName = useKotlinDSL ? KOTLIN_DSL_TEMPLATE_GRADLE_SETTINGS_MERGE : TEMPLATE_GRADLE_SETTINGS_MERGE;
@@ -422,32 +416,21 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     return file;
   }
 
-  private static void saveFile(@NotNull VirtualFile file, @NotNull String templateName, @Nullable Map templateAttributes)
-    throws ConfigurationException {
+  private static void appendToFile(
+    @NotNull VirtualFile file,
+    @NotNull String templateName,
+    @Nullable Map<String, String> templateAttributes
+  ) throws ConfigurationException {
     FileTemplateManager manager = FileTemplateManager.getDefaultInstance();
     FileTemplate template = manager.getInternalTemplate(templateName);
     try {
       appendToFile(file, templateAttributes != null ? template.getText(templateAttributes) : template.getText());
     }
-    catch (IOException e) {
-      LOG.warn(String.format("Unexpected exception on applying template %s config", GradleConstants.SYSTEM_ID.getReadableName()), e);
-      throw new ConfigurationException(
-        e.getMessage(), GradleInspectionBundle.message("dialog.title.can.t.apply.template.config.text", GradleConstants.SYSTEM_ID.getReadableName())
-      );
-    }
-  }
-
-  private static void appendToFile(@NotNull VirtualFile file, @NotNull String templateName, @Nullable Map templateAttributes)
-    throws ConfigurationException {
-    FileTemplateManager manager = FileTemplateManager.getDefaultInstance();
-    FileTemplate template = manager.getInternalTemplate(templateName);
-    try {
-      appendToFile(file, templateAttributes != null ? template.getText(templateAttributes) : template.getText());
-    }
-    catch (IOException e) {
+    catch (Exception e) {
       LOG.warn(String.format("Unexpected exception on appending template %s config", GradleConstants.SYSTEM_ID.getReadableName()), e);
       throw new ConfigurationException(
-        e.getMessage(), GradleInspectionBundle.message("dialog.title.can.t.append.template.config.text", GradleConstants.SYSTEM_ID.getReadableName())
+        GradleInspectionBundle.message("dialog.message.generate.scripts.error") + "\n" + e.getMessage(),
+        UIBundle.message("error.project.wizard.new.project.title", 1)
       );
     }
   }
@@ -485,7 +468,10 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
   public void setParentProject(@Nullable ProjectData parentProject) {
     myParentProject = parentProject;
-    isCreatingNewLinkedProject = parentProject == null;
+  }
+
+  private boolean isCreatingNewLinkedProject() {
+    return myParentProject == null;
   }
 
   public boolean isInheritGroupId() {
@@ -520,12 +506,16 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     isCreatingNewProject = creatingNewProject;
   }
 
-  public void setGradleVersion(@NotNull GradleVersion gradleVersion) {
-    this.gradleVersion = gradleVersion;
+  public void setGradleVersion(@NotNull GradleVersion version) {
+    gradleVersion = version;
   }
 
-  public @NotNull GradleVersion getGradleVersion() {
-    return this.gradleVersion;
+  public void setGradleDistributionType(@NotNull DistributionType distributionType) {
+    gradleDistributionType = distributionType;
+  }
+
+  public void setGradleHome(@Nullable String path) {
+    gradleHome = path;
   }
 
   @Override
@@ -536,8 +526,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   @Nullable
   @Override
   public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
-    if (settingsStep instanceof ProjectSettingsStep) {
-      final ProjectSettingsStep projectSettingsStep = (ProjectSettingsStep)settingsStep;
+    if (settingsStep instanceof ProjectSettingsStep projectSettingsStep) {
       if (myProjectId != null) {
         final ModuleNameLocationSettings nameLocationSettings = settingsStep.getModuleNameLocationSettings();
         String artifactId = myProjectId.getArtifactId();
@@ -575,7 +564,8 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   @Nullable
   @Override
   public Project createProject(String name, String path) {
-    return setupCreatedProject(super.createProject(name, path));
+    setCreatingNewProject(true);
+    return super.createProject(name, path);
   }
 
   public boolean isUseKotlinDsl() {
@@ -607,7 +597,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     }
 
     private void configureModulesSdk(@NotNull DataNode<ProjectData> projectNode) {
-      DataNode<ModuleData> moduleNode = ExternalSystemApiUtil.find(projectNode, ProjectKeys.MODULE, this::isTargetModule);
+      DataNode<ModuleData> moduleNode = ExternalSystemApiUtil.findChild(projectNode, ProjectKeys.MODULE, this::isTargetModule);
       if (moduleNode == null) return;
       configureModuleSdk(moduleNode);
       Collection<DataNode<GradleSourceSetData>> sourceSetsNodes = ExternalSystemApiUtil.getChildren(moduleNode, GradleSourceSetData.KEY);

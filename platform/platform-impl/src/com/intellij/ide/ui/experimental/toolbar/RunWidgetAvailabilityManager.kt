@@ -1,37 +1,25 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.experimental.toolbar
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
-abstract class RunWidgetAvailabilityManager {
+open class RunWidgetAvailabilityManager {
   companion object {
     fun getInstance(project: Project): RunWidgetAvailabilityManager = project.service()
   }
 
-  private val listeners = mutableListOf<RunWidgetAvailabilityListener>()
+  private val availabilityChangedMutable = MutableStateFlow(true)
+  val availabilityChanged: StateFlow<Boolean>
+    get() = availabilityChangedMutable
 
-  fun addListener(disposable: Disposable, listener: RunWidgetAvailabilityListener) {
-    listeners.add(listener)
-    Disposer.register(disposable, Disposable {
-      listeners.remove(listener)
-    })
-  }
-
-  abstract fun isAvailable(): Boolean
-
+  // used by Rider
+  @Suppress("unused")
   protected fun fireUpdate(value: Boolean) {
-    listeners.forEach { it.availabilityChanged(value) }
+    availabilityChangedMutable.value = value
   }
 
-  @FunctionalInterface
-  fun interface RunWidgetAvailabilityListener {
-    fun availabilityChanged(value: Boolean)
-  }
-}
-
-internal class BaseRunWidgetAvailabilityManager : RunWidgetAvailabilityManager() {
-  override fun isAvailable(): Boolean = true
+  fun isAvailable(): Boolean = availabilityChangedMutable.value
 }

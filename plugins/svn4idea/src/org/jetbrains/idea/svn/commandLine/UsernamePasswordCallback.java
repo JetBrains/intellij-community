@@ -16,8 +16,6 @@ import java.util.regex.Pattern;
 /**
  * Special callback for svn 1.8 credentials request as --non-interactive does not return authentication realm (just url) - so we
  * could not create temp cache
- *
- * @author Konstantin Kolosovsky.
  */
 public class UsernamePasswordCallback extends AuthCallbackCase {
 
@@ -62,8 +60,7 @@ public class UsernamePasswordCallback extends AuthCallbackCase {
 
   @Override
   public void updateParameters(@NotNull Command command) {
-    if (myAuthentication instanceof PasswordAuthenticationData) {
-      PasswordAuthenticationData auth = (PasswordAuthenticationData)myAuthentication;
+    if (myAuthentication instanceof PasswordAuthenticationData auth) {
 
       command.put("--username");
       command.put(auth.getUserName());

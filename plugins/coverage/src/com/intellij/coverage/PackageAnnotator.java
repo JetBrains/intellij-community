@@ -35,9 +35,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author ven
- */
 public final class PackageAnnotator {
   private static final Logger LOG = Logger.getInstance(PackageAnnotator.class);
   private static final @NonNls String DEFAULT_CONSTRUCTOR_NAME_SIGNATURE = "<init>()V";
@@ -92,6 +89,13 @@ public final class PackageAnnotator {
 
     public int coveredBranchCount;
     public int totalBranchCount;
+
+    public boolean isFullyCovered() {
+      return totalBranchCount == coveredBranchCount
+        && totalLineCount == getCoveredLineCount()
+        && totalMethodCount == coveredMethodCount
+        && totalClassCount == coveredClassCount;
+    }
   }
 
   public static class ClassCoverageInfo extends SummaryCoverageInfo {
@@ -137,7 +141,7 @@ public final class PackageAnnotator {
   }
 
   public static class DirCoverageInfo extends PackageCoverageInfo {
-    public VirtualFile sourceRoot;
+    final public VirtualFile sourceRoot;
 
     public DirCoverageInfo(VirtualFile sourceRoot) {
       this.sourceRoot = sourceRoot;
@@ -298,8 +302,7 @@ public final class PackageAnnotator {
 
       final Object[] lines = classData.getLines();
       for (Object l : lines) {
-        if (l instanceof LineData) {
-          final LineData lineData = (LineData)l;
+        if (l instanceof LineData lineData) {
           if (lineData.getStatus() == LineCoverage.FULL) {
             info.fullyCoveredLineCount++;
           }

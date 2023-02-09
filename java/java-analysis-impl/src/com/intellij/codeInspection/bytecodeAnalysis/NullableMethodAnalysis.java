@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
@@ -123,8 +123,7 @@ final class NullableMethodAnalysis {
     if (result instanceof LabeledNull) {
       return Value.Null;
     }
-    if (result instanceof Calls) {
-      Calls calls = ((Calls)result);
+    if (result instanceof Calls calls) {
       int mergedMappedLabels = calls.mergedLabels;
       if (mergedMappedLabels != 0) {
         Set<Component> sum = new HashSet<>();
@@ -163,10 +162,8 @@ final class NullableMethodAnalysis {
       int intersect = v2Origins & constraintOrigins;
       return intersect == v2Origins ? v1 : lNull;
     }
-    else if (v1 instanceof Calls) {
-      if (v2 instanceof Calls) {
-        Calls calls1 = (Calls)v1;
-        Calls calls2 = (Calls)v2;
+    else if (v1 instanceof Calls calls1) {
+      if (v2 instanceof Calls calls2) {
         int labels2 = calls2.mergedLabels;
         int aliveLabels2 = labels2 - (labels2 & constraint.calls);
         return new Calls(calls1.mergedLabels | aliveLabels2);
@@ -330,10 +327,8 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
     else if (v2 instanceof LabeledNull) {
       return v2;
     }
-    else if (v1 instanceof Calls) {
-      if (v2 instanceof Calls) {
-        Calls calls1 = (Calls)v1;
-        Calls calls2 = (Calls)v2;
+    else if (v1 instanceof Calls calls1) {
+      if (v2 instanceof Calls calls2) {
         return new Calls(calls1.mergedLabels | calls2.mergedLabels);
       }
       else {

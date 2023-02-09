@@ -17,6 +17,7 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.*
 import com.intellij.psi.infos.CandidateInfo
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
@@ -74,5 +75,5 @@ class LazyJavaUTypeReferenceExpression(
   givenParent: UElement?,
   private val typeSupplier: () -> PsiType
 ) : JavaAbstractUExpression(givenParent), UTypeReferenceExpression {
-  override val type: PsiType by lz { typeSupplier() }
+  override val type: PsiType by lazyPub { typeSupplier() }
 }

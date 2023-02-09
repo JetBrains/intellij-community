@@ -28,9 +28,6 @@ import org.jetbrains.uast.generate.UastCodeGenerationPluginKt;
 
 import java.util.ArrayList;
 
-/**
- * @author ven
- */
 public class MigrationProcessor extends BaseRefactoringProcessor {
   private final MigrationMap myMigrationMap;
   private PsiMigration myPsiMigration;

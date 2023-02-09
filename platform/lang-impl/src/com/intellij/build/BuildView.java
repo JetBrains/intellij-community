@@ -8,8 +8,14 @@ import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.actions.StopProcessAction;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.console.ConsoleViewWrapperBase;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.*;
@@ -22,6 +28,9 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -29,6 +38,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -43,6 +54,37 @@ public class BuildView extends CompositeView<ExecutionConsole>
   public static final String CONSOLE_VIEW_NAME = "consoleView";
   @ApiStatus.Experimental
   public static final DataKey<List<AnAction>> RESTART_ACTIONS = DataKey.create("restart actions");
+  private static final OccurenceNavigator EMPTY_PROBLEMS_NAVIGATOR = new OccurenceNavigator() {
+    @Override
+    public boolean hasNextOccurence() {
+      return false;
+    }
+
+    @Override
+    public boolean hasPreviousOccurence() {
+      return false;
+    }
+
+    @Override
+    public OccurenceInfo goNextOccurence() {
+      return null;
+    }
+
+    @Override
+    public OccurenceInfo goPreviousOccurence() {
+      return null;
+    }
+
+    @Override
+    public @NotNull String getNextOccurenceActionName() {
+      return IdeBundle.message("action.next.problem");
+    }
+
+    @Override
+    public @NotNull String getPreviousOccurenceActionName() {
+      return IdeBundle.message("action.previous.problem");
+    }
+  };
   private final @NotNull Project myProject;
   private final @NotNull ViewManager myViewManager;
   private final AtomicBoolean isBuildStartEventProcessed = new AtomicBoolean();
@@ -134,16 +176,27 @@ public class BuildView extends CompositeView<ExecutionConsole>
         Disposer.register(this, runContentDescriptor);
       }
     }
+    boolean buildTree = true;
     ExecutionConsole executionConsole = myExecutionConsole;
     if (executionConsole != null) {
       executionConsole.getComponent(); //create editor to be able to add console editor actions
       if (myViewSettingsProvider.isExecutionViewHidden()) {
         addViewAndShowIfNeeded(executionConsole, CONSOLE_VIEW_NAME, myViewManager.isConsoleEnabledByDefault());
+        buildTree = false;
+      }
+      else if (isShowInDashboard()) {
+        ExecutionConsole consoleView =
+          executionConsole instanceof ConsoleView ? wrapWithToolbar((ConsoleView)executionConsole) : executionConsole;
+        addViewAndShowIfNeeded(consoleView, CONSOLE_VIEW_NAME, myViewManager.isConsoleEnabledByDefault());
+        if (executionConsole instanceof ConsoleViewImpl consoleViewImpl) {
+          consoleViewImpl.getEditor().setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
+        }
+        buildTree = false;
       }
     }
 
     BuildTreeConsoleView eventView = null;
-    if (!myViewSettingsProvider.isExecutionViewHidden()) {
+    if (buildTree) {
       eventView = getEventView();
       if (eventView == null) {
         String eventViewName = BuildTreeConsoleView.class.getName();
@@ -392,7 +445,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
     if (executionConsole instanceof OccurenceNavigator) {
       return (OccurenceNavigator)executionConsole;
     }
-    return EMPTY;
+    return EMPTY_PROBLEMS_NAVIGATOR;
   }
 
   @Override
@@ -423,5 +476,34 @@ public class BuildView extends CompositeView<ExecutionConsole>
   @Override
   public @NotNull String getPreviousOccurenceActionName() {
     return getOccurenceNavigator().getPreviousOccurenceActionName();
+  }
+
+  private boolean isShowInDashboard() {
+    ExecutionEnvironment environment = myBuildDescriptor.getExecutionEnvironment();
+    RunProfile runProfile = environment != null ? environment.getRunProfile() : null;
+    return runProfile instanceof RunConfiguration configuration &&
+           RunDashboardManager.getInstance(myProject).isShowInDashboard(configuration) &&
+           ExecutionManagerImpl.getDelegatedRunProfile(configuration) instanceof RunConfiguration;
+  }
+
+  private static @NotNull ExecutionConsole wrapWithToolbar(@NotNull ConsoleView executionConsole) {
+    return new ConsoleViewWrapperBase(executionConsole) {
+      private final JPanel myPanel;
+      {
+        myPanel = new NonOpaquePanel(new BorderLayout());
+        JComponent baseComponent = getDelegate().getComponent();
+        myPanel.add(baseComponent, BorderLayout.CENTER);
+
+        DefaultActionGroup actionGroup = new DefaultActionGroup(executionConsole.createConsoleActions());
+        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("BuildConsole", actionGroup, false);
+        toolbar.setTargetComponent(baseComponent);
+        myPanel.add(toolbar.getComponent(), BorderLayout.EAST);
+      }
+
+      @Override
+      public @NotNull JComponent getComponent() {
+        return myPanel;
+      }
+    };
   }
 }

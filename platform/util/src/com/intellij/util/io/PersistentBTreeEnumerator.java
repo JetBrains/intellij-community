@@ -25,7 +25,7 @@ import java.util.List;
  * <li><code>{enumerator-name}.keystream</code></li>
  * <li><code>{enumerator-name}.storage</code></li>
  * <li><code>{enumerator-name}.storage_i</code></li>
- * </ul>.
+ * </ul>
  * Data instances are stored in a <code>{name}.keystream</code>, file, and apt record offset is ~ its id.
  * Mapping <code>(hashCode(Data) -> id)</code> is stored in a BTree (<code>{name}.storage_i</code>),
  * and <code>{name}.storage</code> file is used to resolve hashcode collisions.

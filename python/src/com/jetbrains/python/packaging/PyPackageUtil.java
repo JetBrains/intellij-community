@@ -61,9 +61,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author vlan
- */
 public final class PyPackageUtil {
   public static final String SETUPTOOLS = "setuptools";
   public static final String PIP = "pip";
@@ -521,8 +518,7 @@ public final class PyPackageUtil {
     final String text = String.format("foo(%s=['%s'])", keyword, requirementName);
     final PyExpression generated = PyElementGenerator.getInstance(setupPy.getProject()).createExpressionFromText(languageLevel, text);
 
-    if (generated instanceof PyCallExpression) {
-      final PyCallExpression callExpression = (PyCallExpression)generated;
+    if (generated instanceof PyCallExpression callExpression) {
 
       return Stream
         .of(callExpression.getArguments())

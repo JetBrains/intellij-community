@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.copy;
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
@@ -451,7 +451,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       float numberOfProcessedClasses = 0;
       for (PsiClass copiedClass : oldToNewMap.values()) {
         if (copiedClass == null) {
-          LOG.error(oldToNewMap.keySet());
+          LOG.error("Unexpected null value, keys = " + oldToNewMap.keySet());
           continue;
         }
         if (progress != null) {
@@ -581,11 +581,8 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
                                 final Map<PsiClass, PsiClass> oldToNewMap,
                                 Map<PsiJavaCodeReferenceElement, PsiElement> rebindExpressions) {
     final PsiElement resolved = expression.resolve();
-    if (resolved instanceof PsiClass) {
-      final PsiClass psiClass = (PsiClass)resolved;
-      if (oldToNewMap.containsKey(psiClass)) {
-        rebindExpressions.put(expression, oldToNewMap.get(psiClass));
-      }
+    if (resolved instanceof PsiClass psiClass && oldToNewMap.containsKey(psiClass)) {
+      rebindExpressions.put(expression, oldToNewMap.get(psiClass));
     }
   }
 

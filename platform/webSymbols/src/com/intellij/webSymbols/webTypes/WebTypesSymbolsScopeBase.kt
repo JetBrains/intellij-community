@@ -59,30 +59,24 @@ abstract class WebTypesSymbolsScopeBase : WebSymbolsScope, WebSymbolsContextRule
   override fun getModificationCount(): Long =
     modCount
 
-  final override fun getSymbols(namespace: SymbolNamespace?,
+  final override fun getSymbols(namespace: SymbolNamespace,
                                 kind: String,
                                 name: String?,
                                 params: WebSymbolsNameMatchQueryParams,
                                 scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
-    if (namespace != null) {
-      getMaps(params).flatMap {
-        it.getSymbols(namespace, kind, name, params, Stack(scope))
-      }.toList()
-    }
-    else emptyList()
+    getMaps(params).flatMap {
+      it.getSymbols(namespace, kind, name, params, Stack(scope))
+    }.toList()
 
 
-  final override fun getCodeCompletions(namespace: SymbolNamespace?,
+  final override fun getCodeCompletions(namespace: SymbolNamespace,
                                         kind: String,
                                         name: String?,
                                         params: WebSymbolsCodeCompletionQueryParams,
                                         scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
-    if (namespace != null) {
-      getMaps(params).flatMap {
-        it.getCodeCompletions(namespace, kind, name, params, Stack(scope))
-      }.toList()
-    }
-    else emptyList()
+    getMaps(params).flatMap {
+      it.getCodeCompletions(namespace, kind, name, params, Stack(scope))
+    }.toList()
 
   override fun getContextRules(): MultiMap<ContextKind, WebSymbolsContextKindRules> =
     contextRulesCache.value
@@ -366,16 +360,16 @@ abstract class WebTypesSymbolsScopeBase : WebSymbolsScope, WebSymbolsContextRule
     override val library: String? = webTypes.name
     private val contextExpr = webTypes.context
 
-    private val descriptionRenderer: (String) -> String? =
+    private val descriptionRenderer: (String) -> String =
       when (webTypes.descriptionMarkupWithLegacy) {
         WebTypes.DescriptionMarkup.HTML -> { doc -> doc }
-        WebTypes.DescriptionMarkup.MARKDOWN -> { doc -> HtmlMarkdownUtils.toHtml(doc, false) }
+        WebTypes.DescriptionMarkup.MARKDOWN -> { doc -> HtmlMarkdownUtils.toHtml(doc, false) ?: ("<p>$doc") }
         else -> { doc -> "<p>" + StringUtil.escapeXmlEntities(doc).replace(EOL_PATTERN, "<br>") }
       }
 
     override val defaultIcon: Icon? = webTypes.defaultIcon?.let { IconLoader.createLazy { loadIcon(it) ?: EmptyIcon.ICON_0 } }
 
-    override fun renderDescription(description: String): String? = descriptionRenderer(description)
+    override fun renderDescription(description: String): String = descriptionRenderer(description)
 
     override fun resolveSourceSymbol(source: SourceBase, cacheHolder: UserDataHolderEx): PsiElement? =
       resolveSourceLocation(source)?.let { sourceSymbolResolver(it, cacheHolder) }

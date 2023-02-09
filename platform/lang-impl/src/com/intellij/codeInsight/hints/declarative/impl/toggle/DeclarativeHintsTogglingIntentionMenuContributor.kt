@@ -25,7 +25,7 @@ class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributo
       val descriptor = HighlightInfo.IntentionActionDescriptor(action, mutableListOf(), null, null, null, null, HighlightSeverity.INFORMATION)
       intentions.intentionsToShow.add(descriptor)
     }
-    val settings = DeclarativeInlayHintsSettings.getInstance(hostFile.project)
+    val settings = DeclarativeInlayHintsSettings.getInstance()
     for (providersWithOption in context.providersWithOptions) {
       val providerId = providersWithOption.providerId
       val providerInfo = InlayHintsProviderFactory.getProviderInfo(hostFile.language, providerId) ?: continue
@@ -57,6 +57,7 @@ class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributo
     private val currentOptions = HashSet<String>()
 
     override fun addPresentation(position: InlayPosition,
+                                 payloads: List<InlayPayload>?,
                                  tooltip: String?,
                                  hasBackground: Boolean,
                                  builder: PresentationTreeBuilder.() -> Unit) {
@@ -95,7 +96,7 @@ class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributo
         if (providers.isEmpty()) return null
         val ownBypassCollectors = ArrayList<OwnCollectorInfo>()
         val sharedBypassCollectors = ArrayList<SharedCollectorInfo>()
-        val settings = DeclarativeInlayHintsSettings.getInstance(project)
+        val settings = DeclarativeInlayHintsSettings.getInstance()
         for (provider in providers) {
           val collector = provider.provider.createCollector(file, editor)
           if (collector == null) continue
@@ -124,7 +125,7 @@ class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributo
                 }
                 if (sink.attemptedToAddUnderOptions.isNotEmpty()) {
                   for (optionId in sink.attemptedToAddUnderOptions) {
-                    providersWithOptionsToToggle.add(ProviderWithOptionInfo(providerId, optionId, providerName, providerEnabled, ))
+                    providersWithOptionsToToggle.add(ProviderWithOptionInfo(providerId, optionId, providerName, providerEnabled))
                   }
                 }
               }

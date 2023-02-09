@@ -179,7 +179,7 @@ public abstract class ReloadablePanel<T> {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
   }
 

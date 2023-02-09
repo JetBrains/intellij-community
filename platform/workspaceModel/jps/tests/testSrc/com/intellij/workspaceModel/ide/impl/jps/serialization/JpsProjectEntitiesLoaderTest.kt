@@ -240,7 +240,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
   private fun loadProject(projectFile: File): EntityStorage {
     val storageBuilder = MutableEntityStorage.create()
     val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-    loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, virtualFileManager)
+    loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, storageBuilder, virtualFileManager)
     return storageBuilder.toSnapshot()
   }
 }

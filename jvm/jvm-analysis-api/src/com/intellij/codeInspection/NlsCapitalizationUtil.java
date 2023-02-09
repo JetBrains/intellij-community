@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class NlsCapitalizationUtil {
+public final class NlsCapitalizationUtil {
 
   public static boolean isCapitalizationSatisfied(String value, Nls.Capitalization capitalization) {
     if (StringUtil.isEmpty(value) || capitalization == Nls.Capitalization.NotSpecified) {

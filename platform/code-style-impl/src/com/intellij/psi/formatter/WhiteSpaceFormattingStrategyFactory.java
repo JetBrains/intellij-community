@@ -15,8 +15,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Contains utility methods for working with {@link WhiteSpaceFormattingStrategy}.
- *
- * @author Denis Zhdanov
  */
 public final class WhiteSpaceFormattingStrategyFactory {
   public static final WhiteSpaceFormattingStrategy DEFAULT_STRATEGY =

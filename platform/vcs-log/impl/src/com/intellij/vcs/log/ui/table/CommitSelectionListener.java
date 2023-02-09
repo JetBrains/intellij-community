@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,12 +17,12 @@ import java.util.Arrays;
 import java.util.List;
 
 public abstract class CommitSelectionListener<T extends VcsCommitMetadata> implements ListSelectionListener {
-  private final static Logger LOG = Logger.getInstance(CommitSelectionListener.class);
-  @NotNull protected final VcsLogGraphTable myGraphTable;
-  @NotNull private final DataGetter<? extends T> myCommitDetailsGetter;
+  private static final Logger LOG = Logger.getInstance(CommitSelectionListener.class);
+  protected final @NotNull VcsLogGraphTable myGraphTable;
+  private final @NotNull DataGetter<? extends T> myCommitDetailsGetter;
 
-  @Nullable private ListSelectionEvent myLastEvent;
-  @Nullable private ProgressIndicator myLastRequest;
+  private @Nullable ListSelectionEvent myLastEvent;
+  private @Nullable ProgressIndicator myLastRequest;
 
   protected CommitSelectionListener(@NotNull VcsLogGraphTable table,
                                     @NotNull DataGetter<? extends T> dataGetter) {

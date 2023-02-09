@@ -68,6 +68,27 @@ public class OverflowingLoop {
     }
   }
 
+  void withoutInit1(int s) {
+    int i = s;
+    <warning descr="Loop executes zero or billions of times">for</warning> (; i < 10; i--) {
+      System.out.println("asdsakdj");
+    }
+  }
+
+  void withoutInit2(int s) {
+    int i = s;
+    <warning descr="Loop executes zero or billions of times">for</warning> (; i < 10; i -= 1) {
+      System.out.println("asdsakdj");
+    }
+  }
+
+  int iField = 0;
+  void withoutInit3() {
+    for (; iField < 10; iField -= 1) {
+      System.out.println("asdsakdj");
+    }
+  }
+
   void byteUsage() {
     for (byte i = 0; i >= 0; i++) {
       System.out.println(i);

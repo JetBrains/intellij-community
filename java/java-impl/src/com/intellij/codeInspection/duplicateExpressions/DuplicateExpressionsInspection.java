@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -19,18 +19,18 @@ import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
-/**
- * @author Pavel.Dolgov
- */
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
 public final class DuplicateExpressionsInspection extends LocalInspectionTool {
   public int complexityThreshold = 70;
 
@@ -231,7 +231,7 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
   private static boolean canReplaceOtherOccurrences(@NotNull PsiExpression originalOccurrence,
                                                     @NotNull List<? extends PsiExpression> occurrences,
                                                     @NotNull PsiVariable variable) {
-    return occurrences.stream().anyMatch(occurrence -> occurrence != originalOccurrence && canReplaceWith(occurrence, variable));
+    return ContainerUtil.exists(occurrences, occurrence -> occurrence != originalOccurrence && canReplaceWith(occurrence, variable));
   }
 
   private static boolean canReplaceWith(@NotNull PsiExpression occurrence, @NotNull PsiVariable variable) {
@@ -253,19 +253,16 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
   @Nullable
   private static PsiVariable findVariableByInitializer(@NotNull PsiExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiVariable) {
-      PsiVariable variable = (PsiVariable)parent;
-      if (PsiTreeUtil.isAncestor(variable.getInitializer(), expression, false)) {
-        return variable;
-      }
+    if (parent instanceof PsiVariable variable && PsiTreeUtil.isAncestor(variable.getInitializer(), expression, false)) {
+      return variable;
     }
     return null;
   }
 
   @Override
-  public @NotNull JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      JavaBundle.message("inspection.duplicate.expressions.complexity.threshold"), this, "complexityThreshold", 3);
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("complexityThreshold", JavaBundle.message("inspection.duplicate.expressions.complexity.threshold"), 1, 1000));
   }
 
   private static final class IntroduceVariableFix implements LocalQuickFix {

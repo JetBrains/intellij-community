@@ -7,14 +7,26 @@ import com.intellij.openapi.projectRoots.Sdk
 interface IntelliJNewProjectWizardData {
 
   val sdkProperty: ObservableMutableProperty<Sdk?>
-  val moduleNameProperty: ObservableMutableProperty<String>
-  val contentRootProperty: ObservableMutableProperty<String>
-  val moduleFileLocationProperty: ObservableMutableProperty<String>
-  val addSampleCodeProperty: ObservableMutableProperty<Boolean>
 
   var sdk: Sdk?
+
+  val moduleNameProperty: ObservableMutableProperty<String>
+
   var moduleName: String
+
+  val contentRootProperty: ObservableMutableProperty<String>
+
   var contentRoot: String
+
+  val moduleFileLocationProperty: ObservableMutableProperty<String>
+
   var moduleFileLocation: String
+
+  val addSampleCodeProperty: ObservableMutableProperty<Boolean>
+
   var addSampleCode: Boolean
+
+  val generateOnboardingTipsProperty: ObservableMutableProperty<Boolean>
+
+  val generateOnboardingTips: Boolean
 }

@@ -59,12 +59,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
    * @param withIdeSettings specifies whether to load application settings or not
    * @return all configurables as a plain list except the root configurable group
    */
-  public static @NotNull List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings) {
+  public static @NotNull List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings, boolean checkNonDefaultProject) {
     List<Configurable> list = new ArrayList<>();
 
     for (Configurable configurable : ConfigurableExtensionPointUtil.getConfigurables(
       withIdeSettings ? project : currentOrDefaultProject(project),
-      withIdeSettings
+      withIdeSettings, checkNonDefaultProject
     )) {
       list.add(configurable);
       if (configurable instanceof Configurable.Composite) {

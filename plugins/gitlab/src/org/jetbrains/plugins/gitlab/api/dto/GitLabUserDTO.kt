@@ -3,12 +3,24 @@ package org.jetbrains.plugins.gitlab.api.dto
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.collaboration.auth.AccountDetails
+import com.intellij.openapi.util.NlsSafe
 
 @GraphQLFragment("graphql/fragment/user.graphql")
-class GitLabUserDTO(
+data class GitLabUserDTO(
   val id: String,
   val username: String,
-  override val name: String,
+  override val name: @NlsSafe String,
   override val avatarUrl: String?,
   val webUrl: String
-) : AccountDetails
+) : AccountDetails {
+
+  companion object {
+    fun fromRestDTO(dto: GitLabUserRestDTO): GitLabUserDTO = GitLabUserDTO(
+      id = "gid://gitlab/User/${dto.id}",
+      username = dto.username,
+      name = dto.name,
+      avatarUrl = dto.avatarUrl?.removePrefix("https://gitlab.com"),
+      webUrl = dto.webUrl
+    )
+  }
+}

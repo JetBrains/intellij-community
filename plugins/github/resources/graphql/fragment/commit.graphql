@@ -5,6 +5,7 @@ fragment commit on Commit {
     }
     messageHeadline
     messageBodyHTML
+    committedDate
     parents(first: 100) {
         nodes {
             ...commitHash

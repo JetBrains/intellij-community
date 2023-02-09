@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,8 +24,8 @@ public final class VcsLogColorManagerImpl implements VcsLogColorManager {
   private static final Color[] ROOT_COLORS =
     {JBColor.RED, JBColor.GREEN, JBColor.BLUE, JBColor.ORANGE, JBColor.CYAN, JBColor.YELLOW, JBColor.MAGENTA, JBColor.PINK};
 
-  @NotNull private final Map<String, Color> myPaths2Colors;
-  @NotNull private final List<FilePath> myPaths;
+  private final @NotNull Map<String, Color> myPaths2Colors;
+  private final @NotNull List<FilePath> myPaths;
 
   public VcsLogColorManagerImpl(@NotNull Set<? extends VirtualFile> roots) {
     this(ContainerUtil.map(ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getName)),
@@ -40,8 +40,7 @@ public final class VcsLogColorManagerImpl implements VcsLogColorManager {
     }
   }
 
-  @NotNull
-  private static Color getColor(int rootNumber, int rootsCount) {
+  private static @NotNull Color getColor(int rootNumber, int rootsCount) {
     Color color;
     if (rootNumber >= ROOT_COLORS.length) {
       double balance = ((double)(rootNumber / ROOT_COLORS.length)) / (rootsCount / ROOT_COLORS.length);
@@ -55,25 +54,21 @@ public final class VcsLogColorManagerImpl implements VcsLogColorManager {
     return color;
   }
 
-  @NotNull
-  public static JBColor getBackgroundColor(@NotNull final Color baseRootColor) {
+  public static @NotNull JBColor getBackgroundColor(final @NotNull Color baseRootColor) {
     return JBColor.lazy(() -> ColorUtil.mix(baseRootColor, UIUtil.getTableBackground(), 0.75));
   }
 
-  @NotNull
   @Override
-  public Color getPathColor(@NotNull FilePath path) {
+  public @NotNull Color getPathColor(@NotNull FilePath path) {
     return getColor(path.getPath());
   }
 
-  @NotNull
   @Override
-  public Color getRootColor(@NotNull VirtualFile root) {
+  public @NotNull Color getRootColor(@NotNull VirtualFile root) {
     return getColor(root.getPath());
   }
 
-  @NotNull
-  private Color getColor(@NotNull String path) {
+  private @NotNull Color getColor(@NotNull String path) {
     Color color = myPaths2Colors.get(path);
     if (color == null) {
       LOG.error("No color record for path " + path + ". All paths: " + myPaths2Colors);
@@ -82,14 +77,12 @@ public final class VcsLogColorManagerImpl implements VcsLogColorManager {
     return color;
   }
 
-  @NotNull
-  private static Color getDefaultRootColor() {
+  private static @NotNull Color getDefaultRootColor() {
     return UIUtil.getTableBackground();
   }
 
-  @NotNull
   @Override
-  public Collection<FilePath> getPaths() {
+  public @NotNull Collection<FilePath> getPaths() {
     return myPaths;
   }
 }

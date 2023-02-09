@@ -31,6 +31,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   private var panelContext = PanelContext()
 
   private val _rows = mutableListOf<RowImpl>()
+  private val rowsRanges = mutableListOf<RowsRangeImpl>()
 
   private var visible = true
   private var enabled = true
@@ -153,7 +154,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun rowsRange(init: Panel.() -> Unit): RowsRangeImpl {
-    val result = RowsRangeImpl(this, _rows.size)
+    val result = createRowRange()
     this.init()
     result.endIndex = _rows.size - 1
     return result
@@ -186,7 +187,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   @Suppress("OVERRIDE_DEPRECATION")
-  override fun group(title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?, init: Panel.() -> Unit): Panel {
+  override fun group(@NlsContexts.BorderTitle title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?, init: Panel.() -> Unit): Panel {
     lateinit var result: Panel
     val row = row {
       result = panel {
@@ -209,7 +210,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun groupRowsRange(title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?,
                               init: Panel.() -> Unit): RowsRangeImpl {
-    val result = RowsRangeImpl(this, _rows.size)
+    val result = createRowRange()
     createSeparatorRow(title)
     if (indent) {
       indent(init)
@@ -245,20 +246,23 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   @Deprecated("Use buttonsGroup(...) instead")
   @ApiStatus.ScheduledForRemoval
-  override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, title: String?, indent: Boolean, init: Panel.() -> Unit) {
+  override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String?,
+                               indent: Boolean, init: Panel.() -> Unit) {
     buttonsGroup(title, indent, init)
       .bind(MutableProperty(binding.get, binding.set), type)
   }
 
-  override fun buttonsGroup(title: String?, indent: Boolean, init: Panel.() -> Unit): ButtonsGroupImpl {
+  override fun buttonsGroup(@NlsContexts.BorderTitle title: String?, indent: Boolean, init: Panel.() -> Unit): ButtonsGroupImpl {
     val result = ButtonsGroupImpl(this, _rows.size)
+    rowsRanges.add(result)
+
     dialogPanelConfig.context.addButtonsGroup(result)
     try {
       if (title != null) {
         val row = row {
           @Suppress("DialogTitleCapitalization")
           label(title)
-            .applyToComponent { putClientProperty(DslComponentProperty.NO_BOTTOM_GAP, true) }
+            .applyToComponent { putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(bottom = false)) }
         }
         row.internalBottomGap = spacingConfiguration.buttonGroupHeaderBottomGap
       }
@@ -278,17 +282,17 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun onApply(callback: () -> Unit): PanelImpl {
-    dialogPanelConfig.applyCallbacks.register(null, callback)
+    dialogPanelConfig.applyCallbacks.list(null).add(callback)
     return this
   }
 
   override fun onReset(callback: () -> Unit): PanelImpl {
-    dialogPanelConfig.resetCallbacks.register(null, callback)
+    dialogPanelConfig.resetCallbacks.list(null).add(callback)
     return this
   }
 
   override fun onIsModified(callback: () -> Boolean): PanelImpl {
-    dialogPanelConfig.isModifiedCallbacks.register(null, callback)
+    dialogPanelConfig.isModifiedCallbacks.list(null).add(callback)
     return this
   }
 
@@ -318,8 +322,9 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     doEnabled(parentEnabled && enabled, range)
   }
 
-  fun isEnabled(): Boolean {
-    return enabled && (parent == null || parent.isEnabled())
+  fun isEnabled(row: RowImpl): Boolean {
+    val rowIndex = rows.indexOf(row)
+    return enabled && isRowFromEnabledRange(rowIndex) && (parent == null || parent.isEnabled())
   }
 
   override fun enabledIf(predicate: ComponentPredicate): PanelImpl {
@@ -348,17 +353,20 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     doVisible(parentVisible && visible, range)
   }
 
-  fun isVisible(): Boolean {
-    return visible && (parent == null || parent.isVisible())
+  fun isVisible(row: RowImpl): Boolean {
+    val rowIndex = rows.indexOf(row)
+    return visible && isRowFromVisibleRange(rowIndex) && (parent == null || parent.isVisible())
   }
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelImpl {
     super.horizontalAlign(horizontalAlign)
     return this
   }
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): PanelImpl {
     super.verticalAlign(verticalAlign)
     return this
@@ -380,7 +388,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun indent(init: Panel.() -> Unit): RowsRangeImpl {
-    val result = RowsRangeImpl(this, _rows.size)
+    val result = createRowRange()
     val prevPanelContext = panelContext
     panelContext = panelContext.copy(indentCount = prevPanelContext.indentCount + 1)
     try {
@@ -395,14 +403,32 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   private fun doEnabled(isEnabled: Boolean, range: IntRange) {
     for (i in range) {
-      _rows[i].enabledFromParent(isEnabled)
+      _rows[i].enabledFromParent(isEnabled && isRowFromEnabledRange(i))
     }
+  }
+
+  private fun isRowFromEnabledRange(rowIndex: Int): Boolean {
+    for (rowsRange in rowsRanges) {
+      if (rowIndex >= rowsRange.startIndex && rowIndex <= rowsRange.endIndex && !rowsRange.enabled) {
+        return false
+      }
+    }
+    return true
   }
 
   private fun doVisible(isVisible: Boolean, range: IntRange) {
     for (i in range) {
-      _rows[i].visibleFromParent(isVisible)
+      _rows[i].visibleFromParent(isVisible && isRowFromVisibleRange(i))
     }
+  }
+
+  private fun isRowFromVisibleRange(rowIndex: Int): Boolean {
+    for (rowsRange in rowsRanges) {
+      if (rowIndex >= rowsRange.startIndex && rowIndex <= rowsRange.endIndex && !rowsRange.visible) {
+        return false
+      }
+    }
+    return true
   }
 
   private fun setTopGroupGap(row: RowImpl, topGap: Boolean?) {
@@ -421,6 +447,12 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     else {
       row.bottomGap(if (bottomGap) BottomGap.MEDIUM else BottomGap.NONE)
     }
+  }
+
+  private fun createRowRange(): RowsRangeImpl {
+    val result = RowsRangeImpl(this, _rows.size)
+    rowsRanges.add(result)
+    return result
   }
 }
 

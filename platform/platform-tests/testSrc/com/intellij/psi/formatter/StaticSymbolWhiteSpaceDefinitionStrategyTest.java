@@ -5,9 +5,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertSame;
 
-/**
- * @author Denis Zhdanov
- */
 public class StaticSymbolWhiteSpaceDefinitionStrategyTest {
 
   private StaticSymbolWhiteSpaceDefinitionStrategy myStrategy;

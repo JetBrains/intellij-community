@@ -4,7 +4,6 @@ package com.intellij.psi
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream
@@ -15,6 +14,8 @@ import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.util.function.Function
+import java.util.function.IntFunction
+import java.util.function.ToIntFunction
 
 abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
                                                                  private val persistentAttribute: FileAttribute) : FilePropertyKey<T> {
@@ -59,7 +60,7 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
     }
   }
 
-  protected fun keysEqual(k1: RAW?, k2: RAW?): Boolean = (k1 == k2)
+  private fun keysEqual(k1: RAW?, k2: RAW?): Boolean = (k1 == k2)
 
   protected fun readValue(virtualFile: VirtualFile): RAW? {
     if (virtualFile !is VirtualFileWithId) {
@@ -109,12 +110,12 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
     @JvmStatic
     @get:VisibleForTesting
     val READ_PERSISTENT_VALUE: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
-      Registry.`is`("retrieve.pushed.properties.from.vfs", false) or Registry.`is`("scanning.in.smart.mode", false)
+      Registry.`is`("retrieve.pushed.properties.from.vfs", true) or Registry.`is`("scanning.in.smart.mode", true)
     }
 
     @JvmStatic
     private val NULL_MARKER by lazy(LazyThreadSafetyMode.PUBLICATION) {
-      if (Registry.`is`("cache.nulls.for.pushed.properties", false) or Registry.`is`("scanning.in.smart.mode", false)) {
+      if (Registry.`is`("cache.nulls.for.pushed.properties", true)) {
         Object()
       }
       else {
@@ -139,11 +140,30 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
     }
 
     @JvmStatic
+    fun createPersistentIntKey(userDataName: String,
+                               persistentDataName: String,
+                               persistentDataVersion: Int): FilePropertyKey<Int> {
+      return FilePropertyIntKey(userDataName, FileAttribute(persistentDataName, persistentDataVersion, true), { t -> t }, { t -> t })
+    }
+
+    @JvmStatic
     fun <T : Enum<T>> createPersistentEnumKey(userDataName: String,
                                               persistentDataName: String,
                                               persistentDataVersion: Int,
                                               clazz: Class<T>): FilePropertyKey<T> {
-      return FilePropertyEnumKey(userDataName, FileAttribute(persistentDataName, persistentDataVersion, true), clazz)
+      fun fromRaw(value: Int): T? {
+        if (value >= 0 && value < clazz.enumConstants.size) {
+          return clazz.enumConstants[value]
+        }
+        else {
+          return null
+        }
+      }
+
+      fun toRaw(value: T): Int = value.ordinal
+
+      return FilePropertyIntKey(userDataName, FileAttribute(persistentDataName, persistentDataVersion, true),
+                                { t -> toRaw(t) }, { t -> fromRaw(t) })
     }
   }
 }
@@ -163,9 +183,11 @@ internal class FilePropertyStringKey<T>(name: String, persistentAttribute: FileA
   override fun writeValue(stream: AttributeOutputStream, newValue: String?) = stream.writeEnumeratedString(newValue)
 }
 
-internal class FilePropertyEnumKey<T : Enum<T>>(name: String,
-                                                persistentAttribute: FileAttribute,
-                                                private val clazz: Class<T>) : FilePropertyKeyImpl<T, Int>(name, persistentAttribute) {
+internal class FilePropertyIntKey<T>(name: String,
+                                     persistentAttribute: FileAttribute,
+                                     private val fnToRaw: ToIntFunction<T>,
+                                     private val fnFromRaw: IntFunction<T?>) : FilePropertyKeyImpl<T, Int>(name,
+                                                                                                           persistentAttribute) {
   @Throws(IOException::class)
   override fun readValue(stream: AttributeInputStream): Int = DataInputOutputUtil.readINT(stream)
 
@@ -174,14 +196,6 @@ internal class FilePropertyEnumKey<T : Enum<T>>(name: String,
     newValue?.let { DataInputOutputUtil.writeINT(stream, it) }
   }
 
-  override fun fromRaw(value: Int): T? {
-    if (value >= 0 && value < clazz.enumConstants.size) {
-      return clazz.enumConstants[value]
-    }
-    else {
-      return null
-    }
-  }
-
-  override fun toRaw(value: T): Int = value.ordinal
+  override fun fromRaw(value: Int): T? = fnFromRaw.apply(value)
+  override fun toRaw(value: T): Int = fnToRaw.applyAsInt(value)
 }

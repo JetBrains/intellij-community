@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
@@ -20,12 +20,11 @@ import com.intellij.psi.util.PsiTreeUtil
 internal class CreateAnnotationAction(target: PsiModifierListOwner, override val request: AnnotationRequest) :
   CreateTargetAction<PsiModifierListOwner>(target, request) {
 
-  override fun getText(): String =
-    AddAnnotationPsiFix.calcText(target, StringUtilRt.getShortName(request.qualifiedName))
+  override fun getText(): String = AddAnnotationPsiFix.calcText(target, StringUtilRt.getShortName(request.qualifiedName))
 
   override fun getFamilyName(): String = QuickFixBundle.message("create.annotation.family")
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, file: PsiFile, target: PsiModifierListOwner) {
     val modifierList = target.modifierList ?: return
     addAnnotationToModifierList(modifierList, request)
   }
@@ -55,7 +54,7 @@ internal class CreateAnnotationAction(target: PsiModifierListOwner, override val
                                                 list: PsiAnnotationOwner,
                                                 annotationRequest: AnnotationRequest) {
       val project = context.project
-      val annotation = list.addAnnotation(annotationRequest.qualifiedName)
+      val annotation = list.findAnnotation(annotationRequest.qualifiedName) ?: list.addAnnotation(annotationRequest.qualifiedName)
       val psiElementFactory = PsiElementFactory.getInstance(project)
 
       fillAnnotationAttributes(annotation, annotationRequest, psiElementFactory, context)

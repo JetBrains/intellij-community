@@ -1,15 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.util.concurrency.AppExecutorUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.images.sync.jpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
-import java.nio.file.Paths
 
 fun main(args: Array<String>) {
   try {
-    generateIconsClasses(args.firstOrNull()?.let { Paths.get(it) })
+    generateIconClasses(args.firstOrNull()?.let { Path.of(it) })
   }
   finally {
     shutdownAppScheduledExecutorService()
@@ -29,10 +29,9 @@ data class IntellijIconClassGeneratorModuleConfig(
    * The directory where icons are located relative to resource root.
    */
   val iconDirectory: String? = null,
-) {
-}
+)
 
-abstract class IconsClasses {
+abstract class IconClasses {
   open val homePath: String
     get() = System.getProperty("user.dir")
 
@@ -44,7 +43,7 @@ abstract class IconsClasses {
   open fun getConfigForModule(moduleName: String): IntellijIconClassGeneratorModuleConfig? = null
 }
 
-internal fun generateIconsClasses(dbFile: Path?, config: IconsClasses = IntellijIconClassGeneratorConfig()) {
+internal fun generateIconClasses(dbFile: Path?, config: IconClasses = IntellijIconClassGeneratorConfig()) {
   val home = Path.of(config.homePath)
 
   val modules = config.modules
@@ -63,7 +62,9 @@ internal fun generateIconsClasses(dbFile: Path?, config: IconsClasses = Intellij
 
   if (dbFile != null) {
     val preCompiler = ImageSvgPreCompiler()
-    preCompiler.preCompileIcons(modules, dbFile)
+    runBlocking {
+      preCompiler.preCompileIcons(modules, dbFile)
+    }
   }
 
   val checker = ImageSanityChecker(home)

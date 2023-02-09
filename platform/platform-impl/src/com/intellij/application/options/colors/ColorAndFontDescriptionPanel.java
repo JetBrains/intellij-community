@@ -166,8 +166,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
   public void reset(@NotNull EditorSchemeAttributeDescriptor attrDescription) {
     try {
       myUiEventsEnabled = false;
-      if (!(attrDescription instanceof ColorAndFontDescription)) return;
-      ColorAndFontDescription description = (ColorAndFontDescription)attrDescription;
+      if (!(attrDescription instanceof ColorAndFontDescription description)) return;
 
       if (description.isFontEnabled()) {
         myLabelFont.setEnabled(description.isEditable());
@@ -264,8 +263,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
 
   @Override
   public void apply(@NotNull EditorSchemeAttributeDescriptor attrDescription, EditorColorsScheme scheme) {
-    if (!(attrDescription instanceof ColorAndFontDescription)) return;
-    ColorAndFontDescription description = (ColorAndFontDescription)attrDescription;
+    if (!(attrDescription instanceof ColorAndFontDescription description)) return;
 
     description.setInherited(myInheritAttributesBox.isSelected());
     if (description.isInherited()) {

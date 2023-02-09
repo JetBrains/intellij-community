@@ -41,13 +41,14 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.FocusManagerImpl
-import com.intellij.toolWindow.StripeButton
+import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.PlatformUtils
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.XDebuggerManager
@@ -321,7 +322,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
 
     toggleBreakpointTask(sample, { logicalPosition }, checkLine = false) {
       text(JavaLessonsBundle.message("java.onboarding.balloon.click.here"),
-           LearningBalloonConfig(Balloon.Position.below, width = 0, duplicateMessage = false))
+           LearningBalloonConfig(Balloon.Position.below, width = 0, cornerToPointerDistance = JBUI.scale(20)))
       text(JavaLessonsBundle.message("java.onboarding.toggle.breakpoint.1",
                                      code("6.5"), code("findAverage"), code("26")))
       text(JavaLessonsBundle.message("java.onboarding.toggle.breakpoint.2"))
@@ -342,7 +343,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
 
     task {
       rehighlightPreviousUi = true
-      gotItStep(Balloon.Position.above, 400,
+      gotItStep(Balloon.Position.above, width = 0,
                 JavaLessonsBundle.message("java.onboarding.balloon.about.debug.panel",
                                           strong(UIBundle.message("tool.window.name.debug")),
                                           if (UIExperiment.isNewDebuggerUIEnabled()) 0 else 1,
@@ -397,20 +398,23 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     }
 
     task {
+      val introductionText = JavaLessonsBundle.message("java.onboarding.temporary.configuration.description",
+                                                       strong(ActionsBundle.actionText("NewUiRunWidget")),
+                                                       icon(AllIcons.Actions.Execute),
+                                                       icon(AllIcons.Actions.StartDebugger))
       val runOptionsText = if (PlatformUtils.isIdeaUltimate()) {
         JavaLessonsBundle.message("java.onboarding.run.options.ultimate",
-                                  icon(AllIcons.Actions.Execute),
-                                  icon(AllIcons.Actions.StartDebugger),
                                   icon(AllIcons.Actions.Profile),
-                                  icon(AllIcons.General.RunWithCoverage))
+                                  icon(AllIcons.General.RunWithCoverage),
+                                  icon(AllIcons.Actions.More))
       }
       else {
         JavaLessonsBundle.message("java.onboarding.run.options.community",
-                                  icon(AllIcons.Actions.Execute),
-                                  icon(AllIcons.Actions.StartDebugger),
-                                  icon(AllIcons.General.RunWithCoverage))
+                                  icon(AllIcons.General.RunWithCoverage),
+                                  icon(AllIcons.Actions.More))
       }
-      text(JavaLessonsBundle.message("java.onboarding.temporary.configuration.description") + " $runOptionsText")
+
+      text("$introductionText $runOptionsText")
       text(JavaLessonsBundle.message("java.onboarding.run.sample", icon(AllIcons.Actions.Execute), action("Run")))
       text(JavaLessonsBundle.message("java.onboarding.run.sample.balloon", icon(AllIcons.Actions.Execute), action("Run")),
            LearningBalloonConfig(Balloon.Position.below, 0))
@@ -421,8 +425,8 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
 
   private fun LessonContext.openLearnToolwindow() {
     task {
-      triggerAndBorderHighlight().component { stripe: StripeButton ->
-        stripe.windowInfo.id == "Learn"
+      triggerAndBorderHighlight().component { stripe: ActionButton ->
+        stripe.action.templateText == LearnBundle.message("toolwindow.stripe.Learn")
       }
     }
 
@@ -474,8 +478,8 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     }
 
     task {
-      triggerAndBorderHighlight().component { stripe: StripeButton ->
-        stripe.windowInfo.id == "Project"
+      triggerAndBorderHighlight().component { stripe: ActionButton ->
+        stripe.action.templateText == IdeUICustomization.getInstance().getProjectViewTitle(project)
       }
     }
 
@@ -487,7 +491,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       text(JavaLessonsBundle.message("java.onboarding.project.view.description",
                                      action("ActivateProjectToolWindow")))
       text(JavaLessonsBundle.message("java.onboarding.balloon.project.view"),
-           LearningBalloonConfig(Balloon.Position.atRight, width = 0))
+           LearningBalloonConfig(Balloon.Position.atRight, width = 0, cornerToPointerDistance = JBUI.scale(8)))
       triggerUI().treeItem { tree: JTree, path: TreePath ->
         val result = path.pathCount >= 2 && path.getPathComponent(1).isToStringContains("IdeaLearningProject")
         if (result) {

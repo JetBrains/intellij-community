@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.editor.actions;
 
-/**
- * @author Denis Zhdanov
- */
 public class PreviousWordInDifferentHumpsModeAction extends TextComponentEditorAction {
   public PreviousWordInDifferentHumpsModeAction() {
     super(new NextPrevWordHandler(false, false, true));

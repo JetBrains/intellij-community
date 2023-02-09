@@ -118,7 +118,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
 
   override fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?) {
     try {
-      val bytes: ByteArray
+      val bytes: ByteArray?
       if (pluginDescriptor == null) {
         when (requestor) {
           is TempUIThemeBasedLookAndFeelInfo -> {
@@ -143,7 +143,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
       }
       else {
         val classLoader = pluginDescriptor.classLoader
-        bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), classLoader, true)
+        bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), classLoader)
         if (bytes == null) {
           LOG.error("Cannot found scheme $resourceName in $classLoader")
           return

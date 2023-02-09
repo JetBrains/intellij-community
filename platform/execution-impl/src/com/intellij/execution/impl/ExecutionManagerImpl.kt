@@ -133,6 +133,12 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         DELEGATED_RUN_PROFILE_KEY[runProfile] = runProfileToDelegate
       }
     }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun getDelegatedRunProfile(runProfile: RunProfile): RunProfile? {
+      return if (runProfile is UserDataHolder) runProfile.getUserData(DELEGATED_RUN_PROFILE_KEY) else null
+    }
   }
 
   init {

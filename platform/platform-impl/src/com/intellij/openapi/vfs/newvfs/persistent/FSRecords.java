@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -22,12 +23,16 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.util.ExceptionUtil;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.*;
+import com.intellij.util.io.ClosedStorageException;
+import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PersistentHashMapValueStorage;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
@@ -41,6 +46,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
+import java.util.zip.ZipException;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
 
@@ -59,7 +65,6 @@ public final class FSRecords {
   @Deprecated
   static final boolean bulkAttrReadSupport = SystemProperties.getBooleanProperty("idea.bulk.attr.read", false);
 
-  static final boolean useCompressionUtil = SystemProperties.getBooleanProperty("idea.use.lightweight.compression.for.vfs", false);
   /**
    * If true -> use {@link CompactRecordsTable} for managing attributes record, instead of default {@link com.intellij.util.io.storage.RecordsTable}
    */
@@ -91,14 +96,14 @@ public final class FSRecords {
   }
 
   private static int calculateVersion() {
-    return nextMask(59 + (PersistentFSRecordsStorage.RECORDS_STORAGE_KIND.ordinal()),  // acceptable range is [0..255]
+    return nextMask(59 + (PersistentFSRecordsStorageFactory.RECORDS_STORAGE_KIND.ordinal()),  // acceptable range is [0..255]
                     8,
                     nextMask(useContentHashes,
                     nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
                     nextMask(bulkAttrReadSupport,
                     nextMask(inlineAttributes,
                     nextMask(SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false),
-                    nextMask(useCompressionUtil,
+                    nextMask(false, // feel free to use
                     nextMask(useSmallAttrTable,
                     nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
                     nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
@@ -127,8 +132,7 @@ public final class FSRecords {
       fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
 
     InvertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
@@ -158,13 +162,13 @@ public final class FSRecords {
     return ourCurrentVersion;
   }
 
-  static void connect() {
+  static void connect(@NotNull VfsLog vfsLog) {
     if (IOUtil.isSharedCachesEnabled()) {
       IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
     }
     try {
       ourCurrentVersion = calculateVersion();
-      ourConnection = PersistentFSConnector.connect(getCachesDir(), ourCurrentVersion, useContentHashes);
+      ourConnection = PersistentFSConnector.connect(getCachesDir(), ourCurrentVersion, useContentHashes, vfsLog.getInterceptors());
       ourContentAccessor = new PersistentFSContentAccessor(useContentHashes, ourConnection);
       ourAttributeAccessor = new PersistentFSAttributeAccessor(ourConnection);
       ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourConnection);
@@ -173,8 +177,8 @@ public final class FSRecords {
         ourTreeAccessor.ensureLoaded();
       }
       catch (IOException e) {
-        LOG.error(e);
-        handleError(e);
+        LOG.error(e);//because we need more details
+        throw handleError(e);
       }
     }
     finally {
@@ -189,11 +193,10 @@ public final class FSRecords {
 
   public static long getCreationTimestamp() {
     try {
-      return ourConnection.getTimestamp();
+      return getConnectionOrFail().getTimestamp();
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -203,8 +206,7 @@ public final class FSRecords {
       return ourRecordAccessor.createRecord();
     }
     catch (Exception e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -217,11 +219,10 @@ public final class FSRecords {
     try {
       //ourConnection.incModCount(id) -> will be done anyway in .setFlags(FREE_RECORD)
       markAsDeletedRecursively(id);
-      ourConnection.markDirty();
+      getConnectionOrFail().markDirty();
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -230,7 +231,7 @@ public final class FSRecords {
       markAsDeletedRecursively(subRecord);
     }
 
-    int nameId = ourConnection.getRecords().getNameId(id);
+    int nameId = getConnectionOrFail().getRecords().getNameId(id);
     if (PersistentFS.isDirectory(getFlags(id))) {
       ourTreeAccessor.deleteDirectoryRecord(id);
     }
@@ -244,35 +245,41 @@ public final class FSRecords {
       return ourTreeAccessor.listRoots();
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
   @TestOnly
   static void force() {
     try {
-      ourConnection.doForce();
+      getConnectionOrFail().doForce();
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
   @TestOnly
   static boolean isDirty() {
-    return ourConnection.isDirty();
+    return getConnectionOrFail().isDirty();
   }
 
   static @PersistentFS.Attributes int getFlags(int id) {
     try {
-      return ourConnection.getRecords().getFlags(id);
+      return getConnectionOrFail().getRecords().getFlags(id);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
+  }
+
+  @NotNull
+  private static PersistentFSConnection getConnectionOrFail() {
+    PersistentFSConnection connection = ourConnection;
+    if (connection == null) {
+      throw new AlreadyDisposedException("VFS is already disposed");
+    }
+    return connection;
   }
 
   @ApiStatus.Internal
@@ -281,8 +288,7 @@ public final class FSRecords {
       return ourRecordAccessor.isDeleted(id);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -291,8 +297,7 @@ public final class FSRecords {
       return ourTreeAccessor.findOrCreateRootRecord(rootUrl);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -301,8 +306,7 @@ public final class FSRecords {
       ourTreeAccessor.loadRootData(id, path, fs);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -311,8 +315,7 @@ public final class FSRecords {
       ourTreeAccessor.loadDirectoryData(id, path, fs);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -321,8 +324,7 @@ public final class FSRecords {
       ourTreeAccessor.deleteRootRecord(fileId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -331,8 +333,7 @@ public final class FSRecords {
       return ourTreeAccessor.listIds(fileId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -341,8 +342,7 @@ public final class FSRecords {
       return ourTreeAccessor.mayHaveChildren(fileId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -355,8 +355,7 @@ public final class FSRecords {
       return ourTreeAccessor.doLoadChildren(parentId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -369,8 +368,7 @@ public final class FSRecords {
       return ourTreeAccessor.wereChildrenAccessed(id);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -378,7 +376,9 @@ public final class FSRecords {
   // Obtain fresh children and try to apply `childrenConvertor` to the children of `parentId`.
   // If everything is still valid (i.e. no one changed the list in the meantime), commit.
   // Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
-  static @NotNull ListResult update(@NotNull VirtualFile parent, int parentId, @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
+  static @NotNull ListResult update(@NotNull VirtualFile parent,
+                                    int parentId,
+                                    @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
     SlowOperations.assertSlowOperationsAreAllowed();
 
     assert parentId > 0 : parentId;
@@ -402,8 +402,8 @@ public final class FSRecords {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + toSave);
         }
-        ourConnection.markRecordAsModified(parentId);
-        ourConnection.markDirty();
+        getConnectionOrFail().markRecordAsModified(parentId);
+        getConnectionOrFail().markDirty();
         updateSymlinksForNewChildren(parent, children, toSave);
         ourTreeAccessor.doSaveChildren(parentId, toSave);
       }
@@ -414,9 +414,7 @@ public final class FSRecords {
       throw e;
     }
     catch (Throwable e) {
-      handleError(e);
-      ExceptionUtil.rethrow(e);
-      return result;
+      throw handleError(e);
     }
     finally {
       updateLock.unlock(parentId);
@@ -443,21 +441,20 @@ public final class FSRecords {
             LOG.debug("Move children from " + fromParentId + " to " + toParentId + "; children = " + children);
           }
 
-          ourConnection.markRecordAsModified(toParentId);
+          getConnectionOrFail().markRecordAsModified(toParentId);
           ourTreeAccessor.doSaveChildren(toParentId, children);
 
-          ourConnection.markRecordAsModified(fromParentId);
+          getConnectionOrFail().markRecordAsModified(fromParentId);
           ourTreeAccessor.doSaveChildren(fromParentId, new ListResult(Collections.emptyList(), fromParentId));
 
-          ourConnection.markDirty();
+          getConnectionOrFail().markDirty();
         }
         catch (ProcessCanceledException e) {
           // NewVirtualFileSystem.list methods can be interrupted now
           throw e;
         }
         catch (Throwable e) {
-          handleError(e);
-          ExceptionUtil.rethrow(e);
+          throw handleError(e);
         }
       }
       finally {
@@ -502,40 +499,38 @@ public final class FSRecords {
         String result = StringUtil.nullize(IOUtil.readUTF(stream));
         return result == null ? null : FileUtil.toSystemIndependentName(result);
       }
+      return null;
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
-    return null;
   }
 
   static void storeSymlinkTarget(int id, @Nullable String symlinkTarget) {
     try {
-      ourConnection.markDirty();
+      getConnectionOrFail().markDirty();
       try (DataOutputStream stream = writeAttribute(id, ourSymlinkTargetAttr)) {
         IOUtil.writeUTF(stream, StringUtil.notNullize(symlinkTarget));
       }
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
 
   static int getLocalModCount() {
-    return ourConnection.getModificationCount() + ourAttributeAccessor.getLocalModificationCount();
+    return getConnectionOrFail().getModificationCount() + ourAttributeAccessor.getLocalModificationCount();
   }
 
   @TestOnly
   static int getPersistentModCount() {
-    return ourConnection.getPersistentModCount();
+    return getConnectionOrFail().getPersistentModCount();
   }
 
   public static int getParent(int id) {
     try {
-      int parentId = ourConnection.getRecords().getParent(id);
+      int parentId = getConnectionOrFail().getRecords().getParent(id);
       if (parentId == id) {
         LOG.error("Cyclic parent child relations in the database. id = " + id);
         return 0;
@@ -544,8 +539,7 @@ public final class FSRecords {
       return parentId;
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -558,7 +552,7 @@ public final class FSRecords {
       public Void compute() throws Exception {
         int currentId = id;
         while (true) {
-          int parentId = ourConnection.getRecords().getParent(currentId);
+          int parentId = getConnectionOrFail().getRecords().getParent(currentId);
           if (parentId == 0) {
             break;
           }
@@ -610,8 +604,7 @@ public final class FSRecords {
       finder.compute();
     }
     catch (Exception e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
     VirtualFileSystemEntry file = finder.findDescendantByIdPath();
     if (file != null) {
@@ -625,7 +618,7 @@ public final class FSRecords {
    */
   @ApiStatus.Internal
   public static @NotNull IntList getRemainFreeRecords() {
-    return ourConnection.getFreeRecords();
+    return getConnectionOrFail().getFreeRecords();
   }
 
   /**
@@ -644,22 +637,20 @@ public final class FSRecords {
     }
 
     try {
-      ourConnection.getRecords().setParent(id, parentId);
-      ourConnection.markDirty();
+      getConnectionOrFail().getRecords().setParent(id, parentId);
+      getConnectionOrFail().markDirty();
     }
     catch (Throwable e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
   public static boolean processAllNames(@NotNull Processor<? super CharSequence> processor) {
     try {
-      return ourConnection.getNames().processAllDataObjects(processor);
+      return getConnectionOrFail().getNames().processAllDataObjects(processor);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -673,14 +664,13 @@ public final class FSRecords {
   //         in any file record, even though name was already registered for some file(s)
   public static int getNameId(@NotNull String name) {
     try {
-      return ourConnection.getNames().enumerate(name);
+      return getConnectionOrFail().getNames().enumerate(name);
     }
     catch (ProcessCanceledException e) {
       throw e;
     }
     catch (Throwable e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -690,12 +680,11 @@ public final class FSRecords {
 
   static @NotNull CharSequence getNameSequence(int id) {
     try {
-      int nameId = ourConnection.getRecords().getNameId(id);
+      int nameId = getConnectionOrFail().getRecords().getNameId(id);
       return nameId == 0 ? "" : FileNameCache.getVFileName(nameId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -704,99 +693,92 @@ public final class FSRecords {
       return doGetNameByNameId(nameId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
   private static CharSequence doGetNameByNameId(int nameId) throws IOException {
     assert nameId >= 0 : nameId;
-    return nameId == 0 ? "" : ourConnection.getNames().valueOf(nameId);
+    PersistentFSConnection connection = getConnectionOrFail();
+    return nameId == 0 ? "" : connection.getNames().valueOf(nameId);
   }
 
   static void setName(int fileId, @NotNull String name, int oldNameId) {
     try {
       ourNamesIndexModCount.incrementAndGet();
       int nameId = getNameId(name);
-      ourConnection.getRecords().setNameId(fileId, nameId);
-      ourConnection.markDirty();
+      getConnectionOrFail().getRecords().setNameId(fileId, nameId);
+      getConnectionOrFail().markDirty();
       InvertedNameIndex.updateFileName(fileId, nameId, oldNameId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
   static void setFlags(int id, @PersistentFS.Attributes int flags) {
     try {
-      if (ourConnection.getRecords().setFlags(id, flags)) {
-        ourConnection.markDirty();
+      if (getConnectionOrFail().getRecords().setFlags(id, flags)) {
+        getConnectionOrFail().markDirty();
       }
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
   static long getLength(int id) {
     try {
-      return ourConnection.getRecords().getLength(id);
+      return getConnectionOrFail().getRecords().getLength(id);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
   static void setLength(int id, long len) {
     try {
-      if (ourConnection.getRecords().putLength(id, len)) {
-        ourConnection.markDirty();
+      if (getConnectionOrFail().getRecords().setLength(id, len)) {
+        getConnectionOrFail().markDirty();
       }
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
   static void fillRecord(int id, long timestamp, long length, int flags, int nameId, int parentId, boolean overwriteMissed)
     throws IOException {
-    ourConnection.getRecords().fillRecord(id, timestamp, length, flags, nameId, parentId, overwriteMissed);
-    ourConnection.markDirty();
+    getConnectionOrFail().getRecords().fillRecord(id, timestamp, length, flags, nameId, parentId, overwriteMissed);
+    getConnectionOrFail().markDirty();
   }
 
   static long getTimestamp(int id) {
     try {
-      return ourConnection.getRecords().getTimestamp(id);
+      return getConnectionOrFail().getRecords().getTimestamp(id);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
   static void setTimestamp(int id, long value) {
     try {
-      if (ourConnection.getRecords().putTimestamp(id, value)) {
-        ourConnection.markDirty();
+      if (getConnectionOrFail().getRecords().setTimestamp(id, value)) {
+        getConnectionOrFail().markDirty();
       }
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
   static int getModCount(int id) {
     try {
-      return ourConnection.getRecords().getModCount(id);
+      return getConnectionOrFail().getRecords().getModCount(id);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -806,6 +788,15 @@ public final class FSRecords {
     }
     catch (OutOfMemoryError outOfMemoryError) {
       throw outOfMemoryError;
+    }
+    catch (ZipException e) {
+      // we use zip to compress content
+      String fileName = getName(fileId);
+      long length = getLength(fileId);
+      IOException diagnosticException =
+        new IOException("Failed to decompress file's content for file. File name = " + fileName + ", length = " + length);
+      diagnosticException.addSuppressed(e);
+      handleError(diagnosticException);
     }
     catch (Throwable e) {
       handleError(e);
@@ -829,8 +820,7 @@ public final class FSRecords {
       return readAttribute(fileId, attribute);
     }
     catch (Throwable e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -844,8 +834,7 @@ public final class FSRecords {
       return ourContentAccessor.acquireContentRecord(fileId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -854,8 +843,7 @@ public final class FSRecords {
       ourContentAccessor.releaseContentRecord(contentId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -864,8 +852,7 @@ public final class FSRecords {
       return ourConnection.getRecords().getContentRecordId(fileId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -875,8 +862,7 @@ public final class FSRecords {
       return ourContentAccessor.getContentHash(fileId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -887,11 +873,11 @@ public final class FSRecords {
         try {
           super.close();
           if (((PersistentFSContentAccessor.ContentOutputStream)out).isModified()) {
-            ourConnection.markRecordAsModified(fileId);
+            getConnectionOrFail().markRecordAsModified(fileId);
           }
         }
         catch (IOException e) {
-          handleError(e);
+          throw handleError(e);
         }
       }
     };
@@ -902,8 +888,7 @@ public final class FSRecords {
       ourContentAccessor.writeContent(fileId, bytes, readOnly);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -912,8 +897,7 @@ public final class FSRecords {
       return ourContentAccessor.allocateContentRecordAndStore(bytes);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -934,7 +918,7 @@ public final class FSRecords {
   }
 
   public static void invalidateCaches() {
-    ourConnection.createBrokenMarkerFile(null);
+    getConnectionOrFail().createBrokenMarkerFile(null);
   }
 
   static void checkSanity() {
@@ -942,20 +926,38 @@ public final class FSRecords {
       ourRecordAccessor.checkSanity();
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
+  /**
+   * Method is supposed to be called in a pattern like this:
+   * <pre>
+   * try{
+   *  ...
+   * }
+   * catch(Throwable t){
+   *   throw handeError(e);
+   * }
+   * </pre>
+   * i.e. in a 'throw' statement -- to make clear, it will throw an exception. Method made return
+   * RuntimeException specifically for that purpose: to be used in a 'throw' statement, so compiler
+   * understands it is as a method exit point.
+   */
   @Contract("_->fail")
-  public static void handleError(Throwable e) throws RuntimeException, Error {
+  public static RuntimeException handleError(final Throwable e) throws RuntimeException, Error {
+    if (e instanceof ClosedStorageException) {
+      // no connection means IDE is closing...
+      throw new AlreadyDisposedException("VFS already disposed");
+    }
+    if (e instanceof ProcessCanceledException) {
+      throw (ProcessCanceledException)e;
+    }
     if (ourConnection != null) {
       ourConnection.handleError(e);
     }
-    //TODO RC: connection.handleError re-throw the exception, but in almost all
-    // callsites it is called in pair with throw new RuntimeException(e). Would
-    // be cleaner if handleError() do that 'throw' in a branch ourConnection==null,
-    // and remove all throw new RuntimeException(e) statement from callsites
+    // no connection means IDE is closing...
+    throw new ServiceNotReadyException();
   }
 
   @TestOnly

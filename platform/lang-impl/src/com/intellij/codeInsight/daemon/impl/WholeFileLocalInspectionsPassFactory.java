@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.daemon.DaemonBundle;
-import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.editor.Document;
@@ -39,9 +38,6 @@ final class WholeFileLocalInspectionsPassFactory implements MainHighlightingPass
       return null;
     }
 
-    if (!ProblemHighlightFilter.shouldHighlightFile(file)) {
-      return null;
-     }
     if (tracker.canSkipFile(file)) {
       return null;
     }

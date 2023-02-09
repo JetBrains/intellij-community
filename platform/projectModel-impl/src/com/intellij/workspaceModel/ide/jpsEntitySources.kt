@@ -48,15 +48,25 @@ sealed class JpsProjectConfigLocation {
 }
 
 /**
+ * Represents a specific xml file containing configuration of global IntelliJ IDEA entities.
+ */
+data class JpsGlobalFileEntitySource(val file: VirtualFileUrl): JpsFileEntitySource()
+
+/**
  * Represents an xml file containing configuration of IntelliJ IDEA project in JPS format (*.ipr file or *.xml file under .idea directory)
  */
 sealed class JpsFileEntitySource : EntitySource {
-  abstract val projectLocation: JpsProjectConfigLocation
+  /**
+   * Entity source with the information about project location
+   */
+  abstract class JpsProjectFileEntitySource: JpsFileEntitySource() {
+    abstract val projectLocation: JpsProjectConfigLocation
+  }
 
   /**
    * Represents a specific xml file containing configuration of some entities of IntelliJ IDEA project.
    */
-  data class ExactFile(val file: VirtualFileUrl, override val projectLocation: JpsProjectConfigLocation) : JpsFileEntitySource() {
+  data class ExactFile(val file: VirtualFileUrl, override val projectLocation: JpsProjectConfigLocation) : JpsProjectFileEntitySource() {
     override val virtualFileUrl: VirtualFileUrl
       get() = file
   }
@@ -67,7 +77,7 @@ sealed class JpsFileEntitySource : EntitySource {
    */
   @DefaultSerializer(FileInDirectorySerializer::class)
   data class FileInDirectory(val directory: VirtualFileUrl,
-                             override val projectLocation: JpsProjectConfigLocation) : JpsFileEntitySource() {
+                             override val projectLocation: JpsProjectConfigLocation) : JpsProjectFileEntitySource() {
     /**
      * Automatically generated value which is used to distinguish different files in [directory]. The actual name is stored in serialization
      * structures and may change if name of the corresponding entity has changed.

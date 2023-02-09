@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
@@ -23,6 +24,10 @@ import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -162,12 +167,7 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.url != dataSource.url) this.url = dataSource.url
       if (this.rootType != dataSource.rootType) this.rootType = dataSource.rootType
-      if (parents != null) {
-        val contentRootNew = parents.filterIsInstance<ContentRootEntity>().single()
-        if ((this.contentRoot as WorkspaceEntityBase).id != (contentRootNew as WorkspaceEntityBase).id) {
-          this.contentRoot = contentRootNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -406,7 +406,7 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return SourceRootEntity(url, rootType, entitySource) {
-      this.contentRoot = parents.filterIsInstance<ContentRootEntity>().single()
+      parents.filterIsInstance<ContentRootEntity>().singleOrNull()?.let { this.contentRoot = it }
     }
   }
 

@@ -67,10 +67,9 @@ public class BadOddnessInspection extends BaseInspection {
     }
 
     private static boolean isModTwo(PsiExpression exp) {
-      if (!(exp instanceof PsiBinaryExpression)) {
+      if (!(exp instanceof PsiBinaryExpression binary)) {
         return false;
       }
-      final PsiBinaryExpression binary = (PsiBinaryExpression)exp;
       final IElementType tokenType = binary.getOperationTokenType();
       if (!JavaTokenType.PERC.equals(tokenType)) {
         return false;
@@ -98,7 +97,7 @@ public class BadOddnessInspection extends BaseInspection {
     }
 
     private static boolean hasValue(PsiExpression expression, int testValue) {
-      final Integer value = (Integer)ConstantExpressionUtil.computeCastTo(expression, PsiType.INT);
+      final Integer value = (Integer)ConstantExpressionUtil.computeCastTo(expression, PsiTypes.intType());
       return value != null && value.intValue() == testValue;
     }
   }

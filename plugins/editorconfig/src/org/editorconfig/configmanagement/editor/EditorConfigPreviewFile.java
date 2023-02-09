@@ -3,6 +3,7 @@ package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -28,7 +29,10 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
   private final String   myOriginalPath;
   private final Document myDocument;
 
-  EditorConfigPreviewFile(@NotNull Project project, @NotNull VirtualFile originalFile, @NotNull Document document) {
+  EditorConfigPreviewFile(@NotNull Project project,
+                          @NotNull VirtualFile originalFile,
+                          @NotNull Document document,
+                          @NotNull Disposable disposable) {
     super(originalFile.getName());
     myProject = project;
     myOriginalPath = originalFile.getPath();
@@ -39,7 +43,7 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
     }
     super.setContent(this, myDocument.getText(), false);
     reformat();
-    CodeStyleSettingsManager.getInstance(project).addListener(this);
+    CodeStyleSettingsManager.getInstance(project).subscribe(this, disposable);
   }
 
   @NotNull
@@ -51,18 +55,14 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
 
   @Override
   public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
-    PsiFile psiFile = event.getPsiFile();
-    if (psiFile == null || isOriginalFile(psiFile)) {
+    VirtualFile virtualFile = event.getVirtualFile();
+    if (virtualFile == null || isOriginalFile(virtualFile)) {
       reformat();
     }
   }
 
-  private boolean isOriginalFile(@NotNull PsiFile psiFile) {
-    VirtualFile file = psiFile.getVirtualFile();
-    if (file != null) {
-      return file.getPath().equals(myOriginalPath);
-    }
-    return false;
+  private boolean isOriginalFile(@NotNull VirtualFile file) {
+    return file.getPath().equals(myOriginalPath);
   }
 
   private void reformat() {
@@ -96,7 +96,4 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
     return null;
   }
 
-  public void unregisterListener() {
-    CodeStyleSettingsManager.removeListener(myProject, this);
-  }
 }

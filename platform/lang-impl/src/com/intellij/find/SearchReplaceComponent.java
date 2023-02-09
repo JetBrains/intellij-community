@@ -27,9 +27,7 @@ import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.touchbar.Touchbar;
-import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.SwingUndoUtil;
@@ -87,9 +85,9 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   private final DataProvider myDataProviderDelegate;
 
   private final boolean myMultilineEnabled;
-  private final boolean myUseSearchField;
   private boolean myMultilineMode;
   private final boolean myAddSearchResultsToGlobalSearch;
+  private final SearchComponentMode myMode;
 
   @NotNull private @NlsContexts.Label String myStatusText = "";
   @NotNull private Color myStatusColor = ExperimentalUI.isNewUI() ? UIUtil.getLabelInfoForeground() : UIUtil.getLabelForeground();
@@ -121,7 +119,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                  boolean maximizeLeftPanelOnResize,
                                  boolean multilineEnabled,
                                  boolean addSearchResultsToGlobalSearch,
-                                 boolean useSearchField) {
+                                 SearchComponentMode mode,
+                                 boolean showSeparator) {
     myProject = project;
     myTargetComponent = targetComponent;
     mySearchFieldActions = searchFieldActions;
@@ -130,7 +129,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myCloseRunnable = closeRunnable;
     myMultilineEnabled = multilineEnabled;
     myAddSearchResultsToGlobalSearch = addSearchResultsToGlobalSearch;
-    myUseSearchField = useSearchField;
+    myMode = mode;
 
     boolean isNewUI = ExperimentalUI.isNewUI();
 
@@ -186,7 +185,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     leftPanel.add(mySearchFieldWrapper, constraints);
     constraints.gridy++;
     leftPanel.add(myReplaceFieldWrapper, constraints);
-    leftPanel.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 0, 1));
+
+    if (showSeparator) {
+      leftPanel.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 0, 1));
+    }
 
     searchToolbar1Actions.addAll(searchToolbar2Actions.getChildren(null));
     replaceToolbar1Actions.addAll(replaceToolbar2Actions.getChildren(null));
@@ -383,7 +385,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   @Nullable
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.is(dataId)) {
+    if (PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId)) {
       return mySearchTextComponent.getText();
     }
     return myDataProviderDelegate != null ? myDataProviderDelegate.getData(dataId) : null;
@@ -554,8 +556,11 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     @NotNull JTextComponent innerTextComponent;
     @NotNull JComponent outerComponent;
 
-    if (myUseSearchField) {
-      outerComponent = new SearchTextField(true, this.toString());
+    if (myMode instanceof SearchTextFieldMode mode) {
+      outerComponent = new SearchTextField(
+        mode.searchHistoryEnabled,
+        mode.clearSearchActionEnabled,
+        mode.searchHistoryEnabled ? this.toString() : null);
       innerTextComponent = ((SearchTextField)outerComponent).getTextEditor();
       innerTextComponent.setBorder(BorderFactory.createEmptyBorder());
     }
@@ -669,7 +674,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   private void updateBindings(@NotNull DefaultActionGroup group, @NotNull JComponent shortcutHolder) {
-    updateBindings(ContainerUtil.immutableList(group.getChildActionsOrStubs()), shortcutHolder);
+    updateBindings(List.of(group.getChildActionsOrStubs()), shortcutHolder);
   }
 
   private void updateBindings(@NotNull ActionToolbarImpl toolbar, @NotNull JComponent shortcutHolder) {
@@ -746,11 +751,14 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     private boolean myMaximizeLeftPanelOnResize = false;
     private boolean myMultilineEnabled = true;
     private boolean myAddSearchResultsToGlobalSearch = true;
-    private boolean myUseSearchField = false;
+    private boolean myShowSeparator = true;
+
+    private SearchComponentMode myMode;
 
     private Builder(@Nullable Project project, @NotNull JComponent component) {
       myProject = project;
       myTargetComponent = component;
+      myMode = new TextAreaMode();
     }
 
     @NotNull
@@ -844,7 +852,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                         myMaximizeLeftPanelOnResize,
                                         myMultilineEnabled,
                                         myAddSearchResultsToGlobalSearch,
-                                        myUseSearchField);
+                                        myMode,
+                                        myShowSeparator);
     }
 
     @NotNull
@@ -859,10 +868,37 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       return this;
     }
 
+    /**
+     * @deprecated use {@link #withUseSearchField(boolean, boolean)} instead to specify explicitly search field look and features
+     */
     @NotNull
+    @Deprecated(forRemoval = true)
     public Builder withUseSearchField(boolean b) {
-      myUseSearchField = b;
+      return withUseSearchField(true, true);
+    }
+
+    @NotNull
+    public Builder withUseSearchField(boolean enableSearchHistory, boolean enableClearSearchAction) {
+      myMode = new SearchTextFieldMode(enableSearchHistory, enableClearSearchAction);
       return this;
+    }
+
+    @NotNull
+    public Builder withoutSeparator() {
+      myShowSeparator = false;
+      return this;
+    }
+  }
+
+  private interface SearchComponentMode { }
+  private static class TextAreaMode implements SearchComponentMode { }
+  private static class SearchTextFieldMode implements SearchComponentMode {
+    public final boolean searchHistoryEnabled;
+    public final boolean clearSearchActionEnabled;
+
+    private SearchTextFieldMode(boolean searchHistoryEnabled, boolean clearSearchActionEnabled) {
+      this.searchHistoryEnabled = searchHistoryEnabled;
+      this.clearSearchActionEnabled = clearSearchActionEnabled;
     }
   }
 
