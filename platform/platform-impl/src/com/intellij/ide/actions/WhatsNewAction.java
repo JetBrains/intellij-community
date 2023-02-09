@@ -24,6 +24,7 @@ import com.intellij.util.Urls;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -68,6 +69,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     return ApplicationInfoEx.getInstanceEx().isShowWhatsNewOnUpdate() && !AppMode.isRemoteDevHost();
   }
 
+  @ApiStatus.Internal
   public static void openWhatsNewPage(@NotNull Project project, @NotNull String url) {
     if (!JBCefApp.isSupported()) {
       String name = ApplicationNamesInfo.getInstance().getFullProductName();
@@ -80,33 +82,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
         .notify(project);
     }
     else {
-      boolean darkTheme = UIUtil.isUnderDarcula();
-
-      Map<String, String> parameters = new HashMap<>();
-      parameters.put("var", "embed");
-      if (darkTheme) {
-        parameters.put("theme", "dark");
-      }
-      Locale locale = Locale.getDefault();
-      if (locale != null) {
-        parameters.put("lang", locale.toLanguageTag().toLowerCase(Locale.ENGLISH));
-      }
-      var request = HTMLEditorProvider.Request.url(Urls.newFromEncoded(url).addParameters(parameters).toExternalForm());
-
-      try (var stream = WhatsNewAction.class.getResourceAsStream("whatsNewTimeoutText.html")) {
-        if (stream != null) {
-          request.withTimeoutHtml(new String(stream.readAllBytes(), StandardCharsets.UTF_8)
-                                    .replace("__THEME__", darkTheme ? "theme-dark" : "")
-                                    .replace("__TITLE__", IdeBundle.message("whats.new.timeout.title"))
-                                    .replace("__MESSAGE__", IdeBundle.message("whats.new.timeout.message"))
-                                    .replace("__ACTION__", IdeBundle.message("whats.new.timeout.action", url)));
-        }
-      }
-      catch (IOException e) {
-        Logger.getInstance(WhatsNewAction.class).error(e);
-      }
-
-      request.withQueryHandler((HTMLEditorProvider.JsQueryHandler.Java)(id, jsRequest) -> {
+      openWhatsNewPage(project, url, (HTMLEditorProvider.JsQueryHandler.Java)(id, jsRequest) -> {
         if (ENABLE_NEW_UI_REQUEST.equals(jsRequest)) {
           //todo[KB] please put the implementation here
           return "true";
@@ -115,9 +91,43 @@ public class WhatsNewAction extends AnAction implements DumbAware {
           throw new IllegalArgumentException("Unexpected query: " + jsRequest);
         }
       });
-
-      var title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().getFullProductName());
-      HTMLEditorProvider.openEditor(project, title, request);
     }
+  }
+
+  public static void openWhatsNewPage(@NotNull Project project, @NotNull String url, @Nullable HTMLEditorProvider.JsQueryHandler queryHandler) {
+    if (!JBCefApp.isSupported()) {
+      throw new IllegalStateException("JCEF is not supported on this system");
+    }
+
+    boolean darkTheme = UIUtil.isUnderDarcula();
+
+    Map<String, String> parameters = new HashMap<>();
+    parameters.put("var", "embed");
+    if (darkTheme) {
+      parameters.put("theme", "dark");
+    }
+    Locale locale = Locale.getDefault();
+    if (locale != null) {
+      parameters.put("lang", locale.toLanguageTag().toLowerCase(Locale.ENGLISH));
+    }
+    var request = HTMLEditorProvider.Request.url(Urls.newFromEncoded(url).addParameters(parameters).toExternalForm());
+
+    try (var stream = WhatsNewAction.class.getResourceAsStream("whatsNewTimeoutText.html")) {
+      if (stream != null) {
+        request.withTimeoutHtml(new String(stream.readAllBytes(), StandardCharsets.UTF_8)
+                                  .replace("__THEME__", darkTheme ? "theme-dark" : "")
+                                  .replace("__TITLE__", IdeBundle.message("whats.new.timeout.title"))
+                                  .replace("__MESSAGE__", IdeBundle.message("whats.new.timeout.message"))
+                                  .replace("__ACTION__", IdeBundle.message("whats.new.timeout.action", url)));
+      }
+    }
+    catch (IOException e) {
+      Logger.getInstance(WhatsNewAction.class).error(e);
+    }
+
+    request.withQueryHandler(queryHandler);
+
+    var title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().getFullProductName());
+    HTMLEditorProvider.openEditor(project, title, request);
   }
 }
