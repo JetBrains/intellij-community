@@ -6,6 +6,7 @@ import com.intellij.execution.filters.ExceptionLineParserFactory
 import com.intellij.execution.testframework.actions.TestDiffProvider
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
@@ -22,7 +23,7 @@ abstract class JvmTestDiffProvider : TestDiffProvider {
       val file = lineParser.file ?: return@findExpected null
       val diffProvider = TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(file.language).asSafely<JvmTestDiffProvider>()
       if (diffProvider == null) return@findExpected null
-      if (diffProvider.isCompiled(file)) {
+      if (!ProjectFileIndex.getInstance(project).isInSourceContent(file.virtualFile)) {
         if (expectedParam == null) return@forEach // keep looking, test class wasn't found yet
         else return@findExpected null // return null when tracking expected param
       }
@@ -40,8 +41,6 @@ abstract class JvmTestDiffProvider : TestDiffProvider {
     }
     return null
   }
-
-  abstract fun isCompiled(file: PsiFile): Boolean
 
   abstract fun failedCall(file: PsiFile, startOffset: Int, endOffset: Int, method: UMethod?): PsiElement?
 

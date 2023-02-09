@@ -12,17 +12,12 @@ import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.util.findElementsOfClassInRange
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UParameter
 import org.jetbrains.uast.toUElementOfType
 
 class KotlinTestDiffProvider : JvmTestDiffProvider() {
-    override fun isCompiled(file: PsiFile): Boolean {
-        return file.safeAs<KtFile>()?.isCompiled == true
-    }
-
     override fun failedCall(file: PsiFile, startOffset: Int, endOffset: Int, method: UMethod?): PsiElement? {
         val failedCalls = findElementsOfClassInRange(file, startOffset, endOffset, KtCallExpression::class.java)
             .map { it as KtCallExpression }
