@@ -68,6 +68,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   static final String MUST_EXECUTE_UNDER_EDT = "Access is allowed from Event Dispatch Thread (EDT) only";
   static final String MUST_NOT_EXECUTE_UNDER_EDT = "Access from Event Dispatch Thread (EDT) is not allowed";
 
+  private static final String DOCUMENTATION_LINK = "; see https://jb.gg/ij-platform-threading for details";
+
   final ReadMostlyRWLock myLock;
 
   /**
@@ -1040,7 +1042,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private static void throwThreadAccessException(@NotNull @NonNls String message) {
-    throw new RuntimeExceptionWithAttachments(message+"\n"+getThreadDetails(),
+    throw new RuntimeExceptionWithAttachments(message + DOCUMENTATION_LINK + "\n" + getThreadDetails(),
                                               new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
   }
 
