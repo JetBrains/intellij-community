@@ -26,7 +26,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
-public class ProjectNode extends ProjectsGroupNode {
+class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
   private static final URL ERROR_ICON_URL = MavenProjectsStructure.class.getResource("/general/error.png");
 
   private final MavenProject myMavenProject;
@@ -37,7 +37,7 @@ public class ProjectNode extends ProjectsGroupNode {
 
   private @NlsContexts.Tooltip String myTooltipCache;
 
-  public ProjectNode(MavenProjectsStructure structure, @NotNull MavenProject mavenProject) {
+  ProjectNode(MavenProjectsStructure structure, @NotNull MavenProject mavenProject) {
     super(structure, null);
     myMavenProject = mavenProject;
 
@@ -54,6 +54,7 @@ public class ProjectNode extends ProjectsGroupNode {
     return MavenNodeType.PROJECT;
   }
 
+  @Override
   public MavenProject getMavenProject() {
     return myMavenProject;
   }

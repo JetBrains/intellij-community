@@ -7,10 +7,10 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public abstract class ProjectsGroupNode extends GroupNode {
+abstract class ProjectsGroupNode extends GroupNode {
   private final List<ProjectNode> myProjectNodes = new CopyOnWriteArrayList<>();
 
-  public ProjectsGroupNode(MavenProjectsStructure structure, MavenSimpleNode parent) {
+  ProjectsGroupNode(MavenProjectsStructure structure, MavenSimpleNode parent) {
     super(structure, parent);
     getTemplatePresentation().setIcon(MavenIcons.ModulesClosed);
   }

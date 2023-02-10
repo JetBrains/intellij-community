@@ -12,10 +12,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
-public class ProfilesNode extends GroupNode {
+class ProfilesNode extends GroupNode {
   private final List<ProfileNode> myProfileNodes = new CopyOnWriteArrayList<>();
 
-  public ProfilesNode(MavenProjectsStructure structure, MavenSimpleNode parent) {
+  ProfilesNode(MavenProjectsStructure structure, MavenSimpleNode parent) {
     super(structure, parent);
     getTemplatePresentation().setIcon(MavenIcons.ProfilesClosed);
   }

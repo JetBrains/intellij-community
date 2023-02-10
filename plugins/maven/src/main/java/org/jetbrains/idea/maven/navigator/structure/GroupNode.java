@@ -8,10 +8,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public abstract class GroupNode extends MavenSimpleNode {
+abstract class GroupNode extends MavenSimpleNode {
   private static final Comparator<MavenSimpleNode> NODE_COMPARATOR = (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true);
 
-  public GroupNode(MavenProjectsStructure structure, MavenSimpleNode parent) {
+  GroupNode(MavenProjectsStructure structure, MavenSimpleNode parent) {
     super(structure, parent);
   }
 

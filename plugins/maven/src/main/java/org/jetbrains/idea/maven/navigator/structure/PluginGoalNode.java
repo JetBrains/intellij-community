@@ -12,11 +12,11 @@ import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 
 import java.util.Objects;
 
-public class PluginGoalNode extends GoalNode {
+class PluginGoalNode extends MavenGoalNode {
 
   private final String myUnqualifiedGoal;
 
-  public PluginGoalNode(MavenProjectsStructure structure, PluginNode parent, String goal, String unqualifiedGoal, String displayName) {
+  PluginGoalNode(MavenProjectsStructure structure, PluginNode parent, String goal, String unqualifiedGoal, String displayName) {
     super(structure, parent, goal, displayName);
     getTemplatePresentation().setIcon(MavenIcons.PluginGoal);
     myUnqualifiedGoal = unqualifiedGoal;

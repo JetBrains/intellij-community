@@ -3,8 +3,8 @@ package org.jetbrains.idea.maven.navigator.structure;
 
 import org.jetbrains.idea.maven.model.MavenConstants;
 
-public class StandardGoalNode extends GoalNode {
-  public StandardGoalNode(MavenProjectsStructure structure, GoalsGroupNode parent, String goal) {
+class StandardGoalNode extends MavenGoalNode {
+  StandardGoalNode(MavenProjectsStructure structure, GoalsGroupNode parent, String goal) {
     super(structure, parent, goal, goal);
   }
 

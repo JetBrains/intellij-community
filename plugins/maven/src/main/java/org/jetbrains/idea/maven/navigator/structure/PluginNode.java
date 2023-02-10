@@ -8,11 +8,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.utils.MavenPluginInfo;
 
-public class PluginNode extends GoalsGroupNode {
+class PluginNode extends GoalsGroupNode {
   private final MavenPlugin myPlugin;
   private MavenPluginInfo myPluginInfo;
 
-  public PluginNode(MavenProjectsStructure structure, PluginsNode parent, MavenPlugin plugin, MavenPluginInfo pluginInfo) {
+  PluginNode(MavenProjectsStructure structure, PluginsNode parent, MavenPlugin plugin, MavenPluginInfo pluginInfo) {
     super(structure, parent);
     myPlugin = plugin;
 

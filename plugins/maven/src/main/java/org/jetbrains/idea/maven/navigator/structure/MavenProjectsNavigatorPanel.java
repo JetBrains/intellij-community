@@ -123,8 +123,7 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
   @Nullable
   public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      @NotNull List<MavenSimpleNode> selectedNodes =
-        MavenProjectsStructure.getSelectedNodes(myTree, MavenSimpleNode.class);
+      @NotNull List<MavenSimpleNode> selectedNodes = MavenProjectsStructure.getSelectedNodes(myTree, MavenSimpleNode.class);
       return (DataProvider)slowId -> getSlowData(slowId, selectedNodes);
     }
     if (PlatformCoreDataKeys.HELP_ID.is(dataId)) return "reference.toolWindows.mavenProjects";
@@ -156,15 +155,14 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
   }
 
   private VirtualFile extractVirtualFile(@NotNull List<MavenSimpleNode> selectedNodes) {
-
     for (MavenSimpleNode each : selectedNodes) {
       VirtualFile file = each.getVirtualFile();
       if (file != null && file.isValid()) return file;
     }
 
-    final ProjectNode projectNode = getContextProjectNode(selectedNodes);
+    var projectNode = getContextProjectNode(selectedNodes);
     if (projectNode == null) return null;
-    VirtualFile file = projectNode.getVirtualFile();
+    VirtualFile file = projectNode.getMavenProject().getFile();
     if (file == null || !file.isValid()) return null;
     return file;
   }
@@ -220,19 +218,34 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
       }
     }
     else {
-      List<GoalNode> goalNodes = filterNodesByClass(selectedNodes, GoalNode.class);
-      if (MavenProjectsStructure.getCommonProjectNode(goalNodes) == null) {
+      List<MavenGoalNode> goalNodes = filterNodesByClass(selectedNodes, MavenGoalNode.class);
+      if (getCommonProjectNode(goalNodes) == null) {
         return null;
       }
 
       final List<String> goals = new ArrayList<>();
-      for (GoalNode node : goalNodes) {
+      for (MavenGoalNode node : goalNodes) {
         goals.add(qualifiedGoals ? node.getGoal() : node.getName());
       }
       goals.sort(myGoalOrderComparator);
       return goals;
     }
     return null;
+  }
+
+  @Nullable
+  private static MavenProjectNode getCommonProjectNode(Collection<? extends MavenSimpleNode> nodes) {
+    MavenProjectNode parent = null;
+    for (MavenSimpleNode node : nodes) {
+      var nextParent = node.findParentProjectNode();
+      if (parent == null) {
+        parent = nextParent;
+      }
+      else if (parent != nextParent) {
+        return null;
+      }
+    }
+    return parent;
   }
 
   private Object extractProfiles(@NotNull List<MavenSimpleNode> selectedNodes) {
@@ -278,11 +291,11 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
   }
 
 
-  private @Nullable ProjectNode getContextProjectNode(@NotNull List<MavenSimpleNode> selectedNodes) {
+  private @Nullable MavenProjectNode getContextProjectNode(@NotNull List<MavenSimpleNode> selectedNodes) {
     List<ProjectNode> projectNodes = filterNodesByClass(selectedNodes, ProjectNode.class);
     ProjectNode projectNode = projectNodes.size() == 1 ? projectNodes.get(0) : null;
     if (projectNode != null) return projectNode;
-    return MavenProjectsStructure.getCommonProjectNode(selectedNodes);
+    return getCommonProjectNode(selectedNodes);
   }
 
   private static final class MyTransferHandler extends TransferHandler {

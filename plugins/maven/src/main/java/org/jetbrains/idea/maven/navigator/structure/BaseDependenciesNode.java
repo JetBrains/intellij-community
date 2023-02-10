@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * {@link #doGetChildren()} method is expected to be called only when the node is displayed.
  * Visibility and error level are calculated without creating children.
  */
-public abstract class BaseDependenciesNode extends GroupNode {
+abstract class BaseDependenciesNode extends GroupNode {
   protected final MavenProject myMavenProject;
   private final List<DependencyNode> myChildren = new CopyOnWriteArrayList<>();
   private final AtomicReference<ChildrenUpdate> myChildrenUpdate = new AtomicReference<>();

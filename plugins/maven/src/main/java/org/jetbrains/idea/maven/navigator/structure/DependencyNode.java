@@ -14,12 +14,12 @@ import org.jetbrains.idea.maven.navigator.MavenNavigationUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-public class DependencyNode extends BaseDependenciesNode {
+class DependencyNode extends BaseDependenciesNode implements ArtifactNode {
   private final MavenArtifact myArtifact;
   private final MavenArtifactNode myArtifactNode;
   private final boolean myUnresolved;
 
-  public DependencyNode(MavenProjectsStructure structure,
+  DependencyNode(MavenProjectsStructure structure,
                         MavenSimpleNode parent,
                         MavenArtifactNode artifactNode,
                         MavenProject mavenProject,
@@ -31,6 +31,7 @@ public class DependencyNode extends BaseDependenciesNode {
     getTemplatePresentation().setIcon(AllIcons.Nodes.PpLib);
   }
 
+  @Override
   public MavenArtifact getArtifact() {
     return myArtifact;
   }

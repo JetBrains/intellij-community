@@ -4,10 +4,10 @@ package org.jetbrains.idea.maven.navigator.structure;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public abstract class GoalsGroupNode extends GroupNode {
-  protected final List<GoalNode> myGoalNodes = new CopyOnWriteArrayList<>();
+abstract class GoalsGroupNode extends GroupNode {
+  protected final List<MavenGoalNode> myGoalNodes = new CopyOnWriteArrayList<>();
 
-  public GoalsGroupNode(MavenProjectsStructure structure, MavenSimpleNode parent) {
+  GoalsGroupNode(MavenProjectsStructure structure, MavenSimpleNode parent) {
     super(structure, parent);
   }
 

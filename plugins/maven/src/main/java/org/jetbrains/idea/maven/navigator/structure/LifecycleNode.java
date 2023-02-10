@@ -6,8 +6,8 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
-public class LifecycleNode extends GoalsGroupNode {
-  public LifecycleNode(MavenProjectsStructure structure, ProjectNode parent) {
+class LifecycleNode extends GoalsGroupNode {
+  LifecycleNode(MavenProjectsStructure structure, ProjectNode parent) {
     super(structure, parent);
 
     for (String goal : MavenConstants.PHASES) {

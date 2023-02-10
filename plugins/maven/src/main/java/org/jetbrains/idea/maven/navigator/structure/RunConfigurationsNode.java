@@ -17,11 +17,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static icons.ExternalSystemIcons.Task;
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
-public class RunConfigurationsNode extends GroupNode {
+class RunConfigurationsNode extends GroupNode {
 
   private final List<RunConfigurationNode> myChildren = new CopyOnWriteArrayList<>();
 
-  public RunConfigurationsNode(MavenProjectsStructure structure, ProjectNode parent) {
+  RunConfigurationsNode(MavenProjectsStructure structure, ProjectNode parent) {
     super(structure, parent);
     getTemplatePresentation().setIcon(Task);
   }

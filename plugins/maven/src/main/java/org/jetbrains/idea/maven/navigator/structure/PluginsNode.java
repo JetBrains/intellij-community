@@ -10,10 +10,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
-public class PluginsNode extends GroupNode {
+class PluginsNode extends GroupNode {
   private final List<PluginNode> myPluginNodes = new CopyOnWriteArrayList<>();
 
-  public PluginsNode(MavenProjectsStructure structure, ProjectNode parent) {
+  PluginsNode(MavenProjectsStructure structure, ProjectNode parent) {
     super(structure, parent);
     getTemplatePresentation().setIcon(AllIcons.Nodes.ConfigFolder);
   }

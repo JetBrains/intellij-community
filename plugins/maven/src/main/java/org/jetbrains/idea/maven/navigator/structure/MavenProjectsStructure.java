@@ -13,7 +13,6 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.model.MavenProfileKind;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
@@ -298,21 +297,6 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       }
     }
     return nodes;
-  }
-
-  @Nullable
-  public static ProjectNode getCommonProjectNode(Collection<? extends MavenSimpleNode> nodes) {
-    ProjectNode parent = null;
-    for (MavenSimpleNode node : nodes) {
-      ProjectNode nextParent = node.findParent(ProjectNode.class);
-      if (parent == null) {
-        parent = nextParent;
-      }
-      else if (parent != nextParent) {
-        return null;
-      }
-    }
-    return parent;
   }
 
   public enum ErrorLevel {

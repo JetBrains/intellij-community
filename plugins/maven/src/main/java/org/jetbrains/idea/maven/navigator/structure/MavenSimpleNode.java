@@ -29,7 +29,7 @@ import java.util.List;
 import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
 import static org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure.MavenStructureDisplayMode.*;
 
-public abstract class MavenSimpleNode extends CachingSimpleNode {
+abstract class MavenSimpleNode extends CachingSimpleNode implements MavenNode {
   private MavenSimpleNode myParent;
   private MavenProjectsStructure.ErrorLevel myErrorLevel = MavenProjectsStructure.ErrorLevel.NONE;
   private MavenProjectsStructure.ErrorLevel myTotalErrorLevel = null;
@@ -41,7 +41,7 @@ public abstract class MavenSimpleNode extends CachingSimpleNode {
     OTHER
   }
 
-  public MavenSimpleNode(MavenProjectsStructure structure, MavenSimpleNode parent) {
+  MavenSimpleNode(MavenProjectsStructure structure, MavenSimpleNode parent) {
     super(structure.getProject(), null);
     myMavenProjectsStructure = structure;
     setParent(parent);
@@ -60,17 +60,17 @@ public abstract class MavenSimpleNode extends CachingSimpleNode {
     return myParent;
   }
 
-  public <T extends MavenSimpleNode> T findParent(Class<T> parentClass) {
-    return ObjectUtils.doIfNotNull(myParent, it -> it.findNode(parentClass));
+  MavenProjectNode findParentProjectNode() {
+    return ObjectUtils.doIfNotNull(myParent, it -> it.findProjectNode());
   }
 
-  public <T extends MavenSimpleNode> T findNode(Class<T> parentClass) {
+  @Override
+  public MavenProjectNode findProjectNode() {
     MavenSimpleNode node = this;
-    while (node != null && !parentClass.isInstance(node)) {
+    while (node != null && !(node instanceof MavenProjectNode)) {
       node = node.myParent;
     }
-    //noinspection unchecked
-    return (T)node;
+    return (MavenProjectNode)node;
   }
 
   public boolean isVisible() {

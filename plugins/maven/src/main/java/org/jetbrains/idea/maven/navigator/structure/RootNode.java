@@ -4,10 +4,10 @@ package org.jetbrains.idea.maven.navigator.structure;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class RootNode extends ProjectsGroupNode {
+class RootNode extends ProjectsGroupNode {
   private final ProfilesNode myProfilesNode;
 
-  public RootNode(MavenProjectsStructure structure) {
+  RootNode(MavenProjectsStructure structure) {
     super(structure, null);
     myProfilesNode = new ProfilesNode(structure, this);
   }

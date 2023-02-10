@@ -27,11 +27,11 @@ import java.util.List;
 
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
-public class ProfileNode extends MavenSimpleNode {
+class ProfileNode extends MavenSimpleNode {
   private final String myProfileName;
   private MavenProfileKind myState;
 
-  public ProfileNode(MavenProjectsStructure structure, ProfilesNode parent, String profileName) {
+  ProfileNode(MavenProjectsStructure structure, ProfilesNode parent, String profileName) {
     super(structure, parent);
     myProfileName = profileName;
   }
