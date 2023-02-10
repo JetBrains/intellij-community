@@ -373,7 +373,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }
 
     if (!loadingAdditionalRoots) {
-      val javaModuleSettings = JavaSettingsSerializer.loadJavaModuleSettings(rootManagerElement, virtualFileManager, contentRootEntitySource)
+      val javaModuleSettings = JavaSettingsSerializer.loadJavaModuleSettings(rootManagerElement, context, contentRootEntitySource)
       if (javaModuleSettings != null) {
         moduleEntity.javaSettings = javaModuleSettings
       }
@@ -717,7 +717,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                      entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                                      writer: JpsFileContentWriter) {
     val rootManagerElement = JDomSerializationUtil.createComponentElement(MODULE_ROOT_MANAGER_COMPONENT_NAME)
-    JavaSettingsSerializer.saveJavaSettings(module.javaSettings, rootManagerElement)
+    JavaSettingsSerializer.saveJavaSettings(module.javaSettings, rootManagerElement, context)
 
     if (customImlData != null) {
       val rootManagerTagCustomData = customImlData.rootManagerTagCustomData

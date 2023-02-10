@@ -24,7 +24,7 @@ object JpsProjectEntitiesLoader {
                           unloadedEntitiesBuilder: MutableEntityStorage = MutableEntityStorage.create(),
                           context: SerializationContext): JpsProjectSerializers {
     val data = createProjectSerializers(configLocation, externalStoragePath, context)
-    data.loadAll(context.fileContentReader, builder, orphanage, unloadedEntitiesBuilder, unloadedModuleNames, errorReporter, null)
+    data.loadAll(context.fileContentReader, builder, orphanage, unloadedEntitiesBuilder, unloadedModuleNames, errorReporter)
     return data
   }
   

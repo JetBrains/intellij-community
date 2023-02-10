@@ -10,4 +10,7 @@ class SerializationContextForTests(
   override val fileContentReader: JpsFileContentReader,
   override val isExternalStorageEnabled: Boolean = false,
   override val fileInDirectorySourceNames: FileInDirectorySourceNames = FileInDirectorySourceNames.empty()
-) : SerializationContext
+) : SerializationContext {
+  override val isJavaPluginPresent: Boolean
+    get() = IdeSerializationContext.isJavaPluginPresent
+}

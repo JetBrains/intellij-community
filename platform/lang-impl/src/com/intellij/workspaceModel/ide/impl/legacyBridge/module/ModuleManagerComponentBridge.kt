@@ -25,10 +25,7 @@ import com.intellij.platform.workspaceModel.jps.serialization.SerializationConte
 import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
-import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
+import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
@@ -37,6 +34,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRoot
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
@@ -395,4 +393,6 @@ private class SingleImlSerializationContext(override val virtualFileUrlManager: 
     get() = false
   override val fileInDirectorySourceNames: FileInDirectorySourceNames
     get() = FileInDirectorySourceNames.empty()
+  override val isJavaPluginPresent: Boolean
+    get() = IdeSerializationContext.isJavaPluginPresent
 }
