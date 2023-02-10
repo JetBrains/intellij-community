@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter.custom.impl;
 
 import com.intellij.CommonBundle;
@@ -197,6 +197,8 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   }
 
   private static Stream<String> splitKeywordLines(boolean ignoreCase, JTextArea list) {
-    return Arrays.stream(StringUtil.splitByLines(list.getText())).map(s -> ignoreCase ? s.toLowerCase(Locale.getDefault()) : s);
+    return Arrays.stream(StringUtil.splitByLines(list.getText()))
+      .filter(StringUtil::isNotEmpty)
+      .map(s -> ignoreCase ? s.toLowerCase(Locale.getDefault()) : s);
   }
 }
