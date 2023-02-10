@@ -5,6 +5,8 @@ package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ScrollType
@@ -20,8 +22,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.enumMapOf
-import com.intellij.util.resettableLazy
 import com.intellij.util.flow.zipWithNext
+import com.intellij.util.resettableLazy
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter
@@ -33,38 +35,47 @@ import kotlin.properties.Delegates
 import kotlin.time.Duration.Companion.milliseconds
 
 
+private val LOG = logger<XDebuggerExecutionPointManager>()
+
 internal class XDebuggerExecutionPointManager(project: Project,
                                               parentScope: CoroutineScope) {
   private val coroutineScope: CoroutineScope = parentScope.childScope(Dispatchers.EDT + CoroutineName(javaClass.simpleName))
 
   private val navigationRequestFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  private val activeSourceKindState = MutableStateFlow(XSourceKind.MAIN)
-  private val executionPointState = MutableStateFlow<ExecutionPoint?>(null)
-  private val gutterIconRendererState = MutableStateFlow<GutterIconRenderer?>(null)
+  private val _executionPointState = MutableStateFlow<ExecutionPoint?>(null)
+  private val executionPointState: StateFlow<ExecutionPoint?> = _executionPointState.asStateFlow()
+  var executionPoint: ExecutionPoint? by _executionPointState::value
 
-  var activeSourceKind: XSourceKind by activeSourceKindState::value
-  var executionPoint: ExecutionPoint? by executionPointState::value
-  var gutterIconRenderer: GutterIconRenderer? by gutterIconRendererState::value
+  private val _activeSourceKindState = MutableStateFlow(XSourceKind.MAIN)
+  private val activeSourceKindState: StateFlow<XSourceKind> = _activeSourceKindState.asStateFlow()
+  var activeSourceKind: XSourceKind by _activeSourceKindState::value
 
-  private val presentationState: StateFlow<ExecutionPointPresentation?>
+  private val _gutterIconRendererState = MutableStateFlow<GutterIconRenderer?>(null)
+  private val gutterIconRendererState: StateFlow<GutterIconRenderer?> = _gutterIconRendererState.asStateFlow()
+  var gutterIconRenderer: GutterIconRenderer? by _gutterIconRendererState::value
+
+  private val presentationState: StateFlow<ExecutionPointPresentation?> = executionPointState
+    .onCompletion { emit(null) }
+    .map { executionPoint ->
+      if (executionPoint != null) {
+        kotlin.runCatching {
+          ExecutionPointPresentation(project, executionPoint)
+        }.getOrLogException(LOG)
+      }
+      else null
+    }.stateIn(coroutineScope, SharingStarted.Eagerly, initialValue = null)
+
+  private val presentation by presentationState::value
 
   init {
-    val presentationFlow: SharedFlow<ExecutionPointPresentation?> = executionPointState
-      .debounce(10.milliseconds)
-      .map { executionPoint ->
-        executionPoint?.let {
-          ExecutionPointPresentation(project, it)
-        }
-      }.shareIn(coroutineScope, SharingStarted.Eagerly)
-
-    presentationFlow.onCompletion { emit(null) }
+    presentationState
       .zipWithNext { oldValue, _ ->
         oldValue?.hideAndDispose()
       }.launchIn(coroutineScope)
 
     if (!ApplicationManager.getApplication().isUnitTestMode) {
-      presentationFlow.onCompletion { emit(null) }
+      presentationState
         .map { it != null }.distinctUntilChanged()
         .dropWhile { !it }  // ignore initial 'false' value
         .onEach { hasHighlight ->
@@ -77,8 +88,6 @@ internal class XDebuggerExecutionPointManager(project: Project,
         }.launchIn(coroutineScope)
     }
 
-    presentationState = presentationFlow.stateIn(coroutineScope, SharingStarted.Eagerly, initialValue = null)
-
     with(presentationState.filterNotNull()) {
       combine(activeSourceKindState, ExecutionPointPresentation::activeSourceKind::set).launchIn(coroutineScope)
       combine(gutterIconRendererState, ExecutionPointPresentation::gutterIconRenderer::set).launchIn(coroutineScope)
@@ -86,14 +95,16 @@ internal class XDebuggerExecutionPointManager(project: Project,
       combine(navigationRequestFlow) { presentation, _ -> presentation }
         .debounce(10.milliseconds)
         .onEach { presentation ->
-          presentation.navigateTo()
+          kotlin.runCatching {
+            presentation.navigateTo()
+          }.getOrLogException(LOG)
         }.launchIn(coroutineScope)
     }
   }
 
   @RequiresEdt
   fun isFullLineHighlighter(): Boolean {
-    return presentationState.value?.isFullLineHighlighter == true
+    return presentation?.isFullLineHighlighter == true
   }
 
   fun showExecutionPosition() {
