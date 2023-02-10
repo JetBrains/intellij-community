@@ -446,9 +446,8 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
   }
 
   private void initStructure() {
-    var customization = new MavenProjectsStructure.Customization(null, true, false);
     myStructure = new MavenProjectsStructure(myProject,
-                                             customization,
+                                             MavenProjectsStructure.MavenStructureDisplayMode.SHOW_ALL,
                                              MavenProjectsManager.getInstance(myProject),
                                              MavenTasksManager.getInstance(myProject),
                                              MavenShortcutsManager.getInstance(myProject),

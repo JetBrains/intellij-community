@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
+import static org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure.MavenStructureDisplayMode.*;
 
 public abstract class MavenSimpleNode extends CachingSimpleNode {
   private MavenSimpleNode myParent;
@@ -34,10 +35,20 @@ public abstract class MavenSimpleNode extends CachingSimpleNode {
   private MavenProjectsStructure.ErrorLevel myTotalErrorLevel = null;
   protected final MavenProjectsStructure myMavenProjectsStructure;
 
+  public enum MavenNodeType {
+    PROJECT,
+    GOAL,
+    OTHER
+  }
+
   public MavenSimpleNode(MavenProjectsStructure structure, MavenSimpleNode parent) {
     super(structure.getProject(), null);
     myMavenProjectsStructure = structure;
     setParent(parent);
+  }
+
+  public MavenNodeType getType() {
+    return MavenNodeType.OTHER;
   }
 
   public void setParent(MavenSimpleNode parent) {
@@ -67,12 +78,12 @@ public abstract class MavenSimpleNode extends CachingSimpleNode {
   }
 
   public MavenProjectsStructure.DisplayKind getDisplayKind() {
-    Class[] visibles = myMavenProjectsStructure.getCustomization().visibleNodeClasses();
-    if (visibles == null) return MavenProjectsStructure.DisplayKind.NORMAL;
+    var displayMode = myMavenProjectsStructure.getDisplayMode();
+    if (displayMode == SHOW_ALL) return MavenProjectsStructure.DisplayKind.NORMAL;
 
-    for (Class each : visibles) {
-      if (each.isInstance(this)) return MavenProjectsStructure.DisplayKind.ALWAYS;
-    }
+    if (displayMode == SHOW_PROJECTS && getType() == MavenNodeType.PROJECT) return MavenProjectsStructure.DisplayKind.ALWAYS;
+    if (displayMode == SHOW_GOALS && getType() == MavenNodeType.GOAL) return MavenProjectsStructure.DisplayKind.ALWAYS;
+
     return MavenProjectsStructure.DisplayKind.NEVER;
   }
 
@@ -154,7 +165,7 @@ public abstract class MavenSimpleNode extends CachingSimpleNode {
   }
 
   public boolean showDescription() {
-    return true;
+    return myMavenProjectsStructure.getDisplayMode() == SHOW_ALL;
   }
 
   protected void setNameAndTooltip(@NotNull PresentationData presentation,

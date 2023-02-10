@@ -27,6 +27,11 @@ public abstract class GoalNode extends MavenSimpleNode {
     getTemplatePresentation().setIcon(Task);
   }
 
+  @Override
+  public MavenNodeType getType() {
+    return MavenNodeType.GOAL;
+  }
+
   public MavenProject getMavenProject() {
     return myMavenProject;
   }
@@ -98,8 +103,4 @@ public abstract class GoalNode extends MavenSimpleNode {
     return "Maven.BuildMenu";
   }
 
-  @Override
-  public boolean showDescription() {
-    return myMavenProjectsStructure.getCustomization().showDescriptions();
-  }
 }

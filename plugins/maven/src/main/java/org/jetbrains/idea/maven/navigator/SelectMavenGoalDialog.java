@@ -20,6 +20,7 @@ import com.intellij.ui.treeStructure.NullNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.navigator.structure.GoalNode;
+import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 
 import javax.swing.*;
@@ -28,7 +29,7 @@ public class SelectMavenGoalDialog extends SelectFromMavenProjectsDialog {
   private GoalNode myResult;
 
   public SelectMavenGoalDialog(Project project) {
-    super(project, MavenProjectBundle.message("dialog.title.choose.maven.goal"), GoalNode.class);
+    super(project, MavenProjectBundle.message("dialog.title.choose.maven.goal"), MavenProjectsStructure.MavenStructureDisplayMode.SHOW_GOALS);
     init();
   }
 

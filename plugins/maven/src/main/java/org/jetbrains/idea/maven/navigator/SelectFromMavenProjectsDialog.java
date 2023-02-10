@@ -26,7 +26,6 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure;
-import org.jetbrains.idea.maven.navigator.structure.MavenSimpleNode;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
@@ -42,13 +41,13 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
 
   public SelectFromMavenProjectsDialog(Project project,
                                        @NlsContexts.DialogTitle String title,
-                                       final Class<? extends MavenSimpleNode> nodeClass) {
-    this(project, title, nodeClass, null);
+                                       MavenProjectsStructure.MavenStructureDisplayMode displayMode) {
+    this(project, title, displayMode, null);
   }
 
   public SelectFromMavenProjectsDialog(Project project,
                                        @NlsContexts.DialogTitle String title,
-                                       final Class<? extends MavenSimpleNode> nodeClass,
+                                       MavenProjectsStructure.MavenStructureDisplayMode displayMode,
                                        @Nullable NodeSelector selector) {
     super(project, false);
     mySelector = selector;
@@ -57,9 +56,8 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
     myTree = new SimpleTree();
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-    var customization = new MavenProjectsStructure.Customization(new Class[]{nodeClass}, false, true);
     MavenProjectsStructure treeStructure = new MavenProjectsStructure(project,
-                                                                      customization,
+                                                                      displayMode,
                                                                       MavenProjectsManager.getInstance(project),
                                                                       MavenTasksManager.getInstance(project),
                                                                       MavenShortcutsManager.getInstance(project),

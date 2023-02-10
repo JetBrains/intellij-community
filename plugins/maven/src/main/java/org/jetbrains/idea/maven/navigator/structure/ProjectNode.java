@@ -49,6 +49,11 @@ public class ProjectNode extends ProjectsGroupNode {
     getTemplatePresentation().setIcon(MavenIcons.MavenProject);
   }
 
+  @Override
+  public MavenNodeType getType() {
+    return MavenNodeType.PROJECT;
+  }
+
   public MavenProject getMavenProject() {
     return myMavenProject;
   }
@@ -84,7 +89,7 @@ public class ProjectNode extends ProjectsGroupNode {
     myLifecycleNode.updateGoalsList();
     myPluginsNode.updatePlugins(myMavenProject);
 
-    if (myMavenProjectsStructure.isShown(DependencyNode.class)) {
+    if (myMavenProjectsStructure.getDisplayMode() == MavenProjectsStructure.MavenStructureDisplayMode.SHOW_ALL) {
       myDependenciesNode.updateDependencies();
     }
 
@@ -238,10 +243,5 @@ public class ProjectNode extends ProjectsGroupNode {
   @NonNls
   protected String getMenuId() {
     return "Maven.NavigatorProjectMenu";
-  }
-
-  @Override
-  public boolean showDescription() {
-    return myMavenProjectsStructure.getCustomization().showDescriptions();
   }
 }

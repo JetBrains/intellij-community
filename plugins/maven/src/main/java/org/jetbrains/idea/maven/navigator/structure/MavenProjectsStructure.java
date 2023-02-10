@@ -32,12 +32,14 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 
 public class MavenProjectsStructure extends SimpleTreeStructure {
-  public record Customization(Class<? extends MavenSimpleNode>[] visibleNodeClasses, boolean showDescriptions, boolean alwaysShowAllPhases) {}
+  public enum MavenStructureDisplayMode {
+    SHOW_ALL, SHOW_PROJECTS, SHOW_GOALS
+  }
 
   private final ExecutorService boundedUpdateService;
 
   private final Project myProject;
-  private final Customization myCustomization;
+  private final MavenStructureDisplayMode myDisplayMode;
   private final MavenProjectsManager myProjectsManager;
   private final MavenTasksManager myTasksManager;
   private final MavenShortcutsManager myShortcutsManager;
@@ -51,14 +53,14 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   private final Map<MavenProject, ProjectNode> myProjectToNodeMapping = new HashMap<>();
 
   public MavenProjectsStructure(Project project,
-                                Customization customization,
+                                MavenStructureDisplayMode displayMode,
                                 MavenProjectsManager projectsManager,
                                 MavenTasksManager tasksManager,
                                 MavenShortcutsManager shortcutsManager,
                                 MavenProjectsNavigator projectsNavigator,
                                 SimpleTree tree) {
     myProject = project;
-    myCustomization = customization;
+    myDisplayMode = displayMode;
     myRoot = new RootNode(this);
     myProjectsManager = projectsManager;
     myTasksManager = tasksManager;
@@ -100,8 +102,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     return myShortcutsManager;
   }
 
-  Customization getCustomization() {
-    return myCustomization;
+  MavenStructureDisplayMode getDisplayMode() {
+    return myDisplayMode;
   }
 
   private static void configureTree(final SimpleTree tree) {
@@ -263,29 +265,12 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     return myProjectToNodeMapping.get(project);
   }
 
-  boolean isShown(Class aClass) {
-    Class<? extends MavenSimpleNode>[] classes = getVisibleNodesClasses();
-    if (classes == null) return true;
-
-    for (Class<? extends MavenSimpleNode> c : classes) {
-      if (c == aClass) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   enum DisplayKind {
     ALWAYS, NEVER, NORMAL
   }
 
-  protected final Class<? extends MavenSimpleNode>[] getVisibleNodesClasses() {
-    return getCustomization().visibleNodeClasses();
-  }
-
   protected boolean showOnlyBasicPhases() {
-    if (getCustomization().alwaysShowAllPhases()) {
+    if (getDisplayMode() == MavenStructureDisplayMode.SHOW_GOALS) {
       return false;
     }
     return getProjectsNavigator().getShowBasicPhasesOnly();
