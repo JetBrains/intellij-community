@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("BlockingMethodInNonBlockingContext")
 
 package org.jetbrains.intellij.build.impl
@@ -248,6 +248,10 @@ class MacDistributionBuilder(override val context: BuildContext,
     val classPath = context.bootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/$it" }
 
     val fileVmOptions = VmOptionsGenerator.computeVmOptions(context.applicationInfo.isEAP, context.productProperties).toMutableList()
+    VmOptionsGenerator.writeVmOptions(macDistDir.resolve("bin/${executable}.vmoptions"), fileVmOptions, "\n")
+
+    val errorFilePath = "-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log"
+    val heapDumpPath = "-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof"
     val additionalJvmArgs = context.getAdditionalJvmArguments(OsFamily.MACOS, arch).toMutableList()
     if (!bootClassPath.isEmpty()) {
       //noinspection SpellCheckingInspection
@@ -256,10 +260,6 @@ class MacDistributionBuilder(override val context: BuildContext,
     val predicate: (String) -> Boolean = { it.startsWith("-D") }
     val launcherProperties = additionalJvmArgs.filter(predicate)
     val launcherVmOptions = additionalJvmArgs.filterNot(predicate)
-
-    fileVmOptions.add("-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log")
-    fileVmOptions.add("-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof")
-    VmOptionsGenerator.writeVmOptions(macDistDir.resolve("bin/${executable}.vmoptions"), fileVmOptions, "\n")
 
     val urlSchemes = macCustomizer.urlSchemes
     val urlSchemesString = if (urlSchemes.isEmpty()) {
@@ -299,6 +299,8 @@ class MacDistributionBuilder(override val context: BuildContext,
         Pair("bundle_identifier", macCustomizer.bundleIdentifier),
         Pair("year", todayYear),
         Pair("version", version),
+        Pair("xx_error_file", errorFilePath),
+        Pair("xx_heap_dump", heapDumpPath),
         Pair("vm_options", optionsToXml(launcherVmOptions)),
         Pair("vm_properties", propertiesToXml(launcherProperties, mapOf("idea.executable" to context.productProperties.baseFileName))),
         Pair("class_path", classPath),
