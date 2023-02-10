@@ -669,16 +669,6 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
         if ("map".equals(methodName) || "flatMap".equals(methodName) || "filter".equals(methodName)) {
           if (isJavaUtilMethodCall((PsiMethodCallExpression)expr)) {
-            if (Registry.is("add.past.participle.to.suggested.names")) {
-              String[] words = NameUtilCore.nameToWords(methodName);
-              if (words.length == 1) {
-                return new NamesByExprInfo(methodName, PastParticiple.pastParticiple(methodName));
-              }
-              else {
-                words[1] = PastParticiple.pastParticiple(words[1]);
-                return new NamesByExprInfo(methodName, words[0], StringUtil.join(words));
-              }
-            }
             return NamesByExprInfo.EMPTY;
           }
         }
