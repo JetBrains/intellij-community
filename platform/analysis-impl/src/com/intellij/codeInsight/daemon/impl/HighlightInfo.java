@@ -50,6 +50,7 @@ import java.util.function.BiFunction;
 import static com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import static com.intellij.openapi.util.NlsContexts.Tooltip;
 
+@ApiStatus.NonExtendable
 public class HighlightInfo implements Segment {
   private static final Logger LOG = Logger.getInstance(HighlightInfo.class);
 
