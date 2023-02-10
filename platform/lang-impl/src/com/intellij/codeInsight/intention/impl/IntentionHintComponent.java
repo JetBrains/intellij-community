@@ -128,8 +128,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   };
 
-  @NotNull
-  private static Icon getIcon(CachedIntentions cachedIntentions) {
+  private static @NotNull Icon getIcon(CachedIntentions cachedIntentions) {
     boolean showRefactoring = !ExperimentalUI.isNewUI() && ContainerUtil.exists(
       cachedIntentions.getInspectionFixes(),
       descriptor -> IntentionActionDelegate.unwrap(descriptor.getAction()) instanceof BaseRefactoringIntentionAction
@@ -149,12 +148,11 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     return AllIcons.Actions.IntentionBulb;
   }
 
-  @NotNull
-  public static IntentionHintComponent showIntentionHint(@NotNull Project project,
-                                                         @NotNull PsiFile file,
-                                                         @NotNull Editor editor,
-                                                         boolean showExpanded,
-                                                         @NotNull CachedIntentions cachedIntentions) {
+  public static @NotNull IntentionHintComponent showIntentionHint(@NotNull Project project,
+                                                                  @NotNull PsiFile file,
+                                                                  @NotNull Editor editor,
+                                                                  boolean showExpanded,
+                                                                  @NotNull CachedIntentions cachedIntentions) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     IntentionPopup intentionPopup = new IntentionPopup(project, editor, file, cachedIntentions);
     IntentionHintComponent component = new IntentionHintComponent(project, file, editor, getIcon(cachedIntentions), intentionPopup);
@@ -217,8 +215,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   }
 
-  @Nullable
-  private Point getHintPosition() {
+  private @Nullable Point getHintPosition() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return new Point();
     Editor editor = myEditor;
     int offset = editor.getCaretModel().getOffset();
@@ -659,10 +656,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   static class IntentionPopup implements Disposable.Parent {
-    @NotNull
-    private final CachedIntentions myCachedIntentions;
-    @NotNull
-    private final Editor myEditor;
+    private final @NotNull CachedIntentions myCachedIntentions;
+    private final @NotNull Editor myEditor;
     private final PsiFile myFile;
     private final Project myProject;
     private final IntentionPreviewPopupUpdateProcessor myPreviewPopupUpdateProcessor;
