@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -19,7 +20,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal object GHPRDetailsDescriptionComponentFactory {
-  private const val DESCRIPTION_MAX_HEIGHT = 30
+  private const val VISIBLE_DESCRIPTION_LINES = 2
 
   fun create(scope: CoroutineScope, reviewDetailsVM: GHPRDetailsViewModel): JComponent {
     val descriptionPanel = HtmlEditorPane().apply {
@@ -35,9 +36,11 @@ internal object GHPRDetailsDescriptionComponentFactory {
 
     val layout = MigLayout(LC().emptyBorders().flowY())
     return JPanel(layout).apply {
+      name = "Review details description panel"
       isOpaque = false
 
-      add(descriptionPanel, CC().maxHeight("${JBUI.scale(DESCRIPTION_MAX_HEIGHT)}"))
+      val maxHeight = UIUtil.getUnscaledLineHeight(descriptionPanel) * VISIBLE_DESCRIPTION_LINES
+      add(descriptionPanel, CC().maxHeight("$maxHeight"))
       add(timelineLink, CC())
     }
   }
