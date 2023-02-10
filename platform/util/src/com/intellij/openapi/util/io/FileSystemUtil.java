@@ -272,6 +272,10 @@ public final class FileSystemUtil {
   private static class Nio2MediatorImpl implements Mediator {
     @Override
     public FileAttributes getAttributes(@NotNull String pathStr) {
+      if (SystemInfo.isWindows && pathStr.length() == 2 && pathStr.charAt(1) == ':') {
+        LOG.error("Incomplete Windows path: " + pathStr);
+        pathStr += '\\';
+      }
       try {
         Path path = Paths.get(pathStr);
         BasicFileAttributes attributes = NioFiles.readAttributes(path);

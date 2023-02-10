@@ -390,20 +390,9 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void notSoHiddenRoot() {
-    if (SystemInfo.isWindows) {
-      File absRoot = new File("C:\\");
-      FileAttributes absAttributes = getAttributes(absRoot);
-      assertFalse(absAttributes.isHidden());
-
-      File relRoot = new File("C:");
-      FileAttributes relAttributes = getAttributes(relRoot);
-      assertFalse(relAttributes.isHidden());
-    }
-    else {
-      File absRoot = new File("/");
-      FileAttributes absAttributes = getAttributes(absRoot);
-      assertFalse(absAttributes.isHidden());
-    }
+    File absRoot = SystemInfo.isWindows ? new File(System.getenv("SystemDrive") + '\\') : new File("/");
+    FileAttributes absAttributes = getAttributes(absRoot);
+    assertFalse(absAttributes.isHidden());
   }
 
   @Test
@@ -591,7 +580,7 @@ public abstract class FileAttributesReadingTest {
     }
   }
 
-  private static @NotNull FileAttributes getAttributes(@NotNull File file) {
+  private static FileAttributes getAttributes(File file) {
     String path = file.getPath();
     FileAttributes attributes = getAttributes(path);
     assertNotNull(path + ", exists=" + file.exists(), attributes);
