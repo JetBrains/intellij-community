@@ -8051,6 +8051,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/deprecatedSymbolUsage/infixCall.kt");
             }
 
+            @TestMetadata("infixCallToNonInfixCall.kt")
+            public void testInfixCallToNonInfixCall() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/infixCallToNonInfixCall.kt");
+            }
+
             @TestMetadata("keepArgumentNamed.kt")
             public void testKeepArgumentNamed() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/keepArgumentNamed.kt");
