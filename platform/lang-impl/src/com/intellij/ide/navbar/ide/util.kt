@@ -62,13 +62,13 @@ internal fun activityFlow(project: Project): Flow<Unit> {
       override fun fileStatusesChanged() = fire()
       override fun fileStatusChanged(virtualFile: VirtualFile) = fire()
     })
-
     connection.subscribe(ProblemListener.TOPIC, object : ProblemListener {
       override fun problemsAppeared(file: VirtualFile) = fire()
       override fun problemsDisappeared(file: VirtualFile) = fire()
     })
-    connection.subscribe(VirtualFileAppearanceListener.TOPIC, VirtualFileAppearanceListener { fire() })
-
+    connection.subscribe(VirtualFileAppearanceListener.TOPIC, VirtualFileAppearanceListener {
+      fire()
+    })
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileOpened(source: FileEditorManager, file: VirtualFile) = fire()
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) = fire()

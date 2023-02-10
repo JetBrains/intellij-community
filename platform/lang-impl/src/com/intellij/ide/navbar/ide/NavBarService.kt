@@ -123,7 +123,7 @@ internal suspend fun focusModel(project: Project): List<NavBarVmItem> {
  */
 @TestOnly
 @Internal
-suspend fun dumpContextModel(ctx: DataContext, project: Project) : List<String> {
+suspend fun dumpContextModel(ctx: DataContext, project: Project): List<String> {
   return contextModel(ctx, project).map { it.presentation.text }
 }
 
@@ -131,8 +131,8 @@ private suspend fun contextModel(ctx: DataContext, project: Project): List<NavBa
   if (CommonDataKeys.PROJECT.getData(ctx) != project) {
     return emptyList()
   }
-  try {
-    return readAction {
+  return try {
+    readAction {
       contextModelInner(ctx)
     }
   }
@@ -144,7 +144,7 @@ private suspend fun contextModel(ctx: DataContext, project: Project): List<NavBa
   }
   catch (t: Throwable) {
     LOG.error(t)
-    return emptyList()
+    emptyList()
   }
 }
 
