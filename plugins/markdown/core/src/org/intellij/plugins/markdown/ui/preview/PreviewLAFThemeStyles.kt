@@ -50,9 +50,9 @@ internal object PreviewLAFThemeStyles {
     val scrollbarThumbBorderHovered = scheme.getScrollbarColor(ScrollBarPainter.THUMB_OPAQUE_HOVERED_FOREGROUND)
 
     val scale = UISettingsUtils.instance.currentIdeScale
-    val scrollbarTrackSizePx = (if (SystemInfo.isMac) 14 else 10) * scale
-    val scrollbarThumbBorderSizePx = (if (SystemInfo.isMac) 3 else 1) * scale
-    val scrollbarThumbRadiusPx = (if (SystemInfo.isMac) 14 else 0) * scale
+    val scrollbarTrackSizePx = JBCefApp.normalizeScaledSize((if (SystemInfo.isMac) 14 else 10)) * scale
+    val scrollbarThumbBorderSizePx = JBCefApp.normalizeScaledSize( (if (SystemInfo.isMac) 3 else 1)) * scale
+    val scrollbarThumbRadiusPx = JBCefApp.normalizeScaledSize((if (SystemInfo.isMac) 14 else 0)) * scale
     UISettingsUtils.instance.currentIdeScale
 
     val backgroundColor = scheme.defaultBackground.webRgba()
