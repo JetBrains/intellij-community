@@ -194,7 +194,7 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
     PsiClass recordClass = context.recordClass;
     PsiStatement scope = context.base.getBody();
 
-    if ((level != null && level >  context.options.maxLevel) || !recordClass.isRecord() ||
+    if ((level != null && level > context.options.maxLevel) || !recordClass.isRecord() ||
         recordClass.getRecordComponents().length == 0 ||
         recordClass.getRecordComponents().length > context.options.maxComponentCount) {
       return;
@@ -224,7 +224,7 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
       return null;
     }
     PsiType iteratedType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
-    if (iteratedType instanceof PsiClassType classType && classType.isRaw()) {
+    if (iteratedType == null || iteratedType instanceof PsiClassType classType && classType.isRaw()) {
       return null;
     }
     if (!PsiTypesUtil.compareTypes(parameterType, iteratedType, false)) {
@@ -268,7 +268,7 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
         return Map.of();
       }
       PsiType substituted = context.classSubstitutor.substitute(component.getType());
-      if (substituted instanceof PsiWildcardType || substituted instanceof PsiCapturedWildcardType) {
+      if (substituted == null || substituted instanceof PsiWildcardType || substituted instanceof PsiCapturedWildcardType) {
         return Map.of();
       }
 
@@ -416,6 +416,9 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
         String type = "var";
         if (!context.options.useVar) {
           PsiType substituted = context.classSubstitutor.substitute(component.getType());
+          if (substituted == null) {
+            return null;
+          }
           type = substituted.getCanonicalText();
         }
         ArrayList<String> proposedNames = new ArrayList<>();
