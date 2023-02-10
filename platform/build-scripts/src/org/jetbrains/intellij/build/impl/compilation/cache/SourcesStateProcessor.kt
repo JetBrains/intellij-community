@@ -1,12 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation.cache
 
-import com.google.common.hash.Hashing
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.jetbrains.jps.cache.model.BuildTargetState
+import org.jetbrains.xxh3.Xxh3
 import org.jetbrains.intellij.build.impl.compilation.CompilationOutput
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -88,6 +87,5 @@ class SourcesStateProcessor(dataStorageRoot: Path, private val classesOutputDire
 }
 
 private fun calculateStringHash(content: String): String {
-  val hasher = Hashing.murmur3_128().newHasher()
-  return hasher.putString(content, StandardCharsets.UTF_8).hash().toString()
+  return Xxh3.hash(content).toString()
 }
