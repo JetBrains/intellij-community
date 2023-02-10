@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -23,6 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.getHeaderBackgroundColor
 import com.intellij.psi.PsiDocumentManager
@@ -41,7 +41,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 
-val isContrastRunWidget: Boolean get() = AdvancedSettings.getBoolean("contrast.run.widget")
+val isContrastRunWidget: Boolean get() = Registry.`is`("ide.experimental.ui.contrast.run.widget")
 
 private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean): ActionToolbar {
   val toolbarId = if (isContrastRunWidget) "ContrastRunToolbarMainActionGroup" else "RunToolbarMainActionGroup"
