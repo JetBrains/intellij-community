@@ -73,7 +73,7 @@ class SourceSetCachedFinder {
   }
 
   Set<File> findSourcesByArtifact(String path) {
-    def sources = mySourcesMap[path]
+    def sources = mySourcesMap.get(path)
     if (sources == null) {
       def sourceSet = myArtifactsMap.myArtifactsMap[path]
       if (sourceSet != null) {

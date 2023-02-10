@@ -89,7 +89,6 @@ class GradleVersionCatalogsCompletionTest : GradleCodeInsightTestCase() {
       .create("GradleVersionCatalogs-completion") {
         withSettingsFile {
           setProjectName("GradleVersionCatalogs-completion")
-          enableFeaturePreview("VERSION_CATALOGS")
         }
         withFile("gradle/libs.versions.toml", /* language=TOML */ """
       [versions]
@@ -114,7 +113,6 @@ class GradleVersionCatalogsCompletionTest : GradleCodeInsightTestCase() {
       .create("GradleVersionCatalogs-completion-java") { gradleVersion ->
         withSettingsFile {
           setProjectName("GradleVersionCatalogs-completion-java")
-          enableFeaturePreview("VERSION_CATALOGS")
         }
         withBuildFile(gradleVersion) {
           withJavaPlugin()
