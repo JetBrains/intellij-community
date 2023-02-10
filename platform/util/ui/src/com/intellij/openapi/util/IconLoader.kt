@@ -57,6 +57,8 @@ private val iconCache = ConcurrentHashMap<Pair<String, ClassLoader?>, CachedImag
 private val iconToDisabledIcon = ConcurrentHashMap<() -> RGBImageFilter, MutableMap<Icon, Icon>>()
 private val standardDisablingFilter: () -> RGBImageFilter = { UIUtil.getGrayFilter() }
 
+private val colorPatchCache = ConcurrentHashMap<Int, MutableMap<List<Byte>, MutableMap<Icon, Icon>>>()
+
 @Volatile
 private var STRICT_GLOBAL = false
 
@@ -437,7 +439,21 @@ object IconLoader {
         result = variant
       }
     }
-    return result.createWithPatcher(colorPatcher)
+
+    val wholeDigest = colorPatcher.wholeDigest()
+    if (wholeDigest == null) {
+      return result.createWithPatcher(colorPatcher)
+    }
+
+    val topMapIndex = when(isDark) {
+      false -> 0
+      true -> 1
+      else -> 2
+    }
+
+    return colorPatchCache.computeIfAbsent(topMapIndex) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
+      .computeIfAbsent(wholeDigest.asList()) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
+      .computeIfAbsent(imageIcon) {result.createWithPatcher(colorPatcher) }
   }
 
   /**
@@ -685,6 +701,9 @@ private fun updateTransform(updater: Function<in IconTransform, IconTransform>) 
   pathTransformGlobalModCount.incrementAndGet()
   if (prev != next) {
     iconToDisabledIcon.clear()
+    colorPatchCache.clear()
+    CachedImageIcon.iconToStrokeIcon.clear()
+
     // clear svg cache
     ImageCache.INSTANCE.clearCache()
     // iconCache is not cleared because it contains an original icon (instance that will delegate to)
