@@ -287,9 +287,9 @@ class JCefImageViewer(private val myFile: VirtualFile,
     val thumbBorderHovered = getColorCSS(ScrollBarPainter.THUMB_OPAQUE_HOVERED_FOREGROUND)
 
     val scale = UISettingsUtils.instance.currentIdeScale
-    val trackSizePx = (if (SystemInfo.isMac) 14 else 10) * scale
-    val thumbBorderSizePx = (if (SystemInfo.isMac) 3 else 1) * scale
-    val thumbRadiusPx = (if (SystemInfo.isMac) 14 else 0) * scale
+    val trackSizePx = JBCefApp.normalizeScaledSize((if (SystemInfo.isMac) 14 else 10)) * scale
+    val thumbBorderSizePx = JBCefApp.normalizeScaledSize((if (SystemInfo.isMac) 3 else 1)) * scale
+    val thumbRadiusPx = JBCefApp.normalizeScaledSize((if (SystemInfo.isMac) 14 else 0)) * scale
 
     return /*language=css*/ """
       ::-webkit-scrollbar {
