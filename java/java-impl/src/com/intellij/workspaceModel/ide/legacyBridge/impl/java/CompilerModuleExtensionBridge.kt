@@ -155,7 +155,7 @@ class CompilerModuleExtensionBridge(
     return result.toTypedArray()
   }
 
-  companion object : ModuleExtensionBridgeFactory<CompilerModuleExtensionBridge> {
+  class Factory : ModuleExtensionBridgeFactory<CompilerModuleExtensionBridge> {
     override fun createExtension(module: ModuleBridge,
                                  entityStorage: VersionedEntityStorage,
                                  diff: MutableEntityStorage?): CompilerModuleExtensionBridge =

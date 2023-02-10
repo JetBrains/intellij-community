@@ -1109,7 +1109,7 @@
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightExceptionsHandlerFactory"/>
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightRecordComponentsRecordFactory"/>
     <workspaceModel.moduleExtensionBridgeFactory
-      implementation="com.intellij.workspaceModel.ide.legacyBridge.impl.java.CompilerModuleExtensionBridge$Companion"/>
+      implementation="com.intellij.workspaceModel.ide.legacyBridge.impl.java.CompilerModuleExtensionBridge$Factory"/>
     <projectExtension implementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl$MyProjectExtension"/>
     <liveTemplateContext contextId="JAVA_CODE" implementation="com.intellij.codeInsight.template.JavaCodeContextType$Generic"/>
     <liveTemplateContext contextId="JAVA_STATEMENT" baseContextId="JAVA_CODE" implementation="com.intellij.codeInsight.template.JavaCodeContextType$Statement"/>
