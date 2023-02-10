@@ -50,12 +50,15 @@ open class XDebugSessionTabNewUI(
 
     val toolbar = DefaultActionGroupWithDelegate(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP))
 
-    mySingleContentSupplier = object: RunTabSupplier(toolbar) {
-      override fun getToolbarActions(): ActionGroup? {
-        return if (isVerticalToolbar) ActionGroup.EMPTY_GROUP else super.getToolbarActions()
+    if (isSingleContent()) {
+      mySingleContentSupplier = object : RunTabSupplier(toolbar) {
+        override fun getToolbarActions(): ActionGroup? {
+          return if (isVerticalToolbar) ActionGroup.EMPTY_GROUP else super.getToolbarActions()
+        }
+
+        override fun getMainToolbarPlace() = ActionPlaces.DEBUGGER_TOOLBAR
+        override fun getContentToolbarPlace() = ActionPlaces.DEBUGGER_TOOLBAR
       }
-      override fun getMainToolbarPlace() = ActionPlaces.DEBUGGER_TOOLBAR
-      override fun getContentToolbarPlace() = ActionPlaces.DEBUGGER_TOOLBAR
     }
 
     toolbarGroup = toolbar
@@ -109,6 +112,7 @@ open class XDebugSessionTabNewUI(
     toolbar.add(more, Constraints(Anchor.BEFORE, ""))
   }
 
+  open fun isSingleContent() = false
   override fun getSupplier(): SingleContentSupplier? = mySingleContentSupplier
 }
 
