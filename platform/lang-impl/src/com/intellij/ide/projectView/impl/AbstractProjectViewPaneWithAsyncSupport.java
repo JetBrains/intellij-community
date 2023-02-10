@@ -167,6 +167,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
   }
 
   protected void onSelectionChanged() {
+    if (myProject.isDisposed()) return;
     myProject.getMessageBus().syncPublisher(PROJECT_VIEW_SELECTION_TOPIC).onChanged();
 
     if (myTree != null && myTree.getSelectionModel() != null) {
