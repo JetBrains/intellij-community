@@ -51,6 +51,13 @@ class LearnToolWindow internal constructor(val project: Project, private val who
     }
   }
 
+  override fun updateUI() {
+    super.updateUI()
+    if (parent != null) {
+      reinitViews()
+    }
+  }
+
   internal fun reinitViews() {
     modulesPanel.modulesPanel?.updateMainPanel()
   }

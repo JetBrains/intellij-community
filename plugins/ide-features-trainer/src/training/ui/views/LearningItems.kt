@@ -39,13 +39,6 @@ class LearningItems(private val project: Project) : JPanel() {
     isFocusable = false
   }
 
-  override fun updateUI() {
-    super.updateUI()
-    if (parent != null) {
-      updateItems(null)
-    }
-  }
-
   fun updateItems(showModule: IftModule? = null) {
     if (showModule != null) expanded.add(showModule)
 
