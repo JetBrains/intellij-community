@@ -334,6 +334,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     boolean changed = myList.setSelectedButtonIndex(++currentIndex);
     if (changed) {
       getContent().repaint();
+      if (myPopupInlineActionsSupport.isMoreButton(selected, currentIndex) && buttonsCount == 1) {
+        myPopupInlineActionsSupport.getInlineAction(selected, currentIndex, null).executeAction();
+      }
     }
     return true;
   }

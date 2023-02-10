@@ -35,7 +35,9 @@ class NonActionsPopupInlineSupport(private val myListPopup: ListPopupImpl) : Pop
 
   override fun getActiveButtonIndex(list: JList<*>): Int? = (list as? ListPopupImpl.ListWithInlineButtons)?.selectedButtonIndex
 
+  override fun isMoreButton(element: Any?, index: Int): Boolean = hasMoreButton(element) && index == 0
+
   private fun hasMoreButton(element: Any?) = myListPopup.listStep.hasSubstep(element)
-                                            && !myListPopup.isShowSubmenuOnHover
-                                            && myListPopup.listStep.isFinal(element)
+                                             && !myListPopup.isShowSubmenuOnHover
+                                             && myListPopup.listStep.isFinal(element)
 }
