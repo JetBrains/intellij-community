@@ -5,5 +5,5 @@ actual class <!LINE_MARKER("descr='Has expects in jvmAndJs module'")!>ExpectInMi
 
 expect class <!NO_ACTUAL_FOR_EXPECT!>ExpectInJvmWithoutActual<!>
 
-expect class <!LINE_MARKER("descr='Has actuals in jvm module'")!>ExpectInJvmActualInJvm<!>
-actual class <!LINE_MARKER("descr='Has expects in jvm module'")!>ExpectInJvmActualInJvm<!>
+expect <!EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE!>class <!LINE_MARKER("descr='Has actuals in jvm module'")!>ExpectInJvmActualInJvm<!><!>
+actual <!EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE!>class <!LINE_MARKER("descr='Has expects in jvm module'")!>ExpectInJvmActualInJvm<!><!>
