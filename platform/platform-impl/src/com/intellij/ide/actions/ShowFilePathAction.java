@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -9,6 +10,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -16,17 +20,20 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileSystemView;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +51,8 @@ public class ShowFilePathAction extends DumbAwareAction {
     if (visible) {
       VirtualFile file = getFile(e);
       e.getPresentation().setEnabled(file != null);
-      e.getPresentation().setText(ActionsBundle.messagePointer(file != null && file.isDirectory() ? "action.ShowFilePath.directory" : "action.ShowFilePath.file"));
+      e.getPresentation().setText(
+        ActionsBundle.messagePointer(file != null && file.isDirectory() ? "action.ShowFilePath.directory" : "action.ShowFilePath.file"));
     }
   }
 
@@ -93,14 +101,15 @@ public class ShowFilePathAction extends DumbAwareAction {
       eachParent = eachParent.getParent();
     }
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      List<Icon> icons = new ArrayList<>();
-      for (String url : fileUrls) {
-        File ioFile = new File(url);
-        icons.add(ioFile.exists() ? FileSystemView.getFileSystemView().getSystemIcon(ioFile) : EmptyIcon.ICON_16);
-      }
-      ApplicationManager.getApplication().invokeLater(() -> action.consume(createPopup(files, icons)));
-    });
+    ReadAction
+      .nonBlocking(() -> ContainerUtil.map(fileUrls, url -> {
+        VirtualFile vFile = LocalFileSystem.getInstance().findFileByNioFile(Path.of(url));
+        if (vFile == null) return EmptyIcon.ICON_16;
+        if (vFile.isDirectory()) return AllIcons.Nodes.Folder;
+        return FileTypeManager.getInstance().getFileTypeByFile(vFile).getIcon();
+      }))
+      .finishOnUiThread(ModalityState.NON_MODAL, icons -> action.consume(createPopup(files, icons)))
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private static String getPresentableUrl(VirtualFile file) {
