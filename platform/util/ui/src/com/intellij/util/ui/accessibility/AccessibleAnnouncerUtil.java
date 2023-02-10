@@ -6,6 +6,7 @@ import com.jetbrains.AccessibleAnnouncer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.Accessible;
+import java.awt.KeyboardFocusManager;
 
 final public class AccessibleAnnouncerUtil {
   final private static AccessibleAnnouncer announcer = JBR.getAccessibleAnnouncer();
@@ -20,12 +21,17 @@ final public class AccessibleAnnouncerUtil {
    * @param interruptCurrentOutput  output interruption
    */
   public static void announce(@NotNull final Accessible a, final String str, final boolean interruptCurrentOutput) {
-    if (announcer != null) {
-      if (interruptCurrentOutput) {
-        announcer.announce(a, str, AccessibleAnnouncer.ANNOUNCE_WITH_INTERRUPTING_CURRENT_OUTPUT);
-        return;
-      }
-      announcer.announce(a, str, AccessibleAnnouncer.ANNOUNCE_WITHOUT_INTERRUPTING_CURRENT_OUTPUT);
+    if (announcer == null) return;;
+
+    KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    if ((focusManager == null) &&
+        (focusManager.getActiveWindow() == null)) return;;
+
+    if (interruptCurrentOutput) {
+      announcer.announce(a, str, AccessibleAnnouncer.ANNOUNCE_WITH_INTERRUPTING_CURRENT_OUTPUT);
+      return;
     }
+
+    announcer.announce(a, str, AccessibleAnnouncer.ANNOUNCE_WITHOUT_INTERRUPTING_CURRENT_OUTPUT);
   }
 }
