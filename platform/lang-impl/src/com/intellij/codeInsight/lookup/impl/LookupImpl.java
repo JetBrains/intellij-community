@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -15,7 +15,6 @@ import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction;
 import com.intellij.codeInsight.template.impl.actions.NextVariableAction;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -446,7 +445,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     updateListHeight(listModel);
 
     myList.setSelectedIndex(toSelect);
-    if (GeneralSettings.getInstance().isSupportScreenReaders()) {
+    if (ScreenReader.isActive()) {
       AccessibleContext context = myList.getAccessibleContext();
       Accessible child = context.getAccessibleChild(myList.getSelectedIndex());
       context.firePropertyChange(AccessibleContext.ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY, null, child);
