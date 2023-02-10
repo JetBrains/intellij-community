@@ -43,6 +43,7 @@ import org.intellij.images.thumbnail.actions.ShowBorderAction
 import org.intellij.images.ui.ImageComponentDecorator
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
+import java.awt.Color
 import java.awt.Point
 import java.beans.PropertyChangeListener
 import java.io.ByteArrayInputStream
@@ -66,10 +67,12 @@ class JCefImageViewer(private val myFile: VirtualFile,
     private const val VIEWER_PATH = "/index.html"
     private const val IMAGE_PATH = "/image"
     private const val SCROLLBARS_CSS_PATH = "/scrollbars.css"
+    private const val CHESSBOARD_CSS_PATH = "/chessboard.css"
 
     private const val VIEWER_URL = "$PROTOCOL://$HOST_NAME$VIEWER_PATH"
     private const val IMAGE_URL = "$PROTOCOL://$HOST_NAME$IMAGE_PATH"
     private const val SCROLLBARS_STYLE_URL = "$PROTOCOL://$HOST_NAME$SCROLLBARS_CSS_PATH"
+    private const val CHESSBOARD_STYLE_URL = "$PROTOCOL://$HOST_NAME$CHESSBOARD_CSS_PATH"
   }
 
   private val myDocument: Document = FileDocumentManager.getInstance().getDocument(myFile)!!
@@ -169,6 +172,14 @@ class JCefImageViewer(private val myFile: VirtualFile,
       }
     }
 
+    resourceRequestHandler.addResource(SCROLLBARS_CSS_PATH) {
+      CefStreamResourceHandler(ByteArrayInputStream(buildScrollbarsStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+    }
+
+    resourceRequestHandler.addResource(CHESSBOARD_CSS_PATH) {
+      CefStreamResourceHandler(ByteArrayInputStream(buildChessboardStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+    }
+
     resourceRequestHandler.addResource(IMAGE_PATH) {
       var stream: InputStream? = null
       try {
@@ -189,10 +200,6 @@ class JCefImageViewer(private val myFile: VirtualFile,
 
         return@addResource resourceHandler
       }
-    }
-
-    resourceRequestHandler.addResource(SCROLLBARS_CSS_PATH) {
-      CefStreamResourceHandler(ByteArrayInputStream(buildScrollbarsStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
     myCefClient.addRequestHandler(resourceRequestHandler, myBrowser.cefBrowser)
@@ -225,12 +232,12 @@ class JCefImageViewer(private val myFile: VirtualFile,
     }
 
     myInitializer.set {
+      reloadStyles()
       execute("sendInfo = function(info_text) {${myViewerStateJSQuery.inject("info_text")};}")
       execute("setImageUrl('$IMAGE_URL');")
       isGridVisible = OptionsManager.getInstance().options.editorOptions.gridOptions.isShowDefault
       isTransparencyChessboardVisible = OptionsManager.getInstance().options.editorOptions.transparencyChessboardOptions.isShowDefault
       setBorderVisible(ShowBorderAction.isBorderVisible())
-      reloadStyles()
     }
 
     myCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
@@ -269,6 +276,8 @@ class JCefImageViewer(private val myFile: VirtualFile,
     @Serializable
     data class Size(val width: Int, val height: Int)
   }
+
+  private fun colorToCSS(color: Color) = "rgba(${color.red}, ${color.blue}, ${color.green}, ${color.alpha / 255.0})"
 
   private fun getColorCSS(key: ColorKey): String {
     val colorScheme = EditorColorsManager.getInstance().schemeForCurrentUITheme
@@ -366,9 +375,26 @@ class JCefImageViewer(private val myFile: VirtualFile,
     }
   }
 
+  private fun buildChessboardStyle(): String {
+    val options = OptionsManager.getInstance().options.editorOptions.transparencyChessboardOptions
+    val cellSize = JBCefApp.normalizeScaledSize(options.cellSize)
+    val blackColor = colorToCSS(options.blackColor)
+    val whiteColor = colorToCSS(options.whiteColor)
+    return /*language=css*/ """
+      #chessboard {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: repeating-conic-gradient(${blackColor} 0% 25%, ${whiteColor} 0% 50%) 50% / ${cellSize * 2}px ${cellSize * 2}px;
+        background-position: 0 0;
+      }
+    """.trimIndent()
+  }
+
   private fun reloadStyles() {
     execute("""
       loadScrollbarsStyle('$SCROLLBARS_STYLE_URL');
+      loadChessboardStyle('$CHESSBOARD_STYLE_URL');
     """.trimIndent())
   }
 }

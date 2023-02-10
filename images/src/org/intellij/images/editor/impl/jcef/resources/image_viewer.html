@@ -13,7 +13,6 @@
       position: absolute;
       left: 0;
       top: 0;
-      z-index: 50;
     }
 
     #zoom_anchor_cross_in_viewport {
@@ -26,7 +25,6 @@
       position: absolute;
       left: 0;
       top: 0;
-      z-index: 50;
     }
 
     body {
@@ -41,7 +39,6 @@
       position: absolute;
       top: 0;
       left: 0;
-      z-index: 30;
       opacity: 0.5;
     }
 
@@ -52,7 +49,6 @@
       right: 0;
       font-family: monospace;
       white-space: pre;
-      z-index: 30;
       opacity: 0.5;
     }
 
@@ -88,21 +84,14 @@
       position: absolute;
       display: block;
       transform-origin: 0 0;
-      z-index: 10;
     }
 
     #chessboard {
       position: absolute;
       width: 100%;
       height: 100%;
-      background-color: #ffffff;
-      background-image: linear-gradient(45deg, #C0C0C0 25%, transparent 25%),
-      linear-gradient(-45deg, #C0C0C0 25%, transparent 25%),
-      linear-gradient(45deg, transparent 75%, #C0C0C0 75%),
-      linear-gradient(-45deg, transparent 75%, #C0C0C0 75%);
-      background-size: 20px 20px;
-      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
-      z-index: 5;
+      background: repeating-conic-gradient(#808080 0% 25%, #FFFFFF 0% 50%) 50% / 30px 30px;
+      background-position: 0 0;
     }
 
     #pixel_grid {
@@ -110,7 +99,6 @@
       width: 100%;
       height: 100%;
       margin: 0;
-      z-index: 15;
       background-image: linear-gradient(to right, grey 1px, transparent 1px),
       linear-gradient(to bottom, grey 1px, transparent 1px);
       background-size: 1px 1px;
@@ -123,15 +111,15 @@
       height: 100%;
       border: 1px solid gray;
       mix-blend-mode: difference;
-      z-index: 20;
     }
   </style>
   <link id="scrollbars_style" rel="stylesheet" type="text/css" href="scrollbars.css"/>
+  <link id="chessboard_style" rel="stylesheet" type="text/css" href="chessboard.css"/>
   <title>Image viewer</title>
 </head>
 
 <body>
-<div id="control_panel" style="display: none">
+<div id="control_panel" style="display: none; z-index: 30">
   <input type="text" style="width: 100%;" id="url_input">
   <button onclick="zoomIn()">+</button>
   <button onclick="zoomOut()">-</button>
@@ -146,19 +134,19 @@
 </div>
 
 <div id="container">
-  <div id="zoom_anchor_cross_in_viewport" style="display: none"></div>
+  <div id="zoom_anchor_cross_in_viewport" style="display: none; z-index: 50;"></div>
   <div id="view_port">
     <div id="svg_canvas">
-      <object id="image"></object>
-      <div id="chessboard" style="display: none"></div>
-      <div id="pixel_grid" style="display: none"></div>
-      <div id="image_border" style="display: none"></div>
-      <div id="zoom_anchor_cross_on_canvas" style="display: none"></div>
+      <object id="image" style="z-index: 10"></object>
+      <div id="chessboard" class="chessboard_base chessboard_style" style="display: none; z-index: 5;"></div>
+      <div id="pixel_grid" style="display: none; z-index: 15;"></div>
+      <div id="image_border" style="display: none; z-index: 20;"></div>
+      <div id="zoom_anchor_cross_on_canvas" style="display: none; z-index: 50;"></div>
     </div>
   </div>
 </div>
 
-<div id="info_panel" style="display: none">No data</div>
+<div id="info_panel" style="display: none; z-index: 30">No data</div>
 
 <!--Place the script at the end to make sure that the DOM is ready at this point-->
 <script>
@@ -194,7 +182,8 @@
   }
 
   const gStyles = {
-    'scrollbars': document.getElementById('scrollbars_style')
+    'scrollbars': document.getElementById('scrollbars_style'),
+    'chessboard': document.getElementById('chessboard_style')
   }
   let sendInfo = function (info_string) {}
 
@@ -448,6 +437,10 @@
     gStyles.scrollbars.href = _setTimestamp(url)
   }
 
+  function loadChessboardStyle(url) {
+    gStyles.chessboard.href = _setTimestamp(url)
+  }
+
   function _setTimestamp(url) {
     let patched_url = new URL(url)
     patched_url.searchParams.set('timestamp', new Date().getTime().toString())
@@ -456,6 +449,7 @@
 
   function reloadStyles() {
     loadScrollbarsStyle(gStyles.scrollbars.href)
+    loadScrollbarsStyle(gStyles.chessboard.href)
   }
 </script>
 
