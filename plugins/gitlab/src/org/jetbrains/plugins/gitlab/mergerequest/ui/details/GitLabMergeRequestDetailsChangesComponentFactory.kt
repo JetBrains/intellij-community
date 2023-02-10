@@ -7,6 +7,8 @@ import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.TransparentScrollPane
 import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory
 import com.intellij.collaboration.ui.util.bindContent
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
@@ -58,6 +60,8 @@ internal class GitLabMergeRequestDetailsChangesComponentFactory(private val proj
           vm.updateSelectedChanges(VcsTreeModelData.getListSelectionOrAll(it).map { it as? Change })
         }
         vm.updateSelectedChanges(VcsTreeModelData.getListSelectionOrAll(it).map { it as? Change })
+
+        it.installPopupHandler(ActionManager.getInstance().getAction("GitLab.Merge.Requests.Details.Popup") as ActionGroup)
       }
   }
 }

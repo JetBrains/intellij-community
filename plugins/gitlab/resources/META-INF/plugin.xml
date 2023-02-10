@@ -55,5 +55,18 @@
       <action id="GitLab.Merge.Request.Open.In.Browser"
               class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabOpenMergeRequestInBrowserAction"/>
     </group>
+
+    <group id="GitLab.Merge.Requests.Details.Popup">
+      <reference id="Diff.ShowDiff"/>
+      <reference id="Diff.ShowStandaloneDiff"/>
+      <reference id="GitLab.Merge.Requests.Details.Refresh"/>
+      <reference id="EditSource"/>
+      <group id="GitLab.Merge.Requests.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
+        <reference id="ChangesView.GroupBy"/>
+      </group>
+      <separator/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
+    </group>
   </actions>
 </idea-plugin>
