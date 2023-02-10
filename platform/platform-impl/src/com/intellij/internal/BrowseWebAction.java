@@ -30,9 +30,9 @@ final class BrowseWebAction extends AnAction implements DumbAware {
       var url = Messages.showInputDialog(project, "Where to?", "Browse Web", null, "https://www.jetbrains.com", null);
       if (url != null && !url.isBlank()) {
         HTMLEditorProvider.openEditor(project, "World Wild Web", HTMLEditorProvider.Request.url(url)
-          .withQueryHandler((HTMLEditorProvider.JsQueryHandler.Java)(id, jsRequest) -> {
+          .withQueryHandler((id, jsRequest, completion) -> {
             new Notification("System Messages", "JS request", "[" + id + "] " + jsRequest, NotificationType.INFORMATION).notify(project);
-            return "x";
+            return "true";
           }));
       }
     }

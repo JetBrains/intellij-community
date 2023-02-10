@@ -84,7 +84,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
         .notify(project);
     }
     else {
-      openWhatsNewPage(project, url, (HTMLEditorProvider.JsQueryHandler.Java)(id, jsRequest) -> {
+      openWhatsNewPage(project, url, (id, jsRequest, completion) -> {
         if (ENABLE_NEW_UI_REQUEST.equals(jsRequest)) {
           if (!ExperimentalUI.isNewUI()) {
             ApplicationManager.getApplication().invokeLater(() -> {

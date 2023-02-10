@@ -7,7 +7,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.JS_FUNCTION_NAME
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -89,13 +88,5 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
    */
   interface JsQueryHandler {
     suspend fun query(id: Long, request: String): String
-
-    // Java compatibility layer
-    interface Java : JsQueryHandler {
-      fun syncQuery(id: Long, request: String): String
-
-      override suspend fun query(id: Long, request: String): String =
-        blockingContext { syncQuery(id, request) }
-    }
   }
 }
