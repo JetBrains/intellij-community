@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
 import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
@@ -10,7 +9,4 @@ class SerializationContextForTests(
   override val fileContentReader: JpsFileContentReader,
   override val isExternalStorageEnabled: Boolean = false,
   override val fileInDirectorySourceNames: FileInDirectorySourceNames = FileInDirectorySourceNames.empty()
-) : SerializationContext {
-  override val isJavaPluginPresent: Boolean
-    get() = IdeSerializationContext.isJavaPluginPresent
-}
+) : BaseIdeSerializationContext()

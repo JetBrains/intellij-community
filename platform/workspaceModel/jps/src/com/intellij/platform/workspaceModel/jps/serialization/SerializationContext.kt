@@ -19,4 +19,6 @@ interface SerializationContext {
    * currently is implemented inside the platform. 
    */
   val isJavaPluginPresent: Boolean
+  
+  val isOrphanageEnabled: Boolean
 }

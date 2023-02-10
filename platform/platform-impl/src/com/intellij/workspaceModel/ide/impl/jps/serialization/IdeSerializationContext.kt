@@ -6,21 +6,23 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
 import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
+import com.intellij.workspaceModel.ide.EntitiesOrphanage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
-class IdeSerializationContext(
+abstract class BaseIdeSerializationContext : SerializationContext {
+  override val isJavaPluginPresent: Boolean
+    get() = PluginManagerCore.getPlugin(PluginId.findId("com.intellij.java")) != null
+  
+  override val isOrphanageEnabled: Boolean
+    get() = EntitiesOrphanage.isEnabled
+}
+
+open class IdeSerializationContext(
   override val virtualFileUrlManager: VirtualFileUrlManager,
   override val fileContentReader: JpsFileContentReader,
   override val fileInDirectorySourceNames: FileInDirectorySourceNames,
   private val externalStorageConfigurationManager: ExternalStorageConfigurationManager
-) : SerializationContext {
+) : BaseIdeSerializationContext() {
   override val isExternalStorageEnabled: Boolean
     get() = externalStorageConfigurationManager.isEnabled
-  override val isJavaPluginPresent: Boolean
-    get() = IdeSerializationContext.isJavaPluginPresent
-  
-  companion object {
-    val isJavaPluginPresent: Boolean
-      get() = PluginManagerCore.getPlugin(PluginId.findId("com.intellij.java")) != null
-  }
 }

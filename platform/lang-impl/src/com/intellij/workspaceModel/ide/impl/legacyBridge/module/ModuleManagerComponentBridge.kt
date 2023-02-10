@@ -388,11 +388,9 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 }
 
 private class SingleImlSerializationContext(override val virtualFileUrlManager: VirtualFileUrlManager,
-                                            override val fileContentReader: JpsFileContentReader) : SerializationContext {
+                                            override val fileContentReader: JpsFileContentReader) : BaseIdeSerializationContext() {
   override val isExternalStorageEnabled: Boolean
     get() = false
   override val fileInDirectorySourceNames: FileInDirectorySourceNames
     get() = FileInDirectorySourceNames.empty()
-  override val isJavaPluginPresent: Boolean
-    get() = IdeSerializationContext.isJavaPluginPresent
 }

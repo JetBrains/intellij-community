@@ -122,3 +122,8 @@ internal class FileInDirectorySerializer : Serializer<JpsProjectFileEntitySource
 interface CustomModuleEntitySource : EntitySource {
   val internalSource: JpsFileEntitySource
 }
+
+/**
+ * Special sources for entities which are temporal parents for entities in [the orphanage][com.intellij.workspaceModel.ide.EntitiesOrphanage].
+ */
+object OrphanageWorkerEntitySource : EntitySource
