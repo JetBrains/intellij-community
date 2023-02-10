@@ -4,16 +4,10 @@ package com.intellij.codeInspection.javaDoc
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.CheckBoxList
-import com.intellij.ui.CheckBoxListListener
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
-import java.awt.CardLayout
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
 import kotlin.reflect.KMutableProperty0
 
@@ -40,39 +34,6 @@ object JavadocUIUtil {
 
   fun item(@NlsContexts.Checkbox text: String, checkboxBinding: KMutableProperty0<Boolean>, description: JComponent): MasterDetailsItem {
     return MasterDetailsItem(text, MutableProperty(checkboxBinding::get, checkboxBinding::set), description)
-  }
-
-  private fun createMasterDetails(items: List<MasterDetailsItem>): JPanel {
-    val layout = CardLayout()
-    val description = JPanel(layout)
-    val list = CheckBoxList<MasterDetailsItem>()
-    list.border = JBUI.Borders.empty(2)
-    items.forEach { item ->
-      description.add(item.description, item.text)
-      list.addItem(item, item.text, item.checkboxBinding.get())
-    }
-    list.addListSelectionListener {
-      val selectedIndex = list.selectedIndex
-      val item = list.takeIf { selectedIndex >= 0 }?.getItemAt(selectedIndex) ?: return@addListSelectionListener
-      layout.show(description, item.text)
-      UIUtil.setEnabled(description, item.checkboxBinding.get(), true)
-    }
-    list.setCheckBoxListListener(
-      CheckBoxListListener { _, value ->
-        val selectedIndex = list.selectedIndex
-        val item = list.takeIf { selectedIndex >= 0 }?.getItemAt(selectedIndex) ?: return@CheckBoxListListener
-        item.checkboxBinding.set(value)
-        UIUtil.setEnabled(description, value, true)
-      }
-    )
-    list.selectedIndex = 0
-
-    return panel {
-      row {
-        cell(list).align(AlignY.FILL)
-        cell(description).align(AlignX.FILL + AlignY.TOP)
-      }
-    }
   }
 
   fun javadocDeclarationOptions(settings: JavadocDeclarationInspection): JComponent = panel {
