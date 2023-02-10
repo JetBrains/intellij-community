@@ -168,7 +168,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
                                           @NotNull @NlsContexts.Label String splitLabel,
                                           int minValue,
                                           int maxValue) {
-    return new OptNumber(bindId, new PlainMessage(splitLabel), minValue, maxValue);
+    return new OptNumber(bindId, new PlainMessage(splitLabel), minValue, maxValue, null);
   }
 
   /**

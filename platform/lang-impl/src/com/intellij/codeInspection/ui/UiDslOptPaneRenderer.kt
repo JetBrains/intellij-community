@@ -172,19 +172,25 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       // Split label with null suffix
       splitLabel?.prefix != null -> row(splitLabel.prefix) { cell = renderOptCell(component, context) }
       // No row label (align left, control handles the label)
-      else -> row {
-        cell = renderOptCell(component, context)
-
+      else -> row { cell = renderOptCell(component, context) }
+    }
+      .layout(RowLayout.PARENT_GRID)
+      .applyIf(withBottomGap) { bottomGap(BottomGap.SMALL) }
+      .applyIf(component.hasResizableRow) { resizableRow() }
+      .applyIf(component is OptNumber || component is OptString || component is OptCheckbox) {
+        (component as OptDescribedComponent).description()?.let {
+          cell.gap(RightGap.SMALL)
+          contextHelp (HtmlBuilder().append(it).toString())
+        }
+        this
+      }
+      .apply {
         nestedInRow?.let { nested ->
           val checkbox = cell.component as JBCheckBox
           renderOptCell(nested, context)
             .enabledIf(checkboxPredicate(checkbox))
         }
       }
-    }
-      .layout(RowLayout.PARENT_GRID)
-      .applyIf(withBottomGap) { bottomGap(BottomGap.SMALL) }
-      .applyIf(component.hasResizableRow) { resizableRow() }
 
     // Nested components
     component.nestedControls?.let { nested ->
@@ -214,10 +220,6 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
               isSelected = context.getOption(component.bindId) as Boolean
             }
             .onChanged { context.setOption(component.bindId, it.isSelected) }
-            .apply { component.description?.let {
-              gap(RightGap.SMALL)
-              this@renderOptCell.contextHelp (HtmlBuilder().append(it).toString())
-            } }
         }
 
         is OptString -> {
@@ -232,10 +234,6 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
             .onChanged {
               context.setOption(component.bindId, it.text)
             }
-            .apply { component.description?.let {
-              gap(RightGap.SMALL)
-              this@renderOptCell.contextHelp (HtmlBuilder().append(it).toString())
-            } }
         }
 
         is OptNumber -> {
@@ -352,7 +350,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                    .resizeY(true)
                    .createPanel()
                })
-            .comment(component.description?.toString(), 40)
+            .comment(component.description()?.toString(), 40)
             .align(Align.FILL)
         }
 
