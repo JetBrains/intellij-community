@@ -43,7 +43,7 @@ class KotlinObjectRegisteredAsExtensionInspection : LocalInspectionTool() {
     if (!DevKitInspectionUtil.isAllowed(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
     return object : KtVisitorVoid() {
       override fun visitObjectDeclaration(declaration: KtObjectDeclaration) {
-        val ktLightClass = declaration.toLightClass() ?: return // do we need any checks?
+        val ktLightClass = declaration.toLightClass() ?: return
         if (isInstantiatedExtension(ktLightClass)) {
           val objectKeyword = declaration.nameIdentifier ?: declaration.getObjectKeyword() ?: return
           holder.registerProblem(objectKeyword, DevKitKotlinBundle.message("inspections.plugin.kotlin.object.registered.as.extension"))
