@@ -83,8 +83,10 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   private static final int NORMAL_BORDER_SIZE = 6;
   private static final int SMALL_BORDER_SIZE = 4;
 
-  private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE);
-  private static final Border INACTIVE_BORDER_SMALL = BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE);
+  private static final Border INACTIVE_BORDER =
+    BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE);
+  private static final Border INACTIVE_BORDER_SMALL =
+    BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE);
 
   @TestOnly
   public CachedIntentions getCachedIntentions() {
@@ -94,11 +96,17 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   private final IntentionPopup myPopup;
 
   private static Border createActiveBorder() {
-    return BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(getBorderColor(), 1), BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1));
+    return BorderFactory.createCompoundBorder(
+      BorderFactory.createLineBorder(getBorderColor(), 1),
+      BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE - 1)
+    );
   }
 
-  private static  Border createActiveBorderSmall() {
-    return BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(getBorderColor(), 1), BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1));
+  private static Border createActiveBorderSmall() {
+    return BorderFactory.createCompoundBorder(
+      BorderFactory.createLineBorder(getBorderColor(), 1),
+      BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE - 1, SMALL_BORDER_SIZE - 1, SMALL_BORDER_SIZE - 1, SMALL_BORDER_SIZE - 1)
+    );
   }
 
   private static Color getBorderColor() {
@@ -233,16 +241,16 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       // place bulb at the corner of the surrounding component
       Container ancestor = findAncestorCombo(myEditor);
       if (ancestor != null) {
-        convertComponent = (JComponent) ancestor;
+        convertComponent = (JComponent)ancestor;
       }
       else {
         ancestor = SwingUtilities.getAncestorOfClass(JTextField.class, editor.getContentComponent());
         if (ancestor != null) {
-          convertComponent = (JComponent) ancestor;
+          convertComponent = (JComponent)ancestor;
         }
       }
 
-      realPoint = new Point(- (EmptyIcon.ICON_16.getIconWidth() / 2) - 4, - (EmptyIcon.ICON_16.getIconHeight() / 2));
+      realPoint = new Point(-(EmptyIcon.ICON_16.getIconWidth() / 2) - 4, -(EmptyIcon.ICON_16.getIconHeight() / 2));
     }
     else {
       Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
@@ -259,7 +267,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
       int xShift = EmptyIcon.ICON_16.getIconWidth();
 
-      realPoint = new Point(Math.max(0,visibleArea.x - xShift), position.y + yShift);
+      realPoint = new Point(Math.max(0, visibleArea.x - xShift), position.y + yShift);
     }
 
     Point location = SwingUtilities.convertPoint(convertComponent, realPoint, editor.getComponent().getRootPane().getLayeredPane());
@@ -308,7 +316,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       public void mousePressed(@NotNull MouseEvent e) {
         if (!e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1) {
           AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
-          AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.MOUSE_SHORTCUT, null, SimpleDataContext.getProjectContext(project));
+          DataContext projectContext = SimpleDataContext.getProjectContext(project);
+          AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.MOUSE_SHORTCUT, null, projectContext);
           ActionsCollector.getInstance().record(project, action, event, file.getLanguage());
 
           showPopup(true);
@@ -382,7 +391,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     RelativePoint positionHint = null;
     if (mouseClick && myPanel.isShowing()) {
       RelativePoint swCorner = RelativePoint.getSouthWestOf(myPanel);
-      int yOffset = canPlaceBulbOnTheSameLine(myEditor) ? 0 : myEditor.getLineHeight() - (myEditor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE);
+      int yOffset = canPlaceBulbOnTheSameLine(myEditor) ? 0 :
+                    myEditor.getLineHeight() - (myEditor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE);
       positionHint = new RelativePoint(swCorner.getComponent(), new Point(swCorner.getPoint().x, swCorner.getPoint().y + yOffset));
     }
     myPopup.show(this, positionHint);
@@ -403,12 +413,14 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       for (Shortcut shortcut : shortcuts) {
         if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
           if (keyboardShortcut.getSecondKeyStroke() == null) {
-            ((WizardPopup)that.myListPopup).registerAction("activateSelectedElement", keyboardShortcut.getFirstKeyStroke(), new AbstractAction() {
-              @Override
-              public void actionPerformed(ActionEvent e) {
-                that.myListPopup.handleSelect(true);
+            ((WizardPopup)that.myListPopup).registerAction(
+              "activateSelectedElement", keyboardShortcut.getFirstKeyStroke(), new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                  that.myListPopup.handleSelect(true);
+                }
               }
-            });
+            );
           }
         }
       }
@@ -418,7 +430,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
 
     boolean committed = PsiDocumentManager.getInstance(that.myFile.getProject()).isCommitted(that.myEditor.getDocument());
-    PsiFile injectedFile = committed ? InjectedLanguageUtil.findInjectedPsiNoCommit(that.myFile, that.myEditor.getCaretModel().getOffset()) : null;
+    PsiFile injectedFile = committed
+                           ? InjectedLanguageUtil.findInjectedPsiNoCommit(that.myFile, that.myEditor.getCaretModel().getOffset())
+                           : null;
     Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(that.myEditor, injectedFile);
 
     ScopeHighlighter highlighter = new ScopeHighlighter(that.myEditor);
@@ -547,15 +561,15 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
     for (var shortcut : shortcuts.getShortcuts()) {
       if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
-        ((WizardPopup)that.myListPopup).registerAction(IntentionShortcutUtils.getWrappedActionId(intention),
-                                                       keyboardShortcut.getFirstKeyStroke(),
-                                                       new AbstractAction() {
-                                                     @Override
-                                                     public void actionPerformed(ActionEvent e) {
-                                                       that.close();
-                                                       IntentionShortcutUtils.invokeAsAction(intention, that.myEditor, that.myFile);
-                                                     }
-                                                   });
+        ((WizardPopup)that.myListPopup).registerAction(
+          IntentionShortcutUtils.getWrappedActionId(intention), keyboardShortcut.getFirstKeyStroke(), new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              that.close();
+              IntentionShortcutUtils.invokeAsAction(intention, that.myEditor, that.myFile);
+            }
+          }
+        );
       }
     }
   }
@@ -577,8 +591,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         }
       }
     };
-    ((WizardPopup)that.myListPopup).registerAction("showIntentionPreview",
-                                                   KeymapUtil.getKeyStroke(IntentionPreviewPopupUpdateProcessor.Companion.getShortcutSet()), action);
+    KeyStroke keyStroke = KeymapUtil.getKeyStroke(IntentionPreviewPopupUpdateProcessor.Companion.getShortcutSet());
+    ((WizardPopup)that.myListPopup).registerAction("showIntentionPreview", keyStroke, action);
     advertisePopup(that);
   }
 
