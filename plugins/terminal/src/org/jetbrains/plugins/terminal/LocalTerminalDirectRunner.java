@@ -211,7 +211,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
                                                       @NotNull Map<String, String> environment,
                                                       boolean envDiff) {
     String info = Arrays.toString(command) + " in " + workingDirectory + (isDirectory(workingDirectory) ? "" : " [no such directory]") +
-                  ", term_size=[" + initialTermSize + "]";
+                  ", [" + initialTermSize + "]";
     if (envDiff) {
       return info + ", diff_envs=" + getEnvironmentDiff(environment, System.getenv());
     }
