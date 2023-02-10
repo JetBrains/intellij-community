@@ -27,7 +27,7 @@ public class PsiElementFromSelectionsRule implements GetDataRule {
       PsiElement element = o instanceof PsiElement ? (PsiElement)o :
                            o instanceof PsiAwareObject && project != null ? ((PsiAwareObject)o).findElement(project) :
                            o instanceof PsiElementNavigationItem ? ((PsiElementNavigationItem)o).getTargetElement() :
-                           o instanceof Pointer<?> ? (PsiElement)((Pointer<?>)o).dereference() : null;
+                           o instanceof Pointer<?> ? PsiElementFromSelectionRule.getElement((Pointer<?>)o) : null;
       if (element == null || !element.isValid()) return null;
       elements[i] = element;
     }
