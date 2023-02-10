@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.container.get
 import org.jetbrains.kotlin.context.GlobalContext
 import org.jetbrains.kotlin.context.withModule
 import org.jetbrains.kotlin.context.withProject
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
 import org.jetbrains.kotlin.descriptors.InvalidModuleException
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -45,6 +46,7 @@ import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.resolve.diagnostics.DiagnosticsElementsCache
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
+import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.storage.CancellableSimpleLock
 import org.jetbrains.kotlin.storage.guarded
 import org.jetbrains.kotlin.types.KotlinType
@@ -429,7 +431,9 @@ private class StackedCompositeBindingContextTrace(
         }
 
         override fun <K : Any?, V : Any?> get(slice: ReadOnlySlice<K, V>, key: K): V? {
-            return selfGet(slice, key) ?: parentContext.get(slice, key)
+            return selfGet(slice, key) ?: parentContext.get(slice, key)?.takeIf {
+                (it as? DeclarationDescriptorWithSource)?.source?.getPsi()?.isValid != false
+            }
         }
 
         override fun getType(expression: KtExpression): KotlinType? {
