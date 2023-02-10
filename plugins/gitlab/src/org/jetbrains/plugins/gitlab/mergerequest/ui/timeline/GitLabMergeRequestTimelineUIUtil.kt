@@ -18,7 +18,7 @@ import javax.swing.JComponent
 
 object GitLabMergeRequestTimelineUIUtil {
 
-  fun createTitleTextPane(author: GitLabUserDTO, date: Date): JComponent {
+  fun createTitleTextPane(author: GitLabUserDTO, date: Date?): JComponent {
     val titleText = getTitleHtml(author, date)
     val titleTextPane = SimpleHtmlPane(titleText).apply {
       foreground = UIUtil.getContextHelpForeground()
@@ -33,14 +33,18 @@ object GitLabMergeRequestTimelineUIUtil {
       bindText(cs, author.map { getTitleHtml(it, date) })
     }
 
-  private fun getTitleHtml(author: GitLabUserDTO, date: Date): @NlsSafe String {
+  private fun getTitleHtml(author: GitLabUserDTO, date: Date?): @NlsSafe String {
     val userNameLink = HtmlChunk.link(author.webUrl, author.name)
       .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(UIUtil.getLabelForeground())))
       .bold()
-    return HtmlBuilder()
+    val builder = HtmlBuilder()
       .append(userNameLink)
-      .append(HtmlChunk.nbsp())
-      .append(JBDateFormat.getFormatter().formatPrettyDateTime(date))
-      .toString()
+    if (date != null) {
+      builder
+        .append(HtmlChunk.nbsp())
+        .append(JBDateFormat.getFormatter().formatPrettyDateTime(date))
+    }
+
+    return builder.toString()
   }
 }

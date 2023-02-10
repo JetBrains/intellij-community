@@ -103,11 +103,14 @@ object GitLabMergeRequestTimelineComponentFactory {
     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
     timelineLoadingResult: LoadingState.Result
   ): JComponent {
-    val titleComponent = GitLabMergeRequestTimelineTitleComponent.create(timelineCs, timelineLoadingResult.mr).let {
+    val mr = timelineLoadingResult.mr
+    val titleComponent = GitLabMergeRequestTimelineTitleComponent.create(timelineCs, mr).let {
       CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
     }.apply {
       border = Borders.empty(CodeReviewTimelineUIUtil.HEADER_VERT_PADDING, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
     }
+
+    val descriptionComponent = GitLabMergeRequestTimelineDescriptionComponent.createComponent(timelineCs, mr, avatarIconsProvider)
 
     val timelineItemsComponent = ComponentListPanelFactory.createVertical(timelineCs, timelineLoadingResult.items,
                                                                           GitLabMergeRequestTimelineItemViewModel::id) { cs, item ->
@@ -116,6 +119,7 @@ object GitLabMergeRequestTimelineComponentFactory {
 
     return VerticalListPanel().apply {
       add(titleComponent)
+      add(descriptionComponent)
       add(timelineItemsComponent)
     }
   }
