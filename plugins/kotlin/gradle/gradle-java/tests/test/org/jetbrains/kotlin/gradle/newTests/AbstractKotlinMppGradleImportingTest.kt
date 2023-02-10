@@ -29,8 +29,9 @@ import java.io.PrintStream
 @RunWith(BlockJUnit4ClassRunner::class)
 @TestDataPath("\$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
 abstract class AbstractKotlinMppGradleImportingTest :
-    GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl, HighlightingCheckDsl,
-    TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl {
+    GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl,HighlightingCheckDsl,
+    TestWithKotlinPluginAndGradleVersions
+{
     val kotlinTestPropertiesService: KotlinTestPropertiesService = KotlinTestPropertiesServiceImpl()
 
     final override val gradleVersion: String
@@ -81,7 +82,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
             """.trimMargin()
         )
 
-        configureByFiles(testDataDirectoryService.testDataDirectory(), configuration)
+        configureByFiles(testDataDirectoryService.testDataDirectory())
 
         configuration.getConfiguration(LinkedProjectPathsTestsFeature).linkedProjectPaths.forEach {
             gradleProjectLinkingService.linkGradleProject(it, importedProjectRoot.toNioPath(), importedProject)
@@ -92,6 +93,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
         }
 
         importProject()
+
 
         noErrorEventsDuringImportService.checkImportErrors(testDataDirectoryService)
         workspaceModelTestingService.checkWorkspaceModel(configuration, this)
@@ -120,27 +122,8 @@ abstract class AbstractKotlinMppGradleImportingTest :
             "-XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${System.getProperty("user.dir")}"
     }
 
-    private fun configureByFiles(rootDir: File, testConfiguration: TestConfiguration): List<VirtualFile> {
+    private fun configureByFiles(rootDir: File, properties: Map<String, String>? = null): List<VirtualFile> {
         assert(rootDir.exists()) { "Directory ${rootDir.path} doesn't exist" }
-        val devModeConfig = testConfiguration.getConfiguration(DevModeTestFeature)
-        val writeTestProjectTo = devModeConfig.writeTestProjectTo
-        val rootForAdditionalCopy = if (writeTestProjectTo != null) {
-            val root = File(writeTestProjectTo, testDirectoryName)
-
-            when {
-                !writeTestProjectTo.isDirectory ->
-                    error("Trying to write test project to ${writeTestProjectTo.canonicalPath}, but it's not a directory")
-
-                root.exists() && devModeConfig.overwriteExisting ->
-                    root.deleteRecursively()
-
-                root.exists() && root.listFiles().isNotEmpty() && !devModeConfig.overwriteExisting ->
-                    error("Asked to write test project to ${root.canonicalPath}, but it's not empty and 'overwriteExisting = true' isn't specified")
-            }
-
-            root
-        } else null
-        rootForAdditionalCopy?.mkdirs()
 
         return rootDir.walk().mapNotNull {
             when {
@@ -148,16 +131,10 @@ abstract class AbstractKotlinMppGradleImportingTest :
 
                 !it.name.endsWith(KotlinGradleImportingTestCase.AFTER_SUFFIX) -> {
                     val text = kotlinTestPropertiesService.substituteKotlinTestPropertiesInText(
-                        clearTextFromDiagnosticMarkup(FileUtil.loadFile(it, /* convertLineSeparators = */ true))
+                        clearTextFromDiagnosticMarkup(FileUtil.loadFile(it, /* convertLineSeparators = */ true)),
+                        properties
                     )
-                    val relativeToRoot = it.path.substringAfter(rootDir.path + File.separator)
-                    val virtualFile = createProjectSubFile(relativeToRoot, text)
-                    if (rootForAdditionalCopy != null) {
-                        val output = File(rootForAdditionalCopy, relativeToRoot)
-                        output.parentFile.mkdirs()
-                        output.createNewFile()
-                        output.writeText(text)
-                    }
+                    val virtualFile = createProjectSubFile(it.path.substringAfter(rootDir.path + File.separator), text)
 
                     // Real file with expected testdata allows to throw nicer exceptions in
                     // case of mismatch, as well as open interactive diff window in IDEA
