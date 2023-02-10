@@ -1,31 +1,21 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a visual position in the editor. Visual positions take folding into account -
- * for example, if the top 10 lines of the document are folded, the 10th line in the document
- * will have the line number 1 in its visual position.
+ * Represents a 0-based visual position in the editor.
  * <p>
- * Visual position corresponds to a boundary between two characters and can be associated with either a preceding or succeeding character 
- * (see {@link #leansRight}). This association makes a difference in a bidirectional text, where a mapping from visual to logical position 
- * is not continuous.
+ * Visual positions take folding into account.
+ * For example, if the top 10 lines of the document are folded into a single line,
+ * the logical lines 0 to 9 all have the visual line 0,
+ * and the logical line 10 has the visual line 1.
+ * <p>
+ * A visual position corresponds to a boundary between two characters
+ * and can be associated with either a preceding or succeeding character (see {@link #leansRight}).
+ * This association makes a difference in a bidirectional text,
+ * where a mapping from visual to logical position is not continuous.
  *
  * @see LogicalPosition
  * @see Editor#logicalToVisualPosition(LogicalPosition)
@@ -49,8 +39,8 @@ public class VisualPosition {
   }
 
   public VisualPosition(int line, int column, boolean leansRight) {
-    if (line < 0) throw new IllegalArgumentException("line must be non negative: "+line);
-    if (column < 0) throw new IllegalArgumentException("column must be non negative: "+column);
+    if (line < 0) throw new IllegalArgumentException("line must be non negative: " + line);
+    if (column < 0) throw new IllegalArgumentException("column must be non negative: " + column);
     this.line = line;
     this.column = column;
     this.leansRight = leansRight;
@@ -67,8 +57,8 @@ public class VisualPosition {
    * </ul>
    * </pre>
    *
-   * @param other   visual position to compare with the current one
-   * @return        {@code true} if current position is 'after' the given one; {@code false} otherwise
+   * @param other visual position to compare with the current one
+   * @return {@code true} if current position is 'after' the given one; {@code false} otherwise
    */
   public boolean after(@NotNull VisualPosition other) {
     if (line == other.line) {
@@ -86,7 +76,7 @@ public class VisualPosition {
 
   @NonNls
   public String toString() {
-    return "VisualPosition: (" + line + ", " + column+")" + (leansRight ? " leans right" : "");
+    return "VisualPosition: (" + line + ", " + column + ")" + (leansRight ? " leans right" : "");
   }
 
   @Override
@@ -107,10 +97,12 @@ public class VisualPosition {
     return result;
   }
 
+  /** @return the 0-based visual line number */
   public int getLine() {
     return line;
   }
 
+  /** @return the 0-based visual column number */
   public int getColumn() {
     return column;
   }
