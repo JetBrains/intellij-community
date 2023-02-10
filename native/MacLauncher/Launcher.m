@@ -421,6 +421,15 @@ NSString *getOverridePropertiesPath(void) {
 
     [args_array addObject:classpathOption];
 
+    NSString *errorFileOption = jvmInfo[@"ErrorFile"];
+    if (errorFileOption != nil) {
+        [args_array addObject:errorFileOption];
+    }
+    NSString *heapDumpOption = jvmInfo[@"HeapDump"];
+    if (heapDumpOption != nil) {
+        [args_array addObject:heapDumpOption];
+    }
+
     NSArray *vmOptions = parseVMOptions();
     if (vmOptions != nil) {
         [args_array addObjectsFromArray:vmOptions];
