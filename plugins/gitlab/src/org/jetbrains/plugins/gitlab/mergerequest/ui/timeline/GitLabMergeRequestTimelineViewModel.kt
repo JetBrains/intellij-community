@@ -13,7 +13,10 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel.LoadingState
-import org.jetbrains.plugins.gitlab.ui.comment.*
+import org.jetbrains.plugins.gitlab.ui.comment.DelegatingGitLabNoteEditingViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.forNewNote
+import org.jetbrains.plugins.gitlab.ui.comment.onDoneIn
 import java.util.concurrent.ConcurrentLinkedQueue
 
 interface GitLabMergeRequestTimelineViewModel {
@@ -27,7 +30,10 @@ interface GitLabMergeRequestTimelineViewModel {
   sealed interface LoadingState {
     object Loading : LoadingState
     class Error(val exception: Throwable) : LoadingState
-    class Result(val items: Flow<List<GitLabMergeRequestTimelineItemViewModel>>) : LoadingState
+    class Result(
+      val mr: GitLabMergeRequest,
+      val items: Flow<List<GitLabMergeRequestTimelineItemViewModel>>
+    ) : LoadingState
   }
 }
 
@@ -54,7 +60,8 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
     mergeRequestFlow.collectLatest { mr ->
       coroutineScope {
         val result = try {
-          LoadingState.Result(createItemsFlow(mr.getOrThrow()).mapToVms().stateIn(this))
+          val resultMr = mr.getOrThrow()
+          LoadingState.Result(resultMr, createItemsFlow(resultMr).mapToVms().stateIn(this))
         }
         catch (ce: CancellationException) {
           throw ce

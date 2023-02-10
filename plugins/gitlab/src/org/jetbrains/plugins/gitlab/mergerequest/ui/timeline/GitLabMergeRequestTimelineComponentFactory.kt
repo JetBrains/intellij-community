@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
+import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
@@ -66,9 +67,7 @@ object GitLabMergeRequestTimelineComponentFactory {
             }
           }
           is LoadingState.Result -> {
-            ComponentListPanelFactory.createVertical(this, state.items, GitLabMergeRequestTimelineItemViewModel::id) { cs, item ->
-              createItemComponent(project, cs, avatarIconsProvider, item)
-            }
+            createLoadedTimelineComponent(this, project, avatarIconsProvider, state)
           }
           else -> null
         }
@@ -95,6 +94,29 @@ object GitLabMergeRequestTimelineComponentFactory {
       UiNotifyConnector.doWhenFirstShown(it) {
         vm.requestLoad()
       }
+    }
+  }
+
+  private fun createLoadedTimelineComponent(
+    timelineCs: CoroutineScope,
+    project: Project,
+    avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+    timelineLoadingResult: LoadingState.Result
+  ): JComponent {
+    val titleComponent = GitLabMergeRequestTimelineTitleComponent.create(timelineCs, timelineLoadingResult.mr).let {
+      CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
+    }.apply {
+      border = Borders.empty(CodeReviewTimelineUIUtil.HEADER_VERT_PADDING, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
+    }
+
+    val timelineItemsComponent = ComponentListPanelFactory.createVertical(timelineCs, timelineLoadingResult.items,
+                                                                          GitLabMergeRequestTimelineItemViewModel::id) { cs, item ->
+      createItemComponent(project, cs, avatarIconsProvider, item)
+    }
+
+    return VerticalListPanel().apply {
+      add(titleComponent)
+      add(timelineItemsComponent)
     }
   }
 
