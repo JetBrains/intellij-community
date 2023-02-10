@@ -229,48 +229,51 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     Editor editor = myEditor;
     LOG.assertTrue(editor.getComponent().isDisplayable());
 
-    VisualPosition visualPosition = editor.offsetToVisualPosition(editor.getCaretModel().getOffset());
-    Point lineStart = editor.visualPositionToXY(new VisualPosition(visualPosition.line, 0));
+    return editor.isOneLineMode()
+           ? getHintPositionOneLine(editor)
+           : getHintPositionMultiLine(editor);
+  }
 
+  private static @NotNull Point getHintPositionOneLine(Editor editor) {
     JComponent convertComponent = editor.getContentComponent();
 
-    Point realPoint;
-    boolean oneLineEditor = editor.isOneLineMode();
-    if (oneLineEditor) {
-      // place bulb at the corner of the surrounding component
-      JComboBox<?> ancestorCombo = findAncestorCombo(myEditor);
-      if (ancestorCombo != null) {
-        convertComponent = ancestorCombo;
-      }
-      else {
-        JComponent ancestor = (JComponent)SwingUtilities.getAncestorOfClass(JTextField.class, editor.getContentComponent());
-        if (ancestor != null) {
-          convertComponent = ancestor;
-        }
-      }
-
-      realPoint = new Point(-(EmptyIcon.ICON_16.getIconWidth() / 2) - 4, -(EmptyIcon.ICON_16.getIconHeight() / 2));
+    // place bulb at the corner of the surrounding component
+    JComboBox<?> ancestorCombo = findAncestorCombo(editor);
+    if (ancestorCombo != null) {
+      convertComponent = ancestorCombo;
     }
     else {
-      Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-      if (lineStart.y < visibleArea.y || lineStart.y >= visibleArea.y + visibleArea.height) return null;
-
-      // try to place bulb on the same line
-      int yShift = -(NORMAL_BORDER_SIZE + EmptyIcon.ICON_16.getIconHeight());
-      if (canPlaceBulbOnTheSameLine(editor)) {
-        yShift = -(NORMAL_BORDER_SIZE + (EmptyIcon.ICON_16.getIconHeight() - editor.getLineHeight()) / 2 + 3);
+      JTextField ancestorTextField = (JTextField)SwingUtilities.getAncestorOfClass(JTextField.class, editor.getContentComponent());
+      if (ancestorTextField != null) {
+        convertComponent = ancestorTextField;
       }
-      else if (lineStart.y < visibleArea.y + editor.getLineHeight()) {
-        yShift = editor.getLineHeight() - NORMAL_BORDER_SIZE;
-      }
-
-      int xShift = EmptyIcon.ICON_16.getIconWidth();
-
-      realPoint = new Point(Math.max(0, visibleArea.x - xShift), lineStart.y + yShift);
     }
 
-    Point location = SwingUtilities.convertPoint(convertComponent, realPoint, editor.getComponent().getRootPane().getLayeredPane());
-    return new Point(location.x, location.y);
+    Point realPoint = new Point(-(EmptyIcon.ICON_16.getIconWidth() / 2) - 4, -(EmptyIcon.ICON_16.getIconHeight() / 2));
+    Point p = SwingUtilities.convertPoint(convertComponent, realPoint, editor.getComponent().getRootPane().getLayeredPane());
+    return new Point(p.x, p.y);
+  }
+
+  private static @Nullable Point getHintPositionMultiLine(Editor editor) {
+    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    VisualPosition visualPosition = editor.offsetToVisualPosition(editor.getCaretModel().getOffset());
+    Point lineStart = editor.visualPositionToXY(new VisualPosition(visualPosition.line, 0));
+    if (lineStart.y < visibleArea.y || lineStart.y >= visibleArea.y + visibleArea.height) return null;
+
+    // try to place bulb on the same line
+    int yShift = -(NORMAL_BORDER_SIZE + EmptyIcon.ICON_16.getIconHeight());
+    if (canPlaceBulbOnTheSameLine(editor)) {
+      yShift = -(NORMAL_BORDER_SIZE + (EmptyIcon.ICON_16.getIconHeight() - editor.getLineHeight()) / 2 + 3);
+    }
+    else if (lineStart.y < visibleArea.y + editor.getLineHeight()) {
+      yShift = editor.getLineHeight() - NORMAL_BORDER_SIZE;
+    }
+
+    int xShift = EmptyIcon.ICON_16.getIconWidth();
+
+    Point realPoint = new Point(Math.max(0, visibleArea.x - xShift), lineStart.y + yShift);
+    Point p = SwingUtilities.convertPoint(editor.getContentComponent(), realPoint, editor.getComponent().getRootPane().getLayeredPane());
+    return new Point(p.x, p.y);
   }
 
   private static boolean canPlaceBulbOnTheSameLine(Editor editor) {
