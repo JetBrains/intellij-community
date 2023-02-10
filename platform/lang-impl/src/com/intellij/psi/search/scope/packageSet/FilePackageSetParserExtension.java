@@ -52,7 +52,7 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
     return new FilePatternPackageSet(modulePattern, parseFilePattern(lexer), FilePatternPackageSet.SCOPE_FILE.equals(scope));
   }
 
-  private static String parseFilePattern(Lexer lexer) throws ParsingException {
+  protected static String parseFilePattern(Lexer lexer) throws ParsingException {
     StringBuilder pattern = new StringBuilder();
     boolean wasIdentifier = false;
     while (true) {
