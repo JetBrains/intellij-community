@@ -21,12 +21,10 @@ interface WorkspaceChecksDsl : OrderEntriesChecksDsl, KotlinFacetSettingsChecksD
     }
 
     fun TestConfigurationDslScope.onlyCheckers(vararg checkers: AbstractTestChecker<*>) {
-        require(config.disableCheckers == null) { "'onlyCheckers' is mutually exclusive with 'disableCheckers'" }
         config.onlyCheckers = checkers.toSet()
     }
 
     fun TestConfigurationDslScope.disableCheckers(vararg checkers: AbstractTestChecker<*>) {
-        require(config.onlyCheckers == null) { "'onlyCheckers' is mutually exclusive with 'disableCheckers'" }
         config.disableCheckers = checkers.toSet()
     }
 }
