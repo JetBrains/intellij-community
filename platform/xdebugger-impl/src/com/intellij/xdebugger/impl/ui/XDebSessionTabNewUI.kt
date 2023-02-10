@@ -39,7 +39,11 @@ open class XDebugSessionTabNewUI(
     addDebugToolwindowActions(session.project)
     CustomActionsListener.subscribe(this, object : CustomActionsListener {
       override fun schemaChanged() {
-        updateToolbars()
+        if (isSingleContent()) {
+          updateToolbars()
+        } else {
+          initToolbars(session)
+        }
       }
     })
   }
