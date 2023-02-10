@@ -2845,4 +2845,33 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     myFixture.completeBasic();
     myFixture.assertPreferredCompletionItems(0, "NonNls", "NotNull");
   }
+
+  @NeedsIndex.Full
+  public void testEnumMapNoTypeParams() {
+    myFixture.configureByText("Test.java", """
+      import java.util.Map;
+            
+      public abstract class SuperClass {
+          enum X {A, B, C}
+            
+          void run() {
+              Map<X, String> map = new EnumM<caret>
+          }
+      }
+      """);
+    myFixture.completeBasic();
+    myFixture.type('\n');
+    myFixture.checkResult("""
+                            import java.util.EnumMap;
+                            import java.util.Map;
+                                                        
+                            public abstract class SuperClass {
+                                enum X {A, B, C}
+                                                        
+                                void run() {
+                                    Map<X, String> map = new EnumMap<>()
+                                }
+                            }
+                            """);
+  }
 }
