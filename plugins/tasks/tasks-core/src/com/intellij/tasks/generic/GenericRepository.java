@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskRepositorySubtype;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
@@ -174,7 +175,7 @@ public class GenericRepository extends BaseRepositoryImpl {
   @Override
   public Task[] getIssues(@Nullable final String query, final int max, final long since) throws Exception {
     if (StringUtil.isEmpty(myTasksListUrl)) {
-      throw new Exception("'Task list URL' configuration parameter is mandatory");
+      throw new Exception(TaskBundle.message("task.list.url.configuration.parameter.is.mandatory"));
     }
     if (!isLoginAnonymously() && !isUseHttpAuthentication()) {
       executeMethod(getLoginMethod());
