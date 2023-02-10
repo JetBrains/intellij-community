@@ -75,99 +75,6 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public final class IntentionHintComponent implements Disposable, ScrollAwareHint {
-  static class IntentionPopup implements Disposable.Parent {
-    @NotNull
-    private final CachedIntentions myCachedIntentions;
-    @NotNull
-    private final Editor myEditor;
-    private final PsiFile myFile;
-    private final Project myProject;
-    private final IntentionPreviewPopupUpdateProcessor myPreviewPopupUpdateProcessor;
-    private PopupMenuListener myOuterComboboxPopupListener;
-    private IntentionHintComponent myHint;
-    private ListPopup myListPopup;
-    private boolean myDisposed;
-    private boolean myPopupShown;
-
-    private IntentionPopup(@NotNull Project project,
-                           @NotNull Editor editor,
-                           @NotNull PsiFile file,
-                           @NotNull CachedIntentions cachedIntentions) {
-      myProject = project;
-      myEditor = editor;
-      myFile = file;
-      myCachedIntentions = cachedIntentions;
-      myPreviewPopupUpdateProcessor = new IntentionPreviewPopupUpdateProcessor(project, myFile, myEditor);
-    }
-
-    private boolean isVisible() {
-      return myListPopup != null && SwingUtilities.getWindowAncestor(myListPopup.getContent()) != null;
-    }
-
-    private void show(@NotNull IntentionHintComponent component, @Nullable RelativePoint positionHint) {
-      if (myDisposed || myEditor.isDisposed() || (myListPopup != null && myListPopup.isDisposed()) || myPopupShown) return;
-
-      if (myListPopup == null) {
-        assert myHint == null;
-        myHint = component;
-        recreateMyPopup(this, new IntentionListStep(this, myEditor, myFile, myProject, myCachedIntentions));
-      }
-      else {
-        assert myHint == component;
-      }
-
-      if (positionHint != null) {
-        myListPopup.show(positionHint);
-      }
-      else {
-        myListPopup.showInBestPositionFor(myEditor);
-      }
-
-      if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
-        ApplicationManager.getApplication().invokeLater(() -> showPreview(this));
-      }
-
-      IntentionsCollector.reportShownIntentions(myFile.getProject(), myListPopup, myFile.getLanguage());
-      myPopupShown = true;
-    }
-
-    private void close() {
-      myListPopup.cancel();
-      myPopupShown = false;
-    }
-
-    void cancelled(@NotNull IntentionListStep step) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      if (myListPopup.getListStep() == step && !myDisposed) {
-        Disposer.dispose(myHint);
-      }
-    }
-
-    /**
-     * Hide preview temporarily when submenu is shown
-     */
-    void hidePreview() {
-      myPreviewPopupUpdateProcessor.hideTemporarily();
-    }
-
-    @Override
-    public void beforeTreeDispose() {
-      // The flag has to be set early. Child's dispose() can call `cancelled` and it must be a no-op at this point.
-      myDisposed = true;
-    }
-
-    @Override
-    public void dispose() {
-      if (myOuterComboboxPopupListener != null) {
-        JComboBox<?> ancestor = findAncestorCombo(myEditor);
-        if (ancestor != null) {
-          ancestor.removePopupMenuListener(myOuterComboboxPopupListener);
-        }
-
-        myOuterComboboxPopupListener = null;
-      }
-    }
-  }
 
   private static final Logger LOG = Logger.getInstance(IntentionHintComponent.class);
 
@@ -749,5 +656,99 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     return !isDisposed()
            && isVisible()
            && (myComponentHint.isVisible() || myPopup.isVisible() || ApplicationManager.getApplication().isUnitTestMode());
+  }
+
+  static class IntentionPopup implements Disposable.Parent {
+    @NotNull
+    private final CachedIntentions myCachedIntentions;
+    @NotNull
+    private final Editor myEditor;
+    private final PsiFile myFile;
+    private final Project myProject;
+    private final IntentionPreviewPopupUpdateProcessor myPreviewPopupUpdateProcessor;
+    private PopupMenuListener myOuterComboboxPopupListener;
+    private IntentionHintComponent myHint;
+    private ListPopup myListPopup;
+    private boolean myDisposed;
+    private boolean myPopupShown;
+
+    private IntentionPopup(@NotNull Project project,
+                           @NotNull Editor editor,
+                           @NotNull PsiFile file,
+                           @NotNull CachedIntentions cachedIntentions) {
+      myProject = project;
+      myEditor = editor;
+      myFile = file;
+      myCachedIntentions = cachedIntentions;
+      myPreviewPopupUpdateProcessor = new IntentionPreviewPopupUpdateProcessor(project, myFile, myEditor);
+    }
+
+    private boolean isVisible() {
+      return myListPopup != null && SwingUtilities.getWindowAncestor(myListPopup.getContent()) != null;
+    }
+
+    private void show(@NotNull IntentionHintComponent component, @Nullable RelativePoint positionHint) {
+      if (myDisposed || myEditor.isDisposed() || (myListPopup != null && myListPopup.isDisposed()) || myPopupShown) return;
+
+      if (myListPopup == null) {
+        assert myHint == null;
+        myHint = component;
+        recreateMyPopup(this, new IntentionListStep(this, myEditor, myFile, myProject, myCachedIntentions));
+      }
+      else {
+        assert myHint == component;
+      }
+
+      if (positionHint != null) {
+        myListPopup.show(positionHint);
+      }
+      else {
+        myListPopup.showInBestPositionFor(myEditor);
+      }
+
+      if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
+        ApplicationManager.getApplication().invokeLater(() -> showPreview(this));
+      }
+
+      IntentionsCollector.reportShownIntentions(myFile.getProject(), myListPopup, myFile.getLanguage());
+      myPopupShown = true;
+    }
+
+    private void close() {
+      myListPopup.cancel();
+      myPopupShown = false;
+    }
+
+    void cancelled(@NotNull IntentionListStep step) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      if (myListPopup.getListStep() == step && !myDisposed) {
+        Disposer.dispose(myHint);
+      }
+    }
+
+    /**
+     * Hide preview temporarily when submenu is shown
+     */
+    void hidePreview() {
+      myPreviewPopupUpdateProcessor.hideTemporarily();
+    }
+
+    @Override
+    public void beforeTreeDispose() {
+      // The flag has to be set early. Child's dispose() can call `cancelled` and it must be a no-op at this point.
+      myDisposed = true;
+    }
+
+    @Override
+    public void dispose() {
+      if (myOuterComboboxPopupListener != null) {
+        JComboBox<?> ancestor = findAncestorCombo(myEditor);
+        if (ancestor != null) {
+          ancestor.removePopupMenuListener(myOuterComboboxPopupListener);
+        }
+
+        myOuterComboboxPopupListener = null;
+      }
+    }
   }
 }
