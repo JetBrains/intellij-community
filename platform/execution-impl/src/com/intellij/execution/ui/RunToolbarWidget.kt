@@ -91,8 +91,10 @@ internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
     actions.add(Separator.create())
   }
   if (!shouldShowRecent || Registry.`is`("ide.experimental.ui.redesigned.run.popup")) {
+    var allRunConfigurationsToggle: AnAction? = null
     if (shouldShowRecent) {
-      actions.add(AllRunConfigurationsToggle())
+      allRunConfigurationsToggle = AllRunConfigurationsToggle()
+      actions.add(allRunConfigurationsToggle)
     }
 
     val shouldBeShown: () -> Boolean = if (shouldShowRecent) ({
@@ -105,10 +107,14 @@ internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
     val createFolderFn: (String) -> DefaultActionGroup = { folderName ->
       HideableDefaultActionGroup(folderName, shouldBeShown)
     }
-    RunConfigurationsComboBoxAction.addRunConfigurations(actions, project, createActionFn, createFolderFn)
+    val allConfigurationsNumber = RunConfigurationsComboBoxAction.addRunConfigurations(actions, project, createActionFn, createFolderFn)
+    allRunConfigurationsToggle?.templatePresentation?.text = allConfigurationMessage(allConfigurationsNumber)
   }
   else {
-    actions.add(DelegateAction({ ExecutionBundle.message("run.toolbar.widget.all.configurations") },
+    val tmpGroup = DefaultActionGroup()
+    val allConfigurationsNumber = RunConfigurationsComboBoxAction.addRunConfigurations(tmpGroup, project,
+                                                                                       { DecorativeElement() }, { DefaultActionGroup() })
+    actions.add(DelegateAction({ allConfigurationMessage(allConfigurationsNumber) },
                                ActionManager.getInstance().getAction("ChooseRunConfiguration")))
   }
 
@@ -118,6 +124,12 @@ internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
   actions.add(Separator.create())
   actions.add(ActionManager.getInstance().getAction("editRunConfigurations"))
   return actions
+}
+
+private fun allConfigurationMessage(number: Int): @Nls String {
+  val textColor = ColorUtil.toHex(JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND)
+  val message = ExecutionBundle.message("run.toolbar.widget.all.configurations", """<a style="color:#$textColor;">${number}</a>""")
+  return "<html>$message</html>"
 }
 
 internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataContext: DataContext, disposeCallback: (() -> Unit)?) :
@@ -152,8 +164,7 @@ private interface HideableAction {
 private class HideableDefaultActionGroup(@NlsSafe name: String, override val shouldBeShown: () -> Boolean)
   : DefaultActionGroup({ name }, true), DumbAware, HideableAction
 
-private class AllRunConfigurationsToggle : ToggleAction(ExecutionBundle.message("run.toolbar.widget.all.configurations")),
-                                           KeepingPopupOpenAction, DumbAware {
+private class AllRunConfigurationsToggle : ToggleAction(), KeepingPopupOpenAction, DumbAware {
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 

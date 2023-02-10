@@ -4,7 +4,7 @@ package com.intellij.openapi.actionSystem
 /**
  * [ActionGroup]'s can have decorative elements. These elements must not be performed.
  */
-abstract class DecorativeElement : AnAction() {
+open class DecorativeElement : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     throw UnsupportedOperationException()
   }
