@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -135,7 +136,7 @@ public class RegisterExtensionFix extends IntentionAndQuickFixAction {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
     return IntentionPreviewInfo.EMPTY;
   }
 }

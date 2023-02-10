@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -102,7 +103,7 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
     return new IntentionAndQuickFixAction() {
 
       @Override
-      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
         return IntentionPreviewInfo.EMPTY;
       }
 
