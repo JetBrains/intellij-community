@@ -286,7 +286,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       }
     }
 
-    if (tree != null && value != null) {
+    if (tree != null && value != null && userObject !is PopupFactoryImpl.ActionItem) {
       SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, mainTextComponent, true, selected)
     }
 
