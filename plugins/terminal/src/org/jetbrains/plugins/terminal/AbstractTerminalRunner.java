@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -28,7 +29,9 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.ui.TerminalWidget;
+import com.intellij.util.Alarm;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jediterm.core.util.TermSize;
@@ -43,6 +46,9 @@ import org.jetbrains.plugins.terminal.exp.TerminalWidgetImpl;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public abstract class AbstractTerminalRunner<T extends Process> {
@@ -156,11 +162,47 @@ public abstract class AbstractTerminalRunner<T extends Process> {
                                               @Nullable String currentWorkingDirectory,
                                               boolean deferSessionStartUntilUiShown) {
     if (deferSessionStartUntilUiShown) {
-      UiNotifyConnector.doWhenFirstShown(terminalWidget.getComponent(), () -> openSessionInDirectory(terminalWidget, currentWorkingDirectory));
+      doWhenFirstShownAndLaidOut(terminalWidget, () -> openSessionInDirectory(terminalWidget, currentWorkingDirectory));
     }
     else {
       openSessionInDirectory(terminalWidget, currentWorkingDirectory);
     }
+  }
+
+  private static void doWhenFirstShownAndLaidOut(@NotNull TerminalWidget terminalWidget, @NotNull Runnable action) {
+    JComponent component = terminalWidget.getComponent();
+    UiNotifyConnector.doWhenFirstShown(component, () -> {
+      Dimension size = component.getSize();
+      if (size.width != 0 || size.height != 0) {
+        LOG.debug("Terminal component layout is already done");
+        action.run();
+        return;
+      }
+      long startNano = System.nanoTime();
+      CompletableFuture<Void> future = new CompletableFuture<>();
+      ComponentAdapter resizeListener = new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent e) {
+          if (LOG.isDebugEnabled()) {
+            LOG.info("Terminal component layout took " + TimeoutUtil.getDurationMillis(startNano) + "ms");
+          }
+          future.complete(null);
+        }
+      };
+      component.addComponentListener(resizeListener);
+
+      Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, terminalWidget);
+      alarm.addRequest(() -> {
+        LOG.debug("Terminal component layout is timed out (>1000ms), starting terminal with default size");
+        future.complete(null);
+      }, 1000, ModalityState.stateForComponent(component));
+
+      future.thenAccept(result -> {
+        Disposer.dispose(alarm);
+        component.removeComponentListener(resizeListener);
+        action.run();
+      });
+    });
   }
 
   private void initConsoleUI(final T process) {
