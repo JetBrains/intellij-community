@@ -440,6 +440,8 @@
                         serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportChooser"/>
     <applicationService serviceInterface="com.jetbrains.python.refactoring.PyRefactoringUiService"
                         serviceImplementation="com.jetbrains.python.refactoring.PyRefactoringUiServiceImpl"/>
+    <applicationService serviceInterface="com.jetbrains.python.PythonDocumentationHighlightingService"
+                        serviceImplementation="com.jetbrains.python.PythonDocumentationHighlightingServiceImpl"/>
 
     <registryKey key="python.relative.import.depth" defaultValue="3"
                  description="Specifies default acceptable number of dots in a relative import statement"/>

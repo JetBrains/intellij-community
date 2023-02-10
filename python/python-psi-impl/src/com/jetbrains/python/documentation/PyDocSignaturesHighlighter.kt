@@ -1,13 +1,11 @@
 package com.jetbrains.python.documentation
 
-import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.PythonLanguage
+import com.jetbrains.python.PythonDocumentationHighlightingService
 import com.jetbrains.python.highlighting.PyHighlighter
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyExpression
@@ -31,17 +29,13 @@ internal fun highlightExpressionText(expressionText: @NlsSafe String, expression
     // Special case for PyStringLiteralExpression there because HtmlSyntaxInfoUtil will consider expressionText as docstring.
     // (The only string literal in a file is considered its docstring).
     is PyStringLiteralExpression -> styledSpan(expressionText, PyHighlighter.PY_UNICODE_STRING)
-    else -> HtmlChunk.raw(HtmlSyntaxInfoUtil.getHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-      expression.project, PythonLanguage.INSTANCE, expressionText, highlightingSaturation()
-    ))
+    else -> HtmlChunk.raw(PythonDocumentationHighlightingService.getInstance().highlightedCodeSnippet(expression.project, expressionText))
   }
 
 @NlsSafe
 private fun styledSpanWithRawText(text: String, textAttributeKey: TextAttributesKey): String {
-  return HtmlSyntaxInfoUtil.getStyledSpan(textAttributeKey, text, highlightingSaturation())
+  return PythonDocumentationHighlightingService.getInstance().styledSpan(textAttributeKey, text)
 }
-
-private fun highlightingSaturation() = DocumentationSettings.getHighlightingSaturation(false)
 
 internal fun paramNameTextAttribute(isSelf: Boolean): TextAttributesKey =
   if (isSelf) PyHighlighter.PY_SELF_PARAMETER else PyHighlighter.PY_PARAMETER
