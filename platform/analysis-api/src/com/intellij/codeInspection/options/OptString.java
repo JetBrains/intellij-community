@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public record OptString(@Language("jvm-field-name") @NotNull String bindId, @NotNull LocMessage splitLabel,
                         @Nullable StringValidator validator, int width, HtmlChunk description) implements OptControl, OptDescribedComponent {
+
   /**
    * @param description textual description
    * @return an equivalent edit box but with a description

@@ -22,21 +22,23 @@ import java.util.List;
 public record OptCheckbox(@Language("jvm-field-name") @NotNull String bindId,
                           @NotNull LocMessage label,
                           @NotNull List<@NotNull OptRegularComponent> children,
-                          @Nullable HtmlChunk description) implements OptControl {
+                          @Nullable HtmlChunk description) implements OptControl, OptDescribedComponent {
   /**
    * @param description textual description
-   * @return an equivalent checkbox but with description
+   * @return an equivalent checkbox but with a description
    * @throws IllegalStateException if description was already set
    */
+  @Override
   public OptCheckbox description(@NotNull @NlsContexts.Tooltip String description) {
     return description(HtmlChunk.text(description));
   }
 
   /**
    * @param description HTML description
-   * @return an equivalent checkbox but with description
+   * @return an equivalent checkbox but with a description
    * @throws IllegalStateException if description was already set
    */
+  @Override
   public OptCheckbox description(@NotNull HtmlChunk description) {
     if (this.description != null) {
       throw new IllegalStateException("Description is already set");
