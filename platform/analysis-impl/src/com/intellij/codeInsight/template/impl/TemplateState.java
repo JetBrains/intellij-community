@@ -4,7 +4,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.macro.TemplateCompletionProcessor;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -500,7 +500,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     if (segmentNumber < 0) {
       Throwable trace = getTemplate().getBuildingTemplateTrace();
       LOG.error("No segment for variable: var=" + varNumber + "; name=" + variableName + "; " + presentTemplate(getTemplate()) +
-                "; offset: " + getEditor().getCaretModel().getOffset(), AttachmentFactory.createAttachment(getDocument()),
+                "; offset: " + getEditor().getCaretModel().getOffset(), CoreAttachmentFactory.createAttachment(getDocument()),
                 new Attachment("trace.txt", trace != null ? ExceptionUtil.getThrowableText(trace) : "<empty>"));
     }
     return segmentNumber;
@@ -777,7 +777,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     TextRange range = TextRange.create(start, end);
     if (!TextRange.from(0, getDocument().getCharsSequence().length()).contains(range)) {
       LOG.error("Diagnostic for EA-54980. Can't extract " + range + " range. " + presentTemplate(getTemplate()),
-                AttachmentFactory.createAttachment(getDocument()));
+                CoreAttachmentFactory.createAttachment(getDocument()));
     }
     String oldText = range.subSequence(getDocument().getCharsSequence()).toString();
 

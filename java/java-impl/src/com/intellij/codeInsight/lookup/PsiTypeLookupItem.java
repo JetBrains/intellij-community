@@ -3,7 +3,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -332,7 +332,7 @@ public final class PsiTypeLookupItem extends LookupItem implements TypedLookupIt
                 "file.length=" + file.getTextLength() + "\n" +
                 "document=" + context.getDocument() + "\n" +
                 new Throwable(),
-                AttachmentFactory.createAttachment(context.getDocument()));
+                CoreAttachmentFactory.createAttachment(context.getDocument()));
       return;
     }
 

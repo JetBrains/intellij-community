@@ -20,7 +20,7 @@ import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.emmet.tokens.TextToken;
 import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
 import com.intellij.codeInsight.template.impl.*;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -105,7 +105,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback, false);
     if (defaultGenerator == null) {
       LOG.error("Cannot find defaultGenerator for key `" + key +"` at " + callback.getEditor().getCaretModel().getOffset() + " offset",
-                AttachmentFactory.createAttachment(callback.getEditor().getDocument()));
+                CoreAttachmentFactory.createAttachment(callback.getEditor().getDocument()));
       return;
     }
     try {
@@ -273,7 +273,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     if (generator == null) {
       int offset = callback.getEditor().getCaretModel().getOffset();
       LOG.error("Emmet is disabled for context for file " + callback.getFileType().getName() + " in offset: " + offset,
-                AttachmentFactory.createAttachment(callback.getEditor().getDocument()));
+                CoreAttachmentFactory.createAttachment(callback.getEditor().getDocument()));
       return false;
     }
     return checkTemplateKey(inputString, callback, generator);

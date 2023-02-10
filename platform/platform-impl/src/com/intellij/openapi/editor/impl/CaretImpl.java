@@ -1,13 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext;
@@ -444,7 +444,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
           return null;
         }
         else {
-          LOG.error("Invalid editor dimension mapping", new Throwable(), AttachmentFactory.createContext(
+          LOG.error("Invalid editor dimension mapping", new Throwable(), com.intellij.openapi.diagnostic.AttachmentFactory.createContext(
             "Expected to map visual position '" +
             visualPosition + "' to offset " + newOffset + " but got the following: -> offset " + tmpOffset +
             ". State: " + myEditor.dumpState()));
