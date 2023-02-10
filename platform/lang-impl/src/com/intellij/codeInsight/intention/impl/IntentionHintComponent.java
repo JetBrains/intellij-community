@@ -225,13 +225,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   private @Nullable Point getHintPosition() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return new Point();
-    Editor editor = myEditor;
-    int offset = editor.getCaretModel().getOffset();
-    VisualPosition pos = editor.offsetToVisualPosition(offset);
-    int line = pos.line;
 
-    Point position = editor.visualPositionToXY(new VisualPosition(line, 0));
+    Editor editor = myEditor;
     LOG.assertTrue(editor.getComponent().isDisplayable());
+
+    VisualPosition visualPosition = editor.offsetToVisualPosition(editor.getCaretModel().getOffset());
+    Point lineStart = editor.visualPositionToXY(new VisualPosition(visualPosition.line, 0));
 
     JComponent convertComponent = editor.getContentComponent();
 
@@ -239,14 +238,14 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     boolean oneLineEditor = editor.isOneLineMode();
     if (oneLineEditor) {
       // place bulb at the corner of the surrounding component
-      Container ancestor = findAncestorCombo(myEditor);
-      if (ancestor != null) {
-        convertComponent = (JComponent)ancestor;
+      JComboBox<?> ancestorCombo = findAncestorCombo(myEditor);
+      if (ancestorCombo != null) {
+        convertComponent = ancestorCombo;
       }
       else {
-        ancestor = SwingUtilities.getAncestorOfClass(JTextField.class, editor.getContentComponent());
+        JComponent ancestor = (JComponent)SwingUtilities.getAncestorOfClass(JTextField.class, editor.getContentComponent());
         if (ancestor != null) {
-          convertComponent = (JComponent)ancestor;
+          convertComponent = ancestor;
         }
       }
 
@@ -254,20 +253,20 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
     else {
       Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-      if (position.y < visibleArea.y || position.y >= visibleArea.y + visibleArea.height) return null;
+      if (lineStart.y < visibleArea.y || lineStart.y >= visibleArea.y + visibleArea.height) return null;
 
       // try to place bulb on the same line
       int yShift = -(NORMAL_BORDER_SIZE + EmptyIcon.ICON_16.getIconHeight());
       if (canPlaceBulbOnTheSameLine(editor)) {
         yShift = -(NORMAL_BORDER_SIZE + (EmptyIcon.ICON_16.getIconHeight() - editor.getLineHeight()) / 2 + 3);
       }
-      else if (position.y < visibleArea.y + editor.getLineHeight()) {
+      else if (lineStart.y < visibleArea.y + editor.getLineHeight()) {
         yShift = editor.getLineHeight() - NORMAL_BORDER_SIZE;
       }
 
       int xShift = EmptyIcon.ICON_16.getIconWidth();
 
-      realPoint = new Point(Math.max(0, visibleArea.x - xShift), position.y + yShift);
+      realPoint = new Point(Math.max(0, visibleArea.x - xShift), lineStart.y + yShift);
     }
 
     Point location = SwingUtilities.convertPoint(convertComponent, realPoint, editor.getComponent().getRootPane().getLayeredPane());
@@ -277,14 +276,14 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   private static boolean canPlaceBulbOnTheSameLine(Editor editor) {
     if (ApplicationManager.getApplication().isUnitTestMode() || editor.isOneLineMode()) return false;
     if (Registry.is("always.show.intention.above.current.line", false)) return false;
-    int offset = editor.getCaretModel().getOffset();
-    VisualPosition pos = editor.offsetToVisualPosition(offset);
-    int line = pos.line;
 
-    int firstNonSpaceColumnOnTheLine = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(editor, line);
-    if (firstNonSpaceColumnOnTheLine == -1) return false;
-    Point point = editor.visualPositionToXY(new VisualPosition(line, firstNonSpaceColumnOnTheLine));
-    return point.x > EmptyIcon.ICON_16.getIconWidth() + (editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE) * 2;
+    int visualCaretLine = editor.offsetToVisualPosition(editor.getCaretModel().getOffset()).line;
+    int textColumn = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(editor, visualCaretLine);
+    if (textColumn == -1) return false;
+
+    int textX = editor.visualPositionToXY(new VisualPosition(visualCaretLine, textColumn)).x;
+    int borderWidth = editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE;
+    return textX > borderWidth + EmptyIcon.ICON_16.getIconWidth() + borderWidth;
   }
 
   private IntentionHintComponent(@NotNull Project project,
