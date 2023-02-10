@@ -4,11 +4,11 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.PathUtil
 import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
 import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
+import com.intellij.util.PathUtilRt
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
@@ -141,8 +141,8 @@ internal class ExternalModuleListSerializer(private val externalStorageRoot: Vir
   }
 
   override fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl, moduleGroup: String?): JpsFileEntitiesSerializer<ModuleEntity> {
-    val fileName = PathUtil.getFileName(fileUrl.url)
-    val actualFileUrl = if (PathUtil.getFileExtension(fileName) == "iml") {
+    val fileName = PathUtilRt.getFileName(fileUrl.url)
+    val actualFileUrl = if (PathUtilRt.getFileExtension(fileName) == "iml") {
       externalStorageRoot.append("modules/${fileName.substringBeforeLast('.')}.xml")
     }
     else {

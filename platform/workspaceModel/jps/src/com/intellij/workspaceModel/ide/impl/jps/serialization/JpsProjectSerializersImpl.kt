@@ -11,7 +11,7 @@ import com.intellij.platform.workspaceModel.jps.serialization.SerializationConte
 import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
 import com.intellij.projectModel.ProjectModelBundle
-import com.intellij.util.PathUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.text.UniqueNameGenerator
@@ -101,7 +101,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val libPath = Paths.get(osPath)
     val files = when {
       Files.isDirectory(libPath) -> Files.list(libPath).use { stream ->
-        stream.filter { path: Path -> PathUtil.getFileExtension(path.toString()) == "xml" && Files.isRegularFile(path) }
+        stream.filter { path: Path -> PathUtilRt.getFileExtension(path.toString()) == "xml" && Files.isRegularFile(path) }
           .collect(Collectors.toList())
       }
       else -> emptyList()
@@ -148,9 +148,9 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         // The file may already be processed during class initialization
         if (fileSerializersByUrl.containsKey(addedFileUrl)) continue
 
-        val factory = directorySerializerFactoriesByUrl[PathUtil.getParentPath(addedFileUrl)]
+        val factory = directorySerializerFactoriesByUrl[PathUtilRt.getParentPath(addedFileUrl)]
         val newFileSerializer = factory?.createSerializer(addedFileUrl, createFileInDirectorySource(
-          virtualFileManager.fromUrl(factory.directoryUrl), PathUtil.getFileName(addedFileUrl)), virtualFileManager)
+          virtualFileManager.fromUrl(factory.directoryUrl), PathUtilRt.getFileName(addedFileUrl)), virtualFileManager)
         if (newFileSerializer != null) {
           newFileSerializers.add(newFileSerializer)
           serializerToDirectoryFactory[newFileSerializer] = factory
@@ -839,7 +839,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     : Map<JpsFileEntitiesSerializer<*>, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>> {
     val serializers = serializerToDirectoryFactory.getKeysByValue(factory) ?: emptyList()
     val nameGenerator = UniqueNameGenerator(serializers) {
-      PathUtil.getFileName(it.fileUrl.url)
+      PathUtilRt.getFileName(it.fileUrl.url)
     }
     return entities.asSequence()
       .filter { @Suppress("UNCHECKED_CAST") factory.entityFilter(it as E) }
@@ -877,9 +877,9 @@ internal fun Element.getChildTagStrict(name: String): Element =
   getChild(name) ?: throw JDOMException("Expected tag $name under ${this.name} element")
 
 fun isExternalModuleFile(filePath: String): Boolean {
-  val parentPath = PathUtil.getParentPath(filePath)
-  return FileUtil.extensionEquals(filePath, "xml") && PathUtil.getFileName(parentPath) == "modules"
-         && PathUtil.getFileName(PathUtil.getParentPath(parentPath)) != ".idea"
+  val parentPath = PathUtilRt.getParentPath(filePath)
+  return FileUtil.extensionEquals(filePath, "xml") && PathUtilRt.getFileName(parentPath) == "modules"
+         && PathUtilRt.getFileName(PathUtilRt.getParentPath(parentPath)) != ".idea"
 }
 
 internal fun getInternalFileSource(source: EntitySource) = when (source) {
