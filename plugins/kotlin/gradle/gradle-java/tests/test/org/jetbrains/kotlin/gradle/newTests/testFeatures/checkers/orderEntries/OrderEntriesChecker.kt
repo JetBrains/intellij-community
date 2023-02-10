@@ -39,6 +39,10 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
                 add("hiding dependencies matching ${configuration.excludeDependencies.toString()}")
             }
 
+            if (configuration.onlyDependencies != null) {
+                add("showing only dependencies matching ${configuration.onlyDependencies.toString()}")
+            }
+
             if (configuration.sortDependencies) {
                 add("dependencies order is not checked")
             }
