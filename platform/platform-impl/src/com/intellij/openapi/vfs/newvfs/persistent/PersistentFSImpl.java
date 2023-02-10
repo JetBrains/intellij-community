@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -13,6 +13,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.InternalFileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
@@ -1463,6 +1464,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return VfsUtilCore.toVirtualFileArray(roots);
   }
 
+  @SuppressWarnings("deprecation")
   private void applyEvent(@NotNull VFileEvent event) {
     SlowOperations.allowSlowOperations(() -> doApplyEvent(event));
   }
@@ -1515,6 +1517,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           case VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY -> executeChangeCaseSensitivity(file, (FileAttributes.CaseSensitivity)newValue);
         }
       }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       LOG.error(e);
