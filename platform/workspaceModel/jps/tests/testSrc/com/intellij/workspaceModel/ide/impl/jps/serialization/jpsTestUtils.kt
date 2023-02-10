@@ -393,34 +393,34 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null, expectedFil
   PathManager.setExplicitConfigPath(testDir.absolutePath)
   ApplicationManager.getApplication().stateStore.setPath(testDir.toPath())
   ApplicationManager.getApplication().stateStore.clearCaches()
-  JpsGlobalEntitiesSerializers.enableGlobalEntitiesLoading()
-  // Copy original file before loading
-  if (originalFile != null) {
-    val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(),
-                                    "platform/workspaceModel/jps/tests/testData/serialization/globalLibraries/$originalFile")
-    FileUtil.copyDir(globalEntitiesFolder, optionsFolder)
+  JpsGlobalModelSynchronizerImpl.runWithGlobalEntitiesLoadingEnabled {
+    // Copy original file before loading
+    if (originalFile != null) {
+      val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(),
+                                      "platform/workspaceModel/jps/tests/testData/serialization/globalLibraries/$originalFile")
+      FileUtil.copyDir(globalEntitiesFolder, optionsFolder)
+    }
+
+    // Reinitialize application level services
+    val application = ApplicationManager.getApplication()
+    ApplicationManager.getApplication().replaceService(JpsGlobalModelSynchronizer::class.java, JpsGlobalModelSynchronizerImpl(), parentDisposable)
+    ApplicationManager.getApplication().replaceService(GlobalWorkspaceModel::class.java, GlobalWorkspaceModel(), parentDisposable)
+
+    // Entity source for global entities
+    val virtualFileManager = VirtualFileUrlManager.getGlobalInstance()
+    val globalLibrariesFile = virtualFileManager.fromUrl("$testDir/options/applicationLibraries.xml")
+    val entitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
+
+    action(entitySource)
+
+    // Save current state and check it's expected
+    if (expectedFile != null) {
+      application.invokeAndWait { saveDocumentsAndProjectsAndApp(true) }
+      val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(), "platform/workspaceModel/jps/tests/testData/serialization/globalLibraries/$expectedFile")
+      optionsFolder.assertMatches(directoryContentOf(globalEntitiesFolder.toPath()), filePathFilter = { it.contains("applicationLibraries.xml") })
+    }
   }
 
-  // Reinitialize application level services
-  val application = ApplicationManager.getApplication()
-  ApplicationManager.getApplication().replaceService(JpsGlobalModelSynchronizer::class.java, JpsGlobalModelSynchronizerImpl(), parentDisposable)
-  ApplicationManager.getApplication().replaceService(GlobalWorkspaceModel::class.java, GlobalWorkspaceModel(), parentDisposable)
-
-  // Entity source for global entities
-  val virtualFileManager = VirtualFileUrlManager.getGlobalInstance()
-  val globalLibrariesFile = virtualFileManager.fromUrl("$testDir/options/applicationLibraries.xml")
-  val entitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
-
-  action(entitySource)
-
-  // Save current state and check it's expected
-  if (expectedFile != null) {
-    application.invokeAndWait { saveDocumentsAndProjectsAndApp(true) }
-    val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(), "platform/workspaceModel/jps/tests/testData/serialization/globalLibraries/$expectedFile")
-    optionsFolder.assertMatches(directoryContentOf(globalEntitiesFolder.toPath()), filePathFilter = { it.contains("applicationLibraries.xml") })
-  }
-
-  JpsGlobalEntitiesSerializers.disableGlobalEntitiesLoading()
   ApplicationManager.getApplication().stateStore.clearCaches()
   PathManager.setExplicitConfigPath(null)
 }

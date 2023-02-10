@@ -8,25 +8,11 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
 object JpsGlobalEntitiesSerializers {
   const val GLOBAL_LIBRARIES_FILE_NAME: String = "applicationLibraries"
-  private var forceEnableLoading = false
-  private val prohibited: Boolean
-    get() = !forceEnableLoading && ApplicationManager.getApplication().isUnitTestMode
 
   fun createApplicationSerializers(virtualFileUrlManager: VirtualFileUrlManager): JpsFileEntitiesSerializer<LibraryEntity>? {
-    if (prohibited) return null
     val globalLibrariesFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(GLOBAL_LIBRARIES_FILE_NAME).absolutePath)
     val globalLibrariesEntitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
     return JpsGlobalLibrariesFileSerializer(globalLibrariesEntitySource)
-  }
-
-  @TestOnly
-  fun enableGlobalEntitiesLoading() {
-    forceEnableLoading = true
-  }
-
-  @TestOnly
-  fun disableGlobalEntitiesLoading() {
-    forceEnableLoading = false
   }
 }
 
