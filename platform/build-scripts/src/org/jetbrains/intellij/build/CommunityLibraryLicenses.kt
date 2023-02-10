@@ -818,9 +818,6 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/JetBrains/intellij-deps-trove4j",
                    licenseUrl = "https://github.com/JetBrains/intellij-deps-trove4j/blob/master/LICENSE.txt"),
 
-    LibraryLicense(name = "TwelveMonkeys ImageIO", libraryName = "imageio-tiff",
-                   url = "https://github.com/haraldk/TwelveMonkeys")
-      .newBsd("https://github.com/haraldk/TwelveMonkeys#license"),
     LibraryLicense(name = "Typeshed", attachedTo = "intellij.python", version = LibraryLicense.CUSTOM_REVISION,
                    url = "https://github.com/python/typeshed")
       .apache("https://github.com/python/typeshed/blob/master/LICENSE"),
