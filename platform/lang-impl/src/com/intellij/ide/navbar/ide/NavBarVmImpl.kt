@@ -22,7 +22,7 @@ internal class NavBarVmImpl(
   private val cs: CoroutineScope,
   private val project: Project,
   initialItems: List<NavBarVmItem>,
-  activityFlow: Flow<Unit>,
+  contextItems: Flow<List<NavBarVmItem>>,
 ) : NavBarVm {
 
   init {
@@ -39,8 +39,7 @@ internal class NavBarVmImpl(
 
   init {
     cs.launch {
-      activityFlow.collectLatest {
-        val items = focusModel(project)
+      contextItems.collectLatest { items ->
         if (items.isNotEmpty()) {
           _items.value = items.mapIndexed(::NavBarItemVmImpl)
           _selectedIndex.value = -1
