@@ -24,8 +24,8 @@ final public class AccessibleAnnouncerUtil {
     if (announcer == null) return;;
 
     KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    if ((focusManager == null) &&
-        (focusManager.getActiveWindow() == null)) return;;
+    if ((focusManager == null) ||
+        (focusManager.getActiveWindow() == null)) return;
 
     if (interruptCurrentOutput) {
       announcer.announce(a, str, AccessibleAnnouncer.ANNOUNCE_WITH_INTERRUPTING_CURRENT_OUTPUT);
