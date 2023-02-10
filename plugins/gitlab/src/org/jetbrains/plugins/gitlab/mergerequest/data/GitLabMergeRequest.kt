@@ -2,21 +2,16 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.api.HttpStatusErrorException
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.details.RequestState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceLabelEventDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceMilestoneEventDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceStateEventDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
@@ -29,10 +24,11 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val url: String
   val author: GitLabUserDTO
 
+  val sourceProject: StateFlow<GitLabProjectDTO>
   val title: Flow<String>
   val description: Flow<String>
   val targetBranch: Flow<String>
-  val sourceBranch: Flow<String>
+  val sourceBranch: StateFlow<String>
   val hasConflicts: Flow<Boolean>
   val isDraft: Flow<Boolean>
   val requestState: Flow<RequestState>
@@ -84,10 +80,11 @@ internal class LoadedGitLabMergeRequest(
   private val mergeRequestDetailsState: MutableStateFlow<GitLabMergeRequestFullDetails> =
     MutableStateFlow(GitLabMergeRequestFullDetails.fromGraphQL(mergeRequest))
 
+  override val sourceProject: StateFlow<GitLabProjectDTO> = mergeRequestDetailsState.mapState(cs) { it.sourceProject }
   override val title: Flow<String> = mergeRequestDetailsState.map { it.title }
   override val description: Flow<String> = mergeRequestDetailsState.map { it.description }
   override val targetBranch: Flow<String> = mergeRequestDetailsState.map { it.targetBranch }
-  override val sourceBranch: Flow<String> = mergeRequestDetailsState.map { it.sourceBranch }
+  override val sourceBranch: StateFlow<String> = mergeRequestDetailsState.mapState(cs) { it.sourceBranch }
   override val hasConflicts: Flow<Boolean> = mergeRequestDetailsState.map { it.conflicts }
   override val isDraft: Flow<Boolean> = mergeRequestDetailsState.map { it.draft }
   override val requestState: Flow<RequestState> = combine(isDraft, mergeRequestDetailsState.map { it.state }) { isDraft, requestState ->

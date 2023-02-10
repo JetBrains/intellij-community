@@ -20,6 +20,10 @@ fragment mergeRequest on MergeRequest {
   state
   draft
 
+  sourceProject {
+    ...project
+  }
+
   author {
     ...user
   }

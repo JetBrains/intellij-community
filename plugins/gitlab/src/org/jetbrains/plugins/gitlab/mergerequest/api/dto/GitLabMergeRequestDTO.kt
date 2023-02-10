@@ -6,6 +6,7 @@ import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffRefs
+import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
@@ -28,6 +29,7 @@ class GitLabMergeRequestDTO(
   val state: GitLabMergeRequestState,
   val draft: Boolean,
   val author: GitLabUserDTO,
+  val sourceProject: GitLabProjectDTO,
   approvedBy: UserCoreConnection,
   assignees: AssigneeConnection,
   reviewers: ReviewerConnection,

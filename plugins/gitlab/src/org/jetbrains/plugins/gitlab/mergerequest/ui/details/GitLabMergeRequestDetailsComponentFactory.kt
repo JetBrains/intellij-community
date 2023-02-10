@@ -65,11 +65,12 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     val detailsInfoVm = detailsVm.detailsInfoVm
     val detailsReviewFlowVm = detailsVm.detailsReviewFlowVm
     val changesVm = detailsVm.changesVm
+    val repository = detailsVm.repository
 
     val commitsAndBranches = JPanel(HorizontalLayout(0)).apply {
       isOpaque = false
       add(GitLabMergeRequestDetailsCommitsComponentFactory.create(cs, changesVm), HorizontalLayout.LEFT)
-      add(GitLabMergeRequestDetailsBranchComponentFactory.create(cs, detailsInfoVm), HorizontalLayout.RIGHT)
+      add(GitLabMergeRequestDetailsBranchComponentFactory.create(project, cs, detailsInfoVm, repository), HorizontalLayout.RIGHT)
     }
 
     val layout = MigLayout(

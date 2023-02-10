@@ -2,6 +2,7 @@
 
 package org.jetbrains.plugins.github.pullrequest.action
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -29,8 +30,8 @@ import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
 import org.jetbrains.plugins.github.util.GithubSettings
 
 class GHPRCheckoutRemoteBranchAction : DumbAwareAction(
-  GithubBundle.message("pull.request.branch.checkout.remote.action"),
-  GithubBundle.message("pull.request.branch.checkout.remote.action.description"),
+  CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action"),
+  CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description"),
   null
 ) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -40,7 +41,8 @@ class GHPRCheckoutRemoteBranchAction : DumbAwareAction(
     val repository: GitRepository? = e.getData(GHPRActionKeys.GIT_REPOSITORY)
     val dataProvider: GHPRDataProvider? = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
 
-    e.presentation.text = GithubBundle.message("pull.request.branch.checkout.remote", dataProvider?.detailsData?.loadedDetails?.headRefName)
+    e.presentation.text = CollaborationToolsBundle.message("review.details.branch.checkout.remote",
+                                                           dataProvider?.detailsData?.loadedDetails?.headRefName)
     e.presentation.isEnabled = project != null && !project.isDefault && repository != null && dataProvider != null
   }
 

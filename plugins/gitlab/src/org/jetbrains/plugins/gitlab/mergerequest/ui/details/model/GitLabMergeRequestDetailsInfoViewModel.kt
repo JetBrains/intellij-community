@@ -11,6 +11,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 
 internal interface GitLabMergeRequestDetailsInfoViewModel {
+  val mergeRequest: GitLabMergeRequest
+
   val number: String
   val url: String
 
@@ -28,7 +30,8 @@ internal interface GitLabMergeRequestDetailsInfoViewModel {
 }
 
 internal class GitLabMergeRequestDetailsInfoViewModelImpl(
-  parentCs: CoroutineScope, mergeRequest: GitLabMergeRequest
+  parentCs: CoroutineScope,
+  override val mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestDetailsInfoViewModel {
 
   private val cs = parentCs.childScope()

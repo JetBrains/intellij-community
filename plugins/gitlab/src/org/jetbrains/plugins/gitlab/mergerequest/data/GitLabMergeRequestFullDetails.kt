@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffRefs
+import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import java.util.*
@@ -19,6 +20,7 @@ data class GitLabMergeRequestFullDetails(
   override val assignees: List<GitLabUserDTO>,
   override val reviewers: List<GitLabUserDTO>,
   override val webUrl: @NlsSafe String,
+  val sourceProject: GitLabProjectDTO,
   val description: String,
   val approvedBy: List<GitLabUserDTO>,
   val targetBranch: String,
@@ -40,6 +42,7 @@ data class GitLabMergeRequestFullDetails(
       assignees = dto.assignees,
       reviewers = dto.reviewers,
       webUrl = dto.webUrl,
+      sourceProject = dto.sourceProject,
       description = dto.description,
       approvedBy = dto.approvedBy,
       targetBranch = dto.targetBranch,

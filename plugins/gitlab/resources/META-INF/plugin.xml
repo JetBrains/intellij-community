@@ -48,6 +48,8 @@
     <action id="GitLab.Merge.Requests.Details.Refresh"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRefreshDetails"
             use-shortcut-of="Refresh"/>
+    <action id="GitLab.Merge.Requests.Branch.Checkout.Remote"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCheckoutRemoteBranchAction"/>
 
     <group id="GitLab.Merge.Requests.List.Actions">
       <action id="GitLab.Merge.Request.Show"
