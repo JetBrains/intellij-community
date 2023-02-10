@@ -256,16 +256,6 @@ private fun getActiveExecutor(project: Project, conf: RunnerAndConfigurationSett
   return executionManager.getRunningDescriptors { conf === it }.flatMap { executionManager.getExecutors(it) }.firstOrNull()
 }
 
-
-private fun ExecutorGroup<*>.createExecutorActionGroup(conf: (Project) -> RunnerAndConfigurationSettings?) = DefaultActionGroup().apply {
-  templatePresentation.text = actionName
-  isPopup = true
-
-  childExecutors().forEach { executor ->
-    add(RunToolbarWidgetRunAction(executor, hideIfDisable = true, conf))
-  }
-}
-
 private class DelegateAction(val string: Supplier<@Nls String>, delegate: AnAction) : AnActionWrapper(delegate) {
 
   override fun update(e: AnActionEvent) {
