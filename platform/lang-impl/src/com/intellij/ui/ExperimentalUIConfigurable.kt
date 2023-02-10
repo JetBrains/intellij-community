@@ -8,8 +8,8 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
@@ -22,13 +22,13 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
   "reference.settings.ide.settings.new.ui"), Configurable.Beta {
 
   override fun createPanel() = panel {
-    lateinit var newUiCheckBox: com.intellij.ui.dsl.builder.Cell<JBCheckBox>
+    lateinit var newUiCheckBox: Cell<JBCheckBox>
 
     row {
       newUiCheckBox = checkBox(IdeBundle.message("checkbox.enable.new.ui"))
         .bindSelected(
           { ExperimentalUI.isNewUI() },
-          { Registry.get("ide.experimental.ui").setValue(it) })
+          { ExperimentalUI.setNewUI(it) })
         .comment(IdeBundle.message("checkbox.enable.new.ui.description"))
     }
 

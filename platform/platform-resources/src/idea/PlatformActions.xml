@@ -201,6 +201,7 @@
     <action id="SettingsEntryPoint" class="com.intellij.ide.actions.SettingsEntryPointAction" icon="AllIcons.General.GearPlain"/>
 
     <action id="RunAnything" icon="AllIcons.Actions.Run_anything" class="com.intellij.ide.actions.runAnything.RunAnythingAction"/>
+    <action id="EnableNewUi" icon="AllIcons.Actions.Share" class="com.intellij.ide.actions.EnableNewUiAction"/>
 
     <action id="SmartSelect" class="com.intellij.ide.actions.SmartSelect" use-shortcut-of="EditorSelectWord"/>
     <action id="SmartUnSelect" class="com.intellij.ide.actions.SmartUnSelect" use-shortcut-of="EditorUnSelectWord"/>
@@ -1562,6 +1563,7 @@
       <reference id="ShowSettings"/>
       <reference id="WelcomeScreen.Plugins"/>
       <separator/>
+      <reference id="EnableNewUi"/>
       <reference id="ChangeLaf"/>
       <reference id="ChangeKeymap"/>
       <reference id="ChangeView"/>

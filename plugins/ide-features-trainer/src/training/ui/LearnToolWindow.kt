@@ -9,8 +9,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
@@ -122,7 +122,7 @@ private fun adjustModulesPanel(contentPanel: JPanel): JPanel {
         })
         add(Box.createHorizontalGlue())
         add(LinkLabel<Any>(LearnBundle.message("modules.panel.switch.ui"), null) { _, _ ->
-          Registry.get("ide.experimental.ui").setValue(true)
+          ExperimentalUI.setNewUI(true)
         })
       })
     })

@@ -2,10 +2,10 @@
 package training.ui.welcomeScreen
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.InteractiveCourseFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.InteractiveCoursePanel
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
@@ -39,7 +39,7 @@ private class IFTInteractiveCoursePanel : InteractiveCoursePanel(IFTInteractiveC
         contentType = "text/html"
         addHyperlinkListener(object : HyperlinkAdapter() {
           override fun hyperlinkActivated(e: HyperlinkEvent) {
-            Registry.get("ide.experimental.ui").setValue(true)
+            ExperimentalUI.setNewUI(true)
           }
         })
         editorKit = HTMLEditorKitBuilder.simple()

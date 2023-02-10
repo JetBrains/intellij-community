@@ -21,7 +21,6 @@ import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.Urls;
@@ -89,7 +88,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
         if (ENABLE_NEW_UI_REQUEST.equals(jsRequest)) {
           if (!ExperimentalUI.isNewUI()) {
             ApplicationManager.getApplication().invokeLater(() -> {
-              Registry.get("ide.experimental.ui").setValue(true);
+              ExperimentalUI.setNewUI(true);
               UISettings.getInstance().fireUISettingsChanged();
             });
           }
