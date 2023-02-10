@@ -21,9 +21,3 @@ project.unitTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     targetPlatform = JVM (17)
-
-
-Test configuration:
-- hiding following roots: resources, android-specific roots, generated
-- hiding following standard dependencies: sdk, self
-- dependencies order is not checked
