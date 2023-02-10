@@ -2843,7 +2843,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
                          }
                          """);
     myFixture.completeBasic();
-    myFixture.assertPreferredCompletionItems(0, "NonNls", "NotNull");
+    assertEquals(List.of("NonNls", "NotNull"), myFixture.getLookupElementStrings());
   }
 
   @NeedsIndex.Full
