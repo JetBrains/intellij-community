@@ -143,6 +143,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
     }
 
+    /**
+     * Hide preview temporarily when submenu is shown
+     */
+    void hidePreview() {
+      myPreviewPopupUpdateProcessor.hideTemporarily();
+    }
 
     @Override
     public void beforeTreeDispose() {
