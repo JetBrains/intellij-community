@@ -57,7 +57,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.*;
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.PopupMenuEvent;
@@ -508,7 +507,7 @@ public class JBTabsImpl extends JComponent
         if (ExperimentalUI.isNewUI()) {
           Rectangle tabsRect = myLastLayoutPass.getHeaderRectangle();
           if (tabsRect != null) {
-            yield new Rectangle(tabsRect.x + tabsRect.width - SCROLL_BAR_THICKNESS - 1, 0, SCROLL_BAR_THICKNESS, getHeight());
+            yield new Rectangle(tabsRect.x + tabsRect.width - SCROLL_BAR_THICKNESS, 0, SCROLL_BAR_THICKNESS, getHeight());
           }
           else {
             yield new Rectangle(0, 0, 0, 0);
@@ -915,6 +914,12 @@ public class JBTabsImpl extends JComponent
   public @NotNull Dimension getEntryPointPreferredSize() {
     if (myEntryPointToolbar == null) return new Dimension();
     return myEntryPointToolbar.getComponent().getPreferredSize();
+  }
+
+  // Returns default one action horizontal toolbar size (26x24)
+  public @NotNull Dimension getMoreToolbarPreferredSize() {
+    Dimension baseSize = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE;
+    return new Dimension(baseSize.width + JBUI.scale(4), baseSize.height + JBUI.scale(2));
   }
 
   private Rectangle getEntryPointRect() {
@@ -2114,50 +2119,11 @@ public class JBTabsImpl extends JComponent
           visible.add(myDropInfo);
         }
       }
-      if (myEntryPointToolbar != null) {
-        JComponent eComponent = myEntryPointToolbar.getComponent();
-        if (!getTabsPosition().isSide() && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE && getTabCount() > 0) {
-          Dimension preferredSize = eComponent.getPreferredSize();
-          Rectangle bounds = new Rectangle(getWidth() - preferredSize.width - 2, 1, preferredSize.width, myHeaderFitSize.height);
-          int xDiff = (bounds.width - preferredSize.width) / 2;
-          int yDiff = (bounds.height - preferredSize.height) / 2;
-          bounds.x += xDiff + 2;
-          bounds.width -= 2 * xDiff;
-          bounds.y += yDiff;
-          bounds.height -= 2 * yDiff;
-          eComponent.setBounds(bounds);
-        }
-        else {
-          eComponent.setBounds(new Rectangle());
-        }
-        eComponent.putClientProperty(LAYOUT_DONE, true);
-      }
 
       if (myLayout instanceof SingleRowLayout) {
         mySingleRowLayout.scrollSelectionInView();
         myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
 
-        JComponent eComponent = myEntryPointToolbar == null ? null : myEntryPointToolbar.getComponent();
-        if (eComponent != null) {
-          Rectangle entryPointRect = getEntryPointRect();
-          if (entryPointRect != null && !entryPointRect.isEmpty() && getTabCount() > 0) {
-            Dimension preferredSize = eComponent.getPreferredSize();
-            Rectangle bounds = new Rectangle(entryPointRect);
-            if (!ExperimentalUI.isNewUI() || !getTabsPosition().isSide()) {
-              int xDiff = (bounds.width - preferredSize.width) / 2;
-              int yDiff = (bounds.height - preferredSize.height) / 2;
-              bounds.x += xDiff + 2;
-              bounds.width -= 2 * xDiff;
-              bounds.y += yDiff;
-              bounds.height -= 2 * yDiff;
-            }
-            eComponent.setBounds(bounds);
-          }
-          else {
-            eComponent.setBounds(new Rectangle());
-          }
-        }
-        centerizeMoreToolbarPosition();
         Rectangle titleRect = getTitleRect();
         if (titleRect != null && !titleRect.isEmpty()) {
           Dimension preferredSize = myTitleWrapper.getPreferredSize();
@@ -2184,12 +2150,13 @@ public class JBTabsImpl extends JComponent
         }
       }
       else {
-        //TableLayout does layout 'Title' and 'More' by itself
         myTableLayout.scrollSelectionInView();
-        myLastLayoutPass = myTableLayout.layoutTable(visible, myTitleWrapper, myMoreToolbar.getComponent());
-        centerizeMoreToolbarPosition();
+        myLastLayoutPass = myTableLayout.layoutTable(visible);
         mySingleRowLayout.myLastSingRowLayout = null;
       }
+
+      centerizeEntryPointToolbarPosition();
+      centerizeMoreToolbarPosition();
 
       moveDraggedTabLabel();
 
@@ -2247,6 +2214,31 @@ public class JBTabsImpl extends JComponent
       mComponent.setBounds(new Rectangle());
     }
     mComponent.putClientProperty(LAYOUT_DONE, true);
+  }
+
+  private void centerizeEntryPointToolbarPosition() {
+    JComponent eComponent = myEntryPointToolbar == null ? null : myEntryPointToolbar.getComponent();
+    if (eComponent == null) {
+      return;
+    }
+    Rectangle entryPointRect = getEntryPointRect();
+    if (entryPointRect != null && !entryPointRect.isEmpty() && getTabCount() > 0) {
+      Dimension preferredSize = eComponent.getPreferredSize();
+      Rectangle bounds = new Rectangle(entryPointRect);
+      if (!ExperimentalUI.isNewUI() || !getTabsPosition().isSide()) {
+        int xDiff = (bounds.width - preferredSize.width) / 2;
+        int yDiff = (bounds.height - preferredSize.height) / 2;
+        bounds.x += xDiff + 2;
+        bounds.width -= 2 * xDiff;
+        bounds.y += yDiff;
+        bounds.height -= 2 * yDiff;
+      }
+      eComponent.setBounds(bounds);
+    }
+    else {
+      eComponent.setBounds(new Rectangle());
+    }
+    eComponent.putClientProperty(LAYOUT_DONE, true);
   }
 
   void moveDraggedTabLabel() {
@@ -2828,12 +2820,7 @@ public class JBTabsImpl extends JComponent
       }
       else {
         myEntryPointToolbar = createToolbar(group);
-
-        JComponent toolbarComp = myEntryPointToolbar.getComponent();
-        if (ExperimentalUI.isNewUI()) {
-          toolbarComp.setBorder(createEntryPointToolbarBorder());
-        }
-        add(toolbarComp);
+        add(myEntryPointToolbar.getComponent());
       }
     }
     else {
@@ -2841,10 +2828,17 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  private @NotNull Border createEntryPointToolbarBorder() {
-    return getTabsPosition().isSide()
-           ? JBUI.Borders.empty(4, 8, 4, 3)
-           : JBUI.Borders.empty(0, 5, 0, 8);
+  /**
+   * @return insets, that should be used to layout {@link JBTabsImpl#myMoreToolbar} and {@link JBTabsImpl#myEntryPointToolbar}
+   */
+  public Insets getActionsInsets() {
+    if (ExperimentalUI.isNewUI()) {
+      return getPosition().isSide() ? JBInsets.create(new Insets(4, 8, 4, 3))
+                                    : JBInsets.create(new Insets(0, 5, 0, 8));
+    }
+    else {
+      return JBInsets.create(new Insets(0, 1, 0, 1));
+    }
   }
 
   // Useful when you need to always show separator as first or last component of ActionToolbar
@@ -3517,12 +3511,6 @@ public class JBTabsImpl extends JComponent
     }
     else if (divider.getParent() == this && !position.isSide()) {
       remove(divider);
-    }
-    if (ExperimentalUI.isNewUI()) {
-      if (myEntryPointToolbar != null) {
-        myEntryPointToolbar.getComponent().setBorder(createEntryPointToolbarBorder());
-      }
-      myMoreToolbar.getComponent().setBorder(JBUI.Borders.empty(4, 3));
     }
 
     relayout(true, false);

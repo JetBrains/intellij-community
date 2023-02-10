@@ -56,7 +56,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     else {
       int max = data.requiredLength - data.toFitLength + getMoreRectAxisSize();
       if (!ExperimentalUI.isNewUI() && getStrategy() instanceof SingleRowLayoutStrategy.Vertical) {
-        max += getStrategy().getEntryPointAxisSize();
+        max += data.entryPointAxisSize;
       }
       myScrollOffset = Math.max(0, Math.min(myScrollOffset, max));
     }
@@ -93,7 +93,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
         else {
           int maxLength = passInfo.toFitLength - getMoreRectAxisSize();
           if (!ExperimentalUI.isNewUI() && getStrategy() instanceof SingleRowLayoutStrategy.Vertical) {
-            maxLength -= getStrategy().getEntryPointAxisSize();
+            maxLength -= passInfo.entryPointAxisSize;
           }
           if (offset + length > maxLength) {
             // left side should be always visible
@@ -133,7 +133,11 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length) {
     if (data.requiredLength > data.toFitLength && !(label.isPinned() && TabLayout.showPinnedTabsSeparately())) {
       length = getStrategy().getLengthIncrement(label.getPreferredSize());
-      final int moreRectSize = getMoreRectAxisSize();
+      int moreRectSize = getMoreRectAxisSize();
+      if (data.entryPointAxisSize == 0) {
+        Insets insets = myTabs.getActionsInsets();
+        moreRectSize += insets.left + insets.right;
+      }
       if (data.position + length > data.toFitLength - moreRectSize) {
         if (getStrategy().drawPartialOverflowTabs()) {
           int clippedLength = ExperimentalUI.isNewUI() && myTabs.getTabsPosition().isSide()
