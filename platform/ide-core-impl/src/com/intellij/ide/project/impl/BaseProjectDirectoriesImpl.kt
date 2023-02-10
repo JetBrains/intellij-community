@@ -24,12 +24,15 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
   private val flow = MutableSharedFlow<VersionedStorageChange>(extraBufferCapacity = 1000)
   private val processingCounter = AtomicInteger(0)
 
+  private var baseDirectoriesSet: Set<VirtualFile> = emptySet()
+
   init {
     scope.launch {
       flow.collect { change ->
         try {
           updateTreeAndFireChanges(change)
-        } finally {
+        }
+        finally {
           processingCounter.getAndDecrement()
         }
       }
@@ -42,8 +45,11 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
       }
     })
 
-    @Suppress("LeakingThis")
-    collectRoots(WorkspaceModel.getInstance(project).currentSnapshot).forEach { virtualFilesTree.add(it) }
+    synchronized(virtualFilesTree) {
+      @Suppress("LeakingThis")
+      collectRoots(WorkspaceModel.getInstance(project).currentSnapshot).forEach { virtualFilesTree.add(it) }
+      baseDirectoriesSet = virtualFilesTree.getRoots()
+    }
   }
 
   override val isProcessing: Boolean
@@ -64,6 +70,7 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
       oldPossibleRoots.forEach { virtualFilesTree.remove(it) }
       newPossibleRoots.forEach { virtualFilesTree.add(it) }
       newRoots = virtualFilesTree.getRoots()
+      baseDirectoriesSet = newRoots
     }
 
     val diff = BaseProjectDirectoriesDiff(oldRoots - newRoots, newRoots - oldRoots)
@@ -96,10 +103,18 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
   }
 
   override fun getBaseDirectories(): Set<VirtualFile> {
-    return synchronized(virtualFilesTree) { virtualFilesTree.getRoots() }
+    return synchronized(virtualFilesTree) { baseDirectoriesSet }
   }
 
   override fun getBaseDirectoryFor(virtualFile: VirtualFile): VirtualFile? {
-    return synchronized(virtualFilesTree) { virtualFilesTree.getAncestors(virtualFile).firstOrNull() }
+    val baseDirectories = getBaseDirectories()
+
+    var current : VirtualFile? = virtualFile
+    while (current != null) {
+      if (baseDirectories.contains(current)) return current
+      current = current.parent
+    }
+
+    return null
   }
 }
