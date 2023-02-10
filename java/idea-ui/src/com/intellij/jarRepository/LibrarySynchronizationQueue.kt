@@ -3,33 +3,43 @@ package com.intellij.jarRepository
 
 import com.intellij.jarRepository.RepositoryLibrarySynchronizer.removeDuplicatedUrlsFromRepositoryLibraries
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
-import com.intellij.util.concurrency.SequentialTaskExecutor
+import kotlinx.coroutines.*
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 
-internal class LibrarySynchronizationQueue(private val project: Project) {
-  private companion object {
-    val EXECUTOR = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("RemoteLibrarySynchronizerQueue")
+@Service(Service.Level.PROJECT)
+internal class LibrarySynchronizationQueue(private val project: Project, private val scope: CoroutineScope) {
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): LibrarySynchronizationQueue = project.service()
   }
 
   private val queue = LinkedHashSet<LibraryEx>()
 
-  fun synchronizeAllLibraries() = EXECUTOR.execute {
-    removeDuplicatedUrlsFromRepositoryLibraries(project)
-    val libraries = RepositoryLibrarySynchronizer.collectLibrariesToSync(project)
-    for (library in libraries) {
-      requestSynchronization(library as LibraryEx)
+  fun requestAllLibrariesSynchronization() {
+    scope.launch(Dispatchers.IO) {
+      removeDuplicatedUrlsFromRepositoryLibraries(project)
+      val libraries = RepositoryLibrarySynchronizer.collectLibrariesToSync(project)
+      coroutineScope {
+        for (library in libraries) {
+          requestSynchronization(library as LibraryEx)
+        }
+      }
+      flush()
     }
-    flush()
   }
 
-  fun requestSynchronization(library: LibraryEx) = EXECUTOR.execute {
-    if (library.needToReload()) {
-      synchronized(queue) {
-        queue.add(library)
+  fun requestSynchronization(library: LibraryEx) {
+    scope.launch {
+      if (library.needToReload()) {
+        synchronized(queue) {
+          queue.add(library)
+        }
       }
     }
   }
@@ -40,19 +50,21 @@ internal class LibrarySynchronizationQueue(private val project: Project) {
     }
   }
 
-  fun flush() = EXECUTOR.execute {
-    while (true) {
-      if (project.isDisposed) break
+  fun flush() {
+    scope.launch(Dispatchers.IO) {
+      while (isActive) {
+        if (project.isDisposed) break
 
-      val library = nextLibrary()
-      if (library == null) break
+        val library = nextLibrary()
+        if (library == null) break
 
-      if (library.needToReload()) {
-        RepositoryUtils.reloadDependencies(project, library)
+        if (library.needToReload()) {
+          RepositoryUtils.reloadDependencies(project, library)
+        }
       }
     }
   }
-  
+
   private fun LibraryEx.needToReload(): Boolean {
     val props = properties as? RepositoryLibraryProperties ?: return false
 

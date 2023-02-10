@@ -133,7 +133,7 @@ public final class RepositoryLibrarySynchronizer implements StartupActivity.Dumb
     }
 
     var disposable = RemoteRepositoriesConfiguration.getInstance(project);
-    LibrarySynchronizationQueue synchronizationQueue = new LibrarySynchronizationQueue(project);
+    LibrarySynchronizationQueue synchronizationQueue = project.getService(LibrarySynchronizationQueue.class);
     ChangedRepositoryLibrarySynchronizer synchronizer = new ChangedRepositoryLibrarySynchronizer(project, synchronizationQueue);
     GlobalChangedRepositoryLibrarySynchronizer globalLibSynchronizer = new GlobalChangedRepositoryLibrarySynchronizer(synchronizationQueue, disposable);
     for (LibraryTable libraryTable : GlobalChangedRepositoryLibrarySynchronizer.getGlobalAndCustomLibraryTables()) {
@@ -141,7 +141,7 @@ public final class RepositoryLibrarySynchronizer implements StartupActivity.Dumb
     }
     globalLibSynchronizer.installOnExistingLibraries();
     project.getMessageBus().connect(disposable).subscribe(WorkspaceModelTopics.CHANGED, synchronizer);
-    synchronizationQueue.synchronizeAllLibraries();
+    synchronizationQueue.requestAllLibrariesSynchronization();
   }
 
   public static void syncLibraries(@NotNull Project project) {
