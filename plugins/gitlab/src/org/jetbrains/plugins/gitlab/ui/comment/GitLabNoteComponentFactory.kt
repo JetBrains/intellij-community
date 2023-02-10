@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
+import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createNoteTitleComponent
 import javax.swing.JComponent
 
 object GitLabNoteComponentFactory {
@@ -49,7 +49,7 @@ object GitLabNoteComponentFactory {
     return CodeReviewChatItemUIUtil.build(componentType,
                                           { avatarIconsProvider.getIcon(vm.author, it) },
                                           contentPanel) {
-      withHeader(createTitleTextPane(vm.author, vm.createdAt), actionsPanel)
+      withHeader(createNoteTitleComponent(cs, vm), actionsPanel)
     }
   }
 

@@ -7,17 +7,14 @@ import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies
-import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
-import com.intellij.collaboration.ui.util.bindChild
-import com.intellij.collaboration.ui.util.bindIcon
-import com.intellij.collaboration.ui.util.bindText
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.*
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.containers.nullize
 import com.intellij.util.text.JBDateFormat
 import com.intellij.util.ui.EmptyIcon
@@ -29,7 +26,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
+import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createNoteTitleComponent
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -52,18 +49,9 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       bindVisibility(cs, vm.collapsed.inverted())
     }
 
-    val titlePanel = HorizontalListPanel(CodeReviewCommentUIUtil.Title.HORIZONTAL_GAP).apply {
-      add(createTitleTextPane(cs, vm.author, vm.date))
-
-      vm.resolveVm?.resolved?.let { resolvedFlow ->
-        bindChild(cs, resolvedFlow) { _, resolved ->
-          if (resolved) {
-            CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.resolved.tag"))
-          }
-          else {
-            null
-          }
-        }
+    val titlePanel = Wrapper().apply {
+      bindContent(cs, vm.mainNote) { titleCs, mainNote ->
+        createNoteTitleComponent(titleCs, mainNote)
       }
     }
 

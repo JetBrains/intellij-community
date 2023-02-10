@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.comment
 
-import com.intellij.collaboration.async.mapCaching
+import com.intellij.collaboration.async.mapCachingIndexed
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
@@ -51,6 +51,12 @@ class GitLabDiscussionViewModelImpl(
 
   private val expandRequested = MutableStateFlow(false)
 
+  override val resolveVm: GitLabDiscussionResolveViewModel? =
+    if (discussion.canResolve) GitLabDiscussionResolveViewModelImpl(cs, discussion) else null
+
+  override val replyVm: GitLabDiscussionReplyViewModel? =
+    if (discussion.canAddNotes) GitLabDiscussionReplyViewModelImpl(cs, currentUser, discussion) else null
+
   // this is NOT a good way to do this, but a proper implementation would be waaaay too convoluted
   @Volatile
   private var initialNotesSize: Int? = null
@@ -58,9 +64,9 @@ class GitLabDiscussionViewModelImpl(
     if (initialNotesSize == null) {
       initialNotesSize = it.size
     }
-  }.mapCaching(
+  }.mapCachingIndexed(
     GitLabNote::id,
-    { cs, note -> GitLabNoteViewModelImpl(cs, note) },
+    { cs, note, index -> GitLabNoteViewModelImpl(cs, note, if (index == 0) resolveVm else null) },
     GitLabNoteViewModelImpl::destroy
   ).combine(expandRequested) { notes, expanded ->
     if (initialNotesSize!! <= 3 || notes.size <= 3 || expanded) {
@@ -74,13 +80,6 @@ class GitLabDiscussionViewModelImpl(
       )
     }
   }.modelFlow(cs, LOG)
-
-
-  override val resolveVm: GitLabDiscussionResolveViewModel? =
-    if (discussion.canResolve) GitLabDiscussionResolveViewModelImpl(cs, discussion) else null
-
-  override val replyVm: GitLabDiscussionReplyViewModel? =
-    if (discussion.canAddNotes) GitLabDiscussionReplyViewModelImpl(cs, currentUser, discussion) else null
 
   override suspend fun destroy() {
     try {

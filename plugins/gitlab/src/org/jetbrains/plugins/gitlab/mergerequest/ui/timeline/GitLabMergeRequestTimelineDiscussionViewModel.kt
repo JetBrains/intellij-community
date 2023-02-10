@@ -44,7 +44,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val mainNote: Flow<GitLabNoteViewModel> = discussion.notes
     .map { it.first() }
     .distinctUntilChangedBy { it.id }
-    .mapScoped { GitLabNoteViewModelImpl(this, it) }
+    .mapScoped { GitLabNoteViewModelImpl(this, it, resolveVm) }
     .modelFlow(cs, LOG)
 
   override val date: Date = discussion.createdAt
