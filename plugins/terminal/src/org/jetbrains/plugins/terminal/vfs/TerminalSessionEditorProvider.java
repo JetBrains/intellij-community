@@ -31,7 +31,7 @@ public class TerminalSessionEditorProvider implements FileEditorProvider, DumbAw
       TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)file;
       TerminalWidget widget = terminalFile.getTerminalWidget();
 
-      String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget, file.getName());
+      String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget);
       Disposable tempDisposable = Disposer.newDisposable();
       TerminalWidget newWidget = new LocalTerminalDirectRunner(project).startShellTerminalWidget(tempDisposable, workingDirectory, true);
       TerminalSessionVirtualFileImpl newSessionVirtualFile = new TerminalSessionVirtualFileImpl(

@@ -474,7 +474,7 @@ public final class TerminalToolWindowManager implements Disposable {
   public void split(@NotNull TerminalWidget widget, boolean vertically) {
     TerminalContainer container = getContainer(widget);
     if (container != null) {
-      String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget, container.getContent().getDisplayName());
+      String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget);
       TerminalWidget newWidget = myTerminalRunner.startShellTerminalWidget(container.getContent(), workingDirectory, true);
       setupTerminalWidget(myToolWindow, newWidget, container.getContent());
       container.split(!vertically, newWidget);
