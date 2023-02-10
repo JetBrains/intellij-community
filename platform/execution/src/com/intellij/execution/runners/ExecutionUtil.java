@@ -252,7 +252,7 @@ public final class ExecutionUtil {
       builder.executionId(executionId);
     }
     if (dataContext != null) {
-      builder.dataContext(dataContext);
+      builder.dataContext(IdeUiService.getInstance().createAsyncDataContext(dataContext));
     }
 
     ExecutionEnvironment environment = ApplicationManager.getApplication().isDispatchThread() ?
