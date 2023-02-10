@@ -108,7 +108,11 @@ abstract class AbstractKotlinMppGradleImportingTest :
         val config = testConfiguration.getConfiguration(GeneralWorkspaceChecks)
         return when {
             config.disableCheckers != null -> checker !in config.disableCheckers!!
+
             config.onlyCheckers != null -> checker in config.onlyCheckers!!
+                    // Highlighting checker should be disabled explicitly, because it's rarely the intention to not run
+                    // highlighting when you have sources and say 'onlyCheckers(OrderEntriesCheckers)'
+                    || checker is HighlightingChecker
             else -> true
         }
     }
