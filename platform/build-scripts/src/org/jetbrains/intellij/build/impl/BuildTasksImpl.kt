@@ -457,7 +457,10 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
       val debugMapping = mutableListOf<String>()
       for (moduleName in modules) {
         val module = context.findRequiredModule(moduleName)
+/* Android Studio: include sources for Kotlin dependencies too (especially the Kotlin compiler).
         if (moduleName.startsWith("intellij.platform.") && context.findModule("$moduleName.impl") != null) {
+ */     if (moduleName.startsWith("intellij.platform.") && context.findModule("$moduleName.impl") != null ||
+            moduleName.startsWith("kotlin.")) {
           val libraries = JpsJavaExtensionService.dependencies(module).productionOnly().compileOnly().recursivelyExportedOnly().libraries
           includedLibraries.addAll(libraries)
           libraries.mapTo(debugMapping) { "${it.name} for $moduleName" }
