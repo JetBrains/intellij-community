@@ -2359,6 +2359,7 @@
     <notificationGroup id="External annotations" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.setup.external.annotations"/>
     <notificationGroup id="Test integration" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.testintegration"/>
 
+    <compiler.task execute="BEFORE" implementation="com.intellij.jarRepository.CompilationDependenciesResolutionTask"/>
     <compiler.task execute="AFTER" implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
     <registryKey key="load.maven.dependencies.timeout" defaultValue="120" description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>
     <referenceInjector implementation="com.intellij.java.JvmMethodNameReferenceInjector"/>
