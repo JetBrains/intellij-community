@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.diagnostic.VMOptions
@@ -164,7 +164,6 @@ private suspend fun checkRuntime() {
     if (Files.isRegularFile(configFile)) {
       switchAction = NotificationAction.createSimpleExpiring(IdeBundle.message("action.SwitchToJBR.text")) {
         try {
-          @Suppress("BlockingMethodInNonBlockingContext")
           Files.delete(configFile)
           ApplicationManagerEx.getApplicationEx().restart(true)
         }
@@ -194,7 +193,6 @@ private fun isModernJBR(): Boolean {
   return jbrVersion == null || JavaVersion.current() >= jbrVersion.version
 }
 
-@Suppress("BlockingMethodInNonBlockingContext")
 private suspend fun isJbrOperational(): Boolean {
   val bin = Path.of(PathManager.getBundledRuntimePath(), if (SystemInfoRt.isWindows) "bin/java.exe" else "bin/java")
   if (Files.isRegularFile(bin) && (SystemInfoRt.isWindows || Files.isExecutable(bin))) {
