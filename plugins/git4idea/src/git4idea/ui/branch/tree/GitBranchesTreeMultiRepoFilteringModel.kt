@@ -84,8 +84,14 @@ class GitBranchesTreeMultiRepoFilteringModel(
       }
       is GitRepository -> {
         branchesTreeCache.getOrPut(parent) {
-          listOf(BranchTypeUnderRepository(parent, GitBranchType.LOCAL),
-                 BranchTypeUnderRepository(parent, GitBranchType.REMOTE))
+          mutableListOf<BranchTypeUnderRepository>().apply {
+            if (!repositoriesTree.isLocalBranchesEmpty(parent)) {
+              add(BranchTypeUnderRepository(parent, GitBranchType.LOCAL))
+            }
+            if (!repositoriesTree.isRemoteBranchesEmpty(parent)) {
+              add(BranchTypeUnderRepository(parent, GitBranchType.REMOTE))
+            }
+          }
         }
       }
       else -> emptyList()
@@ -93,7 +99,10 @@ class GitBranchesTreeMultiRepoFilteringModel(
   }
 
   private fun getTopLevelNodes(): List<Any> {
-    return topLevelActions + GitBranchType.LOCAL + GitBranchType.REMOTE + repositories
+    val localAndRemoteNodes = getLocalAndRemoteTopLevelNodes(commonLocalBranchesTree, commonRemoteBranchesTree)
+    val notEmptyRepositories = repositoriesTree.getNotEmptyRepositories()
+
+    return topLevelActions + localAndRemoteNodes + notEmptyRepositories
   }
 
   private fun getBranchTreeNodes(branchType: GitBranchType, path: List<String>, repository: GitRepository? = null): List<Any> {
@@ -133,8 +142,8 @@ class GitBranchesTreeMultiRepoFilteringModel(
   private inner class LazyRepositoryBranchesHolder {
 
     private val tree by lazy {
-      if (repositories.size > 1) mutableMapOf(*repositories.map { it to LazyRepositoryBranchesSubtreeHolder(it) }.toTypedArray())
-      else mutableMapOf()
+      if (repositories.size > 1) hashMapOf(*repositories.map { it to LazyRepositoryBranchesSubtreeHolder(it) }.toTypedArray())
+      else hashMapOf()
     }
 
     operator fun get(repository: GitRepository) = tree.getOrPut(repository) { LazyRepositoryBranchesSubtreeHolder(repository) }
@@ -144,6 +153,7 @@ class GitBranchesTreeMultiRepoFilteringModel(
     fun isRemoteBranchesEmpty() = tree.values.all { it.remoteBranches.isEmpty() }
     fun isRemoteBranchesEmpty(repository: GitRepository) = tree[repository]?.remoteBranches?.isEmpty() ?: true
     fun isNotEmpty(repository: GitRepository) = !isLocalBranchesEmpty(repository) || !isRemoteBranchesEmpty(repository)
+    fun getNotEmptyRepositories(): List<GitRepository> = repositories.filter(::isNotEmpty)
   }
 
   private inner class LazyRepositoryBranchesSubtreeHolder(repository: GitRepository) {

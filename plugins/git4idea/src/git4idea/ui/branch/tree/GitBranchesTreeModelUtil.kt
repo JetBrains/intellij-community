@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
 import com.intellij.dvcs.getCommonCurrentBranch
@@ -144,6 +144,14 @@ internal fun getPreferredBranch(project: Project,
   return localMatch ?: remoteMatch
 }
 
+internal fun getLocalAndRemoteTopLevelNodes(localBranchesTree: LazyBranchesSubtreeHolder,
+                                            remoteBranchesTree: LazyBranchesSubtreeHolder): List<Any> {
+  return listOfNotNull(
+    if (!localBranchesTree.isEmpty()) GitBranchType.LOCAL else null,
+    if (!remoteBranchesTree.isEmpty()) GitBranchType.REMOTE else null
+  )
+}
+
 internal class LazyBranchesSubtreeHolder(
   unsortedBranches: Collection<GitBranch>,
   repositories: List<GitRepository>,
@@ -151,9 +159,11 @@ internal class LazyBranchesSubtreeHolder(
   private val isPrefixGrouping: () -> Boolean,
 ) {
 
+  private val initiallyEmpty = unsortedBranches.isEmpty()
+
   val branches by lazy { unsortedBranches.sortedWith(getBranchComparator(repositories, isPrefixGrouping)) }
 
-  fun isEmpty() = matchingResult.first.isEmpty()
+  fun isEmpty() = initiallyEmpty || matchingResult.first.isEmpty()
 
   private val matchingResult: MatchResult by lazy {
     match(branches)
