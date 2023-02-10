@@ -12617,6 +12617,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         public void testSimple() throws Exception {
             runTest("testData/quickfix/reorderParameters/simple.kt");
         }
+
+        @TestMetadata("withUnchangedParameter.kt")
+        public void testWithUnchangedParameter() throws Exception {
+            runTest("testData/quickfix/reorderParameters/withUnchangedParameter.kt");
+        }
+
+        @TestMetadata("withUnchangedParameter2.kt")
+        public void testWithUnchangedParameter2() throws Exception {
+            runTest("testData/quickfix/reorderParameters/withUnchangedParameter2.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
