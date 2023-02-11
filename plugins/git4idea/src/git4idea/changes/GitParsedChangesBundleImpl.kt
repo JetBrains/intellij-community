@@ -28,9 +28,9 @@ class GitParsedChangesBundleImpl(private val project: Project,
   override val changesByCommits = mutableMapOf<String, Collection<Change>>()
   override val linearHistory: Boolean
 
-  private val _diffDataByChange: MutableMap<Change, GitChangeDiffData> =
+  private val _diffDataByChange: MutableMap<Change, GitTextFilePatchWithHistory> =
     CollectionFactory.createCustomHashingStrategyMap(GitParsedChangesBundle.REVISION_COMPARISON_HASHING_STRATEGY)
-  override val diffDataByChange: Map<Change, GitChangeDiffData> = Collections.unmodifiableMap(_diffDataByChange)
+  override val patchesByChange: Map<Change, GitTextFilePatchWithHistory> = Collections.unmodifiableMap(_diffDataByChange)
 
   init {
     val commitsHashes = commits.mapTo(mutableSetOf()) { it.sha }
@@ -77,7 +77,7 @@ class GitParsedChangesBundleImpl(private val project: Project,
 
           patch.beforeVersionId = previousCommitSha
           patch.afterVersionId = commitSha
-          _diffDataByChange[change] = GitChangeDiffData.Commit(patch, fileHistory)
+          _diffDataByChange[change] = GitTextFilePatchWithHistory.Commit(patch, fileHistory)
         }
       }
       changesByCommits[commitWithPatches.sha] = commitChanges
@@ -102,7 +102,7 @@ class GitParsedChangesBundleImpl(private val project: Project,
         patch.beforeVersionId = baseRef
         patch.afterVersionId = headSha
 
-        _diffDataByChange[change] = GitChangeDiffData.Cumulative(patch, fileHistory)
+        _diffDataByChange[change] = GitTextFilePatchWithHistory.Cumulative(patch, fileHistory)
       }
     }
   }
@@ -123,7 +123,7 @@ class GitParsedChangesBundleImpl(private val project: Project,
       if (patch is TextFilePatch) {
         patch.beforeVersionId = baseRef
         patch.afterVersionId = headSha
-        _diffDataByChange[change] = GitChangeDiffData.Cumulative(patch, SinglePatchGitFileHistory(patch))
+        _diffDataByChange[change] = GitTextFilePatchWithHistory.Cumulative(patch, SinglePatchGitFileHistory(patch))
       }
     }
   }

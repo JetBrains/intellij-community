@@ -160,7 +160,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
         tree.selectFile(VcsUtil.getFilePath(filePath, false))
       }
       else {
-        val change = changesProviderModel.value.diffDataByChange.findCumulativeChange(oid, filePath)
+        val change = changesProviderModel.value.patchesByChange.findCumulativeChange(oid, filePath)
         if (change == null) {
           tree.selectFile(VcsUtil.getFilePath(filePath, false))
         }

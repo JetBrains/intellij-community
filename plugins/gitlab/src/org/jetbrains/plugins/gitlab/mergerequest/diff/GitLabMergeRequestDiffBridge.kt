@@ -94,7 +94,7 @@ class GitLabMergeRequestDiffBridgeImpl(private val project: Project,
 
     VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
 
-    val diffComputer = parsedChanges.diffDataByChange[change]?.getDiffComputer()
+    val diffComputer = parsedChanges.patchesByChange[change]?.getDiffComputer()
     if (diffComputer != null) {
       requestDataKeys[DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER] = diffComputer
     }

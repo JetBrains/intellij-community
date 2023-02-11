@@ -11,7 +11,7 @@ import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import git4idea.changes.GitChangeDiffData
+import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.filePath
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
@@ -38,7 +38,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
                                 private val detailsDataProvider: GHPRDetailsDataProvider,
                                 private val avatarIconsProvider: GHAvatarIconsProvider,
                                 private val repositoryDataService: GHPRRepositoryDataService,
-                                private val diffData: GitChangeDiffData,
+                                private val diffData: GitTextFilePatchWithHistory,
                                 private val ghostUser: GHUser,
                                 private val currentUser: GHUser)
   : GHPRDiffReviewSupport {
@@ -86,7 +86,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
                                                                       createCommentParametersHelper, suggestedChangesHelper,
                                                                       ghostUser,
                                                                       currentUser)
-    val cumulative = diffData is GitChangeDiffData.Cumulative
+    val cumulative = diffData is GitTextFilePatchWithHistory.Cumulative
     when (viewer) {
       is SimpleOnesideDiffViewer ->
         GHPRSimpleOnesideDiffViewerReviewThreadsHandler(reviewProcessModel, diffRangesModel, reviewThreadsModel, viewer, componentsFactory,
@@ -154,10 +154,10 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
     if (!diffData.contains(originalCommitSha, thread.path)) return null
 
     val location = when (diffData) {
-      is GitChangeDiffData.Cumulative -> {
+      is GitTextFilePatchWithHistory.Cumulative -> {
         DiffLineLocation(thread.side, thread.line - 1)
       }
-      is GitChangeDiffData.Commit -> {
+      is GitTextFilePatchWithHistory.Commit -> {
         diffData.mapPosition(originalCommitSha, thread.side, thread.originalLine - 1) ?: return null
       }
     }
