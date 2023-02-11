@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.AppTopics;
@@ -61,6 +61,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
+import com.intellij.xdebugger.impl.settings.ShowBreakpointsOverLineNumbersAction;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
@@ -432,7 +433,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
     @Override
     public void mouseMoved(@NotNull EditorMouseEvent e) {
-      if (!ExperimentalUI.isNewUI()) return;
+      if (!ExperimentalUI.isNewUI() || !ShowBreakpointsOverLineNumbersAction.isSelected()) return;
       Editor editor = e.getEditor();
       if (editor.getProject() != myProject || editor.getEditorKind() != EditorKind.MAIN_EDITOR) return;
       EditorGutter editorGutter = editor.getGutter();
@@ -489,7 +490,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
     boolean isEnabled(@NotNull EditorMouseEvent e) {
       Editor editor = e.getEditor();
-      if (ExperimentalUI.isNewUI()) {
+      if (ExperimentalUI.isNewUI() && ShowBreakpointsOverLineNumbersAction.isSelected()) {
         //todo[kb] make it possible to do run to cursor by clicking on the gutter
         return false;
       }
