@@ -50,6 +50,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
   private boolean myEscapePressed = false;
   private String myCommandHistoryFilePath;
+  private List<String> myShellCommand;
   private final Prompt myPrompt = new Prompt();
   private final Queue<String> myPendingCommandsToExecute = new LinkedList<>();
   private final TtyConnectorAccessor myTtyConnectorAccessor = new TtyConnectorAccessor();
@@ -149,6 +150,14 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   @Nullable
   public static String getCommandHistoryFilePath(@Nullable JBTerminalWidget terminalWidget) {
     return terminalWidget instanceof ShellTerminalWidget ? ((ShellTerminalWidget)terminalWidget).myCommandHistoryFilePath : null;
+  }
+
+  public void setShellCommand(@Nullable List<String> shellCommand) {
+    myShellCommand = shellCommand != null ? List.copyOf(shellCommand) : null;
+  }
+
+  public @Nullable List<String> getShellCommand() {
+    return myShellCommand;
   }
 
   @NotNull

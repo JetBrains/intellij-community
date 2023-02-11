@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -30,6 +31,7 @@ import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
 import com.pty4j.PtyProcessBuilder;
 import com.pty4j.unix.UnixPtyProcess;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
@@ -63,6 +65,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final String FISH_NAME = "fish";
 
   protected final Charset myDefaultCharset;
+  private final ThreadLocal<ShellStartupOptions> myStartupOptionsThreadLocal = new ThreadLocal<>();
 
   public LocalTerminalDirectRunner(Project project) {
     super(project);
@@ -170,7 +173,15 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     String workingDir = getWorkingDirectory(options.getWorkingDirectory());
     Map<String, String> envs = getTerminalEnvironment(workingDir);
 
-    String[] command = ArrayUtil.toStringArray(getInitialCommand(envs));
+    List<String> initialCommand = doGetInitialCommand(options, envs);
+    ShellTerminalWidget widget = getShellTerminalWidget(options);
+    if (widget != null) {
+      widget.setShellCommand(initialCommand);
+    }
+    if (enableShellIntegration()) {
+      initialCommand = injectShellIntegration(initialCommand, envs);
+    }
+    String[] command = ArrayUtil.toStringArray(initialCommand);
 
     for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
       try {
@@ -203,6 +214,41 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     catch (IOException e) {
       throw new ExecutionException("Failed to start " + stringifyProcessInfo(command, workingDir, initialTermSize, envs, false), e);
     }
+  }
+
+  private static @Nullable ShellTerminalWidget getShellTerminalWidget(@NotNull ShellStartupOptions options) {
+    TerminalWidget widget = options.getWidget();
+    return widget != null ? ShellTerminalWidget.asShellJediTermWidget(widget) : null;
+  }
+
+  protected boolean enableShellIntegration() {
+    return TerminalOptionsProvider.getInstance().getShellIntegration();
+  }
+
+  private @NotNull List<String> doGetInitialCommand(@NotNull ShellStartupOptions options, @NotNull Map<String, String> envs) {
+    try {
+      myStartupOptionsThreadLocal.set(options);
+      return getInitialCommand(envs);
+    }
+    finally {
+      myStartupOptionsThreadLocal.remove();
+    }
+  }
+
+  static @NotNull List<String> convertShellPathToCommand(@NotNull String shellPath) {
+    List<String> shellCommand = ParametersListUtil.parse(shellPath, false, !SystemInfo.isWindows);
+    String shellExe = ContainerUtil.getFirstItem(shellCommand);
+    if (shellExe == null) return shellCommand;
+    String shellName = PathUtil.getFileName(shellExe);
+    if (!containsLoginOrInteractiveOption(shellCommand)) {
+      if (isLoginOptionAvailable(shellName) && SystemInfo.isMac) {
+        shellCommand.add(LOGIN_CLI_OPTION);
+      }
+      if (isInteractiveOptionAvailable(shellName)) {
+        shellCommand.add(INTERACTIVE_CLI_OPTION);
+      }
+    }
+    return shellCommand;
   }
 
   private static @NotNull String stringifyProcessInfo(String @NotNull[] command,
@@ -310,41 +356,41 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
    *         {@link LocalTerminalCustomizer#customizeCommandAndEnvironment} to it.
    */
   public @NotNull List<String> getInitialCommand(@NotNull Map<String, String> envs) {
-    String shellPath = getShellPath();
-    return getCommand(shellPath, envs, TerminalOptionsProvider.getInstance().getShellIntegration());
+    ShellStartupOptions startupOptions = myStartupOptionsThreadLocal.get();
+    List<String> shellCommand = startupOptions != null ? startupOptions.getShellCommand() : null;
+    return shellCommand != null ? shellCommand : convertShellPathToCommand(getShellPath());
   }
 
   private @NotNull String getShellPath() {
     return TerminalProjectOptionsProvider.getInstance(myProject).getShellPath();
   }
 
+  /** @deprecated to be removed */
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public static @NotNull List<String> getCommand(@NotNull String shellPath,
                                                  @NotNull Map<String, String> envs,
                                                  boolean shellIntegration) {
-    if (SystemInfo.isWindows) {
-      return ParametersListUtil.parse(shellPath, false, false);
-    }
-    List<String> command = ParametersListUtil.parse(shellPath, false, true);
-    String shellCommand = ContainerUtil.getFirstItem(command);
-    if (shellCommand == null) {
-      return command;
-    }
-    command.remove(0);
-    String shellName = PathUtil.getFileName(shellCommand);
+    List<String> command = convertShellPathToCommand(shellPath);
+    return shellIntegration ? injectShellIntegration(command, envs) : command;
+  }
 
-    if (!containsLoginOrInteractiveOption(command)) {
-      if (isLoginOptionAvailable(shellName) && SystemInfo.isMac) {
-        command.add(LOGIN_CLI_OPTION);
-      }
-      if (isInteractiveOptionAvailable(shellName)) {
-        command.add(INTERACTIVE_CLI_OPTION);
-      }
-    }
+  static @NotNull List<String> injectShellIntegration(@NotNull List<String> shellCommand,
+                                                      @NotNull Map<String, String> envs) {
+    String shellExe = ContainerUtil.getFirstItem(shellCommand);
+    if (shellExe == null) return shellCommand;
+    return injectShellIntegration(shellExe, shellCommand.subList(1, shellCommand.size()), envs);
+  }
 
+  private static @NotNull List<String> injectShellIntegration(@NotNull String shellExe,
+                                                              @NotNull List<String> command,
+                                                              @NotNull Map<String, String> envs) {
     List<String> result = new ArrayList<>();
-    result.add(shellCommand);
+    result.add(shellExe);
+    command = new ArrayList<>(command);
 
-    String rcFilePath = shellIntegration ? findRCFile(shellName) : null;
+    String shellName = PathUtil.getFileName(shellExe);
+    String rcFilePath = findRCFile(shellName);
     if (rcFilePath != null) {
       if (shellName.equals(BASH_NAME) || (SystemInfo.isMac && shellName.equals(SH_NAME))) {
         addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");

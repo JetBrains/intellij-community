@@ -310,7 +310,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (myProject.isDisposed()) return;
       try {
-        T process = createProcess(startupOptions.builder().initialTermSize(termSize).build());
+        T process = createProcess(startupOptions.builder().initialTermSize(termSize).widget(terminalWidget).build());
         TtyConnector connector = createTtyConnector(process);
 
         ApplicationManager.getApplication().invokeLater(() -> {

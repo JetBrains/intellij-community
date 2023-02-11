@@ -281,7 +281,10 @@ public final class TerminalToolWindowManager implements Disposable {
     TerminalWidget widget = terminalWidget;
     if (widget == null) {
       String currentWorkingDir = terminalRunner.getCurrentWorkingDir(tabState);
-      ShellStartupOptions startupOptions = new ShellStartupOptions.Builder().workingDirectory(currentWorkingDir).build();
+      ShellStartupOptions startupOptions = new ShellStartupOptions.Builder()
+        .workingDirectory(currentWorkingDir)
+        .shellCommand(tabState != null ? tabState.myShellCommand : null)
+        .build();
       widget = terminalRunner.startShellTerminalWidget(content, startupOptions, deferSessionStartUntilUiShown);
       //TerminalArrangementManager.getInstance(myProject).assignCommandHistoryFile(terminalWidget, tabState);
       TerminalWorkingDirectoryManager.setInitialWorkingDirectory(content, currentWorkingDir);
