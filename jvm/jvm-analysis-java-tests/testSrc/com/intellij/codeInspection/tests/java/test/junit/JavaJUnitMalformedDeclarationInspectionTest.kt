@@ -417,7 +417,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
     """.trimIndent())
   }
   fun `test malformed parameterized add test instance quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.JAVA, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
       import org.junit.jupiter.params.provider.Arguments;
       import org.junit.jupiter.params.provider.MethodSource;
@@ -447,10 +447,10 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @ParameterizedTest
         void foo(String param) { }
       }
-    """.trimIndent(), "Annotate class 'Test' as '@TestInstance'", true)
+    """.trimIndent(), "Annotate class 'Test' as '@TestInstance'")
   }
   fun `test malformed parameterized introduce method source quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.JAVA, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
       import org.junit.jupiter.params.provider.MethodSource;
       
@@ -475,7 +475,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @ParameterizedTest
         void foo(String param) { }
       }
-    """.trimIndent(), "Create method 'parameters' in 'Test'", true)
+    """.trimIndent(), "Create method 'parameters' in 'Test'")
   }
   fun `test malformed parameterized create csv source quickfix`() {
     val file = myFixture.addFileToProject("CsvFile.java", """
@@ -592,7 +592,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
     """.trimIndent())
   }
   fun `test malformed before change signature quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.JAVA, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
       class MainTest {
         @org.junit.Before
         String bef<caret>ore(int i) { return ""; }
@@ -602,10 +602,10 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.Before
         public void before() { return ""; }
       }
-    """.trimIndent(), "Fix 'before' method signature", true)
+    """.trimIndent(), "Fix 'before' method signature")
   }
   fun `test malformed before remove private quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.JAVA, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
       class MainTest {
         @org.junit.jupiter.api.BeforeEach
         private void bef<caret>oreEach() { }
@@ -615,7 +615,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.jupiter.api.BeforeEach
         public void beforeEach() { }
       }
-    """.trimIndent(), "Fix 'beforeEach' method signature", true)
+    """.trimIndent(), "Fix 'beforeEach' method signature")
   }
   fun `test malformed before class no highlighting`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -661,7 +661,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
     """.trimIndent())
   }
   fun `test malformed before all quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.JAVA, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
       class MainTest {
         @org.junit.jupiter.api.BeforeAll
         String before<caret>All(int i) { return ""; }
@@ -671,7 +671,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.jupiter.api.BeforeAll
         static void beforeAll() { return ""; }
       }
-    """.trimIndent(), "Fix 'beforeAll' method signature", true)
+    """.trimIndent(), "Fix 'beforeAll' method signature")
   }
 
   /* Malformed Datapoint(s) */
@@ -718,7 +718,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
     """.trimIndent())
   }
   fun `test malformed dataPoint quickfix make method public and static`() {
-    myFixture.testQuickFix(JvmLanguage.JAVA, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
       class Test {
         @org.junit.experimental.theories.DataPoint Object f<caret>1() { return null; }
       }
@@ -727,7 +727,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.experimental.theories.DataPoint
         public static Object f1() { return null; }
       }
-    """.trimIndent(), "Fix 'f1' method signature", true)
+    """.trimIndent(), "Fix 'f1' method signature")
   }
 
   /* Malformed setup/teardown */
@@ -747,7 +747,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
     """.trimIndent(), "C")
   }
   fun `test malformed setup quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.JAVA, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
       class C extends junit.framework.TestCase {
         private void set<caret>Up(int i) { }
       }  
@@ -755,7 +755,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       class C extends junit.framework.TestCase {
         public void setUp() { }
       }  
-    """.trimIndent(), "Fix 'setUp' method signature", true)
+    """.trimIndent(), "Fix 'setUp' method signature")
   }
 
   /* Malformed rule */
@@ -833,7 +833,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
     """.trimIndent())
   }
   fun `test malformed rule make field public quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.JAVA, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
       class RuleQfTest {
         @org.junit.Rule
         private int x<caret>;
@@ -843,10 +843,10 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.Rule
         public int x;
       }
-    """.trimIndent(), "Fix 'x' field signature", true)
+    """.trimIndent(), "Fix 'x' field signature")
   }
   fun `test malformed rule make field non-static quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.JAVA, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
       class RuleQfTest {
         @org.junit.Rule
         public static int y<caret>() { return 0; }
@@ -856,10 +856,10 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.Rule
         public int y() { return 0; }
       }
-    """.trimIndent(), "Fix 'y' method signature", true)
+    """.trimIndent(), "Fix 'y' method signature")
   }
   fun `test malformed class rule make field public quickfix`() {
-    myFixture.testQuickFix(JvmLanguage.JAVA, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
       class SomeTestRule implements org.junit.rules.TestRule {
         @org.jetbrains.annotations.NotNull
         @Override
@@ -887,7 +887,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.ClassRule
         public static SomeTestRule x = new SomeTestRule();
       }
-    """.trimIndent(), "Fix 'x' field signature", true)
+    """.trimIndent(), "Fix 'x' field signature")
   }
   fun `test malformed class rule make field static quickfix`() {
     myFixture.testQuickFix(JvmLanguage.JAVA, """

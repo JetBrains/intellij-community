@@ -65,7 +65,7 @@ abstract class JvmInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
   }
 
   /**
-   * Run the [hint] quickfix on [before] at the cursor position marked with <caret> and compares it with [after].
+   * Run the [hint] quickfix on [before] at the cursor position marked with <caret> and compares the result with [after].
    */
   protected fun JavaCodeInsightTestFixture.testQuickFix(
     lang: JvmLanguage,
@@ -74,11 +74,27 @@ abstract class JvmInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     hint: String = InspectionsBundle.message(
       "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
     ),
-    testPreview: Boolean = false,
     fileName: String = generateFileName(),
   ) {
     configureByText("$fileName${lang.ext}", before)
-    if (testPreview) testPreview(lang, before, after, hint, fileName)
+    runQuickFix(hint)
+    checkResult(after)
+  }
+
+  /**
+   * Run the [hint] quickfix on [before] at the cursor position marked with <caret> and compares the result and the preview with [after].
+   */
+  protected fun JavaCodeInsightTestFixture.testQuickFixWithPreview(
+    lang: JvmLanguage,
+    before: String,
+    after: String,
+    hint: String = InspectionsBundle.message(
+      "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
+    ),
+    fileName: String = generateFileName(),
+  ) {
+    configureByText("$fileName${lang.ext}", before)
+    testPreview(lang, before, after, hint, fileName)
     runQuickFix(hint)
     checkResult(after)
   }
