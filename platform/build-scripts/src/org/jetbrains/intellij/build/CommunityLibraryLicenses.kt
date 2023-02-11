@@ -561,9 +561,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "kotlinx.html", libraryName = "kotlinx-html-jvm",
                    url = "https://github.com/Kotlin/kotlinx.html")
       .apache("https://github.com/Kotlin/kotlinx.html/blob/master/LICENSE"),
-    LibraryLicense(name = "Kryo", libraryName = "Kryo",
-                   url = "https://github.com/EsotericSoftware/kryo")
-      .newBsd("https://github.com/EsotericSoftware/kryo/blob/master/LICENSE.md"),
     LibraryLicense(name = "Kryo5", libraryName = "Kryo5",
                    url = "https://github.com/EsotericSoftware/kryo")
       .newBsd("https://github.com/EsotericSoftware/kryo/blob/master/LICENSE.md"),
@@ -632,8 +629,6 @@ object CommunityLibraryLicenses {
                    licenseUrl = "https://microba.sourceforge.net/license.txt").newBsd(),
     LibraryLicense(name = "MigLayout", libraryName = "miglayout-swing",
                    url = "https://www.miglayout.com/", licenseUrl = "https://www.miglayout.com/mavensite/license.html").newBsd(),
-    LibraryLicense(name = "minlog", libraryName = "Kryo", transitiveDependency = true, version = "1.2",
-                   url = "https://github.com/EsotericSoftware/minlog").newBsd(),
     LibraryLicense(name = "morfologik-fsa", libraryName = "org.carrot2:morfologik-fsa",
                    url = "https://github.com/morfologik/morfologik-stemming").simplifiedBsd(),
     LibraryLicense(name = "morfologik-fsa-builders", libraryName = "org.carrot2:morfologik-fsa-builders",
