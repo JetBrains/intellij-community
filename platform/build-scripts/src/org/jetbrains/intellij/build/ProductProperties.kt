@@ -6,6 +6,7 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
@@ -45,6 +46,9 @@ abstract class ProductProperties {
    * Name of the module containing ${platformPrefix}ApplicationInfo.xml product descriptor in 'idea' package.
    */
   lateinit var applicationInfoModule: String
+
+  @Internal
+  var productPluginSourceModuleName: String? = null
 
   /**
    * Enables fast activation of a running IDE instance from the launcher
@@ -129,16 +133,7 @@ abstract class ProductProperties {
   /**
    * If `true`, the product's main JAR file will be scrambled using [ProprietaryBuildTools.scrambleTool].
    */
-  var scrambleMainJar = false
-
-  @ApiStatus.Experimental
-  var useProductJar = true
-
-  /**
-   * If `false`, names of private fields won't be scrambled (to avoid problems with serialization).
-   * This field is ignored if [scrambleMainJar] is `false`.
-   */
-  var scramblePrivateFields = true
+  var scrambleMainJar: Boolean = false
 
   /**
    * Path to an alternative scramble script which will should be used for a product.
@@ -148,7 +143,7 @@ abstract class ProductProperties {
   /**
    * Describes which modules should be included in the product's platform and which plugins should be bundled with the product.
    */
-  val productLayout = ProductModulesLayout()
+  val productLayout: ProductModulesLayout = ProductModulesLayout()
 
   /**
    * If `true`, a cross-platform ZIP archive containing binaries for all OSes will be built.
@@ -156,7 +151,7 @@ abstract class ProductProperties {
    * (override [getCrossPlatformZipFileName] to change the file name).
    * Cross-platform distribution is required for [plugins development](https://github.com/JetBrains/gradle-intellij-plugin).
    */
-  var buildCrossPlatformDistribution = false
+  var buildCrossPlatformDistribution: Boolean = false
 
   /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.
@@ -212,7 +207,7 @@ abstract class ProductProperties {
    * If `true`, a .zip archive containing sources of modules included in the product will be produced.
    * See also [includeIntoSourcesArchiveFilter].
    */
-  var buildSourcesArchive = false
+  var buildSourcesArchive: Boolean = false
 
   /**
    * Determines sources of which modules should be included in the source archive when [buildSourcesArchive] is `true`.
@@ -222,7 +217,7 @@ abstract class ProductProperties {
   /**
    * Specifies how Maven artifacts for IDE modules should be generated; by default, no artifacts are generated.
    */
-  val mavenArtifacts = MavenArtifactsProperties()
+  val mavenArtifacts: MavenArtifactsProperties = MavenArtifactsProperties()
 
   /**
    * Specified additional modules (not included into the product layout) which need to be compiled when product is built.
@@ -273,8 +268,7 @@ abstract class ProductProperties {
    * If `true`, a distribution contains libraries and launcher script for running IDE in Remote Development mode.
    */
   @ApiStatus.Internal
-  open fun addRemoteDevelopmentLibraries(): Boolean =
-    productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
+  open fun addRemoteDevelopmentLibraries(): Boolean = productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
 
   /**
    * Build steps which are always skipped for this product.

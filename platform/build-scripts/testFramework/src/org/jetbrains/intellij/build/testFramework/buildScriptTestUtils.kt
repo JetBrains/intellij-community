@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("LiftReturnOrAssignment")
+
 package org.jetbrains.intellij.build.testFramework
 
 import com.intellij.diagnostic.telemetry.useWithScope2
@@ -203,7 +205,7 @@ private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMe
   }
 }
 
-private suspend fun asSingleTraceFile(traceSpanName: String, build: suspend () -> Unit) {
+private inline fun asSingleTraceFile(traceSpanName: String, build: () -> Unit) {
   val traceFile = TestLoggerFactory.getTestLogDir().resolve("$traceSpanName-trace.json")
   TracerProviderManager.setOutput(traceFile)
   try {

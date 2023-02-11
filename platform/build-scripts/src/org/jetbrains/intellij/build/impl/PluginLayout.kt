@@ -21,7 +21,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.function.BiConsumer
-import java.util.function.BiPredicate
 import java.util.function.UnaryOperator
 
 typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
@@ -29,14 +28,10 @@ typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
 /**
  * Describes layout of a plugin in the product distribution
  */
-class PluginLayout private constructor(
-  val mainModule: String,
-  mainJarNameWithoutExtension: String,
-) : BaseLayout() {
-
+class PluginLayout private constructor(val mainModule: String, mainJarNameWithoutExtension: String) : BaseLayout() {
   constructor(mainModule: String) : this(
-    mainModule,
-    convertModuleNameToFileName(mainModule),
+    mainModule = mainModule,
+    mainJarNameWithoutExtension = convertModuleNameToFileName(mainModule),
   )
 
   private var mainJarName = "$mainJarNameWithoutExtension.jar"
@@ -52,24 +47,30 @@ class PluginLayout private constructor(
   var directoryNameSetExplicitly: Boolean = false
   var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
     internal set
+
   var pathsToScramble: PersistentList<String> = persistentListOf()
-  val scrambleClasspathPlugins: MutableList<Pair<String /*plugin name*/, String /*relative path*/>> = mutableListOf()
-  var scrambleClasspathFilter: BiPredicate<BuildContext, Path> = BiPredicate { _, _ -> true }
+    private set
+
+  var scrambleClasspathPlugins: PersistentList<Pair<String /*plugin name*/, String /*relative path*/>> = persistentListOf()
+    private set
+
+  var scrambleClasspathFilter: (BuildContext, Path) -> Boolean = { _, _ -> true }
 
   /**
    * See {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#zkmScriptStub}
    */
   var zkmScriptStub: String? = null
-  var pluginCompatibilityExactVersion = false
-  var retainProductDescriptorForBundledPlugin = false
-  var enableSymlinksAndExecutableResources = false
+  var pluginCompatibilityExactVersion: Boolean = false
+  var retainProductDescriptorForBundledPlugin: Boolean = false
+  var enableSymlinksAndExecutableResources: Boolean = false
 
   internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
     private set
 
   internal var patchers: PersistentList<suspend (ModuleOutputPatcher, BuildContext) -> Unit> = persistentListOf()
+    private set
 
-  fun getMainJarName() = mainJarName
+  fun getMainJarName(): String = mainJarName
 
   companion object {
     /**
@@ -82,7 +83,7 @@ class PluginLayout private constructor(
      * [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules],
      * [org.jetbrains.intellij.build.ProductModulesLayout.pluginModulesToPublish] list.
      *
-     * <p>Note that project-level libraries on which the plugin modules depend, are automatically put to 'IDE_HOME/lib' directory for all IDEs
+     * <p>Note that project-level libraries on which the plugin modules depend are automatically put to 'IDE_HOME/lib' directory for all IDEs
      * which are compatible with the plugin. If this isn't desired (e.g. a library is used in a single plugin only, or if plugins where
      * a library is used aren't bundled with IDEs, so we don't want to increase the size of the distribution, you may invoke {@link PluginLayoutSpec#withProjectLibrary}
      * to include such a library to the plugin distribution.</p>
@@ -107,7 +108,7 @@ class PluginLayout private constructor(
     @JvmStatic
     fun plugin(moduleNames: List<String>, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first())
-      moduleNames.forEach(layout::withModule)
+      layout.withModules(moduleNames)
       body(SimplePluginLayoutSpec(layout))
       return layout
     }
@@ -115,7 +116,7 @@ class PluginLayout private constructor(
     @JvmStatic
     fun plugin(moduleNames: List<String>): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first())
-      moduleNames.forEach(layout::withModule)
+      layout.withModules(moduleNames)
       return layout
     }
 
@@ -132,7 +133,7 @@ class PluginLayout private constructor(
   override fun withModule(moduleName: String) {
     if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
       // must be in a separate JAR
-      super.withModule(moduleName)
+      withModule(moduleName, "${convertModuleNameToFileName(moduleName)}.jar")
     }
     else {
       withModule(moduleName, mainJarName)
@@ -359,16 +360,15 @@ class PluginLayout private constructor(
      * @param pluginName - a name of dependent plugin, whose jars should be added to scramble classpath
      * @param relativePath - a directory where jars should be searched (relative to plugin home directory, "lib" by default)
      */
-    @JvmOverloads
     fun scrambleClasspathPlugin(pluginName: String, relativePath: String = "lib") {
-      layout.scrambleClasspathPlugins.add(Pair(pluginName, relativePath))
+      layout.scrambleClasspathPlugins = layout.scrambleClasspathPlugins.add(Pair(pluginName, relativePath))
     }
 
     /**
      * Allows control over classpath entries that will be used by the scrambler to resolve references from jars being scrambled.
      * By default, all platform jars are added to the 'scramble classpath'
      */
-    fun filterScrambleClasspath(filter: BiPredicate<BuildContext, Path>) {
+    fun filterScrambleClasspath(filter: (BuildContext, Path) -> Boolean) {
       layout.scrambleClasspathFilter = filter
     }
 
@@ -380,10 +380,11 @@ class PluginLayout private constructor(
       withPatch { patcher, context ->
         val discoveredServiceFiles = LinkedHashMap<String, LinkedHashSet<Pair<String, Path>>>()
 
-        for (moduleName in layout.jarToModules.get(layout.mainJarName)!!) {
+        for (moduleName in layout.includedModules.asSequence().filter { it.relativeOutputFile ==  layout.mainJarName }.map { it.moduleName }.distinct()) {
           val path = context.findFileInModuleSources(moduleName, "META-INF/services") ?: continue
-          Files.list(path).use { stream ->
-            stream
+          Files.newDirectoryStream(path).use { dirStream ->
+            dirStream
+              .asSequence()
               .filter { Files.isRegularFile(it) }
               .forEach { serviceFile ->
                 discoveredServiceFiles.computeIfAbsent(serviceFile.fileName.toString()) { LinkedHashSet() }
@@ -421,3 +422,5 @@ class PluginLayout private constructor(
     fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String
   }
 }
+
+private fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')

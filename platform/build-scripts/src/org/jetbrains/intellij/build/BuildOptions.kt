@@ -288,7 +288,11 @@ class BuildOptions {
   var printEnvironmentInfo = SystemProperties.getBooleanProperty("intellij.print.environment", false)
 
   @Internal
-  var printFreeSpace = true
+  @JvmField
+  var printFreeSpace: Boolean = true
+  @Internal
+  @JvmField
+  var validateImplicitPlatformModule: Boolean = true
 
   /**
    * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be

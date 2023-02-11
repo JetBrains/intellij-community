@@ -34,11 +34,9 @@ private val sourceToNames: Map<String, MutableList<String>> by lazy {
   val sourceToNames = LinkedHashMap<String, MutableList<String>>()
   getClassLoadingLog().bufferedReader().forEachLine {
     val data = it.split(':', limit = 2)
-    val sourcePath = data[1]
-    // main jar is scrambled - doesn't make sense to reorder it
-    if (sourcePath != "lib/idea.jar") {
-      sourceToNames.computeIfAbsent(sourcePath) { mutableListOf() }.add(data[0])
-    }
+    val sourcePath = data.get(1)
+    // the main jar is scrambled - doesn't make sense to reorder it
+    sourceToNames.computeIfAbsent(sourcePath) { mutableListOf() }.add(data.get(0))
   }
   sourceToNames
 }
@@ -53,28 +51,18 @@ fun reorderJar(relativePath: String, file: Path) {
     }
 }
 
-fun generateClasspath(homeDir: Path, mainJarName: String, antTargetFile: Path?): PersistentList<String> {
+fun generateClasspath(homeDir: Path, antTargetFile: Path?): PersistentList<String> {
   val libDir = homeDir.resolve("lib")
   val appFile = libDir.resolve("app.jar")
 
   tracer.spanBuilder("generate app.jar")
     .setAttribute("dir", homeDir.toString())
-    .setAttribute("mainJarName", mainJarName)
     .use {
       transformFile(appFile) { target ->
         writeNewZip(target) { zipCreator ->
           val packageIndexBuilder = PackageIndexBuilder()
           copyZipRaw(appFile, packageIndexBuilder, zipCreator) { entryName ->
             entryName != "module-info.class"
-          }
-
-          val mainJar = libDir.resolve(mainJarName)
-          if (Files.exists(mainJar)) {
-            // no such file in community (no closed sources)
-            copyZipRaw(mainJar, packageIndexBuilder, zipCreator) { entryName ->
-              entryName != "module-info.class"
-            }
-            Files.delete(mainJar)
           }
 
           // packing to product.jar maybe disabled
@@ -105,7 +93,6 @@ fun generateClasspath(homeDir: Path, mainJarName: String, antTargetFile: Path?):
       val sourceToNames = readClassLoadingLog(
         classLoadingLog = PackageIndexBuilder::class.java.classLoader.getResourceAsStream("$classifier/class-report.txt")!!,
         rootDir = homeDir,
-        mainJarName = mainJarName
       )
       val files = computeAppClassPath(sourceToNames, libDir)
       if (antTargetFile != null) {
@@ -137,14 +124,11 @@ private inline fun addJarsFromDir(dir: Path, consumer: (Sequence<Path>) -> Unit)
   }
 }
 
-internal fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path, mainJarName: String): Map<Path, List<String>> {
+internal fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path): Map<Path, List<String>> {
   val sourceToNames = LinkedHashMap<Path, MutableList<String>>()
   classLoadingLog.bufferedReader().forEachLine {
     val data = it.split(':', limit = 2)
-    var sourcePath = data[1]
-    if (sourcePath == "lib/idea.jar") {
-      sourcePath = "lib/$mainJarName"
-    }
+    val sourcePath = data[1]
     sourceToNames.computeIfAbsent(rootDir.resolve(sourcePath)) { mutableListOf() }.add(data[0])
   }
   return sourceToNames
@@ -171,7 +155,7 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
     readZipEntries(sourceBuffer, fileSize) { name, entry ->
       entries.add(EntryData(name, entry))
     }
-    // ignore existing package index on reorder - a new one will be computed even if it is the same, do not optimize for simplicity
+    // ignore the existing package index on reorder - a new one will be computed even if it is the same, do not optimize for simplicity
     entries.sortWith(Comparator { o1, o2 ->
       val o2p = o2.name
       if ("META-INF/plugin.xml" == o2p) {

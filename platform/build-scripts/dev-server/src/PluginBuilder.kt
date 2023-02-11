@@ -123,7 +123,7 @@ internal class PluginBuilder(private val outDir: Path,
 
       if (mainModule != "intellij.platform.builtInHelp") {
         checkOutputOfPluginModules(mainPluginModule = mainModule,
-                                   jarToModules = plugin.layout.jarToModules,
+                                   includedModules = plugin.layout.includedModules,
                                    moduleExcludes = plugin.layout.moduleExcludes,
                                    context = context)
       }
@@ -139,7 +139,7 @@ internal class PluginBuilder(private val outDir: Path,
         layoutDistribution(layout = plugin.layout,
                            targetDirectory = plugin.dir,
                            moduleOutputPatcher = moduleOutputPatcher,
-                           jarToModule = plugin.layout.jarToModules,
+                           includedModules = plugin.layout.includedModules,
                            context = context)
         withContext(Dispatchers.IO) {
           plugin.markAsBuilt(outDir)

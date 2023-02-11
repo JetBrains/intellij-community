@@ -19,8 +19,6 @@ import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.LibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.jps.model.artifact.JpsArtifactService
-import org.jetbrains.jps.model.library.JpsOrderRootType
-import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.xxh3.Xx3UnencodedString
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -77,7 +75,7 @@ internal class IdeBuilder(internal val pluginBuilder: PluginBuilder,
 internal suspend fun buildProduct(productConfiguration: ProductConfiguration, request: BuildRequest, isServerMode: Boolean): IdeBuilder {
   val runDir = withContext(Dispatchers.IO) {
     var rootDir = request.homePath.resolve("out/dev-run")
-    // if symlinked to ram disk, use real path for performance reasons and avoid any issues in ant/other code
+    // if symlinked to ram disk, use a real path for performance reasons and avoid any issues in ant/other code
     if (Files.exists(rootDir)) {
       // toRealPath must be called only on existing file
       rootDir = rootDir.toRealPath()
@@ -85,7 +83,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
 
     val classifier = if (request.isIdeProfileAware) computeAdditionalModulesFingerprint(request.additionalModules) else ""
     val runDir = rootDir.resolve((if (request.platformPrefix == "Idea") "idea-community" else request.platformPrefix) + classifier)
-    // on start delete everything to avoid stale data
+    // on start, delete everything to avoid stale data
     if (Files.isDirectory(runDir)) {
       val usePluginCache = spanBuilder("check plugin cache applicability").useWithScope2 {
         checkBuildModulesModificationAndMark(productConfiguration, request.productionClassOutput)
@@ -114,7 +112,9 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     }
 
     // remove all modules without content root
-    val modules = plugin.includedModuleNames
+    val modules = plugin.includedModules.asSequence()
+      .map { it.moduleName }
+      .distinct()
       .filter { it == plugin.mainModule || !context.findRequiredModule(it).contentRootsList.urls.isEmpty() }
       .toList()
     val pluginBuildDescriptor = PluginBuildDescriptor(dir = pluginRootDir.resolve(plugin.directoryName),
@@ -170,10 +170,12 @@ private suspend fun createBuildContext(productConfiguration: ProductConfiguratio
       }
     }
 
-    BuildContextImpl.createContext(compilationContext = compilationContext.await(),
-                                   projectHome = request.homePath,
-                                   productProperties = productProperties.await()
-    )
+    BuildContextImpl(compilationContext = compilationContext.await(),
+                     productProperties = productProperties.await(),
+                     windowsDistributionCustomizer = null,
+                     linuxDistributionCustomizer = null,
+                     macDistributionCustomizer = null,
+                     proprietaryBuildTools = ProprietaryBuildTools.DUMMY)
   }
 }
 
@@ -264,7 +266,7 @@ private suspend fun createLibClassPath(homePath: Path, context: BuildContext): S
                                                           platform = platformLayout,
                                                           context = context,
                                                           copyFiles = isPackagedLib)
-  // for some reasons maybe duplicated paths - use set
+  // for some reasons, maybe duplicated paths - use set
   val classPath = LinkedHashSet<String>()
   if (isPackagedLib) {
     projectStructureMapping.mapTo(classPath) { it.path.toString() }
@@ -290,11 +292,6 @@ private suspend fun createLibClassPath(homePath: Path, context: BuildContext): S
         }
         else -> throw UnsupportedOperationException("Entry $entry is not supported")
       }
-    }
-
-    for (libName in platformLayout.projectLibrariesToUnpack.values()) {
-      val library = context.project.libraryCollection.findLibrary(libName) ?: throw IllegalStateException("Cannot find library $libName")
-      library.getRootUrls(JpsOrderRootType.COMPILED).mapTo(classPath, JpsPathUtil::urlToPath)
     }
   }
 
@@ -374,6 +371,7 @@ private fun getCommunityHomePath(homePath: Path): BuildDependenciesCommunityRoot
 private fun createBuildOptions(runDir: Path): BuildOptions {
   val options = BuildOptions()
   options.printFreeSpace = false
+  options.validateImplicitPlatformModule = false
   options.useCompiledClassesFromProjectOutput = true
   options.targetOs = persistentListOf()
   options.cleanOutputFolder = false
