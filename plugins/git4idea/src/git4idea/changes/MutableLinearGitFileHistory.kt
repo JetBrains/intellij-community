@@ -3,7 +3,7 @@ package git4idea.changes
 
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 
-class MutableLinearGitFileHistory(commitHashes: List<String>) : GitFileHistory {
+class MutableLinearGitFileHistory(private val commitHashes: List<String>) : GitFileHistory {
 
   private val history: MutableMap<String, Entry>
 
@@ -21,6 +21,19 @@ class MutableLinearGitFileHistory(commitHashes: List<String>) : GitFileHistory {
     for (sha in commitHashes) {
       history[sha] = Entry(null)
     }
+  }
+
+  override fun findStartCommit(): String? = commitHashes.firstOrNull()
+
+  override fun findFirstParent(commitSha: String): String? {
+    var parentSha: String? = null
+    for (commitHash in commitHashes) {
+      if (commitSha == commitHash) {
+        break
+      }
+      parentSha = commitHash
+    }
+    return parentSha
   }
 
   fun append(commitSha: String, patch: TextFilePatch) {
@@ -50,42 +63,26 @@ class MutableLinearGitFileHistory(commitHashes: List<String>) : GitFileHistory {
     error("Unknown commit sha")
   }
 
-  override fun getPatches(parent: String, child: String, includeFirstKnownPatch: Boolean, includeLastPatch: Boolean): List<TextFilePatch> {
+  override fun getPatchesBetween(parent: String, child: String): List<TextFilePatch> {
     val patches = mutableListOf<TextFilePatch>()
 
     var foundParent = false
-    var lastFound: TextFilePatch? = null
-
     for ((sha, entry) in history) {
-
       if (!foundParent) {
-        if (entry.patch != null) lastFound = entry.patch
-
         if (sha == parent) {
           foundParent = true
-          if (!includeFirstKnownPatch) {
-            val patchToAdd = entry.patch ?: lastFound
-                             ?: error("Original patch was not found")
-            patches.add(patchToAdd)
-          }
         }
       }
       else {
-        if (includeLastPatch) {
-          if (sha == child) break
-          entry.patch?.let { patches.add(it) }
-        }
-        else {
-          entry.patch?.let { patches.add(it) }
-          if (sha == child) break
-        }
+        entry.patch?.let { patches.add(it) }
+        if (sha == child) break
       }
     }
     return patches
   }
 
   private class Entry(val patch: TextFilePatch?) {
-    val filePath = patch?.filePath
+    val filePath: String? = patch?.filePath
   }
 
   companion object {

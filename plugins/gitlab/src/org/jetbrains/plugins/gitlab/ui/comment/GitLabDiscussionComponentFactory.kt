@@ -47,6 +47,7 @@ object GitLabDiscussionComponentFactory {
     }
 
     return VerticalListPanel().apply {
+      name = "GitLab Discussion Panel ${vm.id}"
       add(notesPanel)
       val replyVm = vm.replyVm
       if (replyVm != null) {

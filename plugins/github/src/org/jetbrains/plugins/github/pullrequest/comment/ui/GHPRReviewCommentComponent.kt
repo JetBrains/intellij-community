@@ -136,10 +136,10 @@ object GHPRReviewCommentComponent {
                                  commentBody: @Nls String,
                                  maxTextWidth: Int): JComponent {
     val commentComponentFactory = GHPRReviewCommentComponentFactory(project)
-    val commentComponent = if (GHSuggestedChange.containsSuggestedChange(commentBody)) {
+    val commentComponent = if (!thread.isOutdated && GHSuggestedChange.containsSuggestedChange(commentBody)) {
       val suggestedChange = GHSuggestedChange.create(commentBody,
                                                      thread.diffHunk, thread.filePath,
-                                                     thread.startLine ?: thread.line, thread.line)
+                                                     thread.startLine ?: thread.line!!, thread.line!!)
       commentComponentFactory.createCommentWithSuggestedChangeComponent(thread, suggestedChange, suggestedChangeHelper, maxTextWidth)
     }
     else {
