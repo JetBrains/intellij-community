@@ -1,16 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.timeline
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.collaboration.ui.util.bindChild
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.diff.util.DiffDrawUtil
+import com.intellij.diff.util.TextDiffType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.diff.impl.patch.PatchHunk
+import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.PatchLine
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.LineNumberConverter
@@ -23,6 +28,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch
 import com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder
 import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.ListLayout
@@ -41,7 +47,9 @@ import kotlinx.coroutines.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.awt.Color
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -50,8 +58,13 @@ import javax.swing.JPanel
 object TimelineDiffComponentFactory {
 
   fun createDiffComponent(project: Project, editorFactory: EditorFactory,
-                          patchHunk: PatchHunk, isMultiline: Boolean): JComponent {
-    val truncatedHunk = truncateHunk(patchHunk, isMultiline)
+                          patchHunk: PatchHunk,
+                          anchor: DiffLineLocation?,
+                          anchorStart: DiffLineLocation?): JComponent {
+    val truncatedHunk = truncateHunk(patchHunk, anchorStart != null)
+
+    val anchorLineIndex = anchor?.let { PatchHunkUtil.findHunkLineIndex(truncatedHunk, it) }
+
     if (truncatedHunk.lines.any { it.type != PatchLine.Type.CONTEXT }) {
       val appliedSplitHunks = GenericPatchApplier.SplitHunk.read(truncatedHunk).map {
         AppliedTextPatch.AppliedSplitPatchHunk(it, -1, -1, AppliedTextPatch.HunkStatus.NOT_APPLIED)
@@ -68,11 +81,13 @@ object TimelineDiffComponentFactory {
                                  LineNumberConverterAdapter(builder.lineConvertor2.createConvertor()))
         }
 
-        val hunk = builder.hunks.first()
-        DiffDrawUtil.createUnifiedChunkHighlighters(editor,
-                                                    hunk.patchDeletionRange,
-                                                    hunk.patchInsertionRange,
-                                                    null)
+        builder.hunks.forEach { hunk ->
+          DiffDrawUtil.createUnifiedChunkHighlighters(editor,
+                                                      hunk.patchDeletionRange,
+                                                      hunk.patchInsertionRange,
+                                                      null)
+        }
+        anchorLineIndex?.let { highlightAnchorLine(editor, it) }
       }
     }
     else {
@@ -85,8 +100,26 @@ object TimelineDiffComponentFactory {
             LineNumberConverter.Increasing { _, line -> line + truncatedHunk.startLineAfter }
           )
         }
+        anchorLineIndex?.let { highlightAnchorLine(editor, it) }
       }
     }
+  }
+
+  private fun highlightAnchorLine(editor: EditorEx, line: Int) {
+    DiffDrawUtil.createHighlighter(editor, line, line + 1, AnchorLine, false)
+  }
+
+  object AnchorLine : TextDiffType {
+    @Nls
+    override fun getName() = CollaborationToolsBundle.message("review.thread.diff.anchor.name")
+
+    override fun getColor(editor: Editor?): Color = JBColor.namedColor(
+      "Review.Timeline.Thread.Diff.AnchorLine",
+      JBColor(0xFBF1D1, 0x544B2D)
+    )
+
+    override fun getIgnoredColor(editor: Editor?) = getColor(editor)
+    override fun getMarkerColor(editor: Editor?) = getColor(editor)
   }
 
   private const val SINGLE_LINE_DIFF_SIZE = 3

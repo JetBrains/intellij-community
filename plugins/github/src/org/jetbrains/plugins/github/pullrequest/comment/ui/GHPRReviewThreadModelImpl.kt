@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.ui.SimpleEventListener
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
@@ -30,6 +31,17 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     private set
   override val commit = thread.originalCommit
   override val filePath = thread.path
+  override val diffHunk = thread.diffHunk
+
+  override val originalLocation: DiffLineLocation? =
+    thread.originalLine?.let { thread.side to it - 1 }
+
+  override val originalStartLocation: DiffLineLocation? =
+    if (thread.startSide != null && thread.originalStartLine != null) {
+      thread.startSide to thread.originalStartLine - 1
+    }
+    else null
+
   override val line = thread.line
   override val startLine = thread.startLine
 

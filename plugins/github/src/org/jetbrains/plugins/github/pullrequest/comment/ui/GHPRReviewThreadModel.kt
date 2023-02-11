@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.openapi.diff.impl.patch.PatchHunk
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
@@ -19,6 +20,9 @@ interface GHPRReviewThreadModel : ListModel<GHPRReviewCommentModel> {
   val commit: GHCommitHash?
   val filePath: String
   val patchHunk: PatchHunk?
+  val diffHunk: String
+  val originalLocation: DiffLineLocation?
+  val originalStartLocation: DiffLineLocation?
   val line: Int?
   val startLine: Int?
 

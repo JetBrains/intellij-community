@@ -2,8 +2,7 @@
 package com.intellij.openapi.diff.impl.patch
 
 import com.intellij.diff.util.Range
-import com.intellij.openapi.diff.impl.patch.PatchHunk
-import com.intellij.openapi.diff.impl.patch.PatchLine
+import com.intellij.diff.util.Side
 
 object PatchHunkUtil {
 
@@ -75,6 +74,26 @@ object PatchHunkUtil {
       ranges.add(Range(start1, end1, start2, end2))
     }
     return ranges
+  }
+
+  fun findHunkLineIndex(hunk: PatchHunk, locationInDiff: Pair<Side, Int>): Int? {
+    val (side, fileLineIndex) = locationInDiff
+    val sideFileLineIndex = fileLineIndex - side.select(hunk.startLineBefore, hunk.startLineAfter)
+
+    var sideFileLineCounter = 0
+
+    var lastMatchedLineWithNewline: Int? = null
+    for ((index, line) in hunk.lines.withIndex()) {
+      if (line.type == PatchLine.Type.ADD && side == Side.RIGHT ||
+          line.type == PatchLine.Type.REMOVE && side == Side.LEFT ||
+          line.type == PatchLine.Type.CONTEXT) {
+        if (sideFileLineCounter == sideFileLineIndex) return index
+        sideFileLineCounter++
+        //potentially a comment on a newline
+        if (sideFileLineCounter == sideFileLineIndex && !line.isSuppressNewLine) lastMatchedLineWithNewline = index
+      }
+    }
+    return lastMatchedLineWithNewline
   }
 
   fun createPatchFromHunk(filePath: String, diffHunk: String): String {
