@@ -264,7 +264,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     return startSessionAndShowTab(sessionName, icon, null, contentToReuse, showToolWindowOnSuspendOnly, starter);
   }
 
-  private XDebugSession startSessionAndShowTab(@NotNull String sessionName,
+  private XDebugSession startSessionAndShowTab(@Nls @NotNull String sessionName,
                                               Icon icon,
                                               @Nullable ExecutionEnvironment environment,
                                               @Nullable RunContentDescriptor contentToReuse,
