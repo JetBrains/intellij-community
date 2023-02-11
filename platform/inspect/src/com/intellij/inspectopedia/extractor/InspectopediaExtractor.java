@@ -14,13 +14,11 @@ import com.intellij.inspectopedia.extractor.data.OptionsPanelInfo;
 import com.intellij.inspectopedia.extractor.data.Plugin;
 import com.intellij.inspectopedia.extractor.data.Plugins;
 import com.intellij.inspectopedia.extractor.utils.HtmlUtils;
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.ui.HyperlinkLabel;
 import org.jetbrains.annotations.NonNls;
@@ -38,7 +36,7 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class InspectopediaExtractor implements ApplicationStarter {
+public final class InspectopediaExtractor implements ApplicationStarter {
   private static final Logger LOG = Logger.getInstance(InspectopediaExtractor.class);
   public static final String IDE_CODE = ApplicationInfo.getInstance().getBuild().getProductCode().toLowerCase(Locale.getDefault());
   public static final String IDE_NAME = ApplicationInfo.getInstance().getVersionName();
