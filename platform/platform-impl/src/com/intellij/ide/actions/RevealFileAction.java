@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Ole32;
@@ -204,6 +205,9 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       if (fmApp.endsWith("dolphin") && toSelect != null) {
         spawn(fmApp, "--select", toSelect);
       }
+      else if (fmApp.endsWith("dde-file-manager") && toSelect != null) {
+        spawn(fmApp, "--show-item", toSelect);
+      }
       else {
         spawn(fmApp, toSelect != null ? toSelect : dir);
       }
@@ -283,10 +287,12 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   private static class Holder {
+    private static final String[] supportedFileManagers = {"nautilus", "pantheon-files", "dolphin", "dde-file-manager"};
+
     private static final String fileManagerApp =
       readDesktopEntryKey("Exec")
         .map(line -> line.split(" ")[0])
-        .filter(exec -> exec.endsWith("nautilus") || exec.endsWith("pantheon-files") || exec.endsWith("dolphin"))
+        .filter(exec -> ContainerUtil.exists(supportedFileManagers, supportedFileManager -> exec.endsWith(supportedFileManager)))
         .orElse(null);
 
     private static final String fileManagerName =
