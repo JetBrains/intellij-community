@@ -14,7 +14,6 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -245,7 +244,6 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     : GHPRTimelineItemComponentFactory {
 
     val selectInToolWindowHelper = GHPRSelectInToolWindowHelper(project, detailsModel.value)
-    val diffFactory = GHPRReviewThreadDiffComponentFactory(project, EditorFactory.getInstance())
     return GHPRTimelineItemComponentFactory(
       project,
       detailsDataProvider,
@@ -253,7 +251,6 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       reviewDataProvider,
       avatarIconsProvider,
       reviewThreadsModelsProvider,
-      diffFactory,
       selectInToolWindowHelper,
       suggestedChangeHelper,
       ghostUser,

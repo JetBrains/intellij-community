@@ -2,6 +2,10 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.ui.SimpleEventListener
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diff.impl.patch.PatchHunk
+import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
+import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.ui.CollectionListModel
 import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,6 +14,8 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThre
 import javax.swing.ListModel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
+
+private val LOG = logger<GHPRReviewThreadModelImpl>()
 
 class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
   : CollectionListModel<GHPRReviewCommentModel>(thread.comments.map(GHPRReviewCommentModelImpl::convert)), GHPRReviewThreadModel {
@@ -24,7 +30,6 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     private set
   override val commit = thread.originalCommit
   override val filePath = thread.path
-  override val diffHunk = thread.diffHunk
   override val line = thread.line
   override val startLine = thread.startLine
 
@@ -33,6 +38,15 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
   override val repliesModel: ListModel<GHPRReviewCommentModel> = RepliesModel(this)
 
   private val stateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
+
+  override val patchHunk: PatchHunk? by lazy {
+    val patchReader = PatchReader(PatchHunkUtil.createPatchFromHunk("_", thread.diffHunk))
+    patchReader.readTextPatches().firstOrNull()?.hunks?.firstOrNull().also {
+      if (it == null) {
+        LOG.warn("Couldn't parse duff hunk for thread $id:\n${thread.diffHunk}")
+      }
+    }
+  }
 
   init {
     maybeMarkFirstCommentResolved()

@@ -81,7 +81,6 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                        private val reviewDataProvider: GHPRReviewDataProvider,
                                        private val avatarIconsProvider: GHAvatarIconsProvider,
                                        private val reviewsThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
-                                       private val reviewDiffComponentFactory: GHPRReviewThreadDiffComponentFactory,
                                        private val selectInToolWindowHelper: GHPRSelectInToolWindowHelper,
                                        private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
                                        private val ghostUser: GHUser,
@@ -302,7 +301,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       })
     }
 
-    val diff = GHPRReviewThreadComponent.createThreadDiff(thread, reviewDiffComponentFactory, selectInToolWindowHelper)
+    val diff = GHPRReviewThreadComponent.createThreadDiff(project, thread, selectInToolWindowHelper)
 
     val repliesCollapsedState = MutableStateFlow(true)
     coroutineScopeProvider.launchInScope {
