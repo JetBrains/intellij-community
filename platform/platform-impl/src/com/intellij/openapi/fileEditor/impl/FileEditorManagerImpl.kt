@@ -229,7 +229,7 @@ open class FileEditorManagerImpl(
 
     currentFileEditorFlow = selectionFlow
       .map { it?.fileEditorProvider?.fileEditor }
-      .stateIn(coroutineScope, SharingStarted.WhileSubscribed(), null)
+      .stateIn(coroutineScope, SharingStarted.Eagerly, null)
 
     project.messageBus.connect(coroutineScope).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
       override fun exitDumbMode() {
