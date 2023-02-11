@@ -9,6 +9,9 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.semconv.trace.attributes.SemanticAttributes
+import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.longs.LongArrayList
+import org.jetbrains.annotations.Contract
 import java.io.File
 import java.nio.file.Path
 import java.time.Instant
@@ -18,8 +21,6 @@ import java.time.format.DateTimeFormatterBuilder
 import java.time.temporal.ChronoField
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
 
 class ConsoleSpanExporter : AsyncSpanExporter {
   companion object {
@@ -34,7 +35,7 @@ class ConsoleSpanExporter : AsyncSpanExporter {
     val sb = StringBuilder()
     for (span in spans) {
       val attributes = span.attributes
-      val reportSpanToConsole = attributes.get(AttributeKey.booleanKey("_CES_")) != java.lang.Boolean.TRUE
+      val reportSpanToConsole = attributes.get(AttributeKey.booleanKey("_CES_")) != true
       if (reportSpanToConsole) {
         writeSpan(sb, span, span.endEpochNanos - span.startEpochNanos, span.endEpochNanos)
       }
@@ -61,7 +62,7 @@ private val buildRootMacro = "\${buildRoot}${File.separatorChar}"
 private fun writeSpan(sb: StringBuilder, span: SpanData, duration: Long, endEpochNanos: Long) {
   sb.append(span.name)
   sb.append(" (duration=")
-  sb.append(duration.toDuration(DurationUnit.NANOSECONDS).toString())
+  sb.append(formatDuration(duration / 1_000_000))
   sb.append(", end=")
   writeTime(endEpochNanos, sb)
   if (span.status.statusCode == StatusCode.ERROR && !span.status.description.isEmpty()) {
@@ -165,4 +166,37 @@ private fun writeAttributesAsHumanReadable(attributes: Attributes, sb: StringBui
       }
     }
   })
+}
+
+private val TIME_UNITS = arrayOf("ms", "s", "m", "h", "d")
+private val TIME_MULTIPLIERS = longArrayOf(1, 1000, 60, 60, 24)
+
+// cannot depend on Formats, and kotlin Duration.toString() is not good (`8.515s` instead of `8 s 515 ms`)
+@Contract(pure = true)
+private fun formatDuration(duration: Long): java.lang.StringBuilder {
+  val unitValues = LongArrayList()
+  val unitIndices = IntArrayList()
+  var count = duration
+  var i = 1
+  while (i < TIME_UNITS.size && count > 0) {
+    val multiplier = TIME_MULTIPLIERS[i]
+    if (count < multiplier) break
+    val remainder = count % multiplier
+    count /= multiplier
+    if (remainder != 0L || !unitValues.isEmpty) {
+      unitValues.add(0, remainder)
+      unitIndices.add(0, i - 1)
+    }
+    i++
+  }
+  unitValues.add(0, count)
+  unitIndices.add(0, i - 1)
+  val result = java.lang.StringBuilder()
+  i = 0
+  while (i < unitValues.size) {
+    if (i > 0) result.append(" ")
+    result.append(unitValues.getLong(i)).append(' ').append(TIME_UNITS[unitIndices.getInt(i)])
+    i++
+  }
+  return result
 }
