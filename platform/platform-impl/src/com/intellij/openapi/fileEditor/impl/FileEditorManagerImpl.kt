@@ -30,6 +30,7 @@ import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager.Companion.getProjectSession
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logError
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
@@ -204,23 +205,28 @@ open class FileEditorManagerImpl(
       .stateIn(coroutineScope, SharingStarted.Eagerly, null)
 
     // not using collectLatest() to ensure that no selection update is missed by the listeners
-    selectionFlow.zipWithNext { oldState, state ->
-      val oldEditorWithProvider = oldState?.fileEditorProvider
-      val newEditorWithProvider = state?.fileEditorProvider
-      if (oldEditorWithProvider == newEditorWithProvider) {
-        return@zipWithNext
-      }
+    selectionFlow
+      .zipWithNext { oldState, state ->
+        val oldEditorWithProvider = oldState?.fileEditorProvider
+        val newEditorWithProvider = state?.fileEditorProvider
+        if (oldEditorWithProvider == newEditorWithProvider) {
+          return@zipWithNext
+        }
 
-      val publisher = project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-      // expected in EDT
-      withContext(Dispatchers.EDT) {
-        fireSelectionChanged(oldComposite = oldState?.composite,
-                             newComposite = state?.composite,
-                             oldEditorWithProvider = oldEditorWithProvider,
-                             newEditorWithProvider = newEditorWithProvider,
-                             publisher = publisher)
+        val publisher = project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+        // expected in EDT
+        withContext(Dispatchers.EDT) {
+          fireSelectionChanged(oldComposite = oldState?.composite,
+                               newComposite = state?.composite,
+                               oldEditorWithProvider = oldEditorWithProvider,
+                               newEditorWithProvider = newEditorWithProvider,
+                               publisher = publisher)
+        }
       }
-    }.launchIn(coroutineScope)
+      // Don't die on an unhandled exception. Even though the upstream source is a state flow with replay cache,
+      // using retry() is fine here because zipWithNext {} always needs to collect two elements in the beginning,
+      // and retry() will never end up in an infinitely throwing loop on the same pair of faulty elements.
+      .logError(LOG).retry().launchIn(coroutineScope)
 
     currentFileEditorFlow = selectionFlow
       .map { it?.fileEditorProvider?.fileEditor }

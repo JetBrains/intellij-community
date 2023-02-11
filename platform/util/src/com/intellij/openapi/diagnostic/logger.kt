@@ -2,6 +2,8 @@
 package com.intellij.openapi.diagnostic
 
 import com.intellij.openapi.progress.ProcessCanceledException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
 
@@ -37,4 +39,17 @@ fun <T> Result<T>.getOrLogException(logger: Logger): T? {
       logger.error(e)
     }
   }.getOrNull()
+}
+
+fun <T> Flow<T>.logError(logger: Logger): Flow<T> {
+  return catch { e ->
+    try {
+      if (e !is ProcessCanceledException && e !is CancellationException) {
+        logger.error(e)
+      }
+    }
+    finally {
+      throw e
+    }
+  }
 }
