@@ -166,7 +166,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  public @NotNull PtyProcess createProcess(@NotNull TerminalProcessOptions options) throws ExecutionException {
+  public @NotNull PtyProcess createProcess(@NotNull ShellStartupOptions options) throws ExecutionException {
     String workingDir = getWorkingDirectory(options.getWorkingDirectory());
     Map<String, String> envs = getTerminalEnvironment(workingDir);
 

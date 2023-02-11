@@ -48,6 +48,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -56,6 +57,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   @NotNull
   protected final Project myProject;
   private final JBTerminalSystemSettingsProvider mySettingsProvider;
+  private final ThreadLocal<ShellStartupOptions> myStartupOptionsThreadLocal = new ThreadLocal<>();
 
   public JBTerminalSystemSettingsProvider getSettingsProvider() {
     return mySettingsProvider;
@@ -86,7 +88,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   private void doRun() {
     // Create Server process
     try {
-      final T process = createProcess(new TerminalProcessOptions(null, null), null);
+      final T process = createProcess(new ShellStartupOptions.Builder().build());
 
       UIUtil.invokeLaterIfNeeded(() -> initConsoleUI(process));
     }
@@ -95,8 +97,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     }
   }
 
-  public @NotNull T createProcess(@NotNull TerminalProcessOptions options) throws ExecutionException {
-    return createProcess(options, null);
+  public @NotNull T createProcess(@NotNull ShellStartupOptions startupOptions) throws ExecutionException {
+    //noinspection removal
+    return createProcess(new TerminalProcessOptions(startupOptions.getWorkingDirectory(), startupOptions.getInitialTermSize()), null);
   }
 
   protected abstract ProcessHandler createProcessHandler(T process);
@@ -122,36 +125,49 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   /**
-   * @deprecated use {@link #startShellTerminalWidget(Disposable, String, boolean)}
+   * @deprecated use {@link #startShellTerminalWidget(Disposable, ShellStartupOptions, boolean)}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated(forRemoval = true)
   public @NotNull JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
                                                         @Nullable String currentWorkingDirectory,
                                                         boolean deferSessionStartUntilUiShown) {
-    TerminalWidget terminalWidget = createShellTerminalWidget(parent, currentWorkingDirectory);
+    ShellStartupOptions startupOptions = getStartupOptions(currentWorkingDirectory);
+    TerminalWidget terminalWidget = createShellTerminalWidget(parent, startupOptions);
     JBTerminalWidget jediTermWidget = JBTerminalWidget.asJediTermWidget(terminalWidget);
     if (jediTermWidget == null) {
       throw new IncompatibleWidgetException();
     }
-    scheduleOpenSessionInDirectory(terminalWidget, currentWorkingDirectory, deferSessionStartUntilUiShown);
+    scheduleOpenSessionInDirectory(terminalWidget, startupOptions, deferSessionStartUntilUiShown);
     return jediTermWidget;
   }
 
+  private @NotNull ShellStartupOptions getStartupOptions(@Nullable String workingDirectory) {
+    ShellStartupOptions startupOptions = myStartupOptionsThreadLocal.get();
+    if (startupOptions != null && Objects.equals(startupOptions.getWorkingDirectory(), workingDirectory)) {
+      return startupOptions;
+    }
+    return ShellStartupOptionsKt.shellStartupOptions(workingDirectory);
+  }
+
   public @NotNull TerminalWidget startShellTerminalWidget(@NotNull Disposable parent,
-                                                          @Nullable String currentWorkingDirectory,
+                                                          @NotNull ShellStartupOptions startupOptions,
                                                           boolean deferSessionStartUntilUiShown) {
     try {
-      return createTerminalWidget(parent, currentWorkingDirectory, deferSessionStartUntilUiShown).asNewWidget();
+      myStartupOptionsThreadLocal.set(startupOptions);
+      return createTerminalWidget(parent, startupOptions.getWorkingDirectory(), deferSessionStartUntilUiShown).asNewWidget();
     }
     catch (IncompatibleWidgetException e) {
-      TerminalWidget widget = createShellTerminalWidget(parent, currentWorkingDirectory);
-      scheduleOpenSessionInDirectory(widget, currentWorkingDirectory, deferSessionStartUntilUiShown);
+      TerminalWidget widget = createShellTerminalWidget(parent, startupOptions);
+      scheduleOpenSessionInDirectory(widget, startupOptions, deferSessionStartUntilUiShown);
       return widget;
+    }
+    finally {
+      myStartupOptionsThreadLocal.remove();
     }
   }
 
-  protected @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent, @Nullable String currentWorkingDirectory) {
+  protected @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent, @NotNull ShellStartupOptions startupOptions) {
     if (Registry.is("ide.experimental.ui.new.terminal", false)) {
       return new TerminalWidgetImpl(myProject, mySettingsProvider, parent);
     }
@@ -159,13 +175,13 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   private void scheduleOpenSessionInDirectory(@NotNull TerminalWidget terminalWidget,
-                                              @Nullable String currentWorkingDirectory,
+                                              @NotNull ShellStartupOptions startupOptions,
                                               boolean deferSessionStartUntilUiShown) {
     if (deferSessionStartUntilUiShown) {
-      doWhenFirstShownAndLaidOut(terminalWidget, () -> openSessionInDirectory(terminalWidget, currentWorkingDirectory));
+      doWhenFirstShownAndLaidOut(terminalWidget, () -> openSessionInDirectory(terminalWidget, startupOptions));
     }
     else {
-      openSessionInDirectory(terminalWidget, currentWorkingDirectory);
+      openSessionInDirectory(terminalWidget, startupOptions);
     }
   }
 
@@ -287,14 +303,14 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return dir != null ? dir.getPath() : null;
   }
 
-  private void openSessionInDirectory(@NotNull TerminalWidget terminalWidget, @Nullable String directory) {
+  private void openSessionInDirectory(@NotNull TerminalWidget terminalWidget, @NotNull ShellStartupOptions startupOptions) {
     ModalityState modalityState = ModalityState.stateForComponent(terminalWidget.getComponent());
-    TermSize size = terminalWidget.getTermSize();
+    TermSize termSize = terminalWidget.getTermSize();
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (myProject.isDisposed()) return;
       try {
-        T process = createProcess(new TerminalProcessOptions(directory, size));
+        T process = createProcess(startupOptions.builder().initialTermSize(termSize).build());
         TtyConnector connector = createTtyConnector(process);
 
         ApplicationManager.getApplication().invokeLater(() -> {
@@ -320,7 +336,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   @ApiStatus.Internal
   public void openSessionInDirectory(@NotNull JBTerminalWidget terminalWidget,
                                      @Nullable String directory) {
-    openSessionInDirectory(terminalWidget.asNewWidget(), directory);
+    openSessionInDirectory(terminalWidget.asNewWidget(), getStartupOptions(directory));
   }
 
   private void printError(@NotNull TerminalWidget terminalWidget, @NotNull String errorMessage, @NotNull Exception e) {
@@ -340,15 +356,16 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   /**
-   * @deprecated use {@link #createProcess(TerminalProcessOptions)} instead
+   * @deprecated use {@link #createProcess(ShellStartupOptions)} instead
    */
+  @SuppressWarnings("removal")
   @Deprecated(forRemoval = true)
   public @NotNull T createProcess(@NotNull TerminalProcessOptions options, @Nullable JBTerminalWidget widget) throws ExecutionException {
-    return createProcess(options);
+    return createProcess(options.toStartupOptions());
   }
 
   /**
-   * @deprecated use {@link #createProcess(TerminalProcessOptions)} instead
+   * @deprecated use {@link #createProcess(ShellStartupOptions)} instead
    */
   @Deprecated(forRemoval = true)
   protected T createProcess(@Nullable String directory) throws ExecutionException {
@@ -356,7 +373,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   /**
-   * @deprecated use {@link #createProcess(TerminalProcessOptions, JBTerminalWidget)} instead
+   * @deprecated use {@link #createProcess(ShellStartupOptions)} instead
    */
   @Deprecated(forRemoval = true)
   protected T createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
