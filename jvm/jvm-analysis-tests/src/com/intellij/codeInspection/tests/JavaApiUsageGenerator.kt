@@ -23,12 +23,13 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.writeLines
 
+/**
+ * Generator which is used to generate required api files for [com.intellij.codeInspection.JavaApiUsageInspection].
+ */
 @Ignore
 class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LANGUAGE_LEVEL) {
-    override fun getSdk(): Sdk {
-      return IdeaTestUtil.createMockJdk("java-gen", JDK_HOME)
-    }
+    override fun getSdk(): Sdk = IdeaTestUtil.createMockJdk("java-gen", JDK_HOME)
   }
 
   /**
