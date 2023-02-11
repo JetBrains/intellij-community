@@ -100,7 +100,7 @@ private object UNINITIALIZED
  *
  * See also: [Sequence.zipWithNext]
  */
-fun <T, R> Flow<T>.zipWithNext(transform: (a: T, b: T) -> R): Flow<R> {
+fun <T, R> Flow<T>.zipWithNext(transform: suspend (a: T, b: T) -> R): Flow<R> {
   return flow {
     var current: Any? = UNINITIALIZED
     collect { value ->

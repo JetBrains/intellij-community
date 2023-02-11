@@ -81,6 +81,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.SmartHashSet
+import com.intellij.util.flow.zipWithNext
 import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
@@ -102,8 +103,6 @@ import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.lang.Runnable
-import java.lang.ref.Reference
-import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
@@ -190,7 +189,7 @@ open class FileEditorManagerImpl(
     get() = dockable.value
 
   init {
-    val selectionFlow = splitterFlow
+    val selectionFlow: StateFlow<SelectionState?> = splitterFlow
       .flatMapLatest { it.currentCompositeFlow }
       .flatMapLatest { composite ->
         if (composite == null) {
@@ -204,28 +203,24 @@ open class FileEditorManagerImpl(
       }
       .stateIn(coroutineScope, SharingStarted.Eagerly, null)
 
-    coroutineScope.launch {
-      val lastState = AtomicReference<Reference<SelectionState?>>()
-      selectionFlow.collectLatest { state ->
-        val oldState = lastState.getAndSet(state?.let(::WeakReference))?.get()
-
-        val oldEditorWithProvider = oldState?.fileEditorProvider
-        val newEditorWithProvider = state?.fileEditorProvider
-        if (oldEditorWithProvider == newEditorWithProvider) {
-          return@collectLatest
-        }
-
-        val publisher = project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-        // expected in EDT
-        withContext(Dispatchers.EDT) {
-          fireSelectionChanged(oldComposite = oldState?.composite,
-                               newComposite = state?.composite,
-                               oldEditorWithProvider = oldEditorWithProvider,
-                               newEditorWithProvider = newEditorWithProvider,
-                               publisher = publisher)
-        }
+    // not using collectLatest() to ensure that no selection update is missed by the listeners
+    selectionFlow.zipWithNext { oldState, state ->
+      val oldEditorWithProvider = oldState?.fileEditorProvider
+      val newEditorWithProvider = state?.fileEditorProvider
+      if (oldEditorWithProvider == newEditorWithProvider) {
+        return@zipWithNext
       }
-    }
+
+      val publisher = project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+      // expected in EDT
+      withContext(Dispatchers.EDT) {
+        fireSelectionChanged(oldComposite = oldState?.composite,
+                             newComposite = state?.composite,
+                             oldEditorWithProvider = oldEditorWithProvider,
+                             newEditorWithProvider = newEditorWithProvider,
+                             publisher = publisher)
+      }
+    }.launchIn(coroutineScope)
 
     currentFileEditorFlow = selectionFlow
       .map { it?.fileEditorProvider?.fileEditor }
