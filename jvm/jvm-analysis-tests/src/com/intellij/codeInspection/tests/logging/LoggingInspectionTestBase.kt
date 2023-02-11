@@ -1,8 +1,8 @@
 package com.intellij.codeInspection.tests.logging
 
-import com.intellij.codeInspection.tests.UastInspectionTestBase
+import com.intellij.codeInspection.tests.JvmInspectionTestBase
 
-abstract class LoggingInspectionTestBase : UastInspectionTestBase() {
+abstract class LoggingInspectionTestBase : JvmInspectionTestBase() {
 
   override fun setUp() {
     super.setUp()

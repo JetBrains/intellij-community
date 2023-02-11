@@ -1,11 +1,11 @@
 package com.intellij.codeInspection.tests.java.test.junit
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.junit.JUnitAssertEqualsMayBeAssertSameInspectionTestBase
 
 class JavaJUnitAssertEqualsMayBeAssertSameInspectionTest : JUnitAssertEqualsMayBeAssertSameInspectionTestBase() {
   fun `test JUnit 3 highlighting`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Test extends junit.framework.TestCase { 
         public void testOne() { 
           <warning descr="'assertEquals()' may be 'assertSame()'">assertEquals</warning>(A.a, A.b); 
@@ -15,7 +15,7 @@ class JavaJUnitAssertEqualsMayBeAssertSameInspectionTest : JUnitAssertEqualsMayB
   }
 
   fun `test JUnit 3 quickfix`() {
-    myFixture.testQuickFix(ULanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       class Test extends junit.framework.TestCase { 
         public void testOne() { 
           asser<caret>tEquals(A.a, A.b); 
@@ -31,7 +31,7 @@ class JavaJUnitAssertEqualsMayBeAssertSameInspectionTest : JUnitAssertEqualsMayB
   }
 
   fun `test JUnit 4 highlighting`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Test { 
         @org.junit.Test 
         public void test() { 
@@ -42,7 +42,7 @@ class JavaJUnitAssertEqualsMayBeAssertSameInspectionTest : JUnitAssertEqualsMayB
   }
 
   fun `test JUnit 4 quickfix`() {
-    myFixture.testQuickFix(ULanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       class Test { 
         @org.junit.Test 
         public void test() { 

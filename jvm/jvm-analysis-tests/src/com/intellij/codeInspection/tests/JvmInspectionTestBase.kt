@@ -14,7 +14,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import java.io.File
 
-abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
+abstract class JvmInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
   override fun getTestDataPath(): String = PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + basePath
 
   abstract val inspection: InspectionProfileEntry
@@ -37,7 +37,7 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
   }
 
   protected fun JavaCodeInsightTestFixture.testHighlighting(
-    lang: ULanguage,
+    lang: JvmLanguage,
     text: String,
     fileName: String = generateFileName()
   ) {
@@ -49,7 +49,7 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
    * Checks whether preview matches [preview] specified by the quickfix [hint] at the cursor position marked with <caret> in [code].
    */
   protected fun JavaCodeInsightTestFixture.testPreview(
-    lang: ULanguage,
+    lang: JvmLanguage,
     code: String,
     preview: String,
     hint: String,
@@ -68,7 +68,7 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
    * Run the [hint] quickfix on [before] at the cursor position marked with <caret> and compares it with [after].
    */
   protected fun JavaCodeInsightTestFixture.testQuickFix(
-    lang: ULanguage,
+    lang: JvmLanguage,
     before: String,
     after: String,
     hint: String = InspectionsBundle.message(
@@ -87,7 +87,7 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
    * Runs all quickfixes in [hints] on [before] and execute [test] when the exception is thrown.
    */
   protected inline fun <reified E : Throwable> JavaCodeInsightTestFixture.testQuickFixException(
-    lang: ULanguage,
+    lang: JvmLanguage,
     before: String,
     vararg hints: String = arrayOf(InspectionsBundle.message(
       "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
@@ -110,7 +110,7 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
    * [testQuickFix] which only runs the quick fix at the <caret> position.
    */
   protected fun JavaCodeInsightTestFixture.testAllQuickfixes(
-    lang: ULanguage,
+    lang: JvmLanguage,
     before: String,
     after: String,
     vararg hints: String = emptyArray(),
@@ -150,7 +150,7 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
   }
 
   protected fun JavaCodeInsightTestFixture.testQuickFixUnavailable(
-    lang: ULanguage,
+    lang: JvmLanguage,
     text: String,
     hint: String = InspectionsBundle.message(
       "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName

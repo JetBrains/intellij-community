@@ -1,12 +1,12 @@
 package com.intellij.codeInspection.tests.java
 
 import com.intellij.codeInspection.tests.MigrationTestBase
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.refactoring.migration.MigrationMapEntry
 
 class JavaMigrationTest : MigrationTestBase() {
   fun `test package`() {
-    migrationTest(ULanguage.JAVA, before = """
+    migrationTest(JvmLanguage.JAVA, before = """
       package p1;
 
       import qqq.AAA;
@@ -24,7 +24,7 @@ class JavaMigrationTest : MigrationTestBase() {
       }
     """.trimIndent(), MigrationMapEntry("qqq", "jetbrains.test", MigrationMapEntry.PACKAGE, true)
     )
-    migrationTest(ULanguage.JAVA, before = """
+    migrationTest(JvmLanguage.JAVA, before = """
       package p1;
 
       import qqq.*;
@@ -43,7 +43,7 @@ class JavaMigrationTest : MigrationTestBase() {
   }
 
   fun `test package migration with non existing package`() {
-    migrationTest(ULanguage.JAVA, before = """
+    migrationTest(JvmLanguage.JAVA, before = """
       package p1;
       
       import qqq.AAA;
@@ -61,7 +61,7 @@ class JavaMigrationTest : MigrationTestBase() {
       }
     """.trimIndent(), MigrationMapEntry("qqq", "zzz.bbb", MigrationMapEntry.PACKAGE, true)
     )
-    migrationTest(ULanguage.JAVA, before = """
+    migrationTest(JvmLanguage.JAVA, before = """
       package p1;
       
       import qqq.*;
@@ -82,7 +82,7 @@ class JavaMigrationTest : MigrationTestBase() {
   }
 
   fun `test two classes`() {
-    migrationTest(ULanguage.JAVA, before = """
+    migrationTest(JvmLanguage.JAVA, before = """
       class A {}
       class A1 {}
       
@@ -105,13 +105,13 @@ class JavaMigrationTest : MigrationTestBase() {
         B1 b;
       }
     """.trimIndent(),
-      MigrationMapEntry("A", "A1", MigrationMapEntry.CLASS, true),
-      MigrationMapEntry("B", "B1", MigrationMapEntry.CLASS, true)
+                  MigrationMapEntry("A", "A1", MigrationMapEntry.CLASS, true),
+                  MigrationMapEntry("B", "B1", MigrationMapEntry.CLASS, true)
     )
   }
 
   fun `test two non existent classes`() {
-    migrationTest(ULanguage.JAVA, before = """
+    migrationTest(JvmLanguage.JAVA, before = """
       package p1;
 
       import qqq.aaa.XXX;
@@ -129,7 +129,7 @@ class JavaMigrationTest : MigrationTestBase() {
       }
     """.trimIndent(), MigrationMapEntry("qqq.aaa.XXX", "zzz.bbb.QQQ", MigrationMapEntry.CLASS, false)
     )
-    migrationTest(ULanguage.JAVA, before = """
+    migrationTest(JvmLanguage.JAVA, before = """
       package p1;
       
       import qqq.aaa.*;
@@ -151,7 +151,7 @@ class JavaMigrationTest : MigrationTestBase() {
   }
 
   fun `test non existing class and non existing package`() {
-    migrationTest(ULanguage.JAVA, before = """
+    migrationTest(JvmLanguage.JAVA, before = """
       package p1;
 
       import qqq.aaa.XXX;
@@ -169,7 +169,7 @@ class JavaMigrationTest : MigrationTestBase() {
       }
     """.trimIndent(), MigrationMapEntry("qqq.aaa.XXX", "java.lang.String", MigrationMapEntry.CLASS, false)
     )
-    migrationTest(ULanguage.JAVA, before = """
+    migrationTest(JvmLanguage.JAVA, before = """
       package p1;
       
       import qqq.aaa.*;
@@ -190,7 +190,7 @@ class JavaMigrationTest : MigrationTestBase() {
   }
 
   fun `test same short name class`() {
-    migrationTest(ULanguage.JAVA, before = """
+    migrationTest(JvmLanguage.JAVA, before = """
       import aaa.*;
       
       public class C {
@@ -213,7 +213,7 @@ class JavaMigrationTest : MigrationTestBase() {
       }
     """.trimIndent(), MigrationMapEntry("aaa.Test", "bbb.Test", MigrationMapEntry.CLASS, false)
     )
-    migrationTest(ULanguage.JAVA, before = """
+    migrationTest(JvmLanguage.JAVA, before = """
       import aaa.Test;
       
       public class C1 {
