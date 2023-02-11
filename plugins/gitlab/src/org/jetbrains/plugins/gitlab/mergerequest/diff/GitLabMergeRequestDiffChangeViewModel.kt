@@ -12,7 +12,7 @@ import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.util.childScope
-import git4idea.changes.GitChangeDiffData
+import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -43,7 +43,7 @@ class GitLabMergeRequestDiffChangeViewModelImpl(
   parentCs: CoroutineScope,
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
-  private val diffData: GitChangeDiffData
+  private val diffData: GitTextFilePatchWithHistory
 ) : GitLabMergeRequestDiffChangeViewModel {
 
   private val cs = parentCs.childScope()
@@ -63,17 +63,17 @@ class GitLabMergeRequestDiffChangeViewModelImpl(
       vms.map { DiffMappedValue(it.toPair()) }
     }.modelFlow(cs, LOG)
 
-  private fun mapDiscussionToDiff(diffData: GitChangeDiffData, discussion: GitLabDiscussion): DiffMappedValue<GitLabDiscussion>? {
+  private fun mapDiscussionToDiff(diffData: GitTextFilePatchWithHistory, discussion: GitLabDiscussion): DiffMappedValue<GitLabDiscussion>? {
     val position = discussion.position?.takeIf { pos -> diffData.contains(pos.diffRefs.headSha, pos.filePath) } ?: return null
 
     val originalSide = if (position.newLine != null) Side.RIGHT else Side.LEFT
     val originalLine = (position.newLine ?: position.oldLine!!) - 1
 
     val location = when (diffData) {
-      is GitChangeDiffData.Cumulative -> {
+      is GitTextFilePatchWithHistory.Cumulative -> {
         DiffLineLocation(originalSide, originalLine)
       }
-      is GitChangeDiffData.Commit -> {
+      is GitTextFilePatchWithHistory.Commit -> {
         diffData.mapPosition(position.diffRefs.headSha, originalSide, originalLine) ?: return null
       }
     }

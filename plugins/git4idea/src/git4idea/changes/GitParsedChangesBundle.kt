@@ -16,7 +16,7 @@ import java.util.*
 interface GitParsedChangesBundle {
   val changes: List<Change>
   val changesByCommits: Map<String, Collection<Change>>
-  val diffDataByChange: Map<Change, GitChangeDiffData>
+  val patchesByChange: Map<Change, GitTextFilePatchWithHistory>
   val linearHistory: Boolean
 
   companion object {
@@ -32,12 +32,12 @@ interface GitParsedChangesBundle {
   }
 }
 
-fun Map<Change, GitChangeDiffData>.findCumulativeChange(commitSha: String, filePath: String): Change? =
+fun Map<Change, GitTextFilePatchWithHistory>.findCumulativeChange(commitSha: String, filePath: String): Change? =
   entries.find {
-    it.value is GitChangeDiffData.Cumulative && it.value.contains(commitSha, filePath)
+    it.value is GitTextFilePatchWithHistory.Cumulative && it.value.contains(commitSha, filePath)
   }?.key
 
-fun GitChangeDiffData.getDiffComputer(): DiffUserDataKeysEx.DiffComputer {
+fun GitTextFilePatchWithHistory.getDiffComputer(): DiffUserDataKeysEx.DiffComputer {
   val diffRanges = diffRangesWithoutContext
   return DiffUserDataKeysEx.DiffComputer { text1, text2, policy, innerChanges, indicator ->
     val comparisonManager = getInstanceImpl()

@@ -7,7 +7,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 
-sealed class GitChangeDiffData(val patch: TextFilePatch, protected val fileHistory: GitFileHistory) {
+sealed class GitTextFilePatchWithHistory(val patch: TextFilePatch, protected val fileHistory: GitFileHistory) {
 
   val diffRanges: List<Range> by lazy(LazyThreadSafetyMode.NONE) {
     patch.hunks.map(PatchHunkUtil::getRange)
@@ -20,7 +20,7 @@ sealed class GitChangeDiffData(val patch: TextFilePatch, protected val fileHisto
     return fileHistory.contains(commitSha, filePath)
   }
 
-  class Commit(patch: TextFilePatch, fileHistory: GitFileHistory) : GitChangeDiffData(patch, fileHistory) {
+  class Commit(patch: TextFilePatch, fileHistory: GitFileHistory) : GitTextFilePatchWithHistory(patch, fileHistory) {
 
     fun mapPosition(fromCommitSha: String,
                     side: Side, line: Int): DiffLineLocation? {
@@ -77,5 +77,5 @@ sealed class GitChangeDiffData(val patch: TextFilePatch, protected val fileHisto
     private fun reverseRange(range: Range) = Range(range.start2, range.end2, range.start1, range.end1)
   }
 
-  class Cumulative(patch: TextFilePatch, fileHistory: GitFileHistory) : GitChangeDiffData(patch, fileHistory)
+  class Cumulative(patch: TextFilePatch, fileHistory: GitFileHistory) : GitTextFilePatchWithHistory(patch, fileHistory)
 }
