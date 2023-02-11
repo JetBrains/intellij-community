@@ -80,6 +80,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
           }
         }
       }
+    }.apply {
+      name = "GitLab Discussion Panel ${vm.id}"
     }
   }
 

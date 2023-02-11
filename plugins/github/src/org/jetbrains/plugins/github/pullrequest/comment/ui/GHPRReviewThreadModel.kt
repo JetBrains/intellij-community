@@ -18,7 +18,7 @@ interface GHPRReviewThreadModel : ListModel<GHPRReviewCommentModel> {
   val commit: GHCommitHash?
   val filePath: String
   val diffHunk: String
-  val line: Int
+  val line: Int?
   val startLine: Int?
 
   val collapsedState: MutableStateFlow<Boolean>

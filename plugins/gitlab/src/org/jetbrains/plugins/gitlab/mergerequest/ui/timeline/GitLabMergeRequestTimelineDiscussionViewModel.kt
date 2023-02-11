@@ -15,6 +15,7 @@ import org.jetbrains.plugins.gitlab.ui.comment.*
 import java.util.*
 
 interface GitLabMergeRequestTimelineDiscussionViewModel {
+  val id: String
   val date: Date
   val author: Flow<GitLabUserDTO>
 
@@ -47,6 +48,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     .mapScoped { GitLabNoteViewModelImpl(this, it, resolveVm) }
     .modelFlow(cs, LOG)
 
+  override val id: String = discussion.id
   override val date: Date = discussion.createdAt
   override val author: Flow<GitLabUserDTO> = mainNote.map { it.author }
 
