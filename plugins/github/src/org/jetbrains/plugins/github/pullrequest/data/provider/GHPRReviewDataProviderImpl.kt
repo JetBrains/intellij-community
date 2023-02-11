@@ -125,7 +125,16 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
         if (comments.isEmpty())
           null
         else
-          GHPullRequestReviewThread(it.id, it.isResolved, it.isOutdated, it.path, it.side, it.line, it.originalLine, it.startLine,
+          GHPullRequestReviewThread(it.id,
+                                    it.isResolved,
+                                    it.isOutdated,
+                                    it.path,
+                                    it.side,
+                                    it.line,
+                                    it.originalLine,
+                                    it.startSide,
+                                    it.startLine,
+                                    it.originalStartLine,
                                     GraphQLNodesDTO(comments))
       }
     }
@@ -138,7 +147,16 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
     val future = reviewService.updateComment(progressIndicator, pullRequestId, commentId, newText)
     reviewThreadsRequestValue.combineResult(future) { list, newComment ->
       list.map {
-        GHPullRequestReviewThread(it.id, it.isResolved, it.isOutdated, it.path, it.side, it.line, it.originalLine, it.startLine,
+        GHPullRequestReviewThread(it.id,
+                                  it.isResolved,
+                                  it.isOutdated,
+                                  it.path,
+                                  it.side,
+                                  it.line,
+                                  it.originalLine,
+                                  it.startSide,
+                                  it.startLine,
+                                  it.originalStartLine,
                                   GraphQLNodesDTO(it.comments.map { comment ->
                                     if (comment.id == commentId)
                                       GHPullRequestReviewComment(comment.id, comment.databaseId, comment.url, comment.author,
