@@ -203,8 +203,10 @@ object GitLabMergeRequestTimelineComponentFactory {
 
   private fun createLabeledEventContent(item: GitLabMergeRequestTimelineItem.LabelEvent): JComponent {
     val text = when (item.event.actionEnum) {
-      GitLabResourceLabelEventDTO.Action.ADD -> GitLabBundle.message("merge.request.event.label.added", item.event.label.toHtml())
-      GitLabResourceLabelEventDTO.Action.REMOVE -> GitLabBundle.message("merge.request.event.label.removed", item.event.label.toHtml())
+      GitLabResourceLabelEventDTO.Action.ADD ->
+        GitLabBundle.message("merge.request.event.label.added", item.event.label?.toHtml().orEmpty())
+      GitLabResourceLabelEventDTO.Action.REMOVE ->
+        GitLabBundle.message("merge.request.event.label.removed", item.event.label?.toHtml().orEmpty())
     }
     val textPane = SimpleHtmlPane(text)
     return StatusMessageComponentFactory.create(textPane)
