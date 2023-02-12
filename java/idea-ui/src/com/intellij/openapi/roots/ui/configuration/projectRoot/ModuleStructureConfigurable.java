@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
@@ -215,15 +215,14 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private void updateModuleEditorSelection(final NamedConfigurable configurable) {
-    if (configurable instanceof ModuleConfigurable) {
-      final ModuleConfigurable moduleConfigurable = (ModuleConfigurable)configurable;
+    if (configurable instanceof ModuleConfigurable moduleConfigurable) {
       final ModuleEditor editor = moduleConfigurable.getModuleEditor();
       if (editor != null) { //already deleted
         editor.init(myHistory);
       }
     }
-    if (configurable instanceof FacetConfigurable) {
-      ((FacetConfigurable)configurable).getEditor().onFacetSelected();
+    if (configurable instanceof FacetConfigurable facetConfigurable) {
+      facetConfigurable.getEditor().onFacetSelected();
     }
   }
 
@@ -339,8 +338,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     addItemsChangeListener(new ItemsChangeListener() {
       @Override
       public void itemChanged(@Nullable Object deletedItem) {
-        if (deletedItem instanceof Library) {
-          final Library library = (Library)deletedItem;
+        if (deletedItem instanceof Library library) {
           final MyNode node = findNodeByObject(myRoot, library);
           if (node != null) {
             final TreeNode parent = node.getParent();
@@ -540,8 +538,13 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return myContext.myModulesConfigurator.getFacetsConfigurator();
   }
 
-  private void addModule(boolean anImport, String defaultModuleName) {
-    final List<Module> modules = myContext.myModulesConfigurator.addModule(myTree, anImport, defaultModuleName);
+  private void addModule(boolean anImport) {
+    final List<Module> modules;
+    if (anImport) {
+      modules = myContext.myModulesConfigurator.addImportModule(myTree);
+    } else {
+      modules = myContext.myModulesConfigurator.addNewModule();
+    }
     if (modules != null && !modules.isEmpty()) {
       //new module wizard may add yet another SDK to the project
       myProjectStructureConfigurable.getProjectJdksModel().syncSdks();
@@ -1081,14 +1084,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-      String defaultModuleName = "untitled";
-      if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(myProject) && getSelectedNode() instanceof ModuleGroupNodeImpl selectedNode) {
-        ModuleGroup group = selectedNode.getModuleGroup();
-        if (!group.getGroupPathList().isEmpty()) {
-          defaultModuleName = StringUtil.join(group.getGroupPathList(), ".") + ".untitled";
-        }
-      }
-      addModule(myImport, defaultModuleName);
+      addModule(myImport);
     }
   }
 

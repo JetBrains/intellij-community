@@ -480,46 +480,43 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
     @Override
     public void visitReferenceExpression(final @NotNull PsiReferenceExpression reference) {
-      if (myLineRange.intersects(reference.getTextRange())) {
-        final PsiElement psiElement = reference.resolve();
-        if (psiElement instanceof PsiVariable) {
-          final PsiVariable var = (PsiVariable)psiElement;
-          if (var instanceof PsiField) {
-            if (myCollectExpressions && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(reference, myVisibleLocals)) {
-              /*
-              if (var instanceof PsiEnumConstant && reference.getQualifier() == null) {
-                final PsiClass enumClass = ((PsiEnumConstant)var).getContainingClass();
-                if (enumClass != null) {
-                  final PsiExpression expression = JavaPsiFacade.getInstance(var.getProject()).getParserFacade().createExpressionFromText(enumClass.getName() + "." + var.getName(), var);
-                  final PsiReference ref = expression.getReference();
-                  if (ref != null) {
-                    ref.bindToElement(var);
-                    myExpressions.add(new TextWithImportsImpl(expression));
-                  }
+      if (myLineRange.intersects(reference.getTextRange()) && reference.resolve() instanceof PsiVariable var) {
+        if (var instanceof PsiField) {
+          if (myCollectExpressions && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(reference, myVisibleLocals)) {
+            /*
+            if (var instanceof PsiEnumConstant && reference.getQualifier() == null) {
+              final PsiClass enumClass = ((PsiEnumConstant)var).getContainingClass();
+              if (enumClass != null) {
+                final PsiExpression expression = JavaPsiFacade.getInstance(var.getProject()).getParserFacade().createExpressionFromText(enumClass.getName() + "." + var.getName(), var);
+                final PsiReference ref = expression.getReference();
+                if (ref != null) {
+                  ref.bindToElement(var);
+                  myExpressions.add(new TextWithImportsImpl(expression));
                 }
               }
-              else {
-                myExpressions.add(new TextWithImportsImpl(reference));
-              }
-              */
-              final PsiModifierList modifierList = var.getModifierList();
-              boolean isConstant = (var instanceof PsiEnumConstant) ||
-                                   (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC) && modifierList.hasModifierProperty(PsiModifier.FINAL));
-              if (!isConstant) {
-                myExpressions.add(new TextWithImportsImpl(reference));
-              }
-            }
-          }
-          else {
-            if (myVisibleLocals.contains(var.getName())) {
-              myVars.add(var.getName());
             }
             else {
-              // fix for variables used in inner classes
-              if (!Comparing.equal(PsiTreeUtil.getParentOfType(reference, PsiClass.class),
-                                   PsiTreeUtil.getParentOfType(var, PsiClass.class))) {
-                myExpressions.add(new TextWithImportsImpl(reference));
-              }
+              myExpressions.add(new TextWithImportsImpl(reference));
+            }
+            */
+            final PsiModifierList modifierList = var.getModifierList();
+            boolean isConstant = (var instanceof PsiEnumConstant) ||
+                                 (modifierList != null && 
+                                  modifierList.hasModifierProperty(PsiModifier.STATIC) && modifierList.hasModifierProperty(PsiModifier.FINAL));
+            if (!isConstant) {
+              myExpressions.add(new TextWithImportsImpl(reference));
+            }
+          }
+        }
+        else {
+          if (myVisibleLocals.contains(var.getName())) {
+            myVars.add(var.getName());
+          }
+          else {
+            // fix for variables used in inner classes
+            if (!Comparing.equal(PsiTreeUtil.getParentOfType(reference, PsiClass.class),
+                                 PsiTreeUtil.getParentOfType(var, PsiClass.class))) {
+              myExpressions.add(new TextWithImportsImpl(reference));
             }
           }
         }

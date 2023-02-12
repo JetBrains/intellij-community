@@ -69,6 +69,16 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
+    <action id="JavaSoftExit" class="com.intellij.execution.impl.DefaultJavaProgramRunner$SoftExitAction">
+      <add-to-group group-id="RunTab.TopToolbar.More"/>
+      <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Stop"/>
+    </action>
+
+    <action id="JavaControlBreak" class="com.intellij.execution.impl.DefaultJavaProgramRunner$ControlBreakAction">
+      <add-to-group group-id="RunTab.TopToolbar.More"/>
+      <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Stop"/>
+    </action>
+
     <!-- View -->
     <reference ref="DelegateMethods">
       <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="ImplementMethods"/>
@@ -381,13 +391,6 @@
       <add-to-group group-id="RunToolbarAdditionalProcessActions"/>
     </action>
 
-    <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="AllIcons.Actions.PopFrame">
-      <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="ForceRunToCursor"/>
-      <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="first"/>
-      <!--<add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="before" relative-to-action="RunToCursor"/>-->
-      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
-    </action>
-
     <group id="ToggleBreakpointAction">
       <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction">
         <override-text place="MainMenu"/>
@@ -461,7 +464,6 @@
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
       </action>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
-      <reference ref="Debugger.PopFrame"/>
       <group id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </group>
@@ -482,13 +484,13 @@
       <action id="Debugger.InterruptThread" class="com.intellij.debugger.actions.InterruptThreadAction"/>
 
       <action id="Debugger.ForceEarlyReturn" class="com.intellij.debugger.actions.ForceEarlyReturnAction">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
-        <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.PopFrame"/>
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="ResetFrame"/>
+        <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="ResetFrame"/>
         <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
       </action>
 
       <action id="Debugger.ThrowException" class="com.intellij.debugger.actions.ThrowExceptionAction">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="ResetFrame"/>
         <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.ForceEarlyReturn"/>
         <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
       </action>
@@ -606,7 +608,7 @@
       <reference ref="Debugger.ResumeThread"/>
       <reference ref="Debugger.FreezeThread"/>
       <reference ref="Debugger.InterruptThread"/>
-      <reference ref="Debugger.PopFrame"/>
+      <reference ref="ResetFrame"/>
       <separator/>
       <reference ref="ExportThreads"/>
       <reference ref="Debugger.AddSteppingFilter"/>

@@ -185,10 +185,9 @@ public final class GroovyCompletionUtil {
     }
 
     final PsiElement pparent = parent.getParent();
-    if (!(pparent instanceof GrVariableDeclaration)) return false;
+    if (!(pparent instanceof GrVariableDeclaration variableDeclaration)) return false;
     if (((GrVariableDeclaration)pparent).isTuple()) return false;
 
-    final GrVariableDeclaration variableDeclaration = (GrVariableDeclaration)pparent;
     if (variableDeclaration.getTypeElementGroovy() != null) return false;
 
     return variableDeclaration.getVariables()[0] == parent;
@@ -364,9 +363,8 @@ public final class GroovyCompletionUtil {
       builder = builder.withTailText(PsiFormatUtil.formatMethod((PsiMethod)element, substitutor, PsiFormatUtilBase.SHOW_PARAMETERS,
                                                                 PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE));
     }
-    else if (element instanceof PsiClass) {
+    else if (element instanceof PsiClass psiClass) {
       String tailText = getPackageText((PsiClass)element);
-      final PsiClass psiClass = (PsiClass)element;
       if ((substitutor == null || substitutor.getSubstitutionMap().isEmpty()) && psiClass.getTypeParameters().length > 0) {
         tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), psiTypeParameter -> psiTypeParameter.getName(), "," + (showSpaceAfterComma(psiClass) ? " " : "")) + ">" + tailText;
       }
@@ -432,8 +430,7 @@ public final class GroovyCompletionUtil {
     PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
 
     Object o = item.getObject();
-    if (o instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)o;
+    if (o instanceof PsiClass aClass) {
       if (aClass.getQualifiedName() == null) return;
       final String lookupString = item.getLookupString();
       int length = lookupString.length();

@@ -62,7 +62,7 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
       }
     };
     project.getMessageBus().connect(this).subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener);
-    getTextEditor().getEditor().getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener());
+    getTextEditor().getEditor().getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener(), this);
   }
 
   @Override
@@ -99,8 +99,7 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
 
   @Override
   public void setState(@NotNull FileEditorState state) {
-    if (state instanceof MarkdownEditorWithPreviewState) {
-      final var actualState = ((MarkdownEditorWithPreviewState)state);
+    if (state instanceof MarkdownEditorWithPreviewState actualState) {
       super.setState(actualState.getUnderlyingState());
       setVerticalSplit(actualState.isVerticalSplit());
     }

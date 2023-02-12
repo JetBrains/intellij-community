@@ -395,8 +395,10 @@ public class CustomizableActionsPanel {
 
     AnAction reuseFrom = actionManager.getAction(path);
     if (reuseFrom != null) {
-      node.setUserObject(Pair.create(value, reuseFrom.getTemplatePresentation().getIcon()));
-      schema.addIconCustomization(actionId, path);
+      Icon toSet = CustomizationUtil.getOriginalIconFrom(reuseFrom);
+      Icon defaultIcon = CustomizationUtil.getOriginalIconFrom(action);
+      node.setUserObject(Pair.create(value, toSet));
+      schema.addIconCustomization(actionId, toSet != defaultIcon ? path : null);
     }
     else {
       Icon icon;
@@ -451,8 +453,7 @@ public class CustomizableActionsPanel {
     @Override
     protected void doOKAction() {
       Object selectedItem = myComboBox.getSelectedItem();
-      if (selectedItem instanceof ActionIconInfo) {
-        ActionIconInfo selectedInfo = (ActionIconInfo)selectedItem;
+      if (selectedItem instanceof ActionIconInfo selectedInfo) {
         if (setCustomIcon(mySelectedSchema, myNode, selectedInfo, getContentPane())) {
           myActionsTree.repaint();
           CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
@@ -528,7 +529,11 @@ public class CustomizableActionsPanel {
               int newActionPosition = isGroupSelected ? node.getChildCount() : node.getParent().getIndex(node) + ind + 1;
               ActionUrl url = new ActionUrl(getGroupPath(new TreePath(node.getPath()), true), action, ADDED, newActionPosition);
               addCustomizedAction(url);
-              changePathInActionsTree(myActionsTree, url);
+              DefaultMutableTreeNode newNode = addPathToActionsTree(myActionsTree, url);
+              if (newNode != null && action instanceof String) {
+                Icon icon = CustomizationUtil.getIconForPath(ActionManager.getInstance(),mySelectedSchema.getIconPath((String)action));
+                newNode.setUserObject(Pair.create(action, icon));
+              }
             }
 
             ((DefaultTreeModel)myActionsTree.getModel()).reload();

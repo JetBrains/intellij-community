@@ -35,4 +35,5 @@
   </action>
   <action id="MoveLineDown" />
   <action id="MoveLineUp" />
+  <action id="ResetIdeScaleAction"/>
 </keymap>

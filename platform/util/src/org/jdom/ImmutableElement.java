@@ -40,9 +40,6 @@ final class ImmutableElement extends Element {
           Text newText = interner.internText((Text)o);
           newContent[index++]= newText;
         }
-        else if (o instanceof Comment) {
-          // ignore
-        }
         else {
           throw new RuntimeException(o.toString());
         }

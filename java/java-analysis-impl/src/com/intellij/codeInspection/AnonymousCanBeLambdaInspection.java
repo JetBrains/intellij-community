@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -237,11 +237,10 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
   public static PsiExpression replacePsiElementWithLambda(@NotNull PsiElement element,
                                                           final boolean ignoreEqualsMethod,
                                                           boolean forceIgnoreTypeCast) {
-    if (!(element instanceof PsiNewExpression)) {
+    if (!(element instanceof PsiNewExpression newExpression)) {
       return null;
     }
 
-    final PsiNewExpression newExpression = (PsiNewExpression)element;
     final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
 
     if (anonymousClass == null) return null;

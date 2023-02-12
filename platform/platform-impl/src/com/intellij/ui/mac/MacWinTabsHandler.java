@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -76,7 +77,7 @@ public class MacWinTabsHandler {
   }
 
   public static boolean isVersion2() {
-    return Registry.is("ide.mac.os.wintabs.version2", false);
+    return ExperimentalUI.isNewUI() && Registry.is("ide.mac.os.wintabs.version2", true);
   }
 
   public MacWinTabsHandler(@NotNull IdeFrameImpl frame, @NotNull Disposable parentDisposable) {

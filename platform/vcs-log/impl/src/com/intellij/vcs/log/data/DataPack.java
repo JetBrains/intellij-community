@@ -3,13 +3,12 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.GraphColorManagerImpl;
 import com.intellij.vcs.log.graph.GraphCommit;
+import com.intellij.vcs.log.graph.HeadCommitsComparator;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -48,12 +47,12 @@ public class DataPack extends DataPackBase {
     }
     else {
       refsModel = new RefsModel(refs, getHeads(commits), storage, providers);
-      Function<Integer, Hash> hashGetter = VcsLogStorageImpl.createHashGetter(storage);
-      GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
+      Comparator<Integer> headCommitdComparator = new HeadCommitsComparator(refsModel, getRefManagerMap(providers),
+                                                                            VcsLogStorageImpl.createHashGetter(storage));
       Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), storage);
 
       permanentGraph = computeWithSpan(TraceManager.INSTANCE.getTracer("vcs"), "building graph", (span) -> {
-        return PermanentGraphImpl.newInstance(commits, colorManager, branches);
+        return PermanentGraphImpl.newInstance(commits, new GraphColorManagerImpl(refsModel), headCommitdComparator, branches);
       });
     }
 
@@ -77,7 +76,8 @@ public class DataPack extends DataPackBase {
     return heads;
   }
 
-  private static @NotNull Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<? extends VcsRef> branches, @NotNull VcsLogStorage storage) {
+  private static @NotNull Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<? extends VcsRef> branches,
+                                                                  @NotNull VcsLogStorage storage) {
     Set<Integer> result = new HashSet<>();
     for (VcsRef vcsRef : branches) {
       result.add(storage.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()));

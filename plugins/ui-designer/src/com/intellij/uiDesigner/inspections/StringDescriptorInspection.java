@@ -20,22 +20,19 @@ public abstract class StringDescriptorInspection extends BaseFormInspection {
   protected void checkComponentProperties(Module module, @NotNull IComponent component, FormErrorCollector collector) {
     for(IProperty prop: component.getModifiedProperties()) {
       Object propValue = prop.getPropertyValue(component);
-      if (propValue instanceof StringDescriptor) {
-        StringDescriptor descriptor = (StringDescriptor) propValue;
+      if (propValue instanceof StringDescriptor descriptor) {
         checkStringDescriptor(module, component, prop, descriptor, collector);
       }
     }
 
-    if (component instanceof IContainer) {
-      IContainer container = (IContainer) component;
+    if (component instanceof IContainer container) {
       StringDescriptor descriptor = container.getBorderTitle();
       if (descriptor != null) {
         checkStringDescriptor(module, component, myBorderProperty.getValue(), descriptor, collector);
       }
     }
 
-    if (component.getParentContainer() instanceof ITabbedPane) {
-      ITabbedPane parentTabbedPane = (ITabbedPane) component.getParentContainer();
+    if (component.getParentContainer() instanceof ITabbedPane parentTabbedPane) {
       StringDescriptor descriptor = parentTabbedPane.getTabProperty(component, ITabbedPane.TAB_TITLE_PROPERTY);
       if (descriptor != null) {
         checkStringDescriptor(module, component, MockTabTitleProperty.INSTANCE, descriptor, collector);

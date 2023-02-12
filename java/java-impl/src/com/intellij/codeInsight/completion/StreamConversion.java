@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -254,9 +254,8 @@ final class StreamConversion {
       if (call == null) return;
 
       PsiExpression[] args = call.getArgumentList().getExpressions();
-      if (args.length != 1 || !(args[0] instanceof PsiMethodCallExpression)) return;
+      if (args.length != 1 || !(args[0] instanceof PsiMethodCallExpression innerCall)) return;
 
-      PsiMethodCallExpression innerCall = (PsiMethodCallExpression)args[0];
       PsiMethod collectorMethod = innerCall.resolveMethod();
       if (collectorMethod != null && (!collectorMethod.getParameterList().isEmpty() || MethodSignatureUtil.hasOverloads(collectorMethod))) {
         context.getEditor().getCaretModel().moveToOffset(innerCall.getArgumentList().getFirstChild().getTextRange().getEndOffset());

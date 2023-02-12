@@ -7,5 +7,5 @@ inspections:
     enabled: true
     severity: ERROR
     ignore:
-      - "!ijscope:file:*.*"
-      - "ijscope:file:*.java"
+      - "!scope#file:*.*"
+      - "scope#file:*.java"

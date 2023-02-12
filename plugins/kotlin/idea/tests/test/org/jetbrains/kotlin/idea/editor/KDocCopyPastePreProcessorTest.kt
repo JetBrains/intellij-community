@@ -26,6 +26,25 @@ class KDocCopyPastePreProcessorTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent()
     )
 
+    fun testLeadingLineBreak() = doTypeTest(
+        "\n * second line",
+        """
+            /**
+             * hello
+             * first line<caret>
+             * second line
+             */
+        """.trimIndent(),
+        """
+            /**
+             * hello
+             * first line
+             * second line
+             * second line
+             */
+        """.trimIndent()
+    )
+
     fun testPasteRightAfterAsterisks() = doTypeTest(
         """
             Hello
@@ -97,6 +116,9 @@ class KDocCopyPastePreProcessorTest : KotlinLightCodeInsightFixtureTestCase() {
             /**
              * Hello
              * World
+             *
+             *
+             *
              */
         """.trimIndent()
     )
@@ -115,6 +137,8 @@ class KDocCopyPastePreProcessorTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent(),
         """
             /**
+             *
+             *
              * Hello
              * World
              */
@@ -137,8 +161,38 @@ class KDocCopyPastePreProcessorTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent(),
         """
             /**
+             *
+             *
              * Hello
              * World
+             *
+             *
+             */
+        """.trimIndent()
+    )
+
+    fun testPasteTextWithLeadingAndTrailingEmptyLinesAndStar() = doTypeTest(
+        """
+            
+            
+            * Hello
+            * World
+            
+            
+        """.trimIndent(),
+        """
+            /**
+             * <caret>
+             */
+        """.trimIndent(),
+        """
+            /**
+             *
+            
+             * Hello
+             * World
+            
+            
              */
         """.trimIndent()
     )

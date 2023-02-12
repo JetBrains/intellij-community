@@ -357,8 +357,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
       super.visitReturnStatement(statement);
 
       final PsiExpression returnValue = statement.getReturnValue();
-      if (myUseExistingClass && returnValue instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)returnValue;
+      if (myUseExistingClass && returnValue instanceof PsiMethodCallExpression callExpression) {
         if (callExpression.getArgumentList().isEmpty()) {
           final PsiReferenceExpression callMethodExpression = callExpression.getMethodExpression();
           final String methodName = callMethodExpression.getReferenceName();

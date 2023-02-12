@@ -5,15 +5,16 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.VcsLogColorManagerFactory;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -31,15 +32,16 @@ import static com.intellij.vcs.log.impl.CommonUiProperties.SHOW_ROOT_NAMES;
 public class RootCellRenderer extends SimpleColoredRenderer implements TableCellRenderer, VcsLogCellRenderer {
   private final @NotNull VcsLogUiProperties myProperties;
   private final @NotNull VcsLogColorManager myColorManager;
-  private @NotNull Color myColor = UIUtil.getTableBackground();
-  private @NotNull Color myBorderColor = UIUtil.getTableBackground();
-  private boolean isNarrow = true;
+  protected @NotNull Color myColor = UIUtil.getTableBackground();
+  protected @NotNull Color myBorderColor = UIUtil.getTableBackground();
+  protected boolean isNarrow = true;
   private @NotNull @Nls String myTooltip = "";
 
   public RootCellRenderer(@NotNull VcsLogUiProperties properties, @NotNull VcsLogColorManager colorManager) {
     myProperties = properties;
     myColorManager = colorManager;
     setTextAlign(SwingConstants.CENTER);
+    updateInsets();
   }
 
   @Override
@@ -64,11 +66,7 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
 
     FilePath path = (FilePath)value;
 
-    myColor = path == null ? UIUtil.getTableBackground(isSelected, hasFocus) :
-              VcsLogGraphTable.getPathBackgroundColor(path, myColorManager);
-    // FIXME: temporary solution for the new UI
-    boolean hovered = ExperimentalUI.isNewUI() ? false : row == getHoveredRow(table);
-    isSelected = ExperimentalUI.isNewUI() ? false : isSelected;
+    boolean hovered = row == getHoveredRow(table);
 
     myBorderColor = Objects.requireNonNull(((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected, hovered).getBackground());
     setForeground(UIUtil.getTableForeground(false, hasFocus));
@@ -94,6 +92,13 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
       isNarrow = true;
     }
 
+    if (path == null) {
+      myColor = UIUtil.getTableBackground(isSelected, hasFocus);
+    }
+    else {
+      myColor = myColorManager.getPathColor(path, isNarrow ? VcsLogColorManager.DEFAULT_COLOR_MODE : VcsLogColorManagerFactory.ROOT_OPENED_STATE);
+    }
+
     myTooltip = getTooltipText(path, isNarrow);
 
     return this;
@@ -116,6 +121,15 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
         return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
       }
     };
+  }
+
+  public void updateInsets() {
+    boolean rootNamesVisible = myProperties.exists(SHOW_ROOT_NAMES) && myProperties.get(SHOW_ROOT_NAMES);
+    setBorderInsets(rootNamesVisible ? getRootNameInsets() : JBUI.emptyInsets());
+  }
+
+  protected Insets getRootNameInsets() {
+    return JBUI.emptyInsets();
   }
 
   private static boolean isTextShown(JTable table, Object value, int row, int column) {

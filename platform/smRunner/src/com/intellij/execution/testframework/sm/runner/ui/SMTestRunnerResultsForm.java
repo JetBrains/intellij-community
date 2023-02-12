@@ -17,6 +17,7 @@ import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.*;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.treeView.IndexComparator;
@@ -646,7 +647,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     if (testingFinished) {
       boolean noTestsWereRun = myTotalTestCount == 0 && (myTestsRootNode.wasLaunched() || !myTestsRootNode.isTestsReporterAttached());
-      myStatusLine.onTestsDone(noTestsWereRun ? null : myTestsRootNode.getMagnitudeInfo());
+      myStatusLine.onTestsDone(noTestsWereRun ? null : () -> {
+        TestStateInfo.Magnitude magnitude = myTestsRootNode.getMagnitudeInfo();
+        if (magnitude == null) return null;
+        return TestIconMapper.getToolbarIcon(magnitude, myTestsRootNode.hasErrors(), () -> myTestsRootNode.hasPassedTests());
+      });
       final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
       myConsole.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT | SideBorder.TOP),
                                              new SideBorder(editorBackground, SideBorder.LEFT)));
@@ -785,7 +790,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       writeState();
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
       try {
-        SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
+        SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
         TransformerHandler handler = transformerFactory.newTransformerHandler();
         handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
         handler.getTransformer().setOutputProperty(OutputKeys.VERSION, "1.1");

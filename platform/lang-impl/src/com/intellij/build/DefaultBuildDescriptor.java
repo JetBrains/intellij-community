@@ -84,8 +84,7 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
 
   public DefaultBuildDescriptor(@NotNull BuildDescriptor descriptor) {
     this(descriptor.getId(), descriptor.getGroupId(), descriptor.getTitle(), descriptor.getWorkingDir(), descriptor.getStartTime());
-    if (descriptor instanceof DefaultBuildDescriptor) {
-      DefaultBuildDescriptor defaultBuildDescriptor = (DefaultBuildDescriptor)descriptor;
+    if (descriptor instanceof DefaultBuildDescriptor defaultBuildDescriptor) {
       myActivateToolWindowWhenAdded = defaultBuildDescriptor.myActivateToolWindowWhenAdded;
       myActivateToolWindowWhenFailed = defaultBuildDescriptor.myActivateToolWindowWhenFailed;
       myAutoFocusContent = defaultBuildDescriptor.myAutoFocusContent;

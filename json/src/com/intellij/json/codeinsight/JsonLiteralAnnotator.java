@@ -34,8 +34,7 @@ public class JsonLiteralAnnotator implements Annotator {
     if (element instanceof JsonReferenceExpression) {
       highlightPropertyKey(element, holder);
     }
-    else if (element instanceof JsonStringLiteral) {
-      final JsonStringLiteral stringLiteral = (JsonStringLiteral)element;
+    else if (element instanceof JsonStringLiteral stringLiteral) {
       final int elementOffset = element.getTextOffset();
       highlightPropertyKey(element, holder);
       final String text = JsonPsiUtil.getElementTextWithoutHostEscaping(element);

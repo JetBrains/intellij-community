@@ -107,8 +107,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
           return;
         }
       }
-      final PsiLocalVariable variable = (PsiLocalVariable)firstElement;
-      registerModifierError(PsiModifier.FINAL, variable, variable);
+      registerModifierError(PsiModifier.FINAL, firstVariable, firstVariable);
     }
 
     @Override

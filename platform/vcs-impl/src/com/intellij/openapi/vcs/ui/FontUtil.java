@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ui;
 
-import com.intellij.ide.actions.IdeScaleTransformer;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.util.ui.StartupUiUtil;
@@ -54,7 +54,7 @@ public final class FontUtil {
 
   @NotNull
   public static Font getEditorFont() {
-    return EditorFontType.getGlobalPlainFont().deriveFont(IdeScaleTransformer.getInstance().getCurrentEditorFontSize());
+    return EditorFontType.getGlobalPlainFont().deriveFont(UISettingsUtils.getInstance().getScaledEditorFontSize());
   }
 
   @NotNull

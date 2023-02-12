@@ -69,8 +69,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     if (myStopExecuting) {
       return false;
     }
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+    if (element instanceof PsiMethod method) {
 
       if (method.isConstructor() != myIsConstructor) return true;
 

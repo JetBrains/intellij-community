@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -184,8 +184,7 @@ public final class AddExceptionToExistingCatchFix extends PsiElementBaseIntentio
       List<PsiTryStatement> parents = new SmartList<>();
       while (parent != null) {
         if (parent instanceof PsiLambdaExpression || parent instanceof PsiMember || parent instanceof PsiFile) break;
-        if (parent instanceof PsiTryStatement) {
-          PsiTryStatement tryStatement = (PsiTryStatement)parent;
+        if (parent instanceof PsiTryStatement tryStatement) {
           if (tryStatement.getFinallyBlock() != current && !(current instanceof PsiCatchSection)) {
             parents.add((PsiTryStatement)parent);
           }
@@ -215,8 +214,7 @@ public final class AddExceptionToExistingCatchFix extends PsiElementBaseIntentio
   }
 
   private static boolean replacementNeeded(@NotNull PsiClassType newException, @NotNull PsiType catchType) {
-    if (catchType instanceof PsiDisjunctionType) {
-      PsiDisjunctionType disjunction = (PsiDisjunctionType)catchType;
+    if (catchType instanceof PsiDisjunctionType disjunction) {
       for (PsiType type : disjunction.getDisjunctions()) {
         if (newException.isAssignableFrom(type)) {
           return true;

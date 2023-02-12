@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.move.moveMembers;
 
@@ -44,8 +44,7 @@ public final class MoveMembersImpl {
         CommonRefactoringUtil.showErrorMessage(getRefactoringName(), message, HelpID.MOVE_MEMBERS, project);
         return;
       }
-      if (element instanceof PsiField) {
-        PsiField field = (PsiField)element;
+      if (element instanceof PsiField field) {
         if (!field.hasModifierProperty(PsiModifier.STATIC)) {
           String fieldName = PsiFormatUtil.formatVariable(
             field,
@@ -58,8 +57,7 @@ public final class MoveMembersImpl {
         }
         preselectMembers.add(field);
       }
-      else if (element instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)element;
+      else if (element instanceof PsiMethod method) {
         String methodName = PsiFormatUtil.formatMethod(
           method,
           PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
@@ -78,8 +76,7 @@ public final class MoveMembersImpl {
         }
         preselectMembers.add(method);
       }
-      else if (element instanceof PsiClass) {
-        PsiClass aClass = (PsiClass)element;
+      else if (element instanceof PsiClass aClass) {
         if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
           String message = JavaRefactoringBundle.message("inner.class.0.is.not.static", aClass.getQualifiedName(),
                                                      getRefactoringName());

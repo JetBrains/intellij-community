@@ -20,9 +20,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.*;
 
@@ -85,11 +85,11 @@ enum AtomicConversionType {
           if (from.getDeepComponentType() instanceof PsiPrimitiveType) {
             final PsiPrimitiveType unboxedInitialType = PsiPrimitiveType.getUnboxedType(toTypeParameterValue);
             if (unboxedInitialType != null) {
-              return TypeConversionUtil.areTypesConvertible(from.getDeepComponentType(), unboxedInitialType);
+              return TypeConversionUtil.areTypesConvertible(unboxedInitialType, from.getDeepComponentType());
             }
           }
           else {
-            return TypeConversionUtil.isAssignable(from.getDeepComponentType(), PsiUtil.captureToplevelWildcards(toTypeParameterValue, context));
+            return TypeConversionUtil.isAssignable(PsiUtil.captureToplevelWildcards(toTypeParameterValue, context), from.getDeepComponentType());
           }
         }
       }
@@ -108,6 +108,6 @@ enum AtomicConversionType {
 
   @Nullable
   static AtomicConversionType getConversionType(PsiType from, PsiClassType to, PsiExpression context) {
-    return Arrays.stream(values()).filter(type -> type.accept(from, to, context)).findFirst().orElse(null);
+    return ContainerUtil.find(values(), type -> type.accept(from, to, context));
   }
 }

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.debugger.test
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.codegen.ClassBuilderFactory
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.debugger.test.DebuggerTestCompilerFacility
 import org.jetbrains.kotlin.idea.debugger.test.TestFileWithModule
@@ -13,8 +14,9 @@ internal class K2DebuggerTestCompilerFacility(
     private val project: Project,
     files: List<TestFileWithModule>,
     jvmTarget: JvmTarget,
-    useIrBackend: Boolean
-) : DebuggerTestCompilerFacility(files, jvmTarget, useIrBackend) {
+    useIrBackend: Boolean,
+    lambdasGenerationScheme: JvmClosureGenerationScheme,
+) : DebuggerTestCompilerFacility(files, jvmTarget, useIrBackend, lambdasGenerationScheme) {
     override fun compileTestSources(
         project: Project,
         srcDir: File,

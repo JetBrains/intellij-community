@@ -70,10 +70,8 @@ public final class ScalaModelData extends AbstractExternalEntityData {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ScalaModelData)) return false;
+    if (!(o instanceof ScalaModelData data)) return false;
     if (!super.equals(o)) return false;
-
-    ScalaModelData data = (ScalaModelData)o;
 
     if (scalaClasspath != null ? !scalaClasspath.equals(data.scalaClasspath) : data.scalaClasspath != null) return false;
     if (scalaCompileOptions != null ? !scalaCompileOptions.equals(data.scalaCompileOptions) : data.scalaCompileOptions != null) {

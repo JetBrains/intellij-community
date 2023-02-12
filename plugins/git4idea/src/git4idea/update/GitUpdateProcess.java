@@ -281,9 +281,8 @@ public final class GitUpdateProcess {
       GitUpdater updater = updaters.get(repository);
       Collection<Change> changes = changesUnderRoots.get(repository.getRoot());
       LOG.debug("Changes under root '" + getShortRepositoryName(repository) + "': " + changes);
-      if (updater instanceof GitRebaseUpdater && changes != null && !changes.isEmpty()) {
+      if (updater instanceof GitRebaseUpdater rebaseUpdater && changes != null && !changes.isEmpty()) {
         // check only if there are local changes, otherwise stash won't happen anyway and there would be no optimization
-        GitRebaseUpdater rebaseUpdater = (GitRebaseUpdater) updater;
         if (rebaseUpdater.fastForwardMerge()) {
           continue;
         }

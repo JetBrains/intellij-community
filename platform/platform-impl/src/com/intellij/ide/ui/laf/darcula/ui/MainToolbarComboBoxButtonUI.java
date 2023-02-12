@@ -73,8 +73,7 @@ public class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    if (!(c instanceof ComboBoxAction.ComboBoxButton)) return;
-    ComboBoxAction.ComboBoxButton button = (ComboBoxAction.ComboBoxButton)c;
+    if (!(c instanceof ComboBoxAction.ComboBoxButton button)) return;
 
     if (button.getClientProperty(HOVER_PROP) == Boolean.TRUE) paintBackground(g, button, HOVER_COLOR);
     else if (c.isOpaque()) paintBackground(g, button, button.getBackground());
@@ -83,8 +82,7 @@ public class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
 
   @Override
   protected void paintContents(Graphics g, AbstractButton c) {
-    if (!(c instanceof ComboBoxAction.ComboBoxButton)) return;
-    ComboBoxAction.ComboBoxButton button = (ComboBoxAction.ComboBoxButton)c;
+    if (!(c instanceof ComboBoxAction.ComboBoxButton button)) return;
 
     FontMetrics fm = UIUtilities.getFontMetrics(button, g);
     int width = button.getWidth();

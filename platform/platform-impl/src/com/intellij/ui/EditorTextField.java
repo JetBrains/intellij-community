@@ -3,8 +3,8 @@ package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.actions.IdeScaleTransformer;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.ui.laf.PluggableLafInfo;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.Disposable;
@@ -707,7 +707,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       editor.getColorsScheme().setEditorFontSize(getFont().getSize());
       return;
     }
-    float currentEditorFontSize = IdeScaleTransformer.getInstance().getCurrentEditorFontSize();
+    float currentEditorFontSize = UISettingsUtils.getInstance().getScaledEditorFontSize();
     if (editor.getColorsScheme().getEditorFontSize2D() != currentEditorFontSize) {
       editor.putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true);
       editor.setFontSize(currentEditorFontSize);

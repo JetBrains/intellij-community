@@ -87,10 +87,9 @@ public class ConditionalExpressionInspection extends BaseInspection {
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiConditionalExpression)) {
+      if (!(element instanceof PsiConditionalExpression expression)) {
         return;
       }
-      PsiConditionalExpression expression = (PsiConditionalExpression)element;
       CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(expression);
       if (surrounder == null) return;
       CodeBlockSurrounder.SurroundResult result = surrounder.surround();
@@ -154,25 +153,20 @@ public class ConditionalExpressionInspection extends BaseInspection {
         ifStatement = (PsiIfStatement)tracker.replaceAndRestoreComments(statement, ifStatement);
       }
       final PsiStatement elseBranch = ifStatement.getElseBranch();
-      if (elseBranch instanceof PsiReturnStatement) {
-        final PsiReturnStatement returnStatement = (PsiReturnStatement)elseBranch;
+      if (elseBranch instanceof PsiReturnStatement returnStatement) {
         final PsiExpression value = returnStatement.getReturnValue();
-        if (value instanceof PsiParenthesizedExpression) {
-          final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)value;
+        if (value instanceof PsiParenthesizedExpression parenthesizedExpression) {
           if (parenthesizedExpression.getExpression() == null) {
             elseBranch.delete();
           }
         }
       }
-      else if (elseBranch instanceof PsiExpressionStatement) {
-        final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)elseBranch;
+      else if (elseBranch instanceof PsiExpressionStatement expressionStatement) {
         final PsiExpression statementExpression = expressionStatement.getExpression();
-        if (statementExpression instanceof PsiAssignmentExpression) {
-          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)statementExpression;
+        if (statementExpression instanceof PsiAssignmentExpression assignmentExpression) {
           final PsiExpression rhs = assignmentExpression.getRExpression();
 
-          if (rhs instanceof PsiParenthesizedExpression) {
-            final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)rhs;
+          if (rhs instanceof PsiParenthesizedExpression parenthesizedExpression) {
             if (parenthesizedExpression.getExpression() == null) {
               rhs.delete();
             }

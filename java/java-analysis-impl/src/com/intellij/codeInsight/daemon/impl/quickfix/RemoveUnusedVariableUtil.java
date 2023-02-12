@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.psi.*;
@@ -101,8 +101,7 @@ public final class RemoveUnusedVariableUtil {
         parent.replace(createStatementIfNeeded(null, factory, element));
       }
     }
-    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiExpressionListStatement) {
-      PsiExpressionList list = (PsiExpressionList)parent;
+    else if (parent instanceof PsiExpressionList list && parent.getParent() instanceof PsiExpressionListStatement) {
       PsiExpression[] expressions = list.getExpressions();
       if (expressions.length == 2) {
         PsiExpression other = expressions[0] == element ? expressions[1] : expressions[0];

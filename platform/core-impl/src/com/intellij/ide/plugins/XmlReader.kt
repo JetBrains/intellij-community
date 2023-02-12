@@ -3,6 +3,7 @@
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.RawPluginDescriptor.*
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
@@ -183,7 +184,7 @@ private fun readRootElementChild(reader: XMLStreamReader2,
         descriptor.id = getNullifiedContent(reader)
       }
       else if (!KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.id) && descriptor.id != "com.intellij") {
-        // no warn and no redefinition for kotlin - compiler.xml is a known issue
+        // no warning and no redefinition for kotlin - compiler.xml is a known issue
         LOG.warn("id redefinition (${reader.locationInfo.location})")
         descriptor.id = getNullifiedContent(reader)
       }
@@ -194,7 +195,7 @@ private fun readRootElementChild(reader: XMLStreamReader2,
     "name" -> descriptor.name = getNullifiedContent(reader)
     "category" -> descriptor.category = getNullifiedContent(reader)
     "version" -> {
-      // kotlin includes compiler.xml that due to some reasons duplicates version
+      // kotlin includes compiler.xml that due to some reasons duplicates a version
       if (descriptor.version == null || !KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.id)) {
         descriptor.version = getNullifiedContent(reader)
       }
@@ -307,6 +308,8 @@ private fun readRootElementChild(reader: XMLStreamReader2,
   }
 }
 
+private val actionNameToEnum = ActionDescriptorName.values().let { it.associateByTo(HashMap(it.size), ActionDescriptorName::name) }
+
 private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader2, readContext: ReadModuleContext) {
   var actionElements = descriptor.actions
   if (actionElements == null) {
@@ -320,11 +323,63 @@ private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader
       return@consumeChildElements
     }
 
-    actionElements.add(RawPluginDescriptor.ActionDescriptor(
-      name = elementName,
-      element = readXmlAsModel(reader = reader, rootName = elementName, interner = readContext.interner),
-      resourceBundle = resourceBundle,
-    ))
+    val name = actionNameToEnum.get(elementName)
+    if (name == null) {
+      LOG.error("Unexpected name of element: $elementName at ${reader.location}")
+      reader.skipElement()
+      return@consumeChildElements
+    }
+
+    val element = readXmlAsModel(reader = reader, rootName = elementName, interner = readContext.interner)
+
+    when (name) {
+      ActionDescriptorName.action -> {
+        val className = element.attributes.get("class")
+        if (className.isNullOrEmpty()) {
+          LOG.error("action element should have specified \"class\" attribute at ${reader.location}")
+          reader.skipElement()
+          return@consumeChildElements
+        }
+
+        actionElements.add(ActionDescriptorAction(
+          className = className,
+          element = element,
+          resourceBundle = resourceBundle,
+        ))
+      }
+      ActionDescriptorName.group -> {
+        var className = element.attributes.get("class")
+        if (className.isNullOrEmpty()) {
+          className = if ("true" == element.attributes.get("compact")) {
+            "com.intellij.openapi.actionSystem.DefaultCompactActionGroup"
+          }
+          else {
+            "com.intellij.openapi.actionSystem.DefaultActionGroup"
+          }
+        }
+
+        val id = element.attributes.get("id")
+        if (id != null && id.isEmpty()) {
+          LOG.error("ID of the group cannot be an empty string at ${reader.location}")
+          reader.skipElement()
+          return@consumeChildElements
+        }
+
+        actionElements.add(ActionDescriptorGroup(
+          className = className,
+          id = id,
+          element = element,
+          resourceBundle = resourceBundle,
+        ))
+      }
+      else -> {
+        actionElements.add(ActionDescriptorMisc(
+          name = name,
+          element = element,
+          resourceBundle = resourceBundle,
+        ))
+      }
+    }
   }
 }
 
@@ -924,7 +979,7 @@ private fun readOs(value: String): ExtensionDescriptor.Os {
 }
 
 private inline fun XMLStreamReader.consumeChildElements(crossinline consumer: (name: String) -> Unit) {
-  // cursor must be at the start of parent element
+  // cursor must be at the start of the parent element
   assert(isStartElement)
 
   var depth = 1

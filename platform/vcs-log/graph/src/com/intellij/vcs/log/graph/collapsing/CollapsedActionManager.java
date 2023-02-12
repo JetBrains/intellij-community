@@ -311,8 +311,7 @@ final class CollapsedActionManager {
     if (graphElement == null) return null;
 
     if (graphElement instanceof GraphEdge && ((GraphEdge)graphElement).getType() == GraphEdgeType.DOTTED) return (GraphEdge)graphElement;
-    if (graphElement instanceof GraphNode) {
-      GraphNode node = (GraphNode)graphElement;
+    if (graphElement instanceof GraphNode node) {
       for (GraphEdge edge : graph.getAdjacentEdges(node.getNodeIndex(), EdgeFilter.NORMAL_ALL)) {
         if (edge.getType() == GraphEdgeType.DOTTED) return edge;
       }

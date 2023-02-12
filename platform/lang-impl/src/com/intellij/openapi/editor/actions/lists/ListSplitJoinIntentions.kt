@@ -43,7 +43,7 @@ abstract class SplitJoinIntention : PsiElementBaseIntentionAction(), LowPriority
     }
     documentManager.commitDocument(document)
     if (marker.isValid) {
-      splitJoinContext.reformatRange(containingFile, TextRange.create(marker), operation())
+      splitJoinContext.reformatRange(containingFile, marker.textRange, operation())
     }
   }
 

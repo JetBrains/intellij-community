@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gitlab.api.dto
 abstract class GitLabGraphQLMutationResultDTO<V>(
   val errors: List<String>?
 ) {
-  abstract val value: V
+  abstract val value: V?
 
   class Empty(errors: List<String>?) : GitLabGraphQLMutationResultDTO<Unit>(errors) {
     override val value: Unit = Unit

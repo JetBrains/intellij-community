@@ -22,8 +22,8 @@ import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSelectPullRequestForFileAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSwitchRemoteAction
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
+import org.jetbrains.plugins.github.pullrequest.ui.selector.GHRepositoryConnectionManager
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowContentController
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHRepositoryConnectionManager
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.MultiTabGHPRToolWindowContentController
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
@@ -62,7 +62,7 @@ internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
       service<GHAccountManager>(),
       project.service<GHRepositoryConnectionManager>(),
       project.service<GithubPullRequestsProjectUISettings>(),
-      toolWindow.contentManager
+      toolWindow
     )
 
     ClientProperty.put(toolWindow.component, GHPRToolWindowContentController.KEY, controller)

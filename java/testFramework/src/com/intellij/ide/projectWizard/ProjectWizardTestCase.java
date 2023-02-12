@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.actions.ImportModuleAction;
@@ -68,10 +68,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   @Override
   public void tearDown() throws Exception {
     try {
-      if (myWizard != null) {
-        Disposer.dispose(myWizard.getDisposable());
-        myWizard = null;
-      }
+      setWizard(null);
       if (myCreatedProject != null) {
         PlatformTestUtil.forceCloseProjectWithoutSaving(myCreatedProject);
         myCreatedProject = null;
@@ -102,6 +99,13 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         }
       });
     }
+  }
+
+  void setWizard(@Nullable T wizard) {
+    if (myWizard != null) {
+      Disposer.dispose(myWizard.getDisposable());
+    }
+    myWizard = wizard;
   }
 
   protected Project createProjectFromTemplate(@NotNull String group, @Nullable String name, @Nullable Consumer<? super Step> adjuster)
@@ -150,14 +154,11 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   private static void setSelectedTemplate(@NotNull Step step, @NotNull String group, @Nullable String name) {
-    if (step instanceof ProjectTypeStep) {
-      ProjectTypeStep projectTypeStep = (ProjectTypeStep)step;
-      if (!projectTypeStep.setSelectedTemplate(group, name)) {
-        throw new IllegalArgumentException(
-          group + '/' + name + " template not found. " +
-          "Available groups: " + projectTypeStep.availableTemplateGroupsToString()
-        );
-      }
+    if (step instanceof ProjectTypeStep projectTypeStep && !projectTypeStep.setSelectedTemplate(group, name)) {
+      throw new IllegalArgumentException(
+        group + '/' + name + " template not found. " +
+        "Available groups: " + projectTypeStep.availableTemplateGroupsToString()
+      );
     }
     if (step instanceof ChooseTemplateStep) {
       if (name != null) {
@@ -205,11 +206,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   protected void createWizard(@Nullable Project project) throws IOException {
-    if (myWizard != null) {
-      Disposer.dispose(myWizard.getDisposable());
-      myWizard = null;
-    }
-    myWizard = createWizard(project, createTempDirectoryWithSuffix("new").toFile());
+    setWizard(createWizard(project, createTempDirectoryWithSuffix("new").toFile()));
     UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
   }
 
@@ -309,7 +306,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     assertTrue(providers[0].canImport(file, project));
 
     //noinspection unchecked
-    myWizard = (T)ImportModuleAction.createImportWizard(project, null, file, providers);
+    setWizard((T)ImportModuleAction.createImportWizard(project, null, file, providers));
     assertNotNull(myWizard);
     if (myWizard.getStepCount() > 0) {
       runWizard(adjuster);

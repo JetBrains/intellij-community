@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -178,7 +177,7 @@ final class ConsoleTokenUtil {
           break;
         }
         marker.putUserData(USER_INPUT_SENT, true);
-        textToSend.insert(0, marker.getDocument().getText(TextRange.create(marker)));
+        textToSend.insert(0, marker.getDocument().getText(marker.getTextRange()));
       }
     }
     return textToSend;

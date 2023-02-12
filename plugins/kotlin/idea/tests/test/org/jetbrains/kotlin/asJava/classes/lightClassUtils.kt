@@ -15,12 +15,13 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 internal fun testLightClass(
-    expected: File,
     testData: File,
+    suffixes: List<String> = listOf("descriptors"),
     normalize: (String) -> String,
     findLightClass: (String) -> PsiClass?,
     membersFilter: PsiClassRenderer.MembersFilter = PsiClassRenderer.MembersFilter.DEFAULT,
 ) {
+    val expected = UltraLightChecker.getJavaFileForTest(testData, suffixes)
     val actual = LightClassTestCommon.getActualLightClassText(
         testData,
         findLightClass = findLightClass,
@@ -35,8 +36,9 @@ internal fun testLightClass(
                 .removeLinesStartingWith("@" + JvmAnnotationNames.METADATA_FQ_NAME.asString())
                 .run(normalize)
         },
-        membersFilter = membersFilter
+        membersFilter = membersFilter,
     )
+
     KotlinTestUtils.assertEqualsToFile(expected, actual)
 }
 

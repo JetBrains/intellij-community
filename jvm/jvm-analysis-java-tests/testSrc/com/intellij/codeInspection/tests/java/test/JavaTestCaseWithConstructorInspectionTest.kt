@@ -1,11 +1,11 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.TestCaseWithConstructorInspectionTestBase
 
 class JavaTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspectionTestBase() {
   fun `test no highlighting parameterized test case`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.Test;
       import org.junit.runner.RunWith;
       import org.junit.runners.Parameterized;
@@ -36,7 +36,7 @@ class JavaTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspect
   }
 
   fun `test no highlighting trivial constructor`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
       
       public class TestCaseWithConstructorInspection2 extends TestCase {
@@ -52,7 +52,7 @@ class JavaTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspect
   }
 
   fun `test highlighting simple non-trivial constructor`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
 
       public class TestCaseWithConstructorInspection1 extends TestCase {
@@ -64,7 +64,7 @@ class JavaTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspect
   }
 
   fun `test highlighting complex non-trivial constructor`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
       
       public class TestCaseWithConstructorInspection3 extends TestCase {
@@ -78,7 +78,7 @@ class JavaTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspect
   }
 
   fun `test highlighting Junit 4`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class JUnit4TestCaseWithConstructor {
         public <warning descr="Initialization logic in constructor 'JUnit4TestCaseWithConstructor()' instead of 'setup()' life cycle method">JUnit4TestCaseWithConstructor</warning>() {
           System.out.println();

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -160,8 +158,7 @@ public enum Mutability {
 
   @NotNull
   private static Mutability calcMutability(@NotNull PsiModifierListOwner owner) {
-    if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList) {
-      PsiParameterList list = (PsiParameterList)owner.getParent();
+    if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList list) {
       PsiMethod method = ObjectUtils.tryCast(list.getParent(), PsiMethod.class);
       if (method != null) {
         int index = list.getParameterIndex((PsiParameter)owner);
@@ -189,8 +186,7 @@ public enum Mutability {
                                    AnnotationUtil.CHECK_INFERRED)) {
       return UNMODIFIABLE_VIEW;
     }
-    if (owner instanceof PsiField && owner.hasModifierProperty(PsiModifier.FINAL)) {
-      PsiField field = (PsiField)owner;
+    if (owner instanceof PsiField field && owner.hasModifierProperty(PsiModifier.FINAL)) {
       List<PsiExpression> initializers = ContainerUtil.createMaybeSingletonList(field.getInitializer());
       if (initializers.isEmpty() && !owner.hasModifierProperty(PsiModifier.STATIC)) {
         initializers = DfaPsiUtil.findAllConstructorInitializers(field);
@@ -202,8 +198,7 @@ public enum Mutability {
         Mutability newMutability = UNKNOWN;
         if (ClassUtils.isImmutable(initializer.getType())) {
           newMutability = UNMODIFIABLE;
-        } else if (initializer instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression call = (PsiMethodCallExpression)initializer;
+        } else if (initializer instanceof PsiMethodCallExpression call) {
           if (STREAM_COLLECT.test(call)) {
             PsiExpression collector = call.getArgumentList().getExpressions()[0];
             newMutability = UNMODIFIABLE_COLLECTORS.matches(collector) ? UNMODIFIABLE : UNKNOWN;

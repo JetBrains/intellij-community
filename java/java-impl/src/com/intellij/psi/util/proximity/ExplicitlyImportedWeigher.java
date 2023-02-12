@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util.proximity;
 
 import com.intellij.openapi.module.Module;
@@ -77,8 +77,7 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
       return ImportWeight.DECLARED_IN_SAME_FILE;
     }
 
-    if (element instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass)element;
+    if (element instanceof PsiClass psiClass) {
       final String qname = psiClass.getQualifiedName();
       if (qname != null) {
         boolean topLevel = psiClass.getContainingClass() == null;

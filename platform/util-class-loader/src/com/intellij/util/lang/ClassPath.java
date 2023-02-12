@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -36,8 +36,7 @@ public final class ClassPath {
   static final boolean logLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
 
   // DCEVM support
-  private static final boolean isNewClassLoadingEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.new.classloading.enabled",
-                                                                                                  "false"));
+  private static final boolean isNewClassLoadingEnabled = false;
 
   private static final Collection<Map.Entry<String, Path>> loadedClasses;
 
@@ -45,19 +44,18 @@ public final class ClassPath {
   private static final Measurer resourceLoading = new Measurer();
   private static final AtomicLong classDefineTotalTime = new AtomicLong();
 
-  private final List<Path> files;
-  private final @Nullable Function<Path, ResourceFile> resourceFileFactory;
+  private Path[] files;
+  private int searchOffset = 0;
+
+  private final @NotNull Function<Path, ResourceFile> resourceFileFactory;
   final boolean mimicJarUrlConnection;
   private final List<Loader> loaders = new ArrayList<>();
 
   private volatile boolean allUrlsWereProcessed;
 
   private final AtomicInteger lastLoaderProcessed = new AtomicInteger();
-  private final Set<Path> processedPaths = new HashSet<>();
   private final ClasspathCache cache = new ClasspathCache();
 
-  // true implies that the .jar file will not be modified in the lifetime of the JarLoader
-  final boolean lockJars;
   private final boolean useCache;
   final boolean isClassPathIndexEnabled;
   private final @Nullable CachePoolImpl cachePool;
@@ -77,7 +75,7 @@ public final class ClassPath {
     }
   }
 
-  interface ClassDataConsumer {
+  public interface ClassDataConsumer {
     boolean isByteBufferSupported(String name);
 
     Class<?> consumeClassData(String name, byte[] data, Loader loader) throws IOException;
@@ -85,38 +83,35 @@ public final class ClassPath {
     Class<?> consumeClassData(String name, ByteBuffer data, Loader loader) throws IOException;
   }
 
-  @SuppressWarnings("unused")
-  public @Nullable Function<Path, ResourceFile> getResourceFileFactory() {
-    return resourceFileFactory;
-  }
-
-  public ClassPath(@NotNull List<Path> files,
+  public ClassPath(@NotNull Collection<Path> files,
                    @NotNull UrlClassLoader.Builder configuration,
                    @Nullable Function<Path, ResourceFile> resourceFileFactory,
                    boolean mimicJarUrlConnection) {
-    lockJars = configuration.lockJars;
     useCache = configuration.useCache;
     cachePool = configuration.cachePool;
     cachingCondition = configuration.cachingCondition;
     isClassPathIndexEnabled = configuration.isClassPathIndexEnabled;
     this.mimicJarUrlConnection = mimicJarUrlConnection;
 
-    this.files = new ArrayList<>(files.size());
-    this.resourceFileFactory = resourceFileFactory;
-    if (!files.isEmpty()) {
-      for (int i = files.size() - 1; i >= 0; i--) {
-        this.files.add(files.get(i));
-      }
+    this.files = files.toArray(new Path[]{});
+    if (resourceFileFactory == null) {
+      this.resourceFileFactory = file -> new JdkZipResourceFile(file, configuration.lockJars);
+    }
+    else {
+      this.resourceFileFactory = resourceFileFactory;
     }
   }
 
-  public synchronized void reset(@NotNull List<? extends Path> paths) {
+  synchronized List<Path> getFiles() {
+    return Arrays.asList(files);
+  }
+
+  public synchronized void reset() {
     lastLoaderProcessed.set(0);
     allUrlsWereProcessed = false;
     loaders.clear();
-    processedPaths.clear();
+    searchOffset = 0;
     cache.clearCache();
-    addFiles(paths);
   }
 
   public static @NotNull Collection<Map.Entry<String, Path>> getLoadedClasses() {
@@ -125,7 +120,7 @@ public final class ClassPath {
 
   // in nanoseconds
   public static @NotNull Map<String, Long> getLoadingStats() {
-    Map<String, Long> result = new HashMap<>(5);
+    Map<String, Long> result = new HashMap<>(6);
     result.put("classLoadingTime", classLoading.timeCounter.get());
     result.put("classDefineTime", classDefineTotalTime.get());
     result.put("classRequests", (long)classLoading.requestCounter.get());
@@ -138,26 +133,39 @@ public final class ClassPath {
   }
 
   /** Adding URLs to classpath at runtime could lead to hard-to-debug errors */
-  synchronized void addFiles(@NotNull List<? extends Path> files) {
-    for (int i = files.size() - 1; i >= 0; i--) {
-      this.files.add(files.get(i));
+  synchronized void addFile(@NotNull Path file) {
+    for (Path existingFile : files) {
+      if (existingFile.equals(file)) {
+        return;
+      }
     }
+
+    Path[] result = Arrays.copyOf(files, files.length + 1);
+    result[result.length - 1] = file;
+    files = result;
     allUrlsWereProcessed = false;
   }
 
+  /** Adding URLs to classpath at runtime could lead to hard-to-debug errors */
   // use only after approval
-  public synchronized void appendFiles(@NotNull List<? extends Path> newList) {
+  public synchronized void addFiles(@NotNull List<Path> newList) {
     if (newList.isEmpty()) {
       return;
     }
-
-    Set<Path> existing = new HashSet<>(files);
-    for (int i = newList.size() - 1; i >= 0; i--) {
-      Path file = newList.get(i);
-      if (!existing.contains(file)) {
-        files.add(file);
-      }
+    else if (newList.size() == 1) {
+      addFile(newList.get(0));
+      return;
     }
+
+    Set<Path> result = new LinkedHashSet<>(files.length + newList.size());
+    Collections.addAll(result, files);
+    result.addAll(newList);
+    if (result.size() == files.length) {
+      // no new files
+      return;
+    }
+
+    files = result.toArray(new Path[]{});
     allUrlsWereProcessed = false;
   }
 
@@ -172,11 +180,9 @@ public final class ClassPath {
         Loader[] loaders = cache.getClassLoadersByPackageNameHash(packageNameHash);
         if (loaders != null) {
           for (Loader loader : loaders) {
-            if (loader.containsName(fileName)) {
-              Class<?> result = findClassInLoader(fileName, className, classDataConsumer, loader);
-              if (result != null) {
-                return result;
-              }
+            Class<?> result = findClassInLoader(fileName, className, classDataConsumer, loader);
+            if (result != null) {
+              return result;
             }
           }
         }
@@ -205,28 +211,12 @@ public final class ClassPath {
 
   private @Nullable Class<?> findClassWithoutCache(String className,
                                                    String fileName,
-                                                   int loaderIndex,
+                                                   int initialLoaderIndex,
                                                    ClassDataConsumer classDataConsumer) throws IOException {
-    while (true) {
-      boolean useCache = this.useCache;
-      int i = loaderIndex++;
-      Loader loader;
-      if (i < lastLoaderProcessed.get()) {
-        loader = loaders.get(i);
-        // searching in an already processed loader - do not use cache if detecting new classes is enabled
-        useCache = !isNewClassLoadingEnabled;
-      }
-      else {
-        loader = getLoaderSlowPath(i);
-        // useCache doesn't matter - state on disk is checked as part of loader creation
-      }
-
+    for (int loaderIndex = initialLoaderIndex; ; loaderIndex++) {
+      Loader loader = loaderIndex < lastLoaderProcessed.get() ? loaders.get(loaderIndex) : getLoaderSlowPath(loaderIndex);
       if (loader == null) {
         return null;
-      }
-
-      if (useCache && !loader.containsName(fileName)) {
-        continue;
       }
 
       Class<?> result = findClassInLoader(fileName, className, classDataConsumer, loader);
@@ -258,14 +248,12 @@ public final class ClassPath {
         Loader[] loaders = cache.getLoadersByName(resourceName);
         if (loaders != null) {
           for (Loader loader : loaders) {
-            if (loader.containsName(resourceName)) {
-              Resource resource = loader.getResource(resourceName);
-              if (resource != null) {
-                if (loadedClasses != null) {
-                  loadedClasses.add(new AbstractMap.SimpleImmutableEntry<>(resourceName, loader.getPath()));
-                }
-                return resource;
+            Resource resource = loader.getResource(resourceName);
+            if (resource != null) {
+              if (loadedClasses != null) {
+                loadedClasses.add(new AbstractMap.SimpleImmutableEntry<>(resourceName, loader.getPath()));
               }
+              return resource;
             }
           }
         }
@@ -282,10 +270,6 @@ public final class ClassPath {
 
       Loader loader;
       while ((loader = getLoader(i++)) != null) {
-        if (useCache && !loader.containsName(resourceName)) {
-          continue;
-        }
-
         Resource resource = loader.getResource(resourceName);
         if (resource != null) {
           if (loadedClasses != null) {
@@ -336,35 +320,29 @@ public final class ClassPath {
     }
   }
 
-  private @Nullable Loader getLoader(int i) {
+  private @Nullable Loader getLoader(int loaderIndex) {
     // volatile read
-    return i < lastLoaderProcessed.get() ? loaders.get(i) : getLoaderSlowPath(i);
+    return loaderIndex < lastLoaderProcessed.get() ? loaders.get(loaderIndex) : getLoaderSlowPath(loaderIndex);
   }
 
-  private synchronized @Nullable Loader getLoaderSlowPath(int i) {
-    while (loaders.size() < i + 1) {
-      int size = files.size();
-      if (size == 0) {
+  private synchronized @Nullable Loader getLoaderSlowPath(int loaderIndex) {
+    while (loaders.size() < (loaderIndex + 1)) {
+      if (searchOffset == files.length) {
         if (useCache) {
           allUrlsWereProcessed = true;
         }
         return null;
       }
 
-      Path path = files.remove(size - 1);
-      if (processedPaths.contains(path)) {
-        continue;
-      }
-
+      Path path = files[searchOffset++];
       try {
         Loader loader = createLoader(path);
         if (loader != null) {
-          if (useCache && files.isEmpty()) {
+          if (useCache && searchOffset == files.length) {
             allUrlsWereProcessed = true;
           }
 
           loaders.add(loader);
-          processedPaths.add(path);
           lastLoaderProcessed.incrementAndGet();
         }
       }
@@ -374,7 +352,7 @@ public final class ClassPath {
       }
     }
 
-    return loaders.get(i);
+    return loaders.get(loaderIndex);
   }
 
   public @NotNull List<Path> getBaseUrls() {
@@ -398,7 +376,7 @@ public final class ClassPath {
     }
 
     if (fileAttributes.isDirectory()) {
-      return useCache
+      return useCache && !isNewClassLoadingEnabled
              ? FileLoader.createCachingFileLoader(file, cachePool, cachingCondition, isClassPathIndexEnabled, cache)
              : new FileLoader(file);
     }
@@ -406,7 +384,7 @@ public final class ClassPath {
       return null;
     }
 
-    ResourceFile zipFile = resourceFileFactory == null ? new JdkZipResourceFile(file, lockJars) : resourceFileFactory.apply(file);
+    ResourceFile zipFile = resourceFileFactory.apply(file);
     JarLoader loader = new JarLoader(file, this, zipFile);
     if (useCache) {
       ClasspathCache.IndexRegistrar data = cachePool == null ? null : cachePool.loaderIndexCache.get(file);
@@ -430,17 +408,17 @@ public final class ClassPath {
     String[] referencedJars = loadManifestClasspath(loader, zipFile);
     if (referencedJars != null) {
       long startReferenced = logLoadingInfo ? System.nanoTime() : 0;
-      List<Path> urls = new ArrayList<>(referencedJars.length);
+      List<Path> files = new ArrayList<>(referencedJars.length);
       for (String referencedJar : referencedJars) {
         try {
-          urls.add(Paths.get(UrlClassLoader.urlToFilePath(referencedJar)));
+          files.add(Paths.get(UrlClassLoader.urlToFilePath(referencedJar)));
         }
         catch (Exception e) {
           //noinspection UseOfSystemOutOrSystemErr
           System.err.println("file: " + file + " / " + referencedJar + " " + e);
         }
       }
-      addFiles(urls);
+      addFiles(files);
       if (logLoadingInfo) {
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println("Loaded all " + referencedJars.length + " files " + (System.nanoTime() - startReferenced) / 1000000 + "ms");
@@ -469,10 +447,6 @@ public final class ClassPath {
         Loader loader;
         while (index < loaders.length) {
           loader = loaders[index++];
-          if (!loader.containsName(name)) {
-            resource = null;
-            continue;
-          }
           resource = loader.getResource(name);
           if (resource != null) {
             return true;
@@ -523,9 +497,6 @@ public final class ClassPath {
       try {
         Loader loader;
         while ((loader = classPath.getLoader(index++)) != null) {
-          if (classPath.useCache && !loader.containsName(name)) {
-            continue;
-          }
           resource = loader.getResource(name);
           if (resource != null) {
             return true;

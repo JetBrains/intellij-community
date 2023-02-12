@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.externalAnnotation.location;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -58,9 +58,7 @@ public class AnnotationsLocation {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof AnnotationsLocation)) return false;
-
-    AnnotationsLocation location = (AnnotationsLocation)o;
+    if (!(o instanceof AnnotationsLocation location)) return false;
 
     if (!myGroupId.equals(location.myGroupId)) return false;
     if (!myArtifactId.equals(location.myArtifactId)) return false;

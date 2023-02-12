@@ -157,10 +157,9 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
     @Override
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiPolyadicExpression)) {
+      if (!(element instanceof PsiPolyadicExpression expression)) {
         return;
       }
-      final PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
       final CommentTracker tracker = new CommentTracker();
       tracker.replaceExpressionAndRestoreComments(expression, calculateReplacementExpression(expression, tracker));
     }

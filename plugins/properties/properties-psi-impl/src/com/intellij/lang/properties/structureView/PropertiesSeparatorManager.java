@@ -44,10 +44,9 @@ public final class PropertiesSeparatorManager implements PersistentStateComponen
 
   @NotNull
   public String getSeparator(final ResourceBundle resourceBundle) {
-    if (!(resourceBundle instanceof ResourceBundleImpl)) {
+    if (!(resourceBundle instanceof ResourceBundleImpl resourceBundleImpl)) {
       return ".";
     }
-    final ResourceBundleImpl resourceBundleImpl = (ResourceBundleImpl)resourceBundle;
     String separator = myUserDefinedSeparators.getSeparators().get(resourceBundleImpl.getUrl());
     return separator == null ? Objects.requireNonNull(myGuessedSeparators.get(resourceBundleImpl)) : separator;
   }

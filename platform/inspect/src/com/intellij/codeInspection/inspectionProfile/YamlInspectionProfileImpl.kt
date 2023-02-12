@@ -6,6 +6,8 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.codeInspection.ex.InspectionToolsSupplier
+import com.intellij.codeInspection.inspectionProfile.YamlProfileUtils.createProfileCopy
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.io.toNioPath
@@ -20,6 +22,7 @@ import com.intellij.psi.search.scope.packageSet.AbstractPackageSet
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory
+import com.intellij.psi.search.scope.packageSet.ParsingException
 import org.jdom.Element
 import java.io.File
 import java.io.Reader
@@ -29,7 +32,9 @@ import java.nio.file.Paths
 import kotlin.io.path.exists
 import kotlin.io.path.reader
 
-private const val SCOPE_PREFIX = "ijscope:"
+private const val SCOPE_PREFIX = "scope#"
+
+private val LOG = logger<YamlInspectionProfileImpl>()
 
 class YamlInspectionConfigImpl(override val inspection: String,
                                override val enabled: Boolean?,
@@ -173,13 +178,8 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
   }
 
   fun buildEffectiveProfile(): InspectionProfileImpl {
-    val effectiveProfile: InspectionProfileImpl = InspectionProfileImpl("Default", inspectionToolsSupplier,
-                                                                        inspectionProfileManager, baseProfile, null)
-      .also { profile ->
-        profile.initInspectionTools()
-        profile.copyFrom(baseProfile)
-        profile.name = profileName ?: "Default"
-      }
+    val effectiveProfile: InspectionProfileImpl = createProfileCopy(baseProfile, inspectionToolsSupplier, inspectionProfileManager)
+    effectiveProfile.name = profileName ?: "Default"
     configurations.forEach { configuration ->
       val tools = findTools(configuration)
       val scopes = configuration.ignore.map { pattern ->
@@ -200,7 +200,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
         val options = (configuration as? YamlInspectionConfig)?.options
         if (options != null) {
           val element = Element("tool")
-          ProfileMigrationUtils.writeXmlOptions(element, options)
+          YamlProfileUtils.writeXmlOptions(element, options)
           inspectionTools.defaultState.tool.tool.readSettings(element)
         }
         scopes.forEach { (scope, enabled) ->
@@ -222,7 +222,12 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
 
   private fun parsePattern(pattern: String): NamedScope.UnnamedScope {
     if (pattern.startsWith(SCOPE_PREFIX)) {
-     return NamedScope.UnnamedScope(PackageSetFactory.getInstance().compile(pattern.drop(SCOPE_PREFIX.length)))
+      val scope = pattern.drop(SCOPE_PREFIX.length)
+      try {
+        return NamedScope.UnnamedScope(PackageSetFactory.getInstance().compile(scope))
+      } catch (e: ParsingException) {
+        LOG.error("Unknown scope format: $scope", e)
+      }
     }
 
     return getGlobScope(pattern)

@@ -105,8 +105,7 @@ public class LocalCopyPasteManager implements ClientCopyPasteManager {
         return content;
       }
 
-      if (content instanceof KillRingTransferable) {
-        KillRingTransferable killRingContent = (KillRingTransferable)content;
+      if (content instanceof KillRingTransferable killRingContent) {
         if (killRingContent.isReadyToCombine() && !myData.isEmpty()) {
           Transferable prev = myData.get(0);
           if (prev instanceof KillRingTransferable) {

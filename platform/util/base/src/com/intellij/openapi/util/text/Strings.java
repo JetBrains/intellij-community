@@ -803,4 +803,17 @@ public final class Strings {
   public static @NotNull String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, int @Nullable [] offsetsToKeep) {
     return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep);
   }
+
+  /**
+   * Returns {@code true} if {@code s1} and {@code s2} refer to the same instance of {@link String}.
+   * There are only few cases when you really need to use this method instead of {@link String#equals} or {@link Objects#equals}:
+   * <ul>
+   * <li>for small performance improvement if you're sure that there will be no different instances of the same string;</li>
+   * <li>to implement "Sentinel" pattern; in that case use {@link String#String(String)} constructor to create the sentinel instance.</li>
+   * </ul>
+   */
+  @SuppressWarnings({"StringEquality", "StringEqualitySSR"})
+  public static boolean areSameInstance(@Nullable String s1, @Nullable String s2) {
+    return s1 == s2;
+  }
 }

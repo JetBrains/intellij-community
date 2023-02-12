@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsLi
 import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker.Companion.isKotlinFacet
 
 class KotlinFacetSettingsProviderImpl(project: Project) :
-    SynchronizedFineGrainedEntityCache<Module, KotlinFacetSettings>(project),
+    SynchronizedFineGrainedEntityCache<Module, KotlinFacetSettings>(project, doSelfInitialization = false),
     WorkspaceModelChangeListener,
     KotlinCompilerSettingsListener,
     KotlinFacetSettingsProvider {

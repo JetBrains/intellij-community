@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.internal.statistic.eventLog.events.EventPair;
@@ -69,11 +69,10 @@ public class FindVariableUsagesDialog extends JavaFindUsagesDialog<JavaVariableF
     findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
 
     PsiElement element = getPsiElement();
-    if (element instanceof PsiField) {
+    if (element instanceof PsiField field) {
       myCbSearchForAccessors = addCheckboxToPanel(JavaBundle.message("find.options.include.accessors.checkbox"),
                                                   getFindUsagesOptions().isSearchForAccessors, findWhatPanel, true);
 
-      PsiField field = (PsiField)element;
       JavaFindUsagesHandler handler = (JavaFindUsagesHandler)myUsagesHandler;
       if (!handler.getFieldAccessors(field).isEmpty()) {
         myCbSearchForBase = createCheckbox(JavaBundle.message("find.options.include.accessors.base.checkbox"),

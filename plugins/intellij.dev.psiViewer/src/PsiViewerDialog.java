@@ -502,8 +502,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
   @Nullable
   private static PsiElement getPsiElement(DefaultMutableTreeNode node) {
-    if (node.getUserObject() instanceof ViewerNodeDescriptor) {
-      ViewerNodeDescriptor descriptor = (ViewerNodeDescriptor)node.getUserObject();
+    if (node.getUserObject() instanceof ViewerNodeDescriptor descriptor) {
       Object elementObject = descriptor.getElement();
       return elementObject instanceof PsiElement
              ? (PsiElement)elementObject
@@ -649,8 +648,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       if (source instanceof PsiViewerExtension) {
         return ((PsiViewerExtension)source).createElement(myProject, text);
       }
-      if (source instanceof FileType) {
-        FileType type = (FileType)source;
+      if (source instanceof FileType type) {
         String ext = type.getDefaultExtension();
         if (myExtensionComboBox.isVisible() && myExtensionComboBox.getSelectedItem() != null) {
           ext = StringUtil.toLowerCase(myExtensionComboBox.getSelectedItem().toString());
@@ -699,8 +697,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
         TreePath path = myPsiTree.getSelectionPath();
         if (path != null) {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-          if (!(node.getUserObject() instanceof ViewerNodeDescriptor)) return null;
-          ViewerNodeDescriptor descriptor = (ViewerNodeDescriptor)node.getUserObject();
+          if (!(node.getUserObject() instanceof ViewerNodeDescriptor descriptor)) return null;
           Object elementObject = descriptor.getElement();
           PsiElement element = elementObject instanceof PsiElement
                                      ? (PsiElement)elementObject
@@ -736,8 +733,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       clearSelection();
       if (path != null) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-        if (!(node.getUserObject() instanceof ViewerNodeDescriptor)) return;
-        ViewerNodeDescriptor descriptor = (ViewerNodeDescriptor)node.getUserObject();
+        if (!(node.getUserObject() instanceof ViewerNodeDescriptor descriptor)) return;
         Object elementObject = descriptor.getElement();
         PsiElement element = elementObject instanceof PsiElement
                                    ? (PsiElement)elementObject

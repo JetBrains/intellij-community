@@ -595,8 +595,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     super.configureEditor();
 
     installEditorKeyListener(comboBox.getEditor());
-    if (editor instanceof JComponent) {
-      JComponent jEditor = (JComponent)editor;
+    if (editor instanceof JComponent jEditor) {
       jEditor.setOpaque(false);
       jEditor.setBorder(JBUI.Borders.empty());
 

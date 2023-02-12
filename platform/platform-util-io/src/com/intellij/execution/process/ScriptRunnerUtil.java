@@ -139,11 +139,7 @@ public final class ScriptRunnerUtil {
     }
 
     String pathWithExt = PathEnvironmentVariableUtil.findExecutableInWindowsPath(exeName);
-    if (pathWithExt != exeName) {
-      return true;
-    }
-
-    return false;
+    return !pathWithExt.equals(exeName);
   }
 
   public static ScriptOutput executeScriptInConsoleWithFullOutput(String exePathString,
@@ -225,8 +221,7 @@ public final class ScriptRunnerUtil {
       return;
     }
     processHandler.destroyProcess();
-    if (processHandler instanceof KillableProcess) {
-      KillableProcess killableProcess = (KillableProcess) processHandler;
+    if (processHandler instanceof KillableProcess killableProcess) {
       if (killableProcess.canKillProcess()) {
         if (!processHandler.waitFor(millisTimeout)) {
           // doing 'force quite'

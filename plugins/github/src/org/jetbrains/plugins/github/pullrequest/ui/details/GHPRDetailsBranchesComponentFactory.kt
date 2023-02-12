@@ -7,10 +7,10 @@ import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPopupMenu
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
@@ -22,7 +22,6 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.hover.addHoverAndPressStateListener
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.repo.GitRepository
 import icons.CollaborationToolsIcons
 import icons.DvcsImplIcons
@@ -30,6 +29,9 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.GithubIcons
+import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
+import org.jetbrains.plugins.github.pullrequest.action.GHPRCheckoutRemoteBranchAction
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesModel
 import java.awt.BorderLayout
@@ -45,14 +47,19 @@ internal object GHPRDetailsBranchesComponentFactory {
   private const val BRANCH_HOVER_BORDER = 2
   private const val BRANCH_MIN_WIDTH = 30
 
-  fun create(project: Project, repositoryDataService: GHPRRepositoryDataService, model: GHPRBranchesModel): JComponent {
+  fun create(
+    project: Project,
+    dataProvider: GHPRDataProvider,
+    repositoryDataService: GHPRRepositoryDataService,
+    model: GHPRBranchesModel
+  ): JComponent {
     val arrowLabel = JLabel(AllIcons.Chooser.Left)
     val from = createLabel().apply {
       border = JBUI.Borders.empty(BRANCH_HOVER_BORDER)
       addHoverAndPressStateListener(comp = this, pressedStateCallback = { branchLabel, isPressed ->
         if (!isPressed) return@addHoverAndPressStateListener
         branchLabel as JComponent
-        val popup = branchActionPopup(project, repositoryDataService.remoteCoordinates.repository, model)
+        val popup = branchActionPopup(project, dataProvider, repositoryDataService.remoteCoordinates.repository)
         val point = RelativePoint.getSouthWestOf(branchLabel).originalPoint
         popup.component.show(branchLabel, point.x, point.y + POPUP_OFFSET)
       })
@@ -85,18 +92,15 @@ internal object GHPRDetailsBranchesComponentFactory {
     }
   }
 
-  private fun branchActionPopup(project: Project, repository: GitRepository, model: GHPRBranchesModel): ActionPopupMenu {
-    val group = ActionManager.getInstance().getAction("Git.Branch") as ActionGroup
+  private fun branchActionPopup(project: Project, dataProvider: GHPRDataProvider, repository: GitRepository): ActionPopupMenu {
+    val action = GHPRCheckoutRemoteBranchAction()
+    val group = DefaultActionGroup(action)
     val popupMenu = ActionManager.getInstance().createActionPopupMenu("github.review.details", group)
     popupMenu.setDataContext {
-      val localBranch = with(repository.branches) { model.localBranch?.run(::findLocalBranch) }
-      val isCurrentBranchCheckedOut = repository.currentBranchName != null && repository.currentBranchName == localBranch?.name
-      val branchName = if (isCurrentBranchCheckedOut) model.headBranch else "${model.prRemote!!.name}/${model.headBranch}"
-      val branch = repository.branches.findBranchByName(branchName)
       SimpleDataContext.builder()
         .add(CommonDataKeys.PROJECT, project)
-        .add(GitBranchActionsUtil.REPOSITORIES_KEY, listOf(repository))
-        .add(GitBranchActionsUtil.BRANCHES_KEY, branch?.let(::listOf))
+        .add(GHPRActionKeys.GIT_REPOSITORY, repository)
+        .add(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER, dataProvider)
         .build()
     }
 

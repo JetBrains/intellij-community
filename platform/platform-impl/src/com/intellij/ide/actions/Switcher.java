@@ -140,8 +140,7 @@ public final class Switcher extends BaseSwitcherAction {
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (pinned && (e.isControlDown() || e.isMetaDown() || e.isShiftDown())) return false;
         final Object source = e.getSource();
-        if (source instanceof JList) {
-          JList<?> jList = (JList<?>)source;
+        if (source instanceof JList<?> jList) {
           if (jList.getSelectedIndex() == -1 && jList.getAnchorSelectionIndex() != -1) {
             jList.setSelectedIndex(jList.getAnchorSelectionIndex());
           }
@@ -295,7 +294,7 @@ public final class Switcher extends BaseSwitcherAction {
         }
       };
       files = JBListWithOpenInRightSplit
-        .createListWithOpenInRightSplitter(mySpeedSearch != null ? mySpeedSearch.wrap(filesModel) : filesModel, null, true);
+        .createListWithOpenInRightSplitter(mySpeedSearch != null ? mySpeedSearch.wrap(filesModel) : filesModel, null);
       files.setVisibleRowCount(files.getItemsCount());
       files.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
       files.getAccessibleContext().setAccessibleName(IdeBundle.message("recent.files.accessible.file.list"));
@@ -529,8 +528,7 @@ public final class Switcher extends BaseSwitcherAction {
 
     private void addForbiddenMnemonics(@NotNull Map<String, SwitcherToolWindow> keymap, @NotNull String actionId) {
       for (Shortcut shortcut : ActionUtil.getShortcutSet(actionId).getShortcuts()) {
-        if (shortcut instanceof KeyboardShortcut) {
-          KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
+        if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
           keymap.put(onKeyRelease.getForbiddenMnemonic(keyboardShortcut.getFirstKeyStroke()), null);
         }
       }
@@ -573,8 +571,7 @@ public final class Switcher extends BaseSwitcherAction {
       for (int i = selected.length - 1; i >= 0; i--) {
         selectedIndex = selected[i];
         SwitcherListItem item = selectedList.getModel().getElementAt(selectedIndex);
-        if (item instanceof SwitcherVirtualFile) {
-          SwitcherVirtualFile svf = (SwitcherVirtualFile)item;
+        if (item instanceof SwitcherVirtualFile svf) {
           VirtualFile virtualFile = svf.getFile();
           FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
           EditorWindow window = findAppropriateWindow(svf.getWindow());
@@ -708,8 +705,7 @@ public final class Switcher extends BaseSwitcherAction {
           final FileEditorManagerImpl manager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
           EditorWindow splitWindow = null;
           for (Object value : values) {
-            if (value instanceof SwitcherVirtualFile) {
-              SwitcherVirtualFile item = (SwitcherVirtualFile)value;
+            if (value instanceof SwitcherVirtualFile item) {
 
               VirtualFile file = item.getFile();
               if (mode == RIGHT_SPLIT) {

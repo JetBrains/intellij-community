@@ -1,6 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("BlockingMethodInNonBlockingContext")
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.use
@@ -21,7 +19,6 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
-import org.apache.commons.io.FilenameUtils
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
@@ -143,14 +140,9 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
  * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
  */
 suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildContext) {
-  val pluginLayoutRoot = withContext(Dispatchers.IO) {
-    Files.createDirectories(context.paths.tempDir)
-    Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
-  }
   writeProjectStructureReport(
     entries = generateProjectStructureMapping(context = context,
-                                              state = DistributionBuilderState(pluginsToPublish = emptySet(), context = context),
-                                              pluginLayoutRoot = pluginLayoutRoot),
+                                              state = DistributionBuilderState(pluginsToPublish = emptySet(), context = context)),
     file = targetFile,
     buildPaths = context.paths
   )
@@ -892,7 +884,7 @@ private fun logFreeDiskSpace(phase: String, context: CompilationContext) {
 
 fun buildUpdaterJar(context: BuildContext, artifactName: String = "updater.jar") {
   val updaterModule = context.findRequiredModule("intellij.platform.updater")
-  val updaterModuleSource = DirSource(context.getModuleOutputDir(updaterModule))
+  val updaterModuleSource = DirSource(context.getModuleOutputDir(updaterModule), excludes = commonModuleExcludes)
   val librarySources = JpsJavaExtensionService.dependencies(updaterModule)
     .productionOnly()
     .runtimeOnly()

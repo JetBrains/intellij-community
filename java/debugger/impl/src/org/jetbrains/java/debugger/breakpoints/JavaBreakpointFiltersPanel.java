@@ -147,8 +147,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     reloadInstanceFilters();
     updateInstanceFilterEditor(true);
 
-    if (properties instanceof JavaExceptionBreakpointProperties) {
-      JavaExceptionBreakpointProperties exceptionBreakpointProperties = (JavaExceptionBreakpointProperties)properties;
+    if (properties instanceof JavaExceptionBreakpointProperties exceptionBreakpointProperties) {
       changed = exceptionBreakpointProperties.setCatchFiltersEnabled(!myCatchClassFilters.getText().isEmpty() && myCatchCheckBox.isSelected()) || changed;
       changed = exceptionBreakpointProperties.setCatchClassFilters(myCatchClassFilters.getClassFilters()) || changed;
       changed = exceptionBreakpointProperties.setCatchClassExclusionFilters(myCatchClassFilters.getClassExclusionFilters()) || changed;
@@ -198,9 +197,8 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
       myClassFiltersCheckBox.setSelected(properties.isCLASS_FILTERS_ENABLED());
       myClassFiltersField.setClassFilters(properties.getClassFilters(), properties.getClassExclusionFilters());
 
-      if (properties instanceof JavaExceptionBreakpointProperties) {
+      if (properties instanceof JavaExceptionBreakpointProperties exceptionBreakpointProperties) {
         myCatchFiltersPanel.setVisible(true);
-        JavaExceptionBreakpointProperties exceptionBreakpointProperties = (JavaExceptionBreakpointProperties)properties;
         myCatchCheckBox.setSelected(exceptionBreakpointProperties.isCatchFiltersEnabled());
         myCatchClassFilters.setClassFilters(exceptionBreakpointProperties.getCatchClassFilters(),
                                             exceptionBreakpointProperties.getCatchClassExclusionFilters());

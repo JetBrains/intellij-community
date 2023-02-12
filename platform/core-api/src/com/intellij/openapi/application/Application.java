@@ -165,14 +165,14 @@ public interface Application extends ComponentManager {
    * immediately if no write action is currently running, or blocked until the currently running write action
    * completes.
    * <p>
-   * See also {@link WriteIntentAction#compute} for a more lambda-friendly version.
+   * See also {@link WriteIntentReadAction#compute} for a more lambda-friendly version.
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
    * @throws E re-frown from ThrowableComputable
    */
   @ApiStatus.Experimental
-  default <T, E extends Throwable> T runWriteIntentAction(@NotNull ThrowableComputable<T, E> computation) throws E {
+  default <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
     assertWriteIntentLockAcquired();
     return computation.compute();
   }
@@ -522,6 +522,7 @@ public interface Application extends ComponentManager {
   void removeApplicationListener(@NotNull ApplicationListener listener);
 
   /** @deprecated use corresponding {@link Application#invokeLater} methods */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @NotNull ModalityInvokator getInvokator();
 

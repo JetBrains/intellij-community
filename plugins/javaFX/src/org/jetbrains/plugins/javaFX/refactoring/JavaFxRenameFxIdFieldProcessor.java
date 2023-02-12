@@ -60,8 +60,7 @@ public class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor {
 
   @Nullable
   private static NestedControllerCandidate findNestedControllerCandidate(@NotNull PsiElement element) {
-    if (element instanceof PsiField) {
-      final PsiField field = (PsiField)element;
+    if (element instanceof PsiField field) {
       final String fxId = field.getName();
       if (!StringUtil.isEmpty(fxId)) {
         final PsiClass containingClass = field.getContainingClass();

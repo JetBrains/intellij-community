@@ -52,7 +52,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
     final PsiFile containingFile = place.getContainingFile();
     if (containingFile == null) {
       PsiUtilCore.ensureValid(place);
-      ResolveUtilKt.getLog().error(place.getClass());
+      ResolveUtilKt.getLog().error("Containing file is null for " + place.getClass());
       return;
     }
     final PsiFile file = containingFile.getOriginalFile();

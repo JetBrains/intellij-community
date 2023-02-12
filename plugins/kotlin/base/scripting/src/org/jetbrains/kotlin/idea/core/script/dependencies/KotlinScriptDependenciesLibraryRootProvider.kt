@@ -15,7 +15,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleOrLibrarySourceRootData
-import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.workspaceModel.storage.EntityStorage
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
@@ -61,13 +61,13 @@ class KotlinScriptWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<
     override fun registerFileSets(entity: KotlinScriptLibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
         if (!scriptsAsEntities || !useWorkspaceFileContributor()) return // see KotlinScriptDependenciesLibraryRootProvider
         val (classes, sources) = entity.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
-        classes.mapNotNull { it.url.virtualFile }.forEach {
-            registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL, entity, RootData)
+        classes.forEach {
+            registrar.registerFileSet(it.url, WorkspaceFileKind.EXTERNAL, entity, RootData)
         }
 
         if (indexSourceRootsEagerly() || entity.indexSourceRoots) {
-            sources.mapNotNull { it.url.virtualFile }.forEach {
-                registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL_SOURCE, entity, RootSourceData)
+            sources.forEach {
+                registrar.registerFileSet(it.url, WorkspaceFileKind.EXTERNAL_SOURCE, entity, RootSourceData)
             }
         }
     }

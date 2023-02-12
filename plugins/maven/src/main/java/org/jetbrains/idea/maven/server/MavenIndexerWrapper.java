@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.application.Application;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,7 +132,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   /**
    * @deprecated use {@link MavenEmbedderWrapper#getArchetypes()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Collection<MavenArchetype> getArchetypes() {
     return perform(() -> getOrCreateWrappee().getInternalArchetypes(ourToken));
   }

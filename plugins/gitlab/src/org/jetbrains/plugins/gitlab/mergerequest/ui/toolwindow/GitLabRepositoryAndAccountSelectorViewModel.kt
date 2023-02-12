@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 
 import com.intellij.collaboration.async.combineState
-import com.intellij.collaboration.util.URIUtil
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModelBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -14,6 +13,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.createSingleProjectAndAccountState
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 internal class GitLabRepositoryAndAccountSelectorViewModel(
@@ -28,15 +28,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModel(
   onSelected
 ) {
 
-  private val singleRepoAndAccountState: StateFlow<Pair<GitLabProjectMapping, GitLabAccount>?> =
-    combineState(scope, projectsManager.knownRepositoriesState, accountManager.accountsState) { repos, accounts ->
-      repos.singleOrNull()?.let { repo ->
-        accounts.singleOrNull { URIUtil.equalWithoutSchema(it.server.toURI(), repo.repository.serverPath.toURI()) }?.let {
-          repo to it
-        }
-      }
-    }
-
+  private val singleProjectAndAccountState = createSingleProjectAndAccountState(scope, projectsManager, accountManager)
   val tokenLoginAvailableState: StateFlow<Boolean> =
     combineState(scope, repoSelectionState, accountSelectionState, missingCredentialsState, ::isTokenLoginAvailable)
 
@@ -48,7 +40,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModel(
 
   init {
     scope.launch(start = CoroutineStart.UNDISPATCHED) {
-      singleRepoAndAccountState.collect {
+      singleProjectAndAccountState.collect {
         if (it != null) {
           repoSelectionState.value = it.first
           accountSelectionState.value = it.second

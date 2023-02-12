@@ -10,10 +10,12 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.actions.TerminalActionUtil;
+import com.intellij.terminal.pty.PtyProcessTtyConnector;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TtyConnectorAccessor;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.Terminal;
 import com.jediterm.terminal.TextStyle;
@@ -22,6 +24,7 @@ import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
 import com.jediterm.terminal.model.TerminalModelListener;
 import com.jediterm.terminal.model.TerminalTextBuffer;
+import com.jediterm.terminal.ui.JediTermSearchComponent;
 import com.jediterm.terminal.ui.TerminalAction;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +50,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
   private boolean myEscapePressed = false;
   private String myCommandHistoryFilePath;
+  private List<String> myShellCommand;
   private final Prompt myPrompt = new Prompt();
   private final Queue<String> myPendingCommandsToExecute = new LinkedList<>();
   private final TtyConnectorAccessor myTtyConnectorAccessor = new TtyConnectorAccessor();
@@ -56,8 +60,18 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   private final TerminalModelListener myVfsRefreshModelListener;
   private volatile String myPrevPromptWhenCommandStarted;
 
+  /**
+   * @deprecated use {@link #ShellTerminalWidget(Project, JBTerminalSystemSettingsProvider, Disposable)} instead
+   */
+  @Deprecated(forRemoval = true)
   public ShellTerminalWidget(@NotNull Project project,
                              @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
+                             @NotNull Disposable parent) {
+    this(project, settingsProvider instanceof JBTerminalSystemSettingsProvider p ? p : new JBTerminalSystemSettingsProvider(), parent);
+  }
+
+  public ShellTerminalWidget(@NotNull Project project,
+                             @NotNull JBTerminalSystemSettingsProvider settingsProvider,
                              @NotNull Disposable parent) {
     super(project, settingsProvider, parent);
     myShellCommandHandlerHelper = new TerminalShellCommandHandlerHelper(this);
@@ -133,9 +147,16 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     myCommandHistoryFilePath = commandHistoryFilePath;
   }
 
-  @Nullable
-  public static String getCommandHistoryFilePath(@Nullable JBTerminalWidget terminalWidget) {
-    return terminalWidget instanceof ShellTerminalWidget ? ((ShellTerminalWidget)terminalWidget).myCommandHistoryFilePath : null;
+  public @Nullable String getCommandHistoryFilePath() {
+    return myCommandHistoryFilePath;
+  }
+
+  public void setShellCommand(@Nullable List<String> shellCommand) {
+    myShellCommand = shellCommand != null ? List.copyOf(shellCommand) : null;
+  }
+
+  public @Nullable List<String> getShellCommand() {
+    return myShellCommand;
   }
 
   @NotNull
@@ -179,13 +200,12 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   @Override
-  public @Nls @Nullable String getDefaultSessionName() {
-    ProcessTtyConnector connector = getProcessTtyConnector();
-    if (connector instanceof PtyProcessTtyConnector) {
+  public @Nls @Nullable String getDefaultSessionName(@NotNull TtyConnector connector) {
+    if (getProcessTtyConnector(connector) instanceof PtyProcessTtyConnector) {
       // use name from settings for local terminal
       return TerminalOptionsProvider.getInstance().getTabName();
     }
-    return super.getDefaultSessionName();
+    return super.getDefaultSessionName(connector);
   }
 
   @Override
@@ -209,7 +229,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     if (myEscapePressed) {
       result.append((char)KeyEvent.VK_BACK_SPACE); // remove Escape first, workaround for IDEA-221031
     }
-    String enterCode = new String(getTerminalStarter().getCode(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8);
+    String enterCode = new String(getTerminal().getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8);
     result.append(shellCommand).append(enterCode);
     connector.write(result.toString());
   }
@@ -226,18 +246,23 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   @Override
+  public @NotNull JBTerminalSystemSettingsProvider getSettingsProvider() {
+    return (JBTerminalSystemSettingsProvider)super.getSettingsProvider();
+  }
+
+  @Override
   public List<TerminalAction> getActions() {
     List<TerminalAction> actions = new ArrayList<>(super.getActions());
     if (TerminalToolWindowManager.isInTerminalToolWindow(this)) {
       ContainerUtil.addIfNotNull(actions, TerminalActionUtil.createTerminalAction(this, RenameTerminalSessionActionKt.ACTION_ID, true));
     }
     JBTerminalWidgetListener listener = getListener();
-    JBTerminalSystemSettingsProviderBase settingsProvider = getSettingsProvider();
-    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getNewSessionActionPresentation(), l -> {
+    JBTerminalSystemSettingsProvider settingsProvider = getSettingsProvider();
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getNewTabActionPresentation(), l -> {
       l.onNewSession();
       return true;
     }).withMnemonicKey(KeyEvent.VK_T));
-    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getCloseSessionActionPresentation(), l -> {
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getCloseTabActionPresentation(), l -> {
       l.onSessionClosed();
       return true;
     }).withMnemonicKey(KeyEvent.VK_T));
@@ -374,5 +399,14 @@ public class ShellTerminalWidget extends JBTerminalWidget {
         return lineStr.substring(0, Math.min(maxCursorX, lineStr.length()));
       });
     }
+  }
+
+  @Override
+  protected @NotNull JediTermSearchComponent createSearchComponent() {
+    return new TerminalSearchSession(this).getTerminalSearchComponent();
+  }
+
+  public static @Nullable ShellTerminalWidget asShellJediTermWidget(@NotNull TerminalWidget widget) {
+    return ObjectUtils.tryCast(JBTerminalWidget.asJediTermWidget(widget), ShellTerminalWidget.class);
   }
 }

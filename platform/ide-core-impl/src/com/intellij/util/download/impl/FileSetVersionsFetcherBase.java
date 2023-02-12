@@ -5,7 +5,6 @@ import com.intellij.facet.frameworks.LibrariesDownloadAssistant;
 import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.facet.frameworks.beans.ArtifactItem;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileSetDescription;
@@ -37,7 +36,7 @@ public abstract class FileSetVersionsFetcherBase<FS extends DownloadableFileSetD
   @NotNull
   @Override
   public List<FS> fetchVersions() {
-    ApplicationManagerEx.getApplicationEx().assertTimeConsuming();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     final Artifact[] versions;
     if (myGroupId != null) {
       versions = LibrariesDownloadAssistant.getVersions(myGroupId, myLocalUrls);

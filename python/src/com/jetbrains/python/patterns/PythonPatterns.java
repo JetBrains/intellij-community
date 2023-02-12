@@ -45,8 +45,7 @@ public class PythonPatterns extends PlatformPatterns {
     return new PyElementPattern.Capture<>(new InitialPatternCondition<>(PyStringLiteralExpression.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
-        if (o instanceof PyStringLiteralExpression) {
-          final PyStringLiteralExpression expr = (PyStringLiteralExpression)o;
+        if (o instanceof PyStringLiteralExpression expr) {
           if (!DocStringUtil.isDocStringExpression(expr) && expr.getTextLength() < STRING_LITERAL_LIMIT) {
             final String value = expr.getStringValue();
             return pattern.matcher(value).find();

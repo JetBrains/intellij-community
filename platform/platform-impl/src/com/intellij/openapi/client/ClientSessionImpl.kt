@@ -151,8 +151,12 @@ open class ClientAppSessionImpl(
 open class ClientProjectSessionImpl(
   clientId: ClientId,
   clientType: ClientType,
-  final override val project: ProjectImpl,
-) : ClientSessionImpl(clientId, clientType, project), ClientProjectSession {
+  componentManager: ClientAwareComponentManager,
+  final override val project: Project,
+) : ClientSessionImpl(clientId, clientType, componentManager), ClientProjectSession {
+
+  constructor(clientId: ClientId, clientType: ClientType, project: ProjectImpl) : this(clientId, clientType, project, project)
+
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
     return pluginDescriptor.projectContainerDescriptor
   }

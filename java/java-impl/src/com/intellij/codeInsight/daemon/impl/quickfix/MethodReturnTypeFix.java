@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -121,7 +121,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiMethod method = (PsiMethod)startElement;
-
+    if(!method.isPhysical()) return false;
     final PsiType newType = myReturnTypePointer.getType();
     if (BaseIntentionAction.canModify(method) && newType != null && newType.isValid()) {
       final PsiType returnType = method.getReturnType();
@@ -418,11 +418,10 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     if (referenceParameterList == null) return true;
 
     final PsiElement resolve = ((PsiJavaCodeReferenceElement)referenceParameterList.getParent()).resolve();
-    if (!(resolve instanceof PsiClass)) return true;
-    final PsiClass baseClass = (PsiClass)resolve;
+    if (!(resolve instanceof PsiClass baseClass)) return true;
 
-    if (returnType instanceof PsiPrimitiveType) {
-      returnType = ((PsiPrimitiveType)returnType).getBoxedType(derivedClass);
+    if (returnType instanceof PsiPrimitiveType primitiveType) {
+      returnType = primitiveType.getBoxedType(derivedClass);
     }
 
     final PsiSubstitutor superClassSubstitutor =

@@ -23,6 +23,7 @@ import java.util.Set;
  * All plugins which still use this class must be updated to use {@link com.intellij.openapi.roots.ProjectFileIndex} and other APIs instead.
  */
 @ApiStatus.Internal
+@ApiStatus.Obsolete
 public abstract class DirectoryIndex {
   public static DirectoryIndex getInstance(Project project) {
     // todo enable later when all usages will be fixed
@@ -51,7 +52,7 @@ public abstract class DirectoryIndex {
   public abstract String getPackageName(@NotNull VirtualFile dir);
 
   @NotNull
-  public abstract List<OrderEntry> getOrderEntries(@NotNull DirectoryInfo info);
+  public abstract List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir);
 
   /**
    * @return names of unloaded modules which directly or transitively via exported dependencies depend on the specified module

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
@@ -271,11 +271,10 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
         PsiDocTagValue value = tag.getValueElement();
         if (value != null) {
           PsiElement firstChild = value.getFirstChild();
-          if (firstChild != null && firstChild.getFirstChild() instanceof PsiJavaCodeReferenceElement) {
-            PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)firstChild.getFirstChild();
+          if (firstChild != null && firstChild.getFirstChild() instanceof PsiJavaCodeReferenceElement refElement) {
             PsiElement element = refElement.resolve();
-            if (element instanceof PsiClass) {
-              String fqName = ((PsiClass)element).getQualifiedName();
+            if (element instanceof PsiClass psiClass) {
+              String fqName = psiClass.getQualifiedName();
               documentedExceptions = set(documentedExceptions);
               if (documentedExceptions.contains(fqName)) {
                 holder.registerProblem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.problem.duplicate.throws", fqName));
@@ -316,8 +315,7 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
   private void checkInlineTags(PsiElement @NotNull [] elements, @NotNull ProblemsHolder holder) {
     JavadocManager docManager = JavadocManager.getInstance(holder.getProject());
     for (PsiElement element : elements) {
-      if (element instanceof PsiInlineDocTag) {
-        PsiInlineDocTag tag = (PsiInlineDocTag)element;
+      if (element instanceof PsiInlineDocTag tag) {
         String tagName = tag.getName();
         if (docManager.getTagInfo(tagName) == null) {
           checkTagInfo(tag, tagName, null, holder);

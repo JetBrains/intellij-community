@@ -193,7 +193,7 @@ public class NotificationData implements Disposable {
   /**
    * @deprecated Pass {@code NotificationGroup} instead of {@code String}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setBalloonGroup(@Nullable String balloonGroup) {
     myBalloonGroup = balloonGroup == null ? null : NotificationGroupManager.getInstance().getNotificationGroup(balloonGroup);
   }

@@ -93,8 +93,7 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
     final Location location = proxy.getLocation(project, scope);
     if (location != null) {
       final PsiElement element = location.getPsiElement();
-      if (element instanceof PsiMethod && element.isValid()) {
-        final PsiMethod psiMethod = (PsiMethod)element;
+      if (element instanceof PsiMethod psiMethod && element.isValid()) {
         PsiClass psiClass = psiMethod.getContainingClass();
         if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
           final AbstractTestProxy parent = proxy.getParent();

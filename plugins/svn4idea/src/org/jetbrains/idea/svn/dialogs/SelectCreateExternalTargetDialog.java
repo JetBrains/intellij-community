@@ -97,7 +97,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     group.addSeparator();
     group.add(new RefreshAction(browser));
     group.add(new DiscardLocationAction(browser));
-    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu("", group);
+    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu("SelectCreateExternalTargetDialog", group);
     return menu.getComponent();
   }
 

@@ -32,8 +32,7 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
     if (elementToSearch instanceof PsiMethod) {
       searchMethod((PsiMethod)elementToSearch, queryParameters, consumer);
     }
-    if (elementToSearch instanceof JavaFxPropertyElement) {
-      final JavaFxPropertyElement propertyElement = (JavaFxPropertyElement)elementToSearch;
+    if (elementToSearch instanceof JavaFxPropertyElement propertyElement) {
       final JavaFxPropertyReference propertyReference = propertyElement.getPropertyReference();
       final PsiMethod staticSetter = propertyReference.getStaticSetter();
       if (staticSetter != null) {

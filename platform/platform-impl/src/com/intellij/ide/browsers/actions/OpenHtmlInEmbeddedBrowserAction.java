@@ -79,7 +79,7 @@ final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
     if (!enabled) return;
 
     if (WebBrowserXmlService.getInstance().isHtmlFile(request.getFile())
-        && ActionPlaces.CONTEXT_TOOLBAR == e.getPlace()) {
+        && ActionPlaces.CONTEXT_TOOLBAR.equals(e.getPlace())) {
       String text = getTemplateText();
       text += " (" + IdeBundle.message("browser.shortcut") + ")";
       e.getPresentation().setText(text);

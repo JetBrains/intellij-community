@@ -18,6 +18,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.AsyncFileListener.ChangeApplier;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
@@ -249,8 +250,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     if (file == null) {
       String cleanPath = cleanupPath(path);
       // if newly created path is the same as the one extracted from url then the url did not change, we can reuse it
-      //noinspection StringEquality
-      if (cleanPath != path) {
+      if (!Strings.areSameInstance(cleanPath, path)) {
         url = VirtualFileManager.constructUrl(protocol, cleanPath);
         path = cleanPath;
       }
@@ -572,18 +572,15 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       for (VFileEvent event : events) {
         ProgressManager.checkCanceled();
         VirtualFileSystem vfs = event.getFileSystem();
-        if (!(vfs instanceof VirtualFilePointerCapableFileSystem) || !(vfs instanceof NewVirtualFileSystem)) continue;
-        NewVirtualFileSystem fs = (NewVirtualFileSystem)vfs;
-        if (event instanceof VFileDeleteEvent) {
-          VFileDeleteEvent deleteEvent = (VFileDeleteEvent)event;
+        if (!(vfs instanceof VirtualFilePointerCapableFileSystem) || !(vfs instanceof NewVirtualFileSystem fs)) continue;
+        if (event instanceof VFileDeleteEvent deleteEvent) {
           VirtualFileSystemEntry file = (VirtualFileSystemEntry)deleteEvent.getFile();
           VirtualFileSystemEntry parent = (VirtualFileSystemEntry)FilePartNode.getParentThroughJar(file, file.getFileSystem());
           if (parent != null) {
             addRelevantPointers(file, parent, FilePartNode.getNameId(file), toFirePointers, toUpdateNodes, true, fs, event);
           }
         }
-        else if (event instanceof VFileCreateEvent) {
-          VFileCreateEvent createEvent = (VFileCreateEvent)event;
+        else if (event instanceof VFileCreateEvent createEvent) {
           boolean fireSubdirectoryPointers;
           if (createEvent.isDirectory()) {
             // when a new empty directory "/a/b" is created, there's no need to fire any deeper pointers like "/a/b/c/d.txt" - they're not created yet
@@ -599,13 +596,11 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
           addRelevantPointers(null, (VirtualFileSystemEntry)createEvent.getParent(), createEvent.getChildNameId(), toFirePointers,
                               toUpdateNodes, fireSubdirectoryPointers, fs, event);
         }
-        else if (event instanceof VFileCopyEvent) {
-          VFileCopyEvent copyEvent = (VFileCopyEvent)event;
+        else if (event instanceof VFileCopyEvent copyEvent) {
           addRelevantPointers(null, (VirtualFileSystemEntry)copyEvent.getNewParent(), toNameId(copyEvent.getNewChildName()), toFirePointers,
                               toUpdateNodes, true, fs, event);
         }
-        else if (event instanceof VFileMoveEvent) {
-          VFileMoveEvent moveEvent = (VFileMoveEvent)event;
+        else if (event instanceof VFileMoveEvent moveEvent) {
           VirtualFileSystemEntry eventFile = (VirtualFileSystemEntry)moveEvent.getFile();
           int newNameId = FilePartNode.getNameId(eventFile);
           // files deleted from eventFile and created in moveEvent.getNewParent()
@@ -616,8 +611,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
             addRelevantPointers(eventFile, parent, newNameId, toFirePointers, toUpdateNodes, true, fs, event);
           }
         }
-        else if (event instanceof VFilePropertyChangeEvent) {
-          VFilePropertyChangeEvent change = (VFilePropertyChangeEvent)event;
+        else if (event instanceof VFilePropertyChangeEvent change) {
           if (VirtualFile.PROP_NAME.equals(change.getPropertyName()) && !Comparing.equal(change.getOldValue(), change.getNewValue())) {
             VirtualFileSystemEntry eventFile = (VirtualFileSystemEntry)change.getFile();
             VirtualFileSystemEntry parent = (VirtualFileSystemEntry)FilePartNode.getParentThroughJar(eventFile, eventFile.getFileSystem());

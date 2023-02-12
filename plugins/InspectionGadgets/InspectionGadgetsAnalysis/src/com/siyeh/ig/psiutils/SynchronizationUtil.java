@@ -53,10 +53,9 @@ public final class SynchronizationUtil {
 
   public static boolean isCallToHoldsLock(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(expression instanceof PsiMethodCallExpression)) {
+    if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     @NonNls final String name = methodExpression.getReferenceName();
     if (!"holdsLock".equals(name)) {

@@ -47,9 +47,7 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
       }
     }
 
-    if (descriptor1 instanceof ProjectViewNode && descriptor2 instanceof ProjectViewNode) {
-      ProjectViewNode<?> node1 = (ProjectViewNode<?>)descriptor1;
-      ProjectViewNode<?> node2 = (ProjectViewNode<?>)descriptor2;
+    if (descriptor1 instanceof ProjectViewNode<?> node1 && descriptor2 instanceof ProjectViewNode<?> node2) {
 
       NodeSortSettings settings = new NodeSortSettings(isManualOrder(), isFoldersAlwaysOnTop(), isSortByType());
       int sortResult = node1.getSortOrder(settings).compareTo(node2.getSortOrder(settings));

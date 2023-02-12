@@ -3,11 +3,11 @@ package com.intellij.packaging.impl.artifacts
 
 import com.intellij.ide.plugins.PluginFeatureService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.artifacts.ArtifactType
 
-private class ArtifactTypeFeatureCollector : ProjectPostStartupActivity {
+private class ArtifactTypeFeatureCollector : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     PluginFeatureService.instance.collectFeatureMapping(

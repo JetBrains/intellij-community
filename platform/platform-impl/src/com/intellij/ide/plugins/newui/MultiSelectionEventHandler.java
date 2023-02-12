@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * @author Alexander Lobas
@@ -98,7 +97,7 @@ public class MultiSelectionEventHandler extends EventHandler {
             return;
           }
 
-          ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+          ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PluginManagerConfigurable", group);
           popupMenu.setTargetComponent(component);
           popupMenu.getComponent().show(event.getComponent(), event.getX(), event.getY());
           event.consume();

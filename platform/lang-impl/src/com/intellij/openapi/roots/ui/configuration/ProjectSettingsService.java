@@ -74,8 +74,7 @@ public class ProjectSettingsService {
 
   @Nullable
   private static Configurable getLibrarySettingsConfigurable(OrderEntry orderEntry) {
-    if (!(orderEntry instanceof LibraryOrderEntry)) return null;
-    LibraryOrderEntry libOrderEntry = (LibraryOrderEntry)orderEntry;
+    if (!(orderEntry instanceof LibraryOrderEntry libOrderEntry)) return null;
     Library lib = libOrderEntry.getLibrary();
     if (lib instanceof LibraryEx) {
       Project project = libOrderEntry.getOwnerModule().getProject();

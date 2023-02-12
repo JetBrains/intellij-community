@@ -90,8 +90,7 @@ abstract class SEResultsListFactory {
       component = detachParent(renderer.getListCellRendererComponent(list, value, index, selected, true));
     }
 
-    if (component instanceof JComponent) {
-      JComponent jComponent = (JComponent)component;
+    if (component instanceof JComponent jComponent) {
       if (!ExperimentalUI.isNewUI()) {
         jComponent.setBorder(
           new EmptyBorder(jComponent.getBorder() == GotoActionModel.GotoActionListCellRenderer.TOGGLE_BUTTON_BORDER

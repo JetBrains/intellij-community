@@ -97,8 +97,7 @@ public class ExternalJavaDocAction extends AnAction {
       final List<String> finalUrls = urls;
       ApplicationManager.getApplication().invokeLater(() -> {
         if (ContainerUtil.isEmpty(finalUrls)) {
-          if (element != null && provider instanceof ExternalDocumentationProvider) {
-            ExternalDocumentationProvider externalDocumentationProvider = (ExternalDocumentationProvider)provider;
+          if (element != null && provider instanceof ExternalDocumentationProvider externalDocumentationProvider) {
             if (externalDocumentationProvider.canPromptToConfigureDocumentation(element)) {
               externalDocumentationProvider.promptToConfigureDocumentation(element);
             }
@@ -151,8 +150,7 @@ public class ExternalJavaDocAction extends AnAction {
 
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
     boolean enabled;
-    if (provider instanceof ExternalDocumentationProvider) {
-      final ExternalDocumentationProvider edProvider = (ExternalDocumentationProvider)provider;
+    if (provider instanceof ExternalDocumentationProvider edProvider) {
       enabled = CompositeDocumentationProvider.hasUrlsFor(provider, element, originalElement) || edProvider.canPromptToConfigureDocumentation(element);
     }
     else {

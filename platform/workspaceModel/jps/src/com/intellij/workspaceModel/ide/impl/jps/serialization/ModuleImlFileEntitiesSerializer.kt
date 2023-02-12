@@ -3,15 +3,14 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.module.impl.ModulePath
-import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
-import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.workspaceModel.jps.*
+import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
+import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
+import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
 import com.intellij.projectModel.ProjectModelBundle
-import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader.isModulePropertiesBridgeEnabled
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
@@ -29,8 +28,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.StringReader
 import java.nio.file.Path
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 import kotlin.io.path.exists
 
 internal const val DEPRECATED_MODULE_MANAGER_COMPONENT_NAME = "DeprecatedModuleOptionManager"
@@ -51,10 +48,9 @@ private val MODULE_OPTIONS_TO_CHECK = setOf(
 internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePath,
                                                     override val fileUrl: VirtualFileUrl,
                                                     override val internalEntitySource: JpsFileEntitySource,
-                                                    private val virtualFileManager: VirtualFileUrlManager,
+                                                    private val context: SerializationContext,
                                                     internal val internalModuleListSerializer: JpsModuleListSerializer? = null,
-                                                    internal val externalModuleListSerializer: JpsModuleListSerializer? = null,
-                                                    private val externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null)
+                                                    internal val externalModuleListSerializer: JpsModuleListSerializer? = null)
   : JpsFileEntitiesSerializer<ModuleEntity> {
 
   override val mainEntityClass: Class<ModuleEntity>
@@ -70,11 +66,10 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   override fun loadEntities(reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
                             virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> {
-    val externalStorageEnabled = externalStorageConfigurationManager?.isEnabled ?: false
     val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity> = HashMap()
     val newModuleEntity: ModuleEntity?
     val exceptionsCollector = ArrayList<Throwable>()
-    if (!externalStorageEnabled) {
+    if (!context.isExternalStorageEnabled) {
       // Loading data if the external storage is disabled
       val moduleLoadedInfo = loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector, exceptionsCollector)
       if (moduleLoadedInfo != null) {
@@ -83,7 +78,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           createFacetSerializer().loadFacetEntities(moduleLoadedInfo.moduleEntity, reader)
         }
 
-        if (EntitiesOrphanage.isEnabled) {
+        if (context.isOrphanageEnabled) {
           // Load additional elements
           newModuleEntity = loadAdditionalContents(reader,
                                                    virtualFileManager,
@@ -99,8 +94,10 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       // Loading module from two files - external and local
       // Here we load BOTH external and internal iml file. This is done to load module once and attach all the information to it
       // It's a bit dirty, but we'll get rid of this logic when we'll remove external iml storage
-      val externalSerializer = externalModuleListSerializer?.createSerializer(internalEntitySource, fileUrl, modulePath.group) as ModuleImlFileEntitiesSerializer?
-      val moduleLoadedInfo = externalSerializer?.loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector, exceptionsCollector)
+      val externalSerializer = externalModuleListSerializer?.createSerializer(internalEntitySource, fileUrl,
+                                                                              modulePath.group) as ModuleImlFileEntitiesSerializer?
+      val moduleLoadedInfo = externalSerializer?.loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector,
+                                                                  exceptionsCollector)
       val moduleEntity: ModuleEntity?
       if (moduleLoadedInfo != null) {
         val tmpModuleEntity = moduleLoadedInfo.moduleEntity
@@ -111,7 +108,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                            true, moduleLibrariesCollector)
         }
 
-        if (EntitiesOrphanage.isEnabled) {
+        if (context.isOrphanageEnabled) {
           moduleEntity = loadAdditionalContents(reader, virtualFileManager, moduleLoadedInfo.moduleEntity, exceptionsCollector)
         } else {
           moduleEntity = tmpModuleEntity
@@ -121,7 +118,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
         var tmpModule = localModule?.moduleEntity
 
-        if (EntitiesOrphanage.isEnabled && tmpModule != null) {
+        if (context.isOrphanageEnabled && tmpModule != null) {
           tmpModule = loadAdditionalContents(reader, virtualFileManager, tmpModule, exceptionsCollector)
         }
         moduleEntity = tmpModule
@@ -373,7 +370,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }
 
     if (!loadingAdditionalRoots) {
-      val javaModuleSettings = JavaSettingsSerializer.loadJavaModuleSettings(rootManagerElement, virtualFileManager, contentRootEntitySource)
+      val javaModuleSettings = JavaSettingsSerializer.loadJavaModuleSettings(rootManagerElement, context, contentRootEntitySource)
       if (javaModuleSettings != null) {
         moduleEntity.javaSettings = javaModuleSettings
       }
@@ -581,7 +578,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   }
 
   private fun loadTestModuleProperty(moduleEntity: ModuleEntity.Builder, reader: JpsFileContentReader, entitySource: EntitySource) {
-    if (!TestModuleProperties.testModulePropertiesBridgeEnabled()) return
+    if (!isModulePropertiesBridgeEnabled) return
     val component = reader.loadComponent(fileUrl.url, TEST_MODULE_PROPERTIES_COMPONENT_NAME) ?: return
     val productionModuleName = component.getAttribute(PRODUCTION_MODULE_NAME_ATTRIBUTE).value
     if (productionModuleName.isEmpty()) return
@@ -604,7 +601,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       saveModuleEntities(module, entities, storage, writer)
     }
     else {
-      val targetComponent = if (EntitiesOrphanage.isEnabled) ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME else MODULE_ROOT_MANAGER_COMPONENT_NAME
+      val targetComponent = if (context.isOrphanageEnabled) ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME else MODULE_ROOT_MANAGER_COMPONENT_NAME
       if (ContentRootEntity::class.java in entities || SourceRootEntity::class.java in entities || ExcludeUrlEntity::class.java in entities) {
         val contentEntities = entities[ContentRootEntity::class.java] as? List<ContentRootEntity> ?: emptyList()
         val sourceRootEntities = (entities[SourceRootEntity::class.java] as? List<SourceRootEntity>)?.toMutableSet() ?: mutableSetOf()
@@ -631,7 +628,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
               .forEach { (contentRoot, sourceRoots) ->
                 val contentRootTag = Element(CONTENT_TAG)
                 contentRootTag.setAttribute(URL_ATTRIBUTE, contentRoot.url.url)
-                if (EntitiesOrphanage.isEnabled) {
+                if (context.isOrphanageEnabled) {
                   contentRootTag.setAttribute(DUMB_ATTRIBUTE, true.toString())
                 }
                 saveSourceRootEntities(sourceRoots, contentRootTag, contentRoot.getSourceRootsComparator())
@@ -646,7 +643,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           excludes.toSortedMap(compareBy { it.url }).forEach { (url, exclude) ->
             val contentRootTag = Element(CONTENT_TAG)
             contentRootTag.setAttribute(URL_ATTRIBUTE, url.url)
-            if (EntitiesOrphanage.isEnabled) {
+            if (context.isOrphanageEnabled) {
               contentRootTag.setAttribute(DUMB_ATTRIBUTE, true.toString())
             }
             saveExcludeUrls(contentRootTag, exclude)
@@ -655,7 +652,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           }
         }
 
-        if (EntitiesOrphanage.isEnabled) {
+        if (context.isOrphanageEnabled) {
           // Component to save additional roots before introducing AdditionalModuleElements.
           // It's not used for this function anymore and should be cleared
           writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, null)
@@ -664,7 +661,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       else {
         writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, null)
         writer.saveComponent(fileUrl.url, DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, null)
-        if (EntitiesOrphanage.isEnabled) {
+        if (context.isOrphanageEnabled) {
           writer.saveComponent(fileUrl.url, ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME, null)
         }
       }
@@ -696,7 +693,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val serializer = CustomModuleRootsSerializer.EP_NAME.extensionList.firstOrNull { it.id == customSerializerId }
       if (serializer != null) {
         val customDir = moduleOptions[JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE]
-        serializer.saveRoots(module, entities, writer, customDir, fileUrl, storage, virtualFileManager)
+        serializer.saveRoots(module, entities, writer, customDir, fileUrl, storage, context.virtualFileUrlManager)
         writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, null)
       }
       else {
@@ -717,7 +714,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                      entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                                      writer: JpsFileContentWriter) {
     val rootManagerElement = JDomSerializationUtil.createComponentElement(MODULE_ROOT_MANAGER_COMPONENT_NAME)
-    JavaSettingsSerializer.saveJavaSettings(module.javaSettings, rootManagerElement)
+    JavaSettingsSerializer.saveJavaSettings(module.javaSettings, rootManagerElement, context)
 
     if (customImlData != null) {
       val rootManagerTagCustomData = customImlData.rootManagerTagCustomData
@@ -905,7 +902,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   }
 
   private fun saveTestModuleProperty(moduleEntity: ModuleEntity, writer: JpsFileContentWriter) {
-    if (!TestModuleProperties.testModulePropertiesBridgeEnabled()) return
+    if (!isModulePropertiesBridgeEnabled) return
     val testProperties = moduleEntity.testProperties ?: return
     val testModulePropertyTag = Element(TEST_MODULE_PROPERTIES_COMPONENT_NAME)
     testModulePropertyTag.setAttribute(PRODUCTION_MODULE_NAME_ATTRIBUTE, testProperties.productionModuleId.presentableName)
@@ -938,23 +935,20 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 }
 
 internal open class ModuleListSerializerImpl(override val fileUrl: String,
-                                             private val virtualFileManager: VirtualFileUrlManager,
-                                             private val externalModuleListSerializer: JpsModuleListSerializer? = null,
-                                             private val externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null)
+                                             protected val context: SerializationContext,
+                                             private val externalModuleListSerializer: JpsModuleListSerializer? = null)
   : JpsModuleListSerializer {
   companion object {
     internal fun createModuleEntitiesSerializer(fileUrl: VirtualFileUrl,
                                                 moduleGroup: String?,
                                                 source: JpsFileEntitySource,
-                                                virtualFileManager: VirtualFileUrlManager,
+                                                context: SerializationContext,
                                                 internalModuleListSerializer: JpsModuleListSerializer? = null,
-                                                externalModuleListSerializer: JpsModuleListSerializer? = null,
-                                                externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null) =
+                                                externalModuleListSerializer: JpsModuleListSerializer? = null) =
       ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.url), moduleGroup),
-                                      fileUrl, source, virtualFileManager,
+                                      fileUrl, source, context,
                                       internalModuleListSerializer,
-                                      externalModuleListSerializer,
-                                      externalStorageConfigurationManager)
+                                      externalModuleListSerializer)
   }
 
   override val isExternalStorage: Boolean
@@ -972,13 +966,12 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
   }
 
   override fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl, moduleGroup: String?): JpsFileEntitiesSerializer<ModuleEntity> {
-    return createModuleEntitiesSerializer(fileUrl, moduleGroup, internalSource, virtualFileManager, this, externalModuleListSerializer,
-                                          externalStorageConfigurationManager)
+    return createModuleEntitiesSerializer(fileUrl, moduleGroup, internalSource, context, this, externalModuleListSerializer)
   }
 
   override fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<Pair<VirtualFileUrl, String?>> {
     val moduleManagerTag = reader.loadComponent(fileUrl, componentName) ?: return emptyList()
-    return ModuleManagerBridgeImpl.getPathsToModuleFiles(moduleManagerTag).map {
+    return ModulePath.getPathsToModuleFiles(moduleManagerTag).map {
       Path.of(it.path).toVirtualFileUrl(virtualFileManager) to it.group
     }
   }
@@ -1017,15 +1010,15 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
     writer.saveComponent(fileUrl, componentName, componentTag)
   }
 
-  protected open fun getSourceToSave(module: ModuleEntity): JpsFileEntitySource.FileInDirectory? {
+  protected open fun getSourceToSave(module: ModuleEntity): JpsProjectFileEntitySource.FileInDirectory? {
     val entitySource = module.entitySource
     if (entitySource is CustomModuleEntitySource) {
-      return entitySource.internalSource as? JpsFileEntitySource.FileInDirectory
+      return entitySource.internalSource as? JpsProjectFileEntitySource.FileInDirectory
     }
     if (entitySource is JpsFileDependentEntitySource) {
-      return entitySource.originalSource as? JpsFileEntitySource.FileInDirectory
+      return entitySource.originalSource as? JpsProjectFileEntitySource.FileInDirectory
     }
-    return entitySource as? JpsFileEntitySource.FileInDirectory
+    return entitySource as? JpsProjectFileEntitySource.FileInDirectory
   }
 
   override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
@@ -1036,7 +1029,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
     writer.saveComponent(fileUrl, ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME, null)
   }
 
-  private fun getModuleFileUrl(source: JpsFileEntitySource.FileInDirectory,
+  private fun getModuleFileUrl(source: JpsProjectFileEntitySource.FileInDirectory,
                                module: ModuleEntity) = source.directory.url + "/" + module.name + ".iml"
 
   override fun toString(): String = "ModuleListSerializerImpl($fileUrl)"

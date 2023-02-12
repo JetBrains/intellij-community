@@ -167,8 +167,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
                                                   boolean cellHasFocus) {
       //noinspection unchecked
       Component component = myContext.getRenderer().getListCellRendererComponent(list, (T)value, index, isSelected, cellHasFocus);
-      if (component instanceof JComponent && !(component instanceof JSeparator || component instanceof TitledSeparator)) {
-        JComponent jComponent = (JComponent)component;
+      if (component instanceof JComponent jComponent && !(component instanceof JSeparator || component instanceof TitledSeparator)) {
         if (!(component instanceof GroupedElementsRenderer.MyComponent)) {
           jComponent.setBorder(COMBO_ITEM_BORDER);
         }
@@ -232,11 +231,12 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     public String getTextFor(T value) {
       final ListCellRenderer<? super T> cellRenderer = myGetRenderer.get();
       Component component = cellRenderer.getListCellRendererComponent(myProxyList, value, -1, false, false);
-      return component instanceof TitledSeparator || component instanceof JSeparator ? "" :
-             component instanceof JLabel label ? label.getText() :
-             component instanceof SimpleColoredComponent c ? c.getCharSequence(false).toString() :
-             component instanceof Accessible accessible ? accessible.getAccessibleContext().getAccessibleName() :
-             String.valueOf(value);
+      String componentText = component instanceof TitledSeparator || component instanceof JSeparator ? "" :
+                             component instanceof JLabel label ? label.getText() :
+                             component instanceof SimpleColoredComponent c ? c.getCharSequence(false).toString() :
+                             component instanceof Accessible accessible ? accessible.getAccessibleContext().getAccessibleName() :
+                             null;
+      return componentText != null ? componentText : String.valueOf(value);
     }
 
     @Override
@@ -247,9 +247,8 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
 
     @Override
     public @Nullable ListSeparator getSeparatorAbove(T value) {
-      final int index = getValues().indexOf(value);
-      if (myGetRenderer.get() instanceof GroupedComboBoxRenderer<?> renderer) {
-        return renderer.separatorFor(index);
+      if (myGetRenderer.get() instanceof GroupedComboBoxRenderer<? super T> renderer) {
+        return renderer.separatorFor(value);
       }
       return null;
     }

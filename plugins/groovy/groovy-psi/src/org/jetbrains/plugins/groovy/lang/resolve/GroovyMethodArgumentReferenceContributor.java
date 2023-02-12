@@ -64,8 +64,7 @@ public final class GroovyMethodArgumentReferenceContributor extends PsiReference
         return createReferencesForNamedArgument(element, (GrNamedArgument)parent, context);
       }
 
-      if (parent instanceof GrArgumentList) {
-        GrArgumentList argumentList = (GrArgumentList)parent;
+      if (parent instanceof GrArgumentList argumentList) {
         int index = argumentList.getExpressionArgumentIndex(argument);
 
         PsiElement call = argumentList.getParent();
@@ -97,9 +96,7 @@ public final class GroovyMethodArgumentReferenceContributor extends PsiReference
 
       for (GroovyResolveResult result : ((GrReferenceExpression)invokedExpression).multiResolve(false)) {
         PsiElement eMethod = result.getElement();
-        if (!(eMethod instanceof PsiMethod)) continue;
-
-        PsiMethod method = (PsiMethod)eMethod;
+        if (!(eMethod instanceof PsiMethod method)) continue;
 
         for (GroovyMethodInfo info : GroovyMethodInfo.getInfos(method)) {
           Object referenceProvider = info.getNamedArgReferenceProvider(labelName);

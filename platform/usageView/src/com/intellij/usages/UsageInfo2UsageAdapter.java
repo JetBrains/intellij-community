@@ -389,8 +389,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   @Override
   public boolean merge(@NotNull MergeableUsage other) {
-    if (!(other instanceof UsageInfo2UsageAdapter)) return false;
-    UsageInfo2UsageAdapter u2 = (UsageInfo2UsageAdapter)other;
+    if (!(other instanceof UsageInfo2UsageAdapter u2)) return false;
     assert u2 != this;
     if (myLineNumber != u2.myLineNumber || !Comparing.equal(getFile(), u2.getFile())) return false;
     UsageInfo[] merged = ArrayUtil.mergeArrays(getMergedInfos(), u2.getMergedInfos());

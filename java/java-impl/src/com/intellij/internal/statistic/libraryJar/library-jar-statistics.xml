@@ -35,6 +35,7 @@
   <technology class="org.springframework.cloud.client.SpringCloudApplication" name="spring-cloud"/>
   <technology class="org.springframework.web.reactive.HandlerResult" name="spring-webflux"/>
   <technology class="reactor.core.publisher.Mono" name="reactor"/>
+  <technology class="reactor.kotlin.core.publisher.FluxExtensionsKt" name="reactor-kotlin-ext"/>
   <technology class="io.reactivex.Flowable" name="rx-java"/>
   <technology class="com.google.inject.Provider" name="guice"/>
   <technology class="org.drools.core.spi.KnowledgeHelper" name="drools"/>

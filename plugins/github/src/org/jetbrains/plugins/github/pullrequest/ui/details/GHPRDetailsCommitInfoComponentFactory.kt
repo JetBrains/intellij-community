@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.util.text.DateFormatUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRCommitsViewModel
@@ -20,6 +21,13 @@ internal object GHPRDetailsCommitInfoComponentFactory {
     val description = HtmlEditorPane().apply {
       bindText(scope, commitsVm.selectedCommit.map { commit -> commit?.messageBodyHTML.orEmpty() })
     }
+    val info = HtmlEditorPane().apply {
+      bindText(scope, commitsVm.selectedCommit.map { commit ->
+        commit ?: return@map ""
+        val author = commit.author?.user ?: commitsVm.ghostUser
+        "${author.shortName} ${DateFormatUtil.formatPrettyDateTime(commit.committedDate)}"
+      })
+    }
 
     return VerticalListPanel(COMPONENTS_GAP).apply {
       name = "Commit details info"
@@ -27,6 +35,7 @@ internal object GHPRDetailsCommitInfoComponentFactory {
 
       add(title)
       add(description)
+      add(info)
     }
   }
 }

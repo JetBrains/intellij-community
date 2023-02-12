@@ -105,6 +105,8 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   private PathAssembler.LocalDistribution myDistribution;
 
   private final Ref<Couple<String>> deprecationError = Ref.create();
+  private final StringBuilder deprecationTextBuilder = new StringBuilder();
+  private int deprecationTextLineCount = 0;
 
   @Override
   public void setUp() throws Exception {
@@ -123,7 +125,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     cleanScriptsCacheIfNeeded();
   }
 
-  private void configureJDKTable() throws Exception {
+  protected void configureJDKTable() throws Exception {
     removedSdks.clear();
     for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
       ProjectJdkTable.getInstance().removeJdk(sdk);
@@ -361,7 +363,15 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   @Override
   protected void printOutput(@NotNull String text, boolean stdOut) {
     if (text.contains("This is scheduled to be removed in Gradle")) {
-      deprecationError.set(Couple.of("Deprecation warning from Gradle", text));
+      deprecationTextLineCount = 15;
+    }
+    if (deprecationTextLineCount > 0) {
+      deprecationTextBuilder.append(text);
+      deprecationTextLineCount--;
+      if (deprecationTextLineCount == 0) {
+        deprecationError.set(Couple.of("Deprecation warning from Gradle", deprecationTextBuilder.toString()));
+        deprecationTextBuilder.setLength(0);
+      }
     }
     super.printOutput(text, stdOut);
   }

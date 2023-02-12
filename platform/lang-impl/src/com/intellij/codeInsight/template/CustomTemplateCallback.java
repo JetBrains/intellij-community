@@ -4,7 +4,7 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -154,7 +154,7 @@ public class CustomTemplateCallback {
       Document document = documentManager.getDocument(file);
       if (document != null && !documentManager.isCommitted(document)) {
         LOGGER.error("Trying to access to injected template context on uncommited document, offset = " + offset,
-                     AttachmentFactory.createAttachment(file.getVirtualFile()));
+                     CoreAttachmentFactory.createAttachment(file.getVirtualFile()));
       }
       else {
         element = InjectedLanguageManager.getInstance(file.getProject()).findInjectedElementAt(file, offset);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.emptyMethod;
 
 import com.intellij.analysis.AnalysisScope;
@@ -51,10 +51,9 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
                                                            @NotNull InspectionManager manager,
                                                            @NotNull GlobalInspectionContext globalContext,
                                                            @NotNull ProblemDescriptionsProcessor processor) {
-    if (!(refEntity instanceof RefMethod)) {
+    if (!(refEntity instanceof RefMethod refMethod)) {
       return null;
     }
-    final RefMethod refMethod = (RefMethod)refEntity;
 
     if (!isBodyEmpty(refMethod)) return null;
     if (refMethod.isConstructor()) return null;
@@ -350,8 +349,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
                          final @Nullable Runnable refreshViews) {
       for (CommonProblemDescriptor descriptor : descriptors) {
         RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
-        if (refElement instanceof RefMethod && refElement.isValid()) {
-          RefMethod refMethod = (RefMethod)refElement;
+        if (refElement instanceof RefMethod refMethod && refElement.isValid()) {
           if (myNeedToDeleteHierarchy) {
             deleteHierarchy(refMethod, psiElementsToIgnore);
           }

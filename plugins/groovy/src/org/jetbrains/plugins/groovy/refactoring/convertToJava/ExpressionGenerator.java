@@ -756,8 +756,7 @@ public class ExpressionGenerator extends Generator {
     final GroovyResolveResult resolveResult = rValueReference == null ? EmptyGroovyResolveResult.INSTANCE
                                                                       : rValueReference.advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
-    if (resolved instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)resolved)) {
-      final PsiMethod getter = (PsiMethod)resolved;
+    if (resolved instanceof PsiMethod getter && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)resolved)) {
       final String propertyName = GroovyPropertyUtils.getPropertyNameByGetter(getter);
       final PsiType type;
       if (qualifier == null) {
@@ -1523,7 +1522,7 @@ public class ExpressionGenerator extends Generator {
     LOG.assertTrue(type instanceof GrRangeType);
     final PsiClass resolved = ((GrRangeType)type).resolve();
     builder.append("new ");
-    if (resolved == null || resolved.getQualifiedName() == GroovyCommonClassNames.GROOVY_LANG_RANGE) {
+    if (resolved == null || GroovyCommonClassNames.GROOVY_LANG_RANGE.equals(resolved.getQualifiedName())) {
       builder.append(GroovyCommonClassNames.GROOVY_LANG_OBJECT_RANGE);
     }
     else {

@@ -38,10 +38,9 @@ public class AdapterToListenerIntention extends MutablyNamedIntention {
   protected void processIntention(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
     final PsiElement grandParent = parent.getParent();
-    if (!(grandParent instanceof PsiClass)) {
+    if (!(grandParent instanceof PsiClass aClass)) {
       return;
     }
-    final PsiClass aClass = (PsiClass)grandParent;
     final PsiReferenceList extendsList = aClass.getExtendsList();
     if (extendsList == null) {
       return;
@@ -54,10 +53,9 @@ public class AdapterToListenerIntention extends MutablyNamedIntention {
     final PsiJavaCodeReferenceElement extendsReference =
       extendsReferences[0];
     final PsiElement target = extendsReference.resolve();
-    if (!(target instanceof PsiClass)) {
+    if (!(target instanceof PsiClass extendsClass)) {
       return;
     }
-    final PsiClass extendsClass = (PsiClass)target;
     final PsiReferenceList implementsList =
       extendsClass.getImplementsList();
     if (implementsList == null) {
@@ -73,10 +71,9 @@ public class AdapterToListenerIntention extends MutablyNamedIntention {
         continue;
       }
       final PsiElement implementsTarget = implementsReference.resolve();
-      if (!(implementsTarget instanceof PsiClass)) {
+      if (!(implementsTarget instanceof PsiClass implementsClass)) {
         continue;
       }
-      final PsiClass implementsClass = (PsiClass)implementsTarget;
       if (!implementsClass.isInterface()) {
         continue;
       }
@@ -119,19 +116,14 @@ public class AdapterToListenerIntention extends MutablyNamedIntention {
     }
     final PsiStatement[] statements = body.getStatements();
     for (PsiStatement statement : statements) {
-      if (!(statement instanceof PsiExpressionStatement)) {
+      if (!(statement instanceof PsiExpressionStatement expressionStatement)) {
         continue;
       }
-      final PsiExpressionStatement expressionStatement =
-        (PsiExpressionStatement)statement;
       final PsiExpression expression =
         expressionStatement.getExpression();
-      if (!(expression instanceof PsiMethodCallExpression)) {
+      if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
         continue;
       }
-      final PsiMethodCallExpression
-        methodCallExpression =
-        (PsiMethodCallExpression)expression;
       final PsiReferenceExpression methodExpression =
         methodCallExpression.getMethodExpression();
       final PsiExpression qualifier =

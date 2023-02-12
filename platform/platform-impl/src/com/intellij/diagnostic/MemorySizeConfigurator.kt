@@ -6,12 +6,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.sun.management.OperatingSystemMXBean
 import java.lang.management.ManagementFactory
 import kotlin.math.max
 
-private class MemorySizeConfigurator : ProjectPostStartupActivity {
+private class MemorySizeConfigurator : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return

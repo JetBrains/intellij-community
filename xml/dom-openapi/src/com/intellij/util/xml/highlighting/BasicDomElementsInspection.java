@@ -41,8 +41,7 @@ public abstract class BasicDomElementsInspection<T extends DomElement> extends D
   @Override
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
     int oldSize = holder.getSize();
-    if (element instanceof GenericDomValue) {
-      final GenericDomValue<?> genericDomValue = (GenericDomValue<?>) element;
+    if (element instanceof GenericDomValue<?> genericDomValue) {
       if (shouldCheckResolveProblems(genericDomValue)) {
         helper.checkResolveProblems(genericDomValue, holder);
       }

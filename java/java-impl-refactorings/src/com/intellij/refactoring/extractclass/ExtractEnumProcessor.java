@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.extractclass;
 
@@ -142,15 +140,12 @@ public class ExtractEnumProcessor {
                                                             rules,
                                                             true);
       for (UsageInfo usageInfo : myTypeMigrationProcessor.findUsages()) {
-        final PsiElement migrateElement = usageInfo.getElement();
-        if (migrateElement instanceof PsiField) {
-          final PsiField enumConstantField = (PsiField)migrateElement;
-          if (enumConstantField.hasModifierProperty(PsiModifier.STATIC) &&
-              enumConstantField.hasModifierProperty(PsiModifier.FINAL) &&
-              enumConstantField.hasInitializer() &&
-              !myEnumConstants.contains(enumConstantField)) {
-            continue;
-          }
+        if (usageInfo.getElement() instanceof PsiField enumConstantField &&
+            enumConstantField.hasModifierProperty(PsiModifier.STATIC) &&
+            enumConstantField.hasModifierProperty(PsiModifier.FINAL) &&
+            enumConstantField.hasInitializer() &&
+            !myEnumConstants.contains(enumConstantField)) {
+          continue;
         }
         result.add(new EnumTypeMigrationUsageInfo(usageInfo));
       }

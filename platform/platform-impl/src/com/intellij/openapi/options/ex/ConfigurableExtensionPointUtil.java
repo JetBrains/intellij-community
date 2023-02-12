@@ -38,8 +38,7 @@ public final class ConfigurableExtensionPointUtil {
       if (filter != null && !filter.isIncluded(configurable)) {
         continue;
       }
-      if (configurable instanceof HierarchicalConfigurable) {
-        HierarchicalConfigurable wrapper = (HierarchicalConfigurable)configurable;
+      if (configurable instanceof HierarchicalConfigurable wrapper) {
         idToConfigurable.put(wrapper.getId(), wrapper);
         idsInEpOrder.add(wrapper.getId());
       }
@@ -155,8 +154,7 @@ public final class ConfigurableExtensionPointUtil {
   private static void replaceGroupWithSingleConfigurable(List<Configurable> list) {
     for (int i = 0; i < list.size(); i++) {
       Configurable configurable = list.get(i);
-      if (configurable instanceof SortedConfigurableGroup) {
-        SortedConfigurableGroup group = (SortedConfigurableGroup)configurable;
+      if (configurable instanceof SortedConfigurableGroup group) {
         configurable = getConfigurableToReplace(group.myList, group.getWeight());
         if (configurable != null) {
           list.set(i, configurable);
@@ -170,13 +168,11 @@ public final class ConfigurableExtensionPointUtil {
       replaceGroupWithSingleConfigurable(list);
       if (1 == list.size()) {
         Configurable configurable = list.get(0);
-        if (configurable instanceof SortedConfigurableGroup) {
-          SortedConfigurableGroup group = (SortedConfigurableGroup)configurable;
+        if (configurable instanceof SortedConfigurableGroup group) {
           group.myWeight = weight; // modify weight according to the replacing group
           return group;
         }
-        if (configurable instanceof ConfigurableWrapper) {
-          ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+        if (configurable instanceof ConfigurableWrapper wrapper) {
           wrapper.myWeight = weight; // modify weight according to the replacing group
           return wrapper;
         }
@@ -265,12 +261,11 @@ public final class ConfigurableExtensionPointUtil {
   public static @NotNull Map<String, List<Configurable>> groupConfigurables(@NotNull List<? extends Configurable> configurables) {
     Map<String, Node<HierarchicalConfigurable>> tree = new HashMap<>();
     for (Configurable configurable : configurables) {
-      if (!(configurable instanceof HierarchicalConfigurable)) {
+      if (!(configurable instanceof HierarchicalConfigurable hierarchical)) {
         Node.add(tree, "other", configurable);
         continue;
       }
 
-      HierarchicalConfigurable hierarchical = (HierarchicalConfigurable)configurable;
       String id;
       try {
         id = hierarchical.getId();
@@ -422,8 +417,7 @@ public final class ConfigurableExtensionPointUtil {
     }
     if (configurables != null) {
       for (Configurable configurable : configurables) {
-        if (configurable instanceof ConfigurableWrapper) {
-          ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+        if (configurable instanceof ConfigurableWrapper wrapper) {
           bundle = wrapper.getExtensionPoint().findBundle();
           if (getString(bundle, resource) != null) {
             return bundle;

@@ -40,6 +40,6 @@ public enum ActionUpdateThread {
    *
    * @deprecated Migrate to {@link #EDT} or {@link #BGT} ASAP.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   OLD_EDT
 }

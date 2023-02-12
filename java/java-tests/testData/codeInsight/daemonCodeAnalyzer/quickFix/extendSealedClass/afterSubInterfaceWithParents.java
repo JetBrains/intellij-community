@@ -1,4 +1,4 @@
-// "non-sealed" "true"
+// "non-sealed" "true-preview"
 sealed interface Parent permits Child, Foo {}
 
 interface OtherParent {}

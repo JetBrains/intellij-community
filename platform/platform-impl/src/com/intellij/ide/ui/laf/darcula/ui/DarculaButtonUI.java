@@ -69,9 +69,8 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   public static boolean isSmallVariant(Component c) {
-    if (!(c instanceof AbstractButton)) return false;
+    if (!(c instanceof AbstractButton b)) return false;
 
-    AbstractButton b = (AbstractButton)c;
     boolean smallVariant = b.getClientProperty("ActionToolbar.smallVariant") == Boolean.TRUE;
     ComboBoxAction a = (ComboBoxAction)b.getClientProperty("styleCombo");
 

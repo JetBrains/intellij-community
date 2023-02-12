@@ -3,7 +3,9 @@ package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
@@ -21,8 +23,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.ColorUIResource;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -33,9 +38,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @ApiStatus.Internal
 public abstract class ExperimentalUI {
+
+  private static final Logger LOG = Logger.getInstance(ExperimentalUI.class);
+
+  public static final String KEY = "ide.experimental.ui";
+
+  public static final String NEW_UI_USED_PROPERTY = "experimental.ui.used.once";
+
+  private static final String FIRST_PROMOTION_DATE_FORMAT = "yyyy/MM/dd";
+  private static final String FIRST_PROMOTION_DATE_PROPERTY = "experimental.ui.first.promotion.date";
+
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
   private IconPathPatcher iconPathPatcher;
-  public static final String KEY = "ide.experimental.ui";
 
   @Contract(pure = true)
   public static boolean isNewUI() {
@@ -43,6 +57,37 @@ public abstract class ExperimentalUI {
     // Please, apply any modifications here and there synchronously. Or solve the dependency problem :)
 
     return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && isSupported();
+  }
+
+  public static void setNewUI(boolean newUI) {
+    if (newUI) {
+      PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
+      propertyComponent.setValue(NEW_UI_USED_PROPERTY, true);
+    }
+
+    Registry.get("ide.experimental.ui").setValue(newUI);
+  }
+
+  public static int getPromotionDaysCount() {
+    PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
+    String value = propertyComponent.getValue(FIRST_PROMOTION_DATE_PROPERTY);
+    SimpleDateFormat dateFormat = new SimpleDateFormat(FIRST_PROMOTION_DATE_FORMAT);
+    Date now = new Date();
+
+    if (value == null) {
+      propertyComponent.setValue(FIRST_PROMOTION_DATE_PROPERTY, dateFormat.format(now));
+      return 0;
+    }
+
+    try {
+      Date firstDate = dateFormat.parse(value);
+      return (int)TimeUnit.DAYS.convert(now.getTime() - firstDate.getTime(), TimeUnit.MILLISECONDS);
+    }
+    catch (ParseException e) {
+      LOG.warn("Invalid stored date " + value);
+      propertyComponent.setValue(FIRST_PROMOTION_DATE_PROPERTY, dateFormat.format(now));
+      return 0;
+    }
   }
 
   public static boolean isSupported() {
@@ -130,6 +175,7 @@ public abstract class ExperimentalUI {
   public abstract @NotNull Map<ClassLoader, Map<String, String>> getIconMappings();
 
   public abstract void onExpUIEnabled(boolean suggestRestart);
+
   public abstract void onExpUIDisabled(boolean suggestRestart);
 
   private static void patchUIDefaults(boolean isNewUiEnabled) {
@@ -138,10 +184,6 @@ public abstract class ExperimentalUI {
     }
 
     UIDefaults defaults = UIManager.getDefaults();
-    setUIProperty("EditorTabs.underlineArc", 4, defaults);
-    setUIProperty("ToolWindow.Button.selectedBackground", new ColorUIResource(0x3573f0), defaults);
-    setUIProperty("ToolWindow.Button.selectedForeground", new ColorUIResource(0xffffff), defaults);
-
     if (defaults.getColor("EditorTabs.hoverInactiveBackground") == null) {
       // avoid getting EditorColorsManager too early
       setUIProperty("EditorTabs.hoverInactiveBackground", (UIDefaults.LazyValue)__ -> {
@@ -179,7 +221,7 @@ public abstract class ExperimentalUI {
     }
 
     private static Icon loadIcon(String path) {
-      return IconLoader.getIcon(path, AllIcons .class.getClassLoader());
+      return IconLoader.getIcon(path, AllIcons.class.getClassLoader());
     }
   }
 }

@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.TextRange;
@@ -562,18 +561,7 @@ public final class EventLog {
     document.insertString(document.getTextLength(), StringUtil.unescapeXmlEntities(text));
   }
 
-  public static class LogEntry {
-    public final String message;
-    public final @NlsContexts.StatusBarText String status;
-    public final List<Pair<TextRange, HyperlinkInfo>> links;
-    public final int titleLength;
-
-    public LogEntry(@NotNull String message, @NotNull @Nls String status, @NotNull List<Pair<TextRange, HyperlinkInfo>> links, int titleLength) {
-      this.message = message;
-      this.status = status;
-      this.links = links;
-      this.titleLength = titleLength;
-    }
+  record LogEntry(@NotNull String message, @NotNull @Nls String status, @NotNull List<Pair<TextRange, HyperlinkInfo>> links, int titleLength) {
   }
 
   public static @Nullable ToolWindow getEventLog(@Nullable Project project) {

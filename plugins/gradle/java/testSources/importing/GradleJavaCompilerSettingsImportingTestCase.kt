@@ -2,18 +2,18 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.plugins.gradle.testFramework.util.buildSettings
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 
 abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImportingTestCase() {
 
   fun createGradleSettingsFile(vararg moduleNames: String) {
-    createSettingsFile(buildSettings {
+    createSettingsFile {
       setProjectName("project")
       for (moduleName in moduleNames) {
         include(moduleName)
       }
-    })
+    }
   }
 
   fun createJavaGradleSubProject(
@@ -29,7 +29,7 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
   ): VirtualFile {
     createProjectSubDir("$relativePath/src/main/java")
     createProjectSubDir("$relativePath/src/test/java")
-    return createProjectSubFile("$relativePath/build.gradle", buildscript {
+    return createBuildFile(relativePath) {
       withJavaPlugin()
       withPrefix {
         assignIfNotNull("sourceCompatibility", projectSourceCompatibility)
@@ -49,6 +49,6 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
           }
         }
       }
-    })
+    }
   }
 }

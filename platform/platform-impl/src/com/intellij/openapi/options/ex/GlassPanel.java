@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.options.ex;
 
@@ -13,7 +13,6 @@ import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
-import java.awt.image.Kernel;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -52,8 +51,7 @@ public class GlassPanel extends JComponent {
         final Area area = getComponentArea(surfaceComponent, lightComponent, 1);
         if (area == null) continue;
 
-        if (lightComponent instanceof JLabel) {
-          final JLabel label = (JLabel)lightComponent;
+        if (lightComponent instanceof JLabel label) {
           final Component labelFor = label.getLabelFor();
           if (labelFor instanceof JComponent) {
             final Area labelForArea = getComponentArea(surfaceComponent, (JComponent)labelFor, 1);
@@ -124,21 +122,6 @@ public class GlassPanel extends JComponent {
   protected int getComponentVInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
     return isWithBorder ? 1 : isLabelFromTabbedPane ? 10 : 5;
   }
-
-  protected static Kernel getBlurKernel(int blurSize) {
-    if (blurSize <= 0) return null;
-
-    int size = blurSize * blurSize;
-    float coeff = 1.0f / size;
-    float[] kernelData = new float[size];
-
-    for (int i = 0; i < size; i ++) {
-      kernelData[i] = coeff;
-    }
-
-    return new Kernel(blurSize, blurSize, kernelData);
-  }
-
 
   public static double getArea(JComponent component) {
     return Math.PI * component.getWidth() * component.getHeight() / 4.0;

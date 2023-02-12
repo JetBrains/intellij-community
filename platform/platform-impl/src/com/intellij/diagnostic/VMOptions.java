@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.IdeBundle;
@@ -33,8 +33,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static com.intellij.openapi.util.Pair.pair;
 
 public final class VMOptions {
-
-  public static final String TEST_SCRIPT_FILE_NAME = "test_script.txt";
   private static final Logger LOG = Logger.getInstance(VMOptions.class);
   private static final ReadWriteLock ourUserFileLock = new ReentrantReadWriteLock();
 

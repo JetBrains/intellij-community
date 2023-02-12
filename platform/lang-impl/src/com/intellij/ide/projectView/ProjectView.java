@@ -62,7 +62,7 @@ public abstract class ProjectView {
   /**
    * @deprecated unused method
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void changeView();
 
   public abstract void refresh();

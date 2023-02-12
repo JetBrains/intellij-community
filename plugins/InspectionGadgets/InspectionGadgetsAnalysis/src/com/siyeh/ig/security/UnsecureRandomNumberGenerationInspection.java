@@ -62,10 +62,9 @@ public class UnsecureRandomNumberGenerationInspection
         return;
       }
       final PsiElement element = reference.resolve();
-      if (!(element instanceof PsiClass)) {
+      if (!(element instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)element;
       if (!InheritanceUtil.isInheritor(aClass, "java.util.Random")) {
         return;
       }

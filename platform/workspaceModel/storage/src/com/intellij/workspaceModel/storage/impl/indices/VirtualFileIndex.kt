@@ -260,7 +260,7 @@ open class VirtualFileIndex internal constructor(
           return vfu
         }
         else {
-          val result = CollectionFactory.createSmallMemoryFootprintSet<VirtualFileUrl>()
+          val result = CollectionFactory.createSmallMemoryFootprintSet<VirtualFileUrl>(DEFAULT_COLLECTION_SIZE)
           result.add(vfu as VirtualFileUrl)
           result.add(virtualFileUrl)
           return result
@@ -283,7 +283,7 @@ open class VirtualFileIndex internal constructor(
           is Pair<*, *> -> {
             property2Vfu as Pair<String, Any>
             if (property2Vfu.first != propertyName) {
-              val result = CollectionFactory.createSmallMemoryFootprintMap<String, Any>()
+              val result = CollectionFactory.createSmallMemoryFootprintMap<String, Any>(DEFAULT_COLLECTION_SIZE)
               result[property2Vfu.first] = property2Vfu.second
               result[propertyName] = virtualFileUrl
               result
@@ -348,7 +348,7 @@ open class VirtualFileIndex internal constructor(
         when (vfuMap) {
           is Map<*, *> -> {
             vfuMap as Map<String, *>
-            val copiedVfuMap = CollectionFactory.createSmallMemoryFootprintMap<String, Any>()
+            val copiedVfuMap = CollectionFactory.createSmallMemoryFootprintMap<String, Any>(vfuMap.size)
             vfuMap.forEach { copiedVfuMap[it.key] = getVirtualFileUrl(it.value!!) }
             copiedMap[entityId] = copiedVfuMap
           }
@@ -369,6 +369,8 @@ open class VirtualFileIndex internal constructor(
 
     companion object {
       private val LOG = logger<MutableVirtualFileIndex>()
+      private const val DEFAULT_COLLECTION_SIZE = 2
+
       const val VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY = "entitySource"
       fun from(other: VirtualFileIndex): MutableVirtualFileIndex {
         if (other is MutableVirtualFileIndex) other.freezed = true

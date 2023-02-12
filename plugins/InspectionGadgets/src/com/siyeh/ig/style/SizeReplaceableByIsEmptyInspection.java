@@ -83,10 +83,9 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
       if (!(operand instanceof PsiMethodCallExpression)) {
         operand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
       }
-      if (!(operand instanceof PsiMethodCallExpression)) {
+      if (!(operand instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (qualifierExpression == null) {

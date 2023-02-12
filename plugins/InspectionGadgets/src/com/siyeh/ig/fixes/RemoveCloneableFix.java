@@ -39,10 +39,9 @@ public class RemoveCloneableFix extends InspectionGadgetsFix {
   @Override
   protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement().getParent();
-    if (!(element instanceof PsiClass)) {
+    if (!(element instanceof PsiClass aClass)) {
       return;
     }
-    final PsiClass aClass = (PsiClass)element;
     final PsiReferenceList implementsList = aClass.getImplementsList();
     if (implementsList == null) {
       return;

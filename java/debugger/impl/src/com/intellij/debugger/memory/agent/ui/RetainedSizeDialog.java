@@ -179,12 +179,9 @@ public class RetainedSizeDialog extends DialogWrapper {
     while (!nodes.empty()) {
       XValueNodeImpl node = nodes.pop();
       for (TreeNode child : node.getLoadedChildren()) {
-        if (child instanceof XValueNodeImpl) {
-          XValueNodeImpl childImpl = (XValueNodeImpl)child;
-          if (myHeldObjects.contains(getObjectReference(childImpl))) {
-            myHighlighter.highlightNode(childImpl);
-            nodes.push(childImpl);
-          }
+        if (child instanceof XValueNodeImpl childImpl && myHeldObjects.contains(getObjectReference(childImpl))) {
+          myHighlighter.highlightNode(childImpl);
+          nodes.push(childImpl);
         }
       }
     }
@@ -233,13 +230,11 @@ public class RetainedSizeDialog extends DialogWrapper {
 
     @Override
     public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
-      if (!mySkipNotification && node instanceof XValueNodeImpl) {
-        XValueNodeImpl nodeImpl = (XValueNodeImpl)node;
-        if (nodeImpl != nodeImpl.getTree().getRoot() && myHeldObjects.contains(getObjectReference(nodeImpl))) {
-          XValuePresentation presentation = nodeImpl.getValuePresentation();
-          if (presentation != null && nodeImpl.getIcon() != PlatformDebuggerImplIcons.PinToTop.UnpinnedItem) {
-            highlightNode(nodeImpl);
-          }
+      if (!mySkipNotification && node instanceof XValueNodeImpl nodeImpl &&
+          nodeImpl != nodeImpl.getTree().getRoot() && myHeldObjects.contains(getObjectReference(nodeImpl))) {
+        XValuePresentation presentation = nodeImpl.getValuePresentation();
+        if (presentation != null && nodeImpl.getIcon() != PlatformDebuggerImplIcons.PinToTop.UnpinnedItem) {
+          highlightNode(nodeImpl);
         }
       }
       mySkipNotification = false;

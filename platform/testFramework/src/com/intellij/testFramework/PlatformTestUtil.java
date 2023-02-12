@@ -317,8 +317,7 @@ public final class PlatformTestUtil {
 
   private static boolean isBusy(@NotNull JTree tree, TreeModel model) {
     UIUtil.dispatchAllInvocationEvents();
-    if (model instanceof AsyncTreeModel) {
-      AsyncTreeModel async = (AsyncTreeModel)model;
+    if (model instanceof AsyncTreeModel async) {
       if (async.isProcessing()) return true;
       UIUtil.dispatchAllInvocationEvents();
       return async.isProcessing();

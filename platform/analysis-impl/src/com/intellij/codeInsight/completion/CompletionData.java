@@ -187,12 +187,10 @@ public class CompletionData {
   protected void addLookupItem(Set<? super LookupElement> set, TailType tailType, @NotNull Object completion, final CompletionVariant variant) {
     LookupElement ret = objectToLookupItem(completion);
 
-    if (!(ret instanceof LookupItem)) {
+    if (!(ret instanceof LookupItem item)) {
       set.add(ret);
       return;
     }
-
-    LookupItem item = (LookupItem)ret;
 
     InsertHandler<?> insertHandler = variant.getInsertHandler();
     if(insertHandler != null && item.getInsertHandler() == null) {
@@ -228,8 +226,7 @@ public class CompletionData {
           LOG.error("Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(completions));
           continue;
         }
-        if (completion instanceof PsiElement) {
-          final PsiElement psiElement = (PsiElement)completion;
+        if (completion instanceof PsiElement psiElement) {
           if (filter.isClassAcceptable(psiElement.getClass()) && filter.isAcceptable(psiElement, position)) {
             addLookupItem(set, tailType, completion, variant);
           }

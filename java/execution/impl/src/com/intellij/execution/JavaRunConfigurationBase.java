@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.vmOptions.VMOption;
 import com.intellij.execution.wsl.WslPath;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -60,5 +61,17 @@ public abstract class JavaRunConfigurationBase extends ModuleBasedConfiguration<
   @Override
   public void setClasspathModifications(List<ModuleBasedConfigurationOptions.ClasspathModification> modifications) {
     getOptions().setClasspathModifications(modifications);
+  }
+
+  /**
+   * @return list of configuration-specific VM options (usually, -D options), used for completion
+   */
+  public List<VMOption> getKnownVMOptions() {
+    return List.of(
+      VMOption.property("java.awt.headless", "bool", "Run the application in headless mode"),
+      VMOption.property("user.home", "string", "User home directory"),
+      VMOption.property("user.dir", "string", "User working directory"),
+      VMOption.property("user.name", "string", "User account name")
+    );
   }
 }

@@ -123,8 +123,8 @@ public final class JVMNameUtil {
     public JVMName toName() {
       final List<JVMName> optimised = new ArrayList<>();
       for (JVMName evaluator : myList) {
-        if (evaluator instanceof JVMRawText && !optimised.isEmpty() && optimised.get(optimised.size() - 1) instanceof JVMRawText) {
-          JVMRawText nameEvaluator = (JVMRawText)optimised.get(optimised.size() - 1);
+        if (evaluator instanceof JVMRawText && !optimised.isEmpty() &&
+            optimised.get(optimised.size() - 1) instanceof JVMRawText nameEvaluator) {
           nameEvaluator.setName(nameEvaluator.getName() + ((JVMRawText)evaluator).getName());
         }
         else {
@@ -234,8 +234,7 @@ public final class JVMNameUtil {
   }
 
   public static JVMName getJVMQualifiedName(PsiType psiType) {
-    if (psiType instanceof PsiArrayType) {
-      final PsiArrayType arrayType = (PsiArrayType)psiType;
+    if (psiType instanceof PsiArrayType arrayType) {
       JVMName jvmName = getJVMQualifiedName(arrayType.getComponentType());
       JVMNameBuffer buffer = new JVMNameBuffer();
       buffer.append(jvmName);

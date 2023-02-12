@@ -33,11 +33,10 @@ public final class ComponentUtil {
   }
 
   public static boolean isMinimized(@Nullable Window window) {
-    if (!(window instanceof Frame)) {
+    if (!(window instanceof Frame frame)) {
       return false;
     }
 
-    Frame frame = (Frame)window;
     return frame.getExtendedState() == Frame.ICONIFIED;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.makeStatic;
 
@@ -145,9 +145,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
 
           if (processed.contains(referencedElement)) continue;
           processed.add(referencedElement);
-          if (referencedElement instanceof PsiField) {
-            PsiField field = (PsiField)referencedElement;
-
+          if (referencedElement instanceof PsiField field) {
             if (mySettings.getNameForField(field) == null) {
               String message = JavaRefactoringBundle.message("0.uses.non.static.1.which.is.not.passed.as.a.parameter", typeString,
                                                          RefactoringUIUtil.getDescription(field, true));
@@ -253,15 +251,9 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
 
   protected boolean makeClassParameterFinal(UsageInfo[] usages) {
     for (UsageInfo usage : usages) {
-      if (usage instanceof InternalUsageInfo) {
-        final InternalUsageInfo internalUsageInfo = (InternalUsageInfo)usage;
-        PsiElement referencedElement = internalUsageInfo.getReferencedElement();
-        if (!(referencedElement instanceof PsiField)
-            || mySettings.getNameForField((PsiField)referencedElement) == null) {
-          if (internalUsageInfo.isInsideAnonymous()) {
-            return true;
-          }
-        }
+      if (usage instanceof InternalUsageInfo internalUsageInfo && internalUsageInfo.isInsideAnonymous() &&
+          (!(internalUsageInfo.getReferencedElement() instanceof PsiField field) || mySettings.getNameForField(field) == null)) {
+        return true;
       }
     }
     return false;
@@ -269,14 +261,9 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
 
   protected static boolean makeFieldParameterFinal(PsiField field, UsageInfo[] usages) {
     for (UsageInfo usage : usages) {
-      if (usage instanceof InternalUsageInfo) {
-        final InternalUsageInfo internalUsageInfo = (InternalUsageInfo)usage;
-        PsiElement referencedElement = internalUsageInfo.getReferencedElement();
-        if (referencedElement instanceof PsiField && field.equals(referencedElement)) {
-          if (internalUsageInfo.isInsideAnonymous()) {
-            return true;
-          }
-        }
+      if (usage instanceof InternalUsageInfo internalUsageInfo && internalUsageInfo.isInsideAnonymous() &&
+          internalUsageInfo.getReferencedElement() instanceof PsiField refField && field.equals(refField)) {
+        return true;
       }
     }
     return false;

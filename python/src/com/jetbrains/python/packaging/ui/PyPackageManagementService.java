@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
 
 public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull private static final Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
-  @NonNls private static final String TEXT_PREFIX = buildHtmlStylePrefix();
+  @NonNls protected static final String TEXT_PREFIX = buildHtmlStylePrefix();
 
   @NotNull
   private static String buildHtmlStylePrefix() {
@@ -334,8 +334,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   private static PyPackageInstallationErrorDescription createDescription(@NotNull ExecutionException e,
                                                                          @Nullable Sdk sdk,
                                                                          @Nullable String packageName) {
-    if (e instanceof PyExecutionException) {
-      final PyExecutionException ee = (PyExecutionException)e;
+    if (e instanceof PyExecutionException ee) {
       final String stdout = ee.getStdout();
       final String stdoutCause = findErrorCause(stdout);
       final String stderrCause = findErrorCause(ee.getStderr());

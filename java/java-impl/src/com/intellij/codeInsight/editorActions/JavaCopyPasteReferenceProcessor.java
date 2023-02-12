@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -84,8 +84,7 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
       int endOffset = data.endOffset + bounds.getStartOffset();
       PsiElement element = file.findElementAt(startOffset);
 
-      if (element instanceof PsiIdentifier && element.getParent() instanceof PsiJavaCodeReferenceElement) {
-        PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)element.getParent();
+      if (element instanceof PsiIdentifier && element.getParent() instanceof PsiJavaCodeReferenceElement reference) {
         TextRange range = reference.getTextRange();
         if (range.getStartOffset() == startOffset && range.getEndOffset() == endOffset) {
           if (data.staticMemberName == null) {

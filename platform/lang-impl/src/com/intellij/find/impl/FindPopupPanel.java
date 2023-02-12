@@ -455,8 +455,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     header.cbFileFilter.addItemListener(liveResultsPreviewUpdateListener);
     header.fileMaskField.addActionListener(__ -> scheduleResultsUpdate());
     Component editorComponent = header.fileMaskField.getEditor().getEditorComponent();
-    if (editorComponent instanceof EditorTextField) {
-      EditorTextField etf = (EditorTextField) editorComponent;
+    if (editorComponent instanceof EditorTextField etf) {
       etf.addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent event) {

@@ -13,15 +13,14 @@ import com.jediterm.terminal.model.StoredCursor
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.Tabulator
 import com.jediterm.terminal.model.hyperlinks.LinkInfo
-import com.jediterm.terminal.ui.AwtTransformers
 import com.jediterm.terminal.util.CharUtils
-import java.awt.Color
 import java.awt.Desktop
 import java.awt.Dimension
 import java.awt.Toolkit
 import java.net.URI
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.max
 import kotlin.math.min
 
@@ -114,7 +113,7 @@ class TerminalController(private val model: TerminalModel,
     if (model.cursorX >= model.width) {
       return
     }
-    val length: Int = model.getLineText(model.cursorY - 1).length
+    val length: Int = model.getLine(model.cursorY - 1).text.length
     val stop: Int = tabulator.nextTab(model.cursorX)
     var newCursorX = max(model.cursorX, length)
     if (newCursorX < stop) {
@@ -771,14 +770,28 @@ class TerminalController(private val model: TerminalModel,
     model.isBracketedPasteMode = enabled
   }
 
-  override fun getWindowForeground(): TerminalColor? {
-    val color: Color? = AwtTransformers.toAwtColor(settings.terminalColorPalette.getForeground(model.styleState.foreground))
-    return AwtTransformers.fromAwtToTerminalColor(color)
+  override fun getWindowForeground(): com.jediterm.core.Color {
+    return settings.terminalColorPalette.getForeground(model.styleState.foreground)
   }
 
-  override fun getWindowBackground(): TerminalColor? {
-    val color: Color? = AwtTransformers.toAwtColor(settings.terminalColorPalette.getBackground(model.styleState.background))
-    return AwtTransformers.fromAwtToTerminalColor(color)
+  override fun getWindowBackground(): com.jediterm.core.Color {
+    return settings.terminalColorPalette.getBackground(model.styleState.background)
+  }
+
+  private val customCommandListeners: MutableList<TerminalCustomCommandListener> = CopyOnWriteArrayList()
+
+  override fun addCustomCommandListener(listener: TerminalCustomCommandListener) {
+    customCommandListeners.add(listener)
+  }
+
+  override fun removeCustomCommandListener(listener: TerminalCustomCommandListener) {
+    customCommandListeners.remove(listener)
+  }
+
+  override fun processCustomCommand(args: MutableList<String>) {
+    for (customCommandListener in customCommandListeners) {
+      customCommandListener.process(args)
+    }
   }
 
   private class DefaultTabulator(private var myWidth: Int,

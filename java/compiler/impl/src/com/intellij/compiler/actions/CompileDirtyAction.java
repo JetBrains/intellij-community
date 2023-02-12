@@ -16,6 +16,7 @@
 package com.intellij.compiler.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.task.ProjectTaskManager;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class CompileDirtyAction extends CompileActionBase {
 
   @Override
-  protected void doAction(@NotNull AnActionEvent event, Project project) {
+  protected void doAction(@NotNull DataContext dataContext, Project project) {
     ProjectTaskManager.getInstance(project).buildAllModules();
   }
 

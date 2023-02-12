@@ -134,10 +134,9 @@ public final class IdeaSpecificSettings {
           isModified = true;
         }
       }
-      if (!(entry instanceof LibraryOrderEntry)) continue;
+      if (!(entry instanceof LibraryOrderEntry libraryEntry)) continue;
 
       Element element = new Element("lib");
-      LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
 
       String libraryName = ((LibraryOrderEntry)entry).getLibraryName();
       if (libraryName == null) {

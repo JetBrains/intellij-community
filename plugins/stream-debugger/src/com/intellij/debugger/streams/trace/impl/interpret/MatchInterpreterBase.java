@@ -28,8 +28,7 @@ public abstract class MatchInterpreterBase implements CallTraceInterpreter {
   @NotNull
   @Override
   public TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
-    if (value instanceof ArrayReference) {
-      final ArrayReference array = (ArrayReference)value;
+    if (value instanceof ArrayReference array) {
       if (array.length() != 2) {
         throw new UnexpectedArrayLengthException("trace array for *match call should contain two items. Actual = " + array.length());
       }

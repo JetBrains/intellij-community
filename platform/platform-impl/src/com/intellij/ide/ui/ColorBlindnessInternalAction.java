@@ -121,8 +121,7 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
       myCombo.addItemListener(event -> {
         if (ItemEvent.SELECTED == event.getStateChange()) {
           Object object = event.getItem();
-          if (object instanceof FilterItem) {
-            FilterItem item = (FilterItem)object;
+          if (object instanceof FilterItem item) {
             if (item.myFilter instanceof MutableFilter) {
               showSlider(myFirstSlider, listener);
               showSlider(mySecondSlider, listener);

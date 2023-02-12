@@ -130,7 +130,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     snapshot.setTemporary(original.isTemporary());
 
     if (myComponent != null && myComponent.myRCStorageUi != null) {
-      myComponent.myRCStorageUi.apply(snapshot);
+      myComponent.myRCStorageUi.apply(snapshot, false);
     }
 
     return snapshot;

@@ -1,8 +1,8 @@
 package com.intellij.codeInspection.tests.test
 
 import com.intellij.codeInspection.test.TestFailedLineInspection
-import com.intellij.codeInspection.tests.ULanguage
-import com.intellij.codeInspection.tests.UastInspectionTestBase
+import com.intellij.codeInspection.tests.JvmLanguage
+import com.intellij.codeInspection.tests.JvmInspectionTestBase
 import com.intellij.codeInspection.tests.test.junit.addHamcrestLibrary
 import com.intellij.codeInspection.tests.test.junit.addJUnit3Library
 import com.intellij.codeInspection.tests.test.junit.addJUnit5Library
@@ -19,7 +19,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import java.util.*
 
-abstract class TestFailedLineInspectionTestBase : UastInspectionTestBase() {
+abstract class TestFailedLineInspectionTestBase : JvmInspectionTestBase() {
   override val inspection = TestFailedLineInspection()
 
   override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(sdkLevel)
@@ -34,7 +34,7 @@ abstract class TestFailedLineInspectionTestBase : UastInspectionTestBase() {
   }
 
   protected fun doTest(
-    lang: ULanguage,
+    lang: JvmLanguage,
     text: String,
     fileName: String = generateFileName(),
     url: String,

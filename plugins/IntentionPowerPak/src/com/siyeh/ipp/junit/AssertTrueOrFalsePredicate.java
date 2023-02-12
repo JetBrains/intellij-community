@@ -24,10 +24,9 @@ class AssertTrueOrFalsePredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiMethodCallExpression)) {
+    if (!(element instanceof PsiMethodCallExpression expression)) {
       return false;
     }
-    final PsiMethodCallExpression expression = (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = expression.getArgumentList();
     final int numExpressions = argumentList.getExpressionCount();
     if (numExpressions < 1 || numExpressions > 2) {

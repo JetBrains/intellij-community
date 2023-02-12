@@ -66,8 +66,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
   }
 
   static boolean isEqualityComparison(PsiExpression expression) {
-    if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+    if (expression instanceof PsiBinaryExpression binaryExpression) {
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.EQEQ)) {
         return false;
@@ -89,10 +88,9 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
   }
 
   static boolean isIdentityComparison(PsiExpression expression) {
-    if (!(expression instanceof PsiBinaryExpression)) {
+    if (!(expression instanceof PsiBinaryExpression binaryExpression)) {
       return false;
     }
-    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
     if (!ComparisonUtils.isEqualityComparison(binaryExpression)) {
       return false;
     }
@@ -207,8 +205,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
       final PsiExpression firstArgument = assertHint.getFirstArgument();
       PsiExpression lhs = null;
       PsiExpression rhs = null;
-      if (firstArgument instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)firstArgument;
+      if (firstArgument instanceof PsiBinaryExpression binaryExpression) {
         lhs = binaryExpression.getLOperand();
         rhs = binaryExpression.getROperand();
       }
@@ -468,10 +465,9 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
     }
 
     private boolean isEqEqExpression(PsiExpression argument) {
-      if (!(argument instanceof PsiBinaryExpression)) {
+      if (!(argument instanceof PsiBinaryExpression binaryExpression)) {
         return false;
       }
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)argument;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       return JavaTokenType.EQEQ.equals(tokenType);
     }

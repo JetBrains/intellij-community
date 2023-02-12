@@ -93,8 +93,7 @@ public class ConfusingElseInspection extends BaseInspection implements CleanupLo
         anchor = parent;
         parent = anchor.getParent();
       }
-      if (elseBranch instanceof PsiBlockStatement) {
-        final PsiBlockStatement elseBlock = (PsiBlockStatement)elseBranch;
+      if (elseBranch instanceof PsiBlockStatement elseBlock) {
         final PsiCodeBlock block = elseBlock.getCodeBlock();
         final PsiElement[] children = block.getChildren();
         if (children.length > 2) {
@@ -147,8 +146,7 @@ public class ConfusingElseInspection extends BaseInspection implements CleanupLo
 
     private boolean parentCompletesNormally(PsiElement element) {
       PsiElement parent = element.getParent();
-      while (parent instanceof PsiIfStatement) {
-        final PsiIfStatement ifStatement = (PsiIfStatement)parent;
+      while (parent instanceof PsiIfStatement ifStatement) {
         final PsiStatement elseBranch = ifStatement.getElseBranch();
         if (elseBranch != element) {
           return true;
@@ -167,8 +165,7 @@ public class ConfusingElseInspection extends BaseInspection implements CleanupLo
     private PsiStatement getNextStatement(PsiIfStatement statement) {
       while (true) {
         final PsiElement parent = statement.getParent();
-        if (parent instanceof PsiIfStatement) {
-          final PsiIfStatement parentIfStatement = (PsiIfStatement)parent;
+        if (parent instanceof PsiIfStatement parentIfStatement) {
           final PsiStatement elseBranch = parentIfStatement.getElseBranch();
           if (elseBranch == statement) {
             statement = parentIfStatement;

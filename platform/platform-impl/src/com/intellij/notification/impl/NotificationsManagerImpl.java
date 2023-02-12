@@ -709,8 +709,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     Balloon balloon = builder.createBalloon();
 
-    if (balloon instanceof BalloonImpl) {
-      var balloonImpl = (BalloonImpl)balloon;
+    if (balloon instanceof BalloonImpl balloonImpl) {
       balloonImpl.getContent().addMouseListener(new MouseAdapter() {
       });
       balloon.setAnimationEnabled(false);
@@ -989,8 +988,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     private void handleEvent(MouseEvent e, boolean pressed, boolean moved) {
-      if (e.getSource() instanceof JEditorPane) {
-        JEditorPane pane = (JEditorPane)e.getSource();
+      if (e.getSource() instanceof JEditorPane pane) {
         int pos = pane.viewToModel2D(e.getPoint());
         if (pos >= 0) {
           HTMLDocument document = (HTMLDocument)pane.getDocument();
@@ -1547,12 +1545,10 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     private static void cutWidth(@NotNull Component component, @NotNull Dimension size, int width) {
       size.width = width;
       component.setPreferredSize(size);
-      if (component instanceof JButton) {
-        JButton button = (JButton)component;
+      if (component instanceof JButton button) {
         button.setToolTipText(button.getText());
       }
-      else if (component instanceof JLabel) {
-        JLabel label = (JLabel)component;
+      else if (component instanceof JLabel label) {
         label.setToolTipText(label.getText());
       }
     }

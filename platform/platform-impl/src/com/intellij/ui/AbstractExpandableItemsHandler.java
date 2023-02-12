@@ -434,6 +434,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       doFillBackground(height, width, g);
       g.translate(cellBounds.x - visMaxX, borderSize);
       doPaintTooltipImage(renderer, cellBounds, g, key);
+      myTipComponent.setBorder(null);
     }
     else {
       myImage = UIUtil.createImage(myComponent, width, height, BufferedImage.TYPE_INT_RGB);
@@ -448,6 +449,8 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
         width += borderSize;
         height += borderSize * 2;
         myTipComponent.setBorder(border);
+      } else {
+        myTipComponent.setBorder(null);
       }
       g.translate(cellBounds.x - visMaxX, 0);
       doPaintTooltipImage(renderer, cellBounds, g, key);

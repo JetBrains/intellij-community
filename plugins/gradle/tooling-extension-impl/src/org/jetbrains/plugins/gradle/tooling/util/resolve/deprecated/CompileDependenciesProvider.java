@@ -32,7 +32,7 @@ public class CompileDependenciesProvider {
   private Configuration myCompileOnlyConfiguration;
   private Collection<ExternalDependency> myDependencies;
   private Collection<File> myFiles;
-  private final Map<Configuration, Set<File>> myConfigurationFilesCache = new HashMap<Configuration, Set<File>>();
+  private final Map<Configuration, Set<File>> myConfigurationFilesCache = new HashMap<>();
 
   public CompileDependenciesProvider(SourceSet sourceSet, Project project) {
     mySourceSet = sourceSet;

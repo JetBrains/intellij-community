@@ -100,6 +100,16 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
   private fun processChangeEvents(event: VersionedStorageChange, workspaceFacetContributor: WorkspaceFacetContributor<ModuleSettingsBase>) {
     val changedFacets = mutableMapOf<Facet<*>, ModuleSettingsBase>()
 
+    val addedModulesNames by lazy {
+      val result = mutableSetOf<String>()
+      for (entityChange in event.getChanges(ModuleEntity::class.java)) {
+        if (entityChange is EntityChange.Added) {
+          result.add(entityChange.entity.name)
+        }
+      }
+      result
+    }
+
     event.getChanges(workspaceFacetContributor.rootEntityType).forEach { change ->
       when (change) {
         is EntityChange.Added -> {
@@ -113,9 +123,6 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
 
           // We should not send an event if the associated module was added in the same transaction.
           // Event will be sent with "moduleAdded" event.
-          val addedModulesNames = event.getChanges(ModuleEntity::class.java)
-            .filterIsInstance<EntityChange.Added<ModuleEntity>>()
-            .mapTo(HashSet()) { it.entity.name }
           if (moduleEntity.name !in addedModulesNames) {
             publisher.fireFacetAdded(existingFacetBridge)
           }
@@ -144,13 +151,21 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
       }
     }
 
+    val newlyAddedFacets by lazy {
+      event.getChanges(workspaceFacetContributor.rootEntityType)
+        .filterIsInstance<EntityChange.Added<*>>().map { it.newEntity }
+    }
+
+    val removedFacets by lazy {
+      event.getChanges(workspaceFacetContributor.rootEntityType)
+        .filterIsInstance<EntityChange.Removed<*>>().map { it.oldEntity }
+    }
+
     workspaceFacetContributor.childEntityTypes.forEach { entityType ->
       event.getChanges(entityType).forEach { change ->
         when (change) {
           is EntityChange.Added -> {
             // We shouldn't fire `facetConfigurationChanged` for newly added spring settings
-            val newlyAddedFacets = event.getChanges(workspaceFacetContributor.rootEntityType)
-              .filterIsInstance<EntityChange.Added<*>>().map { it.newEntity }
             val rootEntity = workspaceFacetContributor.getRootEntityByChild(change.newEntity)
             if (!newlyAddedFacets.contains(rootEntity)) {
               val facet = event.storageAfter.facetMapping().getDataByEntity(rootEntity) ?: error("Facet should be available")
@@ -159,8 +174,6 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
           }
           is EntityChange.Removed -> {
             // We shouldn't fire `facetConfigurationChanged` for removed spring settings
-            val removedFacets = event.getChanges(workspaceFacetContributor.rootEntityType)
-              .filterIsInstance<EntityChange.Removed<*>>().map { it.oldEntity }
             val rootEntity = workspaceFacetContributor.getRootEntityByChild(change.oldEntity)
             if (!removedFacets.contains(rootEntity)) {
               val facet = event.storageBefore.facetMapping().getDataByEntity(rootEntity) ?: error("Facet should be available")

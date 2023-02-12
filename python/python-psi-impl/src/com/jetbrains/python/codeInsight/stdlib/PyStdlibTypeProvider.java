@@ -80,11 +80,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   private static @Nullable Ref<PyType> getEnumType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context,
                                                    @Nullable PsiElement anchor) {
-    if (referenceTarget instanceof PyTargetExpression) {
-      final PyTargetExpression target = (PyTargetExpression)referenceTarget;
+    if (referenceTarget instanceof PyTargetExpression target) {
       final ScopeOwner owner = ScopeUtil.getScopeOwner(target);
-      if (owner instanceof PyClass) {
-        final PyClass cls = (PyClass)owner;
+      if (owner instanceof PyClass cls) {
         final List<PyClassLikeType> types = cls.getAncestorTypes(context);
         for (PyClassLikeType type : types) {
           if (type != null && PyNames.TYPE_ENUM.equals(type.getClassQName())) {
@@ -96,8 +94,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         }
       }
     }
-    if (referenceTarget instanceof PyQualifiedNameOwner) {
-      final PyQualifiedNameOwner qualifiedNameOwner = (PyQualifiedNameOwner)referenceTarget;
+    if (referenceTarget instanceof PyQualifiedNameOwner qualifiedNameOwner) {
       final String name = qualifiedNameOwner.getQualifiedName();
       if ((PyNames.TYPE_ENUM + ".name").equals(name)) {
         return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getStrType());
@@ -105,8 +102,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       else if ("enum.IntEnum.value".equals(name) && anchor instanceof PyReferenceExpression) {
         return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getIntType());
       }
-      else if ((PyNames.TYPE_ENUM + ".value").equals(name) && anchor instanceof PyReferenceExpression && context.maySwitchToAST(anchor)) {
-        final PyReferenceExpression anchorExpr = (PyReferenceExpression)anchor;
+      else if ((PyNames.TYPE_ENUM + ".value").equals(name) &&
+               anchor instanceof PyReferenceExpression anchorExpr && context.maySwitchToAST(anchor)) {
         final PyExpression qualifier = anchorExpr.getQualifier();
         // An enum value is retrieved programmatically, e.g. MyEnum[name].value, or just type-hinted
         if (qualifier != null) {

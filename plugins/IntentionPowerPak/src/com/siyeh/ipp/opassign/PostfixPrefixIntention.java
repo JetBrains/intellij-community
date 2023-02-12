@@ -28,15 +28,13 @@ public class PostfixPrefixIntention extends MutablyNamedIntention {
       @Override
       public boolean satisfiedBy(PsiElement element) {
         final IElementType tokenType;
-        if (element instanceof PsiPrefixExpression) {
-          final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)element;
+        if (element instanceof PsiPrefixExpression prefixExpression) {
           tokenType = prefixExpression.getOperationTokenType();
           if (prefixExpression.getOperand() == null) {
             return false;
           }
         }
-        else if (element instanceof PsiPostfixExpression) {
-          final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)element;
+        else if (element instanceof PsiPostfixExpression postfixExpression) {
           tokenType = postfixExpression.getOperationTokenType();
         }
         else {
@@ -54,8 +52,7 @@ public class PostfixPrefixIntention extends MutablyNamedIntention {
 
   @NotNull
   private static String getReplacementText(PsiElement element) {
-    if (element instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)element;
+    if (element instanceof PsiPrefixExpression prefixExpression) {
       final PsiExpression operand = prefixExpression.getOperand();
       assert operand != null;
       final PsiJavaToken sign = prefixExpression.getOperationSign();

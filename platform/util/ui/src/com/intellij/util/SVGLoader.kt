@@ -16,6 +16,7 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.*
 import com.intellij.util.io.DigestUtil.sha512
 import com.intellij.util.ui.ImageUtil
+import org.apache.batik.anim.dom.SVGOMDocument
 import org.apache.batik.transcoder.TranscoderException
 import org.jetbrains.annotations.ApiStatus
 import org.w3c.dom.Document
@@ -61,7 +62,7 @@ object SVGLoader {
   }
 
   @Throws(IOException::class)
-  fun load(url: URL?, stream: InputStream, scale: Float): Image {
+  fun load(url: URL?, stream: InputStream, scale: Float): BufferedImage {
     return load(path = url?.path, stream = stream, SvgCacheMapper(scale = scale), colorPatcher = null)
   }
 
@@ -111,7 +112,7 @@ object SVGLoader {
   internal fun load(path: String?,
                     stream: InputStream,
                     mapper: SvgCacheMapper,
-                    colorPatcher: SvgElementColorPatcherProvider?): Image {
+                    colorPatcher: SvgElementColorPatcherProvider?): BufferedImage {
     val persistentCache = SvgCache.persistentCache
     val elementColorPatcher = colorPatcher?.forPath(path)
     val digest = elementColorPatcher?.digest()
@@ -144,7 +145,7 @@ object SVGLoader {
   @Throws(IOException::class)
   fun loadWithoutCache(content: ByteArray, scale: Float): BufferedImage {
     return try {
-      SvgTranscoder.createImage(scale, createDocument(null, ByteArrayInputStream(content)), null)
+      SvgTranscoder.createImage(scale, createDocument(null, ByteArrayInputStream(content)))
     }
     catch (e: TranscoderException) {
       throw IOException(e)
@@ -162,7 +163,6 @@ object SVGLoader {
       val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE)
       SvgTranscoder.createImage(scale = 1f,
                                 document = createDocument(url?.path, stream),
-                                outDimensions = null,
                                 overriddenWidth = (width * scale).toFloat(),
                                 overriddenHeight = (height * scale).toFloat())
     }
@@ -209,7 +209,7 @@ object SVGLoader {
           's'.code.toByte(), 'v'.code.toByte(), 'g'.code.toByte(),
           '>'.code.toByte()))
         val input = ByteArrayInputStream(buffer.internalBuffer, 0, buffer.size())
-        return SvgTranscoder.getDocumentSize(scale = scale, document = createSvgDocument(uri = null, reader = input))
+        return SvgTranscoder.getDocumentSize(scale = scale, document = createSvgDocument(inputStream = input))
       }
     }
     return ImageLoader.Dimension2DDouble((ICON_DEFAULT_SIZE * scale).toDouble(), (ICON_DEFAULT_SIZE * scale).toDouble())
@@ -250,6 +250,7 @@ object SVGLoader {
       override fun forPath(path: String?): SvgElementColorPatcher? {
         return newPatcher(digest, map + backgroundColors.associateWith { "#00000000" }, alpha)
       }
+      override fun wholeDigest(): ByteArray? = digest
     }
   }
 
@@ -341,6 +342,8 @@ object SVGLoader {
 
   interface SvgElementColorPatcherProvider {
     fun forPath(path: String?): SvgElementColorPatcher?
+
+    fun wholeDigest(): ByteArray? = null
   }
 
   val persistentCache: SvgCacheManager?
@@ -356,8 +359,8 @@ private fun toCanonicalColor(color: String): String {
   return s
 }
 
-private fun createDocument(url: String?, inputStream: InputStream): Document {
-  val document = createSvgDocument(url, inputStream)
+private fun createDocument(url: String?, inputStream: InputStream): SVGOMDocument {
+  val document = createSvgDocument(inputStream = inputStream, uri = url)
   patchColors(url = url, document = document, colorPatcher = null)
   return document
 }
@@ -366,7 +369,7 @@ private fun patchColors(url: String?, document: Document, colorPatcher: SVGLoade
   colorPatcher?.forPath(url)?.patchColors(document.documentElement)
 }
 
-private fun createDocument(url: String?, data: ByteArray, colorPatcher: SVGLoader.SvgElementColorPatcherProvider?): Document {
+private fun createDocument(url: String?, data: ByteArray, colorPatcher: SVGLoader.SvgElementColorPatcherProvider?): SVGOMDocument {
   val document = createSvgDocument(uri = url, data = data)
   patchColors(url = url, document = document, colorPatcher = colorPatcher)
   return document
@@ -379,10 +382,9 @@ private fun loadAndCache(path: String?,
                          colorPatcher: SVGLoader.SvgElementColorPatcherProvider?): BufferedImage {
   val decodingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
   val bufferedImage = try {
-    SvgTranscoder.createImage(scale = mapper.scale, document = createDocument(path, data, colorPatcher), outDimensions = mapper.docSize)
+    SvgTranscoder.createImage(scale = mapper.scale, document = createDocument(path, data, colorPatcher))
   }
   catch (e: TranscoderException) {
-    mapper.docSize?.setSize(0.0, 0.0)
     throw IOException(e)
   }
   if (decodingStart != -1L) {

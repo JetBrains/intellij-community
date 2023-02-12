@@ -19,6 +19,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -67,12 +68,14 @@ public class SystemExitInspection extends BaseInspection {
       if (!"exit".equals(methodName) && !"halt".equals(methodName)) {
         return;
       }
-      final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
-      if (ignoreInMainMethod &&
-          containingMethod != null &&
-          "main".equals(containingMethod.getName()) &&
-          PsiMethodUtil.isMainMethod(containingMethod)) {
-        return;
+      if (ignoreInMainMethod) {
+        final PsiMethod containingMethod =
+          PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
+        if (containingMethod != null &&
+            HardcodedMethodConstants.MAIN.equals(containingMethod.getName()) &&
+            PsiMethodUtil.isMainMethod(containingMethod)) {
+          return;
+        }
       }
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
@@ -92,10 +95,12 @@ public class SystemExitInspection extends BaseInspection {
         return;
       }
       final String className = aClass.getQualifiedName();
-      if (!"java.lang.System".equals(className) && !"java.lang.Runtime".equals(className)) {
-        return;
+      if (CommonClassNames.JAVA_LANG_SYSTEM.equals(className)) {
+        registerMethodCallError(expression, "System");
       }
-      registerMethodCallError(expression, "System");
+      else if ("java.lang.Runtime".equals(className)) {
+        registerMethodCallError(expression, "Runtime");
+      }
     }
   }
 }

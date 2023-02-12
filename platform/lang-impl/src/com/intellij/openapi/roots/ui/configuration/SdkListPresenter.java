@@ -195,8 +195,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
       getAccessibleContext().setAccessibleName(ProjectBundle.message("jdk.combo.box.no.sdk.item.accessibility"));
       setIcon(null);
     }
-    else if (value instanceof SdkReferenceItem) {
-      SdkReferenceItem item = (SdkReferenceItem)value;
+    else if (value instanceof SdkReferenceItem item) {
 
       SdkAppearanceService.getInstance()
         .forSdk(item.sdkType, item.name, null, item.hasValidPath, false, selected)

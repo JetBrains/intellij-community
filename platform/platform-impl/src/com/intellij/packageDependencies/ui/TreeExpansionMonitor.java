@@ -28,8 +28,7 @@ public abstract class TreeExpansionMonitor<T> {
         Enumeration enumeration = ((DefaultMutableTreeNode)tree.getModel().getRoot()).breadthFirstEnumeration();
         while (enumeration.hasMoreElements()) {
           final Object nextElement = enumeration.nextElement();
-          if (nextElement instanceof DefaultMutableTreeNode) {
-            DefaultMutableTreeNode child = (DefaultMutableTreeNode)nextElement;
+          if (nextElement instanceof DefaultMutableTreeNode child) {
             if (equality.test(child, node)) {
               return new TreePath(child.getPath());
             }

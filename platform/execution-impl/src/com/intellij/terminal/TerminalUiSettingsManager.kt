@@ -6,6 +6,7 @@ import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -115,9 +116,9 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
 
   private fun detectFontSize(): Float {
     return if (UISettings.getInstance().presentationMode) {
-      UISettings.getInstance().presentationModeFontSize.toFloat()
+      UISettingsUtils.instance.presentationModeFontSize
     }
-    else editorColorsScheme.consoleFontSize2D
+    else UISettingsUtils.instance.scaledConsoleFontSize
   }
 
   fun resetFontSize() {

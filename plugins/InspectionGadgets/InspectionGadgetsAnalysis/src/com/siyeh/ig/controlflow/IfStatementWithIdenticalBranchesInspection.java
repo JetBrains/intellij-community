@@ -314,8 +314,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       Map<PsiReferenceExpression, String> referenceToNewName = new HashMap<>();
       Map<PsiLocalVariable, String> variableToNewName = new HashMap<>();
       for (ExtractionUnit unit : units) {
-        if (unit instanceof VariableDeclarationUnit) {
-          VariableDeclarationUnit declarationUnit = (VariableDeclarationUnit)unit;
+        if (unit instanceof VariableDeclarationUnit declarationUnit) {
           PsiLocalVariable thenVariable = declarationUnit.myThenVariable;
           PsiLocalVariable elseVariable = declarationUnit.myElseVariable;
           String baseName = substitutionTable.get(elseVariable);
@@ -785,8 +784,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
 
     boolean variableRenameRequired() {
       return ContainerUtil.or(myHeadUnitsOfThen, unit -> {
-        if (unit instanceof VariableDeclarationUnit) {
-          VariableDeclarationUnit declarationUnit = (VariableDeclarationUnit)unit;
+        if (unit instanceof VariableDeclarationUnit declarationUnit) {
           if (!Objects.equals(declarationUnit.myThenVariable.getName(), declarationUnit.myElseVariable.getName())) {
             return true;
           }
@@ -1266,12 +1264,10 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     protected Match referenceExpressionsMatch(PsiReferenceExpression first, PsiReferenceExpression second) {
       PsiElement firstElement = first.resolve();
       PsiElement secondElement = second.resolve();
-      if (firstElement instanceof PsiLocalVariable &&
-          secondElement instanceof PsiLocalVariable &&
+      if (firstElement instanceof PsiLocalVariable firstVar &&
+          secondElement instanceof PsiLocalVariable secondVar &&
           myLocalVariables.contains(firstElement) &&
           myLocalVariables.contains(secondElement)) {
-        PsiLocalVariable secondVar = (PsiLocalVariable)secondElement;
-        PsiLocalVariable firstVar = (PsiLocalVariable)firstElement;
         if (firstVar.getType().equals(secondVar.getType())) {
           String firstVarName = firstVar.getName();
           String secondVarName = secondVar.getName();

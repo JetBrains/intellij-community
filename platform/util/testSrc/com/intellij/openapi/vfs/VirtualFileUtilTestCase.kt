@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs
 
 import com.intellij.openapi.util.io.NioPathUtilTestCase
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import java.nio.file.Path
 
 abstract class VirtualFileUtilTestCase : NioPathUtilTestCase() {
@@ -12,7 +13,7 @@ abstract class VirtualFileUtilTestCase : NioPathUtilTestCase() {
   }
 
   suspend fun assertVirtualFile(init: suspend VirtualFile.() -> VirtualFile?): FileAssertion<VirtualFile> {
-    return VirtualFileAssertion().init { getVirtualDirectory().init() }
+    return VirtualFileAssertion().init { refreshAndGetVirtualDirectory().init() }
   }
 
   inner class VirtualFileAssertion : FileAssertion<VirtualFile>() {

@@ -5,12 +5,12 @@ package org.jetbrains.kotlin.idea.util
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
-import java.util.*
 
 abstract class ImportInsertHelper {
     /*TODO: implementation is not quite correct*/
@@ -30,6 +30,7 @@ abstract class ImportInsertHelper {
         aliasName: Name? = null,
     ): ImportDescriptorResult
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use importDescriptor(KtElement)", ReplaceWith("importDescriptor(element, descriptor)"))
     fun importDescriptor(
         file: KtFile,

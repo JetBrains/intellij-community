@@ -9,6 +9,10 @@ import kotlin.io.path.*
  * Abstraction over target path because target paths (like ssh or wsl) can't always be represented as [Path].
  */
 sealed class PathInfo {
+  /**
+   *  File system object exists, but we do not know what is it
+   */
+  object Unknown: PathInfo()
   data class Directory(val empty: Boolean) : PathInfo()
   data class RegularFile(val executable: Boolean) : PathInfo()
   companion object {

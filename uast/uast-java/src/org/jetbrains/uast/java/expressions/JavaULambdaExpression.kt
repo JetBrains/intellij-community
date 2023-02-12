@@ -16,6 +16,7 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
+import com.intellij.util.asSafely
 import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
@@ -40,6 +41,17 @@ class JavaULambdaExpression(
     }
   }
 
+  companion object {
+    internal fun unwrapImplicitBody(uExpression: UExpression): PsiExpression? =
+      uExpression
+        .asSafely<JavaImplicitUBlockExpression>()
+        ?.expressions
+        ?.firstOrNull()
+        ?.asSafely<JavaImplicitUReturnExpression>()
+        ?.returnExpression
+        ?.sourcePsi
+        ?.asSafely<PsiExpression>()
+  }
 }
 
 private fun wrapLambdaBody(parent: JavaULambdaExpression, b: PsiExpression): UBlockExpression =

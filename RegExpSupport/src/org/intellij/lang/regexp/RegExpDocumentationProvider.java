@@ -15,8 +15,7 @@ public final class RegExpDocumentationProvider extends AbstractDocumentationProv
   @Nullable
   @Nls
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
-    if (element instanceof RegExpProperty) {
-      final RegExpProperty prop = (RegExpProperty)element;
+    if (element instanceof RegExpProperty prop) {
       final ASTNode node = prop.getCategoryNode();
       if (node != null) {
         final String description = RegExpLanguageHosts.getInstance().getPropertyDescription(node.getPsi(), node.getText());
@@ -35,8 +34,7 @@ public final class RegExpDocumentationProvider extends AbstractDocumentationProv
   @Override
   @Nullable
   public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
-    if (element instanceof RegExpGroup) {
-      final RegExpGroup group = (RegExpGroup)element;
+    if (element instanceof RegExpGroup group) {
       return StringUtil.escapeXmlEntities(group.getUnescapedText());
     } else {
       return null;

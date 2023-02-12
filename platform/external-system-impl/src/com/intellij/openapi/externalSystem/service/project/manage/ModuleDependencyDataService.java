@@ -58,8 +58,7 @@ public final class ModuleDependencyDataService extends AbstractDependencyDataSer
     final Map<OrderEntry, OrderAware> orderEntryDataMap = new LinkedHashMap<>();
     final List<ModuleOrderEntry> duplicatesToRemove = new ArrayList<>();
     for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
-      if (entry instanceof ModuleOrderEntry) {
-        ModuleOrderEntry e = (ModuleOrderEntry)entry;
+      if (entry instanceof ModuleOrderEntry e) {
         Pair<String, DependencyScope> key = Pair.create(e.getModuleName(), e.getScope());
         if (toRemove.containsKey(key)) {
           duplicatesToRemove.add(e);

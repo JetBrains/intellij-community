@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 
@@ -300,21 +300,15 @@ public class JoiningMigration extends BaseStreamApiMigration {
                                                    int expressionCount,
                                                    boolean neighborIsString) {
       PsiType type = expression.getType();
-      if(expression instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression callExpression = (PsiMethodCallExpression)expression;
-        if(isCallOf(callExpression, CommonClassNames.JAVA_LANG_STRING, "charAt")) {
-          PsiExpression qualifierExpression = callExpression.getMethodExpression().getQualifierExpression();
-          PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
-          if(expressions.length == 1) {
-            PsiExpression first = expressions[0];
-            if(qualifierExpression != null) {
-
-              Object constantExpression = ExpressionUtils.computeConstantExpression(first);
-              if(constantExpression instanceof Integer) {
-                String endIndex = String.valueOf((int)constantExpression + 1);
-                return ct.text(qualifierExpression) + ".substring(" + ct.text(first) + "," + endIndex + ")";
-              }
-            }
+      if (expression instanceof PsiMethodCallExpression callExpression &&
+          isCallOf(callExpression, CommonClassNames.JAVA_LANG_STRING, "charAt")) {
+        PsiExpression qualifierExpression = callExpression.getMethodExpression().getQualifierExpression();
+        PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
+        if (expressions.length == 1) {
+          PsiExpression first = expressions[0];
+          if (qualifierExpression != null && ExpressionUtils.computeConstantExpression(first) instanceof Integer intValue) {
+            String endIndex = String.valueOf(intValue + 1);
+            return ct.text(qualifierExpression) + ".substring(" + ct.text(first) + "," + endIndex + ")";
           }
         }
       }
@@ -509,10 +503,8 @@ public class JoiningMigration extends BaseStreamApiMigration {
     @Nullable
     private static AppendChain getAppendCallExpression(@NotNull PsiVariable target,
                                                        @Nullable PsiElement element) {
-      if (!(element instanceof PsiExpressionStatement)) return null;
-      PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
-      if (!(expression instanceof PsiMethodCallExpression)) return null;
-      PsiMethodCallExpression topCall = (PsiMethodCallExpression)expression;
+      if (!(element instanceof PsiExpressionStatement exprStatement)) return null;
+      if (!(exprStatement.getExpression() instanceof PsiMethodCallExpression topCall)) return null;
       PsiMethodCallExpression call = topCall;
       while (true) {
         if (!APPEND.test(call)) return null;
@@ -529,14 +521,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
       }
     }
 
-    private static final class AppendChain {
-      final @NotNull PsiMethodCallExpression first;
-      final @NotNull PsiMethodCallExpression outermost;
-
-      private AppendChain(@NotNull PsiMethodCallExpression first, @NotNull PsiMethodCallExpression outermost) {
-        this.first = first;
-        this.outermost = outermost;
-      }
+    private record AppendChain(@NotNull PsiMethodCallExpression first, @NotNull PsiMethodCallExpression outermost) {
     }
 
     private static boolean areReferencesAllowed(@NotNull List<PsiElement> refs,

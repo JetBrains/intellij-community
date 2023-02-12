@@ -32,24 +32,16 @@ public final class ExternalTestsSerializationService implements SerializationSer
   @Override
   public byte[] write(ExternalTestsModel testsModel, Class<? extends ExternalTestsModel> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out);
-    try {
+    try (IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out)) {
       write(writer, myWriteContext, testsModel);
-    }
-    finally {
-      writer.close();
     }
     return out.toByteArray();
   }
 
   @Override
   public ExternalTestsModel read(byte[] object, Class<? extends ExternalTestsModel> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return read(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 
@@ -122,7 +114,7 @@ public final class ExternalTestsSerializationService implements SerializationSer
   }
 
   private static List<ExternalTestSourceMapping> readTestSourceMappings(IonReader reader, ReadContext context) {
-    List<ExternalTestSourceMapping> list = new ArrayList<ExternalTestSourceMapping>();
+    List<ExternalTestSourceMapping> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     ExternalTestSourceMapping testSourceMapping;
@@ -153,14 +145,14 @@ public final class ExternalTestsSerializationService implements SerializationSer
   }
 
   private static class ReadContext {
-    private final IntObjectMap<ExternalTestsModel> objectMap = new IntObjectMap<ExternalTestsModel>();
-    private final IntObjectMap<ExternalTestSourceMapping> testSourceMapping = new IntObjectMap<ExternalTestSourceMapping>();
+    private final IntObjectMap<ExternalTestsModel> objectMap = new IntObjectMap<>();
+    private final IntObjectMap<ExternalTestSourceMapping> testSourceMapping = new IntObjectMap<>();
   }
 
   private static class WriteContext {
-    private final ObjectCollector<ExternalTestsModel, IOException> objectCollector = new ObjectCollector<ExternalTestsModel, IOException>();
+    private final ObjectCollector<ExternalTestsModel, IOException> objectCollector = new ObjectCollector<>();
     private final ObjectCollector<ExternalTestSourceMapping, IOException> mappingCollector =
-      new ObjectCollector<ExternalTestSourceMapping, IOException>();
+      new ObjectCollector<>();
   }
 }
 

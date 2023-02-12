@@ -142,8 +142,7 @@ public class DomUtil {
 
   @Nullable
   public static XmlElement getValueElement(GenericDomValue<?> domValue) {
-    if (domValue instanceof GenericAttributeValue) {
-      GenericAttributeValue<?> value = (GenericAttributeValue<?>)domValue;
+    if (domValue instanceof GenericAttributeValue<?> value) {
       XmlAttributeValue attributeValue = value.getXmlAttributeValue();
       return attributeValue == null ? value.getXmlAttribute() : attributeValue;
     } else {
@@ -213,8 +212,7 @@ public class DomUtil {
     }
 
     final XmlElement xmlElement = parent.getXmlElement();
-    if (xmlElement instanceof XmlTag) {
-      XmlTag tag = (XmlTag) xmlElement;
+    if (xmlElement instanceof XmlTag tag) {
       final DomManager domManager = parent.getManager();
       final SmartList<DomElement> result = new SmartList<>();
       if (attributes) {

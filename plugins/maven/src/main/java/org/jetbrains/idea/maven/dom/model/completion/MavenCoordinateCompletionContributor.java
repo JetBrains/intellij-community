@@ -163,12 +163,10 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
 
       PsiElement tagElement = xmlText.getParent();
 
-      if (!(tagElement instanceof XmlTag)) {
+      if (!(tagElement instanceof XmlTag tag)) {
         badPlace = true;
         return this;
       }
-
-      XmlTag tag = (XmlTag)tagElement;
 
       if (!myTagId.equals(tag.getName())) {
         badPlace = true;

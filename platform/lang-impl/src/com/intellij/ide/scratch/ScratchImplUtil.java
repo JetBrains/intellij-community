@@ -261,17 +261,7 @@ final class ScratchImplUtil {
       .withSelection(null);
   }
 
-  static class LanguageItem {
-    final Language language;
-    final FileType fileType;
-    final String fileExtension;
-
-    LanguageItem(@Nullable Language language, @NotNull FileType fileType, @NotNull String fileExtension) {
-      this.language = language;
-      this.fileType = fileType;
-      this.fileExtension = fileExtension;
-    }
-
+  record LanguageItem(@Nullable Language language, @NotNull FileType fileType, @NotNull String fileExtension) {
     @NotNull @NlsSafe String getDisplayName() {
       return language != null ? language.getDisplayName() : fileType.getDescription() + " (*." + fileExtension + ")";
     }

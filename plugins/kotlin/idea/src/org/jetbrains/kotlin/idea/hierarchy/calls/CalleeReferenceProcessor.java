@@ -59,9 +59,8 @@ public abstract class CalleeReferenceProcessor extends ReadActionProcessor<PsiRe
         if (kotlinOnly && !(element instanceof KtNamedDeclaration)) return true;
 
         // If reference belongs to property initializer, show enclosing declaration instead
-        if (element instanceof KtProperty) {
-            KtProperty property = (KtProperty) element;
-            if (PsiTreeUtil.isAncestor(property.getInitializer(), refElement, false)) {
+        if (element instanceof KtProperty property) {
+          if (PsiTreeUtil.isAncestor(property.getInitializer(), refElement, false)) {
                 element = CallHierarchyUtilsKt.getCallHierarchyElement(element.getParent());
             }
         }

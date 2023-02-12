@@ -208,14 +208,12 @@ public final class ExistingTemplatesComponent {
 
   private void removeTemplate(Project project) {
     final Object selection = patternTree.getLastSelectedPathComponent();
-    if (!(selection instanceof DefaultMutableTreeNode)) {
+    if (!(selection instanceof DefaultMutableTreeNode node)) {
       return;
     }
-    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
-    if (!(node.getUserObject() instanceof Configuration)) {
+    if (!(node.getUserObject() instanceof Configuration configuration)) {
       return;
     }
-    final Configuration configuration = (Configuration)node.getUserObject();
     if (configuration.isPredefined()) {
       return;
     }
@@ -319,10 +317,9 @@ public final class ExistingTemplatesComponent {
       @Override
       protected Transferable createTransferable(JComponent c) {
         final Object selection = tree.getLastSelectedPathComponent();
-        if (!(selection instanceof DefaultMutableTreeNode)) {
+        if (!(selection instanceof DefaultMutableTreeNode node)) {
           return null;
         }
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
         if (!(node.getUserObject() instanceof Configuration)) {
           return null;
         }

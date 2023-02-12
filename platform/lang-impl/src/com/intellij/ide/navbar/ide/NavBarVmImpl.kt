@@ -12,7 +12,7 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
-import com.intellij.util.flow.zipWithPrevious
+import com.intellij.util.flow.zipWithNext
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
@@ -22,7 +22,7 @@ internal class NavBarVmImpl(
   private val cs: CoroutineScope,
   private val project: Project,
   initialItems: List<NavBarVmItem>,
-  activityFlow: Flow<Unit>,
+  contextItems: Flow<List<NavBarVmItem>>,
 ) : NavBarVm {
 
   init {
@@ -39,8 +39,7 @@ internal class NavBarVmImpl(
 
   init {
     cs.launch {
-      activityFlow.collectLatest {
-        val items = focusModel(project)
+      contextItems.collectLatest { items ->
         if (items.isNotEmpty()) {
           _items.value = items.mapIndexed(::NavBarItemVmImpl)
           _selectedIndex.value = -1
@@ -100,7 +99,7 @@ internal class NavBarVmImpl(
 
   private suspend fun handleSelectionChange() {
     _items.collectLatest { items: List<NavBarItemVmImpl> ->
-      _selectedIndex.zipWithPrevious().collect { (unselected, selected) ->
+      _selectedIndex.zipWithNext { unselected, selected ->
         if (unselected >= 0) {
           items[unselected].selected.value = false
         }
@@ -110,7 +109,7 @@ internal class NavBarVmImpl(
         if (_popup.value != null) {
           check(_popupRequests.tryEmit(selected))
         }
-      }
+      }.collect()
     }
   }
 

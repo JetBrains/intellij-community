@@ -10,7 +10,7 @@ import java.io.Serializable;
 @ApiStatus.Internal
 public final class Suppliers {
   public static <T> Supplier<T> of(T instance) {
-    return new Suppliers.SupplierOfInstance<T>(instance);
+    return new Suppliers.SupplierOfInstance<>(instance);
   }
 
   public static <T> Supplier<T> wrap(@NotNull Supplier<? extends T> supplier) {
@@ -18,7 +18,7 @@ public final class Suppliers {
       return of(supplier.get());
     }
     catch (UnsupportedMethodException methodException) {
-      return new UnsupportedMethodExceptionSupplier<T>(methodException);
+      return new UnsupportedMethodExceptionSupplier<>(methodException);
     }
   }
 

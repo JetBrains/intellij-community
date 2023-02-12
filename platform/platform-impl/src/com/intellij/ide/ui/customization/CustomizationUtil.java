@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -48,6 +48,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -60,6 +61,35 @@ public final class CustomizationUtil {
 
   private CustomizationUtil() {
   }
+
+  public static @Nullable Icon getOriginalIconFrom(@NotNull AnAction reuseFrom) {
+    Presentation presentation = reuseFrom.getTemplatePresentation();
+    Icon original = presentation.getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON);
+    if (original != null) return original;
+    return presentation.getIcon();
+  }
+
+  @Nullable
+  public static Icon getIconForPath(@NotNull ActionManager actionManager, @Nullable String iconPath) {
+    if (iconPath == null) {
+      return null;
+    }
+    AnAction reuseFrom = actionManager.getAction(iconPath);
+    if (reuseFrom != null) {
+      return getOriginalIconFrom(reuseFrom);
+    }
+    else {
+      try {
+        return CustomActionsSchema.loadCustomIcon(iconPath);
+      }
+      catch (IOException e) {
+        LOG.info(e.getMessage());
+        return null;
+      }
+    }
+  }
+
+
 
   public static ActionGroup correctActionGroup(final ActionGroup group,
                                                final CustomActionsSchema schema,
@@ -80,13 +110,13 @@ public final class CustomizationUtil {
 
     ActionGroup correctedGroup = new CustomisedActionGroup(text, group, schema, defaultGroupName, rootGroupName);
     String groupId = ActionManager.getInstance().getId(group);
-    schema.getActions().stream()
-      .map(actionUrl -> actionUrl.getComponent() instanceof Group g ? g : null)
-      .filter(g -> g != null && Objects.equals(g.getId(), groupId))
-      .findFirst()
-      .ifPresent(g -> {
-        if (g.isForceShowAsPopup()) correctedGroup.setPopup(true);
-      });
+    for (ActionUrl actionUrl : schema.getActions()) {
+      Group g1 = actionUrl.getComponent() instanceof Group g ? g : null;
+      if (g1 != null && Objects.equals(g1.getId(), groupId)) {
+        if (g1.isForceShowAsPopup()) correctedGroup.setPopup(true);
+        break;
+      }
+    }
     return correctedGroup;
   }
 
@@ -133,8 +163,7 @@ public final class CustomizationUtil {
       }
     }
     for (int i = 0; i < reorderedChildren.size(); i++) {
-      if (reorderedChildren.get(i) instanceof ActionGroup) {
-        final ActionGroup groupToCorrect = (ActionGroup)reorderedChildren.get(i);
+      if (reorderedChildren.get(i) instanceof ActionGroup groupToCorrect) {
         final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "", rootGroupName, false);
         reorderedChildren.set(i, correctedAction);
       }
@@ -248,9 +277,7 @@ public final class CustomizationUtil {
 
   @Nullable
   private static TreePath getTreePath(final int positionInPath, final List<String> path, final Object root) {
-    if (!(root instanceof DefaultMutableTreeNode)) return null;
-
-    final DefaultMutableTreeNode treeNode = ((DefaultMutableTreeNode)root);
+    if (!(root instanceof DefaultMutableTreeNode treeNode)) return null;
 
     final String pathElement;
     if (path.size() > positionInPath) {
@@ -379,8 +406,7 @@ public final class CustomizationUtil {
     else if (obj instanceof Separator) {
       text = "-------------";
     }
-    else if (obj instanceof QuickList) {
-      QuickList quickList = (QuickList)obj;
+    else if (obj instanceof QuickList quickList) {
       text = quickList.getDisplayName();
       if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
         description = quickList.getActionId();
@@ -553,7 +579,7 @@ public final class CustomizationUtil {
     return ActionManager.getInstance().getId(actionForId);
   }
 
-  @Nullable
+  @Nls @Nullable
   private static String getGroupName(AnAction action, String groupID) {
     String templateText = action.getTemplateText();
     return Strings.isEmpty(templateText) ? CustomActionsSchema.getInstance().getDisplayName(groupID) : templateText;
@@ -561,9 +587,9 @@ public final class CustomizationUtil {
 
   private static class ToolbarCustomizableActionsPanel extends CustomizableActionsPanel {
     @NotNull private final String myGroupID;
-    @NotNull private final String myGroupName;
+    @Nls @NotNull private final String myGroupName;
 
-    private ToolbarCustomizableActionsPanel(@NotNull String groupID, @NotNull String groupName) {
+    private ToolbarCustomizableActionsPanel(@NotNull String groupID, @Nls @NotNull String groupName) {
       myGroupID = groupID;
       myGroupName = groupName;
     }

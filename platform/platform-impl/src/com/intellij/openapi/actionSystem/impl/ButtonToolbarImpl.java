@@ -142,8 +142,7 @@ class ButtonToolbarImpl extends JPanel {
       // don't update toolbar if there is currently active modal dialog
 
       final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-      if (window instanceof Dialog) {
-        final Dialog dialog = (Dialog)window;
+      if (window instanceof Dialog dialog) {
         if (dialog.isModal() && !SwingUtilities.isDescendingFrom(ButtonToolbarImpl.this, dialog)) {
           return;
         }

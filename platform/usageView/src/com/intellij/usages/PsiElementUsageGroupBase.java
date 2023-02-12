@@ -90,8 +90,7 @@ public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> imp
 
   @Override
   public boolean equals(final Object obj) {
-    if (!(obj instanceof PsiElementUsageGroupBase)) return false;
-    PsiElementUsageGroupBase group = (PsiElementUsageGroupBase)obj;
+    if (!(obj instanceof PsiElementUsageGroupBase group)) return false;
     if (isValid() && group.isValid()) {
       return getElement().getManager().areElementsEquivalent(getElement(), group.getElement());
     }

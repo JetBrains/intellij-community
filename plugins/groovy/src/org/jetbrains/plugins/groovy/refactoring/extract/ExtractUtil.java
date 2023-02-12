@@ -218,8 +218,7 @@ public final class ExtractUtil {
     List<VariableInfo> result = new ArrayList<>();
 
     for (GrStatement statement : statements) {
-      if (statement instanceof GrVariableDeclaration) {
-        GrVariableDeclaration declaration = (GrVariableDeclaration)statement;
+      if (statement instanceof GrVariableDeclaration declaration) {
         for (GrVariable variable : declaration.getVariables()) {
           final VariableInfo removed = names.remove(variable.getName());
           if (removed != null) {

@@ -535,7 +535,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     if (lastStep) {
       if (mySteps.size() > 1) {
         myNextButton.setText(UIUtil.removeMnemonic(IdeBundle.message(isNewWizard() ? "button.create" : "button.finish")));
-        myNextButton.setMnemonic(isNewWizard() ? 'C' : 'F');
+        myNextButton.setMnemonic(isNewWizard() ? KeyEvent.VK_C : KeyEvent.VK_F);
       }
       else {
         myNextButton.setText(IdeBundle.message("button.ok"));
@@ -543,7 +543,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
     else {
       myNextButton.setText(UIUtil.removeMnemonic(IdeBundle.message("button.wizard.next")));
-      myNextButton.setMnemonic('N');
+      myNextButton.setMnemonic(KeyEvent.VK_N);
     }
     myNextButton.setEnabled(canGoNext);
 

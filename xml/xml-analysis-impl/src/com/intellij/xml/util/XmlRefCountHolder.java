@@ -213,9 +213,7 @@ public final class XmlRefCountHolder {
     @Override
     public void visitXmlAttributeValue(final @NotNull XmlAttributeValue value) {
       final PsiElement element = value.getParent();
-      if (!(element instanceof XmlAttribute)) return;
-
-      final XmlAttribute attribute = (XmlAttribute)element;
+      if (!(element instanceof XmlAttribute attribute)) return;
 
       final XmlTag tag = attribute.getParent();
       if (tag == null) return;

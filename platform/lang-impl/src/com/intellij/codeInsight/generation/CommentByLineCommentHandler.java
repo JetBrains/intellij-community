@@ -188,8 +188,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
           break;
         }
 
-        if (commenter instanceof SelfManagingCommenter && block.commenterStateMap.get(commenter) == null) {
-          final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
+        if (commenter instanceof SelfManagingCommenter selfManagingCommenter && block.commenterStateMap.get(commenter) == null) {
           CommenterDataHolder state = selfManagingCommenter.createLineCommentingState(startLine, endLine, document, psiFile);
           if (state == null) state = SelfManagingCommenter.EMPTY_STATE;
           block.commenterStateMap.put(selfManagingCommenter, state);
@@ -353,8 +352,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
     CharSequence chars = document.getCharsSequence();
     lineStart = CharArrayUtil.shiftForward(chars, lineStart, " \t");
 
-    if (commenter instanceof SelfManagingCommenter) {
-      final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
+    if (commenter instanceof SelfManagingCommenter selfManagingCommenter) {
       commented = selfManagingCommenter.isLineCommented(line, lineStart, document, block.commenterStateMap.get(selfManagingCommenter));
     }
     else {
@@ -526,8 +524,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
       return;
     }
 
-    if (commenter instanceof SelfManagingCommenter) {
-      SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
+    if (commenter instanceof SelfManagingCommenter selfManagingCommenter) {
       selfManagingCommenter.uncommentLine(line, startOffset, document, block.commenterStateMap.get(selfManagingCommenter));
       return;
     }
@@ -559,8 +556,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
       if (removeLineSpace) prefix += ' ';
       CharSequence chars = document.getCharsSequence();
 
-      if (commenter instanceof CommenterWithLineSuffix) {
-        CommenterWithLineSuffix commenterWithLineSuffix = (CommenterWithLineSuffix)commenter;
+      if (commenter instanceof CommenterWithLineSuffix commenterWithLineSuffix) {
         String suffix = commenterWithLineSuffix.getLineCommentSuffix();
 
 
@@ -633,8 +629,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
     Document document = block.editor.getDocument();
     if (commenter == null) commenter = findCommenter(block.editor, block.psiFile, line);
     if (commenter == null) return;
-    if (commenter instanceof SelfManagingCommenter) {
-      final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
+    if (commenter instanceof SelfManagingCommenter selfManagingCommenter) {
       selfManagingCommenter.commentLine(line, offset, document, block.commenterStateMap.get(selfManagingCommenter));
       return;
     }

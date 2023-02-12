@@ -90,8 +90,7 @@ public final class InconsistentResourceBundleInspection extends GlobalSimpleInsp
                         @NotNull GlobalInspectionContext globalContext,
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     Set<ResourceBundle> visitedBundles = globalContext.getUserData(VISITED_BUNDLES_KEY);
-    if (!(file instanceof PropertiesFile)) return;
-    final PropertiesFile propertiesFile = (PropertiesFile)file;
+    if (!(file instanceof PropertiesFile propertiesFile)) return;
     ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
     assert visitedBundles != null;
     if (!visitedBundles.add(resourceBundle)) return;

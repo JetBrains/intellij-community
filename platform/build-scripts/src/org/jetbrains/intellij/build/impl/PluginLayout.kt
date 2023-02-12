@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext", "ReplacePutWithAssignment", "ReplaceNegatedIsEmptyWithIsNotEmpty")
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package org.jetbrains.intellij.build.impl
 
@@ -298,6 +298,7 @@ class PluginLayout private constructor(
       layout.pluginXmlPatcher = { text, _ -> pluginXmlPatcher.apply(text) }
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "localizable resources are always put to the module JAR, so there is no need to call this method anymore")
     fun doNotCreateSeparateJarForLocalizableResources() {
     }

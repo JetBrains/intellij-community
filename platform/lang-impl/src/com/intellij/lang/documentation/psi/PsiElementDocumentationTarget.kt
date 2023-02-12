@@ -1,16 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("TestOnlyProblems") // KTIJ-19938
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DEPRECATION", "TestOnlyProblems") // KTIJ-19938
 
 package com.intellij.lang.documentation.psi
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.navigation.SingleTargetElementInfo
 import com.intellij.codeInsight.navigation.targetPresentation
-import com.intellij.lang.documentation.*
+import com.intellij.lang.documentation.DocumentationImageResolver
+import com.intellij.lang.documentation.DocumentationProvider
+import com.intellij.lang.documentation.ExternalDocumentationProvider
 import com.intellij.model.Pointer
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.platform.documentation.*
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -21,7 +24,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Supplier
 
-@Suppress("DEPRECATION")
 @VisibleForTesting
 class PsiElementDocumentationTarget private constructor(
   val targetElement: PsiElement,
@@ -62,7 +64,7 @@ class PsiElementDocumentationTarget private constructor(
 
   override fun createPointer(): Pointer<out DocumentationTarget> = pointer
 
-  override fun presentation(): TargetPresentation = targetPresentation(targetElement)
+  override fun computePresentation(): TargetPresentation = targetPresentation(targetElement)
 
   override val navigatable: Navigatable? get() = targetElement as? Navigatable
 
@@ -84,10 +86,10 @@ class PsiElementDocumentationTarget private constructor(
   }
 
   @RequiresReadLock
-  private fun localDoc(provider: DocumentationProvider): DocumentationResultData? {
+  private fun localDoc(provider: DocumentationProvider): DocumentationData? {
     val html = localDocHtml(provider)
                ?: return null
-    return DocumentationResultData(
+    return DocumentationData(
       content = DocumentationContentData(
         html = html,
         imageResolver = pointer.imageResolver,
@@ -132,7 +134,7 @@ class PsiElementDocumentationTarget private constructor(
       targetElement: PsiElement,
       provider: ExternalDocumentationProvider,
       urls: List<String>,
-      localDoc: DocumentationResult.Data?,
+      localDoc: DocumentationResult.Documentation?,
     ): DocumentationResult = DocumentationResult.asyncDocumentation(Supplier {
       LOG.debug("External documentation URLs: $urls")
       for (url in urls) {
@@ -140,7 +142,7 @@ class PsiElementDocumentationTarget private constructor(
         val doc = provider.fetchExternalDocumentation(project, targetElement, listOf(url), false)
                   ?: continue
         LOG.debug("Fetched documentation from $url")
-        return@Supplier DocumentationResultData(
+        return@Supplier DocumentationData(
           content = DocumentationContentData(
             html = doc,
             imageResolver = imageResolver,

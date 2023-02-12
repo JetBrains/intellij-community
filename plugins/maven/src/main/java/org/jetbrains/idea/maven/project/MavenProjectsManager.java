@@ -152,8 +152,13 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @TestOnly
-  public void setProgressListener(SyncViewManager testViewManager) {
+  public void setProgressListener(BuildProgressListener testViewManager) {
     myProgressListener = testViewManager;
+  }
+
+  @TestOnly
+  public BuildProgressListener getProgressListener() {
+    return myProgressListener;
   }
 
   @Override
@@ -860,6 +865,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   public boolean getIgnoredState(@NotNull MavenProject project) {
     if (!isInitialized()) return false;
     return myProjectsTree.getIgnoredState(project);
+  }
+
+  @ApiStatus.Internal
+  public void setIgnoredStateForPoms(@NotNull List<String> pomPaths, boolean ignored) {
+    if (!isInitialized()) return;
+    myProjectsTree.setIgnoredStateForPoms(pomPaths, ignored);
   }
 
   public void setIgnoredState(@NotNull List<MavenProject> projects, boolean ignored) {

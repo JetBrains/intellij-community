@@ -83,8 +83,7 @@ abstract class SettingsSearch extends SearchTextField implements KeyListener {
   @Override
   public void keyTyped(KeyEvent event) {
     Object source = event.getSource();
-    if (source instanceof JTree) {
-      JTree tree = (JTree)source;
+    if (source instanceof JTree tree) {
       if (!hasAction(KeyStroke.getKeyStrokeForEvent(event), tree.getInputMap())) {
         delegateKeyEvent(event);
       }

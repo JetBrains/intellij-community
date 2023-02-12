@@ -75,9 +75,8 @@ public class PyListCreationInspection extends PyInspection {
     PyStatement expressionStatement = PsiTreeUtil.getNextSiblingOfType(assignment, PyStatement.class);
     while (expressionStatement instanceof PyExpressionStatement) {
       final PyExpression statement = ((PyExpressionStatement)expressionStatement).getExpression();
-      if (!(statement instanceof PyCallExpression)) break;
+      if (!(statement instanceof PyCallExpression callExpression)) break;
 
-      final PyCallExpression callExpression = (PyCallExpression)statement;
       final PyExpression callee = callExpression.getCallee();
       if (!(callee instanceof PyQualifiedExpression)) break;
 

@@ -2,8 +2,9 @@
   "name": "Dark",
   "dark": true,
   "author": "JetBrains",
-  "editorScheme": "/themes/expUI/expUI_darkScheme.xml",
+  "editorScheme": "/themes/expUI/expUI_darkScheme_RC.xml",
   "additionalEditorSchemes": [
+    "/themes/expUI/expUI_darkScheme.xml",
     "/themes/expUI/expUI_darkSchemeNew.xml"
   ],
 
@@ -81,7 +82,31 @@
     "Orange8": "#F0AC81",
     "Orange9": "#F5BD98",
     "Orange10": "#FACEAF",
-    "Orange11": "#FFDFC7"
+    "Orange11": "#FFDFC7",
+
+    "Purple1": "#2F2936",
+    "Purple2": "#433358",
+    "Purple3": "#583D7A",
+    "Purple4": "#6C469C",
+    "Purple5": "#8150BE",
+    "Purple6": "#955AE0",
+    "Purple7": "#A571E6",
+    "Purple8": "#B589EC",
+    "Purple9": "#C4A0F3",
+    "Purple10": "#D4B8F9",
+    "Purple11": "#E4CEFF",
+
+    "Teal1": "#1D3838",
+    "Teal2": "#1E4D4A",
+    "Teal3": "#20635D",
+    "Teal4": "#21786F",
+    "Teal5": "#238E82",
+    "Teal6": "#24A394",
+    "Teal7": "#42B1A4",
+    "Teal8": "#60C0B5",
+    "Teal9": "#7DCEC5",
+    "Teal10": "#9BDDD6",
+    "Teal11": "#B9EBE6"
   },
 
   "ui": {
@@ -224,6 +249,7 @@
     },
 
     "EditorTabs": {
+      "underlineArc": "4",
       "tabInsets": "-3,12,-4,8",
       "hoverBackground": "#1E1F2200",
       "inactiveHoverBackground": "#1E1F2200",
@@ -379,6 +405,7 @@
     },
     "ToolBar.verticalToolbarInsets": "7,4,7,4",
     "ToolBar.horizontalToolbarInsets": "4,7,4,7",
+    "ToolBar.separatorColor": "Grey4",
 
     "SearchField": {
       "errorForeground": "Red6",
@@ -502,6 +529,8 @@
         "leftRightInsets": "0,12,0,12"
       },
       "Button": {
+        "selectedForeground": "Grey14",
+        "selectedBackground": "Blue6",
         "DragAndDrop" : {
           "stripeBackground" : "Grey2",
           "buttonDropBackground": "#35538F99",
@@ -558,12 +587,20 @@
       "Log.Commit": {
         "currentBranchBackground": "#1c2433",
         "unmatchedForeground": "Grey7",
-        "hoveredBackground": "#FFFFFFED"
+        "hoveredBackground": "#FFFFFFED",
+        "Reference.foreground": "Grey7"
       },
       "FileHistory.Commit.selectedBranchBackground": "#1c2433",
       "MarkerPopup": {
         "borderInsets": "6,8,6,10",
         "borderColor": "Grey4"
+      },
+      "GitLog": {
+        "headIconColor": "Yellow8",
+        "localBranchIconColor": "Green6",
+        "otherIconColor": "Grey8",
+        "remoteBranchIconColor": "Purple8",
+        "tagIconColor": "Grey8"
       }
     },
 
@@ -599,7 +636,7 @@
         "Foreground": "Grey13"
       },
       "4": {
-        "Background": "#955AE0",
+        "Background": "Purple6",
         "Foreground": "Grey13"
       },
       "5": {
@@ -635,7 +672,7 @@
       "PackageTagSelected.foreground": "Grey10"
     },
     "RunWidget" : {
-      "foreground": "Grey14",
+      "foreground": "Grey12",
       "disabledForeground": "#FFFFFF66",
       "background": "Blue5",
       "runningBackground": "Green5",

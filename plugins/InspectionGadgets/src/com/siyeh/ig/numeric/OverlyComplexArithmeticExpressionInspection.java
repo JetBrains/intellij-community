@@ -111,21 +111,18 @@ public class OverlyComplexArithmeticExpressionInspection extends BaseInspection 
       if (!isArithmetic(expression)) {
         return 1;
       }
-      if (expression instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression poly = (PsiPolyadicExpression)expression;
+      if (expression instanceof PsiPolyadicExpression poly) {
         int count = 0;
         for (PsiExpression operand : poly.getOperands()) {
           count += countTerms(operand);
         }
         return count;
       }
-      else if (expression instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+      else if (expression instanceof PsiPrefixExpression prefixExpression) {
         final PsiExpression operand = prefixExpression.getOperand();
         return countTerms(operand);
       }
-      else if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
         final PsiExpression contents = parenthesizedExpression.getExpression();
         return countTerms(contents);
       }
@@ -133,20 +130,17 @@ public class OverlyComplexArithmeticExpressionInspection extends BaseInspection 
     }
 
     private boolean isArithmetic(PsiExpression expression) {
-      if (expression instanceof PsiPolyadicExpression) {
+      if (expression instanceof PsiPolyadicExpression binaryExpression) {
         final PsiType type = expression.getType();
         if (TypeUtils.isJavaLangString(type)) {
           return false; //ignore string concatenations
         }
-        final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
         return arithmeticTokens.contains(binaryExpression.getOperationTokenType());
       }
-      else if (expression instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+      else if (expression instanceof PsiPrefixExpression prefixExpression) {
         return arithmeticTokens.contains(prefixExpression.getOperationTokenType());
       }
-      else if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
         final PsiExpression contents = parenthesizedExpression.getExpression();
         return isArithmetic(contents);
       }

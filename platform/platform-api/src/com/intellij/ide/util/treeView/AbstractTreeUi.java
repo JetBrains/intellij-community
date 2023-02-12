@@ -294,8 +294,7 @@ public class AbstractTreeUi {
 
     if (!canUpdateBusyState) return;
 
-    if (myTree instanceof Tree) {
-      Tree tree = (Tree)myTree;
+    if (myTree instanceof Tree tree) {
       boolean isBusy = !isReady(true) || forcedBusy;
       if (isBusy && tree.isShowing()) {
         tree.setPaintBusy(true);
@@ -309,8 +308,7 @@ public class AbstractTreeUi {
   }
 
   private void setHoldSize(boolean holdSize) {
-    if (myTree instanceof Tree) {
-      Tree tree = (Tree)myTree;
+    if (myTree instanceof Tree tree) {
       tree.setHoldSize(holdSize);
     }
   }
@@ -2885,9 +2883,7 @@ public class AbstractTreeUi {
   }
 
   public static boolean isLoadingChildrenFor(Object nodeObject) {
-    if (!(nodeObject instanceof DefaultMutableTreeNode)) return false;
-
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodeObject;
+    if (!(nodeObject instanceof DefaultMutableTreeNode node)) return false;
 
     int loadingNodes = 0;
     for (int i = 0; i < Math.min(node.getChildCount(), 2); i++) {
@@ -2905,9 +2901,7 @@ public class AbstractTreeUi {
 
   @Nullable
   private DefaultMutableTreeNode getParentLoadingInBackground(@NotNull Object nodeObject) {
-    if (!(nodeObject instanceof DefaultMutableTreeNode)) return null;
-
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodeObject;
+    if (!(nodeObject instanceof DefaultMutableTreeNode node)) return null;
 
     TreeNode eachParent = node.getParent();
 
@@ -3041,8 +3035,7 @@ public class AbstractTreeUi {
                   selectedIndex = parentNode.getIndex(childNode);
                 }
 
-                if (childNode.getParent() instanceof DefaultMutableTreeNode) {
-                  DefaultMutableTreeNode parent = (DefaultMutableTreeNode)childNode.getParent();
+                if (childNode.getParent() instanceof DefaultMutableTreeNode parent) {
                   if (myTree.isExpanded(new TreePath(parent.getPath()))) {
                     if (parent.getChildCount() == 1 && parent.getChildAt(0) == childNode) {
                       insertLoadingNode(parent, false);
@@ -3199,8 +3192,7 @@ public class AbstractTreeUi {
     processInnerChange(new TreeRunnable("AbstractTreeUi.expandPath") {
       @Override
       public void perform() {
-        if (path.getLastPathComponent() instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+        if (path.getLastPathComponent() instanceof DefaultMutableTreeNode node) {
           if (node.getChildCount() > 0 && !myTree.isExpanded(path)) {
             if (!canSmartExpand) {
               myNotForSmartExpand.add(node);
@@ -3824,8 +3816,7 @@ public class AbstractTreeUi {
     Set<Object> result = new LinkedHashSet<>();
     if (paths != null) {
       for (TreePath eachPath : paths) {
-        if (eachPath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode eachNode = (DefaultMutableTreeNode)eachPath.getLastPathComponent();
+        if (eachPath.getLastPathComponent() instanceof DefaultMutableTreeNode eachNode) {
           if (eachNode == myRootNode && !myTree.isRootVisible()) continue;
           Object eachElement = getElementFor(eachNode);
           if (eachElement != null) {
@@ -4990,8 +4981,7 @@ public class AbstractTreeUi {
    * @return {@code true} if element is {@code null} or if it contains a {@code null} value
    */
   private static boolean isNodeNull(Object element) {
-    if (element instanceof AbstractTreeNode) {
-      AbstractTreeNode<?> node = (AbstractTreeNode<?>)element;
+    if (element instanceof AbstractTreeNode<?> node) {
       element = node.getValue();
     }
     return element == null;

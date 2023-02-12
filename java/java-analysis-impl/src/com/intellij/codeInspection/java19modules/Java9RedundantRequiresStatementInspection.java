@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.analysis.AnalysisScope;
@@ -33,9 +33,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
                                                            @NotNull AnalysisScope scope,
                                                            @NotNull InspectionManager manager,
                                                            @NotNull GlobalInspectionContext globalContext) {
-    if (refEntity instanceof RefJavaModule) {
-      RefJavaModule refJavaModule = (RefJavaModule)refEntity;
-
+    if (refEntity instanceof RefJavaModule refJavaModule) {
       RefModule refModule = refJavaModule.getModule();
       PsiJavaModule psiJavaModule = refJavaModule.getPsiElement();
       if (refModule != null && psiJavaModule != null) {
@@ -45,12 +43,12 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
           if (!requiredModules.isEmpty()) {
             List<CommonProblemDescriptor> descriptors = new ArrayList<>();
             for (RefJavaModule.RequiredModule requiredModule : requiredModules) {
-              if (requiredModule.isTransitive) continue;
-              String requiredModuleName = requiredModule.moduleName;
+              if (requiredModule.isTransitive()) continue;
+              String requiredModuleName = requiredModule.moduleName();
 
               boolean isJavaBase = PsiJavaModule.JAVA_BASE.equals(requiredModuleName);
               if (isJavaBase ||
-                  isDependencyUnused(requiredModule.packagesExportedByModule, moduleImportedPackages, refJavaModule.getName())) {
+                  isDependencyUnused(requiredModule.packagesExportedByModule(), moduleImportedPackages, refJavaModule.getName())) {
                 PsiRequiresStatement requiresStatement = ContainerUtil.find(
                   psiJavaModule.getRequires(), statement -> requiredModuleName.equals(statement.getModuleName()));
                 if (requiresStatement != null && !isSuppressedFor(requiresStatement)) {
@@ -143,10 +141,8 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiRequiresStatement)) return;
+      if (!(descriptor.getPsiElement() instanceof PsiRequiresStatement statementToDelete)) return;
 
-      PsiRequiresStatement statementToDelete = (PsiRequiresStatement)element;
       addTransitiveDependencies(statementToDelete);
       statementToDelete.delete();
     }
@@ -184,8 +180,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
 
     private void addTransitiveDependencies(@NotNull PsiRequiresStatement statementToDelete) {
       PsiElement parent = statementToDelete.getParent();
-      if (parent instanceof PsiJavaModule) {
-        PsiJavaModule currentModule = (PsiJavaModule)parent;
+      if (parent instanceof PsiJavaModule currentModule) {
         PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(currentModule.getProject()).getParserFacade();
         for (String dependencyName : myDependencies) {
           PsiStatement requiresStatement = parserFacade.createModuleStatementFromText(PsiKeyword.REQUIRES + ' ' + dependencyName, null);
@@ -200,8 +195,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
 
     @Override
     public void onReferencesBuild(RefElement refElement) {
-      if (refElement instanceof RefFile) {
-        RefFile refFile = (RefFile)refElement;
+      if (refElement instanceof RefFile refFile) {
         PsiFile file = refFile.getPsiElement();
         UFile uFile = UastContextKt.toUElement(file, UFile.class);
         if (uFile != null) {

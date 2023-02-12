@@ -48,8 +48,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
   @Override
   public void updateCustomComponent(@NotNull JComponent component,
                                     @NotNull Presentation presentation) {
-    if (component instanceof JCheckBox) {
-      JCheckBox checkBox = (JCheckBox)component;
+    if (component instanceof JCheckBox checkBox) {
       updateCustomComponent(checkBox, presentation);
     }
   }

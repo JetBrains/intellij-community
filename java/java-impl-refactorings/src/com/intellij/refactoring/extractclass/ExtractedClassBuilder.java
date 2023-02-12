@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -393,11 +393,8 @@ class ExtractedClassBuilder {
       final PsiElement qualifier = expression.getQualifier();
       if (qualifier == null || qualifier instanceof PsiThisExpression) {
         final PsiElement referent = resolveResult.getElement();
-        if (referent instanceof PsiField) {
-          final PsiField field = (PsiField)referent;
-
+        if (referent instanceof PsiField field) {
           if (fieldIsExtracted(field)) {
-
             final String name = field.getName();
             if (enumConstantFields.contains(field)) {
               out.append(name).append(".").append(getterName()).append("()");
@@ -417,11 +414,11 @@ class ExtractedClassBuilder {
                 final PsiClass targetClass = importStaticStatement.resolveTargetClass();
                 out.append(targetClass != null ? targetClass.getQualifiedName() : "").append(".").append(field.getName());
               } else {
-                out.append(originalClassName + '.' + field.getName());
+                out.append(originalClassName).append('.').append(field.getName());
               }
             }
             else {
-              out.append(backPointerName + '.' + GenerateMembersUtil.suggestGetterName(field) + "()");
+              out.append(backPointerName).append('.').append(GenerateMembersUtil.suggestGetterName(field)).append("()");
             }
           }
         }

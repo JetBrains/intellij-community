@@ -69,17 +69,17 @@ public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx impleme
 
   @NotNull
   private MultiMap<FacetTypeId<?>, Module> getIndex() {
-    MultiMap<FacetTypeId<?>, Module> index = myIndex;
-    if (index == null) {
-      index = MultiMap.createLinked();
+    MultiMap<FacetTypeId<?>, Module> index = null == myIndex ? MultiMap.createLinkedSet() : myIndex;
+    if (myIndex == null) {
       for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-        for (Facet<?> facet : FacetManager.getInstance(module).getAllFacets()) {
-          index.putValue(facet.getTypeId(), module);
-        }
+        Arrays.stream(FacetManager.getInstance(module).getAllFacets())
+          .map(facet -> facet.getTypeId())
+          .distinct()
+          .forEach(facetTypeId -> index.putValue(facetTypeId, module));
       }
       myIndex = index;
     }
-    return index;
+    return myIndex;
   }
 
   @NotNull
@@ -92,7 +92,7 @@ public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx impleme
   @Override
   public List<Module> getModulesWithFacet(@NotNull FacetTypeId<?> typeId) {
     //noinspection unchecked
-    return Collections.unmodifiableList((List)getIndex().get(typeId));
+    return getIndex().get(typeId).stream().toList();
   }
 
   @Override

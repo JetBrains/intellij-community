@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
@@ -243,8 +244,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     if (EDT.isCurrentThreadEdt() && SlowOperations.isInSection(SlowOperations.ACTION_UPDATE) &&
         ActionUpdater.currentInEDTOperationName() != null && !SlowOperations.isAlwaysAllowed()) {
       String message = "'" + dataId + "' is requested on EDT by " + ActionUpdater.currentInEDTOperationName() + ". See ActionUpdateThread javadoc.";
-      //noinspection StringEquality
-      if (message != ourEDTWarnsInterner.intern(message)) return;
+      if (!Strings.areSameInstance(message, ourEDTWarnsInterner.intern(message))) return;
       Throwable th = error ? new Throwable(message) : null;
       AppExecutorUtil.getAppExecutorService().execute(() -> {
         if (error) {

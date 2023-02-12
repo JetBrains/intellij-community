@@ -85,8 +85,7 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
       int count = parent.getComponentCount();
       for (int i = 0; i < count; i++) {
         Component item = parent.getComponent(i);
-        if (item instanceof JMenuItem) {
-          JMenuItem menuItem = (JMenuItem)item;
+        if (item instanceof JMenuItem menuItem) {
           Icon icon = menuItem.isEnabled() ? menuItem.getIcon() : menuItem.getDisabledIcon();
           if (icon != null) {
             return false;

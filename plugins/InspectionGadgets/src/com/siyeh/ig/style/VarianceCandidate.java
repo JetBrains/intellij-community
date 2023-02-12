@@ -45,27 +45,23 @@ final class VarianceCandidate {
     PsiElement parent = innerTypeElement.getParent();
     if (!(parent instanceof PsiReferenceParameterList)) return null;
     PsiElement pp = parent.getParent();
-    if (!(pp instanceof PsiJavaCodeReferenceElement)) return null;
-    PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)pp;
+    if (!(pp instanceof PsiJavaCodeReferenceElement refElement)) return null;
     if (!parent.equals(refElement.getParameterList())) return null;
     JavaResolveResult result = refElement.advancedResolve(false);
-    if (!(result.getElement() instanceof PsiClass)) return null;
-    PsiClass resolved = (PsiClass)result.getElement();
+    if (!(result.getElement() instanceof PsiClass resolved)) return null;
     int index = ArrayUtil.indexOf(((PsiReferenceParameterList)parent).getTypeParameterElements(), innerTypeElement);
 
     PsiElement p3 = pp.getParent();
     if (!(p3 instanceof PsiTypeElement)) return null;
     PsiElement p4 = p3.getParent();
-    if (!(p4 instanceof PsiParameter)) return null;
-    PsiParameter parameter = (PsiParameter)p4;
+    if (!(p4 instanceof PsiParameter parameter)) return null;
     PsiElement scope = parameter.getDeclarationScope();
-    if (!(scope instanceof PsiMethod)) return null;
+    if (!(scope instanceof PsiMethod method)) return null;
 
     PsiTypeParameter[] typeParameters = resolved.getTypeParameters();
     if (typeParameters.length <= index) return null;
     PsiTypeParameter typeParameter = typeParameters[index];
 
-    PsiMethod method = (PsiMethod)scope;
     PsiParameterList parameterList = method.getParameterList();
     int parameterIndex = parameterList.getParameterIndex(parameter);
     if (parameterIndex == -1) return null;

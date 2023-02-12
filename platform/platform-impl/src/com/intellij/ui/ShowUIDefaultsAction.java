@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
@@ -75,12 +75,20 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
       public JBTable myTable;
       public JBTextField mySearchField;
+      private static final String SEARCH_FIELD_HISTORY_KEY = "LaFDialog.filter";
+      private static final String COLORS_ONLY_KEY = "LaFDialog.ColorsOnly";
+      private static final String LAST_SELECTED_KEY = "LaFDialog.lastSelectedElement";
       public JBCheckBox myColorsOnly;
 
       @Override
       protected void doOKAction() {
         super.doOKAction();
         LafManager.getInstance().updateUI();
+        PropertiesComponent.getInstance().setValue(SEARCH_FIELD_HISTORY_KEY, mySearchField.getText());
+        Object selected = myTable.getValueAt(myTable.getSelectedRow(), 0);
+        if (selected instanceof Pair) {
+          PropertiesComponent.getInstance().setValue(LAST_SELECTED_KEY, ((Pair<?, ?>)selected).first.toString());
+        }
       }
 
       @Nullable
@@ -98,6 +106,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       @Override
       protected JComponent createCenterPanel() {
         mySearchField = new JBTextField(40);
+        mySearchField.setText(PropertiesComponent.getInstance().getValue(SEARCH_FIELD_HISTORY_KEY, ""));
         JPanel top = UI.PanelFactory.panel(mySearchField).withLabel(IdeBundle.message("label.ui.filter")).createPanel();
         final JBTable table = new JBTable(createFilteringModel()) {
           @Override
@@ -155,8 +164,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   updateValue(pair, newInsets, row, column);
                   changed.set(true);
                 }
-              } else if (value instanceof UIUtil.GrayFilter) {
-                UIUtil.GrayFilter f = (UIUtil.GrayFilter)value;
+              } else if (value instanceof UIUtil.GrayFilter f) {
                 String oldFilter = String.format("%d,%d,%d", f.getBrightness(), f.getContrast(), f.getAlpha());
                 UIUtil.GrayFilter newValue = editGrayFilter(key.toString(), oldFilter);
                 if (newValue != null) {
@@ -171,8 +179,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   setValueAt(newValue, row, column);
                   changed.set(true);
                 }
-              } else if (value instanceof Dimension) {
-                Dimension d = (Dimension)value;
+              } else if (value instanceof Dimension d) {
                 String oldDimension = String.format("%d,%d", d.width, d.height);
                 Dimension newDimension = editDimension(key.toString(), oldDimension);
                 if (newDimension != null) {
@@ -186,6 +193,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   LafManager.getInstance().repaintUI();
                 });
               }
+              PropertiesComponent.getInstance().setValue(LAST_SELECTED_KEY, key.toString());
             }
             return false;
           }
@@ -215,8 +223,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
             }
             final JLabel label = new JLabel(value == null ? "" : value.toString());
             final JPanel panel = simplePanel(label);
-            if (value instanceof Color) {
-              final Color c = (Color)value;
+            if (value instanceof Color c) {
               label.setText(String.format("  [%d,%d,%d] #%s", c.getRed(), c.getGreen(), c.getBlue(), StringUtil.toUpperCase(ColorUtil.toHex(c))));
               Color fg = ColorUtil.isDark(c) ? Gray.xFF : Gray.x00;
               label.setForeground(fg);
@@ -248,7 +255,6 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         table.setShowGrid(false);
         TableHoverListener.DEFAULT.removeFrom(table);
         myTable = table;
-        TableUtil.ensureSelectionExists(myTable);
         mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
           @Override
           protected void textChanged(@NotNull DocumentEvent e) {
@@ -258,17 +264,30 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
         ScrollingUtil.installActions(myTable, true, mySearchField);
 
-        myColorsOnly = new JBCheckBox(IdeBundle.message("checkbox.colors.only"), PropertiesComponent.getInstance().getBoolean("LaFDialog.ColorsOnly", false)) {
+        myColorsOnly = new JBCheckBox(IdeBundle.message("checkbox.colors.only"), PropertiesComponent.getInstance().getBoolean(COLORS_ONLY_KEY, false)) {
           @Override
           public void addNotify() {
             super.addNotify();
             updateFilter();
+            String key = PropertiesComponent.getInstance().getValue(LAST_SELECTED_KEY);
+            if (key != null) {
+              for (int i = 0; i < myTable.getRowCount(); i++) {
+                Object valueAt = myTable.getModel().getValueAt(i, 0);
+                if (valueAt instanceof Pair<?,?> && key.equals(((Pair<?, ?>)valueAt).first)) {
+                  myTable.getSelectionModel().setLeadSelectionIndex(i);
+                  myTable.getSelectionModel().setSelectionInterval(i, i);
+                  ScrollingUtil.ensureIndexIsVisible(myTable, i, 1);
+                  return;
+                }
+              }
+              ScrollingUtil.ensureSelectionExists(myTable);
+            }
           }
         };
         myColorsOnly.addActionListener(new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
-            PropertiesComponent.getInstance().setValue("LaFDialog.ColorsOnly", myColorsOnly.isSelected(), false);
+            PropertiesComponent.getInstance().setValue(COLORS_ONLY_KEY, myColorsOnly.isSelected(), false);
             updateFilter();
           }
         });

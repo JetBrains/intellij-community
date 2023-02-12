@@ -50,9 +50,8 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (element instanceof PyFile) {
+    if (element instanceof PyFile pyFile) {
 
-      final PyFile pyFile = (PyFile)element;
       final Project project = element.getProject();
 
       final VirtualFile vFile = pyFile.getVirtualFile();

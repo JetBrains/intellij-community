@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui;
 
 import com.intellij.ide.JavaUiBundle;
@@ -38,8 +38,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
   @NotNull
   @Override
   public CellAppearanceEx forOrderEntry(Project project, @NotNull final OrderEntry orderEntry, final boolean selected) {
-    if (orderEntry instanceof JdkOrderEntry) {
-      JdkOrderEntry jdkLibraryEntry = (JdkOrderEntry)orderEntry;
+    if (orderEntry instanceof JdkOrderEntry jdkLibraryEntry) {
       Sdk jdk = jdkLibraryEntry.getJdk();
       if (!orderEntry.isValid()) {
         final String oldJdkName = jdkLibraryEntry.getJdkName();
@@ -50,8 +49,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
     else if (!orderEntry.isValid()) {
       return FileAppearanceService.getInstance().forInvalidUrl(orderEntry.getPresentableName());
     }
-    else if (orderEntry instanceof LibraryOrderEntry) {
-      LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+    else if (orderEntry instanceof LibraryOrderEntry libraryOrderEntry) {
       if (!libraryOrderEntry.isValid()) { //library can be removed
         return FileAppearanceService.getInstance().forInvalidUrl(orderEntry.getPresentableName());
       }
@@ -64,8 +62,8 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
       Icon icon = orderEntry instanceof ModuleSourceOrderEntry ? sourceFolderIcon(false) : null;
       return new SimpleTextCellAppearance(presentableName, icon, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
     }
-    else if (orderEntry instanceof ModuleOrderEntry) {
-      final Icon icon = ModuleType.get(((ModuleOrderEntry)orderEntry).getModule()).getIcon();
+    else if (orderEntry instanceof ModuleOrderEntry entry) {
+      final Icon icon = ModuleType.get(entry.getModule()).getIcon();
       return SimpleTextCellAppearance.regular(orderEntry.getPresentableName(), icon);
     }
     else {

@@ -3,7 +3,7 @@ package com.intellij.refactoring.suggested
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.TestOnly
 
@@ -25,7 +25,7 @@ class SuggestedRefactoringProviderImpl(project: Project) : SuggestedRefactoringP
     listener = SuggestedRefactoringChangeListener(project, changeCollector, project)
   }
 
-  internal class Startup : ProjectPostStartupActivity {
+  internal class Startup : ProjectActivity {
     override suspend fun execute(project: Project) {
       if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
         getInstance(project)

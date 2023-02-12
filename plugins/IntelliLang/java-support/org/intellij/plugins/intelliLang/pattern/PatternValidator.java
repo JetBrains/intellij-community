@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.pattern;
 
+import com.intellij.codeInsight.intention.AddAnnotationFixWithoutArg;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -32,7 +33,6 @@ import com.intellij.util.SmartList;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.IntelliLangBundle;
-import org.intellij.plugins.intelliLang.util.AnnotateFix;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.intellij.plugins.intelliLang.util.SubstitutedExpressionEvaluationHelper;
@@ -75,8 +75,7 @@ public class PatternValidator extends LocalInspectionTool {
           // this checks method arguments
           check(expression, holder, false);
         }
-        else if (element instanceof PsiNameValuePair) {
-          final PsiNameValuePair valuePair = (PsiNameValuePair)element;
+        else if (element instanceof PsiNameValuePair valuePair) {
           final String name = valuePair.getName();
           if (name == null || name.equals(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)) {
             // check whether @Subst complies with pattern
@@ -113,8 +112,7 @@ public class PatternValidator extends LocalInspectionTool {
       }
 
       private void check(@NotNull PsiExpression expression, ProblemsHolder holder, boolean isAnnotationValue) {
-        if (expression instanceof PsiConditionalExpression) {
-          final PsiConditionalExpression expr = (PsiConditionalExpression)expression;
+        if (expression instanceof PsiConditionalExpression expr) {
           PsiExpression e = expr.getThenExpression();
           if (e != null) {
             check(e, holder, isAnnotationValue);
@@ -217,24 +215,30 @@ public class PatternValidator extends LocalInspectionTool {
           e = expr;
         }
         final PsiModifierListOwner owner = ObjectUtils.tryCast(e, PsiModifierListOwner.class);
-        LocalQuickFix quickFix;
-        if (owner != null && PsiUtilEx.isLanguageAnnotationTarget(owner)) {
-          PsiAnnotation[] resolvedAnnos =
-            AnnotationUtilEx.getAnnotationFrom(owner, configuration.getAdvancedConfiguration().getPatternAnnotationPair(), true);
-          if (resolvedAnnos.length == 2 &&
-              annotations.length == 2 &&
-              Comparing.strEqual(resolvedAnnos[1].getQualifiedName(), annotations[1].getQualifiedName())) {
-            // both target and source annotated indirectly with the same anno
-            return;
+        List<LocalQuickFix> fixes = new SmartList<>();
+        if (holder.isOnTheFly()) {
+          if (owner != null && PsiUtilEx.isLanguageAnnotationTarget(owner)) {
+            PsiAnnotation[] resolvedAnnos =
+              AnnotationUtilEx.getAnnotationFrom(owner, configuration.getAdvancedConfiguration().getPatternAnnotationPair(), true);
+            if (resolvedAnnos.length == 2 &&
+                annotations.length == 2 &&
+                Comparing.strEqual(resolvedAnnos[1].getQualifiedName(), annotations[1].getQualifiedName())) {
+              // both target and source annotated indirectly with the same anno
+              return;
+            }
           }
-
           final String classname = configuration.getAdvancedConfiguration().getSubstAnnotationPair().first;
-          quickFix = AnnotateFix.canApplyOn(owner) ? AnnotateFix.create(e, classname) : new IntroduceVariableFix(false);
+          if (owner != null && AddAnnotationFixWithoutArg.isApplicable(owner, classname)) {
+            fixes.add(new AddAnnotationFixWithoutArg(classname, owner));
+          } else {
+            fixes.add(new IntroduceVariableFix(false));
+          }
         }
         else {
-          quickFix = new IntroduceVariableFix(false);
+          fixes.add(new IntroduceVariableFix(false));
         }
-        holder.registerProblem(expr, IntelliLangBundle.message("inspection.pattern.validator.description"), quickFix);
+        holder.registerProblem(expr, IntelliLangBundle.message("inspection.pattern.validator.description"),
+                               fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     }
   }

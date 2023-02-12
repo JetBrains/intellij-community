@@ -13,11 +13,10 @@ import com.jediterm.terminal.TtyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
-import org.jetbrains.plugins.terminal.TerminalProcessOptions;
+import org.jetbrains.plugins.terminal.ShellStartupOptions;
 
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalProcess> {
@@ -41,14 +40,14 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
   }
 
   @Override
-  public @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent,
-                                                           @Nullable String currentWorkingDirectory,
-                                                           boolean deferSessionStartUntilUiShown) {
-    return super.createShellTerminalWidget(parent, currentWorkingDirectory, myDeferSessionUntilFirstShown);
+  public @NotNull TerminalWidget startShellTerminalWidget(@NotNull Disposable parent,
+                                                          @NotNull ShellStartupOptions startupOptions,
+                                                          boolean deferSessionStartUntilUiShown) {
+    return super.startShellTerminalWidget(parent, startupOptions, myDeferSessionUntilFirstShown);
   }
 
   @Override
-  public @NotNull CloudTerminalProcess createProcess(@NotNull TerminalProcessOptions options) throws ExecutionException {
+  public @NotNull CloudTerminalProcess createProcess(@NotNull ShellStartupOptions options) throws ExecutionException {
     return myProcess;
   }
 
@@ -90,23 +89,13 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
   }
 
   @Override
-  public TtyConnector createTtyConnector(CloudTerminalProcess process) {
+  public @NotNull TtyConnector createTtyConnector(@NotNull CloudTerminalProcess process) {
     return new ProcessTtyConnector(process, StandardCharsets.UTF_8) {
-      private TermSize myAppliedTermSize;
-
       @Override
-      protected void resizeImmediately() {
-        if (myTtyResizeHandler == null) {
-          return;
-        }
-        TermSize termSize = getPendingTermSize();
-        if (Objects.equals(myAppliedTermSize, termSize)) {
-          return;
-        }
-        if (termSize != null) {
+      public void resize(@NotNull TermSize termSize) {
+        if (myTtyResizeHandler != null) {
           myTtyResizeHandler.onTtyResizeRequest(termSize.getColumns(), termSize.getRows());
         }
-        myAppliedTermSize = termSize;
       }
 
       @Override

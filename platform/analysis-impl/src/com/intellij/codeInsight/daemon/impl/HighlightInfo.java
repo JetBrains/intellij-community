@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection;
 import com.intellij.codeInsight.daemon.impl.actions.DisableHighlightingIntentionAction;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.*;
@@ -30,6 +29,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -50,6 +50,7 @@ import java.util.function.BiFunction;
 import static com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import static com.intellij.openapi.util.NlsContexts.Tooltip;
 
+@ApiStatus.NonExtendable
 public class HighlightInfo implements Segment {
   private static final Logger LOG = Logger.getInstance(HighlightInfo.class);
 
@@ -302,8 +303,7 @@ public class HighlightInfo implements Segment {
     if (tooltip == null || description == null || description.isEmpty()) return tooltip;
 
     String encoded = StringUtil.replace(tooltip, XmlStringUtil.escapeString(description), DESCRIPTION_PLACEHOLDER);
-    //noinspection StringEquality
-    if (encoded == tooltip) {
+    if (Strings.areSameInstance(encoded, tooltip)) {
       return tooltip;
     }
     if (encoded.equals(DESCRIPTION_PLACEHOLDER)) encoded = DESCRIPTION_PLACEHOLDER;
@@ -453,8 +453,7 @@ public class HighlightInfo implements Segment {
   @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if (!(obj instanceof HighlightInfo)) return false;
-    HighlightInfo info = (HighlightInfo)obj;
+    if (!(obj instanceof HighlightInfo info)) return false;
 
     return info.getSeverity() == getSeverity() &&
            info.startOffset == startOffset &&
@@ -610,7 +609,7 @@ public class HighlightInfo implements Segment {
       for (Annotation.QuickFixInfo quickFixInfo : fixes) {
         TextRange range = quickFixInfo.textRange;
         HighlightDisplayKey k = quickFixInfo.key != null ? quickFixInfo.key
-                                                         : HighlightDisplayKey.find(AnnotatorBasedInspection.ANNOTATOR_SHORT_NAME);
+                                                         : HighlightDisplayKey.find(HighlightVisitorBasedInspection.SHORT_NAME);
         info.registerFix(quickFixInfo.quickFix, null, HighlightDisplayKey.getDisplayNameByKey(k), range, k);
       }
     }
@@ -708,7 +707,7 @@ public class HighlightInfo implements Segment {
     }
 
     @Nullable IntentionActionDescriptor copyWithEmptyAction() {
-      if (myKey == null || myKey.getID().equals(AnnotatorBasedInspection.ANNOTATOR_SHORT_NAME)) {
+      if (myKey == null || myKey.getID().equals(HighlightVisitorBasedInspection.SHORT_NAME)) {
         // No need to show "Inspection 'Annotator' options" quick fix, it wouldn't be actionable.
         return null;
       }
@@ -795,7 +794,7 @@ public class HighlightInfo implements Segment {
         InspectionProfileEntry wrappedTool =
           toolWrapper instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)toolWrapper).getTool()
                                                             : ((GlobalInspectionToolWrapper)toolWrapper).getTool();
-        if (wrappedTool instanceof DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection) {
+        if (wrappedTool instanceof HighlightVisitorBasedInspection) {
           List<IntentionAction> actions = Collections.emptyList();
           if (myProblemGroup instanceof SuppressableProblemGroup) {
             actions = Arrays.asList(((SuppressableProblemGroup)myProblemGroup).getSuppressActions(element));
@@ -895,7 +894,7 @@ public class HighlightInfo implements Segment {
       throw new RuntimeException("info not applied yet");
     }
     if (!highlighter.isValid()) return "";
-    return highlighter.getDocument().getText(TextRange.create(highlighter));
+    return highlighter.getDocument().getText(highlighter.getTextRange());
   }
 
   /**

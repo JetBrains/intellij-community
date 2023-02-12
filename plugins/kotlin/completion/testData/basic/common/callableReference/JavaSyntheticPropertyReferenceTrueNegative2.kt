@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 // COMPILER_ARGUMENTS: -XXLanguage:-ReferencesToSyntheticJavaProperties
 import java.lang.Thread
 

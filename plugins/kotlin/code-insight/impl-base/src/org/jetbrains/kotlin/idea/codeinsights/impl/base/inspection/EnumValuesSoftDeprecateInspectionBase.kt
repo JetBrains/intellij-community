@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabl
 import org.jetbrains.kotlin.idea.base.codeInsight.isSoftDeprecatedEnumValuesMethod
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
 
@@ -52,6 +53,9 @@ abstract class EnumValuesSoftDeprecateInspectionBase : AbstractKotlinInspection(
                             KotlinBundle.message("inspection.enum.values.method.soft.deprecate.migration.display.name"),
                             quickFix
                         )
+                        callExpression.containingFile?.virtualFile?.let { file ->
+                            KotlinLanguageFeaturesFUSCollector.EnumEntries.logValuesToEntriesQuickFixIsSuggested(file)
+                        }
                     }
                 }
             })
@@ -134,6 +138,9 @@ abstract class EnumValuesSoftDeprecateInspectionBase : AbstractKotlinInspection(
 
             if (replaced is KtElement) {
                 shortenReferences(replaced)
+            }
+            replaced.containingFile?.virtualFile?.let { file ->
+                KotlinLanguageFeaturesFUSCollector.EnumEntries.logValuesToEntriesQuickFixIsApplied(file)
             }
         }
 

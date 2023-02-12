@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.base.util.onTextChange
 import org.jetbrains.kotlin.idea.compiler.configuration.*
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
+import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker
 import org.jetbrains.kotlin.idea.facet.getExposedFacetFields
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
@@ -482,11 +483,12 @@ class KotlinFacetEditorGeneralTab(
                         }
                     }
                 }
+
                 configuration.settings.targetPlatform = editor.getChosenPlatform()
                 updateMergedArguments()
 
                 // Force code analysis with modified settings
-                runWriteAction { editorContext.project.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED) }
+                runWriteAction { KotlinFacetModificationTracker.getInstance(editorContext.project).incModificationCount() }
             }
         }
     }

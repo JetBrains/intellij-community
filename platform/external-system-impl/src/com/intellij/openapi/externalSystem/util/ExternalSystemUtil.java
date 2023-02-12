@@ -815,8 +815,7 @@ public final class ExternalSystemUtil {
       }
       buildEvent = new FinishEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName, eventResult);
     }
-    else if (progressEvent instanceof ExternalSystemStatusEvent) {
-      ExternalSystemStatusEvent statusEvent = (ExternalSystemStatusEvent)progressEvent;
+    else if (progressEvent instanceof ExternalSystemStatusEvent statusEvent) {
       buildEvent = new ProgressBuildEventImpl(progressEvent.getEventId(), progressEvent.getParentEventId(), eventTime, displayName,
                                               statusEvent.getTotal(), statusEvent.getProgress(), statusEvent.getUnit());
     }
@@ -1020,8 +1019,7 @@ public final class ExternalSystemUtil {
 
   public static @Nullable AbstractExternalSystemTaskConfigurationType findConfigurationType(@NotNull ProjectSystemId externalSystemId) {
     for (ConfigurationType type : ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()) {
-      if (type instanceof AbstractExternalSystemTaskConfigurationType) {
-        AbstractExternalSystemTaskConfigurationType candidate = (AbstractExternalSystemTaskConfigurationType)type;
+      if (type instanceof AbstractExternalSystemTaskConfigurationType candidate) {
         if (externalSystemId.equals(candidate.getExternalSystemId())) {
           return candidate;
         }

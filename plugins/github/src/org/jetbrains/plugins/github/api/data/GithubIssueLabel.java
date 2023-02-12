@@ -46,9 +46,7 @@ public class GithubIssueLabel {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof GithubIssueLabel)) return false;
-
-    GithubIssueLabel label = (GithubIssueLabel)o;
+    if (!(o instanceof GithubIssueLabel label)) return false;
 
     if (!id.equals(label.id)) return false;
 

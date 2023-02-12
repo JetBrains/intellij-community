@@ -80,6 +80,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
 
   private Queryable myQueryable;
   private DragOutDelegate myDragOutDelegate;
+  private DragDelegate myDragDelegate;
 
   /**
    * The tab which was selected before the mouse was pressed on this tab. Focus will be transferred to that tab if this tab is dragged
@@ -445,9 +446,22 @@ public final class TabInfo implements Queryable, PlaceProvider {
     myPreviousSelection = new WeakReference<>(previousSelection);
   }
 
+  public DragDelegate getDragDelegate() {
+    return myDragDelegate;
+  }
+
+  public void setDragDelegate(DragDelegate dragDelegate) {
+    myDragDelegate = dragDelegate;
+  }
+
   @Nullable
   public TabInfo getPreviousSelection() {
     return myPreviousSelection.get();
+  }
+
+  public interface DragDelegate {
+    void dragStarted(@NotNull MouseEvent mouseEvent);
+    void dragFinishedOrCanceled();
   }
 
   public interface DragOutDelegate {

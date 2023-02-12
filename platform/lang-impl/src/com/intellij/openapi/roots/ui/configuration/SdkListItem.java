@@ -39,8 +39,7 @@ public abstract class SdkListItem {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof SdkReferenceItem)) return false;
-      SdkReferenceItem item = (SdkReferenceItem)o;
+      if (!(o instanceof SdkReferenceItem item)) return false;
       return sdkType.equals(item.sdkType) && name.equals(item.name);
     }
 

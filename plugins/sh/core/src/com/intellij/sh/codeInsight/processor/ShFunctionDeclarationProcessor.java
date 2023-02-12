@@ -18,8 +18,7 @@ public class ShFunctionDeclarationProcessor implements PsiScopeProcessor {
 
   @Override
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-    if (!(element instanceof ShFunctionDefinition)) return true;
-    ShFunctionDefinition functionDefinition = (ShFunctionDefinition)element;
+    if (!(element instanceof ShFunctionDefinition functionDefinition)) return true;
     PsiElement identifier = functionDefinition.getWord();
     if (identifier == null) return true;
     if (!identifier.getText().equals(myFunctionName)) return true;

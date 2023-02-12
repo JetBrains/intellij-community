@@ -65,7 +65,7 @@ public class XmlCompletionTest extends LightJavaCodeInsightFixtureTestCase {
     final ExternalResourceManager manager = ExternalResourceManager.getInstance();
     final String old = manager.getResourceLocation(url, (String)null);
     if (old != null &&
-        old != url //strange hack: ERM returns url as location sometimes
+        !old.equals(url) //strange hack: ERM returns url as location sometimes
       ) {
       return;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.psi.*;
@@ -245,8 +245,7 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
       element = parent;
       parent = element.getParent();
     }
-    if (parent instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+    if (parent instanceof PsiAssignmentExpression assignment) {
       boolean isStore = assignment.getOperationTokenType().equals(JavaTokenType.EQ) &&
                         assignment.getLExpression() == element;
       return isStore == mustBeStore;

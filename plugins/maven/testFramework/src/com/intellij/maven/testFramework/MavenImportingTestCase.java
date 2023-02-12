@@ -138,8 +138,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   public boolean supportModuleGroups() {
-    return !isWorkspaceImport()
-           && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
+    return !isWorkspaceImport();
   }
 
   public boolean supportsKeepingManualChanges() {
@@ -151,8 +150,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   public boolean supportsKeepingModulesFromPreviousImport() {
-    return !isWorkspaceImport()
-           && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
+    return !isWorkspaceImport();
   }
 
   public boolean supportsLegacyKeepingFoldersFromPreviousImport() {
@@ -164,8 +162,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   public boolean supportsCreateAggregatorOption() {
-    return !isWorkspaceImport()
-           && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
+    return !isWorkspaceImport();
   }
 
   protected void stopMavenImportManager() {
@@ -183,10 +180,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     removeFromLocalRepository("test");
   }
 
-  protected String mn(String parent, String moduleName) {
-    if (MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject)) {
-      return parent + "." + moduleName;
-    }
+  @SuppressWarnings("unused")
+  protected String mn(String parent/* can be used to prepend module name depending on the importing settings*/,
+                      String moduleName) {
     return moduleName;
   }
 

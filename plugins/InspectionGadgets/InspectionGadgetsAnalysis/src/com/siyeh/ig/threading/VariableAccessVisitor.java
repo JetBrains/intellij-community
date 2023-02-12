@@ -368,8 +368,7 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
     if (element instanceof PsiCodeBlock && element.getParent() instanceof PsiSynchronizedStatement) {
       m_inSynchronizedContextCount--;
     }
-    else if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+    else if (element instanceof PsiMethod method) {
       if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED) || methodIsAlwaysUsedSynchronized(method)) {
         m_inSynchronizedContextCount--;
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
@@ -172,7 +172,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                 @NotNull AlignmentStrategy alignmentStrategy,
                                 int startOffset,
                                 @NotNull FormattingMode formattingMode) {
-    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, settings) : indent;
+    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, settings, javaSettings) : indent;
     IElementType elementType = child.getElementType();
     Alignment alignment = alignmentStrategy.getAlignment(elementType);
     PsiElement childPsi = child.getPsi();
@@ -238,7 +238,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                    @NotNull CommonCodeStyleSettings settings,
                                    @NotNull JavaCodeStyleSettings javaSettings,
                                    @NotNull FormattingMode formattingMode) {
-    final Indent indent = getDefaultSubtreeIndent(child, settings);
+    final Indent indent = getDefaultSubtreeIndent(child, settings, javaSettings);
     return newJavaBlock(child, settings, javaSettings, indent, null, AlignmentStrategy.getNullStrategy(), formattingMode);
   }
 
@@ -291,7 +291,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
 
   @Nullable
-  private static Indent getDefaultSubtreeIndent(@NotNull ASTNode child, @NotNull CommonCodeStyleSettings settings) {
+  private static Indent getDefaultSubtreeIndent(@NotNull ASTNode child,
+                                                @NotNull CommonCodeStyleSettings settings,
+                                                @NotNull JavaCodeStyleSettings javaSettings) {
     CommonCodeStyleSettings.IndentOptions indentOptions= getJavaIndentOptions(settings);
     final ASTNode parent = child.getTreeParent();
     final IElementType childNodeType = child.getElementType();
@@ -316,6 +318,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (parent.getPsi() instanceof PsiLambdaExpression && child instanceof PsiCodeBlock) {
         if (settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ||
             settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED2) {
+          return Indent.getNormalIndent();
+        }
+        return Indent.getNoneIndent();
+      }
+      if (parent.getPsi() instanceof PsiSwitchExpression &&
+          child instanceof PsiCodeBlock &&
+          !javaSettings.DOUBLY_SHIFTED_SWITCH_EXPRESSION_BODY) {
+        if (settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ||
+            settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED2) {
           return Indent.getNormalIndent();
         }
         return Indent.getNoneIndent();
@@ -646,8 +657,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
         Block block = createJavaBlock(child, mySettings, myJavaSettings, childIndent, wrap, alignmentStrategyToUse, childOffset, myFormattingMode);
 
-        if (block instanceof AbstractJavaBlock) {
-          final AbstractJavaBlock javaBlock = (AbstractJavaBlock)block;
+        if (block instanceof AbstractJavaBlock javaBlock) {
           if (nodeType == JavaElementType.METHOD_CALL_EXPRESSION && childType == JavaElementType.REFERENCE_EXPRESSION) {
             javaBlock.setReservedWrap(getReservedWrap(nodeType), nodeType);
             javaBlock.setReservedWrap(getReservedWrap(childType), childType);

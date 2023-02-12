@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
+import org.jetbrains.kotlin.idea.codeInsight.gradle.isKgpDependencyResolutionEnabled
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
@@ -534,6 +535,8 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
 
             createHighlightingCheck(correspondingFilePostfix = ".after").invokeOnAllModules()
 
+            val muteP2POnUnsupportedHost = !HostManager.hostIsMac && isKgpDependencyResolutionEnabled() // KTIJ-24578
+
             checkProjectStructure(
                 exhaustiveModuleList = true,
                 exhaustiveSourceSourceRootList = false,
@@ -559,8 +562,8 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                 module("lib-and-app.app.iosArm64Main") {
                     moduleDependency("lib-and-app.app.commonMain", DependencyScope.COMPILE)
                     moduleDependency("lib-and-app.app.iosMain", DependencyScope.COMPILE)
-                    moduleDependency("lib-and-app.lib.commonMain", DependencyScope.COMPILE)
-                    moduleDependency("lib-and-app.lib.iosMain", DependencyScope.COMPILE)
+                    moduleDependency("lib-and-app.lib.commonMain", DependencyScope.COMPILE, isOptional = muteP2POnUnsupportedHost)
+                    moduleDependency("lib-and-app.lib.iosMain", DependencyScope.COMPILE, isOptional = muteP2POnUnsupportedHost)
                     if (HostManager.hostIsMac)
                         moduleDependency("lib-and-app.lib.iosArm64Main", DependencyScope.COMPILE)
                 }
@@ -571,8 +574,8 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                     moduleDependency("lib-and-app.app.iosArm64Main", DependencyScope.TEST)
                     moduleDependency("lib-and-app.app.iosMain", DependencyScope.TEST)
                     moduleDependency("lib-and-app.app.iosTest", DependencyScope.TEST)
-                    moduleDependency("lib-and-app.lib.commonMain", DependencyScope.TEST)
-                    moduleDependency("lib-and-app.lib.iosMain", DependencyScope.TEST)
+                    moduleDependency("lib-and-app.lib.commonMain", DependencyScope.TEST, isOptional = muteP2POnUnsupportedHost)
+                    moduleDependency("lib-and-app.lib.iosMain", DependencyScope.TEST, isOptional = muteP2POnUnsupportedHost)
                 }
 
                 module("lib-and-app.app.iosMain") {
@@ -592,8 +595,8 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                 module("lib-and-app.app.iosX64Main") {
                     moduleDependency("lib-and-app.app.commonMain", DependencyScope.COMPILE)
                     moduleDependency("lib-and-app.app.iosMain", DependencyScope.COMPILE)
-                    moduleDependency("lib-and-app.lib.commonMain", DependencyScope.COMPILE)
-                    moduleDependency("lib-and-app.lib.iosMain", DependencyScope.COMPILE)
+                    moduleDependency("lib-and-app.lib.commonMain", DependencyScope.COMPILE, isOptional = muteP2POnUnsupportedHost)
+                    moduleDependency("lib-and-app.lib.iosMain", DependencyScope.COMPILE, isOptional = muteP2POnUnsupportedHost)
                     if (HostManager.hostIsMac)
                         moduleDependency("lib-and-app.lib.iosX64Main", DependencyScope.COMPILE)
                 }
@@ -613,8 +616,8 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                     moduleDependency("lib-and-app.app.iosX64Main", DependencyScope.TEST)
                     moduleDependency("lib-and-app.app.iosMain", DependencyScope.TEST)
                     moduleDependency("lib-and-app.app.iosTest", DependencyScope.TEST)
-                    moduleDependency("lib-and-app.lib.commonMain", DependencyScope.TEST)
-                    moduleDependency("lib-and-app.lib.iosMain", DependencyScope.TEST)
+                    moduleDependency("lib-and-app.lib.commonMain", DependencyScope.TEST, isOptional = muteP2POnUnsupportedHost)
+                    moduleDependency("lib-and-app.lib.iosMain", DependencyScope.TEST, isOptional = muteP2POnUnsupportedHost)
                     if (HostManager.hostIsMac)
                         moduleDependency("lib-and-app.lib.iosX64Main", DependencyScope.TEST)
                 }

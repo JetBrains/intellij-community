@@ -115,8 +115,7 @@ public class SetPropertyDialog extends DialogWrapper {
       }
     });
     Component editor = myPropertyNameBox.getEditor().getEditorComponent();
-    if (editor instanceof JTextField) {
-      JTextField jTextField = (JTextField)editor;
+    if (editor instanceof JTextField jTextField) {
       jTextField.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {

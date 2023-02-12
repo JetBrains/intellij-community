@@ -72,8 +72,7 @@ public class UnnecessaryContinueInspection extends BaseInspection {
     public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
       final PsiStatement continuedStatement = statement.findContinuedStatement();
       PsiStatement body = null;
-      if (continuedStatement instanceof PsiLoopStatement) {
-        final PsiLoopStatement loopStatement = (PsiLoopStatement)continuedStatement;
+      if (continuedStatement instanceof PsiLoopStatement loopStatement) {
         body = loopStatement.getBody();
       }
       if (body == null) {
@@ -85,8 +84,7 @@ public class UnnecessaryContinueInspection extends BaseInspection {
       if (ControlFlowUtils.isInFinallyBlock(statement, continuedStatement)) {
         return;
       }
-      if (body instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
+      if (body instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock block = blockStatement.getCodeBlock();
         if (ControlFlowUtils.blockCompletesWithStatement(block, statement)) {
           registerError(statement.getFirstChild());

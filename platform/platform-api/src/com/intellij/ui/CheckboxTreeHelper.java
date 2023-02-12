@@ -106,8 +106,7 @@ public class CheckboxTreeHelper {
     final Enumeration children = node.children();
     while (children.hasMoreElements()) {
       final Object o = children.nextElement();
-      if (!(o instanceof CheckedTreeNode)) continue;
-      CheckedTreeNode child = (CheckedTreeNode)o;
+      if (!(o instanceof CheckedTreeNode child)) continue;
       changeNodeState(child, false);
       uncheckChildren(child);
     }
@@ -117,8 +116,7 @@ public class CheckboxTreeHelper {
     final Enumeration children = node.children();
     while (children.hasMoreElements()) {
       final Object o = children.nextElement();
-      if (!(o instanceof CheckedTreeNode)) continue;
-      CheckedTreeNode child = (CheckedTreeNode)o;
+      if (!(o instanceof CheckedTreeNode child)) continue;
       changeNodeState(child, true);
       checkChildren(child);
     }
@@ -132,8 +130,7 @@ public class CheckboxTreeHelper {
           TreePath treePath = tree.getLeadSelectionPath();
           if (treePath == null) return;
           final Object o = treePath.getLastPathComponent();
-          if (!(o instanceof CheckedTreeNode)) return;
-          CheckedTreeNode firstNode = (CheckedTreeNode)o;
+          if (!(o instanceof CheckedTreeNode firstNode)) return;
           if (!firstNode.isEnabled()) return;
           toggleNode(tree, firstNode);
           boolean checked = firstNode.isChecked();
@@ -142,8 +139,7 @@ public class CheckboxTreeHelper {
           for (int i = 0; selectionPaths != null && i < selectionPaths.length; i++) {
             final TreePath selectionPath = selectionPaths[i];
             final Object o1 = selectionPath.getLastPathComponent();
-            if (!(o1 instanceof CheckedTreeNode)) continue;
-            CheckedTreeNode node = (CheckedTreeNode)o1;
+            if (!(o1 instanceof CheckedTreeNode node)) continue;
             setNodeState(tree, node, checked);
           }
 
@@ -166,7 +162,7 @@ public class CheckboxTreeHelper {
         int row = tree.getRowForLocation(e.getX(), e.getY());
         if (row < 0) return false;
         final Object o = tree.getPathForRow(row).getLastPathComponent();
-        if (!(o instanceof CheckedTreeNode)) return false;
+        if (!(o instanceof CheckedTreeNode node)) return false;
         Rectangle rowBounds = tree.getRowBounds(row);
         cellRenderer.setBounds(rowBounds);
         cellRenderer.validate();
@@ -175,7 +171,6 @@ public class CheckboxTreeHelper {
 
         if (checkBounds.height == 0) checkBounds.height = checkBounds.width = rowBounds.height;
 
-        final CheckedTreeNode node = (CheckedTreeNode)o;
         if (checkBounds.contains(e.getPoint()) && cellRenderer.myCheckbox.isVisible()) {
           if (node.isEnabled()) {
             toggleNode(tree, node);

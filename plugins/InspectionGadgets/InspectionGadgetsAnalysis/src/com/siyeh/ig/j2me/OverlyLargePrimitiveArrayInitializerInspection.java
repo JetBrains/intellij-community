@@ -83,9 +83,7 @@ public class OverlyLargePrimitiveArrayInitializerInspection
     }
 
     private int calculateNumElements(PsiExpression expression) {
-      if (expression instanceof PsiArrayInitializerExpression) {
-        final PsiArrayInitializerExpression arrayExpression =
-          (PsiArrayInitializerExpression)expression;
+      if (expression instanceof PsiArrayInitializerExpression arrayExpression) {
         final PsiExpression[] initializers =
           arrayExpression.getInitializers();
         return Arrays.stream(initializers).mapToInt(this::calculateNumElements).sum();

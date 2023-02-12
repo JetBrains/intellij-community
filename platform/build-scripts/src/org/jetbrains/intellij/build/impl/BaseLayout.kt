@@ -47,6 +47,12 @@ open class BaseLayout {
   val includedModuleNames: Set<String>
     get() = Collections.unmodifiableSet(_includedModuleNamesToJarPath.keys)
 
+  fun withModules(moduleNames: List<String>, relativeJarPath: String) {
+    for (moduleName in moduleNames) {
+      withModule(moduleName = moduleName, relativeJarPath = relativeJarPath)
+    }
+  }
+
   fun withModule(moduleName: String, relativeJarPath: String) {
     require(!moduleName.isEmpty()) {
       "Module name must be not empty"

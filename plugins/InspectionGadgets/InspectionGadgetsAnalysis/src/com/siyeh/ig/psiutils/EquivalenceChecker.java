@@ -793,8 +793,7 @@ public class EquivalenceChecker {
   }
 
   private static PsiElement unwrapLambdaBody(PsiElement element) {
-    while (element instanceof PsiCodeBlock) {
-      final PsiCodeBlock codeBlock = (PsiCodeBlock)element;
+    while (element instanceof PsiCodeBlock codeBlock) {
       final PsiStatement[] statements = codeBlock.getStatements();
       if (statements.length != 1) {
         break;
@@ -845,8 +844,7 @@ public class EquivalenceChecker {
     else {
       return EXACT_MISMATCH; // incomplete code
     }
-    if (element1 instanceof PsiMember) {
-      final PsiMember member1 = (PsiMember)element1;
+    if (element1 instanceof PsiMember member1) {
       if (member1.hasModifierProperty(PsiModifier.STATIC)) {
         return EXACT_MATCH;
       }

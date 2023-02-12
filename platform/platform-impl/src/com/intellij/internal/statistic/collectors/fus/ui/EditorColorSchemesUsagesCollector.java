@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -21,7 +21,7 @@ import java.util.Set;
 
 public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollector {
 
-  private final static int CURR_VERSION = 4;
+  private final static int CURR_VERSION = 5;
 
   public static final String SCHEME_NAME_OTHER = "Other";
   public final static String[] KNOWN_NAMES = {
@@ -47,6 +47,7 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
     "Rider",
     "IntelliJ Light",
     "Light",
+    "New Dark RC",
     "New Dark",
     "Dark",
     SCHEME_NAME_OTHER

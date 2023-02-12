@@ -210,7 +210,7 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
     boolean checkFallbackToDefault = isCompound && !target.equals(defaultTarget);
 
     return doWithEachNonCompoundWithSpecifiedTarget(configuration, (subConfiguration, executionTarget) -> {
-      if (!(subConfiguration instanceof TargetAwareRunProfile)) {
+      if (!(subConfiguration instanceof TargetAwareRunProfile targetAwareProfile)) {
         return true;
       }
 
@@ -219,7 +219,6 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
         return false;
       }
 
-      TargetAwareRunProfile targetAwareProfile = (TargetAwareRunProfile)subConfiguration;
       return target.canRun(subConfiguration) && targetAwareProfile.canRunOn(target)
              || (checkFallbackToDefault && defaultTarget.canRun(subConfiguration) && targetAwareProfile.canRunOn(defaultTarget));
     });

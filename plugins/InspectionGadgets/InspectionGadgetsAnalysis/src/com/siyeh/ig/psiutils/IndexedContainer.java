@@ -92,8 +92,7 @@ public abstract class IndexedContainer {
     if (arrayExpression != null) {
       return new ArrayIndexedContainer(arrayExpression);
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression call) {
       if (ListIndexedContainer.isSizeCall(call)) {
         PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getEffectiveQualifier(call.getMethodExpression()));
         if (qualifier != null) {
@@ -112,7 +111,7 @@ public abstract class IndexedContainer {
    *    newArray[i] = 0;
    *  }
    * }</pre>
-   * Additionally, the method that newArray and arrayLength are not reassigned
+   * Additionally, the method checks that newArray and arrayLength are not reassigned
    *
    * @param arrayAccessExpression expression to create an IndexedContainer from
    * @param bound                 reference to arrayLength
@@ -171,8 +170,7 @@ public abstract class IndexedContainer {
     @Override
     public PsiExpression extractIndexFromGetExpression(@Nullable PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
-      if (expression instanceof PsiArrayAccessExpression) {
-        PsiArrayAccessExpression arrayAccess = (PsiArrayAccessExpression)expression;
+      if (expression instanceof PsiArrayAccessExpression arrayAccess) {
         if (isQualifierEquivalent(arrayAccess.getArrayExpression())) {
           return arrayAccess.getIndexExpression();
         }

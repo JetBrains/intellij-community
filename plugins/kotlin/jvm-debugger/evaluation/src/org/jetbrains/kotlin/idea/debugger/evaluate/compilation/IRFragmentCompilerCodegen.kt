@@ -151,7 +151,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
                 }
             },
             evaluatorFragmentInfoForPsi2Ir = evaluatorFragmentInfo,
-            shouldStubAndNotLinkUnboundSymbols = true
+            ideCodegenSettings = JvmIrCodegenFactory.IdeCodegenSettings(shouldStubAndNotLinkUnboundSymbols = true),
         )
     }
 

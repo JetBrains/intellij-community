@@ -384,7 +384,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
                               @NotNull String committedContent,
                               @NotNull String actualContent) {
       PsiFile file = myFileStructure.addTestFile(fileName, actualContent);
-      if (committedContent != actualContent) {
+      if (!committedContent.equals(actualContent)) {
         registerCommittedRevision(committedContent, file);
       }
       return file;

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -375,8 +375,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     if (element == null || !element.isValid()) return null;
     final Project project = element.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (element instanceof PsiPackage) {
-      final PsiPackage aPackage = (PsiPackage)element;
+    if (element instanceof PsiPackage aPackage) {
       final PsiDirectory[] directories = aPackage.getDirectories(GlobalSearchScope.projectScope(project));
       for (final PsiDirectory directory : directories) {
         if (isSource(directory, fileIndex)) return aPackage;

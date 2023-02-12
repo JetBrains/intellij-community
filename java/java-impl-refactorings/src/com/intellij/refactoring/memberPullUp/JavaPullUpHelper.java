@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -438,15 +438,10 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     if (body != null) {
       PsiMethodCallExpression superCall = null;
       final PsiStatement[] statements = body.getStatements();
-      if (statements.length > 0) {
-        if (statements[0] instanceof PsiExpressionStatement) {
-          final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-          if (expression instanceof PsiMethodCallExpression) {
-            final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
-            if ("super".equals(methodCall.getMethodExpression().getText())) {
-              superCall = methodCall;
-            }
-          }
+      if (statements.length > 0 && statements[0] instanceof PsiExpressionStatement) {
+        final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+        if (expression instanceof PsiMethodCallExpression methodCall && "super".equals(methodCall.getMethodExpression().getText())) {
+          superCall = methodCall;
         }
       }
 
@@ -490,47 +485,40 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       for (PsiStatement collectedStatement : collectedStatements) {
         if (collectedStatement instanceof PsiExpressionStatement) {
           final PsiExpression expression = ((PsiExpressionStatement)collectedStatement).getExpression();
-          if (expression instanceof PsiAssignmentExpression) {
-            final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
-            final PsiExpression lExpression = assignmentExpression.getLExpression();
-            if (lExpression instanceof PsiReferenceExpression) {
-              final PsiReferenceExpression lRef = (PsiReferenceExpression)lExpression;
-              if (lRef.getQualifierExpression() == null || lRef.getQualifierExpression() instanceof PsiThisExpression) {
-                final PsiElement resolved = lRef.resolve();
-                if (resolved == field) {
-                  doLookup = false;
-                  if (commonInitializerCandidate == null) {
-                    final PsiExpression initializer = assignmentExpression.getRExpression();
-                    if (initializer == null) return null;
-                    if (commonInitializer == null) {
-                      final IsMovableInitializerVisitor visitor = new IsMovableInitializerVisitor();
-                      statement.accept(visitor);
-                      if (visitor.isMovable()) {
-                        ChangeContextUtil.encodeContextInfo(statement, true);
-                        PsiStatement statementCopy = (PsiStatement)statement.copy();
-                        ChangeContextUtil.clearContextInfo(statement);
-                        statementsToRemove.add(statement);
-                        commonInitializerCandidate = statementCopy;
-                      }
-                      else {
-                        return null;
-                      }
-                    }
-                    else {
-                      if (PsiEquivalenceUtil.areElementsEquivalent(commonInitializer, statement)) {
-                        statementsToRemove.add(statement);
-                        commonInitializerCandidate = commonInitializer;
-                      }
-                      else {
-                        return null;
-                      }
-                    }
-                  }
-                  else if (!PsiEquivalenceUtil.areElementsEquivalent(commonInitializerCandidate, statement)){
-                    return null;
-                  }
+          if (expression instanceof PsiAssignmentExpression assignmentExpression &&
+              assignmentExpression.getLExpression() instanceof PsiReferenceExpression lRef &&
+              (lRef.getQualifierExpression() == null || lRef.getQualifierExpression() instanceof PsiThisExpression) &&
+              lRef.resolve() == field) {
+            doLookup = false;
+            if (commonInitializerCandidate == null) {
+              final PsiExpression initializer = assignmentExpression.getRExpression();
+              if (initializer == null) return null;
+              if (commonInitializer == null) {
+                final IsMovableInitializerVisitor visitor = new IsMovableInitializerVisitor();
+                statement.accept(visitor);
+                if (visitor.isMovable()) {
+                  ChangeContextUtil.encodeContextInfo(statement, true);
+                  PsiStatement statementCopy = (PsiStatement)statement.copy();
+                  ChangeContextUtil.clearContextInfo(statement);
+                  statementsToRemove.add(statement);
+                  commonInitializerCandidate = statementCopy;
+                }
+                else {
+                  return null;
                 }
               }
+              else {
+                if (PsiEquivalenceUtil.areElementsEquivalent(commonInitializer, statement)) {
+                  statementsToRemove.add(statement);
+                  commonInitializerCandidate = commonInitializer;
+                }
+                else {
+                  return null;
+                }
+              }
+            }
+            else if (!PsiEquivalenceUtil.areElementsEquivalent(commonInitializerCandidate, statement)) {
+              return null;
             }
           }
         }
@@ -785,8 +773,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
 
     private boolean shouldFixSuper(PsiMethod method) {
       for (PsiMember element : myMembersAfterMove) {
-        if (element instanceof PsiMethod) {
-          PsiMethod member = (PsiMethod)element;
+        if (element instanceof PsiMethod member) {
           // if there is such member among moved members, super qualifier
           // should not be removed
           final PsiManager manager = method.getManager();

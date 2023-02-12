@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace;
 
 import com.intellij.ide.plugins.PluginManager;
@@ -107,48 +107,28 @@ final class RepositoryContentHandler extends DefaultHandler {
     String currentValueString = currentValue.toString();
     currentValue.setLength(0);
 
-    if (qName.equals(ID)) {
-      currentPlugin.setId(currentValueString);
-    }
-    else if (qName.equals(NAME)) {
-      currentPlugin.setName(currentValueString);
-    }
-    else if (qName.equals(DESCRIPTION)) {
-      currentPlugin.setDescription(currentValueString);
-    }
-    else if (qName.equals(VERSION)) {
-      currentPlugin.setVersion(currentValueString);
-    }
-    else if (qName.equals(VENDOR)) {
-      currentPlugin.setVendor(currentValueString);
-    }
-    else if (qName.equals(DEPENDS)) {
-      currentPlugin.addDepends(currentValueString, false);
-    }
-    else if (qName.equals(CHANGE_NOTES)) {
-      currentPlugin.setChangeNotes(currentValueString);
-    }
-    else if (qName.equals(CATEGORY)) {
-      categories.pop();
-      categoryName = null;
-    }
-    else if (qName.equals(RATING)) {
-      currentPlugin.setRating(currentValueString);
-    }
-    else if (qName.equals(DOWNLOAD_URL) || qName.equals(DOWNLOAD_URL_NEW_STYLE)) {
-      currentPlugin.setDownloadUrl(currentValueString);
-    }
-    else if (qName.equals(IDEA_PLUGIN) || qName.equals(PLUGIN)) {
-      if (currentPlugin != null) {
-        plugins.add(currentPlugin);
+    switch (qName) {
+      case ID -> currentPlugin.setId(currentValueString);
+      case NAME -> currentPlugin.setName(currentValueString);
+      case DESCRIPTION -> currentPlugin.setDescription(currentValueString);
+      case VERSION -> currentPlugin.setVersion(currentValueString);
+      case VENDOR -> currentPlugin.setVendor(currentValueString);
+      case DEPENDS -> currentPlugin.addDepends(currentValueString, false);
+      case CHANGE_NOTES -> currentPlugin.setChangeNotes(currentValueString);
+      case CATEGORY -> {
+        categories.pop();
+        categoryName = null;
       }
-      currentPlugin = null;
-    }
-    else if (qName.equals(TAGS)) {
-      currentPlugin.addTags(currentValueString);
-    }
-    else if (qName.equals(PRODUCT_CODE)) {
-      currentPlugin.setProductCode(currentValueString);
+      case RATING -> currentPlugin.setRating(currentValueString);
+      case DOWNLOAD_URL, DOWNLOAD_URL_NEW_STYLE -> currentPlugin.setDownloadUrl(currentValueString);
+      case IDEA_PLUGIN, PLUGIN -> {
+        if (currentPlugin != null) {
+          plugins.add(currentPlugin);
+        }
+        currentPlugin = null;
+      }
+      case TAGS -> currentPlugin.addTags(currentValueString);
+      case PRODUCT_CODE -> currentPlugin.setProductCode(currentValueString);
     }
   }
 

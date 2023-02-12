@@ -3,6 +3,7 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestIconMapper;
 import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.*;
 
@@ -185,15 +187,16 @@ public final class TestsPresentationUtil {
     renderer.append(testProxy.getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
-  @NotNull
-  public static String getPresentableName(final SMTestProxy testProxy) {
-    final SMTestProxy parent = testProxy.getParent();
-    final String name = testProxy.getName();
+  public static @NotNull String getPresentableName(final @NotNull SMTestProxy testProxy) {
+    return getPresentableName(testProxy, testProxy.getName());
+  }
 
+  public static @NotNull String getPresentableName(final @NotNull SMTestProxy testProxy, final @Nullable String name) {
     if (name == null) {
       return Holder.getNoNameTest();
     }
 
+    final SMTestProxy parent = testProxy.getParent();
     String presentationCandidate = name;
     if (parent != null && !testProxy.isSuite()) {
       String parentName = parent.getName();
@@ -236,18 +239,14 @@ public final class TestsPresentationUtil {
     return presentationCandidate;
   }
 
-  @NotNull
-  public static String getPresentableNameTrimmedOnly(@NotNull SMTestProxy testProxy) {
-    String name = testProxy.getName();
-    if (name != null) {
-      name = name.trim();
-    }
-    if (name == null || name.isEmpty()) {
-      name = Holder.getNoNameTest();
-    }
-    return name;
+  public static @NotNull String getPresentableNameTrimmedOnly(final @Nullable String name) {
+    return (name == null || name.isBlank()) ? Holder.getNoNameTest()
+                                            : name.trim();
   }
 
+  /**
+   * @see TestIconMapper#getToolbarIcon(TestStateInfo.Magnitude, boolean, BooleanSupplier)
+   */
   private static @NotNull Icon getIcon(final SMTestProxy testProxy,
                                        final TestConsoleProperties consoleProperties) {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();

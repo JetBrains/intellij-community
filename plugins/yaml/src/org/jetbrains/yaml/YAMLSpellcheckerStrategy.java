@@ -40,8 +40,7 @@ final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy {
   private final Tokenizer<PsiElement> myQuotedTextTokenizer = new TokenizerBase<>(PlainTextSplitter.getInstance()) {
     @Override
     public void tokenize(@NotNull PsiElement leafElement, @NotNull TokenConsumer consumer) {
-      if (leafElement instanceof LeafPsiElement && leafElement.getParent() instanceof YAMLQuotedText) {
-        YAMLQuotedText quotedText = (YAMLQuotedText)leafElement.getParent();
+      if (leafElement instanceof LeafPsiElement && leafElement.getParent() instanceof YAMLQuotedText quotedText) {
 
         TextRange range = ElementManipulators.getValueTextRange(quotedText);
         if (!range.isEmpty()) {

@@ -109,7 +109,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     }.enabledIf(addSampleCodeProperty)
   }
 
-  private fun setupModuleNameUI(builder: Panel) {
+  protected fun setupModuleNameUI(builder: Panel) {
     builder.row(UIBundle.message("label.project.wizard.new.project.module.name")) {
       textField()
         .bindText(moduleNameProperty)
@@ -120,7 +120,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     }
   }
 
-  private fun setupModuleContentRootUI(builder: Panel) {
+  protected fun setupModuleContentRootUI(builder: Panel) {
     builder.row(UIBundle.message("label.project.wizard.new.project.content.root")) {
       val browseDialogTitle = UIBundle.message("label.project.wizard.new.project.content.root.title")
       val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
@@ -135,7 +135,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     }
   }
 
-  private fun setupModuleFileLocationUI(builder: Panel) {
+  protected fun setupModuleFileLocationUI(builder: Panel) {
     builder.row(UIBundle.message("label.project.wizard.new.project.module.file.location")) {
       val browseDialogTitle = UIBundle.message("label.project.wizard.new.project.module.file.location.title")
       val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()

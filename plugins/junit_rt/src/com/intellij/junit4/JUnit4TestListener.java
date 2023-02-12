@@ -20,15 +20,15 @@ public class JUnit4TestListener extends RunListener {
   public static final String EMPTY_SUITE_NAME = "junit.framework.TestSuite$1";
   public static final String EMPTY_SUITE_WARNING = "warning";
 
-  private final List<Description> myStartedSuites = new ArrayList<Description>();
-  private final Map<Description, List<List<Description>>> myParents = new HashMap<Description, List<List<Description>>>();
-  private final Map<Description, String> myMethodNames = new HashMap<Description, String>();
+  private final List<Description> myStartedSuites = new ArrayList<>();
+  private final Map<Description, List<List<Description>>> myParents = new HashMap<>();
+  private final Map<Description, String> myMethodNames = new HashMap<>();
   private final PrintStream myPrintStream;
   private String myRootName;
   private long myCurrentTestStart;
 
   private Description myCurrentTest;
-  private final Map<Description, TestEvent> myWaitingQueue = new LinkedHashMap<Description, TestEvent>();
+  private final Map<Description, TestEvent> myWaitingQueue = new LinkedHashMap<>();
   private static final JUnitTestTreeNodeManager NODE_NAMES_MANAGER = getTestTreeNodeManager();
 
 
@@ -92,7 +92,7 @@ public class JUnit4TestListener extends RunListener {
     final String classFQN = JUnit4ReflectionUtil.getClassName(description);
 
 
-    List<Description> parentsHierarchy = new ArrayList<Description>();
+    List<Description> parentsHierarchy = new ArrayList<>();
     if (parents != null && !parents.isEmpty()) {
       parentsHierarchy = parents.remove(0);
     }
@@ -267,7 +267,7 @@ public class JUnit4TestListener extends RunListener {
       catch (Throwable ignore) { }
     }
 
-    final Map<String, String> attrs = new LinkedHashMap<String, String>();
+    final Map<String, String> attrs = new LinkedHashMap<>();
     attrs.put("name", methodName);
     final long duration = currentTime() - myCurrentTestStart;
     if (duration > 0) {
@@ -352,7 +352,7 @@ public class JUnit4TestListener extends RunListener {
 
   private void testIgnored(Description description, String methodName) {
     testStarted(description);
-    Map<String, String> attrs = new HashMap<String, String>();
+    Map<String, String> attrs = new HashMap<>();
     try {
       final Ignore ignoredAnnotation = description.getAnnotation(Ignore.class);
       if (ignoredAnnotation != null) {
@@ -460,7 +460,7 @@ public class JUnit4TestListener extends RunListener {
   }
 
   private void sendTree(Description description, Description parent, List<Description> currentParents) {
-    List<Description> pParents = new ArrayList<Description>(3);
+    List<Description> pParents = new ArrayList<>(3);
     pParents.addAll(currentParents);
     if (parent != null) {
       final String parentClassName = JUnit4ReflectionUtil.getClassName(parent);
@@ -471,7 +471,7 @@ public class JUnit4TestListener extends RunListener {
 
     List<List<Description>> parents = myParents.get(description);
     if (parents == null) {
-      parents = new ArrayList<List<Description>>(1);
+      parents = new ArrayList<>(1);
       myParents.put(description, parents);
     }
     parents.add(pParents);
@@ -562,13 +562,7 @@ public class JUnit4TestListener extends RunListener {
           .asSubclass(JUnitTestTreeNodeManager.class);
         result = junitNodeNamesManagerClass.newInstance();
       }
-      catch (ClassCastException ignored) {
-      }
-      catch (IllegalAccessException ignored) {
-      }
-      catch (InstantiationException ignored) {
-      }
-      catch (ClassNotFoundException ignored) {
+      catch (ClassCastException | ClassNotFoundException | InstantiationException | IllegalAccessException ignored) {
       }
     }
     return result;

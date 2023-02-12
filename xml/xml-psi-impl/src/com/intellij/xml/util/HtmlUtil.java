@@ -120,9 +120,9 @@ public final class HtmlUtil {
 
   static {
     for (HTMLControls.Control control : HTMLControls.getControls()) {
-      final String tagName = StringUtil.toLowerCase(control.name);
-      if (control.endTag == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
-      AUTO_CLOSE_BY_MAP.put(tagName, new HashSet<>(control.autoClosedBy));
+      final String tagName = StringUtil.toLowerCase(control.name());
+      if (control.endTag() == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
+      AUTO_CLOSE_BY_MAP.put(tagName, new HashSet<>(control.autoClosedBy()));
     }
   }
 

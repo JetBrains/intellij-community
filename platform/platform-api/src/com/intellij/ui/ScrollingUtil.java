@@ -197,8 +197,7 @@ public final class ScrollingUtil {
     if (c instanceof JList) {
       ensureRangeIsVisible((JList<?>)c, top, bottom);
     }
-    else if (c instanceof JTable) {
-      JTable table = (JTable)c;
+    else if (c instanceof JTable table) {
       Rectangle cellBounds = getCellBounds(table, top, bottom);
       cellBounds.x = 0;
       table.scrollRectToVisible(cellBounds);

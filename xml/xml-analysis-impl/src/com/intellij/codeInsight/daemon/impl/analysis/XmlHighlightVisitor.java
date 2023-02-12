@@ -203,8 +203,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     XmlElementDescriptor elementDescriptor;
 
     final PsiElement parent = tag.getParent();
-    if (parent instanceof XmlTag) {
-      XmlTag parentTag = (XmlTag)parent;
+    if (parent instanceof XmlTag parentTag) {
 
       elementDescriptor = XmlUtil.getDescriptorFromContext(tag);
 
@@ -400,11 +399,9 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     checkReferences(value);
 
     final PsiElement parent = value.getParent();
-    if (!(parent instanceof XmlAttribute)) {
+    if (!(parent instanceof XmlAttribute attribute)) {
       return;
     }
-
-    XmlAttribute attribute = (XmlAttribute)parent;
 
     XmlTag tag = attribute.getParent();
 

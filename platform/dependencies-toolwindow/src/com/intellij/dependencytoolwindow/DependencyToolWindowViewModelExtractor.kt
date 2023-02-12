@@ -7,7 +7,7 @@ import com.intellij.ui.viewModel.extraction.ToolWindowViewModelExtractor
 
 class DependencyToolWindowViewModelExtractor : ToolWindowViewModelExtractor {
   override fun isApplicable(toolWindowId: String, clientId: ClientId?) =
-    toolWindowId == DependencyToolWindowFactory.DEPENDENCIES_TOOL_WINDOW_ID
+    toolWindowId == DEPENDENCIES_TOOL_WINDOW_ID
 
   override fun getMode() = ToolWindowExtractorMode.UNSUPPORTED
 }

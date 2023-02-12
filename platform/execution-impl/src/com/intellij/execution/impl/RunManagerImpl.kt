@@ -245,10 +245,10 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun shouldSetRunConfigurationFromContext(): Boolean {
-    return Registry.`is`("select.run.configuration.from.context") && !isRunWidgetActive()
+    return Registry.`is`("select.run.configuration.from.context") && !isRiderRunWidgetActive()
   }
 
-  override fun isRunWidgetActive(): Boolean {
+  override fun isRiderRunWidgetActive(): Boolean {
     return RunToolbarSlotManager.getInstance(project).active
   }
 

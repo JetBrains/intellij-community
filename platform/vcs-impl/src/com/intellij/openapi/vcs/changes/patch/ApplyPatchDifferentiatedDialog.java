@@ -996,8 +996,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private final class MyChangeNodeDecorator implements ChangeNodeDecorator {
     @Override
     public void decorate(@NotNull Change change, @NotNull SimpleColoredComponent component, boolean isShowFlatten) {
-      if (change instanceof AbstractFilePatchInProgress.PatchChange) {
-        final AbstractFilePatchInProgress.PatchChange patchChange = (AbstractFilePatchInProgress.PatchChange)change;
+      if (change instanceof AbstractFilePatchInProgress.PatchChange patchChange) {
         final AbstractFilePatchInProgress patchInProgress = patchChange.getPatchInProgress();
         if (patchInProgress.getCurrentStrip() > 0) {
           component.append(VcsBundle.message("patch.apply.stripped.description", patchInProgress.getCurrentStrip()),

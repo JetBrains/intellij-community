@@ -1,7 +1,5 @@
 package com.intellij.xdebugger.impl.ui.attach.dialog
 
-import com.intellij.execution.ExecutionException
-import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
@@ -14,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.AnActionButton
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.JBColor
@@ -32,7 +29,6 @@ import com.intellij.xdebugger.attach.XAttachDebugger
 import com.intellij.xdebugger.attach.XAttachDebuggerProvider
 import com.intellij.xdebugger.attach.XAttachHost
 import com.intellij.xdebugger.attach.XAttachHostProvider
-import com.intellij.xdebugger.impl.actions.AttachToProcessActionBase
 import com.intellij.xdebugger.impl.actions.AttachToProcessActionBase.AttachToProcessItem
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogUiInvisibleDebuggerProvider
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.getActionPresentation
@@ -63,7 +59,7 @@ open class AttachToProcessDialog(
     border = JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0)
 
     val editor: JBTextField = textEditor
-    editor.border = JBUI.Borders.empty(0, 0, 0, 0)
+    editor.border = JBUI.Borders.empty()
     editor.isOpaque = true
 
     textEditor.addKeyListener(object : KeyListener {
@@ -178,14 +174,7 @@ open class AttachToProcessDialog(
   override fun getPreferredFocusedComponent(): JComponent = filterTextField.textEditor
 
   protected open fun attach(debugger: XAttachDebugger, item: AttachToProcessItem) {
-    AttachToProcessActionBase.addToRecent(project, item)
-    try {
-      debugger.attachDebugSession(project, item.host, item.processInfo)
-    }
-    catch (e: ExecutionException) {
-      val message = XDebuggerBundle.message("xdebugger.attach.pid", item.processInfo.pid)
-      ExecutionUtil.handleExecutionError(project, ToolWindowId.DEBUG, message, e)
-    }
+    attachToProcessWithDebugger(debugger, item, project)
     super.doOKAction()
   }
 

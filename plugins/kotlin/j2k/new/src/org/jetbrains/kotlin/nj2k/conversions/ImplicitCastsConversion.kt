@@ -3,10 +3,8 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiNewExpression
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.conversions.PrimitiveTypeCastsConversion.Companion.castToAsPrimitiveTypes
-import org.jetbrains.kotlin.nj2k.isEquals
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.symbols.isUnresolved
 import org.jetbrains.kotlin.nj2k.tree.*
@@ -107,9 +105,29 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
     }
 
     private fun convertAssignmentStatement(statement: JKKtAssignmentStatement) {
-        val expressionType = statement.field.calculateType(typeFactory) ?: return
-        statement.expression.castTo(expressionType)?.also {
-            statement.expression = it
+        val fieldType = statement.field.calculateType(typeFactory) ?: return
+        val expressionType = statement.expression.calculateType(typeFactory) ?: return
+        val isCompoundAssignmentWithIncompatibleFloatingPointType =
+            expressionType.asPrimitiveType()?.isFloatingPoint() == true &&
+                    fieldType.asPrimitiveType()?.isFloatingPoint() == false &&
+                    compoundAssignmentMap.contains(statement.token)
+
+        if (isCompoundAssignmentWithIncompatibleFloatingPointType) {
+            // Code like `int *= double` must be converted to `int = (int * double).toInt()`
+            val newToken = compoundAssignmentMap.getValue(statement.token)
+            val newExpression = JKBinaryExpression(
+                left = statement.field.copyTreeAndDetach(),
+                right = statement.expression.copyTreeAndDetach().parenthesizeIfCompoundExpression(),
+                operator = JKKtOperatorImpl(newToken, expressionType)
+            ).parenthesize()
+            newExpression.castTo(fieldType)?.let {
+                statement.token = JKOperatorToken.EQ
+                statement.expression = it
+            }
+        } else {
+            statement.expression.castTo(fieldType)?.let {
+                statement.expression = it
+            }
         }
     }
 
@@ -157,4 +175,15 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
     private fun JKJavaPrimitiveType.isBoolean() = jvmPrimitiveType == JvmPrimitiveType.BOOLEAN
     private fun JKJavaPrimitiveType.isChar() = jvmPrimitiveType == JvmPrimitiveType.CHAR
     private fun JKJavaPrimitiveType.isLong() = jvmPrimitiveType == JvmPrimitiveType.LONG
+
+    private fun JKJavaPrimitiveType.isFloatingPoint(): Boolean =
+        this == JKJavaPrimitiveType.FLOAT || this == JKJavaPrimitiveType.DOUBLE
 }
+
+private val compoundAssignmentMap: Map<JKOperatorToken, JKOperatorToken> = mapOf(
+    JKOperatorToken.PLUSEQ to JKOperatorToken.PLUS,
+    JKOperatorToken.MINUSEQ to JKOperatorToken.MINUS,
+    JKOperatorToken.MULTEQ to JKOperatorToken.MUL,
+    JKOperatorToken.DIVEQ to JKOperatorToken.DIV,
+    JKOperatorToken.PERCEQ to JKOperatorToken.PERC
+)

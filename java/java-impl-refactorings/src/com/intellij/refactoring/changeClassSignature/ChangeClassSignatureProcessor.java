@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeClassSignature;
 
 import com.intellij.history.LocalHistory;
@@ -82,14 +82,13 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
 
     boolean hadTypeParameters = myClass.hasTypeParameters();
     for (final PsiReference reference : ReferencesSearch.search(myClass, projectScope, false)) {
-      if (reference.getElement() instanceof PsiJavaCodeReferenceElement) {
-        PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)reference.getElement();
+      if (reference.getElement() instanceof PsiJavaCodeReferenceElement referenceElement) {
         PsiElement parent = referenceElement.getParent();
         if (parent instanceof PsiTypeElement && (parent.getParent() instanceof PsiInstanceOfExpression ||
                                                  parent.getParent() instanceof PsiClassObjectAccessExpression)) {
           continue;
         }
-        if (parent instanceof PsiNewExpression && PsiDiamondType.hasDiamond((PsiNewExpression)parent)) {
+        if (parent instanceof PsiNewExpression newExpression && PsiDiamondType.hasDiamond(newExpression)) {
           continue;
         }
         if (parent instanceof PsiTypeElement || parent instanceof PsiNewExpression || parent instanceof PsiAnonymousClass ||

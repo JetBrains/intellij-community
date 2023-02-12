@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.CommonBundle;
@@ -397,8 +397,7 @@ public final class ArtifactsStructureConfigurable extends BaseStructureConfigura
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
       final Object o = getSelectedObject();
-      if (o instanceof Artifact) {
-        final Artifact selected = (Artifact)o;
+      if (o instanceof Artifact selected) {
         ModifiableArtifactModel artifactModel = myPackagingEditorContext.getOrCreateModifiableArtifactModel();
         String suggestedName = ArtifactUtil.generateUniqueArtifactName(selected.getName(), artifactModel);
         final String newName = Messages.showInputDialog(JavaUiBundle.message("label.enter.artifact.name"),

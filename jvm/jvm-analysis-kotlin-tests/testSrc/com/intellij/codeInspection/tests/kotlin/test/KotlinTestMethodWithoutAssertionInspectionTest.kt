@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.kotlin.test
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.TestMethodWithoutAssertionInspectionTestBase
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
@@ -23,7 +23,7 @@ class KotlinTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertio
   }
 
   fun `test highlighting for empty method body`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
       import org.junit.Test
       import org.junit.Assert
@@ -41,7 +41,7 @@ class KotlinTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertio
   }
 
   fun `test no highlighting when assertion is present`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
       import org.junit.Test
       import org.junit.Assert
@@ -84,7 +84,7 @@ class KotlinTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertio
   }
 
   fun `test no highlighting kotlin stdlib assertion`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.Test
       import kotlin.test.*
       

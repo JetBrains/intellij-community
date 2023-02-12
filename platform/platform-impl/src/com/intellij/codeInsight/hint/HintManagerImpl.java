@@ -47,16 +47,7 @@ public class HintManagerImpl extends HintManager {
   public interface ActionToIgnore {
   }
 
-  static final class HintInfo {
-    final LightweightHint hint;
-    @HideFlags final int flags;
-    final boolean reviveOnEditorChange;
-
-    HintInfo(LightweightHint hint, @HideFlags int flags, boolean reviveOnEditorChange) {
-      this.hint = hint;
-      this.flags = flags;
-      this.reviveOnEditorChange = reviveOnEditorChange;
-    }
+  record HintInfo(LightweightHint hint, @HideFlags int flags, boolean reviveOnEditorChange) {
   }
 
   public static HintManagerImpl getInstanceImpl() {

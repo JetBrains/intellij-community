@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
@@ -69,8 +69,7 @@ public class MoveJavaFileHandler extends MoveFileHandler {
   @Override
   public void retargetUsages(List<UsageInfo> usageInfos, Map<PsiElement, PsiElement> oldToNewMap) {
     for (UsageInfo usage : usageInfos) {
-      if (usage instanceof MoveRenameUsageInfo) {
-        final MoveRenameUsageInfo moveRenameUsage = (MoveRenameUsageInfo)usage;
+      if (usage instanceof MoveRenameUsageInfo moveRenameUsage) {
         final PsiElement oldElement = moveRenameUsage.getReferencedElement();
         final PsiElement newElement = oldToNewMap.get(oldElement);
         final PsiReference reference = moveRenameUsage.getReference();

@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction
 import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
@@ -31,6 +30,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.SdkTestFixture
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.useProject
+import com.intellij.testFramework.utils.module.assertModules
 import com.intellij.ui.UIBundle
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
@@ -79,7 +79,7 @@ abstract class GradleCreateProjectTestCase : UsefulTestCase() {
   }
 
   fun Project.assertProjectStructure(projectInfo: ProjectInfo) {
-    ExternalSystemImportingTestCase.assertModules(
+    assertModules(
       this,
       projectInfo.rootModule.ideName,
       *projectInfo.rootModule.modulesPerSourceSet.toTypedArray(),

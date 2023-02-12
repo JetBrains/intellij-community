@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -59,8 +59,7 @@ public final class HighlightControlFlowUtil {
         String message = JavaErrorBundle.message("missing.return.statement");
         HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(message);
         PsiElement parent = body.getParent();
-        if (parent instanceof PsiMethod) {
-          PsiMethod method = (PsiMethod)parent;
+        if (parent instanceof PsiMethod method) {
           IntentionAction action1 = QUICK_FIX_FACTORY.createAddReturnFix(method);
           info.registerFix(action1, null, null, null, null);
           IntentionAction action = QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiTypes.voidType(), true);
@@ -366,8 +365,7 @@ public final class HighlightControlFlowUtil {
           block = constructor.getBody();
           aClass = constructor.getContainingClass();
         }
-        else if (parent instanceof PsiClassInitializer) {
-          PsiClassInitializer classInitializer = (PsiClassInitializer)parent;
+        else if (parent instanceof PsiClassInitializer classInitializer) {
           if (!containingFile.getManager().areElementsEquivalent(classInitializer.getContainingClass(), ((PsiField)variable).getContainingClass())) return null;
           block = classInitializer.getBody();
           aClass = classInitializer.getContainingClass();
@@ -513,8 +511,7 @@ public final class HighlightControlFlowUtil {
       Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = getFinalVariableProblemsInBlock(finalVarProblems, declarationScope);
       return codeBlockProblems.contains(new ControlFlowUtil.VariableInfo(variable, null));
     }
-    if (variable instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)variable;
+    if (variable instanceof PsiParameter parameter) {
       return isAssigned(parameter);
     }
     return false;
@@ -677,11 +674,10 @@ public final class HighlightControlFlowUtil {
     if (variable.hasInitializer()) return false;
     if (variable instanceof PsiParameter) return false;
     PsiElement scope = getElementVariableReferencedFrom(variable, expression);
-    if (variable instanceof PsiField) {
+    if (variable instanceof PsiField field) {
       // if inside some field initializer
       if (HighlightUtil.findEnclosingFieldInitializer(expression) != null) return true;
       // assignment from within inner class is illegal always
-      PsiField field = (PsiField)variable;
       if (scope != null && !containingFile.getManager().areElementsEquivalent(scope, field.getContainingClass())) return false;
       PsiMember enclosingCtrOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
       return enclosingCtrOrInitializer != null &&

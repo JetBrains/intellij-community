@@ -54,7 +54,7 @@ public final class Comparing {
   @Deprecated
   @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
   public static boolean equal(@Nullable String arg1, @Nullable String arg2) {
-    return arg1 == null ? arg2 == null : arg1.equals(arg2);
+    return Objects.equals(arg1, arg2);
   }
 
   @Contract(value = "null,!null,_ -> false; !null,null,_ -> false; null,null,_ -> true", pure = true)
@@ -77,7 +77,7 @@ public final class Comparing {
       return false;
     }
 
-    Set<T> aSet = new HashSet<T>(a);
+    Set<T> aSet = new HashSet<>(a);
     for (T t : b) {
       if (!aSet.contains(t)) {
         return false;
@@ -97,7 +97,7 @@ public final class Comparing {
       return false;
     }
 
-    Set<T> aSet = new HashSet<T>(Arrays.asList(a));
+    Set<T> aSet = new HashSet<>(Arrays.asList(a));
     for (T t : b) {
       if (!aSet.contains(t)) {
         return false;

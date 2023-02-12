@@ -10,26 +10,30 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.changeMergeRequestDiscussionResolve
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.createReplyNote
 import java.util.*
 
-interface GitLabDiscussion : GitLabNotesContainer {
+interface GitLabDiscussion {
   val id: String
 
   val createdAt: Date
   val notes: Flow<List<GitLabNote>>
+  val canAddNotes: Boolean
+
+  val position: GitLabNoteDTO.Position?
 
   val canResolve: Boolean
   val resolved: Flow<Boolean>
 
   suspend fun changeResolvedState()
+
+  suspend fun addNote(body: String)
 }
 
 private val LOG = logger<GitLabDiscussion>()
@@ -83,13 +87,15 @@ class LoadedGitLabDiscussion(
     loadedNotes
       .mapCaching(
         GitLabNoteDTO::id,
-        { LoadedGitLabNote(cs, api, project, { noteEvents.emit(it) }, it) },
+        { cs, note -> LoadedGitLabNote(cs, api, project, { noteEvents.emit(it) }, note) },
         LoadedGitLabNote::destroy,
         LoadedGitLabNote::update
       )
       .modelFlow(cs, LOG)
 
   override val canAddNotes: Boolean = mr.userPermissions.createNote
+
+  override val position: GitLabNoteDTO.Position? = discussionData.notes.first().position?.takeIf { it.positionType == "text" }
 
   // a little cheat that greatly simplifies the implementation
   override val canResolve: Boolean = discussionData.notes.first().let { it.resolvable && it.userPermissions.resolveNote }

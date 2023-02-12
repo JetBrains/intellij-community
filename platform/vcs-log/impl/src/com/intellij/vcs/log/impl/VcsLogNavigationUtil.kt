@@ -352,7 +352,7 @@ object VcsLogNavigationUtil {
     val commitIndex = storage.getCommitIndex(hash, root)
     val visibleGraph = visiblePack.visibleGraph
     if (visibleGraph is VisibleGraphImpl<*>) {
-      val nodeId = (visibleGraph as VisibleGraphImpl<Int?>).permanentGraph.permanentCommitsInfo.getNodeId(commitIndex)
+      val nodeId = (visibleGraph as VisibleGraphImpl<Int>).permanentGraph.permanentCommitsInfo.getNodeId(commitIndex)
       if (nodeId == VcsLogUiEx.COMMIT_NOT_FOUND) return VcsLogUiEx.COMMIT_NOT_FOUND
       if (nodeId < 0) return VcsLogUiEx.COMMIT_DOES_NOT_MATCH
       return visibleGraph.linearGraph.getNodeIndex(nodeId) ?: VcsLogUiEx.COMMIT_DOES_NOT_MATCH

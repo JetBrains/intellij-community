@@ -121,20 +121,28 @@ fun removeRedundantSetter(setter: KtPropertyAccessor) {
     }
 }
 
-fun KtExpression.negate(reformat: Boolean = true, isBooleanExpression: (KtExpression) -> Boolean): KtExpression {
-    val specialNegation = specialNegation(reformat, isBooleanExpression)
+fun KtExpression?.isTrueConstant() = this != null && node?.elementType == KtNodeTypes.BOOLEAN_CONSTANT && text == "true"
+
+fun KtExpression?.isFalseConstant() = this != null && node?.elementType == KtNodeTypes.BOOLEAN_CONSTANT && text == "false"
+
+/**
+ * We use [optionalBooleanExpressionCheck] only when checking [KtPrefixExpression] with "!" operation e.g., "!(expr)" has a
+ * baseExpression with a boolean type e.g., check whether "expr" in "!expr" has a boolean type or not.
+ */
+fun KtExpression.negate(reformat: Boolean = true, optionalBooleanExpressionCheck: (KtExpression) -> Boolean = { true }): KtExpression {
+    val specialNegation = specialNegation(reformat, optionalBooleanExpressionCheck)
     if (specialNegation != null) return specialNegation
     return KtPsiFactory(project).createExpressionByPattern(pattern = "!$0", this, reformat = reformat)
 }
 
-private fun KtExpression.specialNegation(reformat: Boolean, isBooleanExpression: (KtExpression) -> Boolean): KtExpression? {
+private fun KtExpression.specialNegation(reformat: Boolean, optionalBooleanExpressionCheck: (KtExpression) -> Boolean): KtExpression? {
     val psiFactory = KtPsiFactory(project)
     when (this) {
         is KtPrefixExpression -> {
             if (operationReference.getReferencedName() == "!") {
                 val baseExpression = baseExpression
                 if (baseExpression != null) {
-                    if (isBooleanExpression(baseExpression)) {
+                    if (optionalBooleanExpressionCheck(baseExpression)) {
                         return KtPsiUtil.safeDeparenthesize(baseExpression)
                     }
                 }

@@ -54,7 +54,7 @@ public class CollectionContainsUrlInspection extends BaseInspection {
         return;
       }
       final PsiType type = typeElement.getType();
-      if (!(type instanceof PsiClassType)) {
+      if (!(type instanceof PsiClassType classType)) {
         return;
       }
       final PsiJavaCodeReferenceElement referenceElement =
@@ -62,7 +62,6 @@ public class CollectionContainsUrlInspection extends BaseInspection {
       if (referenceElement == null) {
         return;
       }
-      final PsiClassType classType = (PsiClassType)type;
       final PsiClass aClass = classType.resolve();
 
       final ClassType collectionType = getClassType(aClass);
@@ -155,11 +154,9 @@ public class CollectionContainsUrlInspection extends BaseInspection {
         expression.getMethodExpression();
       final PsiExpression qualifierExpression =
         methodExpression.getQualifierExpression();
-      if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+      if (!(qualifierExpression instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)qualifierExpression;
       @NonNls final String methodName =
         methodExpression.getReferenceName();
       if (collectionType == ClassType.SET &&

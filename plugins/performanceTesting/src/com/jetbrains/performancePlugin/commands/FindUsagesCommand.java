@@ -157,8 +157,7 @@ public class FindUsagesCommand extends AbstractCommand {
   public static FoundUsage convertToFoundUsage(@NotNull Project project, @NotNull Usage usage) {
     PortableFilePath portableFilePath = null;
     Integer line = null;
-    if (usage instanceof UsageInfo2UsageAdapter) {
-      UsageInfo2UsageAdapter adapter = (UsageInfo2UsageAdapter)usage;
+    if (usage instanceof UsageInfo2UsageAdapter adapter) {
       VirtualFile file = ReadAction.compute(() -> adapter.getFile());
       if (file != null) {
         portableFilePath = PortableFilePaths.INSTANCE.getPortableFilePath(file, project);
@@ -227,8 +226,7 @@ public class FindUsagesCommand extends AbstractCommand {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof FoundUsage)) return false;
-      FoundUsage usage = (FoundUsage)o;
+      if (!(o instanceof FoundUsage usage)) return false;
       return text.equals(usage.text) &&
              Objects.equals(portableFilePath, usage.portableFilePath) &&
              Objects.equals(line, usage.line);

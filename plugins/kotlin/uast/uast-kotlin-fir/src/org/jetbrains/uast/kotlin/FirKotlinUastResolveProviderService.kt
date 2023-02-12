@@ -188,15 +188,31 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> {
         analyzeForUast(ktExpression) {
-            return ktExpression.collectCallCandidates().asSequence().mapNotNull {
-                when (val candidate = it.candidate) {
-                    is KtFunctionCall<*> -> {
-                        toPsiMethod(candidate.partiallyAppliedSymbol.symbol, ktExpression)
+            val candidates = ktExpression.collectCallCandidates()
+            if (candidates.isEmpty()) return emptySequence()
+            return sequence {
+                candidates.forEach { candidateInfo ->
+                    when (val candidate = candidateInfo.candidate) {
+                        is KtFunctionCall<*> -> {
+                            toPsiMethod(candidate.partiallyAppliedSymbol.symbol, ktExpression)?.let { yield(it) }
+                        }
+                        is KtCompoundVariableAccessCall -> {
+                            val variableSymbol = candidate.partiallyAppliedSymbol.symbol
+                            if (variableSymbol is KtSyntheticJavaPropertySymbol) {
+                                toPsiMethod(variableSymbol.getter, ktExpression)?.let { yield(it) }
+                                variableSymbol.setter?.let { toPsiMethod(it, ktExpression) }?.let { yield(it) }
+                            } else {
+                                psiForUast(variableSymbol, ktExpression.project)?.let { yield(it) }
+                            }
+                            toPsiMethod(candidate.compoundAccess.operationPartiallyAppliedSymbol.symbol, ktExpression)?.let { yield(it) }
+                        }
+                        is KtCompoundArrayAccessCall -> {
+                            toPsiMethod(candidate.getPartiallyAppliedSymbol.symbol, ktExpression)?.let { yield(it) }
+                            toPsiMethod(candidate.setPartiallyAppliedSymbol.symbol, ktExpression)?.let { yield(it) }
+                            toPsiMethod(candidate.compoundAccess.operationPartiallyAppliedSymbol.symbol, ktExpression)?.let { yield(it) }
+                        }
+                        else -> {}
                     }
-                    is KtCompoundAccessCall -> {
-                        toPsiMethod(candidate.compoundAccess.operationPartiallyAppliedSymbol.symbol, ktExpression)
-                    }
-                    else -> null
                 }
             }
         }

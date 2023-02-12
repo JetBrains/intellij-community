@@ -73,8 +73,7 @@ public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapa
   public static boolean isFocused(Component c) {
     if (c.hasFocus()) return true;
 
-    if (c instanceof JSpinner) {
-      JSpinner spinner = (JSpinner)c;
+    if (c instanceof JSpinner spinner) {
       if (spinner.getEditor() != null) {
         synchronized (spinner.getEditor().getTreeLock()) {
           return spinner.getEditor().getComponent(0).hasFocus();

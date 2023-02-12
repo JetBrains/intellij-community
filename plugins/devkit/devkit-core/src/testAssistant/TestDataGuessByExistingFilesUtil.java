@@ -168,11 +168,10 @@ public final class TestDataGuessByExistingFilesUtil {
       ProgressManager.checkCanceled();
       Object[] elements = gotoModel.getElementsByName(name, false, name);
       for (Object element : elements) {
-        if (!(element instanceof PsiFileSystemItem)) {
+        if (!(element instanceof PsiFileSystemItem psiFile)) {
           continue;
         }
 
-        PsiFileSystemItem psiFile = (PsiFileSystemItem)element;
         if (normalizedTestDataPath != null) {
           PsiFileSystemItem containingDirectory = psiFile.getParent();
           if (containingDirectory != null) {

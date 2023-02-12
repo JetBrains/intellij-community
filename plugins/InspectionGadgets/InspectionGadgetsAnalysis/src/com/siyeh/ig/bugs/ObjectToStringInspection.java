@@ -119,10 +119,9 @@ public class ObjectToStringInspection extends BaseInspection {
       }
       else if ("valueOf".equals(name)) {
         final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-        if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+        if (!(qualifierExpression instanceof PsiReferenceExpression referenceExpression)) {
           return;
         }
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifierExpression;
         final String canonicalText = referenceExpression.getCanonicalText();
         if (!CommonClassNames.JAVA_LANG_STRING.equals(canonicalText)) {
           return;
@@ -141,7 +140,7 @@ public class ObjectToStringInspection extends BaseInspection {
       if (expression == null) return;
 
       final PsiType type = expression.getType();
-      if (!(type instanceof PsiClassType)) return;
+      if (!(type instanceof PsiClassType classType)) return;
 
       if (IGNORE_TOSTRING && MethodUtils.isToString(PsiTreeUtil.getParentOfType(expression, PsiMethod.class))) return;
 
@@ -156,7 +155,6 @@ public class ObjectToStringInspection extends BaseInspection {
 
       if (IGNORE_NONNLS && NonNlsUtils.isNonNlsAnnotatedUse(expression)) return;
 
-      final PsiClassType classType = (PsiClassType)type;
       if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return;
 
       final PsiClass referencedClass = classType.resolve();

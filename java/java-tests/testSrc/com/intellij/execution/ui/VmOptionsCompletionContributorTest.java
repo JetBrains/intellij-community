@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -9,6 +9,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.platform.documentation.DocumentationData;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -23,29 +24,31 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
   public void testEmptyPrompt() {
     configure("<caret>");
     myFixture.completeBasic();
-    assertEquals(List.of("--add-exports", "--add-opens", "--add-reads", "--limit-modules", "--patch-module",
-                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-dsa", "-ea", "-enableassertions", "-esa",
+    assertEquals(List.of("--add-exports", "--add-opens",
+                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-Djava.awt.headless=",
+                         "-dsa", "-Duser.dir=", "-Duser.home=", "-Duser.name=", "-ea", "-enableassertions", "-esa",
                          "-javaagent:", "-Xmx", "-XX:"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
-    checkPresentation(myFixture.getLookupElements()[5], "-agentlib:|null/null");
+    checkPresentation(myFixture.getLookupElements()[2], "-agentlib:|null/null");
   }
 
   @Test
   public void testSimpleOptions() {
     configure("-<caret>");
     myFixture.completeBasic();
-    assertEquals(List.of("-add-exports", "-add-opens", "-add-reads", "-limit-modules", "-patch-module",
-                         "agentlib:", "agentpath:", "D", "da", "disableassertions", "dsa", "ea", "enableassertions", "esa",
+    assertEquals(List.of("-add-exports", "-add-opens",
+                         "agentlib:", "agentpath:", "D", "da", "disableassertions", "Djava.awt.headless=",
+                         "dsa", "Duser.dir=", "Duser.home=", "Duser.name=", "ea", "enableassertions", "esa",
                          "javaagent:", "Xmx", "XX:"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
-    checkPresentation(myFixture.getLookupElements()[5], "-agentlib:|null/null");
+    checkPresentation(myFixture.getLookupElements()[2], "-agentlib:|null/null");
   }
 
   @Test
   public void testDoubleDash() {
     configure("--<caret>");
     myFixture.completeBasic();
-    assertEquals(List.of("add-exports", "add-opens", "add-reads", "limit-modules", "patch-module"), myFixture.getLookupElementStrings());
+    assertEquals(List.of("add-exports", "add-opens"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
   }
 
@@ -120,6 +123,20 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
     myFixture.completeBasic();
     assertEquals(List.of("MinusFlag"), myFixture.getLookupElementStrings());
   }
+  
+  @Test
+  public void testVmOptionDocumentation() {
+    VMOption option = new VMOption("Flag", "bool", "true", VMOptionKind.Experimental, "SuperOption", VMOptionVariant.XX);
+    DocumentationData result = (DocumentationData)option.computeDocumentation();
+    String doc = result.getHtml();
+    assertEquals("""
+                   <table>\
+                   <tr><td align="right" valign="top"><b>Option: </b></td><td>-XX:Flag</td></tr>\
+                   <tr><td align="right" valign="top"><b>Category: </b></td><td>Experimental (requires -XX:+UnlockExperimentalVMOptions)</td></tr>\
+                   <tr><td align="right" valign="top"><b>Type: </b></td><td>bool</td></tr>\
+                   <tr><td align="right" valign="top"><b>Default value: </b></td><td>true</td></tr>\
+                   <tr><td align="right" valign="top"><b>Description: </b></td><td>SuperOption</td></tr></table>""", doc);
+  }
 
   private void configure(String text) {
     myFixture.configureByText(PlainTextFileType.INSTANCE, text);
@@ -143,7 +160,9 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
         new VMOption("Value", "uint", "10", VMOptionKind.Product, null, VMOptionVariant.XX),
         new VMOption("Experimental", "uint", "10", VMOptionKind.Experimental, null, VMOptionVariant.XX),
         new VMOption("Diagnostic", "uint", "20", VMOptionKind.Diagnostic, null, VMOptionVariant.XX),
-        new VMOption("mx", null, null, VMOptionKind.Product, null, VMOptionVariant.X)
+        new VMOption("mx", null, null, VMOptionKind.Product, null, VMOptionVariant.X),
+        new VMOption("add-exports", null, null, VMOptionKind.Product, null, VMOptionVariant.DASH_DASH),
+        new VMOption("add-opens", null, null, VMOptionKind.Product, null, VMOptionVariant.DASH_DASH)
       )));
     }
   }

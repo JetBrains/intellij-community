@@ -275,11 +275,10 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     if (SystemInfo.isKDE && !KDE_DISABLE_ROOT_MNEMONIC_PROCESSING) {
       // root menu items doesn't catch mnemonic shortcuts (in KDE), so process them inside IDE
       IdeEventQueue.getInstance().addDispatcher(e -> {
-        if (!(e instanceof KeyEvent)) {
+        if (!(e instanceof KeyEvent event)) {
           return false;
         }
 
-        final KeyEvent event = (KeyEvent)e;
         if (!event.isAltDown()) {
           return false;
         }
@@ -527,14 +526,12 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       return null;
     }
     MenuItemInternal result = null;
-    if (each instanceof ActionMenuItem) {
-      final ActionMenuItem ami = (ActionMenuItem)each;
+    if (each instanceof ActionMenuItem ami) {
       result = new MenuItemInternal(parent, -1, System.identityHashCode(ami),
                                     ami.isToggleable() ? GlobalMenuLib.ITEM_CHECK : GlobalMenuLib.ITEM_SIMPLE, ami.getAnAction());
       result.jitem = ami;
     }
-    else if (each instanceof ActionMenu) {
-      final ActionMenu am2 = (ActionMenu)each;
+    else if (each instanceof ActionMenu am2) {
       result = new MenuItemInternal(parent, -1, System.identityHashCode(am2), GlobalMenuLib.ITEM_SUBMENU, am2.getAnAction());
       result.jitem = am2;
     }
@@ -595,8 +592,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
       }
       if (cmi != null) {
-        if (deepness > 1 && (each instanceof ActionMenu)) {
-          final ActionMenu jmiEach = (ActionMenu)each;
+        if (deepness > 1 && (each instanceof ActionMenu jmiEach)) {
           jmiEach.removeAll();
           jmiEach.fillMenu();
           _syncChildren(cmi, jmiEach, deepness - 1, stats);
@@ -717,7 +713,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
             }
             return;
           }
-          if (!(jmi instanceof ActionMenu)) {
+          if (!(jmi instanceof ActionMenu am)) {
             LOG.debug("corresponding (opening) swing item isn't instance of ActionMenu, class=" +
                       jmi.getClass().getName() +
                       ", event source: " +
@@ -727,7 +723,6 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
           mi.lastFilledMs = timeMs;
 
-          final ActionMenu am = (ActionMenu)jmi;
           am.removeAll();
           am.fillMenu();
           _syncChildren(mi, am, DONT_FILL_SUBMENU ? 1 : 2,
@@ -762,7 +757,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
         return;
       }
-      if (!(jmi instanceof ActionMenuItem)) {
+      if (!(jmi instanceof ActionMenuItem ami)) {
         LOG.debug("corresponding (clicked) swing item isn't instance of ActionMenuItem, class=" +
                   jmi.getClass().getName() +
                   ", event source: " +
@@ -770,7 +765,6 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         return;
       }
 
-      final ActionMenuItem ami = (ActionMenuItem)jmi;
       ApplicationManager.getApplication().invokeLater(() -> ami.doClick());
     }
   }
@@ -959,11 +953,9 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         return null;
       }
 
-      if (!(target instanceof JMenuItem)) {
+      if (!(target instanceof JMenuItem jmi)) {
         return null;
       }
-
-      final JMenuItem jmi = (JMenuItem)target;
 
       // find by text
       final String label = jmi.getText();
@@ -1074,7 +1066,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         if (TRACE_CLEARING) _trace("corresponding (closing) swing item is null - nothing to clear, event source: ", this);
         return;
       }
-      if (!(jitem instanceof ActionMenu)) {
+      if (!(jitem instanceof ActionMenu am)) {
         LOG.debug("corresponding (closing) swing item isn't instance of ActionMenu, class=" +
                   jitem.getClass().getName() +
                   ", event source: " +
@@ -1082,7 +1074,6 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         return;
       }
 
-      final ActionMenu am = (ActionMenu)jitem;
       am.clearItems();
       clearChildrenSwingRefs();
       _onSwingCleared(System.currentTimeMillis());
@@ -1102,22 +1093,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
   }
 
-  private static final class QueuedEvent {
-    final int uid;
-    final int eventType;
-    final int rootId;
-    final long timeMs;
-
-    private QueuedEvent(int uid, int eventType, int rootId, long timeMs) {
-      this.uid = uid;
-      this.eventType = eventType;
-      this.rootId = rootId;
-      this.timeMs = timeMs;
-    }
-
-    static QueuedEvent of(int uid, int eventType, int rootId, long timeMs) {
-      return new QueuedEvent(uid, eventType, rootId, timeMs);
-    }
+  private record QueuedEvent(int uid, int eventType, int rootId, long timeMs) {
   }
 
   private class EventFilter {
@@ -1224,7 +1200,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
         else {
           // filter is closed
-          myQueued.add(QueuedEvent.of(uid, eventType, mi.rootPos, timeMs));
+          myQueued.add(new QueuedEvent(uid, eventType, mi.rootPos, timeMs));
           if (myTimer != null) {
             myTimer.restart();
           }
@@ -1239,7 +1215,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
       // filter is opened and first root appeared
       if (TRACE_EVENT_FILTER) _trace("EventFilter: close filter");
-      myQueued.add(QueuedEvent.of(uid, eventType, mi.rootPos, timeMs));
+      myQueued.add(new QueuedEvent(uid, eventType, mi.rootPos, timeMs));
       myClosedMs = timeMs;
       _startTimer();
       return false;

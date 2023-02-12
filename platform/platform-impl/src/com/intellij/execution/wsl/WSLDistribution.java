@@ -20,7 +20,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.Functions;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -58,7 +61,6 @@ public class WSLDistribution implements AbstractWslDistribution {
   public static final String EXEC_PARAMETER = "--exec";
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
-  private static final String RSYNC = "rsync";
 
   /**
    * @see <a href="https://www.gnu.org/software/bash/manual/html_node/Definitions.html#index-name">bash identifier definition</a>
@@ -162,46 +164,6 @@ public class WSLDistribution implements AbstractWslDistribution {
 
   public @NotNull ProcessOutput executeOnWsl(int timeout, @NonNls String @NotNull ... command) throws ExecutionException {
     return executeOnWsl(Arrays.asList(command), new WSLCommandLineOptions(), timeout, null);
-  }
-
-  /**
-   * Recursively copies {@code sourceWslPath} to {@code targetWinDirPath} using rsync.
-   * <p>
-   * Examples:
-   * <ul>
-   *   <li>Copying {@code /dir1} to {@code C:\dir2}, will result in {@code C:\dir2\dir1}</li>
-   *   <li>Copying {@code /file1} to {@code C:\dir2}, will result in {@code C:\dir2\file1}</li>
-   * </ul>
-   * </p>
-   *
-   * @param sourceWslPath     path to the source file or directory inside WSL e.g. /usr/bin/ or /usr/bin/bundle.
-   * @param targetWinDirPath  target windows directory path, e.g. C:\tmp\.
-   *                          This directory will be created along with all parents, if necessary.
-   * @param additionalOptions may be used for --delete (not recommended), --include and so on.
-   * @param handlerConsumer   consumes process handler just before execution.
-   *                          Can be used for fast cancellation.
-   * @deprecated copying using rsync is very slow on WSL2, instead consider using
-   * {@link com.intellij.execution.wsl.sync.WslSync.Companion#syncWslFolders(String, Path, AbstractWslDistribution, boolean, String[])}.
-   */
-  @Deprecated
-  public void copyFromWslToWinDir(@NotNull String sourceWslPath,
-                                  @NotNull String targetWinDirPath,
-                                  @Nullable List<String> additionalOptions,
-                                  @Nullable Consumer<? super ProcessHandler> handlerConsumer) throws ExecutionException {
-    var command = List.of(RSYNC, "--checksum", "--recursive");
-    command = ContainerUtil.concat(additionalOptions == null ? List.of() : additionalOptions);
-    command = ContainerUtil.append(command, getSourceWslPath(sourceWslPath), getTargetWslPath(targetWinDirPath));
-
-    var process = executeOnWsl(command, new WSLCommandLineOptions(), -1, handlerConsumer);
-    if (process.getExitCode() != 0) {
-      // Most common problem is rsync not installed
-      if (executeOnWsl(10_000, "type", RSYNC).getExitCode() != 0) {
-        throw new ExecutionException(IdeBundle.message("wsl.no.rsync", this.myDescriptor.getMsId()));
-      }
-      else {
-        throw new ExecutionException(process.getStderr());
-      }
-    }
   }
 
   /**
@@ -547,6 +509,7 @@ public class WSLDistribution implements AbstractWslDistribution {
     return myDescriptor.getId();
   }
 
+  @Override
   public @NotNull @NlsSafe String getMsId() {
     return myDescriptor.getMsId();
   }
@@ -695,27 +658,4 @@ public class WSLDistribution implements AbstractWslDistribution {
                                                               true);
   }
 
-  /**
-   * @return {@code wslPath} without trailing slashes.
-   */
-  private static @NotNull String getSourceWslPath(final @NotNull String wslPath) {
-    return UriUtil.trimTrailingSlashes(wslPath);
-  }
-
-  /**
-   * @return {@code windowsDirPath} converted to WSL path (e.g. /mnt/c/...) with a trailing slash at the end.
-   * Also, ensures that the necessary directory structure is created.
-   * @throws ExecutionException in case of errors.
-   */
-  private @NotNull String getTargetWslPath(final @NotNull String windowsDirPath) throws ExecutionException {
-    if (!FileUtil.createDirectory(new File(windowsDirPath))) {
-      throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.create.target.dir.message", windowsDirPath));
-    }
-
-    var targetWslPath = getWslPath(windowsDirPath);
-    if (targetWslPath == null) {
-      throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.copy.files.dialog.message", windowsDirPath));
-    }
-    return targetWslPath.endsWith("/") ? targetWslPath : targetWslPath + "/";
-  }
 }

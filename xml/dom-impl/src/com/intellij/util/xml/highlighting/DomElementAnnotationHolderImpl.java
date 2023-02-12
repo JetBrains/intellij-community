@@ -133,8 +133,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
 
     final List<LocalQuickFix> result = new SmartList<>();
     final Converter converter = WrappingConverter.getDeepestConverter(element.getConverter(), element);
-    if (converter instanceof ResolvingConverter) {
-      final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
+    if (converter instanceof ResolvingConverter resolvingConverter) {
       ContainerUtil
         .addAll(result, resolvingConverter.getQuickFixes(ConvertContextFactory.createConvertContext(DomManagerImpl.getDomInvocationHandler(element))));
     }

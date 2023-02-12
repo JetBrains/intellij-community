@@ -67,6 +67,10 @@
       <string>1.8*,1.8+</string>
       <key>MainClass</key>
       <string>@@main_class_name@@</string>
+      <key>ErrorFile</key>
+      <string>@@xx_error_file@@</string>
+      <key>HeapDump</key>
+      <string>@@xx_heap_dump@@</string>
       <key>Options</key>
       <array>
         @@vm_options@@

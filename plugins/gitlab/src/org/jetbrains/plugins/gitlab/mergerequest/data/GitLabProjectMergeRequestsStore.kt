@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.collaboration.api.page.SequentialListLoader
+import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +14,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabMergeRequestsListLoader
+import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.util.concurrent.ConcurrentHashMap
 
 interface GitLabProjectMergeRequestsStore {
@@ -30,11 +32,14 @@ interface GitLabProjectMergeRequestsStore {
   fun findCachedDetails(id: GitLabMergeRequestId): GitLabMergeRequestDetails?
 }
 
-class CachingGitLabProjectMergeRequestsStore(parentCs: CoroutineScope,
+class CachingGitLabProjectMergeRequestsStore(private val project: Project,
+                                             parentCs: CoroutineScope,
                                              private val api: GitLabApi,
-                                             private val project: GitLabProjectCoordinates) : GitLabProjectMergeRequestsStore {
+                                             private val projectMapping: GitLabProjectMapping) : GitLabProjectMergeRequestsStore {
 
   private val cs = parentCs.childScope()
+
+  private val glProject: GitLabProjectCoordinates = projectMapping.repository
 
   private val detailsCache = Caffeine.newBuilder()
     .weakValues()
@@ -51,9 +56,9 @@ class CachingGitLabProjectMergeRequestsStore(parentCs: CoroutineScope,
         val result = runCatching {
           // TODO: create from cached details
           val mrData = withContext(Dispatchers.IO) {
-            api.loadMergeRequest(project, id).body()!!
+            api.loadMergeRequest(glProject, id).body()!!
           }
-          LoadedGitLabMergeRequest(this, api, project, mrData)
+          LoadedGitLabMergeRequest(project, this, api, projectMapping, mrData)
         }
         send(result)
         awaitClose()
@@ -67,7 +72,7 @@ class CachingGitLabProjectMergeRequestsStore(parentCs: CoroutineScope,
 
   private inner class CachingListLoader(searchQuery: String)
     : SequentialListLoader<GitLabMergeRequestDetails> {
-    private val actualLoader = GitLabMergeRequestsListLoader(api, project, searchQuery)
+    private val actualLoader = GitLabMergeRequestsListLoader(api, glProject, searchQuery)
 
     override suspend fun loadNext(): SequentialListLoader.ListBatch<GitLabMergeRequestDetails> {
       return actualLoader.loadNext().also { (data, _) ->

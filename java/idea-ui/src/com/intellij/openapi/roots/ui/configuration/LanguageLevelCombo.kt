@@ -23,25 +23,29 @@ abstract class LanguageLevelCombo(defaultItem: @Nls String?) : ComboBox<Any>() {
     val items = mutableListOf<Any>()
     items.add(defaultItem ?: "")
 
-    val ltsSeparatorIndex = items.size
+    val ltsItems = mutableListOf<LanguageLevel>()
     for (level in LTS) {
-      items.add(level)
+      ltsItems.add(level)
     }
 
-    val otherSeparatorIndex = items.size
+    val otherItems = mutableListOf<LanguageLevel>()
     val highestPreviewLevel = LanguageLevel.HIGHEST.previewLevel
     val highestWithPreview = highestPreviewLevel ?: LanguageLevel.HIGHEST
     LanguageLevel.values()
       .sortedBy { it.toJavaVersion().feature }
       .filter { level: LanguageLevel -> level <= highestWithPreview && (level.isPreview || !ArrayUtil.contains(level, *LTS)) }
-      .forEach { level: LanguageLevel -> items.add(level) }
+      .forEach { level: LanguageLevel -> otherItems.add(level) }
 
-    val experimentalSeparatorIndex = items.size
+    val experimentalItems = mutableListOf<LanguageLevel>()
     for (level in LanguageLevel.values()) {
       if (level > highestWithPreview) {
-        items.add(level)
+        experimentalItems.add(level)
       }
     }
+
+    items.addAll(ltsItems)
+    items.addAll(otherItems)
+    items.addAll(experimentalItems)
 
     isSwingPopup = false
     model = DefaultComboBoxModel(items.toTypedArray())
@@ -52,10 +56,10 @@ abstract class LanguageLevelCombo(defaultItem: @Nls String?) : ComboBox<Any>() {
         else -> ""
       }
 
-      override fun separatorFor(index: Int): ListSeparator? = when (index) {
-        ltsSeparatorIndex -> ListSeparator(JavaUiBundle.message("language.level.combo.lts.versions"))
-        otherSeparatorIndex -> ListSeparator(JavaUiBundle.message("language.level.combo.other.versions"))
-        experimentalSeparatorIndex -> ListSeparator(JavaUiBundle.message("language.level.combo.experimental.versions"))
+      override fun separatorFor(value: Any): ListSeparator? = when (value) {
+        ltsItems.first() -> ListSeparator(JavaUiBundle.message("language.level.combo.lts.versions"))
+        otherItems.first() -> ListSeparator(JavaUiBundle.message("language.level.combo.other.versions"))
+        experimentalItems.first() -> ListSeparator(JavaUiBundle.message("language.level.combo.experimental.versions"))
         else -> null
       }
     }

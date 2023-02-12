@@ -153,8 +153,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
           }
           else if (number == expression.getROperand()) {
             final XPathExpression next = PsiTreeUtil.getParentOfType(PsiTreeUtil.nextLeaf(expression), XPathExpression.class, true);
-            if (next instanceof XPathBinaryExpression) {
-              final XPathBinaryExpression left = (XPathBinaryExpression)next;
+            if (next instanceof XPathBinaryExpression left) {
               final XPathExpression rOperand = left.getROperand();
               if (rOperand != null && lOperand != null) {
                 final String display = number.getText() + " " + left.getOperationSign();
@@ -539,8 +538,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
   private static void checkPrefixReferences(AnnotationHolder holder, QNameElement element, ContextProvider myProvider) {
     final PsiReference[] references = element.getReferences();
     for (PsiReference reference : references) {
-      if (reference instanceof PrefixReference) {
-        final PrefixReference pr = ((PrefixReference)reference);
+      if (reference instanceof PrefixReference pr) {
         if (!pr.isSoft() && pr.isUnresolved()) {
           final TextRange range = pr.getRangeInElement().shiftRight(pr.getElement().getTextRange().getStartOffset());
           AnnotationBuilder builder =

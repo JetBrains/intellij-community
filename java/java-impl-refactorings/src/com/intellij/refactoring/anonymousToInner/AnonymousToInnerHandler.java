@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.anonymousToInner;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -204,14 +204,11 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
   public static PsiAnonymousClass findAnonymousClass(PsiFile file, int offset) {
     PsiElement element = file.findElementAt(offset);
     while (element != null) {
-      if (element instanceof PsiAnonymousClass) {
-        return (PsiAnonymousClass) element;
+      if (element instanceof PsiAnonymousClass anonymousClass) {
+        return anonymousClass;
       }
-      if (element instanceof PsiNewExpression) {
-        final PsiNewExpression newExpression = (PsiNewExpression)element;
-        if (newExpression.getAnonymousClass() != null) {
-          return newExpression.getAnonymousClass();
-        }
+      if (element instanceof PsiNewExpression newExpression && newExpression.getAnonymousClass() != null) {
+        return newExpression.getAnonymousClass();
       }
       element = element.getParent();
     }
@@ -237,9 +234,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
       @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         if (expression.getQualifierExpression() == null) {
           PsiElement refElement = expression.resolve();
-          if (refElement instanceof PsiVariable && !(refElement instanceof PsiField)) {
-            PsiVariable var = (PsiVariable)refElement;
-
+          if (refElement instanceof PsiVariable var && !(refElement instanceof PsiField)) {
             final PsiClass containingClass = PsiTreeUtil.getParentOfType(var, PsiClass.class);
             if (PsiTreeUtil.isAncestor(containingClass, myAnonClass, true)) {
               saveVariable(variableInfoMap, var, expression);
@@ -289,8 +284,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
   private boolean isUsedInInitializer(PsiElement usage) {
     PsiElement parent = usage.getParent();
     while (!myAnonClass.equals(parent)) {
-      if (parent instanceof PsiExpressionList) {
-        PsiExpressionList expressionList = (PsiExpressionList) parent;
+      if (parent instanceof PsiExpressionList expressionList) {
         if (myAnonClass.equals(expressionList.getParent())) {
           return true;
         }
@@ -404,8 +398,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     toAdd.sort(Comparator.comparingInt(e -> e.getTextRange().getStartOffset()));
 
     for (PsiElement element : toAdd) {
-      if (element instanceof PsiClassInitializer) {
-        PsiClassInitializer initializer = (PsiClassInitializer) element;
+      if (element instanceof PsiClassInitializer initializer) {
         final PsiCodeBlock initializerBody = initializer.getBody();
         PsiElement firstBodyElement = initializerBody.getFirstBodyElement();
         if (firstBodyElement != null) {

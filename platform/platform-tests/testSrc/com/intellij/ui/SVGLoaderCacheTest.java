@@ -4,7 +4,6 @@ package com.intellij.ui;
 import com.intellij.ui.scale.paint.ImageComparator;
 import com.intellij.ui.svg.SvgCacheManager;
 import com.intellij.ui.svg.SvgCacheMapper;
-import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -42,16 +41,15 @@ public class SVGLoaderCacheTest {
     cache.close();
     cache = createCache(dir);
 
-    BufferedImage copy = (BufferedImage)cache.loadFromCache(theme, imageBytes, svgCacheMapper);
+    BufferedImage copy = cache.loadFromCache(theme, imageBytes, svgCacheMapper);
 
     assertThat(copy.getWidth()).isEqualTo(10);
     assertThat(copy.getHeight()).isEqualTo(10);
 
     ImageComparator.compareAndAssert(new ImageComparator.AASmootherComparator(0.1, 0.1, new Color(0, 0, 0, 0)), i, copy, null);
 
-    ImageLoader.Dimension2DDouble size = new ImageLoader.Dimension2DDouble(0, 0);
-    assertThat(cache.loadFromCache(new byte[]{123}, imageBytes, new SvgCacheMapper(1f, false, false, size))).isNull();
-    assertThat(cache.loadFromCache(theme, new byte[]{6, 7}, new SvgCacheMapper(1f, false, false, size))).isNull();
-    assertThat(cache.loadFromCache(theme, imageBytes, new SvgCacheMapper(2f, false, false, size))).isNull();
+    assertThat(cache.loadFromCache(new byte[]{123}, imageBytes, new SvgCacheMapper(1f, false, false))).isNull();
+    assertThat(cache.loadFromCache(theme, new byte[]{6, 7}, new SvgCacheMapper(1f, false, false))).isNull();
+    assertThat(cache.loadFromCache(theme, imageBytes, new SvgCacheMapper(2f, false, false))).isNull();
   }
 }

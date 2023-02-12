@@ -405,7 +405,7 @@ public final class UIUtil {
   /**
    * @deprecated use {@link ClientProperty#get(Component, Object)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static Object getWindowClientProperty(Window window, @NotNull Object key) {
     return ClientProperty.get(window, key);
   }
@@ -413,7 +413,7 @@ public final class UIUtil {
   /**
    * @deprecated use {@link ClientProperty#put(Window, Object, Object)}  instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void putWindowClientProperty(Window window, @NotNull Object key, Object value) {
     ClientProperty.put(window, key, value);
   }

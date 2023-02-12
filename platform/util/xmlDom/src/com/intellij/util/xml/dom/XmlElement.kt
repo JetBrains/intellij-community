@@ -16,7 +16,7 @@ data class XmlElement(
 
   fun getAttributeValue(name: String): String? = attributes.get(name)
 
-  fun getAttributeValue(name: String, defaultValue: String?): String? = attributes[name] ?: defaultValue
+  fun getAttributeValue(name: String, defaultValue: String?): String? = attributes.get(name) ?: defaultValue
 
   fun getChild(name: String): XmlElement? = children.firstOrNull { it.name == name }
 

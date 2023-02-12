@@ -23,8 +23,7 @@ public class GradleClosureSamParameterEnhancer extends ClosureSamParameterEnhanc
     if (file == null || !FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)) return null;
 
     PsiType psiType = super.getClosureParameterType(expression, index);
-    if (psiType instanceof PsiWildcardType) {
-      PsiWildcardType wildcardType = (PsiWildcardType)psiType;
+    if (psiType instanceof PsiWildcardType wildcardType) {
       if (wildcardType.isSuper() && wildcardType.getBound() != null &&
           wildcardType.getBound().equalsToText(GradleCommonClassNames.GRADLE_API_SOURCE_SET)) {
         return wildcardType.getBound();

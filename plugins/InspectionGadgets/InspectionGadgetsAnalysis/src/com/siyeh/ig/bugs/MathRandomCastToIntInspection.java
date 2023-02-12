@@ -46,10 +46,9 @@ public class MathRandomCastToIntInspection extends BaseInspection {
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiTypeCastExpression expression = (PsiTypeCastExpression)infos[0];
     final PsiElement parent = expression.getParent();
-    if (!(parent instanceof PsiPolyadicExpression)) {
+    if (!(parent instanceof PsiPolyadicExpression polyadicExpression)) {
       return null;
     }
-    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
     final IElementType tokenType = polyadicExpression.getOperationTokenType();
     if (JavaTokenType.ASTERISK != tokenType || polyadicExpression.getType() == null) {
       return null;
@@ -71,15 +70,13 @@ public class MathRandomCastToIntInspection extends BaseInspection {
       while (parent instanceof PsiPrefixExpression) {
         parent = parent.getParent();
       }
-      if (!(parent instanceof PsiTypeCastExpression)) {
+      if (!(parent instanceof PsiTypeCastExpression typeCastExpression)) {
         return;
       }
-      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
       final PsiElement grandParent = typeCastExpression.getParent();
-      if (!(grandParent instanceof PsiPolyadicExpression)) {
+      if (!(grandParent instanceof PsiPolyadicExpression polyadicExpression)) {
         return;
       }
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)grandParent;
       final PsiExpression operand = typeCastExpression.getOperand();
       if (operand == null) {
         return;
@@ -123,7 +120,7 @@ public class MathRandomCastToIntInspection extends BaseInspection {
       while (operand instanceof PsiPrefixExpression) {
         operand = ((PsiPrefixExpression)operand).getOperand();
       }
-      if (!(operand instanceof PsiMethodCallExpression)) {
+      if (!(operand instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
       final PsiTypeElement castType = expression.getCastType();
@@ -135,7 +132,6 @@ public class MathRandomCastToIntInspection extends BaseInspection {
         .equals(type)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       @NonNls
       final String referenceName = methodExpression.getReferenceName();

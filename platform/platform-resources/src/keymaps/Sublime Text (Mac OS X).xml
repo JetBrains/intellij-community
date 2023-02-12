@@ -333,4 +333,5 @@
   <action id="ResizeToolWindowRight"/>
   <action id="ResizeToolWindowUp"/>
   <action id="ResizeToolWindowDown"/>
+  <action id="ZoomOutIdeAction"/>
 </keymap>

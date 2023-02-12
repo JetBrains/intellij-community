@@ -80,6 +80,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
     if (sourceElement.isNull()) return false;
     if (isUsedTestRunners(context, PLATFORM)) return false;
     configuration.setScriptDebugEnabled(false);
+    configuration.setForceTestExecution(true);
     boolean result = doSetupConfigurationFromContext(configuration, context, sourceElement);
     restoreDefaultScriptParametersIfNeeded(configuration, context);
     return result;
@@ -120,10 +121,8 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
   ) {
     RunnerAndConfigurationSettings template = context.getRunManager().getConfigurationTemplate(getConfigurationFactory());
     final RunConfiguration original = template.getConfiguration();
-    if (original instanceof ExternalSystemRunConfiguration
-        && configuration instanceof ExternalSystemRunConfiguration) {
-      ExternalSystemRunConfiguration originalRC = (ExternalSystemRunConfiguration)original;
-      ExternalSystemRunConfiguration configurationRC = (ExternalSystemRunConfiguration)configuration;
+    if (original instanceof ExternalSystemRunConfiguration originalRC
+        && configuration instanceof ExternalSystemRunConfiguration configurationRC) {
       String currentParams = configurationRC.getSettings().getScriptParameters();
       String defaultParams = originalRC.getSettings().getScriptParameters();
 

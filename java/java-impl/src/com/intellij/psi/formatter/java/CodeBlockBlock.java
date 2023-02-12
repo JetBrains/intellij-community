@@ -49,7 +49,10 @@ public class CodeBlockBlock extends AbstractJavaBlock {
                         @NotNull FormattingMode formattingMode) {
     super(node, wrap, getAlignmentStrategy(alignment, node, settings), indent, settings, javaSettings, formattingMode);
     if (isSwitchCodeBlock() && !settings.INDENT_CASE_FROM_SWITCH ||
-        isLambdaCodeBlock() && settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED) {
+        (isLambdaCodeBlock() && settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED) ||
+        (isSwitchExpressionCodeBlock() &&
+         settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED &&
+         !javaSettings.DOUBLY_SHIFTED_SWITCH_EXPRESSION_BODY)) {
       myChildrenIndent = 0;
     }
     else {
@@ -95,6 +98,11 @@ public class CodeBlockBlock extends AbstractJavaBlock {
   private boolean isLambdaCodeBlock() {
     ASTNode parent = myNode.getTreeParent();
     return parent != null && parent.getElementType() == JavaElementType.LAMBDA_EXPRESSION;
+  }
+
+  private boolean isSwitchExpressionCodeBlock() {
+    ASTNode parent = myNode.getTreeParent();
+    return parent != null && parent.getElementType() == JavaElementType.SWITCH_EXPRESSION;
   }
 
   @Override

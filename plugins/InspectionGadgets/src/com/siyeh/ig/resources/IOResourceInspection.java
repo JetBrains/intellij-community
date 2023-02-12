@@ -76,8 +76,7 @@ public class IOResourceInspection extends ResourceInspection {
     if (expression instanceof PsiNewExpression) {
       return TypeUtils.expressionHasTypeOrSubtype(expression, "java.io.Closeable") && !isIgnoredType(expression);
     }
-    else if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+    else if (expression instanceof PsiMethodCallExpression methodCallExpression) {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
       if (!"getResourceAsStream".equals(methodName)) {

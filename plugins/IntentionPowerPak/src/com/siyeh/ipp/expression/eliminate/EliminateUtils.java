@@ -100,8 +100,7 @@ final class EliminateUtils {
 
   @Nullable
   private static PsiExpression skipPrefixedExprUp(@NotNull PsiExpression expression) {
-    while (expression.getParent() instanceof PsiPrefixExpression) {
-      PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression.getParent();
+    while (expression.getParent() instanceof PsiPrefixExpression prefixExpression) {
       if (!ArrayUtil.contains(prefixExpression.getOperationTokenType(), PREFIXES)) return null;
       expression = prefixExpression;
     }
@@ -121,8 +120,7 @@ final class EliminateUtils {
   static <T> T processPrefixed(@NotNull PsiExpression expression,
                                boolean isNegated,
                                @NotNull BiFunction<? super PsiExpression, ? super Boolean, T> handler) {
-    while (expression instanceof PsiPrefixExpression) {
-      PsiPrefixExpression prefixExpr = (PsiPrefixExpression)expression;
+    while (expression instanceof PsiPrefixExpression prefixExpr) {
       IElementType tokenType = prefixExpr.getOperationTokenType();
       if (!ArrayUtil.contains(tokenType, PREFIXES)) break;
       isNegated ^= JavaTokenType.MINUS.equals(tokenType);

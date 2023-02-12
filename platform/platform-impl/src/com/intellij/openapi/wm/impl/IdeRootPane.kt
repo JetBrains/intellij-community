@@ -10,16 +10,20 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
-import com.intellij.openapi.application.*
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.IdeRootPaneNorthExtension
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarCentralWidgetProvider
+import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFloatingMenuBarSupported
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MacToolbarFrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
@@ -39,15 +43,14 @@ import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.mac.MacWinTabsHandler
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
-import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseMotionAdapter
-import java.util.function.Consumer
 import javax.swing.*
 
 private const val EXTENSION_KEY = "extensionKey"
@@ -204,25 +207,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
       frame.doSetRootPane(rootPane)
       if (SystemInfoRt.isMac) {
         MacWinTabsHandler.fastInit(frame)
-      }
-    }
-
-    @ApiStatus.Internal
-    fun executeWithPrepareActionManagerAndCustomActionScheme(disposable: Disposable?, task: Consumer<ActionManager>) {
-      val app = ApplicationManager.getApplication()
-
-      @Suppress("DEPRECATION")
-      val job = app.coroutineScope.launch {
-        val componentManager = app as ComponentManagerEx
-        val actionManager = componentManager.getServiceAsync(ActionManager::class.java).await()
-        componentManager.getServiceAsync(CustomActionsSchema::class.java).join()
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          task.accept(actionManager)
-        }
-      }
-
-      if (disposable != null) {
-        job.cancelOnDispose(disposable)
       }
     }
   }

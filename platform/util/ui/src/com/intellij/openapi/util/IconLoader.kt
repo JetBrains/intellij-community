@@ -54,7 +54,10 @@ private val LOOKUP = MethodHandles.lookup()
 private val iconCache = ConcurrentHashMap<Pair<String, ClassLoader?>, CachedImageIcon>(100, 0.9f, 2)
 
 // contains mapping between icons and disabled icons
-private val iconToDisabledIcon = CollectionFactory.createConcurrentWeakMap<() -> RGBImageFilter, MutableMap<Icon, Icon>>()
+private val iconToDisabledIcon = ConcurrentHashMap<() -> RGBImageFilter, MutableMap<Icon, Icon>>()
+private val standardDisablingFilter: () -> RGBImageFilter = { UIUtil.getGrayFilter() }
+
+private val colorPatchCache = ConcurrentHashMap<Int, MutableMap<List<Byte>, MutableMap<Icon, Icon>>>()
 
 @Volatile
 private var STRICT_GLOBAL = false
@@ -414,9 +417,9 @@ object IconLoader {
     }
 
     val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
-    val filter = disableFilter ?: { UIUtil.getGrayFilter() } /* returns laf-aware instance */
+    val filter = disableFilter ?: standardDisablingFilter /* returns laf-aware instance */
     return iconToDisabledIcon
-      .computeIfAbsent(filter) { CollectionFactory.createConcurrentWeakMap() }
+      .computeIfAbsent(filter) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
       .computeIfAbsent(effectiveIcon) { filterIcon(icon = it, filterSupplier = filter) }
   }
 
@@ -436,7 +439,21 @@ object IconLoader {
         result = variant
       }
     }
-    return result.createWithPatcher(colorPatcher)
+
+    val wholeDigest = colorPatcher.wholeDigest()
+    if (wholeDigest == null) {
+      return result.createWithPatcher(colorPatcher)
+    }
+
+    val topMapIndex = when(isDark) {
+      false -> 0
+      true -> 1
+      else -> 2
+    }
+
+    return colorPatchCache.computeIfAbsent(topMapIndex) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
+      .computeIfAbsent(wholeDigest.asList()) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
+      .computeIfAbsent(imageIcon) {result.createWithPatcher(colorPatcher) }
   }
 
   /**
@@ -450,8 +467,7 @@ object IconLoader {
           icon == null || icon is DummyIcon || icon is EmptyIcon -> icon
           icon is LazyIcon -> replaceIcon(icon.getOrComputeIcon())
           icon is ReplaceableIcon -> icon.replaceBy(this)
-          !isGoodSize(icon) -> {
-            LOG.error(icon)
+          !checkIconSize(icon) -> {
             com.intellij.openapi.util.CachedImageIcon.EMPTY_ICON
           }
           icon is com.intellij.openapi.util.CachedImageIcon -> cachedImageIconReplacer(icon)
@@ -467,9 +483,7 @@ object IconLoader {
    */
   fun filterIcon(icon: Icon, filterSupplier: () -> RGBImageFilter): Icon {
     val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
-    if (!isGoodSize(effectiveIcon)) {
-      // # 22481
-      LOG.error(effectiveIcon)
+    if (!checkIconSize(effectiveIcon)) {
       return com.intellij.openapi.util.CachedImageIcon.EMPTY_ICON
     }
     return if (effectiveIcon is com.intellij.openapi.util.CachedImageIcon) {
@@ -478,6 +492,14 @@ object IconLoader {
     else {
       FilteredIcon(effectiveIcon, filterSupplier)
     }
+  }
+
+  private fun checkIconSize(icon: Icon): Boolean {
+    if (!isGoodSize(icon)) {
+      LOG.error("Icon $icon has incorrect size: ${icon.iconWidth}x${icon.iconHeight}")
+      return false
+    }
+    return true
   }
 
   fun getScaleToRenderIcon(icon: Icon, ancestor: Component?): Float {
@@ -568,11 +590,12 @@ object IconLoader {
    */
   @JvmStatic
   fun getDarkIcon(icon: Icon, dark: Boolean): Icon {
-    var effectiveIcon = icon
-    if (effectiveIcon is RetrievableIcon) {
-      effectiveIcon = getOrigin(effectiveIcon)
-    }
-    return if (effectiveIcon is DarkIconProvider) effectiveIcon.getDarkIcon(dark) else effectiveIcon
+    return object : IconReplacer {
+      override fun replaceIcon(icon: Icon): Icon {
+        if (icon is DarkIconProvider) return icon.getDarkIcon(dark)
+        return super.replaceIcon(icon)
+      }
+    }.replaceIcon(icon)
   }
 
   fun detachClassLoader(classLoader: ClassLoader) {
@@ -678,6 +701,9 @@ private fun updateTransform(updater: Function<in IconTransform, IconTransform>) 
   pathTransformGlobalModCount.incrementAndGet()
   if (prev != next) {
     iconToDisabledIcon.clear()
+    colorPatchCache.clear()
+    CachedImageIcon.iconToStrokeIcon.clear()
+
     // clear svg cache
     ImageCache.INSTANCE.clearCache()
     // iconCache is not cleared because it contains an original icon (instance that will delegate to)

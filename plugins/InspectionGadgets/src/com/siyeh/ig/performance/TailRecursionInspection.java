@@ -297,8 +297,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
           final String parameterName = parameter.getName();
           final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[index]);
           assert argument != null;
-          if (argument instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)argument;
+          if (argument instanceof PsiReferenceExpression referenceExpression) {
             if (parameter.equals(referenceExpression.resolve())) {
               // parameter keeps same value
               continue;
@@ -376,8 +375,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
     }
 
     private static void buildText(PsiElement element, Map<PsiElement, String> replacements, StringBuilder out) {
-      if (element instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+      if (element instanceof PsiReferenceExpression referenceExpression) {
         final PsiElement target = referenceExpression.resolve();
         final String replacement = replacements.get(target);
         out.append(replacement != null ? replacement : element.getText());
@@ -427,14 +425,12 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
       if (containingMethod.hasModifierProperty(PsiModifier.STATIC)) {
         return false;
       }
-      if (element instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
+      if (element instanceof PsiMethodCallExpression methodCallExpression) {
         final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
         final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
         return qualifierExpression == null;
       }
-      else if (element instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+      else if (element instanceof PsiReferenceExpression referenceExpression) {
         final PsiElement parent = referenceExpression.getParent();
         if (parent instanceof PsiMethodCallExpression) {
           return false;
@@ -482,11 +478,9 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
   @Nullable
   private static PsiMethodCallExpression getTailCall(@Nullable PsiElement element, @NotNull PsiMethod method) {
     PsiMethodCallExpression tailCall = null;
-    if (element instanceof PsiReturnStatement) {
-      final PsiReturnStatement returnStatement = (PsiReturnStatement)element;
+    if (element instanceof PsiReturnStatement returnStatement) {
       PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
-      while (returnValue instanceof PsiPolyadicExpression) {
-        PsiPolyadicExpression polyadic = (PsiPolyadicExpression)returnValue;
+      while (returnValue instanceof PsiPolyadicExpression polyadic) {
         returnValue = null;
         IElementType tokenType = polyadic.getOperationTokenType();
         if (tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.OROR) {

@@ -10,13 +10,16 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.InplaceButton;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.docking.DockContainer;
@@ -32,13 +35,11 @@ import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
-import com.intellij.ui.tabs.impl.JBDefaultTabPainter;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.TabLabel;
-import com.intellij.ui.tabs.impl.TabPainterAdapter;
+import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.WindowTabsLayout;
 import com.intellij.ui.tabs.impl.themes.DefaultTabTheme;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
@@ -48,22 +49,18 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author Alexander Lobas
  */
 public class WindowTabsComponent extends JBTabsImpl {
+  private static final String TITLE_LISTENER_KEY = "TitleListener";
+
   private static final int TAB_HEIGHT = 30;
 
   private static final Icon CLOSE_ICON = ExperimentalUI.isNewUI() ?
@@ -81,7 +78,7 @@ public class WindowTabsComponent extends JBTabsImpl {
   private final Disposable myParentDisposable;
   private final Map<IdeFrameImpl, Integer> myIndexes = new HashMap<>();
 
-  public WindowTabsComponent(@NotNull IdeFrameImpl nativeWindow, @NotNull Project project, @NotNull Disposable parentDisposable) {
+  public WindowTabsComponent(@NotNull IdeFrameImpl nativeWindow, @Nullable Project project, @NotNull Disposable parentDisposable) {
     super(project, IdeFocusManager.getInstance(project), parentDisposable);
     myNativeWindow = nativeWindow;
     myParentDisposable = parentDisposable;
@@ -91,6 +88,13 @@ public class WindowTabsComponent extends JBTabsImpl {
       public @NotNull UiDecoration getDecoration() {
         //noinspection UseDPIAwareInsets
         return new UiDecoration(JBFont.medium(), new Insets(-1, myDropInfo == null ? 0 : -1, -1, -1));
+      }
+    });
+
+    Disposer.register(myParentDisposable, () -> {
+      int count = getTabCount();
+      for (int i = 0; i < count; i++) {
+        removeTitleListener(getTabAt(i));
       }
     });
 
@@ -113,8 +117,66 @@ public class WindowTabsComponent extends JBTabsImpl {
   }
 
   @Override
+  protected @Nullable TabInfo getDraggedTabSelectionInfo() {
+    TabInfo source = getDragHelper().getDragSource();
+    return source != null ? source : super.getDraggedTabSelectionInfo();
+  }
+
+  private static boolean isSelectionClick(@NotNull MouseEvent e) {
+    return e.getClickCount() == 1 && !e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1
+           && !e.isControlDown() && !e.isAltDown() && !e.isMetaDown();
+  }
+
+  @Override
   protected TabLabel createTabLabel(TabInfo info) {
     return new TabLabel(this, info) {
+      {
+        for (MouseListener listener : getMouseListeners()) {
+          removeMouseListener(listener);
+        }
+        TabLabel label = this;
+        addMouseListener(new MouseAdapter() {
+          @Override
+          public void mousePressed(MouseEvent e) {
+            if (!UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED) && !isSelectionClick(e)) {
+              handlePopup(e);
+            }
+          }
+
+          @Override
+          public void mouseReleased(MouseEvent e) {
+            handlePopup(e);
+          }
+
+          @Override
+          public void mouseClicked(MouseEvent e) {
+            if (isSelectionClick(e)) {
+              Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
+              if (c instanceof InplaceButton) return;
+              myTabs.select(info, true);
+              ObjectUtils.consumeIfNotNull(PopupUtil.getPopupContainerFor(label), popup -> {
+                if (ClientProperty.isTrue(popup.getContent(), MorePopupAware.class)) {
+                  popup.cancel();
+                }
+              });
+            }
+            else {
+              handlePopup(e);
+            }
+          }
+
+          @Override
+          public void mouseEntered(MouseEvent e) {
+            setHovered(true);
+          }
+
+          @Override
+          public void mouseExited(MouseEvent e) {
+            setHovered(false);
+          }
+        });
+      }
+
       @Override
       public Dimension getPreferredSize() {
         return new Dimension(super.getPreferredSize().width, JBUI.scale(TAB_HEIGHT));
@@ -193,25 +255,50 @@ public class WindowTabsComponent extends JBTabsImpl {
     };
   }
 
-  public void createTabsForFrame(@NotNull IdeFrameImpl frame, IdeFrameImpl @NotNull [] tabFrames) {
+  private boolean isSameGroup(@NotNull WindowTabsComponent anotherComponent) {
+    if (this == anotherComponent) {
+      return true;
+    }
+
+    int count = getTabCount();
+    if (count != anotherComponent.getTabCount()) {
+      return false;
+    }
+
+    Set<Object> tabs = new HashSet<>();
+    Set<Object> anotherTabs = new HashSet<>();
+
+    for (int i = 0; i < count; i++) {
+      tabs.add(getTabAt(i).getObject());
+      anotherTabs.add(anotherComponent.getTabAt(i).getObject());
+    }
+
+    return tabs.equals(anotherTabs);
+  }
+
+  public void createTabsForFrame(IdeFrameImpl @NotNull [] tabFrames) {
     for (IdeFrameImpl tabFrame : tabFrames) {
-      createTabItem(tabFrame, -1, tabFrame == frame);
+      createTabItem(tabFrame, -1, tabFrame == myNativeWindow);
     }
 
     recalculateIndexes();
 
     setSelectionChangeHandler((info, requestFocus, doChangeSelection) -> {
       IdeFrameImpl tabFrame = (IdeFrameImpl)info.getObject();
+
       if (tabFrame == myNativeWindow) {
+        TabInfo selectedInfo = getSelectedInfo();
+        if (selectedInfo != null && selectedInfo.getObject() == myNativeWindow) {
+          return ActionCallback.REJECTED;
+        }
         return doChangeSelection.run();
       }
-      else {
-        Foundation.executeOnMainThread(true, false, () -> {
-          ID window = MacUtil.getWindowFromJavaWindow((Window)info.getObject());
-          ID tabGroup = Foundation.invoke(window, "tabGroup");
-          Foundation.invoke(tabGroup, "setSelectedWindow:", window);
-        });
-      }
+
+      Foundation.executeOnMainThread(true, false, () -> {
+        ID window = MacUtil.getWindowFromJavaWindow((Window)info.getObject());
+        ID tabGroup = Foundation.invoke(window, "tabGroup");
+        Foundation.invoke(tabGroup, "setSelectedWindow:", window);
+      });
 
       return ActionCallback.REJECTED;
     });
@@ -229,6 +316,7 @@ public class WindowTabsComponent extends JBTabsImpl {
     for (int i = 0; i < count; i++) {
       TabInfo info = getTabAt(i);
       if (info.getObject() == tab) {
+        removeTitleListener(info);
         removeTab(info);
         recalculateIndexes();
         removed = true;
@@ -267,9 +355,14 @@ public class WindowTabsComponent extends JBTabsImpl {
 
     PropertyChangeListener listener = event -> info.setText((String)event.getNewValue()).setTooltipText((String)event.getNewValue());
     tabFrame.addPropertyChangeListener("title", listener);
-    Disposer.register(myParentDisposable, () -> tabFrame.removePropertyChangeListener("title", listener));
+    info.getComponent().putClientProperty(TITLE_LISTENER_KEY, listener);
 
     installTabDnd(info);
+  }
+
+  private static void removeTitleListener(@NotNull TabInfo info) {
+    PropertyChangeListener listener = (PropertyChangeListener)info.getComponent().getClientProperty(TITLE_LISTENER_KEY);
+    ((IdeFrameImpl)info.getObject()).removePropertyChangeListener("title", listener);
   }
 
   private void recalculateIndexes() {
@@ -381,21 +474,19 @@ public class WindowTabsComponent extends JBTabsImpl {
       ID tabGroup = Foundation.invoke(window, "tabGroup");
       ID tab = MacUtil.getWindowFromJavaWindow(tabFrame);
       Foundation.invoke(tabGroup, "addWindow:", tab);
+      Foundation.invoke(tabGroup, "setSelectedWindow:", tab);
 
       ApplicationManager.getApplication().invokeLater(() -> MacWinTabsHandlerV2.updateTabBarsAfterMove(tabFrame, target, -1));
     });
   }
 
-  private void moveTabToNewIndex() {
-    TabInfo info = getDragHelper().getDragSource();
+  private void moveTabToNewIndex(@NotNull TabInfo info) {
     IdeFrameImpl movedFrame = (IdeFrameImpl)info.getObject();
     int newIndex = getIndexOf(info);
     int oldIndex = myIndexes.get(movedFrame);
 
-    recalculateIndexes();
-    select(info, true);
-
     if (oldIndex != newIndex) {
+      recalculateIndexes();
       moveTabToNewIndex(movedFrame, newIndex);
     }
   }
@@ -403,24 +494,33 @@ public class WindowTabsComponent extends JBTabsImpl {
   private void moveTabToNewIndex(@NotNull IdeFrameImpl movedFrame, int newIndex) {
     for (int i = 0, count = getTabCount(); i < count; i++) {
       IdeFrameImpl tabFrame = (IdeFrameImpl)getTabAt(i).getObject();
-      if (tabFrame != movedFrame) {
+      if (tabFrame != myNativeWindow) {
         WindowTabsComponent tabsComponent =
           Objects.requireNonNull(MacWinTabsHandlerV2.getTabsComponent(MacWinTabsHandlerV2.getTabsContainer(tabFrame)));
         tabsComponent.reorderTabs(myIndexes);
       }
     }
 
-    Foundation.executeOnMainThread(true, false, () -> {
+    Runnable action = () -> Foundation.executeOnMainThread(true, false, () -> {
       ID window = MacUtil.getWindowFromJavaWindow(movedFrame);
       ID tabGroup = Foundation.invoke(window, "tabGroup");
       Foundation.invoke(tabGroup, "removeWindow:", window);
       Foundation.invoke(tabGroup, "insertWindow:atIndex:", window, newIndex);
+      Foundation.invoke(tabGroup, "setSelectedWindow:", window);
     });
+
+    if (movedFrame == myNativeWindow) {
+      action.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(action);
+    }
   }
 
   private void moveTabToNewIndexOrWindow(@NotNull TabInfo info, boolean movedFromOut) {
     IdeFrameImpl movedFrame = (IdeFrameImpl)info.getObject();
     int newIndex = getDropInfoIndex();
+    assert newIndex != -1 : "Wrong Reordering";
 
     if (movedFromOut) {
       Foundation.executeOnMainThread(true, false, () -> {
@@ -428,6 +528,7 @@ public class WindowTabsComponent extends JBTabsImpl {
         ID tabGroup = Foundation.invoke(window, "tabGroup");
         ID tab = MacUtil.getWindowFromJavaWindow(movedFrame);
         Foundation.invoke(tabGroup, "insertWindow:atIndex:", tab, newIndex);
+        Foundation.invoke(tabGroup, "setSelectedWindow:", tab);
 
         ApplicationManager.getApplication()
           .invokeLater(() -> MacWinTabsHandlerV2.updateTabBarsAfterMove(movedFrame, myNativeWindow, newIndex));
@@ -435,8 +536,7 @@ public class WindowTabsComponent extends JBTabsImpl {
     }
     else {
       info.setHidden(false);
-      int oldIndex = getIndexOf(info);
-      select(info, true);
+      int oldIndex = myIndexes.get(movedFrame);
 
       if (oldIndex != newIndex) {
         reorderTab(info, newIndex);
@@ -472,9 +572,25 @@ public class WindowTabsComponent extends JBTabsImpl {
 
       @Override
       public void dragOutCancelled(TabInfo source) {
-        source.setHidden(false);
         mySession.cancel();
         mySession = null;
+
+        source.setHidden(false);
+
+        if (getIndexOf(source) != -1) {
+          moveTabToNewIndex(source);
+        }
+      }
+    });
+    info.setDragDelegate(new TabInfo.DragDelegate() {
+      @Override
+      public void dragStarted(@NotNull MouseEvent mouseEvent) {
+        WindowTabsComponent.this.setComponentZOrder(getTabLabel(info), 0);
+      }
+
+      @Override
+      public void dragFinishedOrCanceled() {
+        WindowTabsComponent.this.setComponentZOrder(getTabLabel(getSelectedInfo()), 0);
       }
     });
   }
@@ -500,7 +616,7 @@ public class WindowTabsComponent extends JBTabsImpl {
     addListener(new TabsListener() {
       @Override
       public void tabsMoved() {
-        moveTabToNewIndex();
+        moveTabToNewIndex(getDragHelper().getDragSource());
       }
     });
 
@@ -591,7 +707,8 @@ public class WindowTabsComponent extends JBTabsImpl {
     @Override
     public @Nullable Image startDropOver(@NotNull DockableContent<?> content, RelativePoint point) {
       Presentation presentation = content.getPresentation();
-      myDropTab = new TabInfo(new JLabel()).setText(presentation.getText());
+      myDropTab = new TabInfo(new JLabel()).setText(presentation.getText())
+        .setDefaultForeground(JBUI.CurrentTheme.MainWindow.Tab.foreground(true, false));
       return myDropImage = WindowTabsComponent.this.startDropOver(myDropTab, point);
     }
 
@@ -611,7 +728,7 @@ public class WindowTabsComponent extends JBTabsImpl {
     @Override
     public void add(@NotNull DockableContent<?> _content, @Nullable RelativePoint dropTarget) {
       WindowFrameDockableContent content = (WindowFrameDockableContent)_content;
-      moveTabToNewIndexOrWindow(content.myInfo, content.myTabsComponent != WindowTabsComponent.this);
+      moveTabToNewIndexOrWindow(content.myInfo, !isSameGroup(content.myTabsComponent));
     }
 
     @Override

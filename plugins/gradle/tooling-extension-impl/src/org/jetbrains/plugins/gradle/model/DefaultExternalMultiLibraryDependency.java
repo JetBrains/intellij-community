@@ -17,9 +17,9 @@ public final class DefaultExternalMultiLibraryDependency extends AbstractExterna
   private final Collection<File> javadocs;
 
   public DefaultExternalMultiLibraryDependency() {
-    files = new LinkedHashSet<File>(0);
-    sources = new LinkedHashSet<File>(0);
-    javadocs = new LinkedHashSet<File>(0);
+    files = new LinkedHashSet<>(0);
+    sources = new LinkedHashSet<>(0);
+    javadocs = new LinkedHashSet<>(0);
   }
 
   public DefaultExternalMultiLibraryDependency(ExternalMultiLibraryDependency dependency) {

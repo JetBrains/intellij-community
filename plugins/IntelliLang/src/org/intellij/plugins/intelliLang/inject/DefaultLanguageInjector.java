@@ -14,8 +14,7 @@ public final class DefaultLanguageInjector implements LanguageInjectionContribut
 
   @Override
   public Injection getInjection(@NotNull PsiElement context) {
-    if (!(context instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost)context).isValidHost()) return null;
-    PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
+    if (!(context instanceof PsiLanguageInjectionHost host) || !((PsiLanguageInjectionHost)context).isValidHost()) return null;
 
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
       if (!support.isApplicableTo(host)) continue;

@@ -1678,6 +1678,11 @@
       "since": "2022.2"
     },
     {
+      "key": "VersionControl.Log.Commit.Reference.foreground",
+      "description": "Foreground color for reference labels in log (experimental UI only)",
+      "since": "2023.1"
+    },
+    {
       "key": "VersionControl.RefLabel.backgroundBase",
       "description": "Reference label background base color",
       "since": "2019.1"

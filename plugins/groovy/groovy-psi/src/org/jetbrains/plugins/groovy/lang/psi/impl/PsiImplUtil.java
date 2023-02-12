@@ -207,8 +207,7 @@ public final class PsiImplUtil {
         parentCount++;
       }
 
-      if (element instanceof GrCommandArgumentList) {
-        final GrCommandArgumentList commandArgList = (GrCommandArgumentList)element;
+      if (element instanceof GrCommandArgumentList commandArgList) {
 
         final PsiElement parent = commandArgList.getParent();
         LOG.assertTrue(parent instanceof GrApplicationStatement);
@@ -598,8 +597,7 @@ public final class PsiImplUtil {
       return doNormalizeWildcardByPosition(((PsiCapturedWildcardType)type).getUpperBound(), expression, topLevel);
     }
 
-    if (type instanceof PsiWildcardType) {
-      final PsiWildcardType wildcardType = (PsiWildcardType)type;
+    if (type instanceof PsiWildcardType wildcardType) {
 
       if (PsiUtil.isAccessedForWriting(topLevel)) {
         return wildcardType.getBound();
@@ -669,8 +667,7 @@ public final class PsiImplUtil {
     if (flowOwner == null) return null;
 
     final PsiElement parent = flowOwner.getContext();
-    if (flowOwner instanceof GrOpenBlock && parent instanceof GrMethod) {
-      final GrMethod method = (GrMethod)parent;
+    if (flowOwner instanceof GrOpenBlock && parent instanceof GrMethod method) {
       if (method.isConstructor()) return null;
       return method.getReturnType();
     }
@@ -805,8 +802,7 @@ public final class PsiImplUtil {
   }
 
   public static boolean isSpreadAssignment(@Nullable GrExpression lValue) {
-    if (lValue instanceof GrReferenceExpression) {
-      GrReferenceExpression expression = (GrReferenceExpression)lValue;
+    if (lValue instanceof GrReferenceExpression expression) {
       final PsiElement dot = expression.getDotToken();
       if (dot != null && dot.getNode().getElementType() == GroovyTokenTypes.mSPREAD_DOT) {
         return true;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -150,8 +150,7 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
 
     @NotNull
     private static String getRepeatQualifier(PsiExpression arg, CommentTracker ct) {
-      if (arg instanceof PsiLiteralExpression && !TypeUtils.isJavaLangString(arg.getType())) {
-        PsiLiteralExpression literal = (PsiLiteralExpression)arg;
+      if (arg instanceof PsiLiteralExpression literal && !TypeUtils.isJavaLangString(arg.getType())) {
         Object value = literal.getValue();
         if (value instanceof Character) {
           return PsiLiteralUtil.stringForCharLiteral(literal.getText());

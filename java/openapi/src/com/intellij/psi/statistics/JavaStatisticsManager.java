@@ -94,8 +94,7 @@ public abstract class JavaStatisticsManager {
   @NonNls
   @NotNull
   public static String getMemberUseKey2(@NotNull PsiMember member) {
-    if (member instanceof PsiMethod){
-      PsiMethod method = (PsiMethod)member;
+    if (member instanceof PsiMethod method){
       @NonNls StringBuilder buffer = new StringBuilder();
       buffer.append("method#");
       buffer.append(method.getName());

@@ -507,9 +507,18 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return expressions == null ? getFactory().getUnknown() : JavaDfaValueFactory.createCommonValue(getFactory(), expressions, type);
   }
 
-  @Override public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
+  @Override
+  public void visitForeachPatternStatement(@NotNull PsiForeachPatternStatement statement) {
+    processForeach(statement);
+  }
+
+  @Override 
+  public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
+    processForeach(statement);
+  }
+  
+  private void processForeach(@NotNull PsiForeachStatementBase statement) {
     startElement(statement);
-    final PsiParameter parameter = statement.getIterationParameter();
     final PsiExpression iteratedValue = PsiUtil.skipParenthesizedExprDown(statement.getIteratedValue());
 
     ControlFlowOffset loopEndOffset = getEndOffset(statement);
@@ -536,12 +545,29 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     ControlFlowOffset offset = myCurrentFlow.getNextOffset();
-    DfaVariableValue dfaVariable = PlainDescriptor.createVariableValue(myFactory, parameter);
-    DfaValue commonValue = getIteratedElement(parameter.getType(), iteratedValue);
-    if (DfaTypeValue.isUnknown(commonValue)) {
-      addInstruction(new FlushVariableInstruction(dfaVariable));
-    } else {
-      new CFGBuilder(this).pushForWrite(dfaVariable).push(commonValue).assign().pop();
+    if (statement instanceof PsiForeachStatement normalForeach) {
+      PsiParameter parameter = normalForeach.getIterationParameter();
+      DfaVariableValue dfaVariable = PlainDescriptor.createVariableValue(myFactory, parameter);
+      DfaValue commonValue = getIteratedElement(parameter.getType(), iteratedValue);
+      if (DfaTypeValue.isUnknown(commonValue)) {
+        addInstruction(new FlushVariableInstruction(dfaVariable));
+      } else {
+        new CFGBuilder(this).pushForWrite(dfaVariable).push(commonValue).assign().pop();
+      }
+    }
+    else if (statement instanceof PsiForeachPatternStatement patternForeach &&
+             patternForeach.getIterationPattern() instanceof PsiDeconstructionPattern pattern) {
+      PsiType contextType = JavaPsiPatternUtil.getContextType(pattern);
+      if (contextType == null) {
+        contextType = TypeUtils.getObjectType(statement);
+      }
+      DfaValue commonValue = getIteratedElement(contextType, iteratedValue);
+      addInstruction(new PushInstruction(commonValue, null));
+      DeferredOffset endPattern = new DeferredOffset();
+      processPattern(pattern, pattern, contextType,null, endPattern);
+      endPattern.setOffset(getInstructionCount());
+      addInstruction(new EnsureInstruction(null, RelationType.EQ, DfTypes.TRUE, null));
+      addInstruction(new PopInstruction());
     }
 
     if (!hasSizeCheck) {
@@ -562,7 +588,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new GotoInstruction(offset));
 
     finishElement(statement);
-    removeVariable(parameter);
   }
 
   @Override public void visitForStatement(@NotNull PsiForStatement statement) {

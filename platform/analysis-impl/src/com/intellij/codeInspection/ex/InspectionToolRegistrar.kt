@@ -41,7 +41,7 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
     }
   }
 
-  private val toolFactories: MutableCollection<MutableList<InspectionFactory>>
+  private val toolFactories: Collection<List<InspectionFactory>>
 
   init {
     val app = ApplicationManager.getApplication()

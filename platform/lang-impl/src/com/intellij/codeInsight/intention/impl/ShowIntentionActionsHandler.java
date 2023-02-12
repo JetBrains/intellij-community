@@ -170,8 +170,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
         }
       }
 
-      if (action instanceof PsiElementBaseIntentionAction) {
-        PsiElementBaseIntentionAction psiAction = (PsiElementBaseIntentionAction)action;
+      if (action instanceof PsiElementBaseIntentionAction psiAction) {
         if (!psiAction.checkFile(psiFile)) {
           return false;
         }

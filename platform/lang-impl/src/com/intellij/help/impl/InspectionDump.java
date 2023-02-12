@@ -53,7 +53,7 @@ final class InspectionDump implements ApplicationStarter {
         inspections.appendChild(inspection);
       }
 
-      Transformer transformer = TransformerFactory.newInstance().newTransformer();
+      Transformer transformer = TransformerFactory.newDefaultInstance().newTransformer();
       transformer.setOutputProperty(OutputKeys.INDENT, "yes");
       DOMSource source = new DOMSource(document);
       final String path = args.size() == 2 ? args.get(1) : PathManager.getHomePath() + File.separator + "AllInspections.xml";

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.core.JavaPsiBundle;
@@ -21,6 +21,7 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -595,6 +596,29 @@ public class InferenceSession {
   }
 
   public InferenceVariable[] initBounds(PsiElement context, PsiTypeParameter... typeParameters) {
+    return initBounds(context, mySiteSubstitutor, typeParameters);
+  }
+
+  /**
+   * @param context context element
+   * @param typeParameters type parameters belonging to the same class declaration
+   * @return array of inference variables that correspond to the specified type parameters,
+   * either exiting ones, or newly created ones.
+   */
+  public InferenceVariable[] initOrReuseVariables(PsiElement context,
+                                                  PsiTypeParameter @NotNull ... typeParameters) {
+    if (typeParameters.length == 0) return new InferenceVariable[0];
+    Map<PsiTypeParameter, PsiType> map = myInferenceSubstitution.getSubstitutionMap();
+    InferenceVariable[] variables = StreamEx.of(typeParameters).map(map::get)
+      .map(PsiUtil::resolveClassInClassTypeOnly)
+      .select(InferenceVariable.class)
+      .toArray(new InferenceVariable[0]);
+    if (variables.length != 0) {
+      if (variables.length != typeParameters.length) {
+        LOG.error("Unexpected: either all vars or no vars should be present");
+      }
+      return variables;
+    }
     return initBounds(context, mySiteSubstitutor, typeParameters);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -106,8 +106,7 @@ public class ArrayRenderer extends NodeRendererImpl {
     if (value == null) {
       return "null";
     }
-    else if (value instanceof ArrayReference) {
-      ArrayReference arrValue = (ArrayReference)value;
+    else if (value instanceof ArrayReference arrValue) {
       String componentTypeName = ((ArrayType)arrValue.type()).componentTypeName();
       boolean isString = CommonClassNames.JAVA_LANG_STRING.equals(componentTypeName);
       if (TypeConversionUtil.isPrimitive(componentTypeName) || isString) {
@@ -412,8 +411,7 @@ public class ArrayRenderer extends NodeRendererImpl {
         TreePath path = tree.getPathForLocation(e.getX(), e.getY());
         if (path != null) {
           TreeNode parent = ((TreeNode)path.getLastPathComponent()).getParent();
-          if (parent instanceof XValueNodeImpl) {
-            XValueNodeImpl valueNode = (XValueNodeImpl)parent;
+          if (parent instanceof XValueNodeImpl valueNode) {
             ArrayAction.setArrayRenderer(NodeRendererSettings.getInstance().getArrayRenderer(),
                                          valueNode,
                                          DebuggerManagerEx.getInstanceEx(tree.getProject()).getContext());

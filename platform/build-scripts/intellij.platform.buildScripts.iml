@@ -51,7 +51,6 @@
     <orderEntry type="module" module-name="intellij.groovy.rt" scope="RUNTIME" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.devkit.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="RUNTIME" />
@@ -70,7 +69,7 @@
     <orderEntry type="library" name="zstd-jni" level="project" />
     <orderEntry type="library" name="zstd-jni-windows-aarch64" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
-    <orderEntry type="library" name="kotlinx-collections-immutable-jvm" level="project" />
+    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="library" name="blockmap" level="project" />
@@ -166,5 +165,48 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library name="jetbrains.intellij.plugins.structure" type="repository">
+        <properties maven-id="org.jetbrains.intellij.plugins:structure-intellij:3.247">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains:annotations" />
+            <dependency maven-id="org.apache.commons:commons-compress" />
+            <dependency maven-id="org.slf4j:slf4j-api" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-annotations" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-core" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-databind" />
+            <dependency maven-id="org.jsoup:jsoup" />
+            <dependency maven-id="org.tukaani:xz" />
+            <dependency maven-id="commons-io:commons-io" />
+            <dependency maven-id="org.jvnet.staxex:stax-ex" />
+            <dependency maven-id="org.glassfish.jaxb:txw2" />
+            <dependency maven-id="org.glassfish.jaxb:jaxb-runtime" />
+            <dependency maven-id="com.sun.xml.fastinfoset:FastInfoset" />
+            <dependency maven-id="com.sun.istack:istack-commons-runtime" />
+            <dependency maven-id="javax.xml.bind:jaxb-api" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.247/structure-intellij-3.247.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.247/structure-base-3.247.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.14.1/jackson-module-kotlin-2.14.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="jaxb-api" level="project" />
+    <orderEntry type="library" name="jaxb-runtime" level="project" />
+    <orderEntry type="library" name="tcServiceMessages" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlin-reflect" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="javax.activation" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jsoup" level="project" />
   </component>
 </module>

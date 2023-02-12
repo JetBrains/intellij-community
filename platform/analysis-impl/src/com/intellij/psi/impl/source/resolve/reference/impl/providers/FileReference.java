@@ -29,6 +29,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.refactoring.rename.BindablePsiReference;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
@@ -67,8 +68,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
 
   @Nullable
   public static FileReference findFileReference(@NotNull final PsiReference original) {
-    if (original instanceof PsiMultiReference) {
-      final PsiMultiReference multiReference = (PsiMultiReference)original;
+    if (original instanceof PsiMultiReference multiReference) {
       for (PsiReference reference : multiReference.getReferences()) {
         if (reference instanceof FileReference) {
           return (FileReference)reference;
@@ -148,15 +148,21 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     context = ModelBranchUtil.obtainCopyFromTheSameBranch(getElement(), context);
     if (isAllowedEmptyPath(text) || ".".equals(text) || "/".equals(text)) {
       if (context instanceof FileReferenceResolver) {
-        ContainerUtil.addIfNotNull(result, resolveFileReferenceResolver((FileReferenceResolver)context, text));
-        return;
+        ResolveResult element = resolveFileReferenceResolver((FileReferenceResolver)context, text);
+        if (element != null) {
+          result.add(element);
+          return;
+        }
       }
       result.add(new PsiElementResolveResult(context));
     }
     else if ("..".equals(text)) {
       if (context instanceof FileReferenceResolver) {
-        ContainerUtil.addIfNotNull(result, resolveFileReferenceResolver((FileReferenceResolver)context, text));
-        return;
+        ResolveResult element = resolveFileReferenceResolver((FileReferenceResolver)context, text);
+        if (element != null) {
+          result.add(element);
+          return;
+        }
       }
 
       final PsiFileSystemItem resolved = context.getParent();
@@ -200,9 +206,8 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
           // match filesystem roots
           result.add(new PsiElementResolveResult(getOriginalFile(context)));
         }
-        else if (context instanceof PsiDirectory && caseSensitivityApplies((PsiDirectory)context, caseSensitive)) {
+        else if (context instanceof PsiDirectory directory && caseSensitivityApplies((PsiDirectory)context, caseSensitive)) {
           // optimization: do not load all children into VFS
-          PsiDirectory directory = (PsiDirectory)context;
           PsiFileSystemItem child = directory.findFile(decoded);
           if (child == null) child = directory.findSubdirectory(decoded);
           if (child != null) {
@@ -413,15 +418,14 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   }
 
   public PsiElement bindToElement(@NotNull final PsiElement element, final boolean absolute) throws IncorrectOperationException {
-    if (!(element instanceof PsiFileSystemItem)) {
+    if (!(element instanceof PsiFileSystemItem fileSystemItem)) {
       throw new IncorrectOperationException("Cannot bind to element, should be instanceof PsiFileSystemItem: " + element);
     }
 
     // handle empty reference that resolves to current file
     if (getCanonicalText().isEmpty() && element == getElement().getContainingFile()) return getElement();
 
-    final PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)element;
-    VirtualFile dstVFile = fileSystemItem.getVirtualFile();
+    final VirtualFile dstVFile = fileSystemItem.getVirtualFile();
     if (dstVFile == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
 
     PsiFile file = getElement().getContainingFile();
@@ -484,11 +488,13 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       for (PsiFileSystemItem context : contexts) {
         final VirtualFile contextFile = context.getVirtualFile();
         assert contextFile != null;
+        if (context instanceof FileReferenceResolver) {
+          String path = ((FileReferenceResolver)context).getRelativePath(this, dstVFile, element);
+          if (path != null) return rename(path);
+        }
         if (VfsUtilCore.isAncestor(contextFile, dstVFile, true)) {
-          final String path = VfsUtilCore.getRelativePath(dstVFile, contextFile, '/');
-          if (path != null) {
-            return rename(path);
-          }
+          String path = VfsUtilCore.getRelativePath(dstVFile, contextFile, '/');
+          if (path != null) return rename(path);
         }
       }
 
@@ -525,7 +531,9 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
    * FileReference.getContexts(). Note that in this case it should rename only the text range of the reference
    */
   protected Collection<PsiFileSystemItem> getContextsForBindToElement(VirtualFile curVFile, Project project, FileReferenceHelper helper) {
-    return helper.getContexts(project, curVFile);
+    CommonProcessors.CollectProcessor<PsiFileSystemItem> processor = new CommonProcessors.CollectProcessor<>();
+    helper.processContexts(getFileReferenceSet(), curVFile, true, processor);
+    return processor.getResults();
   }
 
   protected PsiElement fixRefText(String name) {

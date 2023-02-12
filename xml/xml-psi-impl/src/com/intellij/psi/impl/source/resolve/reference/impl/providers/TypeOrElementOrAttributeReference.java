@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.TextRange;
@@ -77,24 +77,18 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     final String localName = tag.getLocalName();
     final String attributeLocalName = attribute.getLocalName();
 
-    if (SchemaReferencesProvider.REF_ATTR_NAME.equals(attributeLocalName) || SchemaReferencesProvider.SUBSTITUTION_GROUP_ATTR_NAME.equals(attributeLocalName)) {
-      if (localName.equals(SchemaReferencesProvider.GROUP_TAG_NAME)) {
-        return ReferenceType.GroupReference;
-      } else if (localName.equals(SchemaReferencesProvider.ATTRIBUTE_GROUP_TAG_NAME)) {
-        return ReferenceType.AttributeGroupReference;
-      } else if (SchemaReferencesProvider.ELEMENT_TAG_NAME.equals(localName)) {
-        return ReferenceType.ElementReference;
-      } else if (SchemaReferencesProvider.ATTRIBUTE_TAG_NAME.equals(localName)) {
-        return ReferenceType.AttributeReference;
-      }
-    } else if (SchemaReferencesProvider.TYPE_ATTR_NAME.equals(attributeLocalName) ||
-               SchemaReferencesProvider.BASE_ATTR_NAME.equals(attributeLocalName) ||
-               SchemaReferencesProvider.MEMBER_TYPES_ATTR_NAME.equals(attributeLocalName) ||
-               SchemaReferencesProvider.ITEM_TYPE_ATTR_NAME.equals(attributeLocalName)
-              ) {
-      return ReferenceType.TypeReference;
-    }
-    return null;
+    return switch (attributeLocalName) {
+      case SchemaReferencesProvider.REF_ATTR_NAME, SchemaReferencesProvider.SUBSTITUTION_GROUP_ATTR_NAME -> switch (localName) {
+        case SchemaReferencesProvider.GROUP_TAG_NAME -> ReferenceType.GroupReference;
+        case SchemaReferencesProvider.ATTRIBUTE_GROUP_TAG_NAME -> ReferenceType.AttributeGroupReference;
+        case SchemaReferencesProvider.ELEMENT_TAG_NAME -> ReferenceType.ElementReference;
+        case SchemaReferencesProvider.ATTRIBUTE_TAG_NAME -> ReferenceType.AttributeReference;
+        default -> null;
+      };
+      case SchemaReferencesProvider.TYPE_ATTR_NAME, SchemaReferencesProvider.BASE_ATTR_NAME, 
+        SchemaReferencesProvider.MEMBER_TYPES_ATTR_NAME, SchemaReferencesProvider.ITEM_TYPE_ATTR_NAME -> ReferenceType.TypeReference;
+      default -> null;
+    };
   }
 
   @NotNull

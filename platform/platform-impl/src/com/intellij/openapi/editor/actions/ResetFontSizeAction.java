@@ -5,6 +5,7 @@ import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -99,17 +100,15 @@ public final class ResetFontSizeAction extends EditorAction {
   }
 
   private static final class PresentationModeStrategy implements Strategy {
-    private final UISettings settings = UISettings.getInstance();
-
     @Override
     public float getFontSize() {
-      return settings.getPresentationModeFontSize();
+      return UISettingsUtils.getInstance().getPresentationModeFontSize();
     }
 
     @Override
     public void setFontSize(float fontSize) {
       int fs = (int)fontSize;
-      settings.setPresentationModeFontSize(fs);
+      UISettingsUtils.getInstance().setPresentationModeFontSize(fs);
       for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
         if (editor instanceof EditorEx) {
           ((EditorEx)editor).setFontSize(fs);
@@ -148,10 +147,9 @@ public final class ResetFontSizeAction extends EditorAction {
   public void update(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (e.getPlace().equals(ActionPlaces.POPUP) && editor != null) {
-      if (!(editor instanceof EditorEx)) {
+      if (!(editor instanceof EditorEx editorEx)) {
         return;
       }
-      EditorEx editorEx = (EditorEx)editor;
       Strategy strategy = getStrategy(editorEx);
       float toReset = strategy.getFontSize();
       //noinspection DialogTitleCapitalization

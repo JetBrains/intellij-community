@@ -100,11 +100,12 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return ((ElementBase)element).getElementIcon(flags);
   }
 
+  @Nullable
   protected Icon computeBaseIcon(@Iconable.IconFlags int flags) {
     Icon baseIcon = isVisibilitySupported() ? getAdjustedBaseIcon(getBaseIcon(), flags) : getBaseIcon();
 
     // to prevent blinking, base icon should be created with the layers
-    if (this instanceof PsiElement) {
+    if (baseIcon != null && this instanceof PsiElement) {
       PsiFile file = ((PsiElement)this).getContainingFile();
       if (file != null) {
         return IconManager.getInstance().createLayeredIcon(file, baseIcon, flags);
@@ -113,6 +114,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return baseIcon;
   }
 
+  @Nullable
   protected Icon getBaseIcon() {
     if (this instanceof PsiElement) {
       PsiFile file = ((PsiElement)this).getContainingFile();
@@ -137,8 +139,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return fileType instanceof INativeFileType && ((INativeFileType) fileType).useNativeIcon() || fileType instanceof UnknownFileType;
   }
 
-  protected Icon getAdjustedBaseIcon(Icon icon, @Iconable.IconFlags int flags) {
-    if (BitUtil.isSet(flags, ICON_FLAG_VISIBILITY)) {
+  protected Icon getAdjustedBaseIcon(@Nullable Icon icon, @Iconable.IconFlags int flags) {
+    if (icon != null && BitUtil.isSet(flags, ICON_FLAG_VISIBILITY)) {
       return IconManager.getInstance().createRowIcon(icon, VISIBILITY_ICON_PLACEHOLDER.getValue());
     }
     return icon;

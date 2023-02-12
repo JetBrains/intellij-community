@@ -197,9 +197,8 @@ public final class RunDashboardServiceViewContributor
     if (!(object instanceof DataProvider)) return null;
 
     Object data = ((DataProvider)object).getData(PlatformCoreDataKeys.SELECTED_ITEMS.getName());
-    if (!(data instanceof Object[])) return null;
+    if (!(data instanceof Object[] items)) return null;
 
-    Object[] items = (Object[])data;
     if (items.length != 1) return null;
 
     RunDashboardRunConfigurationNode node = ObjectUtils.tryCast(items[0], RunDashboardRunConfigurationNode.class);

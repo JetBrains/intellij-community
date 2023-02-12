@@ -13,7 +13,7 @@ import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfiguration
 import org.jetbrains.kotlin.platform.idePlatformKind
 import java.util.concurrent.atomic.AtomicInteger
 
-private class KotlinConfigurationCheckerStartupActivity : ProjectPostStartupActivity {
+private class KotlinConfigurationCheckerStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
         KotlinConfigurationCheckerService.getInstance(project).performProjectPostOpenActions()
     }

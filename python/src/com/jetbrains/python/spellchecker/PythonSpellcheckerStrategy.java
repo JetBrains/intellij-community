@@ -84,8 +84,7 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
         return EMPTY_TOKENIZER;
       }
       PsiElement parent = element.getParent();
-      if (parent instanceof PyBinaryExpression) {
-        PyBinaryExpression binaryExpression = (PyBinaryExpression)parent;
+      if (parent instanceof PyBinaryExpression binaryExpression) {
         if (element == binaryExpression.getLeftExpression() && binaryExpression.getOperator() == PyTokenTypes.PERC) {
           return myFormatStringTokenizer;
         }

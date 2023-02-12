@@ -2,8 +2,8 @@
 package org.jetbrains.idea.maven.search;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.references.MavenModulePsiReference;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
+import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,10 +46,21 @@ class MavenModuleReferenceSearcher extends QueryExecutorBase<PsiReference, Refer
   private static List<PsiReference> getPomTagReferencesToDirectory(@Nullable XmlTag tag,
                                                                    @NotNull VirtualFile pomFile,
                                                                    @NotNull VirtualFile directory) {
+    try {
+      return doGetPomTagReferencesToDirectory(tag, pomFile, directory);
+    } catch (InvalidPathException ignored) {
+      return List.of();
+    }
+  }
+
+  @NotNull
+  private static List<PsiReference> doGetPomTagReferencesToDirectory(@Nullable XmlTag tag,
+                                                                     @NotNull VirtualFile pomFile,
+                                                                     @NotNull VirtualFile directory) {
     var references = new ArrayList<PsiReference>();
     if (null != tag) {
       var oldDirectoryPath = Paths.get(directory.getPath()).normalize();
-      var modulePath = tag.getValue().getText();
+      var modulePath = tag.getValue().getTrimmedText();
       var tmpPath = Paths.get(pomFile.getParent().getPath()).normalize();
       var referencedDirectoryPath = Paths.get(pomFile.getParent().getPath(), modulePath).normalize();
       if (referencedDirectoryPath.startsWith(oldDirectoryPath)) {
@@ -83,13 +95,11 @@ class MavenModuleReferenceSearcher extends QueryExecutorBase<PsiReference, Refer
     var pomFile = mavenProject.getFile();
     var mavenModel = MavenDomUtil.getMavenDomProjectModel(project, pomFile);
     if (null == mavenModel) return;
-    var mavenModules = mavenModel.getModules().getModules();
-    for (var mavenModule : mavenModules) {
-      var moduleTag = mavenModule.getXmlTag();
-      var references = getPomTagReferencesToDirectory(moduleTag, pomFile, directory.getVirtualFile());
-      for (var reference : references) {
-        consumer.process(reference);
-      }
+    var references = ReadAction.compute(() -> mavenModel.getModules().getModules().stream()
+      .flatMap(mavenModule -> getPomTagReferencesToDirectory(mavenModule.getXmlTag(), pomFile, directory.getVirtualFile()).stream())
+      .toList());
+    for (var reference : references) {
+      consumer.process(reference);
     }
   }
 
@@ -98,11 +108,9 @@ class MavenModuleReferenceSearcher extends QueryExecutorBase<PsiReference, Refer
     if (queryParameters.getElementToSearch() instanceof PsiDirectory directory) {
       var project = queryParameters.getProject();
       var modules = ModuleManager.getInstance(project).getModules();
-      ApplicationManager.getApplication().runReadAction(() -> {
-        for (var module : modules) {
-          processModule(project, module, directory, consumer);
-        }
-      });
+      for (var module : modules) {
+        processModule(project, module, directory, consumer);
+      }
     }
   }
 }

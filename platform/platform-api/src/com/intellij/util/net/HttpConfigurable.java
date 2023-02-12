@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -28,7 +28,6 @@ import com.intellij.util.io.HttpRequests;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.proxy.PropertiesEncryptionSupport;
-import com.intellij.util.proxy.SharedProxyConfig;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
@@ -115,31 +114,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
     correctPasswords(state);
     return state;
-  }
-
-  @Override
-  public void noStateLoaded() {
-    // all settings are defaults
-    // trying user's proxy configuration entered while obtaining the license
-    SharedProxyConfig.ProxyParameters cfg = SharedProxyConfig.load();
-    if (cfg == null) {
-      return;
-    }
-
-    SharedProxyConfig.clear();
-    if (cfg.host == null) {
-      return;
-    }
-
-    USE_HTTP_PROXY = true;
-    PROXY_HOST = cfg.host;
-    PROXY_PORT = cfg.port;
-    if (cfg.login != null) {
-      setPlainProxyPassword(new String(cfg.password));
-      storeSecure("proxy.login", cfg.login);
-      PROXY_AUTHENTICATION = true;
-      KEEP_PROXY_PASSWORD = true;
-    }
   }
 
   @Override
@@ -493,8 +467,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
         for (Proxy proxy : proxies) {
           if (isRealProxy(proxy)) {
             SocketAddress address = proxy.address();
-            if (address instanceof InetSocketAddress) {
-              InetSocketAddress inetSocketAddress = (InetSocketAddress)address;
+            if (address instanceof InetSocketAddress inetSocketAddress) {
               if (Proxy.Type.SOCKS.equals(proxy.type())) {
                 result.add(pair(JavaProxyProperty.SOCKS_HOST, inetSocketAddress.getHostString()));
                 result.add(pair(JavaProxyProperty.SOCKS_PORT, String.valueOf(inetSocketAddress.getPort())));

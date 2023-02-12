@@ -6,7 +6,6 @@ import com.intellij.ProjectTopics;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.debugger.*;
 import com.intellij.debugger.actions.DebuggerAction;
-import com.intellij.debugger.actions.PopFrameAction;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -64,6 +63,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
@@ -1176,8 +1176,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
               if (lastIndex >= 0 && myArgs.size() > lastIndex) { // at least one varargs param
                 Object firstVararg = myArgs.get(lastIndex);
                 if (myArgs.size() == lastIndex + 1) { // only one vararg param
-                  if (firstVararg instanceof ArrayReference) {
-                    ArrayReference arrayRef = (ArrayReference)firstVararg;
+                  if (firstVararg instanceof ArrayReference arrayRef) {
                     if (((ArrayType)arrayRef.referenceType()).componentType() instanceof InterfaceType) {
                       List<String> argTypes = myMethod.argumentTypeNames();
                       if (argTypes.size() > lastIndex && argTypes.get(lastIndex).startsWith(CommonClassNames.JAVA_LANG_OBJECT)) {
@@ -2005,7 +2004,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       if (myStackFrame.isBottom()) {
         DebuggerInvocationUtil.swingInvokeLater(myProject, () -> Messages.showMessageDialog(myProject, JavaDebuggerBundle
-          .message("error.pop.bottom.stackframe"), ActionsBundle.actionText(PopFrameAction.ACTION_NAME), Messages.getErrorIcon()));
+          .message("error.pop.bottom.stackframe"), XDebuggerBundle.message("xdebugger.reset.frame.title"), Messages.getErrorIcon()));
         return;
       }
 
@@ -2014,10 +2013,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         getSuspendManager().popFrame(suspendContext);
       }
       catch (final EvaluateException e) {
-        DebuggerInvocationUtil.swingInvokeLater(myProject,
-                                                () -> Messages.showMessageDialog(myProject, JavaDebuggerBundle
-                                                  .message("error.pop.stackframe", e.getLocalizedMessage()), ActionsBundle.actionText(
-                                                  PopFrameAction.ACTION_NAME), Messages.getErrorIcon()));
+        DebuggerInvocationUtil.swingInvokeLater(myProject, () ->
+          Messages.showMessageDialog(myProject, JavaDebuggerBundle.message("error.pop.stackframe", e.getLocalizedMessage()),
+                                     XDebuggerBundle.message("xdebugger.reset.frame.title"), Messages.getErrorIcon()));
         LOG.info(e);
       }
     }
@@ -2457,15 +2455,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     ObjectUtils.consumeIfNotNull(myReturnValueWatcher, MethodReturnValueWatcher::disable);
   }
 
-  private static class VirtualMachineData {
-    public final VirtualMachineProxyImpl vm;
-    public final RemoteConnection connection;
-    public final DebuggerManagerThreadImpl debuggerManagerThread;
-
-    private VirtualMachineData(VirtualMachineProxyImpl vm, RemoteConnection connection, DebuggerManagerThreadImpl debuggerManagerThread) {
-      this.vm = vm;
-      this.connection = connection;
-      this.debuggerManagerThread = debuggerManagerThread;
-    }
+  private record VirtualMachineData(VirtualMachineProxyImpl vm, RemoteConnection connection,
+                                    DebuggerManagerThreadImpl debuggerManagerThread) {
   }
 }

@@ -25,10 +25,9 @@ final class ShiftUtils {
   }
 
   public static boolean isPowerOfTwo(PsiExpression rhs) {
-    if (!(rhs instanceof PsiLiteralExpression)) {
+    if (!(rhs instanceof PsiLiteralExpression literal)) {
       return false;
     }
-    final PsiLiteralExpression literal = (PsiLiteralExpression)rhs;
     final Object value = literal.getValue();
     if (!(value instanceof Number)) {
       return false;

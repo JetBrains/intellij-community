@@ -368,7 +368,7 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
         }
         ActionGroup group = mySelectedContainer.getGridLayoutManager().getCaptionActions();
         if (group != null) {
-          final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+          final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("GridCaptionPanel", group);
           popupMenu.getComponent().show(GridCaptionPanel.this, e.getX(), e.getY());
           return true;
         }
@@ -528,10 +528,9 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
       if (mySelectedContainer == null) {
         return false;
       }
-      if (!(aEvent.getAttachedObject() instanceof MyDragBean)) {
+      if (!(aEvent.getAttachedObject() instanceof MyDragBean bean)) {
         return false;
       }
-      MyDragBean bean = (MyDragBean) aEvent.getAttachedObject();
       if (bean.isRow != myIsRow || bean.cells.length == 0) {
         return false;
       }
@@ -559,10 +558,9 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
 
     @Override
     public void drop(DnDEvent aEvent) {
-      if (!(aEvent.getAttachedObject() instanceof MyDragBean)) {
+      if (!(aEvent.getAttachedObject() instanceof MyDragBean dragBean)) {
         return;
       }
-      MyDragBean dragBean = (MyDragBean) aEvent.getAttachedObject();
       int targetCell = getDropGridLine(aEvent);
       if (targetCell < 0) return;
       mySelectedContainer.getGridLayoutManager().processCellsMoved(mySelectedContainer, myIsRow, dragBean.cells, targetCell);

@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.WindowManager
@@ -214,7 +214,7 @@ internal class RemindLaterManager : SimpleModificationTracker(), PersistentState
   }
 }
 
-internal class RemindLaterActivity : ProjectPostStartupActivity {
+internal class RemindLaterActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     RemindLaterManager.instance()
   }

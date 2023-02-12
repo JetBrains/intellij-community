@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import io.opentelemetry.api.common.AttributeKey
@@ -37,7 +37,7 @@ class ProprietaryBuildTools(
   /**
    * Properties required to bundle a default version of feature usage statistics white list into IDE
    */
-  val featureUsageStatisticsProperties: FeatureUsageStatisticsProperties?,
+  val featureUsageStatisticsProperties: List<FeatureUsageStatisticsProperties>?,
 
   /**
    * Generation of shared indexes and other tasks may require a valid license to run,

@@ -114,7 +114,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
     override fun dispose() = Unit
 
     private sealed class BaseStdLibCache(project: Project) :
-        SynchronizedFineGrainedEntityCache<LibraryInfo, Boolean>(project, cleanOnLowMemory = true),
+        SynchronizedFineGrainedEntityCache<LibraryInfo, Boolean>(project, doSelfInitialization = false, cleanOnLowMemory = true),
         LibraryInfoListener {
         override fun subscribe() {
             val busConnection = project.messageBus.connect(this)
@@ -161,7 +161,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         override fun dispose() = Unit
 
         private abstract inner class AbstractCache<Key : IdeaModuleInfo> :
-            SynchronizedFineGrainedEntityCache<Key, StdlibDependency>(project, cleanOnLowMemory = true),
+            SynchronizedFineGrainedEntityCache<Key, StdlibDependency>(project, doSelfInitialization = false, cleanOnLowMemory = true),
             LibraryInfoListener {
             override fun subscribe() {
                 val connection = project.messageBus.connect(this)

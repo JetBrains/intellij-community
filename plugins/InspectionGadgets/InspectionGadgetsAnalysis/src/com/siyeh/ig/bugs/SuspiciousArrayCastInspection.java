@@ -72,10 +72,9 @@ public class SuspiciousArrayCastInspection extends BaseInspection {
     }
 
     private static boolean isCollectionToArrayCall(PsiExpression expression) {
-      if (!(expression instanceof PsiMethodCallExpression)) {
+      if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       if (argumentList.getExpressionCount() != 1) {
         return false;

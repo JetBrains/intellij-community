@@ -6,17 +6,8 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nullable;
 
 @Internal
-public final class CliResult {
+public record CliResult(int exitCode, @Nullable @NlsContexts.DialogMessage String message) {
   public static final CliResult OK = new CliResult(0, null);
-
-  public final int exitCode;
-  public final @Nullable @NlsContexts.DialogMessage String message;
-
-  public CliResult(int exitCode, @Nullable @NlsContexts.DialogMessage String message) {
-    this.exitCode = exitCode;
-    this.message = message;
-  }
-
   @Override
   public String toString() {
     return message == null ? String.valueOf(exitCode) : exitCode + ": " + message;

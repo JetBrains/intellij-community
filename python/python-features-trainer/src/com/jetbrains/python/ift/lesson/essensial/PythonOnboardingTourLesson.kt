@@ -321,7 +321,7 @@ class PythonOnboardingTourLesson :
 
     task {
       val introductionText = PythonLessonsBundle.message("python.onboarding.temporary.configuration.description",
-                                                         strong(ActionsBundle.actionText("RedesignedRunToolbarWrapper")),
+                                                         strong(ActionsBundle.actionText("NewUiRunWidget")),
                                                          icon(AllIcons.Actions.Execute),
                                                          icon(AllIcons.Actions.StartDebugger))
 

@@ -32,6 +32,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.TreeNodeProcessingResult;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.*;
@@ -313,7 +314,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       final Object[] moduleValues = getModuleImmediateValues(pushers, module);
       return fileOrDir -> {
         applyPushersToFile(fileOrDir, pushers, moduleValues);
-        return ContentIteratorEx.Status.CONTINUE;
+        return TreeNodeProcessingResult.CONTINUE;
       };
     });
   }

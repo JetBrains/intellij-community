@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit2.configuration;
 
@@ -35,7 +35,6 @@ import javax.swing.text.PlainDocument;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 
 // Author: dyoma
@@ -114,11 +113,11 @@ public class JUnitConfigurationModel {
     final String testObject = getTestObject();
     final String className = getJUnitTextValue(CLASS);
     data.TEST_OBJECT = testObject;
-    if (testObject != JUnitConfiguration.TEST_PACKAGE &&
-        testObject != JUnitConfiguration.TEST_PATTERN &&
-        testObject != JUnitConfiguration.TEST_DIRECTORY &&
-        testObject != JUnitConfiguration.TEST_CATEGORY  &&
-        testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
+    if (!JUnitConfiguration.TEST_PACKAGE.equals(testObject) &&
+        !JUnitConfiguration.TEST_PATTERN.equals(testObject) &&
+        !JUnitConfiguration.TEST_DIRECTORY.equals(testObject) &&
+        !JUnitConfiguration.TEST_CATEGORY.equals(testObject) &&
+        !JUnitConfiguration.BY_SOURCE_CHANGES.equals(testObject)) {
       data.METHOD_NAME = getJUnitTextValue(METHOD);
       if (!className.equals(replaceRuntimeClassName(data.getMainClassName()))) {
         try {
@@ -143,25 +142,21 @@ public class JUnitConfigurationModel {
         }
       }
     }
-    else if (testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
-      if (testObject == JUnitConfiguration.TEST_PACKAGE) {
-        data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
-      }
-      else if (testObject == JUnitConfiguration.TEST_DIRECTORY) {
-        data.setDirName(getJUnitTextValue(DIR));
-      }
-      else if (testObject == JUnitConfiguration.TEST_CATEGORY) {
-        data.setCategoryName(getJUnitTextValue(CATEGORY));
-      }
-      else {
-        final LinkedHashSet<String> set = new LinkedHashSet<>();
-        final String[] patterns = getJUnitTextValue(PATTERN).split("\\|\\|");
-        for (String pattern : patterns) {
-          if (pattern.length() > 0) {
-            set.add(pattern);
+    else if (!JUnitConfiguration.BY_SOURCE_CHANGES.equals(testObject)) {
+      switch (testObject) {
+        case JUnitConfiguration.TEST_PACKAGE -> data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
+        case JUnitConfiguration.TEST_DIRECTORY -> data.setDirName(getJUnitTextValue(DIR));
+        case JUnitConfiguration.TEST_CATEGORY -> data.setCategoryName(getJUnitTextValue(CATEGORY));
+        default -> {
+          final LinkedHashSet<String> set = new LinkedHashSet<>();
+          final String[] patterns = getJUnitTextValue(PATTERN).split("\\|\\|");
+          for (String pattern : patterns) {
+            if (pattern.length() > 0) {
+              set.add(pattern);
+            }
           }
+          data.setPatterns(set);
         }
-        data.setPatterns(set);
       }
       data.MAIN_CLASS_NAME = "";
       data.METHOD_NAME = "";

@@ -20,8 +20,7 @@ public abstract class SliceUsageCellRendererBase extends ColoredTreeCellRenderer
     DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
     Object userObject = treeNode.getUserObject();
     if (userObject == null) return;
-    if (userObject instanceof MyColoredTreeCellRenderer) {
-      MyColoredTreeCellRenderer node = (MyColoredTreeCellRenderer)userObject;
+    if (userObject instanceof MyColoredTreeCellRenderer node) {
       node.customizeCellRenderer(this, tree, value, selected, expanded, leaf, row, hasFocus);
       if (node instanceof SliceNode) {
         setToolTipText(((SliceNode)node).getPresentation().getTooltip());

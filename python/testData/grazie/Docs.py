@@ -8,10 +8,10 @@ class ExampleClassWithNoTypos:
     This class has no useful logic; it's just a documentation example.
 
     Args:
-        name (str): the name of this group.
+        name (str): the name of this group. And another sentence.
 
     Attributes:
-        name (str): the name of this group.
+        name (str): the name of this group. <warning descr="UPPERCASE_SENTENCE_START">and</warning> another sentence.
 
     """
 

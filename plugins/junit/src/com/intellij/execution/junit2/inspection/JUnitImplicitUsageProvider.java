@@ -49,8 +49,7 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
 
   private static boolean isParameterUsedInParameterizedPresentation(PsiParameter parameter) {
     PsiElement declarationScope = parameter.getDeclarationScope();
-    if (declarationScope instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)declarationScope;
+    if (declarationScope instanceof PsiMethod method) {
       PsiAnnotation annotation = method.getModifierList().findAnnotation(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST);
       if (annotation != null) {
         PsiAnnotationMemberValue attributeValue = annotation.findDeclaredAttributeValue("name");
@@ -76,8 +75,7 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
   }
 
   private static boolean isReferencedInsideMethodSourceAnnotation(@NotNull PsiElement element) {
-    if (element instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod) element;
+    if (element instanceof PsiMethod psiMethod) {
       return CachedValuesManager.getCachedValue(psiMethod,
                                          () -> CachedValueProvider.Result.create(isReferencedInsideMethodSourceAnnotation(psiMethod),
                                                                                  PsiModificationTracker.MODIFICATION_COUNT));

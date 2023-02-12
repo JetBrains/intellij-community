@@ -28,7 +28,7 @@ public interface Notifications {
   /**
    * @deprecated Please use dedicated notification groups for your notifications
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   String SYSTEM_MESSAGES_GROUP_ID = "System Messages";
 
   default void notify(@NotNull Notification notification) { }

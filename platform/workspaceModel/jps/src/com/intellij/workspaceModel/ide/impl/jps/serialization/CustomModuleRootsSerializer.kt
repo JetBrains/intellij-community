@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId

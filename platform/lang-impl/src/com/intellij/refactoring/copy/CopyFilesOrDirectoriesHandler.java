@@ -469,8 +469,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       }
       ((PsiDirectoryImpl)targetDirectory).executeWithUpdatingAddedFilesDisabled(() -> ContainerUtil.addIfNotNull(added, targetDirectory.copyFileFrom(name, file)));
     }
-    else if (elementToCopy instanceof PsiDirectory) {
-      PsiDirectory directory = (PsiDirectory)elementToCopy;
+    else if (elementToCopy instanceof PsiDirectory directory) {
       if (directory.equals(targetDirectory)) {
         return;
       }

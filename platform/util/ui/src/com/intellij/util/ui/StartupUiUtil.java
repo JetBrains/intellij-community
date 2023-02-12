@@ -175,8 +175,7 @@ public final class StartupUiUtil {
 
     Graphics2D invG = null;
     double scale = 1;
-    if (image instanceof JBHiDPIScaledImage) {
-      JBHiDPIScaledImage hidpiImage = (JBHiDPIScaledImage)image;
+    if (image instanceof JBHiDPIScaledImage hidpiImage) {
       Image delegate = hidpiImage.getDelegate();
       if (delegate != null) image = delegate;
       scale = hidpiImage.getScale();

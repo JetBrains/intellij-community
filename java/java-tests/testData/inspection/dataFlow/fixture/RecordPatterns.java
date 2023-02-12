@@ -20,8 +20,8 @@ class Test {
 
   void test(Object obj) {
     switch(obj) {
-      case R(int x, int y) r -> {
-        if (<warning descr="Condition 'r == null' is always 'false'">r == null</warning>) {}
+      case R(int x, int y) -> {
+        if (<warning descr="Condition 'obj == null' is always 'false'">obj == null</warning>) {}
       }
       default -> {
         if (<warning descr="Condition 'obj instanceof R' is always 'false'">obj instanceof R</warning>) {}
@@ -33,7 +33,7 @@ class Test {
     switch (obj) {
       case R(int a, int b) when (a > b) -> {}
       case <warning descr="Switch label 'R(int b, int a) when (b > a)' is unreachable">R(int b, int a) when (<warning descr="Condition 'b > a' is always 'false'">b > a</warning>)</warning> -> {}
-      case R(int x, int y) r when <warning descr="Condition 'x == r.x()' is always 'true'">x == r.x()</warning> -> {}
+      case R(int x, int y) when <warning descr="Condition 'x == ((R)obj).x()' is always 'true'">x == ((R)obj).x()</warning> -> {}
       default -> {}
     }
   }

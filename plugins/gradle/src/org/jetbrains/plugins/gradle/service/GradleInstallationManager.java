@@ -110,8 +110,7 @@ public class GradleInstallationManager implements Disposable {
   public BuildLayoutParameters guessBuildLayoutParameters(@NotNull Project project, @Nullable String projectPath) {
     return myBuildLayoutParametersCache.computeIfAbsent(ObjectUtils.notNull(projectPath, getDefaultProjectKey(project)), p -> {
       for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(GradleConstants.SYSTEM_ID)) {
-        if (!(executionAware instanceof GradleExecutionAware)) continue;
-        GradleExecutionAware gradleExecutionAware = (GradleExecutionAware)executionAware;
+        if (!(executionAware instanceof GradleExecutionAware gradleExecutionAware)) continue;
         BuildLayoutParameters buildLayoutParameters = projectPath == null
                                                       ? gradleExecutionAware.getDefaultBuildLayoutParameters(project)
                                                       : gradleExecutionAware.getBuildLayoutParameters(project, projectPath);
@@ -351,8 +350,7 @@ public class GradleInstallationManager implements Disposable {
       project = openProjects.length > 0 ? openProjects[0] : projectManager.getDefaultProject();
     }
     for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(GradleConstants.SYSTEM_ID)) {
-      if (!(executionAware instanceof GradleExecutionAware)) continue;
-      GradleExecutionAware gradleExecutionAware = (GradleExecutionAware)executionAware;
+      if (!(executionAware instanceof GradleExecutionAware gradleExecutionAware)) continue;
       if (gradleExecutionAware.isGradleInstallationHomeDir(project, file.getPath())) {
         return true;
       }

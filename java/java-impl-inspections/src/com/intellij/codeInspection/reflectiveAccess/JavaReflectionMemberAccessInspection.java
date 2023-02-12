@@ -230,7 +230,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
       return null;
     }
     final List<ReflectiveType> argumentTypes =
-      ContainerUtil.map(methodArguments.expressions, JavaReflectionReferenceUtil::getReflectiveType);
+      ContainerUtil.map(methodArguments.expressions(), JavaReflectionReferenceUtil::getReflectiveType);
 
     return JavaLangClassMemberReference.matchMethod(methods, argumentTypes);
   }

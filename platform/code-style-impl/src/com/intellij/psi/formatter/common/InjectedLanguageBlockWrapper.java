@@ -149,8 +149,7 @@ public class InjectedLanguageBlockWrapper implements BlockEx {
     }
     if (child2 instanceof InjectedLanguageBlockWrapper) child2ToUse = ((InjectedLanguageBlockWrapper)child2).myOriginal;
     Spacing spacing = myOriginal.getSpacing(child1ToUse, child2ToUse);
-    if (spacing instanceof DependantSpacingImpl && shift != 0) {
-      DependantSpacingImpl hostSpacing = (DependantSpacingImpl)spacing;
+    if (spacing instanceof DependantSpacingImpl hostSpacing && shift != 0) {
       final int finalShift = shift;
       List<TextRange> shiftedRanges = ContainerUtil.map(hostSpacing.getDependentRegionRanges(), range -> range.shiftRight(finalShift));
       return new DependantSpacingImpl(

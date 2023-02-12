@@ -94,10 +94,9 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
     @Override
     protected void doFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof XmlFile)) {
+      if (!(element instanceof XmlFile xmlFile)) {
         return;
       }
-      final XmlFile xmlFile = (XmlFile)element;
       final PsiDirectory directory = xmlFile.getContainingDirectory();
       if (directory == null) {
         return;
@@ -148,10 +147,9 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
       if (rootTag != null) {
         final PsiElement[] children = rootTag.getChildren();
         for (PsiElement child : children) {
-          if (!(child instanceof HtmlTag)) {
+          if (!(child instanceof HtmlTag htmlTag)) {
             continue;
           }
-          final HtmlTag htmlTag = (HtmlTag)child;
           @NonNls final String name = htmlTag.getName();
           if ("body".equalsIgnoreCase(name)) {
             final XmlTagValue value = htmlTag.getValue();

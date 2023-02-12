@@ -169,9 +169,7 @@ public final class PyTypeChecker {
       return Optional.of(expectedAttributes.containsAll(((PyStructuralType)actual).getAttributeNames()));
     }
 
-    if (actual instanceof PyCallableType && expected instanceof PyCallableType) {
-      final PyCallableType expectedCallable = (PyCallableType)expected;
-      final PyCallableType actualCallable = (PyCallableType)actual;
+    if (actual instanceof PyCallableType actualCallable && expected instanceof PyCallableType expectedCallable) {
       final Optional<Boolean> match = match(expectedCallable, actualCallable, context);
       if (match.isPresent()) {
         return match;
@@ -262,8 +260,7 @@ public final class PyTypeChecker {
 
   private static boolean match(@NotNull PyParamSpecType expected, @Nullable PyType actual, @NotNull MatchContext context) {
     if (actual == null) return true;
-    if (!(actual instanceof PyParamSpecType)) return false;
-    final var callableActual = (PyParamSpecType)actual;
+    if (!(actual instanceof PyParamSpecType callableActual)) return false;
     final var parameters = callableActual.getParameters();
     if (parameters == null) return false;
     context.mySubstitutions.paramSpecs.put(expected, expected.withParameters(parameters, context.context));
@@ -399,8 +396,7 @@ public final class PyTypeChecker {
   private static @Nullable PyType dropSelfIfNeeded(@NotNull PyClassType classType,
                                                    @Nullable PyType elementType,
                                                    @NotNull TypeEvalContext context) {
-    if (elementType instanceof PyFunctionType) {
-      PyFunctionType functionType = (PyFunctionType)elementType;
+    if (elementType instanceof PyFunctionType functionType) {
       if (PyUtil.isInitOrNewMethod(functionType.getCallable()) || !classType.isDefinition()) {
         return functionType.dropSelf(context);
       }
@@ -529,15 +525,13 @@ public final class PyTypeChecker {
             matchContext.mySubstitutions.paramSpecs.put(expectedParamSpecType, expectedParamSpecType.withParameters(actualParameters, context));
             break;
           }
-          else if (expectedParamType instanceof PyConcatenateType && expectedParameters.size() == 1) {
+          else if (expectedParamType instanceof PyConcatenateType expectedConcatenateType && expectedParameters.size() == 1) {
             if (i != 0) break;
 
             final var actualParamType = actualParam.getType(context);
-            final var expectedConcatenateType = (PyConcatenateType)expectedParamType;
             final var expectedFirstTypes = expectedConcatenateType.getFirstTypes();
 
-            if (actualParamType instanceof PyConcatenateType) {
-              final var actualConcatenateType = (PyConcatenateType)actualParamType;
+            if (actualParamType instanceof PyConcatenateType actualConcatenateType) {
               final var actualFirstType = actualConcatenateType.getFirstTypes();
               if (!match(expectedFirstTypes, actualFirstType, matchContext)) {
                 return Optional.of(false);
@@ -624,8 +618,7 @@ public final class PyTypeChecker {
 
   private static boolean consistsOfSameElementNumberTuples(@NotNull PyUnionType unionType, int elementCount) {
     for (PyType type : unionType.getMembers()) {
-      if (type instanceof PyTupleType) {
-        final PyTupleType tupleType = (PyTupleType)type;
+      if (type instanceof PyTupleType tupleType) {
 
         if (!tupleType.isHomogeneous() && elementCount != tupleType.getElementCount()) {
           return false;
@@ -780,8 +773,7 @@ public final class PyTypeChecker {
         return true;
       }
     }
-    if (type instanceof PyUnionType) {
-      final PyUnionType union = (PyUnionType)type;
+    if (type instanceof PyUnionType union) {
       for (PyType t : union.getMembers()) {
         if (isUnknown(t, genericsAreUnknown, context)) {
           return true;
@@ -867,27 +859,23 @@ public final class PyTypeChecker {
     if (type instanceof PySelfType) {
       generics.self = (PySelfType)type;
     }
-    else if (type instanceof PyUnionType) {
-      final PyUnionType union = (PyUnionType)type;
+    else if (type instanceof PyUnionType union) {
       for (PyType t : union.getMembers()) {
         collectGenerics(t, context, generics, visited);
       }
     }
-    else if (type instanceof PyTupleType) {
-      final PyTupleType tuple = (PyTupleType)type;
+    else if (type instanceof PyTupleType tuple) {
       final int n = tuple.isHomogeneous() ? 1 : tuple.getElementCount();
       for (int i = 0; i < n; i++) {
         collectGenerics(tuple.getElementType(i), context, generics, visited);
       }
     }
-    else if (type instanceof PyCollectionType) {
-      final PyCollectionType collection = (PyCollectionType)type;
+    else if (type instanceof PyCollectionType collection) {
       for (PyType elementType : collection.getElementTypes()) {
         collectGenerics(elementType, context, generics, visited);
       }
     }
-    else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
-      final PyCallableType callable = (PyCallableType)type;
+    else if (type instanceof PyCallableType callable && !(type instanceof PyClassLikeType)) {
       final List<PyCallableParameter> parameters = callable.getParameters(context);
       if (parameters != null) {
         for (PyCallableParameter parameter : parameters) {
@@ -927,8 +915,7 @@ public final class PyTypeChecker {
     }
     try {
       if (hasGenerics(type, context)) {
-        if (type instanceof PyGenericType) {
-          final PyGenericType typeVar = (PyGenericType)type;
+        if (type instanceof PyGenericType typeVar) {
           PyType substitution = substitutions.typeVars.get(typeVar);
           if (substitution == null) {
             final PyInstantiableType<?> invertedTypeVar = invert(typeVar);
@@ -970,13 +957,11 @@ public final class PyTypeChecker {
         else if (type instanceof PyUnionType) {
           return ((PyUnionType)type).map(member -> substitute(member, substitutions, context, substituting));
         }
-        else if (type instanceof PyCollectionTypeImpl) {
-          final PyCollectionTypeImpl collection = (PyCollectionTypeImpl)type;
+        else if (type instanceof PyCollectionTypeImpl collection) {
           final List<PyType> elementTypes = collection.getElementTypes();
           final List<PyType> substitutes = new ArrayList<>();
           for (PyType elementType : elementTypes) {
-            if (elementType instanceof PyParamSpecType) {
-              final var paramSpecType = (PyParamSpecType)elementType;
+            if (elementType instanceof PyParamSpecType paramSpecType) {
               final var paramSpecTypeSubst = substitutions.paramSpecs.get(paramSpecType);
               if (paramSpecTypeSubst != null && paramSpecTypeSubst.getParameters() != null) {
                 substitutes.add(paramSpecTypeSubst);
@@ -1002,8 +987,7 @@ public final class PyTypeChecker {
           );
           return PyTypedDictType.Companion.createFromKeysToValueTypes(typedDictType.myClass, substitutedTDFields, false);
         }
-        else if (type instanceof PyTupleType) {
-          final PyTupleType tupleType = (PyTupleType)type;
+        else if (type instanceof PyTupleType tupleType) {
           final PyClass tupleClass = tupleType.getPyClass();
 
           final List<PyType> oldElementTypes = tupleType.isHomogeneous()
@@ -1015,8 +999,7 @@ public final class PyTypeChecker {
 
           return new PyTupleType(tupleClass, newElementTypes, tupleType.isHomogeneous());
         }
-        else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
-          final PyCallableType callable = (PyCallableType)type;
+        else if (type instanceof PyCallableType callable && !(type instanceof PyClassLikeType)) {
           List<PyCallableParameter> substParams = null;
           final List<PyCallableParameter> parameters = callable.getParameters(context);
           if (parameters != null) {
@@ -1030,8 +1013,7 @@ public final class PyTypeChecker {
                   break;
                 }
               }
-              if (parameters.size() == 1 && parameterType instanceof PyConcatenateType) {
-                final var concatenateType = (PyConcatenateType)parameterType;
+              if (parameters.size() == 1 && parameterType instanceof PyConcatenateType concatenateType) {
                 final var paramSpecType = concatenateType.getParamSpec();
                 final var paramSpecTypeSubst = substitutions.paramSpecs.get(paramSpecType);
                 if (paramSpecTypeSubst != null && paramSpecTypeSubst.getParameters() != null) {
@@ -1130,7 +1112,7 @@ public final class PyTypeChecker {
   /**
    * @deprecated use {@link PyTypeChecker#unifyReceiverWithParamSpecs(PyExpression, TypeEvalContext)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static Map<PyGenericType, PyType> unifyReceiver(@Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
     return unifyReceiverWithParamSpecs(receiver, context).typeVars;

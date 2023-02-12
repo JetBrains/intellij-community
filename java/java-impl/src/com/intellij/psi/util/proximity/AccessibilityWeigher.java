@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util.proximity;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -13,8 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public class AccessibilityWeigher extends ProximityWeigher {
   @Override
   public AccessibilityLevel weigh(@NotNull PsiElement element, @NotNull ProximityLocation location) {
-    if (element instanceof PsiDocCommentOwner) {
-      final PsiDocCommentOwner member = (PsiDocCommentOwner)element;
+    if (element instanceof PsiDocCommentOwner member) {
       PsiElement position = location.getPosition();
       Project project = location.getProject();
       if (project != null && !DumbService.isDumb(project)) {

@@ -132,8 +132,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
   @Override
   public boolean canDoAction(@NotNull final MouseEvent e) {
     Component component = e.getComponent();
-    if (component instanceof EditorGutterComponentEx) {
-      EditorGutterComponentEx gutter = (EditorGutterComponentEx)component;
+    if (component instanceof EditorGutterComponentEx gutter) {
       return e.getX() > gutter.getLineMarkerAreaOffset() && e.getX() < gutter.getIconAreaOffset();
     }
     return false;

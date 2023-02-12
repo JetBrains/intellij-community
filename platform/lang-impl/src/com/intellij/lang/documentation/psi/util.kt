@@ -1,15 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.psi
 
-import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.documentation.PsiDocumentationTargetProvider
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus.Internal
 
 @JvmField
 internal val LOG: Logger = Logger.getInstance("#com.intellij.lang.documentation.psi")
 
-@Internal
 fun psiDocumentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget {
   for (ext in PsiDocumentationTargetProvider.EP_NAME.extensionList) {
     return ext.documentationTarget(element, originalElement)

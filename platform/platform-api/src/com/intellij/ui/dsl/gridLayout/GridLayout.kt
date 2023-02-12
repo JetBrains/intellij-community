@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.UiDslException
@@ -7,7 +7,10 @@ import com.intellij.ui.dsl.checkConstraints
 import com.intellij.ui.dsl.gridLayout.impl.GridImpl
 import com.intellij.ui.dsl.gridLayout.impl.PreferredSizeData
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.LayoutManager2
 import javax.swing.JComponent
 
 /**

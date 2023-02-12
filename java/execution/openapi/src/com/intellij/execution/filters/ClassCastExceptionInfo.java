@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,15 +43,14 @@ public class ClassCastExceptionInfo extends ExceptionInfo {
         return typeElement;
       }
     }
-    if (e instanceof PsiIdentifier && e.getParent() instanceof PsiReferenceExpression) {
-      PsiReferenceExpression ref = (PsiReferenceExpression)e.getParent();
+    if (e instanceof PsiIdentifier && e.getParent() instanceof PsiReferenceExpression ref) {
       PsiElement target = ref.resolve();
       PsiType type;
-      if (target instanceof PsiMethod) {
-        type = ((PsiMethod)target).getReturnType();
+      if (target instanceof PsiMethod method) {
+        type = method.getReturnType();
       }
-      else if (target instanceof PsiVariable) {
-        type = ((PsiVariable)target).getType();
+      else if (target instanceof PsiVariable variable) {
+        type = variable.getType();
       }
       else {
         return null;

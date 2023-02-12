@@ -24,9 +24,9 @@ internal class FileLinkPasteProvider: PasteProvider {
     val files = FileCopyPasteUtil.getFiles(transferable)?.asSequence() ?: return
     val file = PsiEditorUtil.getPsiFile(editor)
     val document = editor.document
-    val content = EditorFileDropHandler.buildTextContent(files, file)
+    val content = MarkdownFileDropHandler.buildTextContent(files, file)
     runWriteAction {
-      EditorFileDropHandler.handleReadOnlyModificationException(project, document) {
+      MarkdownFileDropHandler.handleReadOnlyModificationException(project, document) {
         executeCommand(project) {
           editor.caretModel.runForEachCaret(reverseOrder = true) { caret ->
             val offset = caret.offset

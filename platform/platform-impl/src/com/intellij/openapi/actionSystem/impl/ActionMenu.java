@@ -469,8 +469,7 @@ public final class ActionMenu extends JBMenu {
 
     @Override
     public void eventDispatched(AWTEvent event) {
-      if (event instanceof ComponentEvent) {
-        ComponentEvent componentEvent = (ComponentEvent)event;
+      if (event instanceof ComponentEvent componentEvent) {
         Component component = componentEvent.getComponent();
         JPopupMenu popup = ComponentUtil.getParentOfType((Class<? extends JPopupMenu>)JPopupMenu.class, component);
         if (popup != null && popup.getInvoker() == myComponent && popup.isShowing()) {

@@ -3,6 +3,7 @@ package com.intellij.ide.wizard
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.toNioPath
 import java.nio.file.Path
 
 interface NewProjectWizardBaseData {
@@ -21,7 +22,7 @@ interface NewProjectWizardBaseData {
     level = DeprecationLevel.ERROR
   )
   val projectPath: Path
-    get() = Path.of(path, name)
+    get() = path.toNioPath().resolve(name)
 
   companion object {
 

@@ -112,8 +112,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     keyColumn.setMaxWidth(width);
     keyColumn.setMinWidth(width);
     final TableCellRenderer defaultRenderer = myTable.getDefaultRenderer(String.class);
-    if (defaultRenderer instanceof JComponent) {
-      final JComponent component = (JComponent)defaultRenderer;
+    if (defaultRenderer instanceof JComponent component) {
       component.putClientProperty("html.disable", Boolean.TRUE);
     }
     selectKey(keyToPreselect);

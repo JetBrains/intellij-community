@@ -330,10 +330,6 @@ class MavenImportFlow {
 }
 
 internal fun assertNonDispatchThread() {
-  val app = ApplicationManager.getApplication()
-  if (app.isUnitTestMode && app.isDispatchThread) {
-    throw RuntimeException("Access from event dispatch thread is not allowed")
-  }
   ApplicationManager.getApplication().assertIsNonDispatchThread()
 }
 

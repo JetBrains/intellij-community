@@ -77,7 +77,7 @@ private class CreateAllServicesAndExtensionsAction : AnAction("Create All Servic
     }
 
     if (errors.isNotEmpty()) {
-      logger<ComponentManagerImpl>().error(getErrorsAsString(errors))
+      logger<ComponentManagerImpl>().error(getErrorsAsString(errors).toString())
     }
     // some errors are not thrown but logged
     val message = (if (errors.isEmpty()) "No errors" else "${errors.size} errors were logged") + ". Check also that no logged errors."

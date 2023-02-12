@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.junit.Test
 
 class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
@@ -21,10 +21,10 @@ class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
         @Test public void test7() {}
       }
     """.trimIndent())
-    createProjectSubFile("build.gradle", buildscript {
+    createBuildFile {
       withJUnit()
       withJavaPlugin()
-    })
+    }
     importProject()
 
     execute(":test --tests org.example.TestCase")
@@ -102,10 +102,10 @@ class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
       public class SubTestCase extends TestCase {
       }
     """.trimIndent())
-    createProjectSubFile("build.gradle", buildscript {
+    createBuildFile {
       withJUnit()
       withJavaPlugin()
-    })
+    }
     importProject()
 
     execute(":test --tests org.example.SubTestCase")

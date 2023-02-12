@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-use std::collections::HashMap;
 use std::{env, fs};
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -8,7 +7,7 @@ use log::{debug, info};
 use path_absolutize::Absolutize;
 use anyhow::{bail, Context, Result};
 use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, read_file_to_end};
-use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_logs_home, LaunchConfiguration};
+use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_known_intellij_commands, get_logs_home, get_remote_dev_env_vars, IjStarterCommand, LaunchConfiguration};
 use crate::docker::is_running_in_docker;
 
 pub struct RemoteDevLaunchConfiguration {
@@ -55,8 +54,6 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
         let project_trust_file = self.init_project_trust_file_if_needed()?;
         debug!("Project trust file is: {:?}", project_trust_file);
 
-        self.set_ij_stored_host_password_if_needed()?;
-
         self.default.prepare_for_launch()
     }
 
@@ -64,7 +61,6 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
     fn prepare_for_launch(&self) -> Result<PathBuf> {
         init_env_vars()?;
         self.init_project_trust_file_if_needed()?;
-        self.set_ij_stored_host_password_if_needed()?;
 
         // TODO: ld patching
         self.default.prepare_for_launch()
@@ -153,11 +149,6 @@ impl DefaultLaunchConfiguration {
     }
 }
 
-struct IjStarterCommand {
-    ij_command: String,
-    is_project_path_required: bool
-}
-
 impl RemoteDevLaunchConfiguration {
     // remote-dev-server.exe ij_command_name /path/to/project args
     pub fn parse_remote_dev_args(args: &[String]) -> Result<RemoteDevArgs> {
@@ -168,29 +159,24 @@ impl RemoteDevLaunchConfiguration {
         }
 
         let remote_dev_starter_command = args[1].as_str();
-        let is_project_required_by_known_commands = HashMap::from([
-            ("registerBackendLocationForGateway", ("", false)),
-            ("run", ("cwmHostNoLobby", true)),
-            ("status", ("cwmHostStatus", false)),
-            ("cwmHostStatus", ("cwmHostStatus", false)),
-            ("dumpLaunchParameters", ("dump-launch-parameters", false)),
-            ("warmup", ("warmup", true)),
-            ("warm-up", ("warmup", true)),
-            ("invalidate-caches", ("invalidateCaches", true)),
-            ("installPlugins", ("installPlugins", false)),
-            ("stop", ("exit", true)),
-        ]);
+        let known_ij_commands = get_known_intellij_commands();
 
-        let ij_starter_command = match is_project_required_by_known_commands.get(remote_dev_starter_command) {
-            Some((ij_command, is_project_path_required)) => IjStarterCommand {
-                ij_command: ij_command.to_string(),
-                is_project_path_required: *is_project_path_required
+        let ij_starter_command = match known_ij_commands.get(remote_dev_starter_command) {
+            Some(ij_starter_command) => IjStarterCommand {
+                ij_command: ij_starter_command.ij_command.to_string(),
+                is_project_path_required: ij_starter_command.is_project_path_required,
+                is_arguments_required: ij_starter_command.is_arguments_required
             },
             None => {
                 print_help();
                 bail!("Unknown command: {remote_dev_starter_command}")
             }
         };
+
+        if remote_dev_starter_command == "help" {
+            print_help();
+            std::process::exit(0)
+        }
 
         let project_path = if args.len() > 2 {
             let arg = args[2].as_str();
@@ -407,7 +393,7 @@ impl RemoteDevLaunchConfiguration {
     fn init_project_trust_file_if_needed(&self) -> Result<PathBuf> {
         let ij_started_command = (&self.ij_starter_command).as_str();
         match ij_started_command {
-            "cwmHost" | "cwmHostNoLobby" => {
+            "cwmHost" | "cwmHostNoLobby" | "remoteDevHost" => {
                 debug!("Running with '{ij_started_command}' command, considering making project trust checks")
             }
             _ => { }
@@ -444,43 +430,6 @@ impl RemoteDevLaunchConfiguration {
         Ok(trust_file_path)
     }
 
-    fn set_ij_stored_host_password_if_needed(&self) -> Result<()> {
-        if &self.ij_starter_command != "cwmHost" {
-            return Ok(())
-        }
-
-        let ij_host_config_dir = &self.config_dir;
-        let ij_stored_host_passwd = ij_host_config_dir.join("cwm-passwd");
-
-        if ij_stored_host_passwd.exists() {
-            info!("{:?} already exists", ij_stored_host_passwd);
-            return Ok(());
-        }
-
-        if env::var("CWM_NO_PASSWORD").is_ok()
-            && env::var("CWM_HOST_PASSWORD").is_ok()
-            && env::var("REMOTE_DEV_NON_INTERACTIVE").is_ok() {
-
-            info!("No password required. As CWM_NO_PASSWORD, CWM_HOST_PASSWORD and REMOTE_DEV_NON_INTERACTIVE are set");
-            return Ok(());
-        }
-
-        info!(
-            "\n***\n\
-            Connecting via Lobby Server requires a password for security.\n\
-            You may also specify this password by setting CWM_HOST_PASSWORD environment variable or by putting it into {:?}\n\
-            Disable password by setting REMOTE_DEV_NON_INTERACTIVE environment variable to any non-empty value\n\n\
-            Enter a password that will be used to connect to the host\n", ij_stored_host_passwd
-        );
-
-        let password = rpassword::read_password()?;
-        env::set_var("CWM_HOST_PASSWORD", &password);
-
-        info!("Delete {:?} and re-run host if you want to change provided password.", ij_stored_host_passwd);
-
-        Ok(())
-    }
-
     #[cfg(any(target_os = "macos", target_os = "windows"))]
     pub fn setup_font_config() -> Result<()> {
         Ok(())
@@ -504,7 +453,19 @@ pub struct RemoteDevArgs {
 }
 
 fn print_help() {
-    println!("TODO: help")
+    let remote_dev_commands = &get_known_intellij_commands();
+    let mut remote_dev_commands_message = String::from("\nExamples:\n");
+    for (command_name, command_parameters) in remote_dev_commands.iter() {
+        let command_string = format!("\t./remote-dev-server {command_name} {command_parameters}\n");
+        remote_dev_commands_message.push_str(command_string.as_str())
+    }
+
+    let remote_dev_environment_variables = get_remote_dev_env_vars();
+
+    let remote_dev_environment_variables_message = format!("Environment variables:\n{remote_dev_environment_variables}");
+
+    let help_message = "\nUsage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]";
+    println!("{help_message}{remote_dev_commands_message}{remote_dev_environment_variables_message}");
 }
 
 fn init_env_vars() -> Result<()> {

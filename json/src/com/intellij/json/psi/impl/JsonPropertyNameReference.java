@@ -58,11 +58,10 @@ public class JsonPropertyNameReference implements PsiReference {
 
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
-    if (!(element instanceof JsonProperty)) {
+    if (!(element instanceof JsonProperty otherProperty)) {
       return false;
     }
     // May reference to the property with the same name for compatibility with JavaScript JSON support
-    final JsonProperty otherProperty = (JsonProperty)element;
     final PsiElement selfResolve = resolve();
     return otherProperty.getName().equals(getCanonicalText()) && selfResolve != otherProperty;
   }

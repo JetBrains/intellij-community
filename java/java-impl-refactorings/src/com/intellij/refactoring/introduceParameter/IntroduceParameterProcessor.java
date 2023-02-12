@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.analysis.AnalysisScope;
@@ -27,7 +27,10 @@ import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.listeners.RefactoringEventData;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.FieldConflictsResolver;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.LocalVariableOccurrenceManager;
@@ -580,9 +583,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   private void processChangedMethodCall(PsiElement element) throws IncorrectOperationException {
-    if (element.getParent() instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element.getParent();
-
+    if (element.getParent() instanceof PsiMethodCallExpression methodCall) {
       if (myMethodToReplaceIn == myMethodToSearchFor && PsiTreeUtil.isAncestor(methodCall, myParameterInitializer, false)) return;
 
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(methodCall.getProject());
@@ -623,7 +624,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       removeParametersFromCall(argList);
     }
     else {
-      LOG.error(element.getParent());
+      LOG.error("Unexpected parent type: " + element.getParent());
     }
   }
 

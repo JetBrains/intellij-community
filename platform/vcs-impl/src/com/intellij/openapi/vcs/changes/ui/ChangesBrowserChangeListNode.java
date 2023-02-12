@@ -39,8 +39,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
 
   @Override
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
-    if (userObject instanceof LocalChangeList) {
-      final LocalChangeList list = ((LocalChangeList)userObject);
+    if (userObject instanceof LocalChangeList list) {
       String listName = list.getName();
       if (StringUtil.isEmptyOrSpaces(listName)) listName = VcsBundle.message("changes.nodetitle.empty.changelist.name");
       renderer.appendTextWithIssueLinks(listName, list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES

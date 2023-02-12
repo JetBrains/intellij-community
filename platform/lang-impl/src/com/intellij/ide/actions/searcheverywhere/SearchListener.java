@@ -22,7 +22,7 @@ public interface SearchListener {
 
   void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors);
 
-  void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors);
+  void searchStarted(@NotNull String pattern, @NotNull Collection<? extends SearchEverywhereContributor<?>> contributors);
 
   static SearchListener combine(SearchListener... listeners) {
     return combine(Arrays.asList(listeners));
@@ -51,8 +51,8 @@ public interface SearchListener {
       }
 
       @Override
-      public void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
-        for (SearchListener l : listeners) l.searchStarted(contributors);
+      public void searchStarted(@NotNull String pattern, @NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
+        for (SearchListener l : listeners) l.searchStarted(pattern, contributors);
       }
 
       @Override

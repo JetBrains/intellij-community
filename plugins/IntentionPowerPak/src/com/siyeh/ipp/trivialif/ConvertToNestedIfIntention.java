@@ -38,15 +38,13 @@ public class ConvertToNestedIfIntention extends Intention {
 
       @Override
       public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiReturnStatement)) {
+        if (!(element instanceof PsiReturnStatement returnStatement)) {
           return false;
         }
-        final PsiReturnStatement returnStatement = (PsiReturnStatement)element;
         final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
-        if (!(returnValue instanceof PsiPolyadicExpression)) {
+        if (!(returnValue instanceof PsiPolyadicExpression polyadicExpression)) {
           return false;
         }
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)returnValue;
         final IElementType tokenType = polyadicExpression.getOperationTokenType();
         return tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.OROR;
       }
@@ -82,8 +80,7 @@ public class ConvertToNestedIfIntention extends Intention {
                                        boolean top,
                                        CommentTracker tracker,
                                        StringBuilder out) {
-    if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    if (expression instanceof PsiPolyadicExpression polyadicExpression) {
       final PsiExpression[] operands = polyadicExpression.getOperands();
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (JavaTokenType.ANDAND.equals(tokenType)) {
@@ -105,8 +102,7 @@ public class ConvertToNestedIfIntention extends Intention {
         return out;
       }
     }
-    else if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+    else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
       buildIf(parenthesizedExpression.getExpression(), top, tracker, out);
       return out;
     }

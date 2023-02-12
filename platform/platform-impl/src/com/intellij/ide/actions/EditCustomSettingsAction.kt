@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.CommonBundle
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
@@ -19,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -40,6 +42,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
   protected abstract fun file(): Path?
   protected abstract fun template(): String
   protected open fun charset(): Charset = StandardCharsets.UTF_8
+  protected open fun prepareDocument(document: Document?) { }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -80,6 +83,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
       vFile.refresh(false, false)
       val psiFile = PsiManager.getInstance(project).findFile(vFile)
       if (psiFile != null) {
+        prepareDocument(psiFile.viewProvider.document)
         PsiNavigationSupport.getInstance().createNavigatable(project, vFile, psiFile.textLength).navigate(true)
       }
     }
@@ -157,8 +161,9 @@ class EditCustomPropertiesAction : EditCustomSettingsAction() {
 }
 
 class EditCustomVmOptionsAction : EditCustomSettingsAction() {
-  private companion object {
-    val file: Lazy<Path?> = lazy { VMOptions.getUserOptionsFile() }
+  companion object {
+    @JvmField val JRE_PATH_KEY: Key<String> = Key.create("JRE_PATH_KEY")
+    private val file: Lazy<Path?> = lazy { VMOptions.getUserOptionsFile() }
   }
 
   override fun file(): Path? = file.value
@@ -167,6 +172,13 @@ class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   override fun charset(): Charset = VMOptions.getFileCharset()
 
   fun isEnabled(): Boolean = file() != null
+
+  override fun prepareDocument(document: Document?) {
+    val jrePath = System.getProperty("java.home")
+    if (jrePath != null && document != null) {
+      document.putUserData(JRE_PATH_KEY, jrePath)
+    }
+  }
 
   class AccessExtension : NonProjectFileWritingAccessExtension {
     override fun isWritable(file: VirtualFile): Boolean =

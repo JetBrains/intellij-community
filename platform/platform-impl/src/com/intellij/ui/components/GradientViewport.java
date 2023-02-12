@@ -91,8 +91,7 @@ public class GradientViewport extends JBViewport {
         y3 -= myInsets.bottom;
       }
       Component parent = myAlways ? null : getParent();
-      if (parent instanceof JScrollPane) {
-        JScrollPane pane = (JScrollPane)parent;
+      if (parent instanceof JScrollPane pane) {
         JScrollBar vBar = pane.getVerticalScrollBar();
         if (vBar != null && vBar.isVisible()) {
           if (vBar.getX() < getX()) {

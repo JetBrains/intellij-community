@@ -34,10 +34,9 @@ public class MergeCallSequenceToChainIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element) {
-    if (!(element instanceof PsiExpressionStatement)) {
+    if (!(element instanceof PsiExpressionStatement statement)) {
       return;
     }
-    final PsiExpressionStatement statement = (PsiExpressionStatement)element;
     final PsiExpressionStatement nextSibling = PsiTreeUtil.getNextSiblingOfType(statement, PsiExpressionStatement.class);
     if (nextSibling == null) {
       return;
@@ -70,8 +69,7 @@ public class MergeCallSequenceToChainIntention extends Intention {
   private static PsiMethodCallExpression getRootMethodCallExpression(PsiMethodCallExpression expression) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
-    if (qualifierExpression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)qualifierExpression;
+    if (qualifierExpression instanceof PsiMethodCallExpression methodCallExpression) {
       return getRootMethodCallExpression(methodCallExpression);
     }
     return expression;

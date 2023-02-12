@@ -98,9 +98,8 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
     if (!depsGraph.isEmpty()) {
       final ExternalSystemNode<?> depNode = new MyDependenciesNode(externalProjectsView);
       for (DataNode<?> dataNode : depsGraph) {
-        if (!(dataNode.getData() instanceof ProjectDependencies)) continue;
+        if (!(dataNode.getData() instanceof ProjectDependencies projectDependencies)) continue;
 
-        ProjectDependencies projectDependencies = (ProjectDependencies)dataNode.getData();
         for (ComponentDependencies componentDependencies : projectDependencies.getComponentsDependencies()) {
           depNode.add(new DependencyScopeExternalSystemNode(externalProjectsView, componentDependencies.getCompileDependenciesGraph()));
           depNode.add(new DependencyScopeExternalSystemNode(externalProjectsView, componentDependencies.getRuntimeDependenciesGraph()));
@@ -455,8 +454,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
     @NotNull
     private static String getDependencySimpleName(@NotNull ExternalSystemNode<?> node) {
       Object thatData = node.getData();
-      if (thatData instanceof LibraryDependencyData) {
-        LibraryDependencyData dependencyData = (LibraryDependencyData)thatData;
+      if (thatData instanceof LibraryDependencyData dependencyData) {
         String externalName = dependencyData.getExternalName();
         if (StringUtil.isEmpty(externalName)) {
           Set<String> paths = dependencyData.getTarget().getPaths(LibraryPathType.BINARY);
@@ -549,8 +547,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
   @NotNull
   private static String getNodeDisplayName(@NotNull DataNode<?> node) {
     Object data = node.getData();
-    if (data instanceof LibraryDependencyData) {
-      LibraryDependencyData libraryDependencyData = (LibraryDependencyData)data;
+    if (data instanceof LibraryDependencyData libraryDependencyData) {
       String externalName = libraryDependencyData.getExternalName();
       if (StringUtil.isEmpty(externalName)) {
         Set<String> paths = libraryDependencyData.getTarget().getPaths(LibraryPathType.BINARY);

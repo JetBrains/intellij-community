@@ -4,11 +4,11 @@ package com.intellij.openapi.vfs.encoding
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class EncodingProjectManagerStartUpActivity : ProjectPostStartupActivity {
+private class EncodingProjectManagerStartUpActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     // do not try to init on EDT due to VFS usage in loadState
     val service = project.serviceAsync<EncodingProjectManager>().await() as EncodingProjectManagerImpl

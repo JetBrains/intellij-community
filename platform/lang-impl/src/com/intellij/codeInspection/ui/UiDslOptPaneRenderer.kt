@@ -35,7 +35,7 @@ import kotlin.math.max
 
 class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
-  private data class RendererContext(val controller: OptionController, val project: Project?)
+  private data class RendererContext(val controller: OptionController, val parent: Disposable?, val project: Project?)
 
   override fun render(tool: InspectionProfileEntry,
                       pane: OptPane,
@@ -43,7 +43,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                       project: Project?): JComponent {
     return panel {
       pane.components.forEachIndexed { i, component ->
-        render(component, RendererContext(tool.optionController, project), i == 0, component.hasBottomGap)
+        render(component, RendererContext(tool.optionController, parent, project), i == 0, component.hasBottomGap)
       }
     }
       .apply { if (parent != null) registerValidators(parent) }
@@ -313,7 +313,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           val form = when (val validator = component.validator) {
             is StringValidatorWithSwingSelector -> ListEditForm("", component.label.label(), listWithListener, "", validator::select)
             else -> ListEditForm("", component.label.label(), listWithListener)
-          }
+          }.also { addColumnValidators(it.table, listOf(component), context.parent, context.project) }
           cell(form.contentPanel)
             .align(Align.FILL)
             .resizableColumn()
@@ -322,8 +322,9 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                 if (it.propertyName == "enabled") setEnabledRecursively(this, isEnabled)
               }
             }
+            .comment(component.description?.toString(), 50)
         }
-        
+
         is OptTable -> {
           val columns = component.children.map { stringList ->
             @Suppress("UNCHECKED_CAST") val list = context.getOption(stringList.bindId) as MutableList<String>
@@ -331,6 +332,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           }
           val columnNames = component.children.map { stringList -> stringList.label.label() }
           val table = ListTable(ListWrappingTableModel(columns, *columnNames.toTypedArray()))
+            .also { addColumnValidators(it, component.children, context.parent, context.project) }
           val panel = ToolbarDecorator.createDecorator(table)
             .setToolbarPosition(ActionToolbarPosition.LEFT)
             .setAddAction { _ ->
@@ -350,6 +352,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                    .resizeY(true)
                    .createPanel()
                })
+            .comment(component.description?.toString(), 40)
             .align(Align.FILL)
         }
 
@@ -370,9 +373,9 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
   private fun addRowWithSwingSelectors(table: ListTable, component: OptTable, project: Project?) {
     val tableModel = table.model
     val row = mutableListOf<String>()
-    for (child in component.children) {
+    for ((index, child) in component.children.withIndex()) {
       val validator = child.validator
-      if (project == null || validator == null || validator !is StringValidatorWithSwingSelector) {
+      if (index != 0 || project == null || validator == null || validator !is StringValidatorWithSwingSelector) {
         row.add("")
         continue
       }

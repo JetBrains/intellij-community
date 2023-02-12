@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cyclicDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -110,13 +110,11 @@ public class CyclicDependenciesAction extends AnAction{
     }
 
     PsiElement psiTarget = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    if (psiTarget instanceof PsiDirectory) {
-      PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
+    if (psiTarget instanceof PsiDirectory psiDirectory) {
       if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;
       return new AnalysisScope(psiDirectory);
     }
-    if (psiTarget instanceof PsiPackage) {
-      PsiPackage pack = (PsiPackage)psiTarget;
+    if (psiTarget instanceof PsiPackage pack) {
       PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
       if (dirs.length == 0) return null;
       return new JavaAnalysisScope(pack, PlatformCoreDataKeys.MODULE.getData(dataContext));

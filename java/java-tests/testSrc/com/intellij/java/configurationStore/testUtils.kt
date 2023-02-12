@@ -4,8 +4,8 @@ package com.intellij.java.configurationStore
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.components.stateStore
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.workspaceModel.ide.CustomModuleEntitySource
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.platform.workspaceModel.jps.CustomModuleEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity

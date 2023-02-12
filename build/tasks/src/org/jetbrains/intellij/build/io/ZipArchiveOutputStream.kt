@@ -84,7 +84,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     }
 
     val offset = channelPosition
-    val dataOffset = offset.toInt() + header.remaining()
+    val dataOffset = offset + header.remaining()
     entryCount++
     assert(method != -1)
 
@@ -104,7 +104,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     assert(method != -1)
 
     writeBuffer(content)
-    writeCentralFileHeader(size, compressedSize, method, crc, name, offset, dataOffset = offset.toInt() + headerSize)
+    writeCentralFileHeader(size, compressedSize, method, crc, name, offset, dataOffset = offset + headerSize)
   }
 
   fun writeEntryHeaderAt(name: ByteArray, header: ByteBuffer, position: Long, size: Int, compressedSize: Int, crc: Long, method: Int) {
@@ -112,7 +112,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
       throw IOException("Stream has already been finished")
     }
 
-    val dataOffset = position.toInt() + header.remaining()
+    val dataOffset = position + header.remaining()
 
     if (fileChannel == null) {
       val c = channel as SeekableByteChannel
@@ -133,7 +133,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
 
     entryCount++
 
-    assert(channelPosition == dataOffset.toLong() + compressedSize)
+    assert(channelPosition == dataOffset + compressedSize)
     writeCentralFileHeader(size = size,
                            compressedSize = compressedSize,
                            method = method,
@@ -398,7 +398,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
                                      crc: Long,
                                      name: ByteArray,
                                      offset: Long,
-                                     dataOffset: Int,
+                                     dataOffset: Long,
                                      normalName: ByteArray = name) {
     var buffer = metadataBuffer
     if (buffer.remaining() < (46 + name.size)) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.statistics;
 
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
@@ -68,6 +69,8 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
   @Override
   public @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
+    if (!TrustedProjects.isTrusted(project)) return Collections.emptySet();
+
     VcsProjectLog projectLog = project.getServiceIfCreated(VcsProjectLog.class);
     if (projectLog != null) {
       MainVcsLogUi ui = projectLog.getMainLogUi();
@@ -143,7 +146,7 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
   }
 
   private static @NotNull VcsLogUiProperties createDefaultPropertiesInstance() {
-    return new VcsLogUiPropertiesImpl<>(new VcsLogApplicationSettings()) {
+    return new VcsLogUiPropertiesImpl<VcsLogUiPropertiesImpl.State>(new VcsLogApplicationSettings()) {
       private final @NotNull State myState = new State();
 
       @Override

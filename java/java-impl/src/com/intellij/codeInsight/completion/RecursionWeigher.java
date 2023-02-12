@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -138,15 +138,12 @@ class RecursionWeigher extends LookupElementWeigher {
       return Result.normal;
     }
 
-    if (object instanceof PsiMethod && myPositionMethod != null) {
-      final PsiMethod method = (PsiMethod)object;
-      if (PsiTreeUtil.isAncestor(myReference, myPosition, false) &&
-          Objects.equals(method.getName(), myPositionMethod.getName())) {
-        if (!myDelegate && findDeepestSuper(method).equals(findDeepestSuper(myPositionMethod))) {
-          return Result.recursive;
-        }
-        return Result.delegation;
+    if (object instanceof PsiMethod method && myPositionMethod != null && PsiTreeUtil.isAncestor(myReference, myPosition, false) &&
+        Objects.equals(method.getName(), myPositionMethod.getName())) {
+      if (!myDelegate && findDeepestSuper(method).equals(findDeepestSuper(myPositionMethod))) {
+        return Result.recursive;
       }
+      return Result.delegation;
     }
 
     return Result.normal;

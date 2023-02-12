@@ -190,8 +190,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
       return ((DomFileElement<?>)myDomElement).getFile();
     }
 
-    if (myDomElement instanceof GenericAttributeValue) {
-      GenericAttributeValue<?> attributeValue = (GenericAttributeValue<?>)myDomElement;
+    if (myDomElement instanceof GenericAttributeValue<?> attributeValue) {
       final XmlAttributeValue value = attributeValue.getXmlAttributeValue();
       return value != null && StringUtil.isNotEmpty(value.getText()) ? value : attributeValue.getXmlElement();
     }

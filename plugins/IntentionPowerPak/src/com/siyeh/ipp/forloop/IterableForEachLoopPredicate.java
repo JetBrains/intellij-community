@@ -25,19 +25,17 @@ class IterableForEachLoopPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken token)) {
       return false;
     }
-    final PsiJavaToken token = (PsiJavaToken)element;
     final IElementType tokenType = token.getTokenType();
     if (!JavaTokenType.FOR_KEYWORD.equals(tokenType)) {
       return false;
     }
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiForeachStatement)) {
+    if (!(parent instanceof PsiForeachStatement foreachStatement)) {
       return false;
     }
-    final PsiForeachStatement foreachStatement = (PsiForeachStatement)parent;
     final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
     if (iteratedValue == null) {
       return false;

@@ -3,6 +3,7 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +27,7 @@ public final class OSAgnosticPathUtil {
    * instead of character-vs-character matching, the paths are compared as ["a", "b"] vs. ["a.b"].
    */
   public static final Comparator<String> COMPARATOR = (@Nullable String path1, @Nullable String path2) -> {
-    //noinspection StringEquality
-    if (path1 == path2) return 0;
+    if (Strings.areSameInstance(path1, path2)) return 0;
     if (path1 == null) return -1;
     if (path2 == null) return 1;
 

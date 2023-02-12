@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.codeInsight.Nullability;
@@ -99,8 +99,7 @@ class AnalysisStartingPoint {
         return analysis;
       }
     }
-    if (cond instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binop = (PsiBinaryExpression)cond;
+    if (cond instanceof PsiBinaryExpression binop) {
       PsiExpression left = PsiUtil.skipParenthesizedExprDown(binop.getLOperand());
       PsiExpression right = PsiUtil.skipParenthesizedExprDown(binop.getROperand());
       AnalysisStartingPoint analysis = fromBinOp(left, binop.getOperationTokenType(), right);
@@ -116,23 +115,20 @@ class AnalysisStartingPoint {
         return new AnalysisStartingPoint(typedObject, anchor);
       }
     }
-    if (cond instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)cond;
-      if (MethodCallUtils.isEqualsCall(call)) {
-        PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
-        PsiExpression argument = PsiUtil.skipParenthesizedExprDown(ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()));
-        if (qualifier != null && argument != null) {
-          DfType type = fromConstant(qualifier);
-          PsiExpression anchor = extractAnchor(argument);
-          if (type == null) {
-            type = fromConstant(argument);
-            anchor = extractAnchor(qualifier);
-          }
-          if (type != null && anchor != null) {
-            PsiType anchorType = anchor.getType();
-            if (anchorType == null || DfTypes.typedObject(anchorType, Nullability.NOT_NULL).meet(type) == DfType.BOTTOM) return null;
-            return new AnalysisStartingPoint(type, anchor);
-          }
+    if (cond instanceof PsiMethodCallExpression call && MethodCallUtils.isEqualsCall(call)) {
+      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
+      PsiExpression argument = PsiUtil.skipParenthesizedExprDown(ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()));
+      if (qualifier != null && argument != null) {
+        DfType type = fromConstant(qualifier);
+        PsiExpression anchor = extractAnchor(argument);
+        if (type == null) {
+          type = fromConstant(argument);
+          anchor = extractAnchor(qualifier);
+        }
+        if (type != null && anchor != null) {
+          PsiType anchorType = anchor.getType();
+          if (anchorType == null || DfTypes.typedObject(anchorType, Nullability.NOT_NULL).meet(type) == DfType.BOTTOM) return null;
+          return new AnalysisStartingPoint(type, anchor);
         }
       }
     }
@@ -160,13 +156,12 @@ class AnalysisStartingPoint {
   }
 
   static @Nullable DfType fromConstant(@NotNull PsiExpression constant) {
-    if (constant instanceof PsiClassObjectAccessExpression) {
-      PsiClassObjectAccessExpression classObject = (PsiClassObjectAccessExpression)constant;
+    if (constant instanceof PsiClassObjectAccessExpression classObject) {
       PsiTypeElement operand = classObject.getOperand();
       return DfTypes.referenceConstant(operand.getType(), classObject.getType());
     }
-    if (constant instanceof PsiReferenceExpression) {
-      PsiElement target = ((PsiReferenceExpression)constant).resolve();
+    if (constant instanceof PsiReferenceExpression refExpr) {
+      PsiElement target = refExpr.resolve();
       if (target instanceof PsiEnumConstant) {
         return DfTypes.referenceConstant(target, Objects.requireNonNull(constant.getType()));
       }
@@ -248,8 +243,7 @@ class AnalysisStartingPoint {
           newRange = origRange.negate(lrType).minus(LongRangeSet.point(1), lrType);
         }
       }
-      if (expression instanceof PsiBinaryExpression) {
-        PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
+      if (expression instanceof PsiBinaryExpression binOp) {
         IElementType type = binOp.getOperationTokenType();
         LongRangeSet leftRange = CommonDataflow.getExpressionRange(binOp.getLOperand());
         LongRangeSet rightRange = CommonDataflow.getExpressionRange(binOp.getROperand());

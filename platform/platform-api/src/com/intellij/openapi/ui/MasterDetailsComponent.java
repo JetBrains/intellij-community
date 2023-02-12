@@ -127,8 +127,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         MasterDetailsComponent.this.addNotify();
 
         TreeModel m = myTree.getModel();
-        if (m instanceof DefaultTreeModel) {
-          DefaultTreeModel model = (DefaultTreeModel)m;
+        if (m instanceof DefaultTreeModel model) {
           for (int eachRow = 0; eachRow < myTree.getRowCount(); eachRow++) {
             TreePath eachPath = myTree.getPathForRow(eachRow);
             Object component = eachPath.getLastPathComponent();
@@ -222,8 +221,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     final TreePath path = myTree.getSelectionPath();
     if (path != null) {
       final Object lastPathComp = path.getLastPathComponent();
-      if (!(lastPathComp instanceof MyNode)) return;
-      final MyNode node = (MyNode)lastPathComp;
+      if (!(lastPathComp instanceof MyNode node)) return;
       setSelectedNode(node);
     } else {
       setSelectedNode(null);
@@ -528,8 +526,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   @Nullable
   public Object getSelectedObject() {
     final TreePath selectionPath = myTree.getSelectionPath();
-    if (selectionPath != null && selectionPath.getLastPathComponent() instanceof MyNode) {
-      MyNode node = (MyNode)selectionPath.getLastPathComponent();
+    if (selectionPath != null && selectionPath.getLastPathComponent() instanceof MyNode node) {
       final NamedConfigurable configurable = node.getConfigurable();
       LOG.assertTrue(configurable != null, "already disposed");
       return configurable.getEditableObject();
@@ -749,8 +746,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      if (value instanceof MyNode) {
-        final MyNode node = (MyNode)value;
+      if (value instanceof MyNode node) {
         renderIcon(node, expanded);
         renderName(node);
       }

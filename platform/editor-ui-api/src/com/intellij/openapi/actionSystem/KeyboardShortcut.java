@@ -58,10 +58,9 @@ public final class KeyboardShortcut extends Shortcut {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof KeyboardShortcut)) {
+    if (!(obj instanceof KeyboardShortcut second)) {
       return false;
     }
-    KeyboardShortcut second = (KeyboardShortcut)obj;
     return Comparing.equal(myFirstKeyStroke, second.myFirstKeyStroke) && Comparing.equal(mySecondKeyStroke, second.mySecondKeyStroke);
   }
 
@@ -72,8 +71,7 @@ public final class KeyboardShortcut extends Shortcut {
 
   @Override
   public boolean startsWith(@NotNull final Shortcut sc) {
-    if (sc instanceof KeyboardShortcut) {
-      final KeyboardShortcut other = (KeyboardShortcut)sc;
+    if (sc instanceof KeyboardShortcut other) {
       return myFirstKeyStroke.equals(other.myFirstKeyStroke) && (other.mySecondKeyStroke == null || other.mySecondKeyStroke.equals(mySecondKeyStroke));
     }
     else {

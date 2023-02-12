@@ -52,8 +52,7 @@ public class Descriptor {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof Descriptor)) return false;
-    final Descriptor descriptor = (Descriptor)obj;
+    if (!(obj instanceof Descriptor descriptor)) return false;
     return myShortName.equals(descriptor.myShortName) &&
            myLevel.equals(descriptor.getLevel()) &&
            myEnabled == descriptor.isEnabled() &&

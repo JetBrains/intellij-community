@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.impl.FloatingDecorator
 import com.intellij.openapi.wm.impl.InternalDecorator
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.openapi.wm.impl.isInternal
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
@@ -465,7 +466,7 @@ class InternalDecoratorImpl internal constructor(
       val windowInfo = window.windowInfo
       if (toolWindowManager.project.isDisposed ||
           !toolWindowManager.isToolWindowRegistered(window.id) ||
-          window.isDisposed || windowInfo.type == ToolWindowType.FLOATING || windowInfo.type == ToolWindowType.WINDOWED) {
+          window.isDisposed || !windowInfo.type.isInternal) {
         return JBInsets.emptyInsets()
       }
       val anchor = windowInfo.anchor
@@ -514,14 +515,16 @@ class InternalDecoratorImpl internal constructor(
 
   fun updateActiveAndHoverState() {
     val narrow = this.toolWindow.decorator?.width?.let { it < JBUI.scale(120) } ?: false
-    val toolbar = headerToolbar
+    val isVisible = narrow || !toolWindow.toolWindowManager.isNewUi || isWindowHovered || header.isPopupShowing || toolWindow.isActive
+
+    val toolbar = header.getToolbar()
     if (toolbar is AlphaAnimated) {
-      val alpha = toolbar as AlphaAnimated
-      alpha.alphaContext.isVisible = (narrow
-                                     || !toolWindow.toolWindowManager.isNewUi
-                                     || isWindowHovered
-                                     || header.isPopupShowing
-                                     || toolWindow.isActive)
+      toolbar.alphaContext.isVisible = isVisible
+    }
+
+    val toolbarWest = header.getToolbarWest()
+    if (toolbarWest != null && toolbarWest is AlphaAnimated) {
+      toolbarWest.alphaContext.isVisible = isVisible
     }
   }
 

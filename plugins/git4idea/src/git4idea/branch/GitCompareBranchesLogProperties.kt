@@ -25,9 +25,7 @@ abstract class GitCompareBranchesLogProperties(project: Project) :
 
   private var commonState = MyState()
 
-  override fun getLogUiState(): MyState {
-    return commonState
-  }
+  override val logUiState: MyState = commonState
 
   override fun getState(): MyState = logUiState
 

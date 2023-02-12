@@ -80,8 +80,7 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     while (! (current instanceof PsiFile)) {
       final PsiElement position = current;
       current = current.getParent();
-      if (current instanceof JsonArray) {
-        JsonArray array = (JsonArray)current;
+      if (current instanceof JsonArray array) {
         final List<JsonValue> list = array.getValueList();
         int idx = -1;
         for (int i = 0; i < list.size(); i++) {

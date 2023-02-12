@@ -115,9 +115,7 @@ private fun createPresentation(toolWindow: ToolWindowImpl): Presentation {
 
 private fun scaleIcon(presentation: Presentation) {
   val iconSize = JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSize()
-  if (presentation.icon is ScalableIcon && presentation.icon.iconWidth != iconSize) {
-    presentation.icon = IconLoader.loadCustomVersionOrScale(presentation.icon as ScalableIcon, iconSize)
-  }
+  presentation.icon = IconLoader.loadCustomVersionOrScale(presentation.icon as ScalableIcon, iconSize)
 }
 
 private fun createPopupGroup(toolWindow: ToolWindowImpl): DefaultActionGroup {

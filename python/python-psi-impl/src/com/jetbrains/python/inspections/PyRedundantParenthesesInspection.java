@@ -122,8 +122,7 @@ public final class PyRedundantParenthesesInspection extends PyInspection {
           registerProblem(node, PyPsiBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
         }
       }
-      else if (expression instanceof PyBinaryExpression) {
-        final PyBinaryExpression binaryExpression = (PyBinaryExpression)expression;
+      else if (expression instanceof PyBinaryExpression binaryExpression) {
 
         if (parent instanceof PyPrefixExpression) {
           return;

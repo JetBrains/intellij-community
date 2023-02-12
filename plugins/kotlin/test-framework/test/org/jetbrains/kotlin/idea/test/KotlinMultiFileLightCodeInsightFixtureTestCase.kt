@@ -10,6 +10,8 @@ import java.nio.file.Path
 import kotlin.io.path.*
 
 abstract class KotlinMultiFileLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFixtureTestCase() {
+    protected open val isLibraryByDefault: Boolean get() = false
+
     private var mockLibraryFacility: MockLibraryFacility? = null
     private var tempDirectory: Path? = null
 
@@ -21,19 +23,19 @@ abstract class KotlinMultiFileLightCodeInsightFixtureTestCase : KotlinLightCodeI
     )
 
     protected open fun doTest(testDataPath: String) {
-        if (testDataPath.endsWith(".test")) {
-            doMultiFileTest(testDataPath)
-        } else {
-            TODO("Not implemented yet")
-        }
+        doMultiFileTest(testDataPath)
     }
 
     private fun doMultiFileTest(testDataPath: String) {
         val mainFile = Path(testDataPath)
 
-        val subFiles: List<TestFile> = createTestFiles(mainFile)
+        val subFiles: List<TestFile> = if (isLibraryByDefault) {
+            emptyList()
+        } else {
+            createTestFiles(mainFile)
+        }
 
-        val libraryFile = Path("$testDataPath.lib")
+        val libraryFile = Path(if (isLibraryByDefault) testDataPath else "$testDataPath.lib")
         if (libraryFile.exists()) {
             configureLibraries(libraryFile)
         }
@@ -51,6 +53,8 @@ abstract class KotlinMultiFileLightCodeInsightFixtureTestCase : KotlinLightCodeI
         assertNotEmpty(libraryFiles)
 
         val directives = libraryFiles.first().directives
+        val compilerArguments = directives["COMPILER_ARGUMENTS"].orEmpty()
+
         val directoryForLibFiles = createTempDirectory(prefix = fileName()).also { tempDirectory = it }
         val sources = mutableListOf<File>()
         for (testFile in libraryFiles) {
@@ -70,13 +74,14 @@ abstract class KotlinMultiFileLightCodeInsightFixtureTestCase : KotlinLightCodeI
             attachSources = "WITH_SOURCES" in directives,
             libraryName = libraryName,
             target = jarFile,
+            options = compilerArguments.split(' ').map(String::trim).filter(String::isNotBlank),
         )
 
         mockLibraryFacility?.setUp(module)
     }
 
     private fun createTestFiles(mainFile: Path): List<TestFile> = TestFiles.createTestFiles(
-        /* testFileName = */ "single.kt",
+        /* testFileName = */ mainFile.name.takeIf { it.endsWith("kt") || it.endsWith("kts") } ?: "single.kt",
         /* expectedText = */ mainFile.readText(),
         object : TestFiles.TestFileFactoryNoModules<TestFile>() {
             override fun create(fileName: String, text: String, directives: Directives): TestFile {

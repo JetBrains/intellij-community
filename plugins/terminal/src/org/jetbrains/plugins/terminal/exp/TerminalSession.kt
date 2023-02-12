@@ -6,67 +6,68 @@ import com.intellij.openapi.project.Project
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.ConcurrencyUtil
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
+import com.jediterm.core.util.TermSize
+import com.jediterm.terminal.RequestOrigin
 import com.jediterm.terminal.TerminalStarter
 import com.jediterm.terminal.TtyBasedArrayDataStream
-import com.jediterm.terminal.model.*
-import org.jetbrains.plugins.terminal.AbstractTerminalRunner
-import org.jetbrains.plugins.terminal.TerminalProcessOptions
-import org.jetbrains.plugins.terminal.TerminalToolWindowManager
-import java.awt.Dimension
+import com.jediterm.terminal.TtyConnector
+import com.jediterm.terminal.model.JediTermDebouncerImpl
+import com.jediterm.terminal.model.JediTermTypeAheadModel
+import com.jediterm.terminal.model.StyleState
+import com.jediterm.terminal.model.TerminalTextBuffer
 import java.awt.event.KeyEvent
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 
 private var sessionIndex = 1
 
 class TerminalSession(private val project: Project,
-                      private val settings: JBTerminalSystemSettingsProviderBase,
-                      private val size: Dimension): Disposable {
+                      private val settings: JBTerminalSystemSettingsProviderBase) : Disposable {
   val model: TerminalModel
-  val terminalStarter: TerminalStarter
+  lateinit var terminalStarter: TerminalStarter
 
   private val terminalExecutor: ExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("Terminal-${sessionIndex++}")
   private val textBuffer: TerminalTextBuffer
-  private val promptHeaderFuture: CompletableFuture<String> = CompletableFuture()
+  private val controller: TerminalController
+  private val commandManager: ShellCommandManager
+  private val typeAheadManager: TerminalTypeAheadManager
 
   init {
-    val terminalRunner = TerminalToolWindowManager.getInstance(project).terminalRunner as AbstractTerminalRunner<Process>
-    val process = terminalRunner.createProcess(TerminalProcessOptions(null, size.width, size.height))
-    val ttyConnector = terminalRunner.createTtyConnector(process)
-
     val styleState = StyleState()
     styleState.setDefaultStyle(settings.defaultStyle)
-    textBuffer = TerminalTextBuffer(size.width, size.height, styleState)
+    textBuffer = TerminalTextBuffer(80, 24, styleState)
     model = TerminalModel(textBuffer, styleState)
-    val controller = TerminalController(model, settings)
+    controller = TerminalController(model, settings)
+    commandManager = ShellCommandManager(controller)
 
     val typeAheadTerminalModel = JediTermTypeAheadModel(controller, textBuffer, settings)
-    val typeAheadManager = TerminalTypeAheadManager(typeAheadTerminalModel)
+    typeAheadManager = TerminalTypeAheadManager(typeAheadTerminalModel)
     val typeAheadDebouncer = JediTermDebouncerImpl(typeAheadManager::debounce, TerminalTypeAheadManager.MAX_TERMINAL_DELAY)
     typeAheadManager.setClearPredictionsDebouncer(typeAheadDebouncer)
-
-    terminalStarter = TerminalStarter(controller, ttyConnector, TtyBasedArrayDataStream(ttyConnector), typeAheadManager)
   }
 
-  fun start() {
-    textBuffer.addModelListener(object : TerminalModelListener {
-      override fun modelChanged() {
-        val text = textBuffer.screenLines.dropLastWhile { it == ' ' || it == '\n' }
-        if (text.length != 1 && text.endsWith("%")) {
-          promptHeaderFuture.complete("$text ")
-          textBuffer.removeModelListener(this)
-        }
-      }
-    })
-    terminalExecutor.submit { terminalStarter.start() }
+  fun start(ttyConnector: TtyConnector) {
+    terminalStarter = TerminalStarter(controller, ttyConnector, TtyBasedArrayDataStream(ttyConnector), typeAheadManager)
+    terminalExecutor.submit {
+      terminalStarter.start()
+    }
   }
 
   fun executeCommand(command: String) {
-    promptHeaderFuture.thenAccept {
-      val enterCode = terminalStarter.getCode(KeyEvent.VK_ENTER, 0)
-      terminalStarter.sendString(command, false)
-      terminalStarter.sendBytes(enterCode, false)
+    val enterCode = terminalStarter.getCode(KeyEvent.VK_ENTER, 0)
+    terminalStarter.sendString(command, false)
+    terminalStarter.sendBytes(enterCode, false)
+  }
+
+  fun postResize(newSize: TermSize) {
+    // it can be executed right after component is shown,
+    // terminal starter can not be initialized at this point
+    if (this::terminalStarter.isInitialized) {
+      terminalStarter.postResize(newSize, RequestOrigin.User)
     }
+  }
+
+  fun addCommandListener(listener: ShellCommandListener, parentDisposable: Disposable) {
+    commandManager.addListener(listener, parentDisposable)
   }
 
   override fun dispose() {

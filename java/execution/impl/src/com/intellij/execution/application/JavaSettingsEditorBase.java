@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -7,10 +7,8 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaRunConfigurationBase;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.ui.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
-import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,11 +38,13 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
     fragments.addAll(commonParameterFragments.getFragments());
     fragments.add(CommonJavaFragments.createBuildBeforeRun(beforeRunComponent, this));
 
-    SettingsEditorFragment<T, ?> vmParameters = CommonJavaFragments.vmOptionsEx(mySettings, hasModule);
-    fragments.add(vmParameters);
     fragments.add(moduleClasspath);
     fragments.add(new ClasspathModifier<>(mySettings));
     customizeFragments(fragments, moduleClasspath, commonParameterFragments);
+    SettingsEditorFragment<T, ?> jrePath = ContainerUtil.find(fragments, f -> CommonJavaFragments.JRE_PATH.equals(f.getId()));
+    JrePathEditor jrePathEditor = jrePath != null && jrePath.getComponent() instanceof JrePathEditor editor ? editor : null;
+    SettingsEditorFragment<T, ?> vmParameters = CommonJavaFragments.vmOptionsEx(mySettings, hasModule, jrePathEditor);
+    fragments.add(vmParameters);
 
     fragments.add(new LogsGroupFragment<>());
     return fragments;
@@ -85,7 +85,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
   @Override
   public void targetChanged(String targetName) {
     super.targetChanged(targetName);
-    SettingsEditorFragment<T, ?> fragment = ContainerUtil.find(getFragments(), f -> CommonJavaFragments.JRE_PATH == f.getId());
+    SettingsEditorFragment<T, ?> fragment = ContainerUtil.find(getFragments(), f -> CommonJavaFragments.JRE_PATH.equals(f.getId()));
     if (fragment != null) {
       if (((JrePathEditor)fragment.component()).updateModel(getProject(), targetName)) {
         fragment.resetFrom(mySettings);

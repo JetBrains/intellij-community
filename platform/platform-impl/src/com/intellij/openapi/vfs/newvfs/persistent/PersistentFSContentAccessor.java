@@ -9,7 +9,7 @@ import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.DigestUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
-import com.intellij.util.io.storage.AbstractStorage;
+import com.intellij.util.io.storage.IStorageDataOutput;
 import com.intellij.util.io.storage.RefCountingContentStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,7 +138,7 @@ public final class PersistentFSContentAccessor {
       else {
         recordId = myFSConnection.getContents().acquireNewRecord();
       }
-      try (AbstractStorage.StorageDataOutput output = myFSConnection.getContents().writeStream(recordId, true)) {
+      try (IStorageDataOutput output = myFSConnection.getContents().writeStream(recordId, true)) {
         output.write(bytes);
       }
       return recordId;

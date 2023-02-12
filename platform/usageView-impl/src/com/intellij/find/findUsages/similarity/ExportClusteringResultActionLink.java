@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.usages.similarity.clustering.UsageCluster;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
@@ -44,38 +46,37 @@ public class ExportClusteringResultActionLink extends ActionLink {
   public static final String FEATURES = "features";
 
   public ExportClusteringResultActionLink(@NotNull Project project, @NotNull ClusteringSearchSession session, @NotNull String fileName) {
-    super(UsageViewBundle.message("similar.usages.internal.export.clustering.data"),
-          (event) -> {
-            List<UsageCluster> clusters = session.getClusters();
-            Task.Backgroundable loadMostCommonUsagePatternsTask = new Task.Backgroundable(project, UsageViewBundle.message(
-              "similar.usages.internal.exporting.clustering.data.progress.title")) {
-              @Override
-              public void run(@NotNull ProgressIndicator indicator) {
-                try {
-                  buildSessionDataFile(project, clusters, indicator, fileName);
-                }
-                catch (IOException e) {
-                  throw new RuntimeException(e);
-                }
-              }
-            };
-            ProgressIndicator indicator = new BackgroundableProcessIndicator(loadMostCommonUsagePatternsTask);
-            indicator.setIndeterminate(false);
-            ProgressManager.getInstance().runProcessWithProgressAsynchronously(loadMostCommonUsagePatternsTask, indicator);
-          });
+    super(UsageViewBundle.message("similar.usages.internal.export.clustering.data"), (event) -> {
+      List<UsageCluster> clusters = session.getClusters();
+      Task.Backgroundable loadMostCommonUsagePatternsTask =
+        new Task.Backgroundable(project, UsageViewBundle.message("similar.usages.internal.exporting.clustering.data.progress.title")) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            try {
+              buildSessionDataFile(project, clusters, indicator, fileName);
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          }
+        };
+      ProgressIndicator indicator = new BackgroundableProcessIndicator(loadMostCommonUsagePatternsTask);
+      indicator.setIndeterminate(false);
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(loadMostCommonUsagePatternsTask, indicator);
+    });
   }
 
-  private static void createScratchFile(@NotNull String fileContent, @NotNull String fileName)
-    throws IOException {
+  private static void createScratchFile(@NotNull String fileContent, @NotNull String fileName) throws IOException {
     ScratchFileService fileService = ScratchFileService.getInstance();
-    VirtualFile scratchFile = fileService.findFile(RootType.findById("scratches"), fileName + ".json",
-                                                   ScratchFileService.Option.create_new_always);
+    VirtualFile scratchFile =
+      fileService.findFile(RootType.findById("scratches"), fileName + ".json", ScratchFileService.Option.create_new_always);
     VfsUtil.saveText(scratchFile, fileContent);
   }
 
   private static void buildSessionDataFile(@NotNull Project project,
                                            @NotNull List<? extends UsageCluster> clusters,
-                                           @NotNull ProgressIndicator indicator, @NotNull String fileName) throws IOException {
+                                           @NotNull ProgressIndicator indicator,
+                                           @NotNull String fileName) throws IOException {
     int counter = 0;
     StringWriter stringWriter = new StringWriter();
     JsonGenerator generator = new JsonFactory().createGenerator(stringWriter);
@@ -92,7 +93,8 @@ public class ExportClusteringResultActionLink extends ActionLink {
           generator.writeStringField(SNIPPET, getUsageLineSnippet(project, element));
           generator.writeNumberField(CLUSTER_NUMBER, counter);
           generator.writeObjectFieldStart(FEATURES);
-          for (Object2IntMap.Entry<String> entry : usage.getFeatures().getBag().object2IntEntrySet()) {
+          List<Object2IntMap.Entry<String>> sortedEntries = Stream.concat(getPrimaryFeatures(usage.getFeatures()), getStructuralFeatures(usage.getFeatures())).toList();
+          for (Object2IntMap.Entry<String> entry : sortedEntries) {
             generator.writeNumberField(entry.getKey(), entry.getIntValue());
           }
           generator.writeEndObject();
@@ -106,6 +108,18 @@ public class ExportClusteringResultActionLink extends ActionLink {
     writeCommandAction(project).run(() -> {
       createScratchFile(stringWriter.toString(), fileName);
     });
+  }
+
+  private static boolean isStructural(@NotNull String key) {
+    return key.contains("PREV:") || key.contains("NEXT:") || key.contains("GP:") || key.contains("P:");
+  }
+
+  private static Stream<Object2IntMap.Entry<String>> getPrimaryFeatures(@NotNull Bag bag) {
+    return bag.getBag().object2IntEntrySet().stream().filter(entry -> !isStructural(String.valueOf(entry.getKey())));
+  }
+
+  private static Stream<Object2IntMap.Entry<String>> getStructuralFeatures(@NotNull Bag bag) {
+    return bag.getBag().object2IntEntrySet().stream().filter(entry -> isStructural(String.valueOf(entry.getKey())));
   }
 
   public static @NotNull PsiElement getElement(@NotNull UsageInfo2UsageAdapter usage) {

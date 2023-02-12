@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -74,8 +74,7 @@ public final class PermuteArgumentsFix implements IntentionAction, HighPriorityA
     List<PsiCall> permutations = new ArrayList<>();
 
     for (CandidateInfo candidate : candidates) {
-      if (candidate instanceof MethodCandidateInfo) {
-        MethodCandidateInfo methodCandidate = (MethodCandidateInfo)candidate;
+      if (candidate instanceof MethodCandidateInfo methodCandidate) {
         PsiMethod method = methodCandidate.getElement();
         PsiSubstitutor substitutor = methodCandidate.getSubstitutor();
 

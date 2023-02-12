@@ -785,7 +785,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   private static @Nullable FileAttributes getAttributesWithCustomTimestamp(VirtualFile file) {
-    FileAttributes attributes = FileSystemUtil.getAttributes(FileUtilRt.toSystemDependentName(file.getPath()));
+    var pathStr = FileUtilRt.toSystemDependentName(file.getPath());
+    if (pathStr.length() == 2 && pathStr.charAt(1) == ':') pathStr += '\\';
+    var attributes = FileSystemUtil.getAttributes(pathStr);
     return copyWithCustomTimestamp(file, attributes);
   }
 

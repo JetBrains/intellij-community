@@ -122,7 +122,7 @@ public final class XFramesView extends XDebugView {
         if (i != -1) myFramesList.selectFrame(i);
         ActionManager actionManager = ActionManager.getInstance();
         ActionGroup group = (ActionGroup)actionManager.getAction(XDebuggerActions.FRAMES_TREE_POPUP_GROUP);
-        actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
+        actionManager.createActionPopupMenu("XDebuggerFramesList", group).getComponent().show(comp, x, y);
       }
     });
 

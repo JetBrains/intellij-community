@@ -23,8 +23,7 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
   @Override
   public boolean execute(@NotNull final ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiReference> consumer) {
     final PsiElement elementToSearch = queryParameters.getElementToSearch();
-    if (elementToSearch instanceof PsiField) {
-      final PsiField field = (PsiField)elementToSearch;
+    if (elementToSearch instanceof PsiField field) {
       final PsiClass containingClass = ReadAction.compute(() -> field.getContainingClass());
       if (containingClass != null) {
         final String qualifiedName = ReadAction.compute(() -> containingClass.getQualifiedName());
@@ -46,8 +45,7 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
                       final PsiElement resolve = reference.resolve();
                       if (resolve instanceof XmlAttributeValue) {
                         final PsiElement parent = resolve.getParent();
-                        if (parent instanceof XmlAttribute) {
-                          final XmlAttribute attribute = (XmlAttribute)parent;
+                        if (parent instanceof XmlAttribute attribute) {
                           if (FxmlConstants.FX_ID.equals(attribute.getName()) && fieldName.equals(attribute.getValue())) {
                             consumer.process(reference);
                           }

@@ -476,7 +476,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
         convertRemoteRepositories(convertRepositories(new ArrayList<MavenRemoteRepository>(repositories))));
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -572,7 +572,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
       return unknownArchetypeError.get() ? null : result;
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 

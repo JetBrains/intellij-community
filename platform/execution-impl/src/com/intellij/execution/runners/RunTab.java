@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.diagnostic.logging.LogConsoleManagerBase;
@@ -49,6 +49,9 @@ public abstract class RunTab implements DataProvider, Disposable {
   @ApiStatus.Experimental
   public static final Key<PreferredPlace> PREFERRED_PLACE = Key.create("RunTab.preferredActionPlace");
 
+  @ApiStatus.Experimental
+  public static final DataKey<RunTab> KEY = DataKey.create("RunTab");
+
   @NotNull
   protected final RunnerLayoutUi myUi;
   private LogFilesManager myManager;
@@ -98,6 +101,8 @@ public abstract class RunTab implements DataProvider, Disposable {
       return myRunContentDescriptor;
     } else if (SingleContentSupplier.KEY.is(dataId)) {
       return getSupplier();
+    } else if (KEY.is(dataId)) {
+      return this;
     }
     return null;
   }
@@ -132,8 +137,7 @@ public abstract class RunTab implements DataProvider, Disposable {
 
   protected final void initLogConsoles(@NotNull RunProfile runConfiguration, @NotNull RunContentDescriptor contentDescriptor, @Nullable ExecutionConsole console) {
     ProcessHandler processHandler = contentDescriptor.getProcessHandler();
-    if (runConfiguration instanceof RunConfigurationBase) {
-      RunConfigurationBase configuration = (RunConfigurationBase)runConfiguration;
+    if (runConfiguration instanceof RunConfigurationBase configuration) {
       if (myManager == null) {
         myManager = new LogFilesManager(myProject, getLogConsoleManager(), contentDescriptor);
       }

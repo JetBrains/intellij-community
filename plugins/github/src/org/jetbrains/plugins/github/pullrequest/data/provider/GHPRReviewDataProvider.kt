@@ -55,10 +55,6 @@ interface GHPRReviewDataProvider {
   fun canComment(): Boolean
 
   @RequiresEdt
-  fun addComment(progressIndicator: ProgressIndicator, reviewId: String, body: String, commitSha: String, fileName: String, diffLine: Int)
-    : CompletableFuture<out GHPullRequestReviewComment>
-
-  @RequiresEdt
   fun addComment(progressIndicator: ProgressIndicator, replyToCommentId: String, body: String)
     : CompletableFuture<out GHPullRequestReviewComment>
 

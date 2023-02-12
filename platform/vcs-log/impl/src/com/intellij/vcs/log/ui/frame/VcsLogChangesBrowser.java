@@ -372,8 +372,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   }
 
   public @Nullable ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject, boolean forDiffPreview) {
-    if (!(userObject instanceof Change)) return null;
-    Change change = (Change)userObject;
+    if (!(userObject instanceof Change change)) return null;
 
     Map<Key<?>, Object> context = new HashMap<>();
     if (!(change instanceof MergedChange)) {
@@ -386,8 +385,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
                                                                                     @NotNull Change change,
                                                                                     @NotNull Map<Key<?>, Object> context,
                                                                                     boolean forDiffPreview) {
-    if (change instanceof MergedChange) {
-      MergedChange mergedChange = (MergedChange)change;
+    if (change instanceof MergedChange mergedChange) {
       if (mergedChange.getSourceChanges().size() == 2) {
         if (forDiffPreview) {
           putFilePathsIntoMergedChangeContext(mergedChange, context);

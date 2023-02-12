@@ -255,9 +255,7 @@ public class MatchOptions implements JDOMExternalizable {
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof MatchOptions)) return false;
-
-    final MatchOptions matchOptions = (MatchOptions)o;
+    if (!(o instanceof MatchOptions matchOptions)) return false;
 
     if (caseSensitiveMatch != matchOptions.caseSensitiveMatch) return false;
     if (looseMatching != matchOptions.looseMatching) return false;
@@ -266,7 +264,7 @@ public class MatchOptions implements JDOMExternalizable {
     if (searchInjectedCode != matchOptions.searchInjectedCode) return false;
     if (!pattern.equals(matchOptions.pattern)) return false;
     if (!variableConstraints.equals(matchOptions.variableConstraints)) return false;
-    if (myUnknownFileType != matchOptions.myUnknownFileType) return false;
+    if (!Objects.equals(myUnknownFileType, matchOptions.myUnknownFileType)) return false;
     if (myFileType != matchOptions.myFileType) return false;
     if (!Objects.equals(getDialect(), matchOptions.getDialect())) return false;
     if (!Objects.equals(myPatternContextId, matchOptions.myPatternContextId)) return false;

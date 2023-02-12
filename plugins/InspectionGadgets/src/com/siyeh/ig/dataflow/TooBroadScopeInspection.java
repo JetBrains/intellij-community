@@ -84,8 +84,7 @@ public class TooBroadScopeInspection extends BaseInspection {
     if (PsiUtil.isConstantExpression(expression) || ExpressionUtils.isNullLiteral(expression)) {
       return true;
     }
-    if (expression instanceof PsiArrayInitializerExpression) {
-      final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)expression;
+    if (expression instanceof PsiArrayInitializerExpression arrayInitializerExpression) {
       for (PsiExpression initializer : arrayInitializerExpression.getInitializers()) {
         if (!isMovable(initializer)) {
           return false;
@@ -93,8 +92,7 @@ public class TooBroadScopeInspection extends BaseInspection {
       }
       return true;
     }
-    if (expression instanceof PsiNewExpression) {
-      final PsiNewExpression newExpression = (PsiNewExpression)expression;
+    if (expression instanceof PsiNewExpression newExpression) {
       final PsiExpression[] arrayDimensions = newExpression.getArrayDimensions();
       if (arrayDimensions.length > 0) {
         for (PsiExpression arrayDimension : arrayDimensions) {
@@ -135,8 +133,7 @@ public class TooBroadScopeInspection extends BaseInspection {
       }
       return true;
     }
-    if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+    if (expression instanceof PsiReferenceExpression referenceExpression) {
       final PsiExpression qualifier = referenceExpression.getQualifierExpression();
       if (!isMovable(qualifier)) {
         return false;
@@ -145,10 +142,9 @@ public class TooBroadScopeInspection extends BaseInspection {
       if (target instanceof PsiClass) {
         return true;
       }
-      if (!(target instanceof PsiVariable)) {
+      if (!(target instanceof PsiVariable variable)) {
         return false;
       }
-      final PsiVariable variable = (PsiVariable)target;
       if (!ClassUtils.isImmutable(variable.getType()) && !CollectionUtils.isEmptyArray(variable)) {
         return false;
       }
@@ -159,8 +155,7 @@ public class TooBroadScopeInspection extends BaseInspection {
       return context != null && !(variable instanceof PsiField) &&
              HighlightControlFlowUtil.isEffectivelyFinal(variable, context, referenceExpression);
     }
-    if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    if (expression instanceof PsiPolyadicExpression polyadicExpression) {
       for (PsiExpression operand : polyadicExpression.getOperands()) {
         if (!isMovable(operand)) {
           return false;
@@ -168,11 +163,10 @@ public class TooBroadScopeInspection extends BaseInspection {
       }
       return true;
     }
-    if (expression instanceof PsiMethodCallExpression) {
+    if (expression instanceof PsiMethodCallExpression methodCallExpression) {
       if (!isAllowedType(expression.getType())) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiMethod method = methodCallExpression.resolveMethod();
       if (!isAllowedMethod(method)) {
         return false;
@@ -344,15 +338,13 @@ public class TooBroadScopeInspection extends BaseInspection {
     }
 
     private boolean isAssignmentToVariable(PsiElement element, PsiLocalVariable variable) {
-      if (!(element instanceof PsiExpressionStatement)) {
+      if (!(element instanceof PsiExpressionStatement expressionStatement)) {
         return false;
       }
-      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)element;
       final PsiExpression expression = expressionStatement.getExpression();
-      if (!(expression instanceof PsiAssignmentExpression)) {
+      if (!(expression instanceof PsiAssignmentExpression assignmentExpression)) {
         return false;
       }
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
       final IElementType tokenType = assignmentExpression.getOperationTokenType();
       if (tokenType != JavaTokenType.EQ) {
         return false;
@@ -426,19 +418,16 @@ public class TooBroadScopeInspection extends BaseInspection {
         newDeclaration = resourceReference.getParent().addBefore(resourceVariable, resourceReference);
         resourceReference.delete();
       }
-      else if (commonParent instanceof PsiForStatement) {
-        final PsiForStatement forStatement = (PsiForStatement)commonParent;
+      else if (commonParent instanceof PsiForStatement forStatement) {
         final PsiStatement initialization = forStatement.getInitialization();
         if (initialization == null) {
           return;
         }
-        if (initialization instanceof PsiExpressionStatement) {
-          final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)initialization;
+        if (initialization instanceof PsiExpressionStatement expressionStatement) {
           final PsiExpression expression = expressionStatement.getExpression();
-          if (!(expression instanceof PsiAssignmentExpression)) {
+          if (!(expression instanceof PsiAssignmentExpression assignmentExpression)) {
             return;
           }
-          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
           final PsiExpression rhs = assignmentExpression.getRExpression();
           newDeclaration = createNewDeclaration(variable, rhs, tracker);
         }
@@ -523,11 +512,9 @@ public class TooBroadScopeInspection extends BaseInspection {
       }
       assert statementParent != null;
       final PsiExpression initializer = variable.getInitializer();
-      if (isMovable(initializer) && statement instanceof PsiExpressionStatement) {
-        final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+      if (isMovable(initializer) && statement instanceof PsiExpressionStatement expressionStatement) {
         final PsiExpression expression = expressionStatement.getExpression();
-        if (expression instanceof PsiAssignmentExpression) {
-          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+        if (expression instanceof PsiAssignmentExpression assignmentExpression) {
           final PsiExpression rhs = assignmentExpression.getRExpression();
           final PsiExpression lhs = assignmentExpression.getLExpression();
           final IElementType tokenType = assignmentExpression.getOperationTokenType();
@@ -542,8 +529,7 @@ public class TooBroadScopeInspection extends BaseInspection {
         }
       }
       PsiDeclarationStatement newDeclaration = createNewDeclaration(variable, initializer, tracker);
-      if (statement instanceof PsiForStatement) {
-        final PsiForStatement forStatement = (PsiForStatement)statement;
+      if (statement instanceof PsiForStatement forStatement) {
         final PsiStatement initialization = forStatement.getInitialization();
         newDeclaration = (PsiDeclarationStatement)forStatement.addBefore(newDeclaration, initialization);
         if (initialization != null) {

@@ -38,10 +38,9 @@ public class ChangeVariableTypeToRhsTypeIntention extends MutablyNamedIntention 
   @Override
   protected void processIntention(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiVariable)) {
+    if (!(parent instanceof PsiVariable variable)) {
       return;
     }
-    final PsiVariable variable = (PsiVariable)parent;
     final PsiExpression initializer = variable.getInitializer();
     if (initializer == null) {
       return;

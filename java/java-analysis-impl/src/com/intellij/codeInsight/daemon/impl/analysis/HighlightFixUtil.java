@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -53,13 +53,10 @@ public final class HighlightFixUtil {
       if (!(arrayComponentType instanceof PsiPrimitiveType) &&
           !(PsiUtil.resolveClassInType(arrayComponentType) instanceof PsiTypeParameter)) {
         PsiExpression collection = expression;
-        if (expression instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-          if (COLLECTION_TO_ARRAY.test(call)) {
-            collection = call.getMethodExpression().getQualifierExpression();
-            if (collection == null) return;
-            fromType = collection.getType();
-          }
+        if (expression instanceof PsiMethodCallExpression call && COLLECTION_TO_ARRAY.test(call)) {
+          collection = call.getMethodExpression().getQualifierExpression();
+          if (collection == null) return;
+          fromType = collection.getType();
         }
         if (fromType instanceof PsiClassType &&
             (CommonClassNames.JAVA_LANG_OBJECT.equals(arrayComponentType.getCanonicalText()) || !((PsiClassType)fromType).isRaw()) &&
@@ -141,13 +138,10 @@ public final class HighlightFixUtil {
 
   @Nullable
   static PsiClass getPackageLocalClassInTheMiddle(@NotNull PsiElement place) {
-    if (place instanceof PsiReferenceExpression) {
+    if (place instanceof PsiReferenceExpression expression) {
       // check for package-private classes in the middle
-      PsiReferenceExpression expression = (PsiReferenceExpression)place;
       while (true) {
-        PsiElement resolved = expression.resolve();
-        if (resolved instanceof PsiField) {
-          PsiField field = (PsiField)resolved;
+        if (expression.resolve() instanceof PsiField field) {
           PsiClass aClass = field.getContainingClass();
           if (aClass != null && aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
               !JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, place)) {
@@ -320,25 +314,24 @@ public final class HighlightFixUtil {
                                                                           @NotNull PsiJavaCodeReferenceElement place,
                                                                           @Nullable PsiClass accessObjectClass,
                                                                           @Nullable TextRange parentFixRange) {
-    if (refElement instanceof PsiField && place instanceof PsiReferenceExpression) {
-      PsiField psiField = (PsiField)refElement;
+    if (refElement instanceof PsiField psiField && place instanceof PsiReferenceExpression ref) {
       PsiClass containingClass = psiField.getContainingClass();
       if (containingClass != null) {
-        if (PsiUtil.isOnAssignmentLeftHand((PsiExpression)place)) {
+        if (PsiUtil.isOnAssignmentLeftHand(ref)) {
           PsiMethod setterPrototype = PropertyUtilBase.generateSetterPrototype(psiField);
           PsiMethod setter = containingClass.findMethodBySignature(setterPrototype, true);
-          if (setter != null && PsiUtil.isAccessible(setter, place, accessObjectClass)) {
-            PsiElement element = PsiTreeUtil.skipParentsOfType(place, PsiParenthesizedExpression.class);
+          if (setter != null && PsiUtil.isAccessible(setter, ref, accessObjectClass)) {
+            PsiElement element = PsiTreeUtil.skipParentsOfType(ref, PsiParenthesizedExpression.class);
             if (element instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)element).getOperationTokenType() == JavaTokenType.EQ) {
               IntentionAction action = QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, setter, true);
               builder.registerFix(action, null, null, parentFixRange, null);
             }
           }
         }
-        else if (PsiUtil.isAccessedForReading((PsiExpression)place)) {
+        else if (PsiUtil.isAccessedForReading(ref)) {
           PsiMethod getterPrototype = PropertyUtilBase.generateGetterPrototype(psiField);
           PsiMethod getter = containingClass.findMethodBySignature(getterPrototype, true);
-          if (getter != null && PsiUtil.isAccessible(getter, place, accessObjectClass)) {
+          if (getter != null && PsiUtil.isAccessible(getter, ref, accessObjectClass)) {
             IntentionAction action = QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, getter, false);
             builder.registerFix(action, null, null, parentFixRange, null);
           }

@@ -110,10 +110,9 @@ public class ChangeToCStyleCommentIntention extends Intention {
   }
 
   private boolean isEndOfLineComment(PsiElement element) {
-    if (!(element instanceof PsiComment)) {
+    if (!(element instanceof PsiComment comment)) {
       return false;
     }
-    final PsiComment comment = (PsiComment) element;
     final IElementType tokenType = comment.getTokenType();
     return GroovyTokenTypes.mSL_COMMENT.equals(tokenType);
   }

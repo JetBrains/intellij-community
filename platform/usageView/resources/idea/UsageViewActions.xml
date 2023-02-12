@@ -15,6 +15,7 @@
     <registryKey key="similarity.find.usages.use.parent.features.with.child.number" defaultValue="false"
                  description="Take in account what child number is in parent node"/>
     <registryKey defaultValue="true" description="Use information from parent nodes" key="similarity.find.usages.use.parent.features"/>
+    <registryKey defaultValue="true" description="Add features for fields" key="similarity.find.usages.add.features.for.fields"/>
     <registryKey defaultValue="true" description="Enable similarity clustering for Java usages" key="similarity.find.usages.java.clustering.enable"/>
     <registryKey defaultValue="true" description="Enable similarity clustering for Kotlin usages"
                  key="similarity.find.usages.kotlin.clustering.enable"/>
@@ -30,6 +31,7 @@
     <registryKey defaultValue="true" description="Enable auto-update for similar usages component" key="similarity.find.usages.view.auto.update"/>
     <registryKey defaultValue="true" description="Use information from sibling nodes" key="similarity.find.usages.use.sibling.features"/>
     <registryKey defaultValue="false" description="Adds 'import clustering data' action for similar usages preview" key="similarity.import.clustering.results.action.enabled"/>
+    <registryKey defaultValue="true" description="Process lambda and anonymous class separately to collect less features" key="similarity.find.usages.new.features.collector.for.lambda.and.anonymous.class"/>
   </extensions>
   <actions resource-bundle="messages.UsageViewBundle">
     <group id="UsageGroupingActionGroup">

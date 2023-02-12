@@ -64,7 +64,6 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
   CodeStyleSettings tryGetSettings() {
     if (myComputationLock.tryLock()) {
       try {
-        myViewProvider.putUserData(CodeStyleCachingService.CALL_TRACE, Thread.currentThread().getStackTrace());
         return CachedValuesManager.getManager(myProject).getCachedValue(myViewProvider, this);
       }
       finally {
@@ -221,7 +220,6 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
         }
       }
       finally {
-        file.putUserData(CodeStyleCachingService.CALL_TRACE, null);
         myComputationLock.unlock();
       }
     }

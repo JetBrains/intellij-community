@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.popup
 
+import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.DvcsBranchManager
+import com.intellij.dvcs.branch.DvcsBranchSyncPolicyUpdateNotifier
 import com.intellij.dvcs.branch.DvcsBranchesDivergedBanner
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.ui.DvcsBundle
@@ -39,8 +41,10 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
+import git4idea.GitVcs
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.branch.GitBranchType
+import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
@@ -48,7 +52,9 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchPopup
 import git4idea.ui.branch.GitBranchPopupFetchAction
+import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SINGLE_REPOSITORY_ACTION_PLACE
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_DEFAULT_ACTIONS_GROUP
+import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.TOP_LEVEL_ACTION_PLACE
 import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchTypeUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
@@ -109,12 +115,15 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       installRepoListener()
       installResizeListener()
       warnThatBranchesDivergedIfNeeded()
+      DvcsBranchSyncPolicyUpdateNotifier(project, GitVcs.getInstance(project),
+                                         GitVcsSettings.getInstance(project), GitRepositoryManager.getInstance(project))
+        .initBranchSyncPolicyIfNotInitialized()
     }
     installBranchSettingsListener()
     DataManager.registerDataProvider(component, DataProvider { dataId ->
       when {
         POPUP_KEY.`is`(dataId) -> this
-        GitBranchActionsUtil.REPOSITORIES_KEY.`is`(dataId) -> treeStep.repositories
+        GitBranchActionsUtil.REPOSITORIES_KEY.`is`(dataId) -> treeStep.affectedRepositories
         else -> null
       }
     })
@@ -210,8 +219,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         }
 
         val nodeToExpand = when {
-          node is GitBranch && isChild() && treeStep.repositories.any { it.currentBranch == node } -> node
-          node is GitBranch && !isChild() && treeStep.repositories.all { it.currentBranch == node } -> node
+          node is GitBranch && isChild() && treeStep.affectedRepositories.any { it.currentBranch == node } -> node
+          node is GitBranch && !isChild() && treeStep.affectedRepositories.all { it.currentBranch == node } -> node
           node is BranchUnderRepository && node.repository.currentBranch == node.branch -> node
           node is BranchTypeUnderRepository -> node
           else -> null
@@ -278,7 +287,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   private fun toggleFavorite(userObject: Any?) {
     val branchUnderRepository = userObject as? BranchUnderRepository
     val branch = userObject as? GitBranch ?: branchUnderRepository?.branch ?: return
-    val repositories = branchUnderRepository?.repository?.let(::listOf) ?: treeStep.repositories
+    val repositories = branchUnderRepository?.repository?.let(::listOf) ?: treeStep.affectedRepositories
     val branchType = GitBranchType.of(branch)
     val branchManager = project.service<GitBranchManager>()
     val anyNotFavorite = repositories.any { repository -> !branchManager.isFavorite(branchType, repository, branch.name) }
@@ -337,11 +346,18 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   private fun createToolbar(): ActionToolbar {
     val settingsGroup = am.getAction(GitBranchesTreePopupStep.HEADER_SETTINGS_ACTION_GROUP)
     val toolbarGroup = DefaultActionGroup(GitBranchPopupFetchAction(javaClass), settingsGroup)
-    return am.createActionToolbar(GitBranchesTreePopupStep.ACTION_PLACE, toolbarGroup, true)
+    return am.createActionToolbar(TOP_LEVEL_ACTION_PLACE, toolbarGroup, true)
       .apply {
-        targetComponent = this@GitBranchesTreePopup.component
+        targetComponent = component
         setReservePlaceAutoPopupIcon(false)
         component.isOpaque = false
+        DataManager.registerDataProvider(component, DataProvider { dataId ->
+          when {
+            POPUP_KEY.`is`(dataId) -> this@GitBranchesTreePopup
+            GitBranchActionsUtil.REPOSITORIES_KEY.`is`(dataId) -> treeStep.repositories
+            else -> null
+          }
+        })
       }
   }
 
@@ -352,19 +368,20 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     override fun actionPerformed(e: ActionEvent?) {
       if (closePopup) {
         cancel()
-        if (parent != null) {
+        if (isChild()) {
           parent.cancel()
         }
       }
 
-      val stepContext = GitBranchesTreePopupStep.createDataContext(project, treeStep.repositories)
+      val stepContext = GitBranchesTreePopupStep.createDataContext(project, treeStep.selectedRepository, treeStep.affectedRepositories)
       val resultContext =
         with(SimpleDataContext.builder().setParent(stepContext)) {
           actionContext.forEach { (key, value) -> add(key, value) }
           build()
         }
 
-      ActionUtil.invokeAction(action, resultContext, GitBranchesTreePopupStep.ACTION_PLACE, null, afterActionPerformed)
+      val actionPlace = if (isChild()) SINGLE_REPOSITORY_ACTION_PLACE else TOP_LEVEL_ACTION_PLACE
+      ActionUtil.invokeAction(action, resultContext, actionPlace, null, afterActionPerformed)
     }
   }
 
@@ -640,9 +657,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   override fun onSpeedSearchPatternChanged() {
     val currentPrefix = speedSearch.enteredPrefix
-    if (currentPrefix?.endsWith(" ") == true) {
+    if (currentPrefix?.lastOrNull()?.isWhitespace() == true) {
       speedSearch.updatePattern(currentPrefix.trimEnd())
-      return
     }
 
     with(uiScope(this)) {
@@ -678,7 +694,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         null -> ""
         is ItemPresentation -> value.presentableText.orEmpty()
         is GitBranch -> value.name
-        else -> getText(value, treeStep.treeModel, treeStep.repositories) ?: ""
+        else -> getText(value, treeStep.treeModel, treeStep.affectedRepositories) ?: ""
       }
     }
   }
@@ -699,15 +715,24 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     @JvmStatic
     fun isEnabled() = true
 
+    /**
+     * @param selectedRepository - Selected repository:
+     * e.g. [git4idea.branch.GitBranchUtil.guessRepositoryForOperation] or [git4idea.branch.GitBranchUtil.guessWidgetRepository]
+     */
     @JvmStatic
-    fun show(project: Project) {
-      create(project).showCenteredInCurrentWindow(project)
+    fun show(project: Project, selectedRepository: GitRepository?) {
+      create(project, selectedRepository).showCenteredInCurrentWindow(project)
     }
 
+    /**
+     * @param selectedRepository - Selected repository:
+     * e.g. [git4idea.branch.GitBranchUtil.guessRepositoryForOperation] or [git4idea.branch.GitBranchUtil.guessWidgetRepository]
+     */
     @JvmStatic
-    fun create(project: Project): JBPopup {
-      val repositories = GitRepositoryManager.getInstance(project).repositories
-      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, repositories, true))
+    fun create(project: Project, selectedRepository: GitRepository?): JBPopup {
+      val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
+      val selectedRepoIfNeeded = if (GitBranchActionsUtil.userWantsSyncControl(project)) null else selectedRepository
+      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, selectedRepoIfNeeded, repositories, true))
     }
 
     @JvmStatic

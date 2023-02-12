@@ -760,8 +760,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     final String namespace = tag.getNamespace();
     while(parent instanceof XmlTag && !namespace.equals(((XmlTag)parent).getNamespace()))
       parent = parent.getContext();
-    if (parent instanceof XmlTag) {
-      final XmlTag parentTag = (XmlTag)parent;
+    if (parent instanceof XmlTag parentTag) {
       final XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
 
       if(parentDescriptor != null){

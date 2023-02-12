@@ -12,6 +12,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import java.net.http.HttpResponse
 
@@ -85,9 +86,24 @@ suspend fun GitLabApi.addNote(
   return loadGQLResponse(request, CreateNoteResult::class.java, "createNote")
 }
 
-private class CreateNoteResult(note: NoteHolder, errors: List<String>?)
+suspend fun GitLabApi.addDiffNote(
+  project: GitLabProjectCoordinates,
+  mergeRequestGid: String,
+  position: GitLabDiffPositionInput,
+  body: String
+): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabDiscussionDTO>?> {
+  val parameters = mapOf(
+    "noteableId" to mergeRequestGid,
+    "position" to position,
+    "body" to body
+  )
+  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.createDiffNote, parameters)
+  return loadGQLResponse(request, CreateNoteResult::class.java, "createDiffNote")
+}
+
+private class CreateNoteResult(note: NoteHolder?, errors: List<String>?)
   : GitLabGraphQLMutationResultDTO<GitLabDiscussionDTO>(errors) {
-  override val value = note.discussion
+  override val value = note?.discussion
 }
 
 private class NoteHolder(val discussion: GitLabDiscussionDTO)

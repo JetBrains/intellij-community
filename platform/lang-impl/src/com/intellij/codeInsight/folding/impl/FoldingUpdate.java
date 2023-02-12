@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
@@ -295,7 +295,7 @@ public final class FoldingUpdate {
   private static boolean addNonConflictingRegion(DocumentEx document, TextRange range, List<? super RangeMarker> hardRefToRangeMarkers) {
     int start = range.getStartOffset();
     int end = range.getEndOffset();
-    if (!document.processRangeMarkersOverlappingWith(start, end, rm -> !areConflicting(range, TextRange.create(rm)))) {
+    if (!document.processRangeMarkersOverlappingWith(start, end, rm -> !areConflicting(range, rm.getTextRange()))) {
       return false;
     }
     RangeMarker marker = document.createRangeMarker(start, end);
@@ -321,8 +321,9 @@ public final class FoldingUpdate {
                      ", PSI element: " + psiElement +
                      ", PSI element range: " + psiElement.getTextRange() + "; " + DebugUtil.diagnosePsiDocumentInconsistency(psiElement, document);
     LOG.error(message, ApplicationManager.getApplication().isInternal()
-                               ? new Attachment[]{AttachmentFactory.createAttachment(document), new Attachment("psiTree.txt", DebugUtil.psiToString(file,
-                                                                                                                                                    true, true))}
+                               ? new Attachment[]{
+      CoreAttachmentFactory.createAttachment(document), new Attachment("psiTree.txt", DebugUtil.psiToString(file,
+                                                                                                            true, true))}
                                : Attachment.EMPTY_ARRAY);
   }
 

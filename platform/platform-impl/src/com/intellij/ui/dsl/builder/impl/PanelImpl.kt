@@ -187,7 +187,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   @Suppress("OVERRIDE_DEPRECATION")
-  override fun group(title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?, init: Panel.() -> Unit): Panel {
+  override fun group(@NlsContexts.BorderTitle title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?, init: Panel.() -> Unit): Panel {
     lateinit var result: Panel
     val row = row {
       result = panel {
@@ -246,12 +246,13 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   @Deprecated("Use buttonsGroup(...) instead")
   @ApiStatus.ScheduledForRemoval
-  override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, title: String?, indent: Boolean, init: Panel.() -> Unit) {
+  override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String?,
+                               indent: Boolean, init: Panel.() -> Unit) {
     buttonsGroup(title, indent, init)
       .bind(MutableProperty(binding.get, binding.set), type)
   }
 
-  override fun buttonsGroup(title: String?, indent: Boolean, init: Panel.() -> Unit): ButtonsGroupImpl {
+  override fun buttonsGroup(@NlsContexts.BorderTitle title: String?, indent: Boolean, init: Panel.() -> Unit): ButtonsGroupImpl {
     val result = ButtonsGroupImpl(this, _rows.size)
     rowsRanges.add(result)
 
@@ -276,13 +277,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     finally {
       dialogPanelConfig.context.removeLastButtonsGroup()
     }
-    result.endIndex = _rows.size - 1
-    return result
-  }
-
-  override fun <K> placeholderGroup(init: PlaceholderGroup<K>.() -> Unit): PlaceholderGroupImpl<K> {
-    val result = PlaceholderGroupImpl<K>(this, _rows.size)
-    result.init()
     result.endIndex = _rows.size - 1
     return result
   }

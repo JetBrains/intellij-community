@@ -276,6 +276,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         public void testLocalSelfReference() throws Exception {
             runTest("testData/newJ2k/anonymousClass/localSelfReference.java");
         }
+
+        @TestMetadata("staticMembers.java")
+        public void testStaticMembers() throws Exception {
+            runTest("testData/newJ2k/anonymousClass/staticMembers.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -515,6 +520,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("compoundAssignmentPriority2.java")
         public void testCompoundAssignmentPriority2() throws Exception {
             runTest("testData/newJ2k/assignmentExpression/compoundAssignmentPriority2.java");
+        }
+
+        @TestMetadata("compoundAssignmentTypeConversion.java")
+        public void testCompoundAssignmentTypeConversion() throws Exception {
+            runTest("testData/newJ2k/assignmentExpression/compoundAssignmentTypeConversion.java");
         }
 
         @TestMetadata("declarationAssignmentsChain.java")

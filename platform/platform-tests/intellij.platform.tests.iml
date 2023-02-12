@@ -41,7 +41,6 @@
     <orderEntry type="library" scope="TEST" name="jna" level="project" />
     <orderEntry type="library" scope="TEST" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.tests" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="batik-transcoder" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
@@ -73,6 +72,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.impl" scope="TEST" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
     <orderEntry type="library" scope="TEST" name="HdrHistogram" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" scope="TEST" />
   </component>

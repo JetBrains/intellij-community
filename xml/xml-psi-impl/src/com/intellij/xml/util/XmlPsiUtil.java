@@ -102,8 +102,7 @@ public final class XmlPsiUtil {
 
       PsiElement startFrom = element.getFirstChild();
 
-      if (element instanceof XmlEntityRef) {
-        XmlEntityRef ref = (XmlEntityRef)element;
+      if (element instanceof XmlEntityRef ref) {
         if (!visitedEntities.add(ref.getText())) return true;
         PsiElement newElement = parseEntityRef(targetFile, ref);
 
@@ -114,8 +113,7 @@ public final class XmlPsiUtil {
 
         return true;
       }
-      else if (element instanceof XmlConditionalSection) {
-        XmlConditionalSection xmlConditionalSection = (XmlConditionalSection)element;
+      else if (element instanceof XmlConditionalSection xmlConditionalSection) {
         if (!xmlConditionalSection.isIncluded(targetFile)) return true;
         startFrom = xmlConditionalSection.getBodyStart();
       }
@@ -157,8 +155,7 @@ public final class XmlPsiUtil {
         }
         else if (!processor.execute(child)) return false;
       }
-      if (targetFile != null && child instanceof XmlEntityDecl) {
-        XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)child;
+      if (targetFile != null && child instanceof XmlEntityDecl xmlEntityDecl) {
         XmlEntityCache.cacheParticularEntity(targetFile, xmlEntityDecl);
       }
       return true;
@@ -185,8 +182,7 @@ public final class XmlPsiUtil {
 
         continue;
       }
-      if (e instanceof PsiFile) {
-        PsiFile refFile = (PsiFile)e;
+      if (e instanceof PsiFile refFile) {
         final XmlEntityDecl entityDecl = ref.resolve(refFile);
         if (entityDecl != null) return parseEntityDecl(entityDecl, targetFile, type, ref);
         break;

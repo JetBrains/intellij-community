@@ -12,8 +12,7 @@ class LargeFileEditorState implements FileEditorState {
 
   @Override
   public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
-    if (otherState instanceof LargeFileEditorState) {
-      LargeFileEditorState state = (LargeFileEditorState)otherState;
+    if (otherState instanceof LargeFileEditorState state) {
       return caretPageNumber == state.caretPageNumber
              && caretSymbolOffsetInPage == state.caretSymbolOffsetInPage;
     }

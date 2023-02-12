@@ -1,14 +1,20 @@
 MODULES
-    project
-    project.androidApp
-    project.androidApp.androidTest
-        Gradle: org.jetbrains.kotlin.mpp.tests:kmmLib-android-debug:1.0@aar (TEST)
-    project.androidApp.main
-        Gradle: org.jetbrains.kotlin.mpp.tests:kmmLib-android-debug:1.0@aar (COMPILE)
-    project.androidApp.unitTest
-        Gradle: org.jetbrains.kotlin.mpp.tests:kmmLib-android-debug:1.0@aar (TEST)
+project
+
+project.androidApp
+
+project.androidApp.androidTest
+    org.jetbrains.kotlin.mpp.tests:kmmLib-android-debug:1.0@aar (TEST)
+
+project.androidApp.main
+    org.jetbrains.kotlin.mpp.tests:kmmLib-android-debug:1.0@aar (COMPILE)
+
+project.androidApp.unitTest
+    org.jetbrains.kotlin.mpp.tests:kmmLib-android-debug:1.0@aar (TEST)
+
 
 Test configuration:
 - hiding source modules matching .*kmmLib.*
 - hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
 - hiding dependencies matching .*androidApp.*
+- dependencies order is not checked

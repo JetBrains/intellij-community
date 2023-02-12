@@ -2,10 +2,8 @@
 package com.siyeh.ig.security;
 
 import com.intellij.codeInspection.concurrencyAnnotations.JCiPUtil;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.java.JavaBundle;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -16,12 +14,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodMatcher;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.util.Arrays;
 
 /**
  * @author Bas Leijdekkers
@@ -40,14 +34,13 @@ public class PublicStaticCollectionFieldInspection extends BaseInspection {
     .finishDefault();
 
   @Override
-  public JComponent createOptionsPanel() {
-    final ListTable table = new ListTable(new ListWrappingTableModel(
-      Arrays.asList(myMethodMatcher.getClassNames(), myMethodMatcher.getMethodNamePatterns()),
-      InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
-      InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title")));
-    final var panel = new InspectionOptionsPanel();
-    panel.addGrowing(UiUtils.createAddRemoveTreeClassChooserPanel(table, JavaBundle.message("dialog.title.choose.class")));
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(myMethodMatcher.getTable(""));
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return myMethodMatcher.getOptionController();
   }
 
   @Override
@@ -96,10 +89,9 @@ public class PublicStaticCollectionFieldInspection extends BaseInspection {
       if (ExpressionUtils.isNullLiteral(initializer)) {
         return true;
       }
-      if (!(initializer instanceof PsiMethodCallExpression)) {
+      if (!(initializer instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)initializer;
       final PsiMethod method = methodCallExpression.resolveMethod();
       if (method == null || myMethodMatcher.matches(method)) {
         return true;

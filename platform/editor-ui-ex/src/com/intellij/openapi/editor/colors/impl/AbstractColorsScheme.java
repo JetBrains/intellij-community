@@ -955,8 +955,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   public boolean settingsEqual(Object other, @Nullable Predicate<? super ColorKey> colorKeyFilter) {
-    if (!(other instanceof AbstractColorsScheme)) return false;
-    AbstractColorsScheme otherScheme = (AbstractColorsScheme)other;
+    if (!(other instanceof AbstractColorsScheme otherScheme)) return false;
 
     // parent is used only for default schemes (e.g. Darcula bundled in all ide (opposite to IDE-specific, like Cobalt))
     if (getBaseDefaultScheme(this) != getBaseDefaultScheme(otherScheme)) {

@@ -36,8 +36,7 @@ public final class SceneBuilderInfo {
 
   @Override
   public boolean equals(Object object) {
-    if (object instanceof SceneBuilderInfo) {
-      SceneBuilderInfo info = (SceneBuilderInfo)object;
+    if (object instanceof SceneBuilderInfo info) {
       return Objects.equals(path, info.path) && Objects.equals(libPath, info.libPath);
     }
     return false;

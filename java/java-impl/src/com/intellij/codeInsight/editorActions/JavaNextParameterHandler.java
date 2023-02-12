@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -39,10 +39,9 @@ public class JavaNextParameterHandler extends EditorActionHandler {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file instanceof PsiJavaFile) {
         PsiElement exprList = ParameterInfoControllerBase.findArgumentList(file, offset, -1);
-        if (exprList instanceof PsiExpressionList) {
+        if (exprList instanceof PsiExpressionList list) {
           CharSequence text = editor.getDocument().getImmutableCharSequence();
           int next = CharArrayUtil.shiftForward(text, offset, " \t");
-          PsiExpressionList list = (PsiExpressionList)exprList;
           int actualParameterCount = list.getExpressionCount();
           int lastParamStart = actualParameterCount == 0 ? list.getTextOffset() + 1
                                                          : list.getExpressions()[actualParameterCount - 1].getTextRange().getStartOffset();

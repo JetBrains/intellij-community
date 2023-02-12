@@ -108,7 +108,7 @@ public abstract class BaseSplitter implements Splitter {
         if (groupToInclude > 0) {
           TextRange contentFound = matcherRange(range, matcher, groupToInclude);
           if (badSize(contentFound.getEndOffset(), contentFound.getStartOffset())) {
-            toCheck.add(TextRange.create(contentFound));
+            toCheck.add(contentFound);
           }
         }
         from = found.getEndOffset();

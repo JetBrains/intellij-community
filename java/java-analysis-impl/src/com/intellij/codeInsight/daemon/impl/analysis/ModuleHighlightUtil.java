@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -374,9 +374,7 @@ final class ModuleHighlightUtil {
       if (!(intTarget instanceof PsiClass)) continue;
 
       PsiElement implTarget = implRef.resolve();
-      if (implTarget instanceof PsiClass) {
-        PsiClass implClass = (PsiClass)implTarget;
-
+      if (implTarget instanceof PsiClass implClass) {
         if (ModuleUtilCore.findModuleForFile(file) != ModuleUtilCore.findModuleForFile(implClass.getContainingFile())) {
           String message = JavaErrorBundle.message("module.service.alien");
           holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());

@@ -1,30 +1,26 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
-import com.intellij.lang.jvm.JvmTypeDeclaration;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
-import com.intellij.lang.jvm.types.JvmTypeResolveResult;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.BiPredicate;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static com.intellij.psi.CommonClassNames.*;
 
@@ -1244,104 +1240,6 @@ public final class TypeConversionUtil {
                                                              @NotNull PsiSubstitutor derivedSubstitutor) {
     return JavaClassSupers.getInstance().getSuperClassSubstitutor(superClass, derivedClass, derivedClass.getResolveScope(), derivedSubstitutor);
   }
-
-  /**
-   * This method returns true if there is a path for generic classes, which doesn't contain any usage a
-   * type parameter of a child class more than once in any super type. If there is no such a path, the cast is unchecked.
-   * {@code psiClass} and {@code superClass} should be generic.
-   * For example:
-   * <pre>
-   *   {@code
-   *   interface BiGenericInterface<T, R> extends EmptyInterface {}
-   *   interface UnaryGenericInterface<T> extends BiGenericInterface<T, T> {}
-   *   public static void test(BiGenericInterface<? extends String, ? extends String> t) {
-   *     //unchecked cast
-   *     UnaryGenericInterface<? extends CharSequence> t1 = (UnaryGenericInterface<? extends CharSequence>)t;
-   *   }
-   *   }
-   * </pre>
-   */
-  public static boolean existSuperPathWithoutRepetitiveArguments(PsiClass psiClass, PsiClass superClass) {
-    if (!psiClass.hasTypeParameters() || !superClass.hasTypeParameters()) {
-      return false;
-    }
-    final Map<PsiClass, Object> map = CachedValuesManager.getCachedValue(psiClass, () -> {
-      HashingStrategy<PsiClass> strategy = new HashingStrategy<PsiClass>() {
-        @Override
-        public int hashCode(PsiClass object) {
-          return object == null ? 0 : Strings.notNullize(object.getQualifiedName()).hashCode();
-        }
-
-        @Override
-        public boolean equals(PsiClass o1, PsiClass o2) {
-          if (o1 == o2) {
-            return true;
-          }
-          if (o1 == null || o2 == null) {
-            return false;
-          }
-
-          String qname1 = o1.getQualifiedName();
-          if (qname1 != null) {
-            return qname1.equals(o2.getQualifiedName());
-          }
-          return o1.getManager().areElementsEquivalent(o1, o2);
-        }
-      };
-      final Map<PsiClass, Object> result = CollectionFactory.createCustomHashingStrategyMap(strategy);
-      final Object dummyValue = new Object();
-      ArrayDeque<PsiClassType> queue = new ArrayDeque<>();
-      Function<PsiClass, Set<PsiTypeParameter>> collectPsiTypeParameters = aClass -> {
-        PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
-        return Arrays.stream(typeParameters)
-          .filter(t -> t.getBounds().length == 0)
-          .collect(Collectors.toSet());
-      };
-      BiPredicate<Set<PsiTypeParameter>, PsiClassType> isPossibleWay = (sourceTypeParameters, superType) -> {
-        Map<PsiTypeParameter, Integer> count = new HashMap<>();
-        PsiType[] superTypeParameters = superType.getParameters();
-        if (superTypeParameters.length == 0) {
-          return false;
-        }
-        for (PsiType type : superTypeParameters) {
-          if (!(type instanceof PsiClassType)) {
-            continue;
-          }
-          PsiClassType currentClassType = (PsiClassType)type;
-          JvmTypeResolveResult resolvedType = currentClassType.resolveType();
-          if (resolvedType == null) {
-            continue;
-          }
-          JvmTypeDeclaration declaration = resolvedType.getDeclaration();
-          if (declaration instanceof PsiTypeParameter && sourceTypeParameters.contains(declaration)) {
-            count.merge((PsiTypeParameter)declaration, 1, (oldValue, newValue) -> oldValue + newValue);
-          }
-        }
-        return ContainerUtil.and(count.values(), t -> t <= 1);
-      };
-      Set<PsiTypeParameter> psiTypeParameters = collectPsiTypeParameters.apply(psiClass);
-      queue.addAll(ContainerUtil.filter(psiClass.getSuperTypes(), t -> !result.containsKey(t.resolve()) && isPossibleWay.test(psiTypeParameters, t)));
-
-      while (!queue.isEmpty()) {
-        PsiClassType currentClassType = queue.poll();
-        PsiClass currentResolvedClass = currentClassType.resolve();
-        if (currentResolvedClass == null) {
-          continue;
-        }
-        if (result.containsKey(currentResolvedClass)) {
-          continue;
-        }
-        result.put(currentResolvedClass, dummyValue);
-        Set<PsiTypeParameter> psiTypesResolved = collectPsiTypeParameters.apply(currentResolvedClass);
-        queue.addAll(
-          ContainerUtil.filter(currentResolvedClass.getSuperTypes(), t -> !result.containsKey(t.resolve()) && isPossibleWay.test(psiTypesResolved, t)));
-      }
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
-    });
-
-    return map.containsKey(superClass);
-  }
-
 
   @NotNull
   public static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass, @NotNull PsiClassType classType) {

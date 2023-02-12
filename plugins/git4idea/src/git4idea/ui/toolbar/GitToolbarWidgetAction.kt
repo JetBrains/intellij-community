@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.toolbar
 
 import com.intellij.dvcs.repo.Repository
@@ -11,10 +11,12 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.ui.popup.util.PopupImplUtil
@@ -36,6 +38,7 @@ private val repositoryKey = Key.create<GitRepository>("git-widget-repository")
 private val changesKey = Key.create<MyRepoChanges>("git-widget-changes")
 
 internal class GitToolbarWidgetAction : ExpandableComboAction() {
+  private val widgetIcon = IconLoader.getIcon("expui/general/vcs.svg", AllIcons::class.java)
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -44,7 +47,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     val repository = GitBranchUtil.guessWidgetRepository(project, event.dataContext)
 
     val popup: JBPopup = if (repository != null) {
-      if (GitBranchesTreePopup.isEnabled()) GitBranchesTreePopup.create(project)
+      if (GitBranchesTreePopup.isEnabled()) GitBranchesTreePopup.create(project, repository)
       else GitBranchPopup.getInstance(project, repository, event.dataContext).asListPopup()
     }
     else {
@@ -104,7 +107,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
         with(e.presentation) {
           isEnabledAndVisible = true
           text = placeholder ?: GitBundle.message("git.toolbar.widget.no.repo")
-          icon = if (placeholder != null ) AllIcons.Vcs.Branch else null
+          icon = if (placeholder != null ) widgetIcon else null
           description = GitBundle.message("git.toolbar.widget.no.repo.tooltip")
         }
       }
@@ -138,7 +141,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     if (state != Repository.State.NORMAL) {
       return AllIcons.General.Warning
     }
-    return AllIcons.Vcs.Branch
+    return widgetIcon
   }
 
   @Tooltip
@@ -181,6 +184,11 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
 
     val isNonGitRepoExists = !VcsRepositoryManager.getInstance(project).repositories.isEmpty()
     if (isNonGitRepoExists) return GitWidgetState.OtherVcs
+
+    val activeVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
+    if (activeVcss.isNotEmpty()) {
+      return GitWidgetState.OtherVcs
+    }
 
     return GitWidgetState.NoVcs
   }

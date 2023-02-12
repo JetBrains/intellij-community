@@ -4,24 +4,22 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.canBeReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.util.ImportDescriptorResult
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.tower.isSynthesized
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ClassQualifier
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -101,14 +99,8 @@ class ImportAllMembersIntention : SelfTargetingIntention<KtElement>(
         private fun DeclarationDescriptor.isEnumClass(): Boolean = safeAs<ClassDescriptor>()?.kind == ClassKind.ENUM_CLASS
 
         private fun KtQualifiedExpression.isEnumSyntheticMethodCall(receiverDescriptor: DeclarationDescriptor): Boolean =
-            receiverDescriptor.containingDeclaration?.isEnumClass() == true && this.isReferenceToBuiltInEnumFunction()
+            receiverDescriptor.containingDeclaration?.isEnumClass() == true && this.canBeReferenceToBuiltInEnumFunction()
 
-        private fun KtFile.hasImportedEnumSyntheticMethodCall(): Boolean = anyDescendantOfType<KtCallExpression> { call ->
-            call.getQualifiedExpressionForSelector() == null &&
-                    call.isReferenceToBuiltInEnumFunction() &&
-                    call.referenceExpression()?.resolveMainReferenceToDescriptors().orEmpty().any {
-                        if (it is CallableDescriptor) it.containingDeclaration.isEnumClass() && it.isSynthesized else false
-                    }
-        }
+        private fun KtFile.hasImportedEnumSyntheticMethodCall(): Boolean = importDirectives.any { it.isUsedStarImportOfEnumStaticFunctions() }
     }
 }

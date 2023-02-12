@@ -87,8 +87,7 @@ public class DuplicateConditionInspection extends BaseInspection {
 
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
       if (parent instanceof PsiIfStatement) return;
-      if (parent instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression parentExpression = (PsiBinaryExpression)parent;
+      if (parent instanceof PsiBinaryExpression parentExpression) {
         if (tokenType.equals(parentExpression.getOperationTokenType())) return;
       }
 
@@ -120,8 +119,7 @@ public class DuplicateConditionInspection extends BaseInspection {
     private void collectConditionsForExpression(PsiExpression condition, Set<? super PsiExpression> conditions, IElementType wantedTokenType) {
       condition = PsiUtil.skipParenthesizedExprDown(condition);
       if (condition == null) return;
-      if (condition instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
+      if (condition instanceof PsiPolyadicExpression polyadicExpression) {
         final IElementType tokenType = polyadicExpression.getOperationTokenType();
         if (wantedTokenType.equals(tokenType)) {
           final PsiExpression[] operands = polyadicExpression.getOperands();

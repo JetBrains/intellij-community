@@ -82,8 +82,7 @@ public final class GrConcatenationInjector implements MultiHostInjector {
     else if (parent instanceof GrArgumentList) {
       final PsiElement pparent = parent.getParent();
 
-      if (pparent instanceof GrCall) {
-        final GrCall call = (GrCall)pparent;
+      if (pparent instanceof GrCall call) {
         final GroovyResolveResult result = call.advancedResolve();
         if (result.getElement() != null) {
           final Map<GrExpression, Pair<PsiParameter, PsiType>> map =

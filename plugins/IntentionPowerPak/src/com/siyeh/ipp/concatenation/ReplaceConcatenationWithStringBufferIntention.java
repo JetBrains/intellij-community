@@ -88,10 +88,9 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
       return false;
     }
     parent = parent.getParent();
-    if (!(parent instanceof PsiMethodCallExpression)) {
+    if (!(parent instanceof PsiMethodCallExpression methodCall)) {
       return false;
     }
-    final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)parent;
     final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
     final PsiType type = methodExpression.getType();
     if (type == null) {
@@ -108,8 +107,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
   private static void turnExpressionIntoChainedAppends(PsiExpression expression,
                                                        @NonNls StringBuilder result,
                                                        CommentTracker commentTracker) {
-    if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression concatenation = (PsiPolyadicExpression)expression;
+    if (expression instanceof PsiPolyadicExpression concatenation) {
       final PsiType type = concatenation.getType();
       if (type != null && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         result.append(".append(").append(commentTracker.text(concatenation)).append(')');

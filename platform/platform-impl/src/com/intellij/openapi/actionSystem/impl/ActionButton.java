@@ -25,7 +25,10 @@ import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
@@ -59,6 +62,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
    * @see Presentation#setPerformGroup(boolean)
    */
   public static final Key<Boolean> HIDE_DROPDOWN_ICON = Key.create("HIDE_DROPDOWN_ICON");
+
+  public static final Key<HelpTooltip> CUSTOM_HELP_TOOLTIP = Key.create("CUSTOM_HELP_TOOLTIP");
 
   private JBDimension myMinimumButtonSize;
   private Supplier<? extends @NotNull Dimension> myMinimumButtonSizeFunction;
@@ -158,7 +163,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   @NotNull
-  public final Presentation getPresentation() {
+  public Presentation getPresentation() {
     return myPresentation;
   }
 
@@ -388,7 +393,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   @NotNull
   protected Icon getFallbackIcon(boolean enabled) {
-    return EmptyIcon.ICON_18;
+    Presentation p = getAction().getTemplatePresentation();
+    Icon icon = Objects.requireNonNullElse(p.getIcon(), AllIcons.Toolbar.Unknown);
+    if (enabled) return icon;
+    if (p.getDisabledIcon() != null) return p.getDisabledIcon();
+    return IconLoader.getDisabledIcon(icon);
   }
 
   public void updateIcon() {
@@ -413,8 +422,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     String text = myPresentation.getText();
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
-      if (Strings.isNotEmpty(text) || Strings.isNotEmpty(description)) {
-        HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(getShortcutText());
+      HelpTooltip ht = myPresentation.getClientProperty(CUSTOM_HELP_TOOLTIP);
+      if ((Strings.isNotEmpty(text) || Strings.isNotEmpty(description)) && ht == null) {
+        ht = new HelpTooltip().setTitle(text).setShortcut(getShortcutText());
         if (myAction instanceof TooltipLinkProvider) {
           TooltipLinkProvider.TooltipLink link = ((TooltipLinkProvider)myAction).getTooltipLink(this);
           if (link != null) {
@@ -425,6 +435,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         if (!Objects.equals(text, description) && ((id != null && WHITE_LIST.contains(id)) || myAction instanceof TooltipDescriptionProvider)) {
           ht.setDescription(description);
         }
+      }
+      if (ht != null) {
         ht.installOn(this);
       }
     }
@@ -579,6 +591,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
     else if (HIDE_DROPDOWN_ICON.toString().equals(propertyName)) {
       repaint();
+    }
+    else if (CUSTOM_HELP_TOOLTIP.toString().equals(propertyName)) {
+      updateToolTipText();
     }
   }
 

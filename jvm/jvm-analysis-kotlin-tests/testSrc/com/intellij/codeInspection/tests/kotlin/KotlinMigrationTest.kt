@@ -1,12 +1,12 @@
 package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.codeInspection.tests.MigrationTestBase
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.refactoring.migration.MigrationMapEntry
 
 class KotlinMigrationTest : MigrationTestBase() {
   fun `test package`() {
-    migrationTest(ULanguage.KOTLIN, before = """
+    migrationTest(JvmLanguage.KOTLIN, before = """
       package p1
 
       import qqq.AAA
@@ -24,7 +24,7 @@ class KotlinMigrationTest : MigrationTestBase() {
       }
     """.trimIndent(), MigrationMapEntry("qqq", "jetbrains.test", MigrationMapEntry.PACKAGE, true)
     )
-    migrationTest(ULanguage.KOTLIN, before = """
+    migrationTest(JvmLanguage.KOTLIN, before = """
       package p1
       
       import qqq.*
@@ -44,7 +44,7 @@ class KotlinMigrationTest : MigrationTestBase() {
     )
   }
   fun `test package migration with non existing package`() {
-    migrationTest(ULanguage.KOTLIN, before = """
+    migrationTest(JvmLanguage.KOTLIN, before = """
       package p1
       
       import qqq.AAA
@@ -62,7 +62,7 @@ class KotlinMigrationTest : MigrationTestBase() {
       }
     """.trimIndent(), MigrationMapEntry("qqq", "zzz.bbb", MigrationMapEntry.PACKAGE, true)
     )
-    migrationTest(ULanguage.KOTLIN, before = """
+    migrationTest(JvmLanguage.KOTLIN, before = """
       package p1
       
       import qqq.*
@@ -83,7 +83,7 @@ class KotlinMigrationTest : MigrationTestBase() {
   }
 
   fun `test two classes`() {
-    migrationTest(ULanguage.KOTLIN, before = """
+    migrationTest(JvmLanguage.KOTLIN, before = """
       class A {}
       class A1 {}
       
@@ -112,7 +112,7 @@ class KotlinMigrationTest : MigrationTestBase() {
   }
 
   fun `test two non existent classes`() {
-    migrationTest(ULanguage.KOTLIN, before = """
+    migrationTest(JvmLanguage.KOTLIN, before = """
       package p1
 
       import qqq.aaa.XXX
@@ -130,7 +130,7 @@ class KotlinMigrationTest : MigrationTestBase() {
       }
     """.trimIndent(), MigrationMapEntry("qqq.aaa.XXX", "zzz.bbb.QQQ", MigrationMapEntry.CLASS, false)
     )
-    migrationTest(ULanguage.KOTLIN, before = """
+    migrationTest(JvmLanguage.KOTLIN, before = """
       package p1
       
       import qqq.aaa.*
@@ -152,7 +152,7 @@ class KotlinMigrationTest : MigrationTestBase() {
   }
 
   fun `test non existing class and non existing package`() {
-    migrationTest(ULanguage.KOTLIN, before = """
+    migrationTest(JvmLanguage.KOTLIN, before = """
       package p1
 
       import qqq.aaa.XXX
@@ -170,7 +170,7 @@ class KotlinMigrationTest : MigrationTestBase() {
       }
     """.trimIndent(), MigrationMapEntry("qqq.aaa.XXX", "java.lang.String", MigrationMapEntry.CLASS, false)
     )
-    migrationTest(ULanguage.KOTLIN, before = """
+    migrationTest(JvmLanguage.KOTLIN, before = """
       package p1
       
       import qqq.aaa.*
@@ -191,7 +191,7 @@ class KotlinMigrationTest : MigrationTestBase() {
   }
 
   fun `test same short name class`() {
-    migrationTest(ULanguage.KOTLIN, before = """
+    migrationTest(JvmLanguage.KOTLIN, before = """
       import aaa.*
       
       public class C {
@@ -214,7 +214,7 @@ class KotlinMigrationTest : MigrationTestBase() {
       }
     """.trimIndent(), MigrationMapEntry("aaa.Test", "bbb.Test", MigrationMapEntry.CLASS, false)
     )
-    migrationTest(ULanguage.KOTLIN, before = """
+    migrationTest(JvmLanguage.KOTLIN, before = """
       import aaa.Test
       
       public class C1 {

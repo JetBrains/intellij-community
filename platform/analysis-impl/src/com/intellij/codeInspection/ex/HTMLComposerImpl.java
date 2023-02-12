@@ -55,8 +55,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   public void compose(@NotNull StringBuilder buf, RefEntity refElement, CommonProblemDescriptor descriptor) {}
 
   protected void genPageHeader(@NotNull StringBuilder buf, RefEntity refEntity) {
-    if (refEntity instanceof RefElement) {
-      RefElement refElement = (RefElement)refEntity;
+    if (refEntity instanceof RefElement refElement) {
 
       appendHeading(buf, AnalysisBundle.message("inspection.export.results.capitalized.location"));
       buf.append("<div class=\"location\">");

@@ -4,6 +4,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -55,7 +56,7 @@ public final class RelaxedDirectInheritorChecker {
         ambiguity = hasAmbiguitiesSoFar(psiClass, ambiguity);
         files[i] = psiClass.getContainingFile();
       }
-      boolean ambiguities = ambiguity == AMBIGUITY_FOUND;
+      boolean ambiguities = Strings.areSameInstance(ambiguity, AMBIGUITY_FOUND);
       result = new ClassesAndAmbiguities(classes, files, ambiguities);
 
       cache.put(classShortName, new SoftReference<>(result));
@@ -70,7 +71,7 @@ public final class RelaxedDirectInheritorChecker {
   // - LOCAL_CLASS_FOUND: one local class found, all others have same FQN
   // - other: if all classes in the list have the same FQN
   private static String hasAmbiguitiesSoFar(@NotNull PsiClass psiClass, String oldFqn) {
-    if (oldFqn == AMBIGUITY_FOUND) return AMBIGUITY_FOUND;
+    if (Strings.areSameInstance(oldFqn, AMBIGUITY_FOUND)) return AMBIGUITY_FOUND;
     String qName = Objects.requireNonNullElse(psiClass.getQualifiedName(), LOCAL_CLASS_FOUND);
     return oldFqn == null || oldFqn.equals(qName) && !oldFqn.equals(LOCAL_CLASS_FOUND) ? qName : AMBIGUITY_FOUND;
   }
@@ -103,7 +104,7 @@ public final class RelaxedDirectInheritorChecker {
           ambiguity = hasAmbiguitiesSoFar(base, ambiguity);
         }
       }
-      if (ambiguity != AMBIGUITY_FOUND) {
+      if (!Strings.areSameInstance(ambiguity, AMBIGUITY_FOUND)) {
         return hasBaseClass;
       }
     }

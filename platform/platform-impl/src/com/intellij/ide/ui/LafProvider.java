@@ -9,4 +9,8 @@ public interface LafProvider {
   ExtensionPointName<LafProvider> EP_NAME = new ExtensionPointName<>("com.intellij.lafProvider");
 
   @NotNull PluggableLafInfo getLookAndFeelInfo();
+
+  @NotNull default TargetUIType getTargetUI() {
+    return TargetUIType.CLASSIC;
+  }
 }

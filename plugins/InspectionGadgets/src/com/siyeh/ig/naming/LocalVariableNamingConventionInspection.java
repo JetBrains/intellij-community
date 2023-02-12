@@ -77,8 +77,7 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
         final PsiElement parent = variable.getParent();
         if (parent != null) {
           final PsiElement grandparent = parent.getParent();
-          if (grandparent instanceof PsiForStatement) {
-            final PsiForStatement forLoop = (PsiForStatement)grandparent;
+          if (grandparent instanceof PsiForStatement forLoop) {
             final PsiStatement initialization = forLoop.getInitialization();
             if (parent.equals(initialization)) {
               return;

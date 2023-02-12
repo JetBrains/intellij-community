@@ -20,8 +20,7 @@ public class InstanceValueDescriptor extends ValueDescriptorImpl {
   @Override
   public String calcValueName() {
     ObjectReference ref = ((ObjectReference)getValue());
-    if (ref instanceof ArrayReference) {
-      ArrayReference arrayReference = (ArrayReference)ref;
+    if (ref instanceof ArrayReference arrayReference) {
       return NamesUtils.getArrayUniqueName(arrayReference);
     }
     return NamesUtils.getUniqueName(ref);

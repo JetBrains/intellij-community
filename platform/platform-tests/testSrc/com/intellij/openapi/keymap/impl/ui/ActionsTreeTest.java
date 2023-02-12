@@ -208,7 +208,7 @@ public class ActionsTreeTest {
           checkPresentationProperty("description", actionIdAndClass, before.getDescription(), after.getDescription());
         }
 
-        if (action instanceof ActionGroup || action instanceof Separator) {
+        if (action instanceof ActionGroup || action instanceof DecorativeElement) {
           LOG.debug("ignored action group or separator: " + actionIdAndClass);
         }
         else if (StringUtil.isEmpty(action.getTemplatePresentation().getText())) {

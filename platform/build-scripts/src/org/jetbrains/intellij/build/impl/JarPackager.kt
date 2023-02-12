@@ -1,6 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog",
-               "BlockingMethodInNonBlockingContext")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.use
@@ -527,7 +526,8 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
       val fileName = path.substring(path.lastIndexOf('/') + 1)
 
       val os = when {
-        path.startsWith("darwin-") || path.startsWith("mac-") || path.startsWith("darwin/") || path.startsWith("mac/") || path.startsWith("Mac/") -> OsFamily.MACOS
+        path.startsWith("darwin-") || path.startsWith("mac-") || path.startsWith("darwin/") || path.startsWith("mac/") || path.startsWith(
+          "Mac/") -> OsFamily.MACOS
         path.startsWith("win32-") || path.startsWith("win/") || path.startsWith("win-") || path.startsWith("Windows/") -> OsFamily.WINDOWS
         path.startsWith("Linux-Android/") || path.startsWith("Linux-Musl/") -> continue
         path.startsWith("linux-") || path.startsWith("linux/") || path.startsWith("Linux/") -> OsFamily.LINUX
@@ -758,4 +758,19 @@ private suspend fun buildJars(descriptors: List<BuildJarDescriptor>, dryRun: Boo
   val result = TreeMap<ZipSource, MutableList<String>>(compareBy { it.file.fileName.toString() })
   list.asSequence().mapNotNull { it.getCompleted() }.forEach(result::putAll)
   return result
+}
+
+fun buildJar(targetFile: Path,
+             moduleNames: List<String>,
+             context: BuildContext,
+             dryRun: Boolean = false,
+             compress: Boolean = false) {
+  buildJar(
+    targetFile = targetFile,
+    sources = moduleNames.map { moduleName ->
+      DirSource(dir = context.getModuleOutputDir(context.findRequiredModule(moduleName)), excludes = commonModuleExcludes)
+    },
+    dryRun = dryRun,
+    compress = compress,
+  )
 }

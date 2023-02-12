@@ -326,8 +326,7 @@ public final class InspectionEngine {
         }
         else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
           GlobalInspectionTool globalTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();
-          if (globalTool instanceof GlobalSimpleInspectionTool) {
-            GlobalSimpleInspectionTool simpleTool = (GlobalSimpleInspectionTool)globalTool;
+          if (globalTool instanceof GlobalSimpleInspectionTool simpleTool) {
             ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, file, false);
             ProblemDescriptionsProcessor collectProcessor = new ProblemDescriptionsProcessor() {
               @Override

@@ -88,8 +88,7 @@ public final class TableUtil {
 
   static void generateTableList(PsiElement element, boolean isInsideHeader, List<? super Pair<Boolean, List<Integer>>> list,
                                 List<? super XmlTag> tags) {
-    if (element instanceof XmlTag) {
-      XmlTag tag = (XmlTag)element;
+    if (element instanceof XmlTag tag) {
       final String name = StringUtil.toLowerCase(tag.getLocalName());
       if (THEAD.equals(name)) {
         isInsideHeader = true;
@@ -217,8 +216,7 @@ public final class TableUtil {
     PsiElement[] children = tag.getChildren();
     for (int i = 0; i < children.length; i++) {
       PsiElement element = children[i];
-      if (element instanceof XmlToken) {
-        XmlToken token = (XmlToken)element;
+      if (element instanceof XmlToken token) {
         IElementType type = token.getTokenType();
         if (type.equals(XmlTokenType.XML_TAG_END)) {
           return children[i + 1];

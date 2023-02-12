@@ -60,8 +60,7 @@ public class ReplaceAppletTagAction implements LocalQuickFix {
     PsiElement[] replacePsiElements = generateContainingElements(project, name);
     int cnt = 0;
     for (PsiElement element : tag.getChildren()) {
-      if (element instanceof XmlToken) {
-        XmlToken token = (XmlToken)element;
+      if (element instanceof XmlToken token) {
         IElementType type = token.getTokenType();
         if (type == XmlTokenType.XML_NAME) {
           token.replace(replacePsiElements[cnt++]);

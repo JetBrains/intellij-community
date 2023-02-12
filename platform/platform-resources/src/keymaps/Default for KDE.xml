@@ -97,4 +97,5 @@
   <action id="ViewBreakpoints">
     <keyboard-shortcut first-keystroke="shift control 8"/>
   </action>
+  <action id="ResetIdeScaleAction"/>
 </keymap>

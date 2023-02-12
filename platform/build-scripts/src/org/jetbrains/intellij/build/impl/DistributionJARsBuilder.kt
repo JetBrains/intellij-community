@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext", "ReplaceNegatedIsEmptyWithIsNotEmpty", "PrivatePropertyName")
+@file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty", "PrivatePropertyName")
 
 package org.jetbrains.intellij.build.impl
 
@@ -12,6 +12,10 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -25,6 +29,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
+import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.tasks.ZipSource
@@ -50,6 +55,8 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Predicate
 import java.util.stream.Collectors
+import kotlin.io.path.exists
+import kotlin.io.path.name
 
 /**
  * Assembles output of modules to platform JARs (in [BuildPaths.distAllDir]/lib directory),
@@ -161,6 +168,50 @@ class DistributionJARsBuilder {
     }
   }
 
+  private fun validatePlugin(path: Path, context: BuildContext) {
+    spanBuilder("plugin validation").setAttribute("path", "$path").useWithScope {
+      if (!path.exists()) {
+        it.addEvent("path doesn't exist, skipped")
+        return@useWithScope
+      }
+      var id: String? = null
+      val problems = when (val result = IdePluginManager.createManager().createPlugin(path)) {
+        is PluginCreationSuccess -> {
+          id = result.plugin.pluginId
+          result.unacceptableWarnings
+        }
+        is PluginCreationFail -> {
+          result.errorsAndWarnings
+        }
+      }
+      if (problems.isNotEmpty()) {
+        val msg = problems.joinToString(
+          prefix = "${id ?: path}: ",
+          separator = ". ",
+          transform = PluginProblem::message
+        )
+        when (id) {
+          // https://youtrack.jetbrains.com/issue/IDEA-308174
+          "androidx.compose.plugins.idea",
+            // https://youtrack.jetbrains.com/issue/IDEA-312410
+          "com.intellij.tasks",
+            // https://youtrack.jetbrains.com/issue/IDEA-312409
+          "org.jetbrains.plugins.sass",
+            // https://youtrack.jetbrains.com/issue/IDEA-312408
+          "org.toml.lang",
+            // https://youtrack.jetbrains.com/issue/IDEA-312407
+          "com.intellij.plugins.webcomponents",
+            // https://youtrack.jetbrains.com/issue/IDEA-312406
+          "cucumber-javascript",
+            // https://youtrack.jetbrains.com/issue/IDEA-312405
+          "com.jetbrains.plugins.yeoman"
+          -> context.messages.warning(msg)
+          else -> reportBuildProblem(msg, identity = "${id ?: path}")
+        }
+      }
+    }
+  }
+
   // filter out jars with relative paths in name
   val productModules: List<String>
     get() {
@@ -217,18 +268,14 @@ class DistributionJARsBuilder {
     // for some reasons maybe duplicated paths - use set
     val classPath = LinkedHashSet<String>()
     val pluginLayouts = context.productProperties.productLayout.pluginLayouts
-    val pluginLayoutRoot: Path = withContext(Dispatchers.IO) {
-      Files.createDirectories(context.paths.tempDir)
-      Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
-    }
     val nonPluginsEntries = mutableListOf<DistributionFileEntry>()
     val pluginsEntries = mutableListOf<DistributionFileEntry>()
-    for (e in generateProjectStructureMapping(context = context, state = state, pluginLayoutRoot = pluginLayoutRoot)) {
-      if (e.path.startsWith(pluginLayoutRoot)) {
-        val relPath = pluginLayoutRoot.relativize(e.path)
+    val pluginsDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
+    for (e in generateProjectStructureMapping(context = context, state = state)) {
+      if (e.path.startsWith(pluginsDir)) {
+        val relPath = pluginsDir.relativize(e.path)
         // For plugins our classloader load jars only from lib folder
-        val parent = relPath.parent
-        if ((parent?.parent) == null && (relPath.parent.toString() == "lib")) {
+        if (relPath.nameCount == 3 && relPath.getName(1).toString() == "lib") {
           pluginsEntries.add(e)
         }
       }
@@ -361,7 +408,7 @@ class DistributionJARsBuilder {
         }
 
         // buildPlugins pluginBuilt listener is called concurrently
-        val pluginsToIncludeInCustomRepository = ConcurrentLinkedQueue<PluginRepositorySpec>()
+        val pluginSpecs = ConcurrentLinkedQueue<PluginRepositorySpec>()
         val autoPublishPluginChecker = loadPluginAutoPublishList(context)
         val prepareCustomPluginRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                             !context.isStepSkipped(BuildOptions.ARCHIVE_PLUGINS)
@@ -383,10 +430,8 @@ class DistributionJARsBuilder {
             defaultPluginVersion
           }
           val destFile = targetDirectory.resolve("${plugin.directoryName}-$pluginVersion.zip")
-          if (prepareCustomPluginRepository) {
-            val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
-            pluginsToIncludeInCustomRepository.add(PluginRepositorySpec(destFile, pluginXml))
-          }
+          val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
+          pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
           dirToJar.add(NonBundledPlugin(pluginDirOrFile, destFile, !plugin.enableSymlinksAndExecutableResources))
         }
 
@@ -399,21 +444,24 @@ class DistributionJARsBuilder {
                                      targetDir = autoUploadingDir,
                                      moduleOutputPatcher = moduleOutputPatcher,
                                      context = context)
-          if (prepareCustomPluginRepository) {
-            pluginsToIncludeInCustomRepository.add(spec)
-          }
+          pluginSpecs.add(spec)
         }
 
+        for (item in buildKeymapPluginsTask.await()) {
+          pluginSpecs.add(PluginRepositorySpec(pluginZip = item.first, pluginXml = item.second))
+        }
         if (prepareCustomPluginRepository) {
-          for (item in buildKeymapPluginsTask.await()) {
-            pluginsToIncludeInCustomRepository.add(PluginRepositorySpec(pluginZip = item.first, pluginXml = item.second))
-          }
-
-          val list = pluginsToIncludeInCustomRepository.sortedBy { it.pluginZip }
+          val list = pluginSpecs.sortedBy { it.pluginZip }
           generatePluginRepositoryMetaFile(list, nonBundledPluginsArtifacts, context)
           generatePluginRepositoryMetaFile(list.filter { it.pluginZip.startsWith(autoUploadingDir) }, autoUploadingDir, context)
         }
-
+        pluginSpecs.forEach {
+          if (it.pluginZip.startsWith(autoUploadingDir)) {
+            launch {
+              validatePlugin(it.pluginZip, context)
+            }
+          }
+        }
         mappings
       }
     }
@@ -440,9 +488,7 @@ class DistributionJARsBuilder {
   }
 }
 
-internal suspend fun generateProjectStructureMapping(context: BuildContext,
-                                                     state: DistributionBuilderState,
-                                                     pluginLayoutRoot: Path): List<DistributionFileEntry> {
+internal suspend fun generateProjectStructureMapping(context: BuildContext, state: DistributionBuilderState): List<DistributionFileEntry> {
   val moduleOutputPatcher = ModuleOutputPatcher()
   return coroutineScope {
     val libDirLayout = async {
@@ -453,8 +499,9 @@ internal suspend fun generateProjectStructureMapping(context: BuildContext,
     val entries = ArrayList<DistributionFileEntry>()
     for (plugin in allPlugins) {
       if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, withEphemeral = true, context = context)) {
+        val targetDirectory = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY).resolve(plugin.directoryName)
         entries.addAll(layoutDistribution(layout = plugin,
-                                          targetDirectory = pluginLayoutRoot,
+                                          targetDirectory = targetDirectory,
                                           copyFiles = false,
                                           simplify = false,
                                           moduleOutputPatcher = moduleOutputPatcher,
@@ -915,7 +962,9 @@ private suspend fun buildKeymapPlugins(targetDir: Path, context: BuildContext): 
         arrayOf("Mac OS X", "Mac OS X 10.5+"),
         arrayOf("Default for GNOME"),
         arrayOf("Default for KDE"),
-        arrayOf("Default for XWin")
+        arrayOf("Default for XWin"),
+        arrayOf("Emacs"),
+        arrayOf("Sublime Text", "Sublime Text (Mac OS X)"),
       ).map {
         async { buildKeymapPlugin(it, context.buildNumber, targetDir, keymapDir) }
       }

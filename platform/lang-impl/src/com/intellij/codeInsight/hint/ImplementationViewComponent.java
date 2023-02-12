@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.application.options.CodeStyle;
@@ -216,7 +216,7 @@ public class ImplementationViewComponent extends JPanel {
     JLabel label = new JLabel(myElements[myIndex].getPresentableText(), getIconForFile(virtualFile, project), SwingConstants.LEFT);
     mySingleEntryPanel.add(label, BorderLayout.CENTER);
     label.setForeground(FileStatusManager.getInstance(project).getStatus(virtualFile).getColor());
-    
+
     mySingleEntryPanel.add(new JLabel(myElements[myIndex].getLocationText(), myElements[myIndex].getLocationIcon(), SwingConstants.LEFT), BorderLayout.EAST);
     mySingleEntryPanel.setOpaque(false);
     mySingleEntryPanel.setVisible(true);
@@ -562,7 +562,7 @@ public class ImplementationViewComponent extends JPanel {
     ForwardAction forward = new ForwardAction();
     forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), this);
     group.add(forward);
-    
+
     group.add(createGearActionButton(openUsageView));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(IMPLEMENTATION_VIEW_PLACE, group, true);

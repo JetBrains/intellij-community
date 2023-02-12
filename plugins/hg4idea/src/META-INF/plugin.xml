@@ -3,7 +3,7 @@
   <name>Mercurial</name>
   <description>
     <![CDATA[
-      Allows working with <a href="http://www.mercurial-scm.org/">Mercurial version control system</a>.
+      Allows working with <a href="https://www.mercurial-scm.org/">Mercurial version control system</a>.
       The following features are available:
         <ul>
         <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>

@@ -7,9 +7,10 @@ import com.intellij.collaboration.util.withQuery
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQueries
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.api.restApiUri
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestApprovalRestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import java.net.http.HttpRequest
@@ -61,25 +62,25 @@ suspend fun GitLabApi.loadMergeRequestMilestoneEvents(project: GitLabProjectCoor
 suspend fun GitLabApi.mergeRequestApprove(
   project: GitLabProjectCoordinates,
   mergeRequestId: GitLabMergeRequestId
-): HttpResponse<out GitLabMergeRequestShortRestDTO> {
+): HttpResponse<out GitLabMergeRequestApprovalRestDTO> {
   val uri = project.restApiUri
     .resolveRelative("merge_requests")
     .resolveRelative(mergeRequestId.iid)
     .resolveRelative("approve")
   val request = request(uri).POST(HttpRequest.BodyPublishers.noBody()).build()
-  return loadJsonValue(request, GitLabMergeRequestShortRestDTO::class.java)
+  return loadJsonValue(request, GitLabMergeRequestApprovalRestDTO::class.java)
 }
 
 suspend fun GitLabApi.mergeRequestUnApprove(
   project: GitLabProjectCoordinates,
   mergeRequestId: GitLabMergeRequestId
-): HttpResponse<out GitLabMergeRequestShortRestDTO> {
+): HttpResponse<out GitLabMergeRequestApprovalRestDTO> {
   val uri = project.restApiUri
     .resolveRelative("merge_requests")
     .resolveRelative(mergeRequestId.iid)
     .resolveRelative("unapprove")
   val request = request(uri).POST(HttpRequest.BodyPublishers.noBody()).build()
-  return loadJsonValue(request, GitLabMergeRequestShortRestDTO::class.java)
+  return loadJsonValue(request, GitLabMergeRequestApprovalRestDTO::class.java)
 }
 
 suspend fun GitLabApi.mergeRequestUpdate(
@@ -112,15 +113,34 @@ suspend fun GitLabApi.mergeRequestSetReviewers(
 
 suspend fun GitLabApi.mergeRequestAccept(
   project: GitLabProjectCoordinates,
-  mergeRequest: GitLabMergeRequestDTO
+  mergeRequestId: GitLabMergeRequestId,
+  commitMessage: String,
+  sha: String,
+  withSquash: Boolean
 ): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
   val parameters = mapOf(
     "projectId" to project.projectPath.fullPath(),
-    "mergeRequestId" to mergeRequest.iid,
-    "sha" to mergeRequest.commits.last().sha
+    "mergeRequestId" to mergeRequestId.iid,
+    "commitMessage" to commitMessage,
+    "sha" to sha,
+    "withSquash" to withSquash
   )
   val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.mergeRequestAccept, parameters)
   return loadGQLResponse(request, GitLabMergeRequestResult::class.java, "mergeRequestAccept")
+}
+
+suspend fun GitLabApi.mergeRequestSetDraft(
+  project: GitLabProjectCoordinates,
+  mergeRequestId: GitLabMergeRequestId,
+  isDraft: Boolean
+): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
+  val parameters = mapOf(
+    "projectId" to project.projectPath.fullPath(),
+    "mergeRequestId" to mergeRequestId.iid,
+    "isDraft" to isDraft
+  )
+  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.mergeRequestSetDraft, parameters)
+  return loadGQLResponse(request, GitLabMergeRequestResult::class.java, "mergeRequestSetDraft")
 }
 
 private class GitLabMergeRequestResult(mergeRequest: GitLabMergeRequestDTO, errors: List<String>?)

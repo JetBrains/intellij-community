@@ -331,8 +331,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiCatchSection)) return;
-      final PsiCatchSection catchSection = (PsiCatchSection)parent;
+      if (!(parent instanceof PsiCatchSection catchSection)) return;
       final PsiParameter parameter = catchSection.getParameter();
       if (parameter == null) return;
       final PsiIdentifier identifier = parameter.getNameIdentifier();

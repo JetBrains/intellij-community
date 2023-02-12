@@ -5434,6 +5434,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertForEachToForLoop/implicitFunctionLiteralParameter.kt");
         }
 
+        @TestMetadata("implicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("testData/intentions/convertForEachToForLoop/implicitReceiver.kt");
+        }
+
+        @TestMetadata("implicitReceiverWithMultipleReceivers.kt")
+        public void testImplicitReceiverWithMultipleReceivers() throws Exception {
+            runTest("testData/intentions/convertForEachToForLoop/implicitReceiverWithMultipleReceivers.kt");
+        }
+
         @TestMetadata("keepComments.kt")
         public void testKeepComments() throws Exception {
             runTest("testData/intentions/convertForEachToForLoop/keepComments.kt");
@@ -10763,6 +10773,26 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/importAllMembers/EnumSyntheticMethods.kt");
         }
 
+        @TestMetadata("EnumSyntheticMethods10.kt")
+        public void testEnumSyntheticMethods10() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods10.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods11.kt")
+        public void testEnumSyntheticMethods11() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods11.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods12.kt")
+        public void testEnumSyntheticMethods12() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods12.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods13.kt")
+        public void testEnumSyntheticMethods13() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods13.kt");
+        }
+
         @TestMetadata("EnumSyntheticMethods2.kt")
         public void testEnumSyntheticMethods2() throws Exception {
             runTest("testData/intentions/importAllMembers/EnumSyntheticMethods2.kt");
@@ -10786,6 +10816,21 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("EnumSyntheticMethods6.kt")
         public void testEnumSyntheticMethods6() throws Exception {
             runTest("testData/intentions/importAllMembers/EnumSyntheticMethods6.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods7.kt")
+        public void testEnumSyntheticMethods7() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods7.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods8.kt")
+        public void testEnumSyntheticMethods8() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods8.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods9.kt")
+        public void testEnumSyntheticMethods9() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods9.kt");
         }
 
         @TestMetadata("ImportAllMembersInImport.kt")
@@ -17825,6 +17870,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("referenceGetter1.kt")
         public void testReferenceGetter1() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/referenceGetter1.kt");
+        }
+
+        @TestMetadata("referenceGetterFunctionalInterface.kt")
+        public void testReferenceGetterFunctionalInterface() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/referenceGetterFunctionalInterface.kt");
+        }
+
+        @TestMetadata("referenceGetterNotBuiltInFunctionType.kt")
+        public void testReferenceGetterNotBuiltInFunctionType() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/referenceGetterNotBuiltInFunctionType.kt");
         }
 
         @TestMetadata("referenceGetterOldLv.kt")

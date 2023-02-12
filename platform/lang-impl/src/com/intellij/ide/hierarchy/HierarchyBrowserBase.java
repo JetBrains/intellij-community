@@ -124,10 +124,9 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     }
     TreeModel model = tree.getModel();
     Object root = model.getRoot();
-    if (!(root instanceof DefaultMutableTreeNode)) {
+    if (!(root instanceof DefaultMutableTreeNode node)) {
       return PsiElement.EMPTY_ARRAY;
     }
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode)root;
     HierarchyNodeDescriptor descriptor = getDescriptor(node);
     Set<PsiElement> result = new HashSet<>();
     if (descriptor != null) {
@@ -146,8 +145,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
       return;
     }
     for (Object child : children) {
-      if (child instanceof HierarchyNodeDescriptor) {
-        HierarchyNodeDescriptor childDescriptor = (HierarchyNodeDescriptor)child;
+      if (child instanceof HierarchyNodeDescriptor childDescriptor) {
         collectElements(childDescriptor, out);
       }
     }
@@ -165,8 +163,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     ArrayList<HierarchyNodeDescriptor> list = new ArrayList<>(paths.length);
     for (TreePath path : paths) {
       Object lastPathComponent = path.getLastPathComponent();
-      if (lastPathComponent instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
+      if (lastPathComponent instanceof DefaultMutableTreeNode node) {
         HierarchyNodeDescriptor descriptor = getDescriptor(node);
         if (descriptor != null) {
           list.add(descriptor);

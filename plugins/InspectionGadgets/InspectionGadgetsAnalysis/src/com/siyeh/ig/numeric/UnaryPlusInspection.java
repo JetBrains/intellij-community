@@ -84,10 +84,9 @@ public final class UnaryPlusInspection extends BaseInspection {
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiPrefixExpression)) {
+      if (!(parent instanceof PsiPrefixExpression prefixExpression)) {
         return;
       }
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parent;
       final PsiExpression operand = prefixExpression.getOperand();
       if (operand == null) {
         return;

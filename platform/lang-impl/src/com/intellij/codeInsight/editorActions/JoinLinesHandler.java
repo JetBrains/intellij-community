@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -370,7 +370,7 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
       LOG.error("Handler returned negative offset: handler class="+delegate.getClass()+"; offset="+offset);
       return 0;
     } else if (offset > doc.getTextLength()) {
-      LOG.error("Handler returned an offset which exceeds the document length: handler class=" + delegate.getClass() + 
+      LOG.error("Handler returned an offset which exceeds the document length: handler class=" + delegate.getClass() +
                 "; offset=" + offset + "; length=" + doc.getTextLength());
       return doc.getTextLength();
     }
@@ -392,8 +392,7 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
 
   private static boolean tryConvertEndOfLineComment(PsiElement commentElement) {
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(commentElement.getLanguage());
-    if (commenter instanceof CodeDocumentationAwareCommenter) {
-      CodeDocumentationAwareCommenter docCommenter = (CodeDocumentationAwareCommenter) commenter;
+    if (commenter instanceof CodeDocumentationAwareCommenter docCommenter) {
       String lineCommentPrefix = commenter.getLineCommentPrefix();
       String blockCommentPrefix = commenter.getBlockCommentPrefix();
       String blockCommentSuffix = commenter.getBlockCommentSuffix();

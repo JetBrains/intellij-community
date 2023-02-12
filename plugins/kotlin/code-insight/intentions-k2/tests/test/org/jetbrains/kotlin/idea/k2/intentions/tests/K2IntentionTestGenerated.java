@@ -966,6 +966,26 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/importAllMembers/EnumSyntheticMethods.kt");
         }
 
+        @TestMetadata("EnumSyntheticMethods10.kt")
+        public void testEnumSyntheticMethods10() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importAllMembers/EnumSyntheticMethods10.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods11.kt")
+        public void testEnumSyntheticMethods11() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importAllMembers/EnumSyntheticMethods11.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods12.kt")
+        public void testEnumSyntheticMethods12() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importAllMembers/EnumSyntheticMethods12.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods13.kt")
+        public void testEnumSyntheticMethods13() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importAllMembers/EnumSyntheticMethods13.kt");
+        }
+
         @TestMetadata("EnumSyntheticMethods2.kt")
         public void testEnumSyntheticMethods2() throws Exception {
             runTest("../../../idea/tests/testData/intentions/importAllMembers/EnumSyntheticMethods2.kt");
@@ -989,6 +1009,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("EnumSyntheticMethods6.kt")
         public void testEnumSyntheticMethods6() throws Exception {
             runTest("../../../idea/tests/testData/intentions/importAllMembers/EnumSyntheticMethods6.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods7.kt")
+        public void testEnumSyntheticMethods7() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importAllMembers/EnumSyntheticMethods7.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods8.kt")
+        public void testEnumSyntheticMethods8() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importAllMembers/EnumSyntheticMethods8.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods9.kt")
+        public void testEnumSyntheticMethods9() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importAllMembers/EnumSyntheticMethods9.kt");
         }
 
         @TestMetadata("ImportAllMembersInImport.kt")
@@ -2358,6 +2393,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/implicitFunctionLiteralParameter.kt");
         }
 
+        @TestMetadata("implicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/implicitReceiver.kt");
+        }
+
+        @TestMetadata("implicitReceiverWithMultipleReceivers.kt")
+        public void testImplicitReceiverWithMultipleReceivers() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/implicitReceiverWithMultipleReceivers.kt");
+        }
+
         @TestMetadata("keepComments.kt")
         public void testKeepComments() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/keepComments.kt");
@@ -3312,8 +3357,163 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf")
+    public static class WhenToIf extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("comment.kt")
+        public void testComment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/comment.kt");
+        }
+
+        @TestMetadata("kt12040.kt")
+        public void testKt12040() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/kt12040.kt");
+        }
+
+        @TestMetadata("kt13884.kt")
+        public void testKt13884() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/kt13884.kt");
+        }
+
+        @TestMetadata("variableSubject.kt")
+        public void testVariableSubject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/variableSubject.kt");
+        }
+
+        @TestMetadata("whenTrueOrFalse.kt")
+        public void testWhenTrueOrFalse() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenTrueOrFalse.kt");
+        }
+
+        @TestMetadata("whenTrueOrFalse2.kt")
+        public void testWhenTrueOrFalse2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenTrueOrFalse2.kt");
+        }
+
+        @TestMetadata("whenTrueOrFalse3.kt")
+        public void testWhenTrueOrFalse3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenTrueOrFalse3.kt");
+        }
+
+        @TestMetadata("whenTrueOrFalse4.kt")
+        public void testWhenTrueOrFalse4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenTrueOrFalse4.kt");
+        }
+
+        @TestMetadata("whenWithDotQualifiedExpression.kt")
+        public void testWhenWithDotQualifiedExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithDotQualifiedExpression.kt");
+        }
+
+        @TestMetadata("whenWithEqualityTests.kt")
+        public void testWhenWithEqualityTests() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithEqualityTests.kt");
+        }
+
+        @TestMetadata("whenWithIf.kt")
+        public void testWhenWithIf() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithIf.kt");
+        }
+
+        @TestMetadata("whenWithMultiConditions.kt")
+        public void testWhenWithMultiConditions() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithMultiConditions.kt");
+        }
+
+        @TestMetadata("whenWithMultipleConditionTypes.kt")
+        public void testWhenWithMultipleConditionTypes() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithMultipleConditionTypes.kt");
+        }
+
+        @TestMetadata("whenWithNegativePatterns.kt")
+        public void testWhenWithNegativePatterns() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithNegativePatterns.kt");
+        }
+
+        @TestMetadata("whenWithNegativeRangeTests.kt")
+        public void testWhenWithNegativeRangeTests() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithNegativeRangeTests.kt");
+        }
+
+        @TestMetadata("whenWithPatterns.kt")
+        public void testWhenWithPatterns() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithPatterns.kt");
+        }
+
+        @TestMetadata("whenWithRangeTests.kt")
+        public void testWhenWithRangeTests() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithRangeTests.kt");
+        }
+
+        @TestMetadata("whenWithRangeTestsAndMultiConditions.kt")
+        public void testWhenWithRangeTestsAndMultiConditions() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithRangeTestsAndMultiConditions.kt");
+        }
+
+        @TestMetadata("whenWithoutElse.kt")
+        public void testWhenWithoutElse() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithoutElse.kt");
+        }
+
+        @TestMetadata("whenWithoutElseUsedAsExpression.kt")
+        public void testWhenWithoutElseUsedAsExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithoutElseUsedAsExpression.kt");
+        }
+
+        @TestMetadata("whenWithoutSubject.kt")
+        public void testWhenWithoutSubject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithoutSubject.kt");
+        }
+
+        @TestMetadata("wrongIsAndInNoEnd.kt")
+        public void testWrongIsAndInNoEnd() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/wrongIsAndInNoEnd.kt");
+        }
+
+        @TestMetadata("wrongIsAndInNoSubject.kt")
+        public void testWrongIsAndInNoSubject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/wrongIsAndInNoSubject.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions")
     public abstract static class Intentions extends AbstractK2IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/branched")
+        public abstract static class Branched extends AbstractK2IntentionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/intentions/branched/whenToIf")
+            public static class WhenToIf extends AbstractK2IntentionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("comment.kt")
+                public void testComment() throws Exception {
+                    runTest("testData/intentions/branched/whenToIf/comment.kt");
+                }
+
+                @TestMetadata("kt12040.kt")
+                public void testKt12040() throws Exception {
+                    runTest("testData/intentions/branched/whenToIf/kt12040.kt");
+                }
+
+                @TestMetadata("sideEffectWithoutSubjectSeparation.kt")
+                public void testSideEffectWithoutSubjectSeparation() throws Exception {
+                    runTest("testData/intentions/branched/whenToIf/sideEffectWithoutSubjectSeparation.kt");
+                }
+
+                @TestMetadata("whenWithDotQualifiedExpression.kt")
+                public void testWhenWithDotQualifiedExpression() throws Exception {
+                    runTest("testData/intentions/branched/whenToIf/whenWithDotQualifiedExpression.kt");
+                }
+            }
+        }
+
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/useExpressionBody")
         public abstract static class UseExpressionBody extends AbstractK2IntentionTest {

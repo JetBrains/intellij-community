@@ -3,7 +3,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -98,8 +98,7 @@ public final class PsiTypeLookupItem extends LookupItem implements TypedLookupIt
   @Override
   public void handleInsert(@NotNull InsertionContext context) {
     SmartPsiElementPointer<PsiElement> pointer = null;
-    if (getObject() instanceof PsiElement) {
-      PsiElement psiElement = (PsiElement)getObject();
+    if (getObject() instanceof PsiElement psiElement) {
       pointer = SmartPointerManager.getInstance(context.getProject()).createSmartPsiElementPointer(psiElement);
     }
     myImportFixer.handleInsert(context, this);
@@ -154,8 +153,7 @@ public final class PsiTypeLookupItem extends LookupItem implements TypedLookupIt
       return "<>";
     }
 
-    if (getObject() instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass)getObject();
+    if (getObject() instanceof PsiClass psiClass) {
       PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper();
       PsiSubstitutor substitutor = getSubstitutor();
       StringBuilder builder = new StringBuilder();
@@ -334,7 +332,7 @@ public final class PsiTypeLookupItem extends LookupItem implements TypedLookupIt
                 "file.length=" + file.getTextLength() + "\n" +
                 "document=" + context.getDocument() + "\n" +
                 new Throwable(),
-                AttachmentFactory.createAttachment(context.getDocument()));
+                CoreAttachmentFactory.createAttachment(context.getDocument()));
       return;
     }
 

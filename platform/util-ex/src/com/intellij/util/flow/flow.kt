@@ -75,7 +75,8 @@ suspend fun <X> SharedFlow<X>.collectLatestUndispatched(action: suspend (value: 
 private object UNINITIALIZED
 
 /**
- * Returns a cold flow, which pairs an original value with a previous value.
+ * Returns a cold flow containing the results of applying the given transform function
+ * to each pair of two adjacent elements in this flow.
  *
  * Example:
  * ```kotlin
@@ -84,27 +85,38 @@ private object UNINITIALIZED
  *   emit(2)
  *   emit(3)
  *   emit(4)
- * }.zipWithPrevious()
+ * }.zipWithNext { a, b ->
+ *   println("($a, $b)")
+ * }.collect()
  * ```
- * produces the following emissions
+ * produces the following output
  * ```
- * (1,2), (2,3), (3,4)
+ * (1,2)
+ * (2,3)
+ * (3,4)
  * ```
  *
- * The returned flow is empty if [this] flow is empty or emits a single element.
+ * The returned flow is empty if [this] flow is empty or emits only a single element.
+ *
+ * See also: [Sequence.zipWithNext]
  */
-fun <X> Flow<X>.zipWithPrevious(): Flow<Pair<X, X>> {
+fun <T, R> Flow<T>.zipWithNext(transform: suspend (a: T, b: T) -> R): Flow<R> {
   return flow {
-    @Suppress("UNCHECKED_CAST")
-    var previous: X = UNINITIALIZED as X
-    collect {
-      if (previous != UNINITIALIZED) {
-        emit(Pair(previous, it))
+    var current: Any? = UNINITIALIZED
+    collect { value ->
+      if (current !== UNINITIALIZED) {
+        @Suppress("UNCHECKED_CAST")
+        emit(transform(current as T, value))
       }
-      previous = it
+      current = value
     }
   }
 }
+
+/**
+ * See: [zipWithNext]
+ */
+fun <T> Flow<T>.zipWithNext(): Flow<Pair<T, T>> = zipWithNext { a, b -> a to b }
 
 /**
  * Returns a cold flow, which emits values of [this] flow in chunks no often than the given [duration][duration].

@@ -301,7 +301,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         console.waitAllRequests();
         MarkupModel model = DocumentMarkupModel.forDocument(console.getEditor().getDocument(), getProject(), true);
         RangeHighlighter highlighter = assertOneElement(model.getAllHighlighters());
-        assertEquals(new TextRange(0, console.getEditor().getDocument().getTextLength()), TextRange.create(highlighter));
+        assertEquals(new TextRange(0, console.getEditor().getDocument().getTextLength()), highlighter.getTextRange());
       }).assertTiming());
   }
 

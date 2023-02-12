@@ -44,8 +44,7 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
 
     setBorder(BorderFactory.createEmptyBorder(1, 0, 1, 0)); // for separator, see below
 
-    if (value instanceof NodeDescriptor) {
-      final NodeDescriptor descriptor = (NodeDescriptor)value;
+    if (value instanceof NodeDescriptor descriptor) {
       setIcon(descriptor.getIcon());
       final Color elementColor = descriptor.getColor();
 
@@ -53,8 +52,7 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
         color = elementColor;
       }
 
-      if (descriptor instanceof AbstractTreeNode) {
-        final AbstractTreeNode treeNode = (AbstractTreeNode)descriptor;
+      if (descriptor instanceof AbstractTreeNode treeNode) {
         final TextAttributesKey attributesKey = treeNode.getPresentation().getTextAttributesKey();
 
         if (attributesKey != null) {

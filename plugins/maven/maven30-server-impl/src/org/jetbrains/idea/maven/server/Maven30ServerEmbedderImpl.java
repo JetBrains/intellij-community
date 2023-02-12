@@ -528,7 +528,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       return myCurrentIndicator;
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -1006,7 +1006,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
     catch (Exception e) {
       Maven3ServerGlobals.getLogger().info(e);
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -1198,7 +1198,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       //((CustomWagonManager)getComponent(WagonManager.class)).reset();
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 

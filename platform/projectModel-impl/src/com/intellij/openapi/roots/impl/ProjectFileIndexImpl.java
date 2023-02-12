@@ -65,8 +65,8 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
       for (Iterator<VirtualFile> iterator = result.iterator(); iterator.hasNext(); ) {
         VirtualFile root = iterator.next();
-        DirectoryInfo info = getInfoForFileOrDirectory(root);
-        if (!module.equals(info.getModule())) { // maybe 2 modules have the same content root?
+        Module moduleForFile = getModuleForFile(root, false);
+        if (!module.equals(moduleForFile)) { // maybe 2 modules have the same content root?
           iterator.remove();
           continue;
         }
@@ -147,7 +147,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   @NotNull
   public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
-    return myDirectoryIndex.getOrderEntries(getInfoForFileOrDirectory(file));
+    return myDirectoryIndex.getOrderEntries(file);
   }
 
   @Override
@@ -325,8 +325,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
       WorkspaceFileInternalInfo info = myWorkspaceFileIndex.getFileInfo(file, true, true, true, false);
       WorkspaceFileSetWithCustomData<?> fileSet = info.findFileSet(it -> {
         WorkspaceFileKind kind = it.getKind();
-        return (kind == WorkspaceFileKind.CONTENT || kind == WorkspaceFileKind.TEST_CONTENT) && it.getData() instanceof ModuleOrLibrarySourceRootData
-               || kind == WorkspaceFileKind.EXTERNAL;
+        return kind.isContent() && it.getData() instanceof ModuleOrLibrarySourceRootData || kind == WorkspaceFileKind.EXTERNAL;
       });
       return fileSet != null ? fileSet.getRoot() : null;
     }

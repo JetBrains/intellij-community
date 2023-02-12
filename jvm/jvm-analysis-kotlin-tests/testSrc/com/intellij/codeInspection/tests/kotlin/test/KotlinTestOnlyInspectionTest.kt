@@ -1,11 +1,11 @@
 package com.intellij.codeInspection.tests.kotlin.test
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.TestOnlyInspectionTestBase
 
 class KotlinTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
   fun `test @TestOnly on use-site targets`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       package test
       
       import org.jetbrains.annotations.TestOnly
@@ -31,7 +31,7 @@ class KotlinTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
   }
 
   fun `test @TestOnly in production code`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       package test
       
       import org.jetbrains.annotations.TestOnly
@@ -93,7 +93,7 @@ class KotlinTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
       }
     """.trimIndent())
 
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.jetbrains.annotations.VisibleForTesting
       import testapi.VisibleForTestingTestApi
       

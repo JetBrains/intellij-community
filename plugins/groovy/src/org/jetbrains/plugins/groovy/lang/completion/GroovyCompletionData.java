@@ -420,8 +420,7 @@ public final class GroovyCompletionData {
     final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
     if (leaf != null) {
       PsiElement parent = leaf.getParent();
-      if (parent instanceof GroovyFile) {
-        GroovyFile groovyFile = (GroovyFile) parent;
+      if (parent instanceof GroovyFile groovyFile) {
         if (groovyFile.getPackageDefinition() == null) {
           return GroovyCompletionUtil.isNewStatement(context, false);
         }

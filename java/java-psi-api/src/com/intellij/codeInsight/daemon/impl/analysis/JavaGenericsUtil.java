@@ -12,7 +12,9 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
@@ -171,11 +173,11 @@ public final class JavaGenericsUtil {
           if (superClass == null) {
             return true;
           }
-          boolean operandHasWildcard = false;
-          for (PsiTypeParameter parameter : superClass.getTypeParameters()) {
+          Set<PsiTypeParameter> capturedWildcardType = new HashSet<>();
+          for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(operandClass)) {
             PsiType operandParameterType = operandSubstitutor.substitute(parameter);
             if (operandParameterType instanceof PsiCapturedWildcardType) {
-              operandHasWildcard = true;
+              capturedWildcardType.add(parameter);
             }
             PsiType superParameterType = superSubstitutor.substitute(parameter);
             if (operandParameterType != null &&
@@ -184,13 +186,46 @@ public final class JavaGenericsUtil {
               return true;
             }
           }
-          return operandHasWildcard && !TypeConversionUtil.existSuperPathWithoutRepetitiveArguments(castClass, operandClass);
+          return !capturedWildcardTypesAreNotMerged(capturedWildcardType, operandClass, castClass);
         }
         return true;
       }
     }
 
     return false;
+  }
+
+  //according to com.sun.tools.javac.code.Types.Adapter#visitTypeVar, it is impossible to merge 2 captured types.
+  private static boolean capturedWildcardTypesAreNotMerged(Set<PsiTypeParameter> capturedSuperClassTypes,
+                                                           PsiClass superClass,
+                                                           PsiClass derivedClass) {
+    if (capturedSuperClassTypes.isEmpty()) {
+      return true;
+    }
+    PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, derivedClass, PsiSubstitutor.EMPTY);
+    if (substitutor == PsiSubstitutor.EMPTY) {
+      return true;
+    }
+    Set<String> capturedSourceTypeParameters = new HashSet<>();
+    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(superClass)) {
+      if (!capturedSuperClassTypes.contains(parameter)) {
+        continue;
+      }
+      PsiType substituted = substitutor.substitute(parameter);
+      if (!(substituted instanceof PsiClassType)) {
+        continue;
+      }
+      PsiClass resolved = ((PsiClassType)substituted).resolve();
+      if (!(resolved instanceof PsiTypeParameter)) {
+        continue;
+      }
+      PsiTypeParameter typeParameter = (PsiTypeParameter)resolved;
+      if (capturedSourceTypeParameters.contains(typeParameter.getName())) {
+        return false;
+      }
+      capturedSourceTypeParameters.add(typeParameter.getName());
+    }
+    return true;
   }
 
   public static boolean isRawToGeneric(PsiType lType, PsiType rType) {
@@ -316,9 +351,6 @@ public final class JavaGenericsUtil {
       PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getClassSubstitutor(owner, aClass, substitutor);
       if (superClassSubstitutor == null) return null;
       PsiType itemType = superClassSubstitutor.substitute(typeParameter);
-      if (itemType != null) {
-        itemType = PsiUtil.captureToplevelWildcards(itemType, aClass);
-      }
       return itemType == null ? PsiType.getJavaLangObject(manager, aClass.getResolveScope()) : itemType;
     }
     if (type instanceof PsiIntersectionType) {

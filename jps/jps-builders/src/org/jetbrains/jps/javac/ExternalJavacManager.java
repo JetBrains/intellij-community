@@ -44,7 +44,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class ExternalJavacManager extends ProcessAdapter {
   private static final Logger LOG = Logger.getInstance(ExternalJavacManager.class);
@@ -334,9 +333,6 @@ public class ExternalJavacManager extends ProcessAdapter {
 
     appendParam(cmdLine, "-D" + ExternalJavacProcess.JPS_JAVA_COMPILING_TOOL_PROPERTY + "=" + compilingTool.getId());
 
-    // this will disable standard extensions to ensure javac is loaded from the right tools.jar
-    appendParam(cmdLine, "-Djava.ext.dirs=");
-
     for (String option : vmOptions) {
       appendParam(cmdLine, option);
     }
@@ -344,7 +340,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     appendParam(cmdLine, "-classpath");
     List<File> cp = ClasspathBootstrap.getExternalJavacProcessClasspath(sdkHomePath, compilingTool);
     final String pathSeparator = launchInLinuxVM? ":" : File.pathSeparator;
-    appendParam(cmdLine, cp.stream().map(f -> wslSupport.convertPath(f.getPath())).collect(Collectors.joining(pathSeparator)));
+    appendParam(cmdLine, String.join(pathSeparator, Iterators.map(cp, f -> wslSupport.convertPath(f.getPath()))));
 
     appendParam(cmdLine, ExternalJavacProcess.class.getName());
     appendParam(cmdLine, processId.toString());

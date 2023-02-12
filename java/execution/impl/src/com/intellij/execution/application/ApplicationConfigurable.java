@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -122,10 +122,9 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   @NotNull
   static JavaCodeFragment.VisibilityChecker getVisibilityChecker(@NotNull ConfigurationModuleSelector selector) {
     return (declaration, place) -> {
-      if (declaration instanceof PsiClass) {
-        PsiClass aClass = (PsiClass)declaration;
+      if (declaration instanceof PsiClass aClass) {
         if (ConfigurationUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.findMainMethod(aClass) != null ||
-            place != null && place.getParent() != null && selector.findClass(((PsiClass)declaration).getQualifiedName()) != null) {
+            place != null && place.getParent() != null && selector.findClass(aClass.getQualifiedName()) != null) {
           return JavaCodeFragment.VisibilityChecker.Visibility.VISIBLE;
         }
       }

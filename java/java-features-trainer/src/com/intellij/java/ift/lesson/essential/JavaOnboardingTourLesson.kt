@@ -399,7 +399,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
 
     task {
       val introductionText = JavaLessonsBundle.message("java.onboarding.temporary.configuration.description",
-                                                       strong(ActionsBundle.actionText("RedesignedRunToolbarWrapper")),
+                                                       strong(ActionsBundle.actionText("NewUiRunWidget")),
                                                        icon(AllIcons.Actions.Execute),
                                                        icon(AllIcons.Actions.StartDebugger))
       val runOptionsText = if (PlatformUtils.isIdeaUltimate()) {

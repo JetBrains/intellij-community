@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModifiableRootModel
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Returns the dependency scope which has flags specific to the both provided scopes
@@ -34,6 +35,7 @@ fun getScopeContainingBoth(scope1: DependencyScope, scope2: DependencyScope?): D
     return result
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     message = "This method does not set productionOnTest flag for created dependencies",
     replaceWith = ReplaceWith("addModuleDependencyIfNeeded(rootModel, dependeeModule, testScope, false)")

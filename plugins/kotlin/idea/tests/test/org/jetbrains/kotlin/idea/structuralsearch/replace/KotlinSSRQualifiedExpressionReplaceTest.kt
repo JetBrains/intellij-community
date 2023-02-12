@@ -181,4 +181,48 @@ class KotlinSSRQualifiedExpressionReplaceTest : KotlinStructuralReplaceTest() {
             """.trimIndent()
         )
     }
+
+    fun testMakeArgumentReceiverWithLambdaJavaShortenFqn() {
+        myFixture.addFileToProject("Condition.java", """
+            public interface Condition<T> {
+                boolean value(T t);
+            }
+        """.trimIndent() )
+        myFixture.addFileToProject("ContainerUtil.java", """
+            class ContainerUtil {
+                public static <T> T find(T @NotNull [] array, @NotNull Condition<? super T> condition) {
+                    for (T element : array) {
+                        if (condition.value(element)) return element;
+                    }
+                    return null;
+              }
+            }
+        """.trimIndent())
+        myFixture.addFileToProject("KtExtensions.java", """
+            public inline fun <T> Iterable<T>.find(predicate: (T) -> Boolean): T? = null
+        """.trimIndent())
+        myFixture.addFileToProject("MyClass.java", """
+            class MyClass {
+                public int[] getBar() {
+                    return new int[5];
+                }
+            }
+        """.trimIndent())
+        doTest(
+            searchPattern = "'_REC{0,1}:[exprtype(ContainerUtil)].'_:[_${MatchCallSemanticsModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]('_ARG1, '_ARG2)",
+            replacePattern = "'_ARG1.find('_ARG2)",
+            match = """
+                fun main() {
+                    val myClass = MyClass()
+                    ContainerUtil.find(myClass.bar) { `fun` -> null }
+                }
+            """.trimIndent(),
+            result = """
+                fun main() {
+                    val myClass = MyClass()
+                    myClass.bar.find({ `fun` -> null })
+                }
+            """.trimIndent(), shortenFqNames = false
+        )
+    }
 }

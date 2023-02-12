@@ -61,8 +61,7 @@ public abstract class PackageGlobalInspection extends BaseGlobalInspection {
         String packageName = ReadAction.nonBlocking(() -> {
           if (!scope.contains(file)) return null;
           final PsiFile element = PsiManager.getInstance(scope.getProject()).findFile(file);
-          if (!(element instanceof PsiClassOwner)) return null;
-          final PsiClassOwner classOwner = (PsiClassOwner)element;
+          if (!(element instanceof PsiClassOwner classOwner)) return null;
           return classOwner.getPackageName();
         }).executeSynchronously();
         if (packageName == null) {

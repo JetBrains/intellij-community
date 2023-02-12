@@ -243,8 +243,7 @@ public class VarDefinitionHelper {
       List<Exprent> currVars = new ArrayList<>();
 
       for (Object obj : stat.getSequentialObjects()) {
-        if (obj instanceof Statement) {
-          Statement st = (Statement)obj;
+        if (obj instanceof Statement st) {
           childVars.addAll(initStatement(st));
 
           if (st.type == StatementType.DO) {

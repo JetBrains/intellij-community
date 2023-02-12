@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.hover;
 
 import com.intellij.openapi.util.Key;
@@ -7,9 +7,8 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JTable;
-import javax.swing.JTree;
-import java.awt.Component;
+import javax.swing.*;
+import java.awt.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToIntFunction;
 
@@ -36,8 +35,7 @@ public abstract class TreeHoverListener extends HoverListener {
   private final AtomicInteger rowHolder = new AtomicInteger(-1);
 
   private void update(@NotNull Component component, @NotNull ToIntFunction<? super JTree> rowFunc) {
-    if (component instanceof JTree) {
-      JTree tree = (JTree)component;
+    if (component instanceof JTree tree) {
       int rowNew = rowFunc.applyAsInt(tree);
       int rowOld = rowHolder.getAndSet(rowNew);
       if (rowNew != rowOld) onHover(tree, rowNew);

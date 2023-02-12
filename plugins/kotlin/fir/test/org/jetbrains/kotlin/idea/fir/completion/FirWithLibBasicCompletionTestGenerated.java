@@ -33,6 +33,11 @@ public class FirWithLibBasicCompletionTestGenerated extends AbstractFirWithLibBa
         runTest("../completion/testData/basic/withLib/NamedArgumentsKotlin.kt");
     }
 
+    @TestMetadata("OverrideJava.kt")
+    public void testOverrideJava() throws Exception {
+        runTest("../completion/testData/basic/withLib/OverrideJava.kt");
+    }
+
     @TestMetadata("SamAdapter.kt")
     public void testSamAdapter() throws Exception {
         runTest("../completion/testData/basic/withLib/SamAdapter.kt");

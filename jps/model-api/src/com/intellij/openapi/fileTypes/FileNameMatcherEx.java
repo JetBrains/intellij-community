@@ -15,14 +15,12 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated please implement {@link FileNameMatcher} directly and define {@link #acceptsCharSequence(CharSequence)} there.
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval
+@Deprecated(forRemoval = true)
 public abstract class FileNameMatcherEx implements FileNameMatcher {
   /**
    * @deprecated call {@link #acceptsCharSequence(CharSequence)} instead

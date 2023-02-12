@@ -106,7 +106,7 @@ public interface AnnotationHolder {
    * @return the annotation (which can be modified to set additional annotation parameters)
    * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   Annotation createWeakWarningAnnotation(@NotNull ASTNode node,
                                          @Nullable @InspectionMessage String message);
 

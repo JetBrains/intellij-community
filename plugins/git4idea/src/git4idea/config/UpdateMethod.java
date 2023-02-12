@@ -53,7 +53,7 @@ public enum UpdateMethod {
    * @deprecated use {@link #getMethodName()} to avoid confusion with built-in {@link #name()}.
    */
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String getName() {
     return getMethodName();
   }

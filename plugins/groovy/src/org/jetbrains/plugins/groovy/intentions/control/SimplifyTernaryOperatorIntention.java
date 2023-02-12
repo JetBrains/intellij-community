@@ -38,10 +38,9 @@ public class SimplifyTernaryOperatorIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
-    if (!(element instanceof GrConditionalExpression)) {
+    if (!(element instanceof GrConditionalExpression condExp)) {
       throw new IncorrectOperationException("Not invoked on a conditional");
     }
-    GrConditionalExpression condExp = (GrConditionalExpression)element;
     GrExpression thenBranch = condExp.getThenBranch();
     GrExpression elseBranch = condExp.getElseBranch();
 
@@ -113,11 +112,10 @@ public class SimplifyTernaryOperatorIntention extends Intention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!(element instanceof GrConditionalExpression)) {
+        if (!(element instanceof GrConditionalExpression condExp)) {
           return false;
         }
 
-        GrConditionalExpression condExp = (GrConditionalExpression)element;
         PsiType condType = condExp.getType();
         if (condType == null || !PsiTypes.booleanType().isConvertibleFrom(condType)) {
           return false;

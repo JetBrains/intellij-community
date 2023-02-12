@@ -20,8 +20,7 @@ public class XmlElementSignatureProvider extends AbstractElementSignatureProvide
 
   @Override
   public String getSignature(@NotNull PsiElement element) {
-    if (element instanceof XmlTag) {
-      XmlTag tag = (XmlTag)element;
+    if (element instanceof XmlTag tag) {
       PsiElement parent = tag.getParent();
 
       StringBuilder buffer = new StringBuilder();

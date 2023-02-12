@@ -167,17 +167,7 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
     }
   }
 
-  private static final class Problem {
-    final Token token;
-    final @NlsSafe String usedName;
-    final @NlsSafe String intendedName;
-
-    private Problem(Token token, @NlsSafe String usedName, @NlsSafe String intendedName) {
-      this.token = token;
-      this.usedName = usedName;
-      this.intendedName = intendedName;
-    }
-
+  private record Problem(Token token, @NlsSafe String usedName, @NlsSafe String intendedName) {
     @Override
     public @InspectionMessage String toString() {
       String key = Character.isUpperCase(token.character) ? "inspection.suspicious.date.format.message.upper"

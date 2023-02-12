@@ -64,8 +64,7 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
           if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_START_TAG_START) {
             PsiElement parent = element.getParent();
 
-            if (parent instanceof XmlTag && !(token.getNextSibling() instanceof OuterLanguageElement)) {
-              XmlTag tag = (XmlTag)parent;
+            if (parent instanceof XmlTag tag && !(token.getNextSibling() instanceof OuterLanguageElement)) {
               checkTag(tag, holder, isOnTheFly);
             }
           }

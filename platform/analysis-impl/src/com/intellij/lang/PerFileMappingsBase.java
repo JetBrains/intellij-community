@@ -112,8 +112,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
 
   @Nullable
   private T getMappingInner(@Nullable VirtualFile file, @Nullable FilePropertyKey<T> pusherKey, boolean forHierarchy) {
-    if (file instanceof VirtualFileWindow) {
-      VirtualFileWindow window = (VirtualFileWindow)file;
+    if (file instanceof VirtualFileWindow window) {
       file = window.getDelegate();
     }
     VirtualFile originalFile = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getOriginalFile() : null;

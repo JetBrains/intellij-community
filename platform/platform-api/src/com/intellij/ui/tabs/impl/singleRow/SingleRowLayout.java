@@ -135,7 +135,7 @@ public abstract class SingleRowLayout extends TabLayout {
         data.tabRectangle.x = firstLabel.getBounds().x;
         data.tabRectangle.y = firstLabel.getBounds().y;
         data.tabRectangle.width = ExperimentalUI.isNewUI()
-                                  ? (int)data.entryPointRect.getMaxX() - data.tabRectangle.x + 1
+                                  ? (int)data.entryPointRect.getMaxX() + myTabs.getActionsInsets().right - data.tabRectangle.x
                                   : (int)lastLabel.getBounds().getMaxX() - data.tabRectangle.x;
         data.tabRectangle.height = (int)lastLabel.getBounds().getMaxY() - data.tabRectangle.y;
       }

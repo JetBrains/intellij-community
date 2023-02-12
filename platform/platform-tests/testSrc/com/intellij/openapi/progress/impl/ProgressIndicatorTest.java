@@ -205,7 +205,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            assertFalse(ApplicationManager.getApplication().isDispatchThread());
+            ApplicationManager.getApplication().assertIsNonDispatchThread();
             assertSame(indicator, myIndicator);
             while (System.currentTimeMillis() < end) {
               ProgressManager.checkCanceled();

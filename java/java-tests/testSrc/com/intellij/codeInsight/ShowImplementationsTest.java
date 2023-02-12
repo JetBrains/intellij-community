@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.Arrays;
 
 /**
+ * See also {@link com.intellij.java.navigation.ShowImplementationHandlerTest}
  * @author Dmitry AJvdeev
  */
 public class ShowImplementationsTest extends JavaCodeInsightFixtureTestCase {

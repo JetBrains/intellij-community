@@ -53,7 +53,7 @@ public class TextBlockTransferable implements Transferable, Sizeable {
   @Override
   public int getSize() {
     int size = myText.length();
-    if (myRawText != null && myRawText.rawText != myText) {
+    if (myRawText != null && !Strings.areSameInstance(myRawText.rawText, myText)) {
       size += StringUtil.length(myRawText.rawText);
     }
     return size;
@@ -141,13 +141,6 @@ public class TextBlockTransferable implements Transferable, Sizeable {
     }
   }
 
-  private static final class DataFlavorWithPriority {
-    private final DataFlavor flavor;
-    private final int priority;
-
-    private DataFlavorWithPriority(DataFlavor flavor, int priority) {
-      this.flavor = flavor;
-      this.priority = priority;
-    }
+  private record DataFlavorWithPriority(DataFlavor flavor, int priority) {
   }
 }

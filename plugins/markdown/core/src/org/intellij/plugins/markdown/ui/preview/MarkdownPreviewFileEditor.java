@@ -104,6 +104,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
       () -> ObjectUtils.tryCast(myPanel, MarkdownHtmlPanelEx.class)
     );
     scrollPane.addMouseWheelListener(helper);
+    Disposer.register(this, () -> scrollPane.removeMouseWheelListener(helper));
   }
 
   public void setMainEditor(Editor editor) {

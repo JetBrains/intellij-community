@@ -80,7 +80,7 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>) : GroupedEleme
   override fun getSelectionBackground(): Color = UIUtil.getListSelectionBackground(true)
   override fun getSelectionForeground(): Color = UIUtil.getListSelectionForeground(true)
 
-  abstract fun separatorFor(index: Int): ListSeparator?
+  abstract fun separatorFor(value: T): ListSeparator?
 
   override fun getListCellRendererComponent(list: JList<out T>?,
                                             value: T,

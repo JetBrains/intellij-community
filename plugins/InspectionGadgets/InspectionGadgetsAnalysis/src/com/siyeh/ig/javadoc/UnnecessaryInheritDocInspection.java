@@ -54,10 +54,9 @@ public class UnnecessaryInheritDocInspection extends BaseInspection implements C
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiDocTag)) {
+      if (!(element instanceof PsiDocTag docTag)) {
         return;
       }
-      final PsiDocTag docTag = (PsiDocTag)element;
       final PsiElement parent = docTag.getParent();
       if (parent instanceof PsiDocComment docComment) {
         final PsiDocTag[] docTags = docComment.getTags();
@@ -153,10 +152,9 @@ public class UnnecessaryInheritDocInspection extends BaseInspection implements C
         PsiTreeUtil.findChildOfType(valueElement, PsiJavaCodeReferenceElement.class);
       if (referenceElement != null) {
         final PsiElement target = referenceElement.resolve();
-        if (!(target instanceof PsiClass)) {
+        if (!(target instanceof PsiClass aClass)) {
           return false;
         }
-        final PsiClass aClass = (PsiClass)target;
         if (!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_EXCEPTION) ||
           InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
           return false;

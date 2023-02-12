@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -23,9 +23,8 @@ public final class ToArrayConversion {
                              final Consumer<? super LookupElement> result, @Nullable final PsiElement qualifier,
                              final PsiType expectedType) {
     final PsiType componentType = PsiUtil.extractIterableTypeParameter(itemType, true);
-    if (componentType == null || !(expectedType instanceof PsiArrayType)) return;
+    if (componentType == null || !(expectedType instanceof PsiArrayType type)) return;
 
-    final PsiArrayType type = (PsiArrayType)expectedType;
     if (!type.getComponentType().isAssignableFrom(componentType) ||
         componentType instanceof PsiClassType && ((PsiClassType) componentType).hasParameters()) {
       return;

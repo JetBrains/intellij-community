@@ -68,8 +68,7 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof Header) {
-          Header header = (Header)element;
+        if (element instanceof Header header) {
           String headerName = header.getName();
 
           SortedSet<Suggestion> matches = new TreeSet<>();

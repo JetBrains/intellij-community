@@ -71,12 +71,10 @@ final class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProvi
     }
 
     DomElement domElement = DomUtil.getDomElement(leaf);
-    if (domElement instanceof ActionOrGroup) {
-      ActionOrGroup actionOrGroup = (ActionOrGroup)domElement;
+    if (domElement instanceof ActionOrGroup actionOrGroup) {
       createLineMarker(leaf, result, domElement, actionOrGroup.getId());
     }
-    else if (domElement instanceof OverrideText) {
-      OverrideText overrideText = (OverrideText)domElement;
+    else if (domElement instanceof OverrideText overrideText) {
       createLineMarker(leaf, result, domElement, overrideText.getPlace());
     }
     else if (domElement instanceof GenericDomValue) {

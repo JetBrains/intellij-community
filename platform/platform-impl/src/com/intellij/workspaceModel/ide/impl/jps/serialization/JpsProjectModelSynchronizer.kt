@@ -30,11 +30,14 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.platform.workspaceModel.jps.*
+import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.project.stateStore
 import com.intellij.util.PlatformUtils.isIntelliJ
 import com.intellij.util.PlatformUtils.isRider
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.*
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader.createProjectSerializers
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
@@ -231,7 +234,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
       childActivity = childActivity?.endAndStart("loading entities from files")
       val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
-      val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, orphanage, unloadedEntitiesBuilder, unloadedModuleNames, it, project) }
+      val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, orphanage, unloadedEntitiesBuilder, unloadedModuleNames, it) }
       fileContentReader.clearCache()
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.entityTracer?.printInfoAboutTracedEntity(builder, "JPS files")
       if (GlobalLibraryTableBridge.isEnabled()) {
@@ -329,12 +332,11 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
     fileContentReader = (project.stateStore as ProjectStoreWithJpsContentReader).createContentReader()
     val externalStoragePath = project.getExternalConfigurationDir()
-    //TODO:: Get rid of dependency on ExternalStorageConfigurationManager in order to use in build process
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(project)
     val fileInDirectorySourceNames = FileInDirectorySourceNames.from(WorkspaceModel.getInstance(project).currentSnapshot)
-    return JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath,
-                                                             virtualFileManager,
-                                                             externalStorageConfigurationManager, fileInDirectorySourceNames)
+    val context = IdeSerializationContext(virtualFileManager, fileContentReader, fileInDirectorySourceNames,
+                                          externalStorageConfigurationManager)
+    return createProjectSerializers(configLocation, externalStoragePath, context)
   }
 
   fun saveChangedProjectEntities(writer: JpsFileContentWriter) {

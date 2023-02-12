@@ -103,7 +103,7 @@ class RepairUtilityBuilder {
             val repairLog = tmpDir.resolve("repair.log")
             context.messages.error("Unable to generate installation integrity manifest: ${Files.readString(repairLog)}")
           }
-          val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
+          val baseName = baseArtifactName(context)
           val artifact = context.paths.artifactDir.resolve("${baseName}${distributionBinary.distributionSuffix}.manifest")
           Files.move(manifest, artifact, StandardCopyOption.REPLACE_EXISTING)
         }
@@ -142,6 +142,10 @@ class RepairUtilityBuilder {
       }
     }
 
+    private fun baseArtifactName(context: BuildContext): String {
+      return "${context.applicationInfo.productCode}-${context.buildNumber}"
+    }
+
     private suspend fun buildBinaries(context: BuildContext): Map<Binary, Path> {
       return spanBuilder("build repair-utility").useWithScope2 {
         if (SystemInfoRt.isWindows) {
@@ -164,7 +168,7 @@ class RepairUtilityBuilder {
           }
           if (!isDockerAvailable) return@useWithScope2 emptyMap()
           val baseUrl = context.applicationInfo.patchesUrl?.removeSuffix("/") ?: error("Missing download url")
-          val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
+          val baseName = baseArtifactName(context)
           val distributionUrls = BINARIES.associate {
             it.distributionUrlVariable to "$baseUrl/$baseName${it.distributionSuffix}"
           }

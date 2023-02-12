@@ -2,32 +2,26 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRMetadataModel
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStateModel
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import java.awt.event.ActionEvent
+import javax.swing.AbstractAction
 import javax.swing.JComponent
 
-internal class GHPRRequestReviewAction(
-  stateModel: GHPRStateModel,
-  securityService: GHPRSecurityService,
-  private val metadataModel: GHPRMetadataModel,
-  private val avatarIconsProvider: GHAvatarIconsProvider
-) : GHPRStateChangeAction(CollaborationToolsBundle.message("review.details.action.request"), stateModel, securityService) {
-  override fun actionPerformed(event: ActionEvent) = stateModel.submitTask {
-    val parentComponent = event.source as JComponent
-    GHUIUtil.showChooserPopup(
-      GithubBundle.message("pull.request.reviewers"),
-      parentComponent,
-      GHUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider),
-      metadataModel.reviewers,
-      metadataModel.loadPotentialReviewers()
-    ).thenAccept { selectedReviewers ->
-      metadataModel.adjustReviewers(EmptyProgressIndicator(), selectedReviewers)
+internal class GHPRRequestReviewAction(scope: CoroutineScope, private val reviewFlowVm: GHPRReviewFlowViewModel)
+  : AbstractAction(CollaborationToolsBundle.message("review.details.action.request")) {
+
+  init {
+    scope.launch {
+      reviewFlowVm.isBusy.collect { isBusy ->
+        isEnabled = !isBusy && reviewFlowVm.userCanManageReview
+      }
     }
+  }
+
+  override fun actionPerformed(event: ActionEvent) {
+    val parentComponent = event.source as JComponent
+    return reviewFlowVm.requestReview(parentComponent)
   }
 }

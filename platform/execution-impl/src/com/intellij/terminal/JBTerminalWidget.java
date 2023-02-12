@@ -52,9 +52,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -190,15 +190,14 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     myBridge.getTtyConnectorAccessor().setTtyConnector(ttyConnector);
     myTerminalTitle.change(terminalTitleState -> {
       if (terminalTitleState.getDefaultTitle() == null) {
-        terminalTitleState.setDefaultTitle(getDefaultSessionName());
+        terminalTitleState.setDefaultTitle(getDefaultSessionName(ttyConnector));
       }
       return null;
     });
   }
 
-  public @Nls @Nullable String getDefaultSessionName() {
-    TtyConnector connector = getTtyConnector();
-    return connector != null ? connector.getName() : null; //NON-NLS
+  public @Nls @Nullable String getDefaultSessionName(@NotNull TtyConnector connector) {
+    return connector.getName(); //NON-NLS
   }
 
   @Override
@@ -269,51 +268,47 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   @Override
-  protected SearchComponent createSearchComponent() {
-    return new SearchComponent() {
+  protected @NotNull JediTermSearchComponent createSearchComponent() {
+    return new JediTermSearchComponent() {
       private final SearchTextField myTextField = new SearchTextField(false);
 
       @Override
-      public String getText() {
-        return myTextField.getText();
-      }
-
-      @Override
-      public boolean ignoreCase() {
-        return false;
-      }
-
-      @Override
-      public JComponent getComponent() {
+      public @NotNull JComponent getComponent() {
         myTextField.setOpaque(false);
         return myTextField;
       }
 
-      @Override
-      public void addDocumentChangeListener(DocumentListener listener) {
-        myTextField.addDocumentListener(listener);
+      private void searchSettingsChanged(@NotNull JediTermSearchComponentListener listener) {
+        listener.searchSettingsChanged(myTextField.getText(), false);
       }
 
       @Override
-      public void addKeyListener(KeyListener listener) {
+      public void addListener(@NotNull JediTermSearchComponentListener listener) {
+        myTextField.addDocumentListener(new DocumentListener() {
+          @Override
+          public void insertUpdate(DocumentEvent e) {
+            searchSettingsChanged(listener);
+          }
+
+          @Override
+          public void removeUpdate(DocumentEvent e) {
+            searchSettingsChanged(listener);
+          }
+
+          @Override
+          public void changedUpdate(DocumentEvent e) {
+            searchSettingsChanged(listener);
+          }
+        });
+      }
+
+      @Override
+      public void addKeyListener(@NotNull KeyListener listener) {
         myTextField.addKeyboardListener(listener);
       }
 
       @Override
-      public void addIgnoreCaseListener(ItemListener listener) {
-
-      }
-
-      @Override
       public void onResultUpdated(SubstringFinder.FindResult result) {
-      }
-
-      @Override
-      public void nextFindResultItem(SubstringFinder.FindResult.FindItem item) {
-      }
-
-      @Override
-      public void prevFindResultItem(SubstringFinder.FindResult.FindItem item) {
       }
     };
   }
@@ -331,10 +326,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     return (JBTerminalSystemSettingsProviderBase)mySettingsProvider;
   }
 
-  public void moveDisposable(@NotNull Disposable newParent) {
-    Disposer.register(newParent, this);
-  }
-
   public void notifyStarted() {
     if (myListener != null) {
       myListener.onTerminalStarted();
@@ -345,7 +336,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   @Override
   public Object getData(@NotNull String dataId) {
     if (SELECTED_TEXT_DATA_KEY.is(dataId)) {
-      return getSelectedText(getTerminalPanel());
+      return getSelectedText();
     }
     if (TERMINAL_DATA_KEY.is(dataId)) {
       return this;
@@ -369,6 +360,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   public @NotNull String getText() {
     return getText(getTerminalPanel());
+  }
+
+  public @Nullable String getSelectedText() {
+    return getSelectedText(getTerminalPanel());
   }
 
   static @NotNull String getText(@NotNull TerminalPanel terminalPanel) {

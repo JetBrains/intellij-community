@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
+import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
 import com.intellij.ui.*;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
@@ -232,11 +233,19 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       SimpleTextAttributes style = myGraphTable.applyHighlighters(this, row, column, hasFocus, isSelected);
 
       Collection<VcsRef> refs = cell.getRefsToThisCommit();
-      Color baseForeground = Objects.requireNonNull(myGraphTable.getBaseStyle(row, column, hasFocus, isSelected).getForeground());
+      Color labelForeground;
+      if (ExperimentalUI.isNewUI()) {
+        labelForeground = JBColor.namedColor("VersionControl.Log.Commit.Reference.foreground", CurrentBranchComponent.TEXT_COLOR);
+      }
+      else {
+        labelForeground = isSelected
+                          ? Objects.requireNonNull(myGraphTable.getBaseStyle(row, column, hasFocus, isSelected).getForeground())
+                          : CurrentBranchComponent.TEXT_COLOR;
+      }
 
       append(""); // appendTextPadding wont work without this
       if (myReferencePainter.isLeftAligned()) {
-        myReferencePainter.customizePainter(refs, getBackground(), baseForeground, isSelected,
+        myReferencePainter.customizePainter(refs, getBackground(), labelForeground, isSelected,
                                             getAvailableWidth(column, myGraphImage.getWidth()));
 
         int referencesWidth = myReferencePainter.getSize().width;
@@ -247,7 +256,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       else {
         appendTextPadding(myGraphImage.getWidth());
         appendText(cell, style, isSelected);
-        myReferencePainter.customizePainter(refs, getBackground(), baseForeground, isSelected,
+        myReferencePainter.customizePainter(refs, getBackground(), labelForeground, isSelected,
                                             getAvailableWidth(column, myGraphImage.getWidth()));
       }
     }

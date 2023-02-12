@@ -1,11 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview
 
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsUtils
+import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.components.ScrollBarPainter
@@ -36,17 +41,23 @@ internal object PreviewLAFThemeStyles {
 
     val fontSize = JBCefApp.normalizeScaledSize(EditorUtil.getEditorFont().size + 1)
 
-    // For some reason background-color for ::-webkit-scrollbar-thumb
-    // doesn't work with [0..255] alpha values. Fortunately it works fine with [0..1] values.
-    // Default color from base stylesheets will be used, if the final value is null.
-    // (Generated rule will be invalid)
-    val scrollbarColor = scheme.getColor(ScrollBarPainter.THUMB_OPAQUE_BACKGROUND)?.apply {
-      "rgba($red, $blue, $green, ${alpha / 255.0})"
-    }
-    // language=CSS
+    val scrollbarBackgroundColor = scheme.getScrollbarColor(ScrollBarPainter.BACKGROUND)
+    val scrollbarTrackColor = scheme.getScrollbarColor(ScrollBarPainter.TRACK_OPAQUE_BACKGROUND)
+    val scrollbarTrackColorHovered = scheme.getScrollbarColor(ScrollBarPainter.TRACK_OPAQUE_HOVERED_BACKGROUND)
+    val scrollbarThumbColor = scheme.getScrollbarColor(ScrollBarPainter.THUMB_OPAQUE_BACKGROUND)
+    val scrollbarThumbColorHovered = scheme.getScrollbarColor(ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND)
+    val scrollbarThumbBorder = scheme.getScrollbarColor(ScrollBarPainter.THUMB_OPAQUE_FOREGROUND)
+    val scrollbarThumbBorderHovered = scheme.getScrollbarColor(ScrollBarPainter.THUMB_OPAQUE_HOVERED_FOREGROUND)
+
+    val scale = UISettingsUtils.instance.currentIdeScale
+    val scrollbarTrackSizePx = JBCefApp.normalizeScaledSize((if (SystemInfo.isMac) 14 else 10)) * scale
+    val scrollbarThumbBorderSizePx = JBCefApp.normalizeScaledSize( (if (SystemInfo.isMac) 3 else 1)) * scale
+    val scrollbarThumbRadiusPx = JBCefApp.normalizeScaledSize((if (SystemInfo.isMac) 14 else 0)) * scale
+    UISettingsUtils.instance.currentIdeScale
+
     val backgroundColor = scheme.defaultBackground.webRgba()
     // language=CSS
-    val styles = """
+    return """
     body {
         background-color: ${backgroundColor};
         font-size: ${fontSize}px !important;
@@ -80,15 +91,54 @@ internal object PreviewLAFThemeStyles {
       border-left: 2px solid ${linkActiveForeground.webRgba(alpha = 0.4)};
     }
     
-    ::-webkit-scrollbar-thumb {
-        background-color: $scrollbarColor;
-    }
-    
     blockquote, code, pre {
       background-color: ${markdownFenceBackground.webRgba(markdownFenceBackground.alpha / 255.0)};
     }
+    
+    ::-webkit-scrollbar {
+      width: ${scrollbarTrackSizePx}px;
+      height: ${scrollbarTrackSizePx}px;
+      background-color: $scrollbarBackgroundColor;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background-color:$scrollbarTrackColor;
+    }
+    
+    ::-webkit-scrollbar-track:hover {
+      background-color:$scrollbarTrackColorHovered;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background-color:$scrollbarThumbColor;
+      border-radius:${scrollbarThumbRadiusPx}px;
+      border-width: ${scrollbarThumbBorderSizePx}px;
+      border-style: solid;
+      border-color: $scrollbarTrackColor;
+      background-clip: padding-box;
+      outline: 1px solid $scrollbarThumbBorder;
+      outline-offset: -${scrollbarThumbBorderSizePx}px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background-color:$scrollbarThumbColorHovered;
+      border-radius:${scrollbarThumbRadiusPx}px;
+      border-width: ${scrollbarThumbBorderSizePx}px;
+      border-style: solid;
+      border-color: $scrollbarTrackColor;
+      background-clip: padding-box;
+      outline: 1px solid $scrollbarThumbBorderHovered;
+      outline-offset: -${scrollbarThumbBorderSizePx}px;
+    }
+    
+    ::-webkit-scrollbar-button {
+      display:none;
+    }
+    
+    ::-webkit-scrollbar-corner {
+      background-color: $scrollbarBackgroundColor;
+    }
     """.trimIndent()
-    return styles
   }
 
   private fun obtainColorsScheme(): EditorColorsScheme {
@@ -102,6 +152,37 @@ internal object PreviewLAFThemeStyles {
 
   private fun Color.webRgba(alpha: Double = this.alpha.toDouble()): String {
     return "rgba($red, $green, $blue, $alpha)"
+  }
+
+  private fun EditorColorsScheme.getScrollbarColor(key: ColorKey): String {
+    return (getColor(key) ?: key.defaultColor).let {
+      "rgba(${it.red}, ${it.blue}, ${it.green}, ${getScrollbarAlpha(key) ?: (it.alpha / 255.0)})"
+    }
+  }
+
+  private fun getScrollbarAlpha(colorKey: ColorKey): Int? {
+    val contrastElementsKeys = listOf(
+      ScrollBarPainter.THUMB_OPAQUE_FOREGROUND,
+      ScrollBarPainter.THUMB_OPAQUE_BACKGROUND,
+      ScrollBarPainter.THUMB_OPAQUE_HOVERED_FOREGROUND,
+      ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND,
+      ScrollBarPainter.THUMB_FOREGROUND,
+      ScrollBarPainter.THUMB_BACKGROUND,
+      ScrollBarPainter.THUMB_HOVERED_FOREGROUND,
+      ScrollBarPainter.THUMB_HOVERED_BACKGROUND
+    )
+
+    if (!UISettings.shadowInstance.useContrastScrollbars || colorKey !in contrastElementsKeys) return null
+
+    val lightAlpha = if (SystemInfo.isMac) 120 else 160
+    val darkAlpha = if (SystemInfo.isMac) 255 else 180
+    val alpha = Registry.intValue("contrast.scrollbars.alpha.level")
+    return if (alpha > 0) {
+      Integer.min(alpha, 255)
+    }
+    else {
+      if (UIUtil.isUnderDarcula()) darkAlpha else lightAlpha
+    }
   }
 
   /**

@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.test
 
 import com.intellij.codeInspection.test.TestCaseWithConstructorInspection
-import com.intellij.codeInspection.tests.UastInspectionTestBase
+import com.intellij.codeInspection.tests.JvmInspectionTestBase
 import com.intellij.codeInspection.tests.test.junit.addJUnit3Library
 import com.intellij.codeInspection.tests.test.junit.addJUnit4Library
 import com.intellij.openapi.module.Module
@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
-abstract class TestCaseWithConstructorInspectionTestBase : UastInspectionTestBase() {
+abstract class TestCaseWithConstructorInspectionTestBase : JvmInspectionTestBase() {
   override val inspection = TestCaseWithConstructorInspection()
 
   override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(sdkLevel)

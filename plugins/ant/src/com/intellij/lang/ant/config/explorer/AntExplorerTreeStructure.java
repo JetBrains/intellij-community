@@ -81,8 +81,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       return configuration.getBuildFiles();
     }
 
-    if (element instanceof AntBuildFile) {
-      final AntBuildFile buildFile = (AntBuildFile)element;
+    if (element instanceof AntBuildFile buildFile) {
       final AntBuildModel model = buildFile.getModel();
 
       final List<AntBuildTarget> targets =

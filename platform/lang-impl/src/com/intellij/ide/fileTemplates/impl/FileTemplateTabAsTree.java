@@ -99,8 +99,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
       setBackground(UIUtil.getTreeBackground(sel, hasFocus));
       setForeground(UIUtil.getTreeForeground(sel, hasFocus));
 
-      if (value instanceof FileTemplateNode) {
-        final FileTemplateNode node = (FileTemplateNode)value;
+      if (value instanceof FileTemplateNode node) {
         setText((String) node.getUserObject());
         setIcon(node.getIcon());
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,10 +156,9 @@ public final class SystemShortcuts {
     Map<KeyboardShortcut, String> result = null;
     final Shortcut[] actionShortcuts = computeOnEdt(() -> keymap.getShortcuts(actionId));
     for (Shortcut sc : actionShortcuts) {
-      if (!(sc instanceof KeyboardShortcut)) {
+      if (!(sc instanceof KeyboardShortcut ksc)) {
         continue;
       }
-      final KeyboardShortcut ksc = (KeyboardShortcut)sc;
       for (@NotNull KeyStroke sks : myKeyStroke2SysShortcut.keySet()) {
         if (ksc.getFirstKeyStroke().equals(sks) || sks.equals(ksc.getSecondKeyStroke())) {
           if (result == null) result = new HashMap<>();
@@ -235,7 +235,7 @@ public final class SystemShortcuts {
     }
 
     @Nullable String macOsShortcutAction = getDescription(sysKs);
-    if (macOsShortcutAction == ourUnknownSysAction) {
+    if (Strings.areSameInstance(macOsShortcutAction, ourUnknownSysAction)) {
       macOsShortcutAction = null;
     }
     //System.out.println(actionId + " shortcut '" + sysKS + "' "

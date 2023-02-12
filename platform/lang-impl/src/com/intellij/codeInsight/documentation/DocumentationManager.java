@@ -638,12 +638,17 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return findTargetElement(editor, file, getContextElement(editor, file));
   }
 
-  private static @Nullable PsiElement getContextElement(Editor editor, PsiFile file) {
+  @Internal
+  public static @Nullable PsiElement getContextElement(Editor editor, PsiFile file) {
     return getContextElement(file, editor.getCaretModel().getOffset());
   }
 
   private static @Nullable PsiElement getContextElement(@Nullable PsiFile file, int offset) {
-    return file != null ? file.findElementAt(offset) : null;
+    if (file == null) return null;
+    if (offset == file.getTextLength()) {
+      offset = Math.max(0, offset - 1);
+    }
+    return file.findElementAt(offset);
   }
 
   protected void doShowJavaDocInfo(@NotNull PsiElement element,
@@ -1409,9 +1414,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       boolean processed = false;
       if (provider instanceof CompositeDocumentationProvider) {
         for (DocumentationProvider p : ((CompositeDocumentationProvider)provider).getAllProviders()) {
-          if (!(p instanceof ExternalDocumentationHandler)) continue;
+          if (!(p instanceof ExternalDocumentationHandler externalHandler)) continue;
 
-          ExternalDocumentationHandler externalHandler = (ExternalDocumentationHandler)p;
           if (externalHandler.canFetchDocumentationLink(url)) {
             String ref = externalHandler.extractRefFromLink(url);
             cancelAndFetchDocInfoByLink(component, new DocumentationCollector(psiElement, url, ref, p, false) {
@@ -1789,7 +1793,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       )
     );
     var result = !withUrl
-                 ? content
+                 ? List.of(CONTENT_ELEMENT.children(content))
                  : List.of(
                    DEFINITION_ELEMENT.children(HtmlChunk.tag("pre").addText(file.getPresentableUrl())),
                    CONTENT_ELEMENT.children(content)

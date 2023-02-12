@@ -153,8 +153,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     Project project = hostEditor.getProject();
     if (project == null) project = injectedFile.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(injectedFile);
-    if (!(document instanceof DocumentWindowImpl)) return hostEditor;
-    DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
+    if (!(document instanceof DocumentWindowImpl documentWindow)) return hostEditor;
     if (hostCaret != null && hostCaret.hasSelection()) {
       int selstart = hostCaret.getSelectionStart();
       if (selstart != -1) {

@@ -158,7 +158,7 @@ abstract class MacDistributionCustomizer(
     )
     executableFilePatterns.addAll(RepairUtilityBuilder.executableFilesPatterns(context))
     if (includeRuntime) {
-      executableFilePatterns = executableFilePatterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS, context))
+      executableFilePatterns = executableFilePatterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS, context.productProperties.runtimeDistribution))
     }
     return executableFilePatterns
       .addAll(extraExecutables)

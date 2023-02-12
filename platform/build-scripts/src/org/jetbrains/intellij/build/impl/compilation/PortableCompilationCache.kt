@@ -65,8 +65,8 @@ class PortableCompilationCache(private val context: CompilationContext) {
     }
   }
 
-  private val forceDownload = bool(FORCE_DOWNLOAD_PROPERTY)
-  private val forceRebuild = bool(FORCE_REBUILD_PROPERTY)
+  private var forceDownload = bool(FORCE_DOWNLOAD_PROPERTY)
+  private var forceRebuild = bool(FORCE_REBUILD_PROPERTY)
   private val remoteCache = RemoteCache(context)
   private val jpsCaches by lazy { JpsCaches(context) }
   private val remoteGitUrl by lazy {
@@ -206,7 +206,17 @@ class PortableCompilationCache(private val context: CompilationContext) {
 
   private fun downloadCache() {
     context.messages.block("Downloading Portable Compilation Cache") {
-      downloader.download()
+      try {
+        downloader.download()
+      }
+      catch (e: Exception) {
+        e.printStackTrace()
+        context.messages.warning("Failed to download Compilation Cache. Re-trying without any caches.")
+        forceRebuild = true
+        forceDownload = false
+        context.options.incrementalCompilation = false
+        clean()
+      }
     }
   }
 }

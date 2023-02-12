@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -349,6 +349,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     return -1;
   }
 
+  @Nullable
   protected Context createContext(Editor editor, int offset, long startTimestamp) {
     Project project = Objects.requireNonNull(editor.getProject());
 
@@ -423,6 +424,19 @@ public class EditorMouseHoverPopupManager implements Disposable {
       return null;
     }
     return hint;
+  }
+
+  public void showInfoTooltip(EditorMouseEvent e) {
+    Editor editor = e.getEditor();
+    if (editor.getProject() == null) return;
+    int offset = getTargetOffset(e);
+    Context context = createContext(editor, offset, System.currentTimeMillis());
+    if (context != null) {
+      HighlightInfo info = context.getHighlightInfo();
+      if (info != null) {
+        showInfoTooltip(editor, info, offset, false, true);
+      }
+    }
   }
 
   public void showInfoTooltip(@NotNull Editor editor,

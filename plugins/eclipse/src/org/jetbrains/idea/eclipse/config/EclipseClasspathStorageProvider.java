@@ -14,7 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.workspaceModel.ide.JpsFileEntitySource;
+import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource;
 import com.intellij.workspaceModel.ide.VirtualFileUrls;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeUtils;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
@@ -55,8 +55,7 @@ public final class EclipseClasspathStorageProvider implements ClasspathStoragePr
   public void assertCompatible(@NotNull final ModuleRootModel model) throws ConfigurationException {
     final String moduleName = model.getModule().getName();
     for (OrderEntry entry : model.getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry) {
-        final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
+      if (entry instanceof LibraryOrderEntry libraryEntry) {
         if (libraryEntry.isModuleLevel()) {
           final Library library = libraryEntry.getLibrary();
           if (library == null ||

@@ -52,8 +52,7 @@ public class WindowMoveListener extends WindowMouseListener {
     if (event.isConsumed()) return;
     if (BUTTON1_MASK == (BUTTON1_MASK & event.getModifiers()) && 1 < event.getClickCount()) {
       Component view = getView(getContent(event));
-      if (view instanceof Frame) {
-        Frame frame = (Frame)view;
+      if (view instanceof Frame frame) {
         int state = frame.getExtendedState();
         if (!isStateSet(Frame.ICONIFIED, state) && frame.isResizable()) {
           event.consume();

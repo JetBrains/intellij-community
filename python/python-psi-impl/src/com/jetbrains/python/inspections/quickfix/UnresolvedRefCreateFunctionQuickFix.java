@@ -65,8 +65,7 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
         if (param instanceof PyKeywordArgument) {
           functionBuilder.parameter(((PyKeywordArgument)param).getKeyword());
         }
-        else if (param instanceof PyReferenceExpression) {
-          PyReferenceExpression refex = (PyReferenceExpression)param;
+        else if (param instanceof PyReferenceExpression refex) {
           functionBuilder.parameter(refex.getReferencedName());
         }
         else {

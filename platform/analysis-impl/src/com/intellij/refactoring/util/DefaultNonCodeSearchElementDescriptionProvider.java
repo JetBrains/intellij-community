@@ -13,8 +13,7 @@ class DefaultNonCodeSearchElementDescriptionProvider implements ElementDescripti
 
   @Override
   public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
-    if (!(location instanceof NonCodeSearchDescriptionLocation)) return null;
-    final NonCodeSearchDescriptionLocation ncdLocation = (NonCodeSearchDescriptionLocation)location;
+    if (!(location instanceof NonCodeSearchDescriptionLocation ncdLocation)) return null;
 
     if (element instanceof PsiDirectory) {
       if (ncdLocation.isNonJava()) {
@@ -25,8 +24,7 @@ class DefaultNonCodeSearchElementDescriptionProvider implements ElementDescripti
       return ((PsiDirectory) element).getName();
     }
 
-    if (element instanceof PsiMetaOwner) {
-      final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;
+    if (element instanceof PsiMetaOwner psiMetaOwner) {
       final PsiMetaData metaData = psiMetaOwner.getMetaData();
       if (metaData != null) {
         return metaData.getName();

@@ -77,8 +77,7 @@ public abstract class PredefinedCodeStyle {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof PredefinedCodeStyle)) return false;
-    PredefinedCodeStyle otherStyle = (PredefinedCodeStyle)obj;
+    if (!(obj instanceof PredefinedCodeStyle otherStyle)) return false;
     return myName.equals(otherStyle.getName()) &&
            myLanguage.equals(otherStyle.getLanguage());
   }

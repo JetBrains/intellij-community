@@ -1,11 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.actions
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.ide.impl.dataRules.GetDataRule
-import com.intellij.lang.documentation.DocumentationTarget
-import com.intellij.lang.documentation.ide.DocumentationBrowserFacade
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.ide.impl.DocumentationHistory
@@ -17,17 +14,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.ide.documentation.DOCUMENTATION_BROWSER
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
-
-@JvmField
-val DOCUMENTATION_TARGETS: DataKey<List<DocumentationTarget>> = DataKey.create("documentation.targets")
-
-@JvmField
-val DOCUMENTATION_BROWSER: DataKey<DocumentationBrowserFacade> = DataKey.create("documentation.browser")
 
 internal val DOCUMENTATION_POPUP: DataKey<JBPopup> = DataKey.create("documentation.popup")
 

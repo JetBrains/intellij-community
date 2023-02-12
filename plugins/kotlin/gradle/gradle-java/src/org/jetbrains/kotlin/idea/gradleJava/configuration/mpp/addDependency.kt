@@ -6,9 +6,9 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData
 import com.intellij.openapi.roots.DependencyScope
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
 
-internal fun KotlinMPPGradleProjectResolver.Companion.addDependency(
+internal fun KotlinMppGradleProjectResolver.Companion.addDependency(
     fromModule: DataNode<*>, toModule: DataNode<*>, dependOnTestModule: Boolean
 ) {
     if (fromModule.data == toModule.data) return

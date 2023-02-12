@@ -3,10 +3,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
 import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
-import com.intellij.ide.IdeBundle
-import com.intellij.ide.RecentProjectListActionProvider
-import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.ide.*
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -26,8 +23,13 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RecentProjectsWelcomeScreenActionBase
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.JBGaps
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.hover.TreeHoverListener
+import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
@@ -37,10 +39,7 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.asSafely
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.ListUiUtil
-import com.intellij.util.ui.NamedColorUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
@@ -48,6 +47,7 @@ import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionAdapter
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.TreeExpansionEvent
@@ -101,7 +101,8 @@ internal class RecentProjectFilteringTree(
 
     treeComponent.setUI(FullRendererComponentTreeUI())
     treeComponent.setExpandableItemsEnabled(false)
-    UIUtil.setCursor(treeComponent, TREE_CURSOR)
+
+    treeComponent.addMouseMotionListener(MouseHoverListener(treeComponent))
 
     searchModel.updateStructure()
   }
@@ -198,7 +199,7 @@ internal class RecentProjectFilteringTree(
 
   private class TreeHoverToSelectionListener(private val popupMenu: ActionPopupMenu) : TreeHoverListener() {
     override fun onHover(tree: JTree, row: Int) {
-      if (row != -1 && !popupMenu.component.isVisible) {
+      if (!popupMenu.component.isVisible) {
         tree.setSelectionRow(row)
       }
     }
@@ -215,10 +216,9 @@ internal class RecentProjectFilteringTree(
       val point = mouseEvent.point
       val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
       if (row != -1) {
-        tree.repaint(getCloseIconRect(row))
+        tree.repaint(getActionsButtonRect(row))
       }
 
-      projectActionButtonViewModel.hoveredRow = row
       projectActionButtonViewModel.isButtonHovered = intersectWithActionIcon(point)
     }
 
@@ -285,19 +285,22 @@ internal class RecentProjectFilteringTree(
 
     private fun intersectWithActionIcon(point: Point): Boolean {
       val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
-      return row != -1 && getCloseIconRect(row).contains(point)
+      return row != -1 && getActionsButtonRect(row).contains(point)
     }
 
-    private fun getCloseIconRect(row: Int): Rectangle {
+    private fun getActionsButtonRect(row: Int): Rectangle {
       val helper = RenderingHelper(tree) // because the renderer's bounds are not full width
       val bounds = tree.getRowBounds(row)
-      val icon = IconUtil.toSize(AllIcons.Ide.Notification.Gear,
-                                 ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
-                                 ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
+      val size = JBUI.scale(ActionsButton.SIZE)
 
-      return Rectangle(helper.width - helper.rightMargin - icon.iconWidth - JBUIScale.scale(14),
-                       bounds.y + (bounds.height - icon.iconHeight) / 2,
-                       icon.iconWidth, icon.iconHeight)
+      val node = tree.getPathForRow(row)?.lastPathComponent as? DefaultMutableTreeNode
+      val rightGap = when (node?.userObject) {
+        is ProjectsGroupItem -> JBUIScale.scale(ActionsButton.GROUP_RIGHT_GAP)
+        else -> JBUIScale.scale(ActionsButton.RIGHT_GAP) + JBUIScale.scale(RENDERER_BORDER_SIZE)
+      }
+
+      return Rectangle(helper.width - helper.rightMargin - size - rightGap,
+                       bounds.y + (bounds.height - size) / 2, size, size)
     }
 
     private fun cancelCloneProject(cloneableProject: CloneableProject) {
@@ -347,14 +350,14 @@ internal class RecentProjectFilteringTree(
       leaf: Boolean, row: Int, hasFocus: Boolean
     ): Component? {
       return when (val item = (value as DefaultMutableTreeNode).userObject as RecentProjectTreeItem) {
-        is RecentProjectItem -> recentProjectComponent.customizeComponent(item, row, selected)
-        is ProjectsGroupItem -> projectGroupComponent.customizeComponent(item, row, selected)
-        is CloneableProjectItem -> cloneableProjectComponent.customizeComponent(item, row, selected)
+        is RecentProjectItem -> recentProjectComponent.customizeComponent(item, selected)
+        is ProjectsGroupItem -> projectGroupComponent.customizeComponent(item, selected)
+        is CloneableProjectItem -> cloneableProjectComponent.customizeComponent(item, selected)
         is RootItem -> null
       }
     }
 
-    private inner class RecentProjectComponent : BorderLayoutPanel() {
+    private inner class RecentProjectComponent : JPanel(GridLayout()) {
       private val recentProjectsManager: RecentProjectsManagerBase
         get() = RecentProjectsManagerBase.getInstanceEx()
 
@@ -362,34 +365,28 @@ internal class RecentProjectFilteringTree(
       private val projectPathLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("").apply {
         foreground = NamedColorUtil.getInactiveTextColor()
       }
-      private val projectIconLabel = JLabel().apply {
-        border = JBUI.Borders.empty(8, 0, 0, 8)
-        horizontalAlignment = SwingConstants.LEFT
-        verticalAlignment = SwingConstants.TOP
-      }
-      private val projectActions = JLabel().apply {
-        border = JBUI.Borders.empty(0, 0, 0, 10)
-        icon = IconUtil.toSize(AllIcons.Ide.Notification.Gear,
-                               ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
-                               ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
+      private val projectIconLabel = JLabel()
+      private val projectActions = ActionsButton().apply {
+        setState(AllIcons.Ide.Notification.Gear, false)
       }
       private val projectNamePanel = JPanel(VerticalLayout(4)).apply {
         isOpaque = false
-        border = JBUI.Borders.empty(4)
 
         add(projectNameLabel)
         add(projectPathLabel)
       }
 
       init {
-        border = JBUI.Borders.empty(4)
-
-        add(projectNamePanel, BorderLayout.CENTER)
-        add(projectIconLabel, BorderLayout.WEST)
-        add(projectActions, BorderLayout.EAST)
+        border = JBUI.Borders.empty(RENDERER_BORDER_SIZE)
+        RowsGridBuilder(this)
+          .cell(projectIconLabel,
+                gaps = if (ExperimentalUI.isNewUI()) JBGaps(6, 6, 0, 8) else JBGaps(top = 8, right = 8),
+                verticalAlign = VerticalAlign.TOP)
+          .cell(projectNamePanel, resizableColumn = true, horizontalAlign = HorizontalAlign.FILL, gaps = JBGaps(4, 4, 4, 4))
+          .cell(projectActions, gaps = JBGaps(right = ActionsButton.RIGHT_GAP))
       }
 
-      fun customizeComponent(item: RecentProjectItem, row: Int, isSelected: Boolean): JComponent {
+      fun customizeComponent(item: RecentProjectItem, rowHovered: Boolean): JComponent {
         val isPathValid = isProjectPathValid(item.projectPath)
         projectNameLabel.apply {
           text = item.displayName
@@ -403,18 +400,21 @@ internal class RecentProjectFilteringTree(
           disabledIcon = recentProjectsManager.getProjectIcon(item.projectPath, isProjectValid = false)
           isEnabled = isPathValid
         }
-        projectActions.apply {
-          val actionIcon = if (isPathValid) AllIcons.Ide.Notification.Gear else AllIcons.Welcome.Project.Remove
-          val hoveredActionIcon = if (isPathValid) AllIcons.Ide.Notification.GearHover else AllIcons.Welcome.Project.RemoveHover
-
-          icon = IconUtil.toSize(buttonViewModel.selectIcon(row, actionIcon, hoveredActionIcon),
-                                 ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
-                                 ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
-          isVisible = isSelected
+        if (isPathValid) {
+          buttonViewModel.prepareActionsButton(projectActions, rowHovered, AllIcons.Ide.Notification.Gear,
+                                               AllIcons.Ide.Notification.GearHover)
+        }
+        else {
+          buttonViewModel.prepareActionsButton(projectActions, rowHovered, AllIcons.Welcome.Project.Remove,
+                                               AllIcons.Welcome.Project.RemoveHover)
         }
 
         val toolTipPath = PathUtil.toSystemDependentName(item.projectPath)
-        toolTipText = if (isPathValid) toolTipPath else "$toolTipPath ${IdeBundle.message("recent.project.unavailable")}"
+        val tooltip = if (isPathValid) toolTipPath else "$toolTipPath ${IdeBundle.message("recent.project.unavailable")}"
+        if (tooltip != toolTipText) {
+          IdeTooltipManager.getInstance().hideCurrent(null)
+          toolTipText = tooltip
+        }
 
         AccessibleContextUtil.setCombinedName(this, projectNameLabel, "-", projectPathLabel) // NON-NLS
         AccessibleContextUtil.setCombinedDescription(this, projectNameLabel, "-", projectPathLabel) // NON-NLS
@@ -423,36 +423,31 @@ internal class RecentProjectFilteringTree(
       }
     }
 
-    private inner class ProjectGroupComponent : BorderLayoutPanel() {
+    private inner class ProjectGroupComponent : JPanel(GridLayout()) {
+
       private val projectGroupNameLabel = SimpleColoredComponent().apply {
         isOpaque = false
-        border = JBUI.Borders.empty(4)
       }
-      private val projectGroupActions = JLabel().apply {
-        border = JBUI.Borders.empty(0, 0, 0, 14)
-        icon = IconUtil.toSize(AllIcons.Ide.Notification.Gear,
-                               ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
-                               ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
+      private val projectGroupActions = ActionsButton().apply {
+        setState(AllIcons.Ide.Notification.Gear, false)
       }
 
       init {
         isOpaque = false
 
-        add(projectGroupNameLabel, BorderLayout.WEST)
-        add(projectGroupActions, BorderLayout.EAST)
+        RowsGridBuilder(this)
+          .cell(projectGroupNameLabel, resizableColumn = true, gaps = JBGaps(4, 4, 4, 4))
+          .cell(projectGroupActions, gaps = JBGaps(right = ActionsButton.GROUP_RIGHT_GAP))
       }
 
-      fun customizeComponent(item: ProjectsGroupItem, row: Int, isSelected: Boolean): JComponent {
+      fun customizeComponent(item: ProjectsGroupItem, rowHovered: Boolean): JComponent {
         projectGroupNameLabel.apply {
           clear()
           append(item.displayName(), SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getListForeground())) // NON-NLS
         }
-        projectGroupActions.apply {
-          icon = IconUtil.toSize(buttonViewModel.selectIcon(row, AllIcons.Ide.Notification.Gear, AllIcons.Ide.Notification.GearHover),
-                                 ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
-                                 ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
-          isVisible = isSelected
-        }
+
+        buttonViewModel.prepareActionsButton(projectGroupActions, rowHovered, AllIcons.Ide.Notification.Gear,
+                                             AllIcons.Ide.Notification.GearHover)
 
         AccessibleContextUtil.setName(this, projectGroupNameLabel) // NON-NLS
         AccessibleContextUtil.setDescription(this, projectGroupNameLabel) // NON-NLS
@@ -461,7 +456,7 @@ internal class RecentProjectFilteringTree(
       }
     }
 
-    private inner class CloneableProjectComponent : BorderLayoutPanel() {
+    private inner class CloneableProjectComponent : JPanel(GridLayout()) {
       private val recentProjectsManager: RecentProjectsManagerBase
         get() = RecentProjectsManagerBase.getInstanceEx()
 
@@ -473,24 +468,16 @@ internal class RecentProjectFilteringTree(
       }
       private val projectNamePanel = JPanel(VerticalLayout(4)).apply {
         isOpaque = false
-        border = JBUI.Borders.empty(4)
 
         add(projectNameLabel)
         add(projectPathLabel)
       }
       private val projectIconLabel = JLabel().apply {
-        border = JBUI.Borders.empty(8, 0, 0, 8)
         horizontalAlignment = SwingConstants.LEFT
         verticalAlignment = SwingConstants.TOP
       }
-      private val projectRemoveButton = JLabel().apply {
-        border = JBUI.Borders.empty(0, 0, 0, 10)
-      }
-      private val projectCancelButton = JLabel().apply {
-        icon = AllIcons.Actions.DeleteTag
-        border = JBUI.Borders.empty(0, 8, 0, 14)
-      }
-      private val projectActionButton = Wrapper()
+      private var cancelButton: Boolean? = null
+      private val projectActionButton = ActionsButton()
       private val projectProgressLabel = JLabel().apply {
         foreground = NamedColorUtil.getInactiveTextColor()
       }
@@ -500,7 +487,6 @@ internal class RecentProjectFilteringTree(
       private val projectProgressBarPanel = object : BorderLayoutPanel() {
         init {
           isOpaque = false
-          border = JBUI.Borders.empty(8)
         }
 
         override fun getPreferredSize(): Dimension {
@@ -512,23 +498,21 @@ internal class RecentProjectFilteringTree(
         add(projectProgressLabel, BorderLayout.NORTH)
         add(projectProgressBar, BorderLayout.SOUTH)
       }
-      private val projectCloneStatusPanel = JBUI.Panels.simplePanel().apply {
-        isOpaque = false
-
-        add(projectProgressBarPanel, BorderLayout.CENTER)
-        add(projectActionButton, BorderLayout.EAST)
-      }
 
       init {
         isOpaque = false
-        border = JBUI.Borders.empty(4)
+        border = JBUI.Borders.empty(RENDERER_BORDER_SIZE)
 
-        add(projectNamePanel, BorderLayout.CENTER)
-        add(projectIconLabel, BorderLayout.WEST)
-        add(projectCloneStatusPanel, BorderLayout.EAST)
+        RowsGridBuilder(this)
+          .cell(projectIconLabel,
+                gaps = if (ExperimentalUI.isNewUI()) JBGaps(6, 6, 0, 8) else JBGaps(top = 8, right = 8),
+                verticalAlign = VerticalAlign.TOP)
+          .cell(projectNamePanel, resizableColumn = true, horizontalAlign = HorizontalAlign.FILL, gaps = JBGaps(4, 4, 4, 4))
+          .cell(projectProgressBarPanel, gaps = JBGaps(left = 8, right = 8))
+          .cell(projectActionButton, gaps = JBGaps(right = ActionsButton.RIGHT_GAP))
       }
 
-      fun customizeComponent(item: CloneableProjectItem, row: Int, isSelected: Boolean): JComponent {
+      fun customizeComponent(item: CloneableProjectItem, rowHovered: Boolean): JComponent {
         val cloneableProject = item.cloneableProject
         val taskInfo = cloneableProject.cloneTaskInfo
         val progressIndicator = cloneableProject.progressIndicator
@@ -536,19 +520,24 @@ internal class RecentProjectFilteringTree(
 
         projectNameLabel.text = item.displayName() // NON-NLS
         projectPathLabel.text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
-        projectCancelButton.icon = buttonViewModel.selectIcon(row, AllIcons.Actions.DeleteTag, AllIcons.Actions.DeleteTagHover)
-        projectRemoveButton.apply {
-          icon = IconUtil.toSize(buttonViewModel.selectIcon(row, AllIcons.Welcome.Project.Remove, AllIcons.Welcome.Project.RemoveHover),
-                                 ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
-                                 ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
-          isVisible = isSelected
+        when (cancelButton) {
+          true -> {
+            buttonViewModel.prepareActionsButton(projectActionButton, rowHovered, AllIcons.Actions.DeleteTag,
+                                                 AllIcons.Actions.DeleteTagHover)
+            projectActionButton.isVisible = true // always visible
+          }
+          false -> {
+            buttonViewModel.prepareActionsButton(projectActionButton, rowHovered, AllIcons.Welcome.Project.Remove,
+                                                 AllIcons.Welcome.Project.RemoveHover)
+          }
+          else -> {}
         }
         projectProgressBarPanel.apply {
           isVisible = false
           isEnabled = false
         }
         toolTipText = null
-        cursor = TREE_CURSOR
+        cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
 
         projectProgressBar.apply {
           val fraction = progressIndicator.fraction
@@ -574,17 +563,17 @@ internal class RecentProjectFilteringTree(
             projectProgressLabel.text = taskInfo.actionTitle
             projectIconLabel.icon = recentProjectsManager.getProjectIcon(item.projectPath, isProjectValid = true)
             toolTipText = taskInfo.actionTooltipText
-            projectActionButton.setContent(projectCancelButton)
+            cancelButton = true
           }
           CloneStatus.FAILURE -> {
             projectPathLabel.text = taskInfo.failedTitle
             projectIconLabel.icon = recentProjectsManager.getProjectIcon(item.projectPath, isProjectValid = false)
-            projectActionButton.setContent(projectRemoveButton)
+            cancelButton = false
           }
           CloneStatus.CANCEL -> {
             projectPathLabel.text = taskInfo.canceledTitle
             projectIconLabel.icon = recentProjectsManager.getProjectIcon(item.projectPath, isProjectValid = false)
-            projectActionButton.setContent(projectRemoveButton)
+            cancelButton = false
           }
           else -> {}
         }
@@ -600,14 +589,13 @@ internal class RecentProjectFilteringTree(
   }
 
   private class ProjectActionButtonViewModel(
-    var hoveredRow: Int = -1,
     var isButtonHovered: Boolean = false
   ) {
-    fun selectIcon(row: Int, icon: Icon, hoveredIcon: Icon): Icon {
-      return if (isButtonHovered && hoveredRow == row)
-        hoveredIcon
-      else
-        icon
+
+    fun prepareActionsButton(button: ActionsButton, rowHovered: Boolean, icon: Icon, hoveredIcon: Icon) {
+      val hovered = isButtonHovered && rowHovered
+      button.isVisible = rowHovered
+      button.setState(if (hovered) hoveredIcon else icon, hovered)
     }
   }
 
@@ -646,8 +634,22 @@ internal class RecentProjectFilteringTree(
     }
   }
 
+  private class MouseHoverListener(private val tree: Tree) : MouseMotionAdapter() {
+    override fun mouseMoved(e: MouseEvent) {
+      val point = e.point
+      val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
+      if (row != -1) {
+        UIUtil.setCursor(tree, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+      }
+      else {
+        UIUtil.setCursor(tree, Cursor.getDefaultCursor())
+      }
+    }
+  }
+
   companion object {
-    private val TREE_CURSOR = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+
+    private const val RENDERER_BORDER_SIZE = 4
 
     private fun createActionEvent(tree: Tree, inputEvent: InputEvent?): AnActionEvent {
       val dataContext = DataManager.getInstance().getDataContext(tree)
@@ -691,5 +693,32 @@ internal class RecentProjectFilteringTree(
     private fun getSelectedItem(tree: Tree): RecentProjectTreeItem? {
       return TreeUtil.getLastUserObject(RecentProjectTreeItem::class.java, tree.selectionPath)
     }
+  }
+}
+
+private class ActionsButton : SelectablePanel() {
+
+  companion object {
+    const val SIZE = 22
+    const val RIGHT_GAP = 20
+    const val GROUP_RIGHT_GAP = 14
+  }
+
+  private val label = JLabel().apply {
+    horizontalAlignment = SwingConstants.CENTER
+    verticalAlignment = SwingConstants.CENTER
+  }
+
+  init {
+    isOpaque = false
+    preferredSize = JBDimension(SIZE, SIZE)
+    layout = BorderLayout()
+    add(label, BorderLayout.CENTER)
+    selectionArc = JBUI.scale(6)
+  }
+
+  fun setState(icon: Icon, hovered: Boolean) {
+    label.icon = IconUtil.toSize(icon, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)
+    selectionColor = if (hovered) JBUI.CurrentTheme.List.buttonHoverBackground() else null
   }
 }

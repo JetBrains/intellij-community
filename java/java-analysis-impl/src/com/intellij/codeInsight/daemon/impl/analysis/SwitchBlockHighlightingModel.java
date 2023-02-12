@@ -597,10 +597,9 @@ public class SwitchBlockHighlightingModel {
           holder.add(error);
           return;
         }
-        if (JavaGenericsUtil.isUncheckedCast(patternType, mySelectorType)) {
-          String message = JavaErrorBundle.message("unsafe.cast.in.instanceof", JavaHighlightUtil.formatType(mySelectorType),
-                                                   JavaHighlightUtil.formatType(patternType));
-          holder.add(createError(elementToReport, message).create());
+        HighlightInfo.Builder error = PatternHighlightingModel.getUncheckedPatternConversionError(elementToReport);
+        if (error != null) {
+          holder.add(error.create());
           return;
         }
         PsiDeconstructionPattern deconstructionPattern = JavaPsiPatternUtil.findDeconstructionPattern(elementToReport);
@@ -1235,6 +1234,16 @@ public class SwitchBlockHighlightingModel {
     for (Map.Entry<Object, Collection<PsiElement>> entry : duplicateCandidates.entrySet()) {
       if (entry.getValue().size() <= 1) continue;
       result.addAll(entry.getValue());
+    }
+
+    // Find only one unconditional pattern, but not all, because if there are
+    // multiple unconditional patterns, they will all be found as duplicates
+    PsiCaseLabelElement unconditionalPattern =
+      PatternsInSwitchBlockHighlightingModel.findUnconditionalPatternForType(labelElements, switchModel.mySelectorType);
+    PsiElement defaultElement = SwitchUtils.findDefaultElement(switchBlock);
+    if (unconditionalPattern != null && defaultElement != null) {
+      result.add(unconditionalPattern);
+      result.add(defaultElement);
     }
 
     PatternsInSwitchBlockHighlightingModel patternInSwitchModel =

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -108,8 +108,7 @@ public final class JavaTemplateUtil {
         if (!(tmp instanceof PsiJavaCodeReferenceElement) || tmp.getTextRange().getEndOffset() > end) break;
         parent = tmp;
       }
-      if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement) parent).isQualified()) {
-        final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement) parent;
+      if (parent instanceof PsiJavaCodeReferenceElement ref && !ref.isQualified()) {
         ApplicationManager.getApplication().runWriteAction(() -> {
           try {
             ref.bindToElement(aClass);

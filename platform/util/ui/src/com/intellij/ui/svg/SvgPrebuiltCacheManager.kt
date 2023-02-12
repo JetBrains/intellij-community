@@ -44,7 +44,6 @@ internal class SvgPrebuiltCacheManager(dbDir: Path) {
       actualHeight = DataUtils.readVarInt(data)
     }
 
-    mapper.docSize?.setSize((actualWidth / mapper.scale).toDouble(), (actualHeight / mapper.scale).toDouble())
     val image = readImage(buffer = data, w = actualWidth, h = actualHeight)
     IconLoadMeasurer.svgPreBuiltLoad.end(start)
     return image

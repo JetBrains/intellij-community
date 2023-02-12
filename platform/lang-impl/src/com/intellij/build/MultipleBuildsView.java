@@ -130,8 +130,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
     List<Runnable> runOnEdt = new SmartList<>();
     AbstractViewManager.BuildInfo buildInfo;
-    if (event instanceof StartBuildEvent) {
-      StartBuildEvent startBuildEvent = (StartBuildEvent)event;
+    if (event instanceof StartBuildEvent startBuildEvent) {
       if (isInitializeStarted.get()) {
         clearOldBuilds(runOnEdt, startBuildEvent);
       }

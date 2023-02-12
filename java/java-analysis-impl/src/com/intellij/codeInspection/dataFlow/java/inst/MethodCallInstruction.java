@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow.java.inst;
 
@@ -472,7 +472,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       paramList = myTargetMethod.getParameterList();
       int paramCount = paramList.getParametersCount();
       if (paramCount == myArgCount) {
-        argValues = new DfaValue[paramCount];
+        argValues = paramCount == 0 ? DfaValue.EMPTY_ARRAY : new DfaValue[paramCount];
       }
     }
 
@@ -489,14 +489,11 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
         // If we write to local object only, it should not leak
         arg = JavaDfaHelpers.dropLocality(arg, memState);
       }
-      if (getContext() instanceof PsiMethodReferenceExpression) {
-        PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)getContext();
-        if (paramList != null) {
-          PsiParameter parameter = paramList.getParameter(paramIndex);
-          if (parameter != null) {
-            Nullability nullability = getArgRequiredNullability(paramIndex);
-            arg = MethodReferenceInstruction.adaptMethodRefArgument(interpreter, memState, arg, methodRef, parameter, nullability);
-          }
+      if (getContext() instanceof PsiMethodReferenceExpression methodRef && paramList != null) {
+        PsiParameter parameter = paramList.getParameter(paramIndex);
+        if (parameter != null) {
+          Nullability nullability = getArgRequiredNullability(paramIndex);
+          arg = MethodReferenceInstruction.adaptMethodRefArgument(interpreter, memState, arg, methodRef, parameter, nullability);
         }
       }
       if (myMutation.mutatesArg(paramIndex)) {

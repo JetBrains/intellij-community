@@ -48,7 +48,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     /**
      * @deprecated do not use
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
@@ -81,8 +81,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     @Override
     public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
       ScopeOwner owner = ScopeUtil.getScopeOwner(node);
-      if (owner instanceof PyFunction) {
-        PyFunction function = (PyFunction)owner;
+      if (owner instanceof PyFunction function) {
         PyAnnotation annotation = function.getAnnotation();
         String typeCommentAnnotation = function.getTypeCommentAnnotation();
         if (annotation != null || typeCommentAnnotation != null) {
@@ -316,11 +315,10 @@ public class PyTypeCheckerInspection extends PyInspection {
           analyzeParamSpec((PyParamSpecType)expected, allArguments, substitutions, result, unmatchedArguments, unmatchedParameters);
           break;
         }
-        else if (expected instanceof PyConcatenateType) {
+        else if (expected instanceof PyConcatenateType concatenateType) {
           final var allArguments = callSite.getArguments(callableType.getCallable());
           if (allArguments.isEmpty()) break;
 
-          final var concatenateType = (PyConcatenateType)expected;
           final var firstExpectedTypes = concatenateType.getFirstTypes();
           final var argumentRightBound = Math.min(firstExpectedTypes.size(), allArguments.size());
           final var firstArguments = allArguments.subList(0, argumentRightBound);

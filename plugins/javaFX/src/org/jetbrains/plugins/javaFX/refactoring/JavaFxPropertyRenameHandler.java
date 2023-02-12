@@ -62,8 +62,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
                                           JavaFXBundle.message("javafx.property.rename.handler.error.title"), null);
       return;
     }
-    if (reference instanceof JavaFxPropertyReference && reference.resolve() != null) {
-      final JavaFxPropertyReference propertyReference = (JavaFxPropertyReference)reference;
+    if (reference instanceof JavaFxPropertyReference propertyReference && reference.resolve() != null) {
       final Map<PsiElement, String> elementsToRename = getElementsToRename(propertyReference, "a");
       if (!canRename(project, editor, elementsToRename.keySet())) {
         return;

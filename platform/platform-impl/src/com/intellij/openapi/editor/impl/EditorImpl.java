@@ -4,11 +4,11 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
-import com.intellij.ide.actions.IdeScaleTransformer;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.ui.laf.MouseDragSelectionEventHandler;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
@@ -64,6 +64,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -302,6 +303,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private List<CaretState> myCaretStateBeforeLastPress;
   LogicalPosition myLastMousePressedLocation;
+
+  Point myLastMousePressedPoint;
   private VisualPosition myTargetMultiSelectionPosition;
   private boolean myMultiSelectionInProgress;
   private boolean myRectangularSelectionInProgress;
@@ -511,7 +514,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }, myCaretModel);
 
-    setFontSize(IdeScaleTransformer.getInstance().getCurrentEditorFontSize());
+    setFontSize(UISettingsUtils.getInstance().getScaledEditorFontSize());
 
     myGutterComponent.updateSize();
     Dimension preferredSize = getPreferredSize();
@@ -545,8 +548,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
     Disposer.register(myDisposable, myScrollingPositionKeeper);
     putUserData(INITIALIZED, Boolean.TRUE);
-
-    myScrollPane.getHorizontalScrollBar().updateUI();
   }
 
   public void applyFocusMode() {
@@ -3863,6 +3864,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       EditorMouseEvent event = createEditorMouseEvent(e);
       myLastPressWasAtBlockInlay = false;
       myLastMousePressedLocation = event.getLogicalPosition();
+      myLastMousePressedPoint = new RelativePoint(event.getMouseEvent()).getPoint(myEditorComponent);
       myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.emptyList();
       myCurrentDragIsSubstantial = false;
       myDragStarted = false;
@@ -4571,7 +4573,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return myFontPreferences.getSize2D(myFontPreferences.getFontFamily());
       }
       if (myFontSize == FONT_SIZE_TO_IGNORE) {
-        return IdeScaleTransformer.getInstance().scaledEditorFontSize(getDelegate().getEditorFontSize2D());
+        return UISettingsUtils.getInstance().scaleFontSize(getDelegate().getEditorFontSize2D());
       }
       return myFontSize;
     }
@@ -4597,8 +4599,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myFontPreferencesAreSetExplicitly = false;
 
-      IdeScaleTransformer scaleTransformer = IdeScaleTransformer.getInstance();
-      if (!scaleTransformer.isEditorFontSizeForced() && fontSize == scaleTransformer.scaledEditorFontSize(super.getEditorFontSize2D())) {
+      if (fontSize == UISettingsUtils.getInstance().scaleFontSize(super.getEditorFontSize2D())) {
         myFontSize = FONT_SIZE_TO_IGNORE;
       }
       else {
@@ -5035,8 +5036,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       else {
         FoldRegion foldRegion = event.getCollapsedFoldRegion();
-        if (foldRegion instanceof CustomFoldRegion) {
-          CustomFoldRegion customFoldRegion = (CustomFoldRegion)foldRegion;
+        if (foldRegion instanceof CustomFoldRegion customFoldRegion) {
           ActionGroup group = customFoldRegion.getRenderer().getContextMenuGroup(customFoldRegion);
           if (group != null) return group;
         }
@@ -5092,18 +5092,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public @NotNull JScrollBar createHorizontalScrollBar() {
-      return new OpaqueAwareScrollBar(Adjustable.HORIZONTAL) {
-        @Override
-        public void updateUI() {
-          //noinspection ConstantValue
-          if (SystemInfo.isMac && myMarkupModel != null) {
-            setUI(myMarkupModel.createMacHorizontalScrollBarUI());
-          }
-          else {
-            super.updateUI();
-          }
-        }
-      };
+      return new OpaqueAwareScrollBar(Adjustable.HORIZONTAL);
     }
 
     @Override

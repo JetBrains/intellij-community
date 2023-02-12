@@ -139,9 +139,8 @@ public class PushDownConflicts {
       if (member.hasModifierProperty(PsiModifier.STATIC)) continue;
       for (PsiReference ref : ReferencesSearch.search(member, member.getResolveScope(), false)) {
         final PsiElement element = ref.getElement();
-        if (element instanceof PsiReferenceExpression) {
+        if (element instanceof PsiReferenceExpression referenceExpression) {
           if (myConflicts.containsKey(element)) continue;
-          final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
           final PsiExpression qualifier = referenceExpression.getQualifierExpression();
           if (qualifier instanceof PsiSuperExpression && isSuperCallToBeInlined(member, targetClass, myClass)) continue;
           if (qualifier != null) {
@@ -199,8 +198,7 @@ public class PushDownConflicts {
         }
       }
     }
-    else if (movedMember instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)movedMember;
+    else if (movedMember instanceof PsiClass aClass) {
       final String name = aClass.getName();
       final PsiClass[] allInnerClasses = targetClass.getAllInnerClasses();
       for (PsiClass innerClass : allInnerClasses) {

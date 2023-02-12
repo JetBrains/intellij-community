@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -42,32 +44,21 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e){
-    UISettings settings = UISettings.getInstance();
-    Project project = e.getProject();
-
-    setPresentationMode(project, !settings.getPresentationMode());
+    setPresentationMode(e.getProject(), !UISettings.getInstance().getPresentationMode());
   }
 
   public static void setPresentationMode(@Nullable Project project, boolean inPresentation) {
     storeToolWindows(project);
     log(String.format("Will tweak full screen mode for presentation=%b", inPresentation));
 
-    UISettings settings = UISettings.getInstance();
+    UISettings.getInstance().setPresentationMode(inPresentation);
+    float oldScale = UISettingsUtils.getInstance().getCurrentIdeScale();
+    UISettings.getInstance().fireUISettingsChanged();
 
-    if (inPresentation) {
-      float fontSize = settings.getPresentationModeFontSize();
-      IdeScaleTransformer.getInstance().scaleToEditorFontSize(fontSize, () -> {
-        settings.setPresentationMode(inPresentation);
-        return null;
-      });
+    // If IDE scale hasn't been changed, we need to updateUI here
+    if (oldScale == UISettingsUtils.getInstance().getCurrentIdeScale()) {
+      LafManager.getInstance().updateUI();
     }
-    else {
-      IdeScaleTransformer.getInstance().resetToLastPersistedScale(() -> {
-        settings.setPresentationMode(inPresentation);
-        return null;
-      });
-    }
-
 
     Job callback = project == null ? CompletableDeferredKt.CompletableDeferred(Unit.INSTANCE) : tweakFrameFullScreen(project, inPresentation);
     callback.invokeOnCompletion(__ -> {
