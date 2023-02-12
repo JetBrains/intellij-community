@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -131,8 +130,8 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
   }
 
-  public static @NlsSafe @NotNull String getFileManagerName() {
-    return Holder.fileManagerName;
+  public static @ActionText @NotNull String getFileManagerName() {
+    return Holder.getFileManagerName();
   }
 
   public static @Nullable VirtualFile findLocalFile(@Nullable VirtualFile file) {
@@ -289,10 +288,13 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
         .filter(exec -> exec.endsWith("nautilus") || exec.endsWith("pantheon-files") || exec.endsWith("dolphin"))
         .orElse(null);
 
-    private static final String fileManagerName =
-      SystemInfo.isMac ? "Finder" :
-      SystemInfo.isWindows ? "Explorer" :
-      readDesktopEntryKey("Name").orElse("File Manager");
+    @ActionText
+    @NotNull
+    private static String getFileManagerName() {
+      return SystemInfo.isMac ? IdeBundle.message("action.finder.text") :
+             SystemInfo.isWindows ? IdeBundle.message("action.explorer.text") :
+             readDesktopEntryKey("Name").orElse(IdeBundle.message("action.file.manager.text"));
+    }
 
     private static Optional<String> readDesktopEntryKey(String key) {
       if (SystemInfo.hasXdgMime()) {
