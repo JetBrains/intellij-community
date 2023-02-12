@@ -16,10 +16,16 @@ fragment mergeRequest on MergeRequest {
   }
 
   conflicts
+  headPipeline {
+    ...pipeline
+  }
   mergeStatusEnum
   state
   draft
 
+  targetProject {
+    ...project
+  }
   sourceProject {
     ...project
   }

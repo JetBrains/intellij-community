@@ -1,3 +1,4 @@
 fragment project on Project {
   httpUrlToRepo
+  webUrl
 }

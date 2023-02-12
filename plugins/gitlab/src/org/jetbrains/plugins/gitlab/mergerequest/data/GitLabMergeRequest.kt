@@ -24,6 +24,7 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val url: String
   val author: GitLabUserDTO
 
+  val targetProject: StateFlow<GitLabProjectDTO>
   val sourceProject: StateFlow<GitLabProjectDTO>
   val title: Flow<String>
   val description: Flow<String>
@@ -34,6 +35,7 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val requestState: Flow<RequestState>
   val approvedBy: Flow<List<GitLabUserDTO>>
   val reviewers: Flow<List<GitLabUserDTO>>
+  val pipeline: Flow<GitLabPipelineDTO?>
 
   val changes: Flow<GitLabMergeRequestChanges>
 
@@ -80,6 +82,7 @@ internal class LoadedGitLabMergeRequest(
   private val mergeRequestDetailsState: MutableStateFlow<GitLabMergeRequestFullDetails> =
     MutableStateFlow(GitLabMergeRequestFullDetails.fromGraphQL(mergeRequest))
 
+  override val targetProject: StateFlow<GitLabProjectDTO> = mergeRequestDetailsState.mapState(cs) { it.targetProject }
   override val sourceProject: StateFlow<GitLabProjectDTO> = mergeRequestDetailsState.mapState(cs) { it.sourceProject }
   override val title: Flow<String> = mergeRequestDetailsState.map { it.title }
   override val description: Flow<String> = mergeRequestDetailsState.map { it.description }
@@ -98,6 +101,7 @@ internal class LoadedGitLabMergeRequest(
   }
   override val approvedBy: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.approvedBy }
   override val reviewers: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.reviewers }
+  override val pipeline: Flow<GitLabPipelineDTO?> = mergeRequestDetailsState.map { it.headPipeline }
 
   override val changes: Flow<GitLabMergeRequestChanges> = mergeRequestDetailsState.map {
     GitLabMergeRequestChangesImpl(project, cs, api, projectMapping, it)

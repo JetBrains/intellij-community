@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffRefs
-import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import java.util.*
 
@@ -20,6 +17,7 @@ data class GitLabMergeRequestFullDetails(
   override val assignees: List<GitLabUserDTO>,
   override val reviewers: List<GitLabUserDTO>,
   override val webUrl: @NlsSafe String,
+  val targetProject: GitLabProjectDTO,
   val sourceProject: GitLabProjectDTO,
   val description: String,
   val approvedBy: List<GitLabUserDTO>,
@@ -28,6 +26,7 @@ data class GitLabMergeRequestFullDetails(
   val conflicts: Boolean,
   val commits: List<GitLabCommitDTO>,
   val diffRefs: GitLabDiffRefs,
+  val headPipeline: GitLabPipelineDTO?
 ) : GitLabMergeRequestDetails(iid, title, createdAt, author, mergeStatus, state, draft, assignees, reviewers, webUrl) {
 
   companion object {
@@ -42,6 +41,7 @@ data class GitLabMergeRequestFullDetails(
       assignees = dto.assignees,
       reviewers = dto.reviewers,
       webUrl = dto.webUrl,
+      targetProject = dto.targetProject,
       sourceProject = dto.sourceProject,
       description = dto.description,
       approvedBy = dto.approvedBy,
@@ -49,7 +49,8 @@ data class GitLabMergeRequestFullDetails(
       sourceBranch = dto.sourceBranch,
       conflicts = dto.conflicts,
       commits = dto.commits,
-      diffRefs = dto.diffRefs
+      diffRefs = dto.diffRefs,
+      headPipeline = dto.headPipeline
     )
   }
 }

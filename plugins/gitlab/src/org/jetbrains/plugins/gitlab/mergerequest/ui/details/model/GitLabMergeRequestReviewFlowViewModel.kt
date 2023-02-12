@@ -16,6 +16,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
+import org.jetbrains.plugins.gitlab.api.dto.GitLabPipelineDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
@@ -35,6 +37,8 @@ internal interface GitLabMergeRequestReviewFlowViewModel {
   val isApproved: StateFlow<Boolean>
   val reviewState: Flow<ReviewState>
   val reviewerAndReviewState: Flow<Map<GitLabUserDTO, ReviewState>>
+  val pipeline: Flow<GitLabPipelineDTO?>
+  val targetProject: StateFlow<GitLabProjectDTO>
 
   fun merge()
 
@@ -101,6 +105,10 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
       // TODO: implement ReviewState.WAIT_FOR_UPDATES
     }
   }
+
+  override val pipeline: Flow<GitLabPipelineDTO?> = mergeRequest.pipeline
+
+  override val targetProject: StateFlow<GitLabProjectDTO> = mergeRequest.targetProject
 
   override fun merge() = runAction {
     val title = mergeRequest.title.stateIn(scope).value

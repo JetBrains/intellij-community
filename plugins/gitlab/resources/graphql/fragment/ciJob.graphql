@@ -1,0 +1,3 @@
+fragment ciJob on CiJob {
+  status
+}
