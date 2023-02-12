@@ -31,6 +31,7 @@ import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
 import com.pty4j.PtyProcessBuilder;
 import com.pty4j.unix.UnixPtyProcess;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -179,7 +180,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       widget.setShellCommand(initialCommand);
     }
     if (enableShellIntegration()) {
-      initialCommand = injectShellIntegration(initialCommand, envs);
+      initialCommand = injectShellIntegration(initialCommand, envs, options);
     }
     String[] command = ArrayUtil.toStringArray(initialCommand);
 
@@ -191,10 +192,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         LOG.error("Exception during customization of the terminal session", e);
       }
     }
-    //String commandHistoryFilePath = ShellTerminalWidget.getCommandHistoryFilePath(widget);
-    //if (commandHistoryFilePath != null) {
-    //  envs.put(IJ_COMMAND_HISTORY_FILE_ENV, commandHistoryFilePath);
-    //}
 
     TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
     TermSize initialTermSize = options.getInitialTermSize();
@@ -216,8 +213,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
   }
 
-  private static @Nullable ShellTerminalWidget getShellTerminalWidget(@NotNull ShellStartupOptions options) {
-    TerminalWidget widget = options.getWidget();
+  private static @Nullable ShellTerminalWidget getShellTerminalWidget(@Nullable ShellStartupOptions options) {
+    TerminalWidget widget = options != null ? options.getWidget() : null;
     return widget != null ? ShellTerminalWidget.asShellJediTermWidget(widget) : null;
   }
 
@@ -372,19 +369,21 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
                                                  @NotNull Map<String, String> envs,
                                                  boolean shellIntegration) {
     List<String> command = convertShellPathToCommand(shellPath);
-    return shellIntegration ? injectShellIntegration(command, envs) : command;
+    return shellIntegration ? injectShellIntegration(command, envs, null) : command;
   }
 
   static @NotNull List<String> injectShellIntegration(@NotNull List<String> shellCommand,
-                                                      @NotNull Map<String, String> envs) {
+                                                      @NotNull Map<String, String> envs,
+                                                      @Nullable ShellStartupOptions startupOptions) {
     String shellExe = ContainerUtil.getFirstItem(shellCommand);
     if (shellExe == null) return shellCommand;
-    return injectShellIntegration(shellExe, shellCommand.subList(1, shellCommand.size()), envs);
+    return injectShellIntegration(shellExe, shellCommand.subList(1, shellCommand.size()), envs, startupOptions);
   }
 
   private static @NotNull List<String> injectShellIntegration(@NotNull String shellExe,
                                                               @NotNull List<String> command,
-                                                              @NotNull Map<String, String> envs) {
+                                                              @NotNull Map<String, String> envs,
+                                                              @Nullable ShellStartupOptions startupOptions) {
     List<String> result = new ArrayList<>();
     result.add(shellExe);
     command = new ArrayList<>(command);
@@ -397,6 +396,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         // remove --login to enable --rcfile sourcing
         boolean loginShell = command.removeAll(LOGIN_CLI_OPTIONS);
         setLoginShellEnv(envs, loginShell);
+        setCommandHistoryFile(startupOptions, envs);
       }
       else if (shellName.equals(ZSH_NAME)) {
         String zdotdir = envs.get(ZDOTDIR);
@@ -414,6 +414,18 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
     result.addAll(command);
     return result;
+  }
+
+  private static void setCommandHistoryFile(@Nullable ShellStartupOptions startupOptions, @NotNull Map<String, String> envs) {
+    Function0<Path> commandHistoryFileProvider = startupOptions != null ? startupOptions.getCommandHistoryFileProvider() : null;
+    Path commandHistoryFile = commandHistoryFileProvider != null ? commandHistoryFileProvider.invoke() : null;
+    if (commandHistoryFile != null) {
+      envs.put(IJ_COMMAND_HISTORY_FILE_ENV, commandHistoryFile.toString());
+      ShellTerminalWidget widget = getShellTerminalWidget(startupOptions);
+      if (widget != null) {
+        widget.setCommandHistoryFilePath(commandHistoryFile.toString());
+      }
+    }
   }
 
   private static boolean isLoginOptionAvailable(@NotNull String shellName) {

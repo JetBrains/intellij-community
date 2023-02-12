@@ -42,7 +42,7 @@ public class TerminalShellCommandTest extends TestCase {
 
   private static List<String> getCommand(@NotNull String shellPath, @NotNull Map<String, String> envs, boolean shellIntegration) {
     List<String> shellCommand = LocalTerminalDirectRunner.convertShellPathToCommand(shellPath);
-    return shellIntegration ? LocalTerminalDirectRunner.injectShellIntegration(shellCommand, envs) : shellCommand;
+    return shellIntegration ? LocalTerminalDirectRunner.injectShellIntegration(shellCommand, envs, null) : shellCommand;
   }
 
   private static void hasRcConfig(String path, String configName, Map<String, String> envs) {

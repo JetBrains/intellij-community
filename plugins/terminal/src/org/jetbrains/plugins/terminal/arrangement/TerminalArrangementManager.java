@@ -20,7 +20,6 @@ import org.jetbrains.plugins.terminal.ShellTerminalWidget;
 import org.jetbrains.plugins.terminal.TerminalTabState;
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
-import java.nio.file.Path;
 import java.util.List;
 
 @State(name = "TerminalArrangementManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
@@ -88,24 +87,13 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
       tabState.myIsUserDefinedTabTitle = tabState.myTabName.equals(terminalWidget.getTerminalTitle().getUserDefinedTitle());
       tabState.myWorkingDirectory = myWorkingDirectoryManager.getWorkingDirectory(content);
       tabState.myCommandHistoryFileName = TerminalCommandHistoryManager.getFilename(
-        ShellTerminalWidget.getCommandHistoryFilePath(terminalWidget)
+        shellTerminalWidget != null ? shellTerminalWidget.getCommandHistoryFilePath() : null
       );
       arrangementState.myTabStates.add(tabState);
     }
     Content selectedContent = contentManager.getSelectedContent();
     arrangementState.mySelectedTabIndex = selectedContent == null ? -1 : contentManager.getIndexOfContent(selectedContent);
     return arrangementState;
-  }
-
-  public void assignCommandHistoryFile(@NotNull JBTerminalWidget terminalWidget, @Nullable TerminalTabState tabState) {
-    if (isAvailable() && terminalWidget instanceof ShellTerminalWidget) {
-      Path historyFile = TerminalCommandHistoryManager.getInstance().getOrCreateCommandHistoryFile(
-        tabState != null ? tabState.myCommandHistoryFileName : null,
-        myProject
-      );
-      String historyFilePath = historyFile != null ? historyFile.toAbsolutePath().toString() : null;
-      ((ShellTerminalWidget)terminalWidget).setCommandHistoryFilePath(historyFilePath);
-    }
   }
 
   public static @NotNull TerminalArrangementManager getInstance(@NotNull Project project) {

@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -61,12 +62,14 @@ import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction
 import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
+import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
 import java.awt.event.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
@@ -281,12 +284,18 @@ public final class TerminalToolWindowManager implements Disposable {
     TerminalWidget widget = terminalWidget;
     if (widget == null) {
       String currentWorkingDir = terminalRunner.getCurrentWorkingDir(tabState);
+      NullableLazyValue<Path> commandHistoryFileLazyValue = NullableLazyValue.atomicLazyNullable(() -> {
+        return TerminalCommandHistoryManager.getInstance().getOrCreateCommandHistoryFile(
+          tabState != null ? tabState.myCommandHistoryFileName : null,
+          myProject
+        );
+      });
       ShellStartupOptions startupOptions = new ShellStartupOptions.Builder()
         .workingDirectory(currentWorkingDir)
         .shellCommand(tabState != null ? tabState.myShellCommand : null)
+        .commandHistoryFileProvider(() -> commandHistoryFileLazyValue.getValue())
         .build();
       widget = terminalRunner.startShellTerminalWidget(content, startupOptions, deferSessionStartUntilUiShown);
-      //TerminalArrangementManager.getInstance(myProject).assignCommandHistoryFile(terminalWidget, tabState);
       TerminalWorkingDirectoryManager.setInitialWorkingDirectory(content, currentWorkingDir);
     }
     else {

@@ -147,9 +147,8 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     myCommandHistoryFilePath = commandHistoryFilePath;
   }
 
-  @Nullable
-  public static String getCommandHistoryFilePath(@Nullable JBTerminalWidget terminalWidget) {
-    return terminalWidget instanceof ShellTerminalWidget ? ((ShellTerminalWidget)terminalWidget).myCommandHistoryFilePath : null;
+  public @Nullable String getCommandHistoryFilePath() {
+    return myCommandHistoryFilePath;
   }
 
   public void setShellCommand(@Nullable List<String> shellCommand) {

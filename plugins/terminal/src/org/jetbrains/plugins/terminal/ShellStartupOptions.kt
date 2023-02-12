@@ -3,29 +3,37 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.terminal.ui.TerminalWidget
 import com.jediterm.core.util.TermSize
+import java.nio.file.Path
 
 class ShellStartupOptions private constructor(builder: Builder) {
 
   val workingDirectory: String? = builder.workingDirectory
   val shellCommand: List<String>? = builder.shellCommand
+  val commandHistoryFileProvider: (() -> Path?)? = builder.commandHistoryFileProvider
   val initialTermSize: TermSize? = builder.initialTermSize
   val widget: TerminalWidget? = builder.widget
 
   fun builder(): Builder {
-    return Builder(workingDirectory, shellCommand, initialTermSize, widget)
+    return Builder(workingDirectory, shellCommand, commandHistoryFileProvider, initialTermSize, widget)
   }
 
   override fun toString(): String {
-    return "workingDirectory=$workingDirectory, shellCommand=$shellCommand, initialTermSize=[$initialTermSize], widget=${widget != null}"
+    return "workingDirectory=$workingDirectory, shellCommand=$shellCommand" +
+           ", commandHistoryFileProvider=${commandHistoryFileProvider != null}, initialTermSize=[$initialTermSize]" +
+           ", widget=${widget != null}"
   }
 
-  class Builder(var workingDirectory: String? = null,
-                var shellCommand: List<String>? = null,
-                var initialTermSize: TermSize? = null,
-                var widget: TerminalWidget? = null) {
+  class Builder internal constructor(var workingDirectory: String?,
+                                     var shellCommand: List<String>?,
+                                     var commandHistoryFileProvider: (() -> Path?)?,
+                                     var initialTermSize: TermSize?,
+                                     var widget: TerminalWidget?) {
+
+    constructor() : this(null, null, null, null, null)
 
     fun workingDirectory(workingDirectory: String?) = also { this.workingDirectory = workingDirectory }
     fun shellCommand(shellCommand: List<String>?) = also { this.shellCommand = shellCommand }
+    fun commandHistoryFileProvider(commandHistoryFileProvider: (() -> Path?)?) = also { this.commandHistoryFileProvider = commandHistoryFileProvider }
     fun initialTermSize(initialTermSize: TermSize?) = also { this.initialTermSize = initialTermSize }
     fun widget(widget: TerminalWidget?) = also { this.widget = widget }
 
