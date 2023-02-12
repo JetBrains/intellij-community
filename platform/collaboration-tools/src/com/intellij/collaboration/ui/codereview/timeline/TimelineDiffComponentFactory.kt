@@ -264,6 +264,9 @@ object TimelineDiffComponentFactory {
     return RoundedPanel(ListLayout.vertical(0), 8).apply {
       isOpaque = false
       add(createFileNameComponent(filePath, expandCollapseButton, onFileNameClick))
+      CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
+        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+      }
 
       bindChild(cs, collapseVm.collapsed) { cs, collapsed ->
         if (collapsed) return@bindChild null
@@ -334,10 +337,8 @@ object TimelineDiffComponentFactory {
       onFileClick()
     }
     return JPanel(MigLayout(LC().insets("0").gridGap("5", "0").fill().noGrid())).apply {
+      isOpaque = false
       border = JBUI.Borders.empty(10)
-      CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
-        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
-      }
 
       add(nameLabel)
 
