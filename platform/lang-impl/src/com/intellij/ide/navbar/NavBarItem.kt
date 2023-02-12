@@ -51,4 +51,8 @@ interface NavBarItem {
    */
   fun navigateOnClick(): Boolean = false
 
+  /**
+   * Returns weight for this item for sorting when it is presented in navbar children popup
+   */
+  fun weight(): Int = Int.MAX_VALUE
 }

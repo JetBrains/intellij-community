@@ -29,10 +29,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.problems.WolfTheProblemSolver
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiDirectoryContainer
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
+import com.intellij.psi.*
 import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.*
@@ -129,6 +126,7 @@ internal class ModuleNavBarItem(data: Module) : DefaultNavBarItem<Module>(data),
     return if (hasProblems) navBarErrorAttributes else REGULAR_ATTRIBUTES
   }
 
+  override fun weight() = 5
 }
 
 internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelExtension?) : DefaultNavBarItem<PsiElement>(
@@ -195,6 +193,15 @@ internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelEx
     return data !is PsiDirectory && data !is PsiDirectoryContainer
   }
 
+  override fun weight(): Int {
+    return when (data) {
+      is PsiDirectoryContainer -> 4
+      is PsiDirectory -> 4
+      is PsiFile -> 2
+      is PsiNamedElement -> 3
+      else -> Int.MAX_VALUE
+    }
+  }
 }
 
 internal class OrderEntryNavBarItem(data: OrderEntry) : DefaultNavBarItem<OrderEntry>(data) {

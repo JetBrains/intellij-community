@@ -35,18 +35,6 @@ private val weightComparator = compareBy<NavBarItem> { -it.weight() }
 private val nameComparator = compareBy<NavBarItem, String>(NaturalComparator.INSTANCE) { it.presentation().text }
 private val siblingsComparator = weightComparator.then(nameComparator)
 
-private fun NavBarItem.weight() = when (this) {
-  is ModuleNavBarItem -> 5
-  is PsiNavBarItem -> when (data) {
-    is PsiDirectoryContainer -> 4
-    is PsiDirectory -> 4
-    is PsiFile -> 2
-    is PsiNamedElement -> 3
-    else -> Int.MAX_VALUE
-  }
-  else -> Int.MAX_VALUE
-}
-
 internal fun NavBarItem.isModuleContentRoot(): Boolean {
   ApplicationManager.getApplication().assertReadAccessAllowed()
   if (this is PsiNavBarItem) {
