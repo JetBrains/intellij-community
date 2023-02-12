@@ -358,7 +358,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   /**
    * @deprecated use {@link #createProcess(ShellStartupOptions)} instead
    */
-  @SuppressWarnings("removal")
+  @SuppressWarnings({"removal", "unused"})
   @Deprecated(forRemoval = true)
   public @NotNull T createProcess(@NotNull TerminalProcessOptions options, @Nullable JBTerminalWidget widget) throws ExecutionException {
     return createProcess(options.toStartupOptions());
@@ -367,6 +367,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   /**
    * @deprecated use {@link #createProcess(ShellStartupOptions)} instead
    */
+  @SuppressWarnings("unused")
   @Deprecated(forRemoval = true)
   protected T createProcess(@Nullable String directory) throws ExecutionException {
     throw new AssertionError("Call createProcess(TerminalProcessOptions)");
@@ -375,6 +376,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   /**
    * @deprecated use {@link #createProcess(ShellStartupOptions)} instead
    */
+  @SuppressWarnings("unused")
   @Deprecated(forRemoval = true)
   protected T createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
     return createProcess(directory);
