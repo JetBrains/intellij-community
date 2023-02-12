@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.asSafely
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.resettableLazy
@@ -79,11 +80,21 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
     return executionPointState
       .onCompletion { emit(null) }
       .transformLatest { executionPoint ->
-        @Suppress("RemoveExplicitTypeArguments") // complaints about Nothing
         kotlin.runCatching {
-          val sourcePosition = executionPoint?.getSourcePosition(sourceKind) ?: return@transformLatest emit(null)
-          show(sourcePosition, sourceKind, executionPoint.isTopFrame)
-        }.getOrLogException<Nothing>(LOG)
+          val sourcePosition = executionPoint?.getSourcePosition(sourceKind)
+          val positionUpdateFlow = sourcePosition.asSafely<XSourcePositionEx>()?.positionUpdateFlow ?: emptyFlow()
+
+          positionUpdateFlow
+            .onStart { emit(sourcePosition) } // initial
+            .collectLatest { updatedSourcePosition ->
+              if (updatedSourcePosition != null) {
+                show(updatedSourcePosition, sourceKind, executionPoint?.isTopFrame == true)
+              }
+              else {
+                emit(null)
+              }
+            }
+        }.getOrLogException(LOG)
       }
   }
 
