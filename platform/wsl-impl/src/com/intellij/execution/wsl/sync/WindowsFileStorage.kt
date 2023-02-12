@@ -15,13 +15,12 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.exists
-import kotlin.io.path.extension
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.notExists
 
 private val LOGGER = Logger.getInstance(WindowsFileStorage::class.java)
 
-private class MyFileVisitor(private val onlyExtensions: Array<String>,
+private class MyFileVisitor(private val filters: WslHashFilters,
                             private val rootDir: Path,
                             private val processFile: (relativeToDir: FilePathRelativeToDir, file: Path, attrs: BasicFileAttributes) -> Unit) : SimpleFileVisitor<Path>() {
   private val dirLinksInt: MutableMap<FilePathRelativeToDir, FilePathRelativeToDir> = mutableMapOf()
@@ -30,13 +29,12 @@ private class MyFileVisitor(private val onlyExtensions: Array<String>,
     return super.postVisitDirectory(dir, exc)
   }
 
-  override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+  override fun visitFile(path: Path, attrs: BasicFileAttributes): FileVisitResult {
     if (!(attrs.isRegularFile)) return FileVisitResult.CONTINUE
-    if (onlyExtensions.isNotEmpty() && file.extension !in onlyExtensions) { // Skip because we don't care about this extension
+    if (!filters.isFileNameOk(path.fileName.toString())) {
       return FileVisitResult.CONTINUE
     }
-    val name = rootDir.relativize(file).joinToString("/").lowercase()
-    processFile(FilePathRelativeToDir(name), file, attrs)
+    processFile(FilePathRelativeToDir(rootDir.relativize(path).joinToString("/").lowercase()), path, attrs)
     return FileVisitResult.CONTINUE
   }
 
@@ -55,7 +53,7 @@ private class MyFileVisitor(private val onlyExtensions: Array<String>,
 
 class WindowsFileStorage(dir: Path,
                          distro: AbstractWslDistribution,
-                         onlyExtensions: Array<String>) : FileStorage<WindowsFilePath, LinuxFilePath>(dir, distro, onlyExtensions) {
+                         filters: WslHashFilters) : FileStorage<WindowsFilePath, LinuxFilePath>(dir, distro, filters) {
   private fun runCommand(vararg commands: String) {
     val cmd = arrayOf("cmd", "/c", *commands)
     ExecUtil.execAndGetOutput(GeneralCommandLine(*cmd)).let {
@@ -79,7 +77,7 @@ class WindowsFileStorage(dir: Path,
   override fun getHashesAndLinks(skipHashCalculation: Boolean): Pair<List<WslHashRecord>, Map<FilePathRelativeToDir, FilePathRelativeToDir>> {
     val result = ArrayList<WslHashRecord>(AVG_NUM_FILES)
     val hashTool = XXHashFactory.nativeInstance().hash64() // Native hash can access direct (mapped) buffer a little-bit faster
-    val visitor = MyFileVisitor(onlyExtensions, dir) { relativeToDir: FilePathRelativeToDir, file: Path, attrs: BasicFileAttributes ->
+    val visitor = MyFileVisitor(filters, dir) { relativeToDir: FilePathRelativeToDir, file: Path, attrs: BasicFileAttributes ->
       if (skipHashCalculation || attrs.size() == 0L) { // Empty file's hash is 0, see wslhash.c
         result.add(WslHashRecord(relativeToDir, 0))
       }

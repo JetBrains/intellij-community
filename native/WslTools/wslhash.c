@@ -14,37 +14,130 @@
 #include <locale.h>
 #include <langinfo.h>
 #include <stdbool.h>
+#include <stdarg.h>
+#include <regex.h>
 
-// wslhash folder (hash|no_hash) [ext1 ext2 ..]
-// Calculate hashes (or skips it in case of "no_hash") for all files in this folder (optionally limit by extensions)
-// output is: file:[hash]file[hash]
-// hash is 8 bytes little endian
-// This tool also reports symbolic links as file;[link_size]link
-// link_size in 4 bytes little endian signed
+// Usage:
+//  wslhash [OPTIONS] DIR
+//
+// Options:
+//  -n
+//    skip the hash calculation step.
+//  -f FILTER
+//    filters the files using the given FILTER. May be specified multiple times.
+//
+// Description:
+//   Calculate hashes (unless `-n`) for all files in the given DIR.
+//   Files can be filtered using `-f` option.
+//
+// Filters:
+//   Each filter must be specified in the following format:
+//     OPERATOR:MATCHER:PATTERN
+//       where OPERATOR is one of:
+//         `-` to exclude
+//         `+` to include
+//       and MATCHER is one of:
+//         `rgx` for matching using extended regular expressions in PATTERN (see regex(3))
+//
+//   The combination of OPERATORS dictates the filtering behavior:
+//     only `-`, means process all files that do not match any excludes
+//     only `+`, means process only files that match any includes
+//     both `+` and `-`, mean process all files that do not match any excludes or match any includes
+//
+//   Filters within each OPERATOR group are processed in the order of appearance in the command line.
+//
+// Output format:
+//   [FILE_PATH]:[HASH]
+//     where HASH is little-endian 8 byte (64 bit) integer
+//   [FILE_PATH];[LINK_LEN][LINK]
+//     where LINK_LEN is 4 byte (32 bit) signed int
 
-static size_t g_dir_len = 0; // Length of dir string
-static char **g_exts = NULL; // list of extensions or NULL if no filter needed
-static int g_num_of_exts = 0; // number of extensions
-static int g_skip_hash = 0;
+//#define WSLHASH_DEBUG 1
+#ifdef WSLHASH_DEBUG
+#define DEBUG_PRINTF(fmt, ...) \
+        do { fprintf(stderr, "%s:%d:%s: " fmt, __FILE__, __LINE__, __func__, __VA_ARGS__); } while (0)
+#else
+#define DEBUG_PRINTF(fmt, ...)
+#endif // WSLHASH_DEBUG
+
+#define STRINGIFY_(a) #a
+#define STRINGIFY(a) STRINGIFY_(a)
+
+#define FLT_N_MAX 50
+#define FLT_MATCHER_LEN_MAX 3
+#define FLT_PATTERN_LEN_MAX 64
+#define FLT_NAME_LEN_MAX (1 + FLT_MATCHER_LEN_MAX + FLT_PATTERN_LEN_MAX + 2) // OPERATOR + MATCHER + PATTERN + delims
+#define FLT_SCAN_FMT "%c:%" STRINGIFY(FLT_MATCHER_LEN_MAX) "s:%" STRINGIFY(FLT_PATTERN_LEN_MAX) "s"
+
+
+struct wslhash_filter_t {
+    char name[FLT_NAME_LEN_MAX + 1]; // full filter name (OPERATOR:MATCHER:PATTERN).
+
+    void *pattern; // points to arbitrary pattern object.
+
+    int (*fn_match)(const struct wslhash_filter_t *, const char *); // returns 1 if matches, 0 otherwise.
+
+    void (*fn_init)(struct wslhash_filter_t *, const char *); // initializes the filter.
+
+    void (*fn_free)(const struct wslhash_filter_t *); // destroys the filter.
+};
+
+struct wslhash_options_t {
+    char root_dir[PATH_MAX];
+    size_t root_dir_len;
+
+    struct wslhash_filter_t excludes[FLT_N_MAX];
+    size_t excludes_len;
+
+    struct wslhash_filter_t includes[FLT_N_MAX];
+    size_t includes_len;
+
+    int skip_hash;
+};
 
 
 static const char EMPTY[sizeof(XXH64_hash_t)] = {0};
 
-// Check is file extension ok or should be skipped
-static int file_extension_ok(const char *file) {
-    if (g_num_of_exts == 0) {
-        return true;
+static struct wslhash_options_t g_options = {0};
+
+
+static void free_all(void) {
+    const struct wslhash_filter_t *filter;
+    for (size_t i = 0; i < g_options.excludes_len; i++) {
+        filter = &g_options.excludes[i];
+        filter->fn_free(filter);
     }
-    const char *dot = strrchr(file, '.');
-    if (!dot) {
-        return true; // No extension
+    for (size_t i = 0; i < g_options.includes_len; i++) {
+        filter = &g_options.includes[i];
+        filter->fn_free(filter);
     }
-    for (int i = 0; i < g_num_of_exts; i++) {
-        if (strcmp(dot + 1, g_exts[i]) == 0) {
+}
+
+static int any_match(const struct wslhash_filter_t *filters, const size_t filter_len, const char *filename) {
+    const struct wslhash_filter_t *filter;
+    for (size_t i = 0; i < filter_len; i++) {
+        filter = &filters[i];
+        if (filter->fn_match(filter, filename)) {
+            DEBUG_PRINTF("File matched a filter '%s': %s\n", filter->name, filename);
             return true;
         }
     }
     return false;
+}
+
+static int is_filename_ok(const char *filename) {
+    DEBUG_PRINTF("Checking file: %s\n", filename);
+    if (g_options.excludes_len == 0 && g_options.includes_len == 0) {
+        return true;
+    }
+    if (g_options.excludes_len == 0) {
+        return any_match(g_options.includes, g_options.includes_len, filename);
+    }
+    if (g_options.includes_len == 0) {
+        return !any_match(g_options.excludes, g_options.excludes_len, filename);
+    }
+    return !any_match(g_options.excludes, g_options.excludes_len, filename) ||
+           any_match(g_options.includes, g_options.includes_len, filename);
 }
 
 static int is_dir(const char *path) {
@@ -55,21 +148,27 @@ static int is_dir(const char *path) {
     return S_ISDIR(stat_info.st_mode);
 }
 
+static const char * filename(const char* fpath) {
+    const char* last_slash = strrchr(fpath, '/');
+    return (last_slash != NULL) ? last_slash + 1 : fpath;
+}
+
 // Called on each file
 static int
 process_file(const char *fpath, const struct stat *sb, int tflag, __attribute__((unused)) struct FTW *ftwbuf) {
+    DEBUG_PRINTF("Processing file: %s\n", fpath);
     if (tflag != FTW_F && tflag != FTW_SL) {
+        DEBUG_PRINTF("Skipping file: %s\n", fpath);
         return 0; // Not a file
     }
-    if (tflag == FTW_F && !file_extension_ok(fpath)) {
-        return 0; // File has wrong extension, skip
+    if (tflag == FTW_F && !is_filename_ok(filename(fpath))) {
+        DEBUG_PRINTF("Excluding file: %s\n", fpath);
+        return 0;
     }
-
-    const char *fpath_relative = fpath + g_dir_len + 1; // remove first "/"
-
+    const char *fpath_relative = fpath + g_options.root_dir_len + 1; // remove first "/"
     if (tflag == FTW_F) {
         printf("%s:", fpath_relative);
-        if (sb->st_size == 0 || g_skip_hash) {
+        if (sb->st_size == 0 || g_options.skip_hash) {
             // No need to calculate hash for empty file
             fwrite(EMPTY, sizeof(EMPTY), 1, stdout);
             return 0;
@@ -106,6 +205,113 @@ process_file(const char *fpath, const struct stat *sb, int tflag, __attribute__(
     return 0;
 }
 
+static void rgx_init(struct wslhash_filter_t *self, const char *pattern_raw) {
+    regex_t *regex = calloc(1, sizeof(regex_t));
+    if (!regex) {
+        fprintf(stderr, "Calloc failed\n");
+        exit(EXIT_FAILURE);
+    }
+    if (regcomp(regex, pattern_raw, REG_EXTENDED)) {
+        fprintf(stderr, "Failed to compile basic regex: %s\n", pattern_raw);
+        exit(EXIT_FAILURE);
+    }
+    self->pattern = regex;
+}
+
+static void rgx_free(const struct wslhash_filter_t *self) {
+    regex_t *regex = self->pattern;
+    regfree(regex);
+    free(regex);
+}
+
+static int rgx_match(const struct wslhash_filter_t *self, const char *path) {
+    const regex_t *regex = self->pattern;
+    const int result = regexec(regex, path, 0, NULL, 0);
+    if (result == REG_OK) {
+        return true;
+    }
+    if (result == REG_NOMATCH) {
+        return false;
+    }
+    char buf[100] = {0};
+    regerror(result, regex, buf, sizeof(buf));
+    fprintf(stderr, "Regex match failed: %s\n", buf);
+    exit(EXIT_FAILURE);
+}
+
+static void parse_filter(const char *arg) {
+    char operator;
+    char matcher[FLT_MATCHER_LEN_MAX + 1] = {0};
+    char pattern_raw[FLT_PATTERN_LEN_MAX + 1] = {0};
+
+    if (sscanf(arg, FLT_SCAN_FMT, &operator, matcher, pattern_raw) < 3) {
+        fprintf(stderr, "Invalid filter format: %s\n", arg);
+        exit(EXIT_FAILURE);
+    }
+
+    struct wslhash_filter_t *filter;
+
+    if (operator == '-') {
+        if (g_options.excludes_len >= FLT_N_MAX) {
+            fprintf(stderr, "Too many exclude filters >%d\n", FLT_N_MAX);
+            exit(EXIT_FAILURE);
+        }
+        filter = &g_options.excludes[g_options.excludes_len++];
+    } else if (operator == '+') {
+        if (g_options.includes_len >= FLT_N_MAX) {
+            fprintf(stderr, "Too many include filters >%d\n", FLT_N_MAX);
+            exit(EXIT_FAILURE);
+        }
+        filter = &g_options.includes[g_options.includes_len++];
+    } else {
+        fprintf(stderr, "Unknown filter operator '%c': %s\n", operator, arg);
+        exit(EXIT_FAILURE);
+    }
+
+    if (strcmp(matcher, "rgx") == 0) {
+        filter->fn_init = rgx_init;
+        filter->fn_free = rgx_free;
+        filter->fn_match = rgx_match;
+    } else {
+        fprintf(stderr, "Unknown filter matcher '%s': %s\n", matcher, arg);
+        exit(EXIT_FAILURE);
+    }
+
+    strncpy(filter->name, arg, FLT_NAME_LEN_MAX);
+    filter->fn_init(filter, pattern_raw);
+}
+
+static void parse_args(int argc, char *argv[]) {
+    int c;
+    while ((c = getopt(argc, argv, "nf:")) != -1) {
+        switch (c) {
+            case 'n':
+                g_options.skip_hash = 1;
+                break;
+            case 'f':
+                parse_filter(optarg);
+                break;
+            default:
+                fprintf(stderr, "Invalid options\n");
+                exit(EXIT_FAILURE);
+        }
+    }
+    if (optind >= argc) {
+        fprintf(stderr, "Dir is missing\n");
+        exit(EXIT_FAILURE);
+    }
+    const char *dir = argv[optind];
+    if (!is_dir(dir)) {
+        fprintf(stderr, "Provided path is not root_dir\n");
+        exit(2);
+    }
+    if (realpath(dir, g_options.root_dir) == NULL) {
+        fprintf(stderr, "realpath failed: %d", errno);
+        exit(-1);
+    }
+    g_options.root_dir_len = strlen(g_options.root_dir);
+}
+
 static int ensure_charset(void) {
     setlocale(LC_CTYPE, "");
     const char *charset = nl_langinfo(CODESET);
@@ -127,40 +333,13 @@ int main(int argc, char *argv[]) {
     if (!ensure_charset()) {
         return -1;
     }
-
-    if (argc < 3) {
-        fprintf(stderr, "No path or hash/no_hash provided");
-        return 1;
-    }
-
-    g_skip_hash = (strcmp(argv[2], "no_hash") == 0);
-
-    const char *root_dir = argv[1];
-    if (!is_dir(root_dir)) {
-        fprintf(stderr, "Provided path is not dir\n");
-        return 2;
-    }
-
-    char root_dir_clean[PATH_MAX] = {0};
-    if (realpath(root_dir, root_dir_clean) == NULL) {
-        fprintf(stderr, "realpath failed: %d", errno);
-        return -1;
-    }
-
-    g_dir_len = strlen(root_dir_clean);
-
-    const int args_before_exts = 3;
-    if (argc > args_before_exts) { // Extensions are provided: store argc+argv
-        g_exts = argv + args_before_exts;
-        g_num_of_exts = argc - args_before_exts;
-    }
-
-
+    parse_args(argc, argv);
     // number of file descriptors is more or less random taken from example
     // we don't know how many descriptors are available on the particular WSL, but sure not less than 20
-    if (nftw(root_dir_clean, process_file, 20, FTW_MOUNT | FTW_PHYS) == -1) { // Walk through files, see nftw(3)
+    if (nftw(g_options.root_dir, process_file, 20, FTW_MOUNT | FTW_PHYS) == -1) { // Walk through files, see nftw(3)
         perror("nftw failed");
         return 3;
     }
+    free_all();
     return EXIT_SUCCESS;
 }

@@ -13,7 +13,7 @@ import com.intellij.execution.wsl.AbstractWslDistribution
 abstract class FileStorage<MyFileType, OtherSideFileType>(
   protected val dir: MyFileType,
   protected val distro: AbstractWslDistribution,
-  protected val onlyExtensions: Array<String>
+  protected val filters: WslHashFilters
 ) {
 
   /**

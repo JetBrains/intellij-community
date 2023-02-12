@@ -3,6 +3,7 @@ package com.intellij.execution.wsl.sync
 
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.execution.wsl.AbstractWslDistribution
+import com.intellij.execution.wsl.sync.WslHashFilters.Companion.EMPTY_FILTERS
 import com.intellij.openapi.diagnostic.Logger
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture.runAsync
@@ -30,14 +31,15 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
      * Set [onlyExtensions] if you only care about certain extensions.
      * Direction depends on [linToWinCopy]
      */
+    @JvmOverloads
     fun syncWslFolders(linuxDir: String,
                        windowsDir: Path,
                        distribution: AbstractWslDistribution,
                        linToWinCopy: Boolean = true,
-                       onlyExtensions: Array<String> = emptyArray()) {
+                       filters: WslHashFilters = EMPTY_FILTERS) {
       LOGGER.info("Sync " + if (linToWinCopy) "$linuxDir -> $windowsDir" else "$windowsDir -> $linuxDir")
-      val win = WindowsFileStorage(windowsDir, distribution, onlyExtensions)
-      val lin = LinuxFileStorage(linuxDir, distribution, onlyExtensions)
+      val win = WindowsFileStorage(windowsDir, distribution, filters)
+      val lin = LinuxFileStorage(linuxDir, distribution, filters)
       if (linToWinCopy) {
         WslSync(lin, win)
       }

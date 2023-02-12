@@ -7,6 +7,7 @@ import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.wsl.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.containers.ContainerUtil.append
 import com.intellij.util.io.delete
 import kotlinx.coroutines.runBlocking
 import java.io.InputStream
@@ -18,8 +19,8 @@ import kotlin.io.path.writeText
 private val LOGGER = Logger.getInstance(LinuxFileStorage::class.java)
 
 
-class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution, onlyExtensions: Array<String>)
-  : FileStorage<LinuxFilePath, WindowsFilePath>(dir.trimEnd('/') + '/', distro, onlyExtensions) {
+class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution, filters: WslHashFilters)
+  : FileStorage<LinuxFilePath, WindowsFilePath>(dir.trimEnd('/') + '/', distro, filters) {
 
   // Linux side only works with UTF of 7-bit ASCII which is also supported by UTF and WSL doesn't support other charsets
 
@@ -42,7 +43,8 @@ class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution, only
     val hashes = ArrayList<WslHashRecord>(AVG_NUM_FILES)
     val links = HashMap<FilePathRelativeToDir, FilePathRelativeToDir>(AVG_NUM_FILES)
     val time = TimeoutUtil.measureExecutionTime<Throwable> {
-      val tool = distro.getTool("wslhash", dir, if (skipHashCalculation) "no_hash" else "hash", *onlyExtensions)
+      val wslHashArgs = if (skipHashCalculation) append(filters.toArgs(), "-n", dir) else append(filters.toArgs(), dir)
+      val tool = distro.getTool("wslhash", *wslHashArgs.toTypedArray())
       val process = tool.createProcess()
       process.inputStream.use {
         val hashesAndLinks = getHashesInternal(it)
