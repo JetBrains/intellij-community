@@ -2,6 +2,8 @@
 package com.intellij.execution.wsl.target
 
 import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.sync.WslHashFilters.WslHashFiltersBuilder
+import com.intellij.execution.wsl.sync.WslHashMatcher.Factory.extensions
 import com.intellij.execution.wsl.sync.WslSync
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
@@ -45,14 +47,15 @@ class WslSyncAction : DumbAwareAction("WSL Sync") {
     val linux = JOptionPane.showInputDialog("Linux path", "/home/link/huge_folder")
     val windows = Path.of(JOptionPane.showInputDialog("Windows path", "c:\\temp\\huge_folder"))
     val extensionsStr = JOptionPane.showInputDialog("Comma separated extensions (or nothing for all)", "py,pyi").trim()
-    val extensions = if (extensionsStr.isNotBlank()) extensionsStr.split(',') else emptyList()
+    val includeExtensions = if (extensionsStr.isNotBlank()) extensionsStr.split(',').toTypedArray() else arrayOf()
 
     progressManager.run(object : Task.Modal(e.project, "Syncing Folders..", false) {
       override fun run(indicator: ProgressIndicator) {
         val distro = WslDistributionManager.getInstance().installedDistributions.first { it.presentableName == distroName }
         try {
           val time = TimeoutUtil.measureExecutionTime<Exception> {
-            WslSync.syncWslFolders(linux, windows, distro, direction == linToWin, extensions.toTypedArray())
+            val filters = WslHashFiltersBuilder().include(*extensions(*includeExtensions)).build()
+            WslSync.syncWslFolders(linux, windows, distro, direction == linToWin, filters)
           }
           val message = "Synced in $time"
           JOptionPane.showMessageDialog(null, message)
