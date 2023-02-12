@@ -692,12 +692,14 @@ public final class XDebugSessionImpl implements XDebugSession {
       myDispatcher.getMulticaster().stackFrameChanged();
     }
 
-    activateSession();
+    activateSession(frameChanged);
   }
 
-  void activateSession() {
-    myDebuggerManager.setCurrentSession(this);
-    updateExecutionPosition();
+  void activateSession(boolean forceUpdateExecutionPosition) {
+    boolean sessionChanged = myDebuggerManager.setCurrentSession(this);
+    if (sessionChanged || forceUpdateExecutionPosition) {
+      updateExecutionPosition();
+    }
   }
 
   public XBreakpoint<?> getActiveNonLineBreakpoint() {

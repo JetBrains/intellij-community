@@ -147,7 +147,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         if (descriptor != null && ToolWindowId.DEBUG.equals(executor.getToolWindowId())) {
           XDebugSessionImpl session = mySessions.get(descriptor.getProcessHandler());
           if (session != null) {
-            session.activateSession();
+            session.activateSession(true);
           }
           else {
             setCurrentSession(null);
@@ -302,7 +302,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
     // Perform custom configuration of session data for XDebugProcessConfiguratorStarter classes
     if (processStarter instanceof XDebugProcessConfiguratorStarter) {
-      session.activateSession();
+      session.activateSession(false);
       ((XDebugProcessConfiguratorStarter)processStarter).configure(session.getSessionData());
     }
 
@@ -378,7 +378,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     return myActiveSession.get();
   }
 
-  void setCurrentSession(@Nullable XDebugSessionImpl session) {
+  boolean setCurrentSession(@Nullable XDebugSessionImpl session) {
     XDebugSessionImpl previousSession = myActiveSession.getAndSet(session);
     boolean sessionChanged = previousSession != session;
     if (sessionChanged) {
@@ -393,6 +393,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       }
       onActiveSessionChanged(previousSession, session);
     }
+    return sessionChanged;
   }
 
   @Override
