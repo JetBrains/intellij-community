@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(FlowPreview::class)
+@file:OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 
 package com.intellij.xdebugger.impl
 
@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.enumMapOf
-import com.intellij.util.flow.zipWithNext
+import com.intellij.util.io.MultiCloseable
 import com.intellij.util.resettableLazy
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
@@ -38,11 +38,11 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<XDebuggerExecutionPointManager>()
 
-internal class XDebuggerExecutionPointManager(project: Project,
+internal class XDebuggerExecutionPointManager(private val project: Project,
                                               parentScope: CoroutineScope) {
   private val coroutineScope: CoroutineScope = parentScope.childScope(Dispatchers.EDT + CoroutineName(javaClass.simpleName))
 
-  private val navigationRequestFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val navigationRequestFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val _executionPointState = MutableStateFlow<ExecutionPoint?>(null)
   private val executionPointState: StateFlow<ExecutionPoint?> = _executionPointState.asStateFlow()
@@ -56,27 +56,14 @@ internal class XDebuggerExecutionPointManager(project: Project,
   private val gutterIconRendererState: StateFlow<GutterIconRenderer?> = _gutterIconRendererState.asStateFlow()
   var gutterIconRenderer: GutterIconRenderer? by _gutterIconRendererState::value
 
-  private val presentationState: StateFlow<ExecutionPointPresentation?> = executionPointState
-    .onCompletion { emit(null) }
-    .map { executionPoint ->
-      if (executionPoint != null) {
-        kotlin.runCatching {
-          ExecutionPointPresentation(project, executionPoint)
-        }.getOrLogException(LOG)
-      }
-      else null
-    }.stateIn(coroutineScope, SharingStarted.Eagerly, initialValue = null)
+  private val presentationState: StateFlow<ExecutionPointPresentation?> = presentationFlow()
+    .stateIn(coroutineScope, SharingStarted.Eagerly, initialValue = null)
 
   private val presentation by presentationState::value
 
   init {
-    presentationState
-      .zipWithNext { oldValue, _ ->
-        oldValue?.hideAndDispose()
-      }.launchIn(coroutineScope)
-
     if (!ApplicationManager.getApplication().isUnitTestMode) {
-      presentationState
+      executionPointState
         .map { it != null }.distinctUntilChanged()
         .dropWhile { !it }  // ignore initial 'false' value
         .onEach { hasHighlight ->
@@ -88,18 +75,39 @@ internal class XDebuggerExecutionPointManager(project: Project,
           }
         }.launchIn(coroutineScope)
     }
+  }
 
-    with(presentationState.filterNotNull()) {
-      combine(activeSourceKindState, ExecutionPointPresentation::activeSourceKind::set).launchIn(coroutineScope)
-      combine(gutterIconRendererState, ExecutionPointPresentation::gutterIconRenderer::set).launchIn(coroutineScope)
+  private fun presentationFlow(): Flow<ExecutionPointPresentation?> {
+    return executionPointState
+      .onCompletion { emit(null) }
+      .transformLatest { executionPoint ->
+        @Suppress("RemoveExplicitTypeArguments") // complaints about Nothing
+        kotlin.runCatching {
+          if (executionPoint == null) return@transformLatest emit(null)
+          show(executionPoint)
+        }.getOrLogException<Nothing>(LOG)
+      }
+  }
 
-      combine(navigationRequestFlow) { presentation, _ -> presentation }
+  private suspend fun FlowCollector<ExecutionPointPresentation>.show(executionPoint: ExecutionPoint): Nothing = coroutineScope {
+    ExecutionPointPresentation(project, executionPoint).use { presentation ->
+      emit(presentation)
+
+      activeSourceKindState.onEach {
+        presentation.activeSourceKind = it
+      }.launchIn(this)
+
+      gutterIconRendererState.onEach {
+        presentation.gutterIconRenderer = it
+      }.launchIn(this)
+
+      navigationRequestFlow
         .debounce(10.milliseconds)
-        .onEach { presentation ->
-          kotlin.runCatching {
-            presentation.navigateTo()
-          }.getOrLogException(LOG)
-        }.launchIn(coroutineScope)
+        .onEach {
+          presentation.navigateTo()
+        }.launchIn(this)
+
+      awaitCancellation()
     }
   }
 
@@ -131,10 +139,11 @@ internal class ExecutionPoint(
   }
 }
 
-internal class ExecutionPointPresentation(project: Project, executionPoint: ExecutionPoint) {
+internal class ExecutionPointPresentation(project: Project, executionPoint: ExecutionPoint) : MultiCloseable() {
   private val presentationMap = enumMapOf<XSourceKind, PositionPresentation?>().apply {
     enumValues<XSourceKind>().associateWithTo(this) { sourceKind ->
-      PositionPresentation.create(project, executionPoint, sourceKind)
+      val sourcePosition = executionPoint.getSourcePosition(sourceKind) ?: return@associateWithTo null
+      PositionPresentation(project, sourceKind, sourcePosition, executionPoint.isTopFrame).also(::registerCloseable)
     }
   }
   private val presentations: Collection<PositionPresentation?> = presentationMap.values
@@ -156,31 +165,21 @@ internal class ExecutionPointPresentation(project: Project, executionPoint: Exec
   fun navigateTo() {
     presentationMap[activeSourceKind]?.navigator?.navigateTo()
   }
-
-  fun hideAndDispose() {
-    presentations.forEach { it?.hideAndDispose() }
-  }
 }
 
-
-private class PositionPresentation private constructor(
+private class PositionPresentation(
+  project: Project,
   val sourceKind: XSourceKind,
-  val highlight: PositionHighlight?,
-  val navigator: PositionNavigator,
-) {
-  fun hideAndDispose() {
+  sourcePosition: XSourcePosition,
+  isTopFrame: Boolean,
+) : AutoCloseable {
+
+  val highlight = PositionHighlight.create(project, sourcePosition, isTopFrame)
+  val navigator = PositionNavigator.create(project, sourcePosition, isTopFrame)
+
+  override fun close() {
     highlight?.hideAndDispose()
     navigator.disposeDescriptor()
-  }
-
-  companion object {
-    @RequiresEdt
-    fun create(project: Project, executionPoint: ExecutionPoint, sourceKind: XSourceKind): PositionPresentation? {
-      val sourcePosition = executionPoint.getSourcePosition(sourceKind) ?: return null
-      val highlight = PositionHighlight.create(project, sourcePosition, executionPoint.isTopFrame)
-      val navigator = PositionNavigator.create(project, sourcePosition, executionPoint.isTopFrame)
-      return PositionPresentation(sourceKind, highlight, navigator)
-    }
   }
 }
 
