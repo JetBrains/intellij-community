@@ -26,7 +26,7 @@ import org.jetbrains.jps.model.module.*;
 
 import java.util.List;
 
-public class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependenciesListImpl> implements JpsDependenciesList {
+public final class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependenciesListImpl> implements JpsDependenciesList {
   public static final JpsElementCollectionRole<JpsDependencyElement> DEPENDENCY_COLLECTION_ROLE =
     JpsElementCollectionRole.create(JpsElementChildRoleBase.create("dependency"));
 
@@ -40,8 +40,7 @@ public class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependen
   }
 
   @Override
-  @NotNull
-  public List<JpsDependencyElement> getDependencies() {
+  public @NotNull List<JpsDependencyElement> getDependencies() {
     return myContainer.getChild(DEPENDENCY_COLLECTION_ROLE).getElements();
   }
 
@@ -51,28 +50,24 @@ public class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependen
   }
 
   @Override
-  @NotNull
-  public JpsModuleDependency addModuleDependency(@NotNull JpsModule module) {
+  public @NotNull JpsModuleDependency addModuleDependency(@NotNull JpsModule module) {
     return addModuleDependency(module.createReference());
   }
 
-  @NotNull
   @Override
-  public JpsModuleDependency addModuleDependency(@NotNull JpsModuleReference moduleReference) {
+  public @NotNull JpsModuleDependency addModuleDependency(@NotNull JpsModuleReference moduleReference) {
     final JpsModuleDependencyImpl dependency = new JpsModuleDependencyImpl(moduleReference);
     myContainer.getChild(DEPENDENCY_COLLECTION_ROLE).addChild(dependency);
     return dependency;
   }
 
   @Override
-  @NotNull
-  public JpsLibraryDependency addLibraryDependency(@NotNull JpsLibrary libraryElement) {
+  public @NotNull JpsLibraryDependency addLibraryDependency(@NotNull JpsLibrary libraryElement) {
     return addLibraryDependency(libraryElement.createReference());
   }
 
-  @NotNull
   @Override
-  public JpsLibraryDependency addLibraryDependency(@NotNull JpsLibraryReference libraryReference) {
+  public @NotNull JpsLibraryDependency addLibraryDependency(@NotNull JpsLibraryReference libraryReference) {
     final JpsLibraryDependencyImpl dependency = new JpsLibraryDependencyImpl(libraryReference);
     myContainer.getChild(DEPENDENCY_COLLECTION_ROLE).addChild(dependency);
     return dependency;
@@ -88,9 +83,8 @@ public class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependen
     myContainer.getChild(DEPENDENCY_COLLECTION_ROLE).addChild(new JpsSdkDependencyImpl(sdkType));
   }
 
-  @NotNull
   @Override
-  public JpsDependenciesListImpl createCopy() {
+  public @NotNull JpsDependenciesListImpl createCopy() {
     return new JpsDependenciesListImpl(this);
   }
 
