@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.enumMapOf
@@ -103,8 +104,13 @@ internal class XDebuggerExecutionPointManager(project: Project,
   }
 
   @RequiresEdt
-  fun isFullLineHighlighter(): Boolean {
-    return presentation?.isFullLineHighlighter == true
+  fun isFullLineHighlighterAt(position: XSourcePosition): Boolean {
+    return isFullLineHighlighterAt(position.file, position.line)
+  }
+
+  @RequiresEdt
+  fun isFullLineHighlighterAt(file: VirtualFile, line: Int): Boolean {
+    return presentation?.isFullLineHighlighterAt(file, line) == true
   }
 
   fun showExecutionPosition() {
@@ -135,14 +141,16 @@ internal class ExecutionPointPresentation(project: Project, executionPoint: Exec
 
   private val mainPositionHighlight: PositionHighlight? get() = presentationMap[XSourceKind.MAIN]?.highlight
 
-  val isFullLineHighlighter: Boolean get() = mainPositionHighlight?.isFullLineHighlighter == true
-
   var activeSourceKind: XSourceKind by Delegates.observable(XSourceKind.MAIN) { _, _, newValue ->
     presentations.forEach { it?.highlight?.isActiveSourceKind = (newValue == it?.sourceKind) }
   }
 
   var gutterIconRenderer: GutterIconRenderer? by Delegates.observable(null) { _, _, newValue ->
     presentations.forEach { it?.highlight?.gutterIconRenderer = newValue }
+  }
+
+  fun isFullLineHighlighterAt(file: VirtualFile, line: Int): Boolean {
+    return mainPositionHighlight?.isFullLineHighlighterAt(file, line) == true
   }
 
   fun navigateTo() {
@@ -180,10 +188,6 @@ private class PositionHighlight private constructor(
   private val isTopFrame: Boolean,
   private val rangeHighlighter: RangeHighlighter,
 ) {
-  val isFullLineHighlighter: Boolean
-    @RequiresEdt
-    get() = (rangeHighlighter.targetArea == HighlighterTargetArea.LINES_IN_RANGE)
-
   var gutterIconRenderer: GutterIconRenderer? by rangeHighlighter::gutterIconRenderer
   var isActiveSourceKind: Boolean = true
     @RequiresEdt
@@ -194,6 +198,13 @@ private class PositionHighlight private constructor(
       rangeHighlighter.putUserData(ExecutionPointHighlighter.EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY, useTopFrameAttributes)
       field = value
     }
+
+  fun isFullLineHighlighterAt(file: VirtualFile, line: Int): Boolean {
+    return rangeHighlighter.isValid &&
+           rangeHighlighter.targetArea == HighlighterTargetArea.LINES_IN_RANGE &&
+           FileDocumentManager.getInstance().getFile(rangeHighlighter.document) == file &&
+           rangeHighlighter.document.getLineNumber(rangeHighlighter.startOffset) == line
+  }
 
   fun hideAndDispose() {
     rangeHighlighter.dispose()

@@ -404,10 +404,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     return state;
   }
 
-  public boolean isFullLineHighlighter() {
-    return myExecutionPointManager.isFullLineHighlighter();
-  }
-
   @Override
   public void loadState(@NotNull XDebuggerState state) {
     myState = state;
