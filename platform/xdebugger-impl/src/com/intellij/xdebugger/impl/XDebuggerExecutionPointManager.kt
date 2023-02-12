@@ -22,8 +22,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.enumMapOf
-import com.intellij.util.io.MultiCloseable
 import com.intellij.util.resettableLazy
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
@@ -32,7 +30,6 @@ import com.intellij.xdebugger.ui.DebuggerColors
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
-import kotlin.properties.Delegates
 import kotlin.time.Duration.Companion.milliseconds
 
 
@@ -56,10 +53,11 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   private val gutterIconRendererState: StateFlow<GutterIconRenderer?> = _gutterIconRendererState.asStateFlow()
   var gutterIconRenderer: GutterIconRenderer? by _gutterIconRendererState::value
 
-  private val presentationState: StateFlow<ExecutionPointPresentation?> = presentationFlow()
+  private val mainPresentationState = presentationFlowFor(XSourceKind.MAIN)
     .stateIn(coroutineScope, SharingStarted.Eagerly, initialValue = null)
 
-  private val presentation by presentationState::value
+  private val alternativePresentationState = presentationFlowFor(XSourceKind.ALTERNATIVE)
+    .stateIn(coroutineScope, SharingStarted.Eagerly, initialValue = null)
 
   init {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
@@ -77,20 +75,22 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
     }
   }
 
-  private fun presentationFlow(): Flow<ExecutionPointPresentation?> {
+  private fun presentationFlowFor(sourceKind: XSourceKind): Flow<PositionPresentation?> {
     return executionPointState
       .onCompletion { emit(null) }
       .transformLatest { executionPoint ->
         @Suppress("RemoveExplicitTypeArguments") // complaints about Nothing
         kotlin.runCatching {
-          if (executionPoint == null) return@transformLatest emit(null)
-          show(executionPoint)
+          val sourcePosition = executionPoint?.getSourcePosition(sourceKind) ?: return@transformLatest emit(null)
+          show(sourcePosition, sourceKind, executionPoint.isTopFrame)
         }.getOrLogException<Nothing>(LOG)
       }
   }
 
-  private suspend fun FlowCollector<ExecutionPointPresentation>.show(executionPoint: ExecutionPoint): Nothing = coroutineScope {
-    ExecutionPointPresentation(project, executionPoint).use { presentation ->
+  private suspend fun FlowCollector<PositionPresentation>.show(sourcePosition: XSourcePosition,
+                                                               sourceKind: XSourceKind,
+                                                               isTopFrame: Boolean): Nothing = coroutineScope {
+    PositionPresentation(project, sourceKind, sourcePosition, isTopFrame).use { presentation ->
       emit(presentation)
 
       activeSourceKindState.onEach {
@@ -98,13 +98,13 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
       }.launchIn(this)
 
       gutterIconRendererState.onEach {
-        presentation.gutterIconRenderer = it
+        presentation.highlight?.gutterIconRenderer = it
       }.launchIn(this)
 
       navigationRequestFlow
         .debounce(10.milliseconds)
         .onEach {
-          presentation.navigateTo()
+          presentation.navigator.navigateTo()
         }.launchIn(this)
 
       awaitCancellation()
@@ -118,7 +118,13 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
 
   @RequiresEdt
   fun isFullLineHighlighterAt(file: VirtualFile, line: Int): Boolean {
-    return presentation?.isFullLineHighlighterAt(file, line) == true
+    return isFullLineHighlighter(mainPresentationState.value, file, line) ||
+           isFullLineHighlighter(alternativePresentationState.value, file, line)
+  }
+
+  private fun isFullLineHighlighter(presentation: PositionPresentation?, file: VirtualFile, line: Int): Boolean {
+    val highlight = presentation?.highlight ?: return false
+    return highlight.isFullLineHighlighterAt(file, line)
   }
 
   fun showExecutionPosition() {
@@ -139,33 +145,6 @@ internal class ExecutionPoint(
   }
 }
 
-internal class ExecutionPointPresentation(project: Project, executionPoint: ExecutionPoint) : MultiCloseable() {
-  private val presentationMap = enumMapOf<XSourceKind, PositionPresentation?>().apply {
-    enumValues<XSourceKind>().associateWithTo(this) { sourceKind ->
-      val sourcePosition = executionPoint.getSourcePosition(sourceKind) ?: return@associateWithTo null
-      PositionPresentation(project, sourceKind, sourcePosition, executionPoint.isTopFrame).also(::registerCloseable)
-    }
-  }
-  private val presentations: Collection<PositionPresentation?> = presentationMap.values
-
-  private val mainPositionHighlight: PositionHighlight? get() = presentationMap[XSourceKind.MAIN]?.highlight
-
-  var activeSourceKind: XSourceKind by Delegates.observable(XSourceKind.MAIN) { _, _, newValue ->
-    presentations.forEach { it?.highlight?.isActiveSourceKind = (newValue == it?.sourceKind) }
-  }
-
-  var gutterIconRenderer: GutterIconRenderer? by Delegates.observable(null) { _, _, newValue ->
-    presentations.forEach { it?.highlight?.gutterIconRenderer = newValue }
-  }
-
-  fun isFullLineHighlighterAt(file: VirtualFile, line: Int): Boolean {
-    return mainPositionHighlight?.isFullLineHighlighterAt(file, line) == true
-  }
-
-  fun navigateTo() {
-    presentationMap[activeSourceKind]?.navigator?.navigateTo()
-  }
-}
 
 private class PositionPresentation(
   project: Project,
@@ -176,6 +155,15 @@ private class PositionPresentation(
 
   val highlight = PositionHighlight.create(project, sourcePosition, isTopFrame)
   val navigator = PositionNavigator.create(project, sourcePosition, isTopFrame)
+
+  var activeSourceKind: XSourceKind = XSourceKind.MAIN
+    @RequiresEdt
+    set(value) {
+      val isActiveSourceKind = (sourceKind == value)
+      highlight?.isActiveSourceKind = isActiveSourceKind
+      navigator.isActiveSourceKind = isActiveSourceKind
+      field = value
+    }
 
   override fun close() {
     highlight?.hideAndDispose()
@@ -241,11 +229,14 @@ private class PositionHighlight private constructor(
 private class PositionNavigator(
   private val openFileDescriptor: OpenFileDescriptor,
 ) {
+  var isActiveSourceKind: Boolean = false
+
   private val navigateToEditorLazy = resettableLazy {
     XDebuggerUtilImpl.createEditor(openFileDescriptor)
   }
 
   fun navigateTo(): Editor? {
+    if (!isActiveSourceKind) return null
     val editor = navigateToEditorLazy.value?.takeUnless { it.isDisposed }
     if (editor != null) return editor
     navigateToEditorLazy.reset()
