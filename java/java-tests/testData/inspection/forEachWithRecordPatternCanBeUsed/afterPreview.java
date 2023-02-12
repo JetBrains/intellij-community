@@ -1,4 +1,3 @@
-// "Replace with enhanced 'for' with a record pattern" "true-preview"
 import java.util.List;
 
 public class Preview {

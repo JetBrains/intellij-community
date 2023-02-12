@@ -1,4 +1,3 @@
-// "Fix all 'Enhanced 'for' with a record pattern can be used' problems in file" "true"
 import java.util.List;
 
 public class ComponentCounts {
@@ -18,8 +17,8 @@ public class ComponentCounts {
       System.out.println(record4.i4);
     }
 
-    for (Record3 record3 : record3List) {
-      System.out.println(record3.i1<caret>);
+    for (Record3 record3<caret> : record3List) {
+      System.out.println(record3.i1);
       System.out.println(record3.i2);
       System.out.println(record3.i3);
     }

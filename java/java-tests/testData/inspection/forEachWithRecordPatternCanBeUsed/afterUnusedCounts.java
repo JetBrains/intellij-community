@@ -1,4 +1,3 @@
-// "Fix all 'Enhanced 'for' with a record pattern can be used' problems in file" "true"
 import java.util.List;
 
 public class UnusedCounts {

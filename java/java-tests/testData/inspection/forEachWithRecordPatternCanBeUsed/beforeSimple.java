@@ -1,4 +1,3 @@
-// "Fix all 'Enhanced 'for' with a record pattern can be used' problems in file" "true"
 import java.util.List;
 
 public class Simple {
@@ -7,21 +6,25 @@ public class Simple {
   }
 
   public static void simple(List<StringInteger> list) {
-      for (StringInteger(String text, Integer number) : list) {
-          System.out.println(number);
-          System.out.println(number);
-          System.out.println(text);
-          System.out.println(text);
-          System.out.println(number);
-          System.out.println(number.intValue());
-          System.out.println(text);
-      }
+    for (StringInteger stringInteger<caret> : list) {
+      System.out.println(stringInteger.number);
+      System.out.println(stringInteger.number());
+      System.out.println(stringInteger.text);
+      System.out.println(stringInteger.text());
+      Integer number = stringInteger.number;
+      System.out.println(number);
+      System.out.println(number.intValue());
+      String text = stringInteger.text();
+      System.out.println(text);
+      String text1 = stringInteger.text;
+    }
   }
 
   public static void simpleAnnotated(List<StringInteger> list) {
-      for (StringInteger(String text, Integer number1) : list) {
-          @Deprecated Integer number = number1;
-      }
+    for (StringInteger stringInteger : list) {
+      @Deprecated Integer number = stringInteger.number;
+      String text = stringInteger.text();
+    }
   }
 
   public static void simpleUseBefore1(List<StringInteger> list) {
@@ -50,20 +53,22 @@ public class Simple {
   }
 
   public static void convertToDifferentType(List<StringInteger> list) {
-      for (StringInteger(String text, Integer number1) : list) {
-          CharSequence text2 = text;
-          System.out.println(text2);
-          Number number = number1;
-          System.out.println(number);
-      }
+    for (StringInteger stringInteger : list) {
+      CharSequence text2 = stringInteger.text;
+      System.out.println(text2);
+      Number number = stringInteger.number;
+      System.out.println(number);
+    }
   }
 
   public static void usedNames(List<StringInteger> list) {
-      for (StringInteger(String text2, Integer number) : list) {
-          String text = "";
-          System.out.println(text2);
-          System.out.println(text2);
-      }
+    for (StringInteger stringInteger : list) {
+      String text2 = stringInteger.text;
+      Integer number = stringInteger.number;
+      String text = "";
+      System.out.println(text2);
+      System.out.println(stringInteger.text);
+    }
   }
 
   public static void extend(List<? extends StringInteger> list) {
@@ -78,10 +83,10 @@ public class Simple {
 
 
   public static void simpleGeneric(List<GenericString<String>> list) {
-      for (GenericString(String t, String text) : list) {
-          System.out.println(t);
-          System.out.println(text);
-      }
+    for (GenericString<String> genericString : list) {
+      System.out.println(genericString.t);
+      System.out.println(genericString.text);
+    }
   }
 
   public static void rawGeneric(List<GenericString<String>> list) {
@@ -108,15 +113,17 @@ public class Simple {
   }
 
   public static void simpleOuter(List<OuterStringInteger> list) {
-      for (OuterStringInteger(StringInteger(String text, Integer number), Integer number2) : list) {
-          System.out.println(number);
-          System.out.println(number);
-          System.out.println(text);
-          System.out.println(text);
-          System.out.println(number);
-          System.out.println(number.intValue());
-          System.out.println(text);
-      }
+    for (OuterStringInteger(StringInteger stringInteger, Integer number2) : list) {
+      System.out.println(stringInteger.number);
+      System.out.println(stringInteger.number());
+      System.out.println(stringInteger.text);
+      System.out.println(stringInteger.text());
+      Integer number = stringInteger.number;
+      System.out.println(number);
+      System.out.println(number.intValue());
+      String text = stringInteger.text();
+      System.out.println(text);
+    }
   }
 
   public static void simpleUseBefore1Outer(List<OuterStringInteger> list) {
@@ -145,20 +152,22 @@ public class Simple {
   }
 
   public static void convertToDifferentTypeOuter(List<OuterStringInteger> list) {
-      for (OuterStringInteger(StringInteger(String text, Integer number1), Integer number2) : list) {
-          CharSequence text2 = text;
-          System.out.println(text2);
-          Number number = number1;
-          System.out.println(number);
-      }
+    for (OuterStringInteger(StringInteger stringInteger, Integer number2) : list) {
+      CharSequence text2 = stringInteger.text;
+      System.out.println(text2);
+      Number number = stringInteger.number;
+      System.out.println(number);
+    }
   }
 
   public static void usedNamesOuter(List<OuterStringInteger> list) {
-      for (OuterStringInteger(StringInteger(String text2, Integer number), Integer number2) : list) {
-          String text = "";
-          System.out.println(text2);
-          System.out.println(text2);
-      }
+    for (OuterStringInteger(StringInteger stringInteger, Integer number2) : list) {
+      String text2 = stringInteger.text;
+      Integer number = stringInteger.number;
+      String text = "";
+      System.out.println(text2);
+      System.out.println(stringInteger.text);
+    }
   }
 
 
@@ -166,17 +175,17 @@ public class Simple {
   }
 
   public static void simpleGenericOuter(List<GenericStringOuter<String>> list) {
-      for (GenericStringOuter(GenericString(String t, String text), String text2) : list) {
-          System.out.println(t);
-          System.out.println(text);
-      }
+    for (GenericStringOuter(GenericString<String> genericString, String text2) : list) {
+      System.out.println(genericString.t);
+      System.out.println(genericString.text);
+    }
   }
 
   public static void rawGenericOuter(List<GenericStringOuter<String>> list) {
-      for (GenericStringOuter(GenericString(Object t, String text), String text2) : list) {
-          System.out.println(t);
-          System.out.println(text);
-      }
+    for (GenericStringOuter(GenericString genericString, String text2) : list) {
+      System.out.println(genericString.t);
+      System.out.println(genericString.text);
+    }
   }
 
   public static void simpleGenericOuterVar(List<GenericStringOuter<String>> list) {

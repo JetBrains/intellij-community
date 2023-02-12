@@ -1,4 +1,3 @@
-// "Fix all 'Enhanced 'for' with a record pattern can be used' problems in file" "true"
 import java.util.List;
 
 public class Level {
@@ -8,8 +7,8 @@ public class Level {
   }
 
   public static void test(List<Generic<Generic<Generic<String>>>> list) {
-    for (Generic(var t) : list) {
-      System.out.println(t.t<caret>);
+    for (Generic(var t<caret>) : list) {
+      System.out.println(t.t);
     }
   }
 

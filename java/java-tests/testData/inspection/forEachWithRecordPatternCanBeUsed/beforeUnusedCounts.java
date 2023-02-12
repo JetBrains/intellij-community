@@ -1,4 +1,3 @@
-// "Fix all 'Enhanced 'for' with a record pattern can be used' problems in file" "true"
 import java.util.List;
 
 public class UnusedCounts {
@@ -8,8 +7,8 @@ public class UnusedCounts {
   }
 
   public static void test(List<Record3> record3List) {
-    for (Record3 record3 : record3List) {
-      System.out.println(record3.i1<caret>);
+    for (Record3 record3<caret> : record3List) {
+      System.out.println(record3.i1);
       System.out.println(record3.i2);
       System.out.println(record3.i3);
     }
