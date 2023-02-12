@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <locale.h>
 #include <langinfo.h>
+#include <stdbool.h>
 
 // wslhash folder (hash|no_hash) [ext1 ext2 ..]
 // Calculate hashes (or skips it in case of "no_hash") for all files in this folder (optionally limit by extensions)
@@ -22,31 +23,34 @@
 // link_size in 4 bytes little endian signed
 
 static size_t g_dir_len = 0; // Length of dir string
-static char **g_exts; // list of extensions or NULL if no filter needed
+static char **g_exts = NULL; // list of extensions or NULL if no filter needed
 static int g_num_of_exts = 0; // number of extensions
 static int g_skip_hash = 0;
 
 
-static const char empty[sizeof(XXH64_hash_t)];
+static const char EMPTY[sizeof(XXH64_hash_t)] = {0};
 
 // Check is file extension ok or should be skipped
 static int file_extension_ok(const char *file) {
-    if (g_num_of_exts == 0) return 1;
+    if (g_num_of_exts == 0) {
+        return true;
+    }
     const char *dot = strrchr(file, '.');
-    if (!dot) return 1; // No extension
+    if (!dot) {
+        return true; // No extension
+    }
     for (int i = 0; i < g_num_of_exts; i++) {
         if (strcmp(dot + 1, g_exts[i]) == 0) {
-            return 1;
+            return true;
         }
     }
-
-    return 0;
+    return false;
 }
 
 static int is_dir(const char *path) {
-    struct stat stat_info;
+    struct stat stat_info = {0};
     if (stat(path, &stat_info) != 0) {
-        return 0;
+        return false;
     }
     return S_ISDIR(stat_info.st_mode);
 }
@@ -61,13 +65,13 @@ process_file(const char *fpath, const struct stat *sb, int tflag, __attribute__(
         return 0; // File has wrong extension, skip
     }
 
-    const char *file_name = fpath + g_dir_len + 1; // remove first "/"
+    const char *fpath_relative = fpath + g_dir_len + 1; // remove first "/"
 
     if (tflag == FTW_F) {
-        printf("%s:", file_name);
+        printf("%s:", fpath_relative);
         if (sb->st_size == 0 || g_skip_hash) {
             // No need to calculate hash for empty file
-            fwrite(empty, sizeof(empty), 1, stdout);
+            fwrite(EMPTY, sizeof(EMPTY), 1, stdout);
             return 0;
         }
         const int fd = open(fpath, O_RDONLY);
@@ -78,8 +82,7 @@ process_file(const char *fpath, const struct stat *sb, int tflag, __attribute__(
         }
 
         // Mmap file and calculate hash
-        char *buffer;
-        buffer = mmap(NULL, sb->st_size, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0);
+        char *buffer = mmap(NULL, sb->st_size, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0);
         madvise(buffer, sb->st_size, MADV_SEQUENTIAL);
         if (buffer == MAP_FAILED) {
             fprintf(stderr, "Can't mmap file %s", fpath);
@@ -92,9 +95,9 @@ process_file(const char *fpath, const struct stat *sb, int tflag, __attribute__(
 
         close(fd);
     } else {
-        char real_path[PATH_MAX];
+        char real_path[PATH_MAX] = {0};
         if (realpath(fpath, real_path) != NULL && is_dir(real_path)) {
-            printf("%s;", file_name);
+            printf("%s;", fpath_relative);
             const int32_t len = (int32_t) strlen(real_path);
             fwrite(&len, sizeof(int32_t), 1, stdout);
             fputs(real_path, stdout);
@@ -103,21 +106,21 @@ process_file(const char *fpath, const struct stat *sb, int tflag, __attribute__(
     return 0;
 }
 
-static int ensure_charset() {
+static int ensure_charset(void) {
     setlocale(LC_CTYPE, "");
     const char *charset = nl_langinfo(CODESET);
 
     if (strncmp(charset, "UTF-8", sizeof "UTF-8") == 0) {
         // Java side decodes output as UTF-8 and almost all WSL distros use UTF
-        return 1;
+        return true;
     }
     if (strncmp(charset, "ASCII", sizeof "ASCII") == 0) {
         // ASCII is 7 bit, so english texts could be decoded by java either
-        return 1;
+        return true;
     }
     // Other charsets aren't used nor supported by WSL
     fprintf(stderr, "Please use UTF-8 locale, not %s", charset);
-    return 0;
+    return false;
 }
 
 int main(int argc, char *argv[]) {
@@ -132,15 +135,13 @@ int main(int argc, char *argv[]) {
 
     g_skip_hash = (strcmp(argv[2], "no_hash") == 0);
 
-    char *root_dir = argv[1];
-    struct stat path_stat;
-    stat(root_dir, &path_stat);
-    if (!S_ISDIR(path_stat.st_mode)) {
+    const char *root_dir = argv[1];
+    if (!is_dir(root_dir)) {
         fprintf(stderr, "Provided path is not dir\n");
         return 2;
     }
 
-    char root_dir_clean[PATH_MAX];
+    char root_dir_clean[PATH_MAX] = {0};
     if (realpath(root_dir, root_dir_clean) == NULL) {
         fprintf(stderr, "realpath failed: %d", errno);
         return -1;
@@ -161,5 +162,5 @@ int main(int argc, char *argv[]) {
         perror("nftw failed");
         return 3;
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
