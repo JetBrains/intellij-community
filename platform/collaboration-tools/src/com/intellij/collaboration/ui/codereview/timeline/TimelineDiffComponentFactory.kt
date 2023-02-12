@@ -61,7 +61,7 @@ object TimelineDiffComponentFactory {
                           patchHunk: PatchHunk,
                           anchor: DiffLineLocation?,
                           anchorStart: DiffLineLocation?): JComponent {
-    val truncatedHunk = truncateHunk(patchHunk, anchorStart != null)
+    val truncatedHunk = if (anchor == null) patchHunk else truncateHunk(patchHunk, anchor, anchorStart)
 
     val anchorLineIndex = anchor?.let { PatchHunkUtil.findHunkLineIndex(truncatedHunk, it) }
 
@@ -122,20 +122,32 @@ object TimelineDiffComponentFactory {
     override fun getMarkerColor(editor: Editor?) = getColor(editor)
   }
 
-  private const val SINGLE_LINE_DIFF_SIZE = 3
-  private const val MULTILINE_DIFF_SIZE = 10
+  private const val DIFF_CONTEXT_SIZE = 3
 
-  private fun truncateHunk(hunk: PatchHunk, isMultiline: Boolean): PatchHunk {
-    val maxDiffSize = if (isMultiline) MULTILINE_DIFF_SIZE else SINGLE_LINE_DIFF_SIZE
+  private fun truncateHunk(hunk: PatchHunk, anchor: DiffLineLocation, anchorStart: DiffLineLocation?): PatchHunk {
+    if (hunk.lines.size <= DIFF_CONTEXT_SIZE + 1) return hunk
 
-    if (hunk.lines.size <= maxDiffSize) return hunk
+    val hunkWithoutStart = if (anchorStart != null && anchor != anchorStart) {
+      truncateHunkBefore(hunk, anchorStart)
+    }
+    else {
+      truncateHunkBefore(hunk, anchor)
+    }
+    return truncateHunkAfter(hunkWithoutStart, anchor)
+  }
+
+  private fun truncateHunkBefore(hunk: PatchHunk, location: DiffLineLocation): PatchHunk {
+    val lines = hunk.lines
+    if (lines.size <= DIFF_CONTEXT_SIZE + 1) return hunk
+    val lineIdx = PatchHunkUtil.findHunkLineIndex(hunk, location) ?: return hunk
+    val startIdx = lineIdx - DIFF_CONTEXT_SIZE
+    if (startIdx <= 0) return hunk
 
     var startLineBefore: Int = hunk.startLineBefore
     var startLineAfter: Int = hunk.startLineAfter
 
-    val toRemoveIdx = hunk.lines.lastIndex - maxDiffSize
-    for (i in 0..toRemoveIdx) {
-      val line = hunk.lines[i]
+    for (i in 0 until startIdx) {
+      val line = lines[i]
       when (line.type) {
         PatchLine.Type.CONTEXT -> {
           startLineBefore++
@@ -145,8 +157,37 @@ object TimelineDiffComponentFactory {
         PatchLine.Type.REMOVE -> startLineBefore++
       }
     }
-    val truncatedLines = hunk.lines.subList(toRemoveIdx + 1, hunk.lines.size)
+    val truncatedLines = lines.subList(startIdx, lines.size)
     return PatchHunk(startLineBefore, hunk.endLineBefore, startLineAfter, hunk.endLineAfter).apply {
+      for (line in truncatedLines) {
+        addLine(line)
+      }
+    }
+  }
+
+  private fun truncateHunkAfter(hunk: PatchHunk, location: DiffLineLocation): PatchHunk {
+    val lines = hunk.lines
+    if (lines.size <= DIFF_CONTEXT_SIZE + 1) return hunk
+    val lineIdx = PatchHunkUtil.findHunkLineIndex(hunk, location) ?: return hunk
+    val endIdx = lineIdx + DIFF_CONTEXT_SIZE
+    if (endIdx > lines.size - 1) return hunk
+
+    var endLineBefore: Int = hunk.endLineBefore
+    var endLineAfter: Int = hunk.endLineAfter
+
+    for (i in lines.size - 1 downTo endIdx) {
+      val line = lines[i]
+      when (line.type) {
+        PatchLine.Type.CONTEXT -> {
+          endLineBefore--
+          endLineAfter--
+        }
+        PatchLine.Type.ADD -> endLineAfter--
+        PatchLine.Type.REMOVE -> endLineBefore--
+      }
+    }
+    val truncatedLines = lines.subList(0, endIdx + 1)
+    return PatchHunk(hunk.startLineBefore, endLineBefore, hunk.startLineAfter, endLineAfter).apply {
       for (line in truncatedLines) {
         addLine(line)
       }
