@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.GroupedComboBoxRenderer;
 import com.intellij.ui.GroupedElementsRenderer;
@@ -153,9 +154,18 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     list.setFocusable(false);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    Border border = UIManager.getBorder("ComboPopup.border");
-    if (border != null) {
-      getContent().setBorder(border);
+    final var renderer = ((MyBasePopupState<?>)myStep).myGetRenderer.get();
+    if (renderer instanceof GroupedComboBoxRenderer<?> ||
+        renderer instanceof ComboBoxWithWidePopup<?>.AdjustingListCellRenderer r && r.delegate instanceof GroupedComboBoxRenderer<?>) {
+      list.setBorder(JBUI.Borders.empty(PopupUtil.getListInsets(false, false)));
+      mySpeedSearch.addChangeListener(x -> {
+        list.setBorder(JBUI.Borders.empty(PopupUtil.getListInsets(!mySpeedSearch.getFilter().isBlank(), false)));
+      });
+    } else {
+      Border border = UIManager.getBorder("ComboPopup.border");
+      if (border != null) {
+        getContent().setBorder(border);
+      }
     }
   }
 
