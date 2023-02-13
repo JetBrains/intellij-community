@@ -38,7 +38,6 @@ import com.jediterm.terminal.ui.TerminalActionMenuBuilder;
 import com.jediterm.terminal.ui.TerminalActionProvider;
 import com.jediterm.terminal.ui.TerminalPanel;
 import com.pty4j.windows.conpty.WinConPtyProcess;
-import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -327,7 +326,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
   }
 
   @Override
-  protected Font getFontToDisplay(char c, TextStyle style) {
+  protected @NotNull Font getFontToDisplay(char[] text, int start, int end, @NotNull TextStyle style) {
     int fontStyle = Font.PLAIN;
     if (style.hasOption(TextStyle.Option.BOLD)) {
       fontStyle |= Font.BOLD;
@@ -335,12 +334,11 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     if (style.hasOption(TextStyle.Option.ITALIC)) {
       fontStyle |= Font.ITALIC;
     }
-    FontInfo fontInfo = fontForChar(c, fontStyle);
+    FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(
+      text, start, end, fontStyle,
+      mySettingsProvider.getColorsScheme().getConsoleFontPreferences(),
+      null);
     return fontInfo.getFont().deriveFont((float)mySettingsProvider.getUiSettingsManager().getFontSize());
-  }
-
-  private @NotNull FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style) {
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorsScheme().getConsoleFontPreferences(), null);
   }
 
   public void fontChanged() {
