@@ -108,18 +108,12 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     messageBusConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
-        updateExecutionPoint(file, true);
+        myExecutionPointManager.updateExecutionPosition(file, true);
       }
 
       @Override
       public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
-        updateExecutionPoint(file, true);
-      }
-    });
-    messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-      @Override
-      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        updateExecutionPoint(file, false);
+        myExecutionPointManager.updateExecutionPosition(file, true);
       }
     });
     messageBusConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<>() {
@@ -209,10 +203,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   @Override
   public void initializeComponent() {
     myBreakpointManager.init();
-  }
-
-  private void updateExecutionPoint(@NotNull VirtualFile file, boolean navigate) {
-    myExecutionPointManager.updateExecutionPosition(file, navigate);
   }
 
   @Override
