@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.accessibility;
 
-import com.jetbrains.JBR;
 import com.jetbrains.AccessibleAnnouncer;
+import com.jetbrains.JBR;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.Accessible;
-import java.awt.KeyboardFocusManager;
+import java.awt.*;
 
 final public class AccessibleAnnouncerUtil {
   final private static AccessibleAnnouncer announcer = JBR.getAccessibleAnnouncer();
@@ -16,12 +16,12 @@ final public class AccessibleAnnouncerUtil {
   /**
    * This method make announce with screenreader
    *
-   * @param a         announce ovner
-   * @param str       message for announsing
+   * @param a         announce owner
+   * @param str       message for announcing
    * @param interruptCurrentOutput  output interruption
    */
   public static void announce(@NotNull final Accessible a, final String str, final boolean interruptCurrentOutput) {
-    if (announcer == null) return;;
+    if (announcer == null) return;
 
     KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     if ((focusManager == null) ||
