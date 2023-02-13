@@ -193,6 +193,11 @@ public final class Comparing {
     return o1.compareTo(o2);
   }
 
+  /**
+   * Performs null-safe comparison delegating to {@code notNullComparator} for not-null values. 
+   * Consider using {@code Comparator.nullsFirst} instead.
+   */
+  @ApiStatus.Obsolete
   public static <T> int compare(@Nullable T o1, @Nullable T o2, @NotNull Comparator<? super T> notNullComparator) {
     if (o1 == o2) return 0;
     if (o1 == null) return -1;
