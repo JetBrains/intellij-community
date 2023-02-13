@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspaceModel.jps.*
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
@@ -21,6 +20,7 @@ import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
+import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
@@ -318,7 +318,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   protected open fun readExternalSystemOptions(reader: JpsFileContentReader,
                                                moduleOptions: Map<String?, String?>): Pair<Map<String?, String?>, String?> {
     val externalSystemId = moduleOptions["external.system.id"]
-                           ?: if (moduleOptions[ExternalProjectSystemRegistry.IS_MAVEN_MODULE_KEY] == true.toString()) ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID
+                           ?: if (moduleOptions[SerializationConstants.IS_MAVEN_MODULE_IML_ATTRIBUTE] == true.toString()) SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
                            else null
     return Pair(moduleOptions, externalSystemId)
   }
@@ -825,8 +825,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                        writer: JpsFileContentWriter) {
     val optionsMap = TreeMap<String, String?>()
     if (externalSystemOptions != null) {
-      if (externalSystemOptions.externalSystem == ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID) {
-        optionsMap[ExternalProjectSystemRegistry.IS_MAVEN_MODULE_KEY] = true.toString()
+      if (externalSystemOptions.externalSystem == SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID) {
+        optionsMap[SerializationConstants.IS_MAVEN_MODULE_IML_ATTRIBUTE] = true.toString()
       }
       else {
         optionsMap["external.system.id"] = externalSystemOptions.externalSystem

@@ -34,6 +34,7 @@ import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class WorkspaceModuleImporter(
@@ -274,7 +275,7 @@ internal class WorkspaceModuleImporter(
   companion object {
     val JAVADOC_TYPE: LibraryRootTypeId = LibraryRootTypeId("JAVADOC")
 
-    val EXTERNAL_SOURCE_ID get() = ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID
+    val EXTERNAL_SOURCE_ID get() = SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
   }
 
   class ExternalSystemData(val moduleEntity: ModuleEntity, val mavenProjectFilePath: String, val mavenModuleType: StandardMavenModuleType) {
