@@ -8,7 +8,6 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 
 /**
  * Orphanage - storage that contains content roots/source roots/excludes that currently don't have an associated parent in the storage.
