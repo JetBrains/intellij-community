@@ -13,7 +13,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 /**
- * @return corresponding [com.intellij.openapi.module.Module] or null if module is unloaded
+ * @return corresponding [com.intellij.openapi.module.Module] or `null` if this entity isn't added to the project model yet.
  */
 fun ModuleEntity.findModule(snapshot: EntityStorage): ModuleBridge? {
   return snapshot.moduleMap.getDataByEntity(this)
