@@ -33,6 +33,7 @@ public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsi
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
       assert state != null;
       state.gotoEnd(true);
+      UIUtil.dispatchAllInvocationEvents();
       checkResultByFile(getBasePath() + name + "_after" + getExtension());
     }
     finally {
