@@ -9,6 +9,7 @@ class ExperimentalUiCollector : CounterUsagesCollector() {
 
   enum class SwitchSource {
     ENABLE_NEW_UI_ACTION,
+    DISABLE_NEW_UI_ACTION,
     WELCOME_PROMO
   }
 
