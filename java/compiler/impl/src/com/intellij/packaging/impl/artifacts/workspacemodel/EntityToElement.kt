@@ -13,6 +13,7 @@ import com.intellij.packaging.impl.artifacts.UnknownPackagingElementTypeExceptio
 import com.intellij.packaging.impl.elements.*
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import com.intellij.workspaceModel.ide.workspaceModel
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -225,7 +226,7 @@ fun PackagingElementEntity.toElement(
             }
           }
           else {
-            (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Apply packaging elements mappings (toElement)") {
+            (project.workspaceModel as WorkspaceModelImpl).updateProjectModelSilent("Apply packaging elements mappings (toElement)") {
               val mutableMapping = it.mutableElements
               for ((entity, mapping) in mappingsCollector) {
                 mutableMapping.addMapping(entity, mapping)
