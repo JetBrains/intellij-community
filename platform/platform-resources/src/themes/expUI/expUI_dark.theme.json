@@ -616,6 +616,15 @@
       "shortcutBackground": "Grey5"
     },
 
+    "Tooltip.Learning": {
+      "background": "Blue6",
+      "borderColor": "Blue6",
+      "spanBackground": "Blue4",
+      "spanForeground": "Grey14",
+      "foreground": "Grey14",
+      "stepNumberForeground": "Blue11"
+    },
+
     "UnattendedHostStatus": {
       "warningBackground": "Yellow7",
       "warningForeground": "Grey3",

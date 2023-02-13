@@ -640,6 +640,15 @@
       "shortcutBackground": "Grey11"
     },
 
+    "Tooltip.Learning": {
+      "background": "Blue4",
+      "borderColor": "Blue4",
+      "spanBackground": "Blue2",
+      "spanForeground": "Grey14",
+      "foreground": "Grey14",
+      "stepNumberForeground": "Blue11"
+    },
+
     "PackageSearch": {
       "SearchResult": {
         "background": "#e8eefa",
