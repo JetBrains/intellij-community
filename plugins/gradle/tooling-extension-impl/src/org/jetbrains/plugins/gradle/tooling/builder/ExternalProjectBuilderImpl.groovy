@@ -19,6 +19,7 @@ import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.util.PatternFilterable
+import org.gradle.jvm.toolchain.internal.JavaToolchain
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
@@ -51,6 +52,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   public static final boolean is51OrBetter = is4OrBetter && gradleBaseVersion >= GradleVersion.version("5.1")
   public static final boolean is67OrBetter = gradleBaseVersion >= GradleVersion.version("6.7")
   public static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
+  public static final boolean is80OrBetter = gradleBaseVersion >= GradleVersion.version("8.0")
 
   static final DataProvider<ConcurrentMap<Project, ExternalProject>> PROJECTS_PROVIDER = new DataProvider<ConcurrentMap<Project, ExternalProject>>() {
     @NotNull
@@ -279,7 +281,12 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
           if (compiler.present) {
             try {
               def metadata = compiler.get().metadata
-              externalSourceSet.jdkInstallationPath = metadata.installationPath.asFile.canonicalPath
+              def configuredInstallationPath = metadata.installationPath.asFile.canonicalPath
+              boolean isFallbackToolchain = is80OrBetter && metadata instanceof JavaToolchain && ((JavaToolchain)metadata).isFallbackToolchain();
+              boolean isJavaHomeCompiler = configuredInstallationPath != null && configuredInstallationPath == System.getProperty("java.home");
+              if (!isJavaHomeCompiler && !isFallbackToolchain) {
+                externalSourceSet.jdkInstallationPath = configuredInstallationPath
+              }
             } catch (Throwable e) {
               project.logger.warn("Skipping java toolchain information for $javaCompileTask.path : $e.message")
               project.logger.info("Failed to resolve java toolchain info for $javaCompileTask.path", e)
