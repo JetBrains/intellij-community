@@ -2,7 +2,6 @@
 package git4idea.ui.toolbar
 
 import com.intellij.dvcs.repo.Repository
-import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI
@@ -177,20 +176,18 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     object OtherVcs : GitWidgetState()
   }
 
-  private fun getState(project: Project, gitRepository: GitRepository?) : GitWidgetState {
+  private fun getState(project: Project, gitRepository: GitRepository?): GitWidgetState {
     if (gitRepository != null) {
       return GitWidgetState.Repo(gitRepository)
     }
 
-    val isNonGitRepoExists = !VcsRepositoryManager.getInstance(project).repositories.isEmpty()
-    if (isNonGitRepoExists) return GitWidgetState.OtherVcs
+    val allVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
 
-    val activeVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
-    if (activeVcss.isNotEmpty()) {
-      return GitWidgetState.OtherVcs
+    return when {
+      allVcss.isEmpty() -> GitWidgetState.NoVcs
+      allVcss.any { it.keyInstanceMethod != GitVcs.getKey() } -> GitWidgetState.OtherVcs
+      else -> GitWidgetState.NoVcs
     }
-
-    return GitWidgetState.NoVcs
   }
 }
 
