@@ -29,7 +29,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -67,12 +66,12 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   public static final NotificationListener FILE_SELECTING_LISTENER = new NotificationListener.Adapter() {
     @Override
     protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-      URL url = e.getURL();
+      var url = e.getURL();
       if (url != null) {
         try {
-          openFile(new File(url.toURI()));
+          openFile(Path.of(url.toURI()));
         }
-        catch (URISyntaxException ex) {
+        catch (InvalidPathException | URISyntaxException ex) {
           LOG.warn("invalid URL: " + url, ex);
         }
       }
@@ -102,9 +101,9 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VirtualFile file = getFile(e);
+    var file = getFile(e);
     if (file != null) {
-      openFile(new File(file.getPresentableUrl()));
+      openFile(file.toNioPath());
     }
   }
 
@@ -144,7 +143,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       return file;
     }
 
-    VirtualFileSystem fs = file.getFileSystem();
+    var fs = file.getFileSystem();
     if (fs instanceof ArchiveFileSystem && file.getParent() == null) {
       return ((ArchiveFileSystem)fs).getLocalByEntry(file);
     }
@@ -205,10 +204,10 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       }
     }
     else if ((fmApp = Holder.fileManagerApp) != null) {
-      if (fmApp.endsWith("dolphin") && toSelect != null) {
+      if (toSelect != null && fmApp.endsWith("dolphin")) {
         spawn(fmApp, "--select", toSelect);
       }
-      else if (fmApp.endsWith("dde-file-manager") && toSelect != null) {
+      else if (toSelect != null && fmApp.endsWith("dde-file-manager")) {
         spawn(fmApp, "--show-item", toSelect);
       }
       else {
