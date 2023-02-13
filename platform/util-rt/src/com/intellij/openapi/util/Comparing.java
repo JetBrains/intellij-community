@@ -137,8 +137,12 @@ public final class Comparing {
     return Byte.compare(o1, o2);
   }
 
+  /**
+   * @deprecated use {@link Boolean#compare(boolean, boolean)} instead
+   */
+  @Deprecated
   public static int compare(boolean o1, boolean o2) {
-    return o1 == o2 ? 0 : o1 ? 1 : -1;
+    return Boolean.compare(o1, o2);
   }
 
   /**
