@@ -2,9 +2,11 @@
 package com.intellij.platform.workspaceModel.jps.serialization
 
 import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
+import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomFacetRelatedEntitySerializer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleComponentSerializer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleRootsSerializer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
 /**
@@ -27,4 +29,6 @@ interface SerializationContext {
   val customModuleComponentSerializers: List<CustomModuleComponentSerializer>
   
   val customModuleRootsSerializers: List<CustomModuleRootsSerializer>
+  
+  val customFacetRelatedEntitySerializers: List<CustomFacetRelatedEntitySerializer<ModuleSettingsBase>>
 }

@@ -14,7 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomFacetRelatedEntitySerializer
+import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
@@ -190,7 +190,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
       }
     }
 
-    val entityTypeToSerializer = CustomFacetRelatedEntitySerializer.EP_NAME.extensions.associateBy { it.rootEntityType }
+    val entityTypeToSerializer = BaseIdeSerializationContext.CUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP.extensions.associateBy { it.rootEntityType }
     changedFacets.forEach { (facet, rootEntity) ->
       val serializer = entityTypeToSerializer[rootEntity.getEntityInterface()] ?: error("Unavailable XML serializer for ${rootEntity.getEntityInterface()}")
       val rootElement = serializer.serializeIntoXml(rootEntity)

@@ -47,7 +47,7 @@ private val MODULE_OPTIONS_TO_CHECK = setOf(
 internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePath,
                                                     override val fileUrl: VirtualFileUrl,
                                                     override val internalEntitySource: JpsFileEntitySource,
-                                                    private val context: SerializationContext,
+                                                    protected val context: SerializationContext,
                                                     internal val internalModuleListSerializer: JpsModuleListSerializer? = null,
                                                     internal val externalModuleListSerializer: JpsModuleListSerializer? = null)
   : JpsFileEntitiesSerializer<ModuleEntity> {
@@ -670,7 +670,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   }
 
   protected open fun createFacetSerializer(): FacetsSerializer {
-    return FacetsSerializer(fileUrl, internalEntitySource, JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME, null, false)
+    return FacetsSerializer(fileUrl, internalEntitySource, JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME, null, false, context)
   }
 
   protected open fun acceptsSource(entitySource: EntitySource): Boolean {

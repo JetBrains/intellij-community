@@ -2,12 +2,12 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
 import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
+import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
 import com.intellij.util.PathUtilRt
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -110,7 +110,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
     JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
 
   override fun createFacetSerializer(): FacetsSerializer {
-    return FacetsSerializer(fileUrl, internalEntitySource, "ExternalFacetManager", getBaseDirPath(), true)
+    return FacetsSerializer(fileUrl, internalEntitySource, "ExternalFacetManager", getBaseDirPath(), true, context)
   }
 
   override fun getBaseDirPath(): String {

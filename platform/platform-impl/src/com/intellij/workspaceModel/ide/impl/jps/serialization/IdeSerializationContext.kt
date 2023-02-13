@@ -8,6 +8,7 @@ import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
 import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.EntitiesOrphanage
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
 abstract class BaseIdeSerializationContext : SerializationContext {
@@ -20,12 +21,17 @@ abstract class BaseIdeSerializationContext : SerializationContext {
     get() = CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensionList
   override val customModuleRootsSerializers: List<CustomModuleRootsSerializer>
     get() = CUSTOM_MODULE_ROOTS_SERIALIZER_EP.extensionList
+  override val customFacetRelatedEntitySerializers: List<CustomFacetRelatedEntitySerializer<ModuleSettingsBase>>
+    get() = CUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP.extensionList
 
   companion object {
     private val CUSTOM_MODULE_COMPONENT_SERIALIZER_EP: ExtensionPointName<CustomModuleComponentSerializer> = 
       ExtensionPointName.create("com.intellij.workspaceModel.customModuleComponentSerializer")
     val CUSTOM_MODULE_ROOTS_SERIALIZER_EP: ExtensionPointName<CustomModuleRootsSerializer> = 
       ExtensionPointName.create("com.intellij.workspaceModel.customModuleRootsSerializer")
+    val CUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP: ExtensionPointName<CustomFacetRelatedEntitySerializer<ModuleSettingsBase>> =
+      ExtensionPointName.create("com.intellij.workspaceModel.customFacetRelatedEntitySerializer")
+
   }
 }
 
