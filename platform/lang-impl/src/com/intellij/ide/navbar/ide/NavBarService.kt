@@ -104,6 +104,7 @@ internal class NavBarService(private val project: Project, cs: CoroutineScope) {
   private fun requestNavigation(item: NavBarVmItem) {
     cs.launch {
       navigateTo(item)
+      updateRequests.emit(Unit)
     }
   }
 
