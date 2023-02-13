@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithQuickFixTextRange;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
@@ -75,16 +74,9 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
             boolean reportInfo = isOnTheFly && (hasEscapedQuotes || hasComments);
             if (reportWarning) {
               boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
-              InspectionManager inspectionManager = InspectionManager.getInstance(expression.getProject());
-              String message = JavaBundle.message("inspection.text.block.migration.concatenation.message");
-              ProblemDescriptor pd = inspectionManager.createProblemDescriptor(expression, quickFixOnly ? null : firstNewLineTextRange,
-                                                                               message,
-                                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly,
-                                                                               new ReplaceWithTextBlockFix(leftIndex, rightIndex - 1));
-              PsiExpression leftOperand = operands[leftIndex];
-              PsiExpression rightOperand = operands[rightIndex - 1];
-              TextRange range = TextRange.create(leftOperand.getTextRange().getStartOffset(), rightOperand.getTextRange().getEndOffset());
-              holder.registerProblem(new ProblemDescriptorWithQuickFixTextRange((ProblemDescriptorBase)pd, range));
+              holder.registerProblem(expression, quickFixOnly ? null : firstNewLineTextRange,
+                                     JavaBundle.message("inspection.text.block.migration.concatenation.message"),
+                                     new ReplaceWithTextBlockFix(leftIndex, rightIndex - 1));
             }
             else if (reportInfo) {
               holder.registerProblem(expression,
