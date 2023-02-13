@@ -57,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.*;
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.PopupMenuEvent;
@@ -1025,6 +1026,7 @@ public class JBTabsImpl extends JComponent
       return new GroupedItemsListRenderer<>(descriptor) {
         private static final Key<Integer> HOVER_INDEX_KEY = Key.create("HOVER_INDEX");
         private static final Key<TabInfo> TAB_INFO_KEY = Key.create("TAB_INFO");
+        private static final Key<Boolean> SELECTED_KEY = Key.create("SELECTED");
         JPanel component;
         JLabel iconLabel;
         JLabel actionLabel;
@@ -1037,7 +1039,28 @@ public class JBTabsImpl extends JComponent
           component = new JPanel();
           BoxLayout layout = new BoxLayout(component, BoxLayout.X_AXIS);
           component.setLayout(layout);
-          component.setBorder(JBUI.Borders.empty(0, 9, 0, 3));
+          // painting underline for the selected tab
+          component.setBorder(new Border() {
+            @Override
+            public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+              if (ClientProperty.get(c, SELECTED_KEY) != Boolean.TRUE) {
+                return;
+              }
+              int inset = JBUI.scale(2);
+              Rectangle rect = new Rectangle(x, y + inset, width, height - inset * 2);
+              getTabPainter().paintUnderline(JBTabsPosition.left, rect, JBUI.scale(3), (Graphics2D)g, true);
+            }
+
+            @Override
+            public Insets getBorderInsets(Component c) {
+              return JBInsets.create(new Insets(0, 9, 0, 3));
+            }
+
+            @Override
+            public boolean isBorderOpaque() {
+              return true;
+            }
+          });
 
           UISettings settings = UISettings.getInstance();
           if (!settings.getCloseTabButtonOnTheRight()) {
@@ -1095,6 +1118,17 @@ public class JBTabsImpl extends JComponent
 
             addMouseListener(list);
           }
+
+          TabInfo selectedInfo = getSelectedInfo();
+          if (iconLabel != null) {
+            Icon icon = info.getIcon();
+            if (info != selectedInfo) {
+              icon = IconLoader.getTransparentIcon(icon, 0.7f);
+            }
+            iconLabel.setIcon(icon);
+          }
+
+          ClientProperty.put(component, SELECTED_KEY, info == selectedInfo ? true : null);
 
           component.invalidate();
         }
