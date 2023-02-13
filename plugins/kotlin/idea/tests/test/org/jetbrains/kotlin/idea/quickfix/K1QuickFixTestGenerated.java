@@ -2684,6 +2684,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("infix.kt")
+            public void testInfix() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/protected/infix.kt");
+            }
+
             @TestMetadata("protectedFunction.kt")
             public void testProtectedFunction() throws Exception {
                 runTest("testData/quickfix/callFromPublicInline/protected/protectedFunction.kt");
