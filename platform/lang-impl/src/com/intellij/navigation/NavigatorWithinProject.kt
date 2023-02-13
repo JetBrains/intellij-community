@@ -46,30 +46,31 @@ const val PROJECT_NAME_KEY = "project"
 const val ORIGIN_URL_KEY = "origin"
 const val SELECTION = "selection"
 
-suspend fun openProject(parameters: Map<String, String?>): Project? {
+suspend fun openProject(parameters: Map<String, String?>): ProtocolOpenProjectResult {
   val projectName = parameters.get(PROJECT_NAME_KEY)?.nullize(nullizeSpaces = true)
   val originUrl = parameters.get(ORIGIN_URL_KEY)?.nullize(nullizeSpaces = true)
   if (projectName == null && originUrl == null) {
-    throw IllegalArgumentException(IdeBundle.message("jb.protocol.navigate.missing.parameters"))
+    return ProtocolOpenProjectResult.Error(IdeBundle.message("jb.protocol.navigate.missing.parameters"))
   }
+
+  val noProjectResultError = ProtocolOpenProjectResult.Error(IdeBundle.message("jb.protocol.navigate.no.project"))
 
   ProjectUtil.getOpenProjects().find {
     projectName != null && it.name == projectName ||
     originUrl != null && areOriginsEqual(originUrl, getProjectOriginUrl(it.guessProjectDir()?.toNioPath()))
-  }?.let { return it }
-
+  }?.let { return ProtocolOpenProjectResult.Success(it) }
   val recentProjectAction = RecentProjectListActionProvider.getInstance().getActions().asSequence()
                               .filterIsInstance(ReopenProjectAction::class.java)
                               .find {
                                 projectName != null && it.projectName == projectName ||
                                 originUrl != null && areOriginsEqual(originUrl, getProjectOriginUrl(Path.of(it.projectPath)))
-                              } ?: return null
+                              } ?: return noProjectResultError
 
   val project = RecentProjectsManagerBase.getInstanceEx().openProject(Path.of(recentProjectAction.projectPath), OpenProjectTask())
-                ?: return null
+                ?: return noProjectResultError
   return withContext(Dispatchers.EDT) {
     if (project.isDisposed) {
-      null
+      noProjectResultError
     }
     else {
       val future = CompletableDeferred<Project>()
@@ -77,9 +78,15 @@ suspend fun openProject(parameters: Map<String, String?>): Project? {
         future.complete(project)
       }
       future.join()
-      project
+      ProtocolOpenProjectResult.Success(project)
     }
   }
+}
+
+sealed interface ProtocolOpenProjectResult {
+  class Success(val project: Project) : ProtocolOpenProjectResult
+
+  class Error(val message: String) : ProtocolOpenProjectResult
 }
 
 data class LocationInFile(val line: Int, val column: Int)

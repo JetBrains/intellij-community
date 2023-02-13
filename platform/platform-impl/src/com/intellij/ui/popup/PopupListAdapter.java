@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
@@ -129,6 +130,12 @@ final class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAda
   @Override
   public boolean checkResetFilter() {
     return myListWithFilter.resetFilter();
+  }
+
+  @Override
+  public void setFixedRendererSize(@NotNull Dimension dimension) {
+    myList.setFixedCellWidth(dimension.width);
+    myList.setFixedCellHeight(dimension.height);
   }
 
   private final class MyListWrapper extends JBScrollPane implements DataProvider {

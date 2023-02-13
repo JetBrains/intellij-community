@@ -4,7 +4,6 @@ package com.intellij.ide.actions;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -60,7 +59,7 @@ public class CopyAction extends AnAction implements DumbAware, LightEditCompatib
       consumer.accept(provider);
     }
     else {
-      Utils.getOrCreateUpdateSession(event).compute(provider, "update", updateThread, () -> {
+      event.getUpdateSession().compute(provider, "update", updateThread, () -> {
         consumer.accept(provider);
         return null;
       });

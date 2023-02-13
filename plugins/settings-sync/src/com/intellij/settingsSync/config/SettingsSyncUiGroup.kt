@@ -7,7 +7,7 @@ const val EDITOR_FONT_SUBCATEGORY_ID = "editorFont"
 internal class SettingsSyncUiGroup : SettingsSyncSubcategoryGroup {
 
   private val descriptors = listOf(SettingsSyncSubcategoryDescriptor(SettingsSyncBundle.message("settings.category.ui.editor.font"),
-                                                                     EDITOR_FONT_SUBCATEGORY_ID, false))
+                                                                     EDITOR_FONT_SUBCATEGORY_ID, false, false))
 
   override fun getDescriptors(): List<SettingsSyncSubcategoryDescriptor> {
     return descriptors

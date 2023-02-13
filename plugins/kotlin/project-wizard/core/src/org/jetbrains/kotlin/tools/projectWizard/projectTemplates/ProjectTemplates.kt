@@ -2,19 +2,26 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.projectTemplates
 
+import icons.KotlinBaseResourcesIcons
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.buildList
-import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.*
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetting
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSettingReference
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.*
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
+import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.ProjectTemplatesProvider
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.templates.*
 import org.jetbrains.kotlin.tools.projectWizard.templates.mpp.MobileMppTemplate
+import javax.swing.Icon
 
 abstract class ProjectTemplate : DisplayableSettingItem {
     abstract val title: String
@@ -23,6 +30,7 @@ abstract class ProjectTemplate : DisplayableSettingItem {
     abstract val suggestedProjectName: String
     abstract val projectKind: ProjectKind
     abstract val id: String
+    open val icon: Icon? = null
 
     private val setsDefaultValues: List<SettingWithValue<*, *>>
         get() = listOf(KotlinPlugin.projectKind.reference withValue projectKind)
@@ -72,7 +80,12 @@ abstract class ProjectTemplate : DisplayableSettingItem {
             ReactApplicationProjectTemplate,
             NodeJsApplicationProjectTemplate,
             ConsoleApplicationProjectTemplateWithSample
-        )
+        ) + extensionTemplates
+
+        private val extensionTemplates: List<ProjectTemplate>
+            get() = mutableListOf<ProjectTemplate>().also { list ->
+                ProjectTemplatesProvider.EP_NAME.extensionsIfPointIsRegistered.forEach { list.addAll(it.getTemplates()) }
+            }
 
         fun byId(id: String): ProjectTemplate? = ALL.firstOrNull {
             it.id.equals(id, ignoreCase = true)
@@ -123,12 +136,17 @@ open class ConsoleApplicationProjectTemplate(private val addSampleCode: Boolean)
         )
 }
 
-object ConsoleApplicationProjectTemplateWithSample : ConsoleApplicationProjectTemplate(addSampleCode = true)
+object ConsoleApplicationProjectTemplateWithSample : ConsoleApplicationProjectTemplate(addSampleCode = true) {
+    override val icon: Icon
+        get() = KotlinIcons.Wizard.CONSOLE
+}
 
 object MultiplatformLibraryProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.mpp.lib.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.mpp.lib.description")
     override val id = "multiplatformLibrary"
+    override val icon: Icon
+        get() = KotlinIcons.Wizard.MULTIPLATFORM_LIBRARY
 
     @NonNls
     override val suggestedProjectName = "myMultiplatformLibrary"
@@ -163,6 +181,8 @@ object FullStackWebApplicationProjectTemplate : ProjectTemplate() {
     override val title: String = KotlinNewProjectWizardBundle.message("project.template.full.stack.title")
     override val description: String = KotlinNewProjectWizardBundle.message("project.template.full.stack.description")
     override val id = "fullStackWebApplication"
+    override val icon: Icon
+        get() = KotlinIcons.Wizard.WEB
 
     @NonNls
     override val suggestedProjectName: String = "myFullStackApplication"
@@ -190,6 +210,8 @@ object NativeApplicationProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.native.console.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.native.console.description")
     override val id = "nativeApplication"
+    override val icon: Icon
+        get() = KotlinIcons.Wizard.NATIVE
 
     @NonNls
     override val suggestedProjectName = "myNativeConsoleApp"
@@ -218,6 +240,8 @@ object FrontendApplicationProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.browser.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.browser.description")
     override val id = "frontendApplication"
+    override val icon: Icon
+        get() = KotlinIcons.Wizard.JS
 
     @NonNls
     override val suggestedProjectName = "myKotlinJsApplication"
@@ -244,6 +268,8 @@ object ReactApplicationProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.react.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.react.description")
     override val id = "reactApplication"
+    override val icon: Icon
+        get() = KotlinIcons.Wizard.REACT_JS
 
     @NonNls
     override val suggestedProjectName = "myKotlinJsApplication"
@@ -269,6 +295,8 @@ object ReactApplicationProjectTemplate : ProjectTemplate() {
 abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.mpp.mobile.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.mpp.mobile.description")
+    override val icon: Icon
+        get() = KotlinBaseResourcesIcons.Wizard.MultiplatformMobile
 
     @NonNls
     override val suggestedProjectName = "myIOSApplication"
@@ -281,10 +309,12 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
             null,
             permittedTemplateIds = emptySet(),
             sourceSets = createDefaultSourceSets(),
-            subModules = emptyList()
+            subModules = emptyList(),
+            canBeRemoved = false
         )
         val shared = MultiplatformModule(
             "shared",
+            canBeRemoved = false,
             template = MobileMppTemplate(),
             targets = listOf(
                 ModuleType.common.createDefaultTarget(),
@@ -293,7 +323,8 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
                     AndroidTargetConfigurator,
                     null,
                     sourceSets = createDefaultSourceSets(),
-                    subModules = emptyList()
+                    subModules = emptyList(),
+                    canBeRemoved = false
                 ).withConfiguratorSettings<AndroidTargetConfigurator> {
                     configurator.androidPlugin withValue AndroidGradlePlugin.LIBRARY
                 },
@@ -311,7 +342,8 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
                             dependsOnModules = listOf(iosModule),
                         )
                     },
-                    subModules = emptyList()
+                    subModules = emptyList(),
+                    canBeRemoved = false
                 ),
             )
         )
@@ -330,6 +362,8 @@ object NodeJsApplicationProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.nodejs.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.nodejs.description")
     override val id = "nodejsApplication"
+    override val icon: Icon
+        get() = KotlinIcons.Wizard.NODE_JS
 
     @NonNls
     override val suggestedProjectName = "myKotlinJsApplication"

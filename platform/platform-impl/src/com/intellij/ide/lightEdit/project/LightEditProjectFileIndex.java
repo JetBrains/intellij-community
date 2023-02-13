@@ -165,4 +165,9 @@ class LightEditProjectFileIndex implements ProjectFileIndex {
   public boolean isInGeneratedSources(@NotNull VirtualFile file) {
     return false;
   }
+
+  @Override
+  public @Nullable String getUnloadedModuleNameForFile(@NotNull VirtualFile fileOrDir) {
+    return null;
+  }
 }

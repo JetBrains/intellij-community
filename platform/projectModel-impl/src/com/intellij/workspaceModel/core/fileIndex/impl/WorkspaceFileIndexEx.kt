@@ -67,16 +67,6 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    */
   fun ensureInitialized()
 
-  /**
-   * This is a temporary method introduced to support unloading of modules until IDEA-298694 is implemented.
-   */
-  fun unloadModules(entities: List<ModuleEntity>)
-
-  /**
-   * This is a temporary method introduced to support loading back unloaded modules until IDEA-298694 is implemented.
-   */
-  fun loadModules(entities: List<ModuleEntity>)
-
   companion object {
     @JvmField
     val IS_ENABLED: Boolean = Registry.`is`("platform.projectModel.workspace.model.file.index")

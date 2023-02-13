@@ -10,9 +10,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 /**
  * @return corresponding [com.intellij.openapi.module.Module] or null if module is unloaded
@@ -27,6 +25,13 @@ fun ModuleEntity.findModule(snapshot: EntityStorage): ModuleBridge? {
  */
 fun ModuleEntity.isModuleUnloaded(snapshot: EntityStorage): Boolean {
   return this.findModule(snapshot) == null
+}
+
+/**
+ * Returns all module-level libraries defined in this module.
+ */
+fun ModuleEntity.getModuleLevelLibraries(snapshot: EntityStorage): Sequence<LibraryEntity> {
+  return snapshot.referrers(symbolicId, LibraryEntity::class.java)
 }
 
 /**

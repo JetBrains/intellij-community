@@ -158,4 +158,40 @@ class GradleConfigurationAvoidanceInspectionTest : GradleCodeInsightTestCase() {
                     "tasks.register('abc')", "Replace")
     }
   }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNoUnnecessaryExpansion(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testIntention("1.with { tasks.with<caret>Type(Jar) {}; 1 }",
+                    "1.with { tasks.withType(Jar).configureEach {}; 1 }", "Add 'configureEach'")
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testPreserveType1(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testIntention("tas<caret>k('foo', type: Jar) {}",
+                    "tasks.register('foo', Jar) {}", "Use 'tasks.register'")
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testPreserveType2(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testIntention("ta<caret>sk foo(type: Jar) {}",
+                    "tasks.register('foo', Jar) {}", "Use 'tasks.register'")
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testDependsOn(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testIntention("ta<caret>sk foo (type: Jar, dependsOn: javaToolchains) {}",
+                    "tasks.register('foo', Jar) { dependsOn javaToolchains }", "Use 'tasks.register'")
+    }
+  }
 }

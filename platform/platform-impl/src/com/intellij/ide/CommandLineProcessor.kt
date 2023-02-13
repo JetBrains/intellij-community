@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -60,7 +61,6 @@ object CommandLineProcessor {
   @VisibleForTesting
   @ApiStatus.Internal
   suspend fun doOpenFileOrProject(file: Path, shouldWait: Boolean): CommandLineProcessorResult {
-    var project: Project? = null
     if (!LightEditUtil.isForceOpenInLightEditMode()) {
       val options = OpenProjectTask {
         // do not check for .ipr files in the specified directory
@@ -68,17 +68,21 @@ object CommandLineProcessor {
         preventIprLookup = true
         configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir = file, projectToClose = null)
       }
-      project = ProjectUtil.openOrImportAsync(file, options)
+      try {
+        val project = ProjectUtil.openOrImportAsync(file, options)
+        if (project != null) {
+          return CommandLineProcessorResult(
+            project = project,
+            future = if (shouldWait) CommandLineWaitingManager.getInstance().addHookForProject(project).asDeferred() else OK_FUTURE,
+          )
+        }
+      }
+      catch (e: ProcessCanceledException) {
+        return createError(IdeBundle.message("dialog.message.open.cancelled"))
+      }
     }
-    return if (project == null) {
-      doOpenFile(ioFile = file, line = -1, column = -1, tempProject = false, shouldWait = shouldWait)
-    }
-    else {
-      CommandLineProcessorResult(
-        project = project,
-        future = if (shouldWait) CommandLineWaitingManager.getInstance().addHookForProject(project).asDeferred() else OK_FUTURE,
-      )
-    }
+
+    return doOpenFile(ioFile = file, line = -1, column = -1, tempProject = false, shouldWait = shouldWait)
   }
 
   private suspend fun doOpenFile(ioFile: Path, line: Int, column: Int, tempProject: Boolean, shouldWait: Boolean): CommandLineProcessorResult {

@@ -54,9 +54,7 @@ public class IgnoreGroupHelperAction {
   @Nullable
   public static IgnoreGroupHelperAction createFor(@NotNull AnActionEvent e) {
     UpdateSession session = e.getUpdateSession();
-    Optional<IgnoreGroupHelperAction> helper = session != null
-                                               ? session.sharedData(KEY, () -> tryCreateFor(e))
-                                               : tryCreateFor(e);
+    Optional<IgnoreGroupHelperAction> helper = session.sharedData(KEY, () -> tryCreateFor(e));
     return helper.orElse(null);
   }
 

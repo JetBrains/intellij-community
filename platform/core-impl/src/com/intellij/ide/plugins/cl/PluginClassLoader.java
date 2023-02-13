@@ -77,7 +77,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       "kotlin.coroutines.AbstractCoroutineContextKey",
       "kotlin.coroutines.jvm.internal.ContinuationImpl", // IDEA-295189
       "kotlin.coroutines.jvm.internal.BaseContinuationImpl", // IDEA-295189
-      "kotlin.coroutines.jvm.internal.CoroutineStackFrame" // IDEA-295189
+      "kotlin.coroutines.jvm.internal.CoroutineStackFrame", // IDEA-295189
+      "kotlin.time.Duration",
+      "kotlin.time.Duration$Companion"
     ));
     String classes = System.getProperty("idea.kotlin.classes.used.in.signatures");
     if (classes != null) {

@@ -152,18 +152,16 @@ private fun findContextInDirOrFileCached(kind: ContextKind,
     .getProximityPerContextFromExtensionsMap(kind)
 
   val proximityPerContextFromExtensions = WEB_SYMBOLS_CONTEXT_EP.allOf(kind).asSequence()
-    .map { it.key }
-    .map { name ->
-      Pair(name,
-           proximityPerContextFromExtensionsMap.computeIfAbsent(name) {
-             CachedValuesManager.getManager(project).createCachedValue {
-               webContextProximityFromProviders(kind, name, project, dir)
-             }
-           }.value
-      )
+    .mapNotNull {
+      val name = it.key
+      val proximity = proximityPerContextFromExtensionsMap.computeIfAbsent(name) {
+        CachedValuesManager.getManager(project).createCachedValue {
+          webContextProximityFromProviders(kind, name, project, dir)
+        }
+      }.value
+      proximity?.let { Pair(name, proximity) }
     }
-    .filter { it.second != null }
-    .toMap()
+    .toMap(HashMap())
 
   return proximityPerContextFromConfig.keys
     .asSequence().plus(proximityPerContextFromExtensions.keys)
@@ -339,7 +337,7 @@ private fun webContextProximityFromProviders(kind: ContextKind,
   return CachedValueProvider.Result(proximity, *dependencies.toTypedArray())
 }
 
-private const val emptyContext = "%EMPTY%"
+private const val EMPTY_CONTEXT = "%EMPTY%"
 
 private fun withContextChangeCheck(kind: ContextKind,
                                    project: Project,
@@ -352,9 +350,9 @@ private fun withContextChangeCheck(kind: ContextKind,
   val stateMap = project.getUserData(PREV_CONTEXT_KEY)
                  ?: (project as UserDataHolderEx).putUserDataIfAbsent(PREV_CONTEXT_KEY, ContainerUtil.createConcurrentWeakMap())
   val kindMap = stateMap.computeIfAbsent(contextFile) { ConcurrentHashMap() }
-  val prevState = kindMap.put(kind, currentState ?: emptyContext)
-  if (prevState != null && prevState != (currentState ?: emptyContext)) {
-    reloadProject(kind, prevState.takeIf { it != emptyContext } ?: "none", currentState ?: "none", project, contextFile)
+  val prevState = kindMap.put(kind, currentState ?: EMPTY_CONTEXT)
+  if (prevState != null && prevState != (currentState ?: EMPTY_CONTEXT)) {
+    reloadProject(kind, prevState.takeIf { it != EMPTY_CONTEXT } ?: "none", currentState ?: "none", project, contextFile)
   }
   return currentState
 }

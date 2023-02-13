@@ -225,7 +225,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   }
 
   public @NotNull JBIterable<VirtualFile> iterateFilesUnder() {
-    return traverse().filter(VirtualFile.class).filter(VirtualFile::isValid);
+    return traverseObjectsUnder().filter(VirtualFile.class).filter(VirtualFile::isValid);
   }
 
   public @NotNull JBIterable<FilePath> iterateFilePathsUnder() {

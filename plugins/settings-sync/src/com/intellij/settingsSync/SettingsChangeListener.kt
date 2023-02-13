@@ -34,6 +34,8 @@ internal sealed class SyncSettingsEvent {
    */
   object DeletedOnCloud: SyncSettingsEvent()
 
+  class CrossIdeSyncStateChanged(val isCrossIdeSyncEnabled: Boolean) : SyncSettingsEvent()
+
   override fun toString(): String {
     return javaClass.simpleName
   }

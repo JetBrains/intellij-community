@@ -5,12 +5,22 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil
 
 internal fun PsiElement.isReturnTypeValueUsed() : Boolean {
   val containingBlock = parent
-  return !(containingBlock is GrOpenBlock || containingBlock is GroovyFile)
+  if (containingBlock is GroovyFile) {
+    // any expression on the top-level is unused
+    return false
+  }
+  if (containingBlock is GrStatementOwner && this is GrExpression && !ControlFlowBuilderUtil.isCertainlyReturnStatement(this)) {
+    // only the last statement in the block is used
+    return false
+  }
+  return true
 }
 
 /**

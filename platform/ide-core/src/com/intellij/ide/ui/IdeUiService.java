@@ -66,6 +66,9 @@ public class IdeUiService {
     return DataContext.EMPTY_CONTEXT;
   }
 
+  public void initUpdateSession(@NotNull AnActionEvent event) {
+  }
+
   public Component getComponentFromRecentMouseEvent() {
     return null;
   }

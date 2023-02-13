@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.formatter;
 
-import com.intellij.util.text.CharArrayUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -26,7 +26,6 @@ import java.util.Set;
  * @author Denis Zhdanov
  */
 public class StaticTextWhiteSpaceDefinitionStrategy extends AbstractWhiteSpaceFormattingStrategy {
-
   private final Set<CharSequence> myWhiteSpaces = new HashSet<>();
 
   public StaticTextWhiteSpaceDefinitionStrategy(CharSequence @NotNull ... whiteSpaces) {
@@ -36,7 +35,7 @@ public class StaticTextWhiteSpaceDefinitionStrategy extends AbstractWhiteSpaceFo
   @Override
   public int check(@NotNull CharSequence text, int start, int end) {
     for (CharSequence whiteSpace : myWhiteSpaces) {
-      if (CharArrayUtil.indexOf(text, whiteSpace, start, end) == start) {
+      if (end - start >= whiteSpace.length() && Strings.startsWith(text, start, whiteSpace)) {
         return start + whiteSpace.length();
       }
     }

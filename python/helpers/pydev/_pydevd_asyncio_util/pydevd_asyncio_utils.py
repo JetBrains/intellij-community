@@ -1,6 +1,7 @@
 #  Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 from _pydevd_bundle.pydevd_constants import IS_ASYNCIO_DEBUGGER_ENV, IS_ASYNCIO_REPL
+from _pydevd_bundle.pydevd_exec2 import Exec
 from _pydev_bundle.pydev_log import warn
 
 eval_async_expression_in_context = None
@@ -89,6 +90,7 @@ if IS_ASYNCIO_DEBUGGER_ENV or IS_ASYNCIO_REPL:
                     return exception_handler(expression, locals)
             result = exec_async_code(compiled, global_names)
             if compilation_flag == EXEC_SYMBOL:
+                Exec(expression, global_names, frame.f_locals)
                 pydevd_save_locals.save_locals(frame)
             return result
         except (OverflowError, SyntaxError, ValueError):

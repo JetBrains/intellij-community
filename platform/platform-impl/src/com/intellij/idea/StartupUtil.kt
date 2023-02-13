@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment", "KDocUnresolvedReference")
 
@@ -181,8 +181,12 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   val showEuaIfNeededJob = showEuaIfNeeded(euaDocumentDeferred, initLafJob)
 
-  shellEnvDeferred = async(CoroutineName("environment loading") + Dispatchers.IO) {
-    EnvironmentUtil.loadEnvironment()
+  shellEnvDeferred = async(Dispatchers.IO) {
+    // EnvironmentUtil wants logger
+    logDeferred.join()
+    runActivity("environment loading") {
+      EnvironmentUtil.loadEnvironment()
+    }
   }
 
   if (!isHeadless) {
@@ -474,6 +478,8 @@ private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Th
 
       @Suppress("SpellCheckingInspection")
       System.setProperty("sun.awt.noerasebackground", "true")
+      // mute system Cmd+`/Cmd+Shift+` shortcuts on macOS to avoid a conflict with corresponding platform actions (JBR-specific option)
+      System.setProperty("apple.awt.captureNextAppWinKey", "true")
 
       runActivity("awt toolkit creating") {
         Toolkit.getDefaultToolkit()

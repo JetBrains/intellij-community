@@ -16,11 +16,9 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 abstract class USerializableInspectionBase(vararg hint: Class<out UElement>) : AbstractBaseUastLocalInspectionTool(*hint) {
-  @JvmField
   var ignoreAnonymousInnerClasses = false
 
-  @JvmField
-  var superClassString: @NonNls String = "java.awt.Component"
+  private var superClassString: @NonNls String = "java.awt.Component"
 
   private val superClassList: MutableList<String> = mutableListOf()
 

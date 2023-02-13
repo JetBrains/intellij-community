@@ -3,10 +3,10 @@ package com.intellij.openapi.module
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 interface AutomaticModuleUnloader {
-  fun processNewModules(currentModules: Set<String>, storage: EntityStorage)
+  fun processNewModules(currentModules: Set<String>, builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage)
   fun setLoadedModules(modules: List<String>)
 
   companion object {
@@ -15,7 +15,7 @@ interface AutomaticModuleUnloader {
 }
 
 internal class DummyAutomaticModuleUnloader : AutomaticModuleUnloader {
-  override fun processNewModules(currentModules: Set<String>, storage: EntityStorage) {}
+  override fun processNewModules(currentModules: Set<String>, builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage) {}
 
   override fun setLoadedModules(modules: List<String>) {}
 }

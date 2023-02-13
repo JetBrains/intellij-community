@@ -3,8 +3,9 @@ package com.intellij.compiler.progress;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.impl.ExitStatus;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -234,17 +235,38 @@ public final class CompilerTask extends Task.Backgroundable {
     }
     else if (CompilerMessageCategory.ERROR.equals(messageCategory)) {
       myErrorCount += 1;
-      ReadAction.run(() -> informWolf(message));
+      informWolf(message);
     }
     myBuildViewService.addMessage(mySessionId, message);
   }
 
   private void informWolf(final CompilerMessage message) {
-    if (myProject.isDisposed()) return;
-    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-    VirtualFile file = getVirtualFile(message);
-    if (file != null) {
-      wolf.queue(file);
+    if (myProject == null) {
+      return;
+    }
+
+    final Runnable task = () -> {
+      if (myProject.isDisposed()) {
+        return;
+      }
+      VirtualFile file = message.getVirtualFile();
+      if (file == null) {
+        Navigatable navigatable = message.getNavigatable();
+        if (navigatable instanceof OpenFileDescriptor) {
+          file = ((OpenFileDescriptor)navigatable).getFile();
+        }
+      }
+      if (file != null) {
+        WolfTheProblemSolver.getInstance(myProject).queue(file);
+      }
+    };
+
+    final Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
+      app.executeOnPooledThread(task);
+    }
+    else {
+      task.run();
     }
   }
 
@@ -267,17 +289,6 @@ public final class CompilerTask extends Task.Backgroundable {
   @Override
   public boolean isHeadless() {
     return myHeadlessMode && !myForceAsyncExecution;
-  }
-
-  private static VirtualFile getVirtualFile(final CompilerMessage message) {
-    VirtualFile virtualFile = message.getVirtualFile();
-    if (virtualFile == null) {
-      Navigatable navigatable = message.getNavigatable();
-      if (navigatable instanceof OpenFileDescriptor) {
-        virtualFile = ((OpenFileDescriptor)navigatable).getFile();
-      }
-    }
-    return virtualFile;
   }
 
   public static TextRange getTextRange(final CompilerMessage message) {

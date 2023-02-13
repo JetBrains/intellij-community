@@ -22,46 +22,37 @@ class KotlinUsageSimilarityFeaturesProvider : UsageSimilarityFeaturesProvider {
         if (!Registry.`is`("similarity.find.usages.kotlin.clustering.enable")) {
             return features
         }
+
         val context = getContext(usage)
         if (context is KtParameter || context is KtFunction) {
-            val function = context.parentOfType<KtFunction>(withSelf = true)
-            if (function is KtFunction) {
-                features.addAll(collectFeaturesForFunctionSignature(function, context))
+            context.parentOfType<KtFunction>(withSelf = true)?.let {
+                features.addAll(collectFeaturesForFunctionSignature(it, context))
             }
         } else if (context != null) {
             features.addAll(KotlinSimilarityFeaturesExtractor(usage, context).getFeatures())
         }
+
         return features
     }
 
-    private fun collectFeaturesForFunctionSignature(function: KtFunction, context: PsiElement): Bag {
-        val features = Bag()
-        features.add("OVERRIDE: ${function.hasModifier(KtTokens.OVERRIDE_KEYWORD)}")
-        features.add("NAME: ${function.name}")
-        features.add("FUNCTION_CLASS: ${function::class}")
-        features.add("RETURN_TYPE: ${toFeature(function.typeReference)}")
-        features.add("RECEIVER_TYPE_REFERENCE: ${function.receiverTypeReference != null}")
+    private fun collectFeaturesForFunctionSignature(function: KtFunction, context: PsiElement): Bag = Bag().apply {
+        add("OVERRIDE: ${function.hasModifier(KtTokens.OVERRIDE_KEYWORD)}")
+        add("NAME: ${function.name}")
+        add("FUNCTION_CLASS: ${function::class}")
+        add("RETURN_TYPE: ${toFeature(function.typeReference)}")
+        add("RECEIVER_TYPE_REFERENCE: ${function.receiverTypeReference != null}")
         function.valueParameters.forEach {
-            features.add(
-                "PARAMETER_TYPE: ${
-                    if (it == context) "USAGE: " + toFeature(it.typeReference) else toFeature(it.typeReference)
-                }"
-            )
+            add("PARAMETER_TYPE: ${(if (it == context) "USAGE: " else "") + toFeature(it.typeReference)}")
         }
-        return features
     }
 
-    private fun toFeature(typeReference: KtTypeReference?): String? {
-        return typeReference?.text?.filterNot { it.isWhitespace() }
-    }
+    private fun toFeature(typeReference: KtTypeReference?): String? = typeReference?.text?.filterNot { it.isWhitespace() }
 
-    fun getContext(element: PsiElement): PsiElement? {
-        return PsiTreeUtil.findFirstParent(
-            element,
-            false,
-            Condition { e: PsiElement? ->
-                e is KtStatementExpression || e?.parent is KtBlockExpression || e is KtImportDirective
-            },
-        )
-    }
+    fun getContext(element: PsiElement): PsiElement? = PsiTreeUtil.findFirstParent(
+        element,
+        false,
+        Condition { e: PsiElement? ->
+            e is KtStatementExpression || e?.parent is KtBlockExpression || e is KtImportDirective
+        },
+    )
 }

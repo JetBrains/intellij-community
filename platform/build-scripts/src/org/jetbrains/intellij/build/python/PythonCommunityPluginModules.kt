@@ -63,7 +63,7 @@ object PythonCommunityPluginModules {
               else -> true
             }
           },
-          fileFilter = { path -> !path.endsWith("setup.py") }
+          fileFilter = { path -> !path.endsWith("setup.py") && !path.endsWith("conftest.py") }
         )
       }
       // required for "Python Console" in intellij.python.community.impl module

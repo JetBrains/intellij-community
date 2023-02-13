@@ -139,7 +139,6 @@ public final class InspectionsConfigTreeTable extends TreeTable {
 
     registerKeyboardAction(__ -> {
       model.swapInspectionEnableState();
-      updateUI();
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
 
     getEmptyText().setText(AnalysisBundle.message("inspections.settings.empty.text"));

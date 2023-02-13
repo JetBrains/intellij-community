@@ -824,7 +824,9 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
   @Override
   public void revalidate() {
-    revalidate(myTracker);
+    if (!myDisposed) {
+      revalidate(myTracker);
+    }
   }
 
   @Override

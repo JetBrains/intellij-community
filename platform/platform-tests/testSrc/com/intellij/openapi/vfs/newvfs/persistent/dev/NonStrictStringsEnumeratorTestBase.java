@@ -5,11 +5,17 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.DataEnumerator;
+import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
+import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -18,6 +24,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public abstract class NonStrictStringsEnumeratorTestBase<T extends ScannableDataEnumeratorEx<String>> {
 
@@ -38,7 +45,7 @@ public abstract class NonStrictStringsEnumeratorTestBase<T extends ScannableData
   public void setUp() throws Exception {
     storageFile = temporaryFolder.newFile().toPath();
     enumerator = openEnumerator(storageFile);
-    manyValues = generateValues(ENOUGH_VALUES);
+    manyValues = generateValues(ENOUGH_VALUES, 1, 50);
   }
 
   @After
@@ -195,7 +202,6 @@ public abstract class NonStrictStringsEnumeratorTestBase<T extends ScannableData
     );
   }
 
-
   protected void closeEnumerator(final DataEnumerator<String> enumerator) throws Exception {
     if (enumerator instanceof AutoCloseable) {
       ((AutoCloseable)enumerator).close();
@@ -204,17 +210,17 @@ public abstract class NonStrictStringsEnumeratorTestBase<T extends ScannableData
 
   protected abstract T openEnumerator(final @NotNull Path storagePath) throws IOException;
 
-  private static String[] generateValues(final int size) {
+  protected static String @NotNull [] generateValues(int poolSize, int minStringSize, int maxStringSize) {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     return Stream.generate(() -> {
-        final int length = rnd.nextInt(1, 50);
+        final int length = rnd.nextInt(minStringSize, maxStringSize);
         final char[] chars = new char[length];
         for (int i = 0; i < chars.length; i++) {
           chars[i] = Character.forDigit(rnd.nextInt(0, 36), 36);
         }
         return new String(chars);
       })
-      .limit(size)
+      .limit(poolSize)
       .toArray(String[]::new);
   }
 }

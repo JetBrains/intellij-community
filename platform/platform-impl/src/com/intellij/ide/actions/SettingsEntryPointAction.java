@@ -115,7 +115,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
       }
       else {
         String text = child.getTemplateText();
-        if (text != null && !(text.endsWith("...") || text.endsWith("…") )) {
+        if (text != null && !(text.endsWith("...") || text.endsWith("…")) && !(child instanceof NoDots)) {
           AnActionButton button = new AnActionButton.AnActionButtonWrapper(child.getTemplatePresentation(), child) {
             @Override
             public void updateButton(@NotNull AnActionEvent e) {
@@ -224,6 +224,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
      * @return A customized icon using {@link BadgeIconSupplier} or an alternative (custom) icon.
      */
     @Nullable Icon getCustomIcon(@NotNull BadgeIconSupplier supplier);
+  }
+
+  /**
+   * Marker interface to suppress automatic dots "..." addition after action name.
+   */
+  public interface NoDots {
   }
 
   private static UISettingsListener mySettingsListener;

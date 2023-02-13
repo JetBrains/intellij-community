@@ -54,7 +54,8 @@ internal class SettingsSyncPluginManager : Disposable {
   }
 
   private fun firePluginsStateChangeEvent(pluginsState: SettingsSyncPluginsState) {
-    val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()), emptySet(), pluginsState)
+    val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()),
+                                    emptySet(), pluginsState, emptySet())
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
   }
 
@@ -86,7 +87,6 @@ internal class SettingsSyncPluginManager : Disposable {
 
   private fun getLineIfNotEmpty(prefix: String, plugins: Collection<*>) = if (plugins.isNotEmpty()) "$prefix: $plugins\n" else ""
   private fun getLineIfNotEmpty(prefix: String, plugins: Map<*, *>) = if (plugins.isNotEmpty()) "$prefix: $plugins\n" else ""
-  private fun enabledOrDisabled(value: Boolean?) = if (value == null) "null" else if (value) "enabled" else "disabled"
 
   private fun getPluginData(plugin: IdeaPluginDescriptor, explicitEnabled: Boolean? = null): PluginData {
     val isEnabled = if (explicitEnabled != null) {

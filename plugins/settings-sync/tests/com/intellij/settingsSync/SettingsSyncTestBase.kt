@@ -65,7 +65,7 @@ internal abstract class SettingsSyncTestBase {
     val serverState = remoteCommunicator.checkServerState()
     if (serverState != ServerState.FileNotExists) {
       LOG.warn("Server state: $serverState")
-      remoteCommunicator.delete()
+      remoteCommunicator.deleteAllFiles()
     }
   }
 
@@ -75,7 +75,7 @@ internal abstract class SettingsSyncTestBase {
       bridge.waitForAllExecuted()
     }
 
-    remoteCommunicator.delete()
+    remoteCommunicator.deleteAllFiles()
   }
 
   protected fun assertSettingsPushed(build: SettingsSnapshotBuilder.() -> Unit) {

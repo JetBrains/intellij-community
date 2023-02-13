@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.actions.SuppressForClassFix;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.ide.errorTreeView.*;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -112,8 +111,8 @@ public final class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       if (project == null) {
         return;
       }
-      final ErrorTreeElement errorTreeElement =
-        Utils.getOrCreateUpdateSession(e).compute(this, "getSelectedErrorTreeElement", ActionUpdateThread.EDT, CompilerErrorTreeView.this::getSelectedErrorTreeElement);
+      ErrorTreeElement errorTreeElement = e.getUpdateSession()
+        .compute(this, "getSelectedErrorTreeElement", ActionUpdateThread.EDT, CompilerErrorTreeView.this::getSelectedErrorTreeElement);
 
       if (errorTreeElement instanceof NavigatableMessageElement) {
         final NavigatableMessageElement messageElement = (NavigatableMessageElement)errorTreeElement;

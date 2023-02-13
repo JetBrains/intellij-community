@@ -25,11 +25,10 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
       return IdeBundle.message("jb.protocol.navigate.target", target)
     }
 
-    val project = try {
-      openProject(parameters) ?: return IdeBundle.message("jb.protocol.navigate.no.project")
-    }
-    catch (e: Throwable) {
-      return "${e.javaClass.name}: ${e.message}"
+    val openProjectResult = openProject(parameters)
+    val project = when(openProjectResult) {
+      is ProtocolOpenProjectResult.Success -> openProjectResult.project
+      is ProtocolOpenProjectResult.Error -> return openProjectResult.message
     }
 
     DumbService.getInstance(project).runWhenSmart {

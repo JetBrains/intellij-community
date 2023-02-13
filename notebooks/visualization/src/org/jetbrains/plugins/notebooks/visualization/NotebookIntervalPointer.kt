@@ -15,8 +15,6 @@ interface NotebookIntervalPointer {
   fun get(): NotebookCellLines.Interval?
 }
 
-private val key = Key.create<NotebookIntervalPointerFactory>(NotebookIntervalPointerFactory::class.java.name)
-
 interface NotebookIntervalPointerFactory {
   /**
    * Interval should be valid, return pointer to it.
@@ -30,6 +28,9 @@ interface NotebookIntervalPointerFactory {
    */
   fun modifyPointers(changes: Iterable<Change>)
 
+  /**
+   * listener shouldn't throw exceptions
+   */
   interface ChangeListener : EventListener {
     fun onUpdated(event: NotebookIntervalPointersEvent)
   }
@@ -37,6 +38,8 @@ interface NotebookIntervalPointerFactory {
   val changeListeners: EventDispatcher<ChangeListener>
 
   companion object {
+    internal val key = Key.create<NotebookIntervalPointerFactory>(NotebookIntervalPointerFactory::class.java.name)
+
     fun get(editor: Editor): NotebookIntervalPointerFactory =
       getOrNull(editor)!!
 

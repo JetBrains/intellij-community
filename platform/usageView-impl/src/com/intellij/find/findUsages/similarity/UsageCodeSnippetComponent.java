@@ -15,6 +15,8 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.EditorTextFieldCellRenderer;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ui.JBUI;
@@ -61,6 +63,9 @@ class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.SimpleWithGu
     Document doc = docManager.getDocument(InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element));
     if (doc == null) return;
     TextRange selectionRange = UsagePreviewPanel.calculateHighlightingRangeForUsage(element, myInfoRange);
+    if (element instanceof PsiNamedElement && !(element instanceof PsiFile)) {
+      selectionRange = UsagePreviewPanel.getNameElementTextRange(element);
+    }
     selectionRange = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, selectionRange);
     int usageStartLineNumber = doc.getLineNumber(selectionRange.getStartOffset());
     int usageEndLineNumber = doc.getLineNumber(selectionRange.getEndOffset());

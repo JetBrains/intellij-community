@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -17,6 +17,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -148,7 +149,13 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     setFont(UIManager.getFont("TextField.font"));
     addHierarchyListener(e -> {
       if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && e.getChanged().isShowing()) {
-        if (myEditor == null) initEditor();
+        if (myEditor == null) {
+          if (project != null && project.isDisposed()) {
+            Logger.getInstance(EditorTextField.class).error("Requested to create an editor for a disposed project " + project.getName());
+          } else {
+            initEditor();
+          }
+        }
       }
     });
   }

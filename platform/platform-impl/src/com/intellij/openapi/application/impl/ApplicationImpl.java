@@ -386,6 +386,31 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     CompletableFuture<@NotNull ProgressWindow> progress =
       createProgressWindowAsyncIfNeeded(progressTitle, canBeCanceled, shouldShowModalWindow, project, parentComponent, cancelText);
 
+    // Event pumping (`ProgressRunner.modal()`) is not correct without entering the modality (`shouldShowModalWindow == false`),
+    // because one of the events might show a dialog scheduled in outer modality,
+    // which will start another nested loop and prevent the pumping from exit until the dialog closed (IDEA-307428):
+    // - modal progress: `enterModal`;
+    // - modal progress: schedule modal dialog to show after 300ms;
+    // - modal progress: `pumpEventsForHierarchy`;
+    // - one of events runs `isConditionalModal() && !shouldStartInBackground()` task;
+    // - on EDT such tasks are executed synchronously;
+    // - task starts nested `pumpEventsForHierarchy` without entering the modality;
+    // - nested `pumpEventsForHierarchy` shows scheduled modal progress dialog;
+    // - nested `pumpEventsForHierarchy` cannot finish because scheduled modal progress dialog runs nested event loop;
+    // - modal dialog cannot finish until task is finished because it's synchronous.
+    //
+    // Applying `ProgressRunner.modal()` only when `shouldShowModalWindow == true` is a correct solution,
+    // but it forces the execution of non-modal synchronous tasks directly on the EDT
+    // (see com.intellij.openapi.progress.impl.ProgressRunner.checkIfForceDirectExecNeeded),
+    // and clients are not ready for this, they still expect the process Runnable to be executed on a BGT.
+    //
+    // On the other hand, synchronous execution of background tasks on EDT happens for headless tasks,
+    // and it should still pump the EDT without entering the modality state (IDEA-241785).
+    // In tests and is headless mode, there are is modal progress dialog, so IDEA-307428 should not be possible in tests.
+    //
+    // Instead, IDEA-307428 is fixed by ensuring the new modality state for non-headless synchronous EDT tasks
+    // (see `CoreProgressManager.runProcessWithProgressSynchronously(Task)`),
+    // so that the scheduled outer modal progress dialog cannot be shown from inside the nested `pumpEventsForHierarchy`.
     ProgressRunner<?> progressRunner = new ProgressRunner<>(process)
       .sync()
       .onThread(ProgressRunner.ThreadToUse.POOLED)

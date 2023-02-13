@@ -82,6 +82,8 @@ import java.util.function.Predicate;
 public class InspectionApplicationBase implements CommandLineInspectionProgressReporter {
   private static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
 
+  public static final String PROJECT_STRUCTURE_DIR = "projectStructure";
+
   public InspectionToolCmdlineOptionHelpProvider myHelpProvider;
   public String myProjectPath;
   public String myOutPath;
@@ -494,7 +496,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
                                 results);
         InspectResultsConsumer.runConsumers(context.getTools(), results, project);
         if (myOutPath != null) {
-          reportConverter.projectData(project, Paths.get(myOutPath).resolve("projectStructure"));
+          reportConverter.projectData(project, Paths.get(myOutPath).resolve(PROJECT_STRUCTURE_DIR));
         }
       }
       catch (InspectionsReportConverter.ConversionException e) {

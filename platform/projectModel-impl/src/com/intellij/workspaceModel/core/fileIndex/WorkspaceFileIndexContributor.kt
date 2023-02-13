@@ -36,7 +36,21 @@ interface WorkspaceFileIndexContributor<E : WorkspaceEntity> {
    * Describes other entities which properties may be used in [registerFileSets].
    */
   val dependenciesOnOtherEntities: List<DependencyDescription<E>>
-    get() = emptyList() 
+    get() = emptyList()
+
+  /**
+   * Override this property and return [EntityStorageKind.UNLOADED] from it to indicate that the contributor should work on the entities
+   * from the unloaded storage. This is rarely needed because entities from the unloaded storage should be ignored in most of the cases. 
+   */
+  val storageKind: EntityStorageKind
+    get() = EntityStorageKind.MAIN
+}
+
+enum class EntityStorageKind {
+  /** Main storage of entities, accessible via [com.intellij.workspaceModel.ide.WorkspaceModel.entityStorage] */
+  MAIN,
+  /** Storage for unloaded entities, accessible via [com.intellij.workspaceModel.ide.WorkspaceModel.currentSnapshotOfUnloadedEntities] */
+  UNLOADED
 }
 
 sealed interface DependencyDescription<E : WorkspaceEntity> {

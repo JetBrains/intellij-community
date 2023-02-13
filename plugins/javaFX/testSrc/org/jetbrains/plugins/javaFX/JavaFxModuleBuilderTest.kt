@@ -155,6 +155,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
       plugins {
           id 'java'
           id 'application'
+          id 'org.javamodularity.moduleplugin' version '1.8.12'
           id 'org.openjfx.javafxplugin' version '0.0.13'
           id 'org.beryx.jlink' version '2.25.0'
       }

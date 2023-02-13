@@ -11,7 +11,7 @@
 
     <registryKey key="tips.of.the.day.feedback"
                  description="Where to send like/dislike feedback from Tips of the Day (nowhere, staging, production)."
-                 defaultValue="nowhere"
+                 defaultValue="production"
                  restartRequired="false"/>
     <registryKey key="tips.of.the.day.show.group.label"
                  description="Whether to show group name of the tip in Tips of the Day dialog."

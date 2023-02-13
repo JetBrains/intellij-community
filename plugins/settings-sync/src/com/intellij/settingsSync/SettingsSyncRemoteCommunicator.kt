@@ -21,7 +21,14 @@ interface SettingsSyncRemoteCommunicator {
   @RequiresBackgroundThread
   fun push(snapshot: SettingsSnapshot, force: Boolean, expectedServerVersionId: String?): SettingsSyncPushResult
 
-  fun delete()
+  @RequiresBackgroundThread
+  fun createFile(filePath: String, content: String)
+
+  @RequiresBackgroundThread
+  fun deleteFile(filePath: String)
+
+  @RequiresBackgroundThread
+  fun isFileExists(filePath: String): Boolean
 }
 
 sealed class ServerState {

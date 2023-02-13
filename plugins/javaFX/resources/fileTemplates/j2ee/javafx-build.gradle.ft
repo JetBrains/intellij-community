@@ -8,6 +8,7 @@ plugins {
 #if ($context.hasLanguage("kotlin"))
   id 'org.jetbrains.kotlin.jvm' version '${context.getVersion("org.jetbrains.kotlin", "kotlin-gradle-plugin")}'
 #end
+  id 'org.javamodularity.moduleplugin' version '${context.getBomProperty("javamodularity.version")}'
   id 'org.openjfx.javafxplugin' version '${context.getVersion("org.openjfx", "javafxplugin")}'
   id 'org.beryx.jlink' version '${context.getVersion("org.beryx", "badass-jlink-plugin")}'
 }
@@ -42,7 +43,7 @@ application {
 
 [compileKotlin, compileTestKotlin].forEach {
   it.kotlinOptions {
-    jvmTarget = '11'
+    jvmTarget = #if ($context.sdkFeatureVersion < 17)'11'#else'17'#end
   }
 }
 #end

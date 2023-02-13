@@ -16,11 +16,13 @@ internal class SettingsSyncLocalSettings : SimplePersistentStateComponent<Settin
   class State : BaseState() {
     var applicationId: String? by string(UUID.randomUUID().toString())
     var knownAndAppliedServerId: String? by string(null)
+    var crossIdeSyncEnabled by property(false)
 
     @TestOnly
     internal fun reset() {
       applicationId = UUID.randomUUID().toString()
       knownAndAppliedServerId = null
+      crossIdeSyncEnabled = false
     }
   }
 
@@ -30,5 +32,11 @@ internal class SettingsSyncLocalSettings : SimplePersistentStateComponent<Settin
     get() = state.knownAndAppliedServerId
     set(value) {
       state.knownAndAppliedServerId = value
+    }
+
+  var isCrossIdeSyncEnabled: Boolean
+    get() = state.crossIdeSyncEnabled
+    set(value) {
+      state.crossIdeSyncEnabled = value
     }
 }

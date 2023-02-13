@@ -23,7 +23,7 @@ public final class SourceRootPresentation {
   }
 
   @Nullable
-  public static Icon getSourceRootFileLayerIcon(JpsModuleSourceRootType<?> rootType) {
+  public static Icon getSourceRootFileLayerIcon(@NotNull JpsModuleSourceRootType<?> rootType) {
     ModuleSourceRootEditHandler<?> handler = ModuleSourceRootEditHandler.getEditHandler(rootType);
     return handler != null ? handler.getRootFileLayerIcon() : null;
   }

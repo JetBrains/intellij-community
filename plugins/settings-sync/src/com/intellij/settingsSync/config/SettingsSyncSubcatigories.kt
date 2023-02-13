@@ -11,7 +11,8 @@ internal interface SettingsSyncSubcategoryGroup {
 internal data class SettingsSyncSubcategoryDescriptor(
   val name: @Nls String,
   val id: String,
-  var isSelected: Boolean
+  var isSelected: Boolean,
+  var isSubGroupEnd: Boolean
 ) {
   override fun toString(): String {
     return name

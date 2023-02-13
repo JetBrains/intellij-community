@@ -5,11 +5,12 @@
   <version>1.0</version>
 
   <properties>
-    <gradle.version>7.5.1</gradle.version>
+    <gradle.version>7.6</gradle.version>
     <maven.version>3.8.5</maven.version>
     <maven.wrapper.version>3.1.0</maven.wrapper.version>
     <junit.version>5.9.1</junit.version>
     <kotlin.version>1.7.20</kotlin.version>
+    <javamodularity.version>1.8.12</javamodularity.version>
 
     <!-- OpenJFX release trains -->
     <fx.default.version>17.0.2</fx.default.version>
@@ -25,7 +26,7 @@
     <fx20.version>20-ea+4</fx20.version>
 
     <fxgl11.version>11.17</fxgl11.version>
-    <fxgl17.version>17.1</fxgl17.version>
+    <fxgl17.version>17.2</fxgl17.version>
   </properties>
 
   <dependencyManagement>
@@ -54,7 +55,7 @@
       <dependency>
         <groupId>org.controlsfx</groupId>
         <artifactId>controlsfx</artifactId>
-        <version>11.1.1</version>
+        <version>11.1.2</version>
       </dependency>
       <dependency>
         <groupId>com.dlsc.formsfx</groupId>
@@ -64,7 +65,7 @@
       <dependency>
         <groupId>net.synedra</groupId>
         <artifactId>validatorfx</artifactId>
-        <version>0.3.1</version>
+        <version>0.4.0</version>
       </dependency>
       <dependency>
         <groupId>org.kordamp.ikonli</groupId>
@@ -79,7 +80,7 @@
       <dependency>
         <groupId>eu.hansolo</groupId>
         <artifactId>tilesfx</artifactId>
-        <version>17.1.9</version>
+        <version>17.1.15</version>
       </dependency>
       <dependency>
         <groupId>com.github.almasb</groupId>
@@ -115,12 +116,12 @@
       <dependency>
         <groupId>org.apache.groovy</groupId>
         <artifactId>groovy</artifactId>
-        <version>4.0.2</version>
+        <version>4.0.7</version>
       </dependency>
       <dependency>
         <groupId>org.codehaus.gmavenplus</groupId>
         <artifactId>gmavenplus-plugin</artifactId>
-        <version>1.13.1</version>
+        <version>2.1.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

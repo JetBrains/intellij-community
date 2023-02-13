@@ -334,12 +334,16 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     List<AbstractViewManager.BuildInfo> sameBuildsToClear = new SmartList<>();
     for (int i = 0; i < listModel.getSize(); i++) {
       AbstractViewManager.BuildInfo build = listModel.getElementAt(i);
-      boolean sameBuild = build.getWorkingDir().equals(startBuildEvent.getBuildDescriptor().getWorkingDir());
-      if (!build.isRunning() && sameBuild) {
+      boolean sameBuildKind = build.getWorkingDir().equals(startBuildEvent.getBuildDescriptor().getWorkingDir());
+      boolean differentBuildsFromSameBuildGroup = !build.getId().equals(startBuildEvent.getBuildDescriptor().getId()) &&
+                                                  build.getGroupId() != null &&
+                                                  build.getGroupId().equals(startBuildEvent.getBuildDescriptor().getGroupId());
+
+      if (!build.isRunning() && sameBuildKind && !differentBuildsFromSameBuildGroup) {
         sameBuildsToClear.add(build);
       }
       boolean buildFinishedRecently = currentTime - build.endTime < TimeUnit.SECONDS.toMillis(1);
-      if (build.isRunning() || !sameBuild && buildFinishedRecently) {
+      if (build.isRunning() || !sameBuildKind && buildFinishedRecently || differentBuildsFromSameBuildGroup) {
         clearAll = false;
       }
     }

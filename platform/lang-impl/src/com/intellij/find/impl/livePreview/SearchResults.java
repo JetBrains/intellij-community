@@ -311,9 +311,10 @@ public class SearchResults implements DocumentListener, CaretListener {
       if (result == null || !result.isStringFound()) break;
       final int newOffset = result.getEndOffset();
       if (result.getEndOffset() > maxOffset) break;
-      if (offset == newOffset) {
+      if (offset == newOffset || newOffset == result.getStartOffset()) {
+        offset = newOffset;
         if (offset < maxOffset - 1) {
-          offset++;
+          offset++; // skip zero-width result
         }
         else {
           results.add(result);
@@ -322,7 +323,6 @@ public class SearchResults implements DocumentListener, CaretListener {
       }
       else {
         offset = newOffset;
-        if (offset == result.getStartOffset()) ++offset; // skip zero width result
       }
       results.add(result);
     }

@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -81,9 +82,9 @@ class SmartCompletion(
         )
     }
 
-    val descriptorFilter: ((DeclarationDescriptor, AbstractLookupElementFactory) -> Collection<LookupElement>)? =
-        { descriptor: DeclarationDescriptor, factory: AbstractLookupElementFactory ->
-            filterDescriptor(descriptor, factory).map { postProcess(it) }
+    val descriptorFilter: ((DeclarationDescriptor, AbstractLookupElementFactory, LanguageVersionSettings) -> Collection<LookupElement>)? =
+        { descriptor: DeclarationDescriptor, factory: AbstractLookupElementFactory, settings: LanguageVersionSettings ->
+            filterDescriptor(descriptor, factory, settings).map { postProcess(it) }
         }.takeIf { expectedInfos.isNotEmpty() }
 
     fun additionalItems(lookupElementFactory: LookupElementFactory): Pair<Collection<LookupElement>, InheritanceItemsSearcher?> {
@@ -152,13 +153,19 @@ class SmartCompletion(
 
     private fun filterDescriptor(
         descriptor: DeclarationDescriptor,
-        lookupElementFactory: AbstractLookupElementFactory
+        lookupElementFactory: AbstractLookupElementFactory,
+        settings: LanguageVersionSettings,
     ): Collection<LookupElement> {
         ProgressManager.checkCanceled()
         if (descriptor in descriptorsToSkip) return emptyList()
 
         val result = SmartList<LookupElement>()
-        val types = descriptor.fuzzyTypesForSmartCompletion(smartCastCalculator, callTypeAndReceiver, resolutionFacade, bindingContext)
+        val types = descriptor.fuzzyTypesForSmartCompletion(
+            smartCastCalculator,
+            callTypeAndReceiver,
+            resolutionFacade,
+            bindingContext
+        )
         val infoMatcher = { expectedInfo: ExpectedInfo -> types.matchExpectedInfo(expectedInfo) }
 
         result.addLookupElements(
@@ -171,7 +178,7 @@ class SmartCompletion(
         }
 
         if (callTypeAndReceiver is CallTypeAndReceiver.DEFAULT) {
-            result.addCallableReferenceLookupElements(descriptor, lookupElementFactory)
+            result.addCallableReferenceLookupElements(descriptor, lookupElementFactory, settings)
         }
 
         return result
@@ -409,12 +416,13 @@ class SmartCompletion(
 
     private fun MutableCollection<LookupElement>.addCallableReferenceLookupElements(
         descriptor: DeclarationDescriptor,
-        lookupElementFactory: AbstractLookupElementFactory
+        lookupElementFactory: AbstractLookupElementFactory,
+        settings: LanguageVersionSettings,
     ) {
         if (callableTypeExpectedInfo.isEmpty()) return
 
         fun toLookupElement(descriptor: CallableDescriptor): LookupElement? {
-            val callableReferenceType = descriptor.callableReferenceType(resolutionFacade, null) ?: return null
+            val callableReferenceType = descriptor.callableReferenceType(resolutionFacade, null, settings) ?: return null
 
             val matchedExpectedInfos = callableTypeExpectedInfo.filter { it.matchingSubstitutor(callableReferenceType) != null }
             if (matchedExpectedInfos.isEmpty()) return null

@@ -35,7 +35,11 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
     private val LOG = logger<ModuleBridgeLoaderService>()
   }
 
-  private suspend fun loadModules(project: Project, activity: Activity?, targetBuilder: MutableEntityStorage?, loadedFromCache: Boolean) {
+  private suspend fun loadModules(project: Project,
+                                  activity: Activity?,
+                                  targetBuilder: MutableEntityStorage?,
+                                  targetUnloadedEntitiesBuilder: MutableEntityStorage?,
+                                  loadedFromCache: Boolean) {
     val componentManager = project as ComponentManagerEx
 
     val childActivity = activity?.startChild("modules instantiation")
@@ -44,10 +48,11 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
 
     val moduleManager = componentManager.getServiceAsync(ModuleManager::class.java).await() as ModuleManagerComponentBridge
     if (targetBuilder != null) {
-      moduleManager.unloadNewlyAddedModulesIfPossible(targetBuilder)
+      moduleManager.unloadNewlyAddedModulesIfPossible(targetBuilder, targetUnloadedEntitiesBuilder!!)
     }
-    val entities = (targetBuilder ?: moduleManager.entityStore.current).entities(ModuleEntity::class.java)
-    moduleManager.loadModules(entities, targetBuilder, loadedFromCache)
+    val entities = (targetBuilder ?: moduleManager.entityStore.current).entities(ModuleEntity::class.java).toList()
+    val unloadedEntities = (targetUnloadedEntitiesBuilder ?: WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities).entities(ModuleEntity::class.java).toList()
+    moduleManager.loadModules(entities, unloadedEntities, targetBuilder, loadedFromCache)
     childActivity?.setDescription("modules count: ${moduleManager.modules.size}")
     childActivity?.end()
 
@@ -69,19 +74,19 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
         workspaceModel.ignoreCache() // sets `WorkspaceModelImpl#loadedFromCache` to `false`
         project.putUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES, true)
       }
-      loadModules(project, activity, null, workspaceModel.loadedFromCache)
+      loadModules(project, activity, null, null, workspaceModel.loadedFromCache)
     }
     else {
       LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
       val activity = StartUpMeasurer.startActivity("modules loading without cache")
-      val storeToEntitySources = projectModelSynchronizer.loadProjectToEmptyStorage(project)
+      val projectEntities = projectModelSynchronizer.loadProjectToEmptyStorage(project)
 
 
-      loadModules(project, activity, storeToEntitySources?.first, workspaceModel.loadedFromCache)
-      if (storeToEntitySources?.first != null) {
+      loadModules(project, activity, projectEntities?.builder, projectEntities?.unloadedEntitiesBuilder, workspaceModel.loadedFromCache)
+      if (projectEntities?.builder != null) {
         WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
       }
-      projectModelSynchronizer.applyLoadedStorage(storeToEntitySources)
+      projectModelSynchronizer.applyLoadedStorage(projectEntities)
       project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
     }
 

@@ -8,10 +8,10 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
-import com.intellij.openapi.rd.util.launchUnderModalProgress
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.remoteDev.RemoteDevUtilBundle
+import com.intellij.remoteDev.downloader.exceptions.CodeWithMeDownloaderExceptionHandler
 import com.intellij.remoteDev.util.UrlUtil
 import com.intellij.util.application
 import com.intellij.util.fragmentParameters
@@ -78,11 +78,7 @@ object CodeWithMeGuestLauncher {
         }
         catch (t: Throwable) {
           LOG.warn(t)
-          application.invokeLater({
-            Messages.showErrorDialog(
-              RemoteDevUtilBundle.message("error.url.issue", t.message ?: "Unknown"),
-              product)
-          }, ModalityState.any())
+          CodeWithMeDownloaderExceptionHandler.handle(product, t)
         }
         finally {
           alreadyDownloading.remove(url)

@@ -8,4 +8,5 @@ internal abstract class TestRemoteCommunicator : SettingsSyncRemoteCommunicator 
 
   abstract fun awaitForPush(): SettingsSnapshot?
 
+  abstract fun deleteAllFiles()
 }

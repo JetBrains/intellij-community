@@ -3,8 +3,10 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import org.jetbrains.annotations.NonNls
 
 /**
  * Provides access to the storage which holds workspace model entities.
@@ -12,6 +14,14 @@ import com.intellij.workspaceModel.storage.VersionedEntityStorage
 interface WorkspaceModel {
   val entityStorage: VersionedEntityStorage
 
+  /**
+   * Returns a snapshot of the storage containing unloaded entities. 
+   * Unloaded entities must be ignored by almost all code in the IDE, so this property isn't supposed for general use.
+   * 
+   * Currently, unloaded entities correspond to modules which are unloaded using 'Load/Unload Modules' action. 
+   */
+  val currentSnapshotOfUnloadedEntities: EntityStorageSnapshot
+  
   /**
    * Modifies the current model by calling [updater] and applying it to the storage. Requires write action.
    *
@@ -33,6 +43,12 @@ interface WorkspaceModel {
   @Deprecated("Method will be removed from interface. Use WorkspaceModelImpl#updateProjectModelSilent only " +
               "if you are absolutely sure you need it")
   fun <R> updateProjectModelSilent(description: String, updater: (MutableEntityStorage) -> R): R
+
+  /**
+   * Modifies the current model of unloaded entities by calling [updater] and applying it to the storage.
+   * @param description describes the reason for the change, used for logging purposes only.
+   */
+  fun updateUnloadedEntities(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
 
   /**
    * Get builder that can be updated in background and applied later and a project model.

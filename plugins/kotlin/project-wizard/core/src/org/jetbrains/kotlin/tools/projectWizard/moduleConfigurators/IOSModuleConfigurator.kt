@@ -36,6 +36,8 @@ object IOSSinglePlatformModuleConfigurator : IOSSinglePlatformModuleConfigurator
 
 object IOSSinglePlatformCocoaPodsModuleConfigurator : IOSSinglePlatformModuleConfiguratorBase() {
     override val moduleTemplatePath: String get() = "singleplatformCocoaPodsProject"
+    override val canContainSubModules: Boolean
+        get() = false
 
     override fun Writer.runArbitraryTask(
         configurationData: ModulesToIrConversionData,
@@ -67,7 +69,7 @@ object IOSSinglePlatformCocoaPodsModuleConfigurator : IOSSinglePlatformModuleCon
             +fileTemplate("$DEFAULT_APP_NAME.xcodeproj" / "project.pbxproj")
             +fileTemplate(DEFAULT_APP_NAME / "Info.plist")
 
-            +fileTemplate("Podfile".asPath())
+            +fileTemplate("Podfile.vm".asPath())
         }
     }
 }
@@ -83,7 +85,7 @@ abstract class IOSSinglePlatformModuleConfiguratorBase : SinglePlatformModuleCon
     @NonNls
     override val suggestedModuleName = "ios"
 
-    override val moduleKind: ModuleKind = ModuleKind.singlePlatformJvm
+    override val moduleKind: ModuleKind = ModuleKind.ios
     override val greyText = KotlinNewProjectWizardBundle.message("module.configurator.ios.requires.xcode")
     override val text = KotlinNewProjectWizardBundle.message("module.configurator.ios")
 

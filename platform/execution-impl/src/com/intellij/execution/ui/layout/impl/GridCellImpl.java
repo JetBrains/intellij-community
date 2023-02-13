@@ -4,7 +4,6 @@ package com.intellij.execution.ui.layout.impl;
 import com.intellij.execution.ui.layout.*;
 import com.intellij.execution.ui.layout.actions.CloseViewAction;
 import com.intellij.execution.ui.layout.actions.MinimizeViewAction;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -501,14 +500,12 @@ public final class GridCellImpl implements GridCell {
     @NotNull
     @Override
     protected TabLabel createTabLabel(@NotNull TabInfo info) {
-      SingleHeightLabel label = new SingleHeightLabel(this, info) {
+      return new SingleHeightLabel(this, info) {
         @Override
         public void setAlignmentToCenter(boolean toCenter) {
           super.setAlignmentToCenter(false);
         }
       };
-      DataManager.registerDataProvider(label, dataId -> ViewContext.CONTENT_KEY.is(dataId) ? new Content[]{getContentFor(info)} : null);
-      return label;
     }
   }
 }

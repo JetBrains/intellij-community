@@ -6,10 +6,7 @@ import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.system.SystemInfo
-import com.intellij.ide.starter.utils.FileSystem
-import com.intellij.ide.starter.utils.HttpClient
-import com.intellij.ide.starter.utils.logOutput
-import com.intellij.ide.starter.utils.resolveInstalledJdk11
+import com.intellij.ide.starter.utils.*
 import org.gradle.internal.hash.Hashing
 import org.kodein.di.direct
 import org.kodein.di.instance
@@ -139,12 +136,23 @@ fun main() {
 
 fun IDETestContext.downloadAndroidPluginProject(): IDETestContext {
   val projectHome = resolvedProjectHome
-  if (projectHome.toFile().name == "intellij-community-master" && !(projectHome / "android").toFile().exists()) {
+  if (projectHome.toFile().name.startsWith("intellij-community") && !(projectHome / "android").toFile().exists()) {
     val scriptName = "getPlugins.sh"
 
     val script = (projectHome / scriptName).toFile()
     assert(script.exists()) { "File $script does not exist" }
     val scriptContent = script.readText()
+    val commandLineArgs = scriptContent.split(" ")
+    val adjustedCommandLineArgs = when (Git.getDefaultBranch) {
+      "master" -> commandLineArgs
+      else -> {
+        val listOfArgs = commandLineArgs.toMutableList()
+        listOfArgs.add(2, "-b")
+        listOfArgs.add(3, Git.getDefaultBranch)
+        listOfArgs.add(4, "--single-branch")
+        listOfArgs
+      }
+    }
 
     val stdout = ExecOutputRedirect.ToString()
     val stderr = ExecOutputRedirect.ToString()
@@ -152,7 +160,7 @@ fun IDETestContext.downloadAndroidPluginProject(): IDETestContext {
     ProcessExecutor(
       "git-clone-android-plugin",
       workDir = projectHome, timeout = 10.minutes,
-      args = scriptContent.split(" "),
+      args = adjustedCommandLineArgs,
       stdoutRedirect = stdout,
       stderrRedirect = stderr
     ).start()

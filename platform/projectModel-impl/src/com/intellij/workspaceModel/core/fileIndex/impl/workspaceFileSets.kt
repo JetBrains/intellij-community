@@ -5,6 +5,7 @@ import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.MultiMap
+import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
@@ -81,6 +82,7 @@ internal object StoredFileSetKindMask {
  */
 internal sealed interface StoredFileSet : StoredFileSetCollection {
   val entityReference: EntityReference<WorkspaceEntity>
+  val entityStorageKind: EntityStorageKind
   
   override fun removeIf(predicate: (StoredFileSet) -> Boolean): StoredFileSetCollection? {
     return if (predicate(this)) null else this
@@ -97,6 +99,7 @@ internal sealed interface StoredFileSet : StoredFileSetCollection {
 internal class WorkspaceFileSetImpl(override val root: VirtualFile,
                                     override val kind: WorkspaceFileKind,
                                     override val entityReference: EntityReference<WorkspaceEntity>,
+                                    override val entityStorageKind: EntityStorageKind,
                                     override val data: WorkspaceFileSetData)
   : WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, StoredFileSet, WorkspaceFileInternalInfo {
   fun isUnloaded(project: Project): Boolean {
@@ -238,7 +241,8 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
   }
 
   class ByFileKind(@MagicConstant(flagsFromClass = WorkspaceFileKindMask::class) val mask: Int,
-                   override val entityReference: EntityReference<WorkspaceEntity>) : ExcludedFileSet {
+                   override val entityReference: EntityReference<WorkspaceEntity>,
+                   override val entityStorageKind: EntityStorageKind) : ExcludedFileSet {
     override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
       val withExclusion = if (honorExclusion) currentMasks and (mask shl ACCEPTED_KINDS_MASK_SHIFT).inv() else currentMasks
       return withExclusion or StoredFileSetKindMask.EXCLUDED
@@ -246,7 +250,8 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
   }
 
   class ByPattern(val root: VirtualFile, patterns: List<String>,
-                  override val entityReference: EntityReference<WorkspaceEntity>) : ExcludedFileSet {
+                  override val entityReference: EntityReference<WorkspaceEntity>,
+                  override val entityStorageKind: EntityStorageKind) : ExcludedFileSet {
     val table = FileTypeAssocTable<Boolean>()
 
     init {
@@ -274,7 +279,8 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
   }
 
   class ByCondition(val root: VirtualFile, val condition: (VirtualFile) -> Boolean,
-                    override val entityReference: EntityReference<WorkspaceEntity>) : ExcludedFileSet {
+                    override val entityReference: EntityReference<WorkspaceEntity>,
+                    override val entityStorageKind: EntityStorageKind) : ExcludedFileSet {
     private fun isExcluded(file: VirtualFile): Boolean {
       var current = file
       while (current != root) {

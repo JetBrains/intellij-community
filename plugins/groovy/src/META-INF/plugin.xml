@@ -1336,6 +1336,7 @@
 
     <internal.statistic.libraryUsageImportProcessor language="Groovy"
                                                     implementationClass="org.jetbrains.plugins.groovy.stats.GroovyLibraryUsageImportProcessor"/>
+    <iconMapper mappingFile="GroovyIconMappings.json"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

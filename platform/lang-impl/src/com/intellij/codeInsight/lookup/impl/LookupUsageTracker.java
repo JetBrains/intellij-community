@@ -167,7 +167,7 @@ public final class LookupUsageTracker {
         if (vFile != null) {
           String schema = FileTypeUsageCounterCollector.findSchema(myLookup.getProject(), vFile);
           if (schema != null) {
-            SCHEMA.with(schema);
+            data.add(SCHEMA.with(schema));
           }
         }
       }

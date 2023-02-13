@@ -412,19 +412,29 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/testData/basic/common/callableReference/HigherOrderFunction.kt");
             }
 
+            @TestMetadata("JavaSyntheticPropertyReference1.kt")
+            public void testJavaSyntheticPropertyReference1() throws Exception {
+                runTest("../completion/testData/basic/common/callableReference/JavaSyntheticPropertyReference1.kt");
+            }
+
+            @TestMetadata("JavaSyntheticPropertyReference2.kt")
+            public void testJavaSyntheticPropertyReference2() throws Exception {
+                runTest("../completion/testData/basic/common/callableReference/JavaSyntheticPropertyReference2.kt");
+            }
+
+            @TestMetadata("JavaSyntheticPropertyReferenceTrueNegative1.kt")
+            public void testJavaSyntheticPropertyReferenceTrueNegative1() throws Exception {
+                runTest("../completion/testData/basic/common/callableReference/JavaSyntheticPropertyReferenceTrueNegative1.kt");
+            }
+
+            @TestMetadata("JavaSyntheticPropertyReferenceTrueNegative2.kt")
+            public void testJavaSyntheticPropertyReferenceTrueNegative2() throws Exception {
+                runTest("../completion/testData/basic/common/callableReference/JavaSyntheticPropertyReferenceTrueNegative2.kt");
+            }
+
             @TestMetadata("NonEmptyQualifier.kt")
             public void testNonEmptyQualifier() throws Exception {
                 runTest("../completion/testData/basic/common/callableReference/NonEmptyQualifier.kt");
-            }
-
-            @TestMetadata("SyntheticExtensions.kt")
-            public void testSyntheticExtensions() throws Exception {
-                runTest("../completion/testData/basic/common/callableReference/SyntheticExtensions.kt");
-            }
-
-            @TestMetadata("SyntheticExtensions2.kt")
-            public void testSyntheticExtensions2() throws Exception {
-                runTest("../completion/testData/basic/common/callableReference/SyntheticExtensions2.kt");
             }
         }
 

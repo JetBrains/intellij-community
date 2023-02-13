@@ -88,6 +88,11 @@ public final class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
+  public void initUpdateSession(@NotNull AnActionEvent event) {
+    Utils.initUpdateSession(event);
+  }
+
+  @Override
   public Component getComponentFromRecentMouseEvent() {
     return SwingHelper.getComponentFromRecentMouseEvent();
   }

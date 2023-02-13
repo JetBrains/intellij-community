@@ -10,6 +10,7 @@ import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.TabLayout;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,7 +179,8 @@ public class TableLayout extends TabLayout {
 
   private int getMoreRectAxisSize() {
     if (myWithScrollBar) return 0;
-    return myTabs.isSingleRow() ? myTabs.myMoreToolbar.getComponent().getPreferredSize().width : 0;
+    return myTabs.isSingleRow() ? ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + JBUI.scale(7) : 0;
+    // 7 = 4 (borders of the button) + 3 (additional space between button and the last tab)
   }
 
   private static int getTotalLength(@NotNull List<TabInfo> list, @NotNull TablePassInfo data) {
@@ -377,10 +379,12 @@ public class TableLayout extends TabLayout {
     return TabsUtil.getDropSideFor(point, myTabs);
   }
 
-  int getScrollOffset() {
+  @Override
+  public int getScrollOffset() {
     return myScrollOffset;
   }
 
+  @Override
   public void scroll(int units) {
     if (!myTabs.isSingleRow()) {
       myScrollOffset = 0;

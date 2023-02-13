@@ -3,27 +3,35 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
+import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.Processors
+import com.intellij.util.indexing.IdFilter
 
-abstract class KotlinStringStubIndexExtension<Psi : PsiElement>(private val valueClass: Class<Psi>) : StringStubIndexExtension<Psi>() {
+abstract class KotlinStringStubIndexExtension<PsiNav : NavigatablePsiElement>(private val valueClass: Class<PsiNav>) : StringStubIndexExtension<PsiNav>() {
     /**
      * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
      */
-    fun processElements(s: String, project: Project, scope: GlobalSearchScope, processor: Processor<in Psi>) {
-        StubIndex.getInstance().processElements(key, s, project, scope, valueClass, processor)
+    fun processElements(s: String, project: Project, scope: GlobalSearchScope, processor: Processor<in PsiNav>): Boolean {
+        return processElements(s, project, scope, null, processor)
+    }
+
+    /**
+     * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
+     */
+    fun processElements(s: String, project: Project, scope: GlobalSearchScope, idFilter: IdFilter? = null, processor: Processor<in PsiNav>): Boolean {
+        return StubIndex.getInstance().processElements(key, s, project, scope, idFilter, valueClass, processor)
     }
 
     fun processAllElements(
         project: Project,
         scope: GlobalSearchScope,
         filter: (String) -> Boolean = { true },
-        processor: Processor<in Psi>
+        processor: Processor<in PsiNav>
     ) {
         val stubIndex = StubIndex.getInstance()
         val indexKey = key
@@ -34,7 +42,7 @@ abstract class KotlinStringStubIndexExtension<Psi : PsiElement>(private val valu
         if (!processAllKeys(project, CancelableCollectFilterProcessor(allKeys, filter))) return
 
         if (allKeys.isNotEmpty()) {
-            val values = HashSet<Psi>(allKeys.size)
+            val values = HashSet<PsiNav>(allKeys.size)
             val collectProcessor = Processors.cancelableCollectProcessor(values)
             allKeys.forEach { s ->
                 if (!stubIndex.processElements(indexKey, s, project, scope, valueClass, collectProcessor)) return
@@ -43,6 +51,9 @@ abstract class KotlinStringStubIndexExtension<Psi : PsiElement>(private val valu
             values.all(processor::process)
         }
     }
+
+    fun processAllKeys(scope: GlobalSearchScope, filter: IdFilter? = null, processor: Processor<in String>): Boolean =
+        StubIndex.getInstance().processAllKeys(key, processor, scope, filter)
 }
 
 class CancelableCollectFilterProcessor<T>(

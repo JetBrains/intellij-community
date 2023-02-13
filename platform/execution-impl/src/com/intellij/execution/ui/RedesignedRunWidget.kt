@@ -306,7 +306,7 @@ private class RunToolbarSeparator(private val isCurrentConfigurationRunning: () 
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
       g2.color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
-      g2.fill(Rectangle(size))
+      g2.fillRect(-1, 0, size.width + 1, size.height)
       g2.color = JBUI.CurrentTheme.RunWidget.SEPARATOR
       g2.stroke = BasicStroke(JBUI.pixScale(this))
       g2.drawLine(0, JBUI.scale(5), 0, JBUI.scale(25))

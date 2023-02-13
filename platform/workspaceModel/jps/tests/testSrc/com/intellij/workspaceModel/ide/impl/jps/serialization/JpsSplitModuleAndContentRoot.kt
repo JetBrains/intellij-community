@@ -1,5 +1,8 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.facet.mock.MockFacetType
+import com.intellij.facet.mock.registerFacetType
+import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.testFramework.ApplicationRule
@@ -18,6 +21,9 @@ import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class JpsSplitModuleAndContentRoot {
   @Rule
@@ -442,6 +448,32 @@ class JpsSplitModuleAndContentRoot {
     }
   }
 
+  @TestFor(classes = [JavaModuleSettingsEntity::class, ModuleImlFileEntitiesSerializer::class, JavaSettingsSerializer::class])
+  @Test
+  fun `load module without java custom settings but with exclude`() {
+    checkSaveProjectAfterChange("after/imlWithoutJavaSettingsButWithExclude", "after/imlWithoutJavaSettingsButWithExclude") { builder, _ ->
+      val javaSettings = builder.entities(ModuleEntity::class.java).single().javaSettings
+      assertNotNull(javaSettings)
+      assertTrue(javaSettings.excludeOutput)
+      assertFalse(javaSettings.inheritedCompilerOutput)
+      assertNull(javaSettings.languageLevelId)
+      assertNull(javaSettings.compilerOutputForTests)
+    }
+  }
+
+  @TestFor(classes = [JavaModuleSettingsEntity::class, ModuleImlFileEntitiesSerializer::class, JavaSettingsSerializer::class])
+  @Test
+  fun `load module without java custom settings but with languageLevel`() {
+    checkSaveProjectAfterChange("after/imlWithoutJavaSettingsButWithLanguageLevel", "after/imlWithoutJavaSettingsButWithLanguageLevel") { builder, _ ->
+      val javaSettings = builder.entities(ModuleEntity::class.java).single().javaSettings
+      assertNotNull(javaSettings)
+      assertFalse(javaSettings.excludeOutput)
+      assertFalse(javaSettings.inheritedCompilerOutput)
+      assertEquals("JDK_1_8", javaSettings.languageLevelId)
+      assertNull(javaSettings.compilerOutputForTests)
+    }
+  }
+
   private fun checkSaveProjectAfterChange(dirBefore: String,
                                           dirAfter: String,
                                           externalStorage: Boolean = true,
@@ -451,7 +483,8 @@ class JpsSplitModuleAndContentRoot {
       "platform/workspaceModel/jps/tests/testData/serialization/splitModuleAndContentRoot/$dirBefore")
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(projectModel.project)
     externalStorageConfigurationManager.isEnabled = externalStorage
-    checkSaveProjectAfterChange(initialDir, dirAfter, change, virtualFileManager, "serialization/splitModuleAndContentRoot", false,
+    checkSaveProjectAfterChange(initialDir, dirAfter, { builder, _, location -> change(builder, location) }, emptySet(), 
+                                virtualFileManager, "serialization/splitModuleAndContentRoot", false,
                                 externalStorageConfigurationManager)
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -38,7 +39,8 @@ public final class DirectByteBufferAllocator {
         return ourAllocator.submit(computable::compute).get();
       }
       catch (InterruptedException e) {
-        throw new RuntimeException(e);
+        Logger.getInstance(DirectByteBufferAllocator.class).error(e);
+        return computable.compute();
       }
       catch (ExecutionException e) {
         Throwable cause = e.getCause();

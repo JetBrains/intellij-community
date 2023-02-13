@@ -7,15 +7,29 @@ import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointersEvent.*
 
 class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactoryProvider {
-  override fun create(editor: Editor): NotebookIntervalPointerFactory =
-    NotebookIntervalPointerFactoryImpl(NotebookCellLines.get(editor),
-                                       DocumentReferenceManager.getInstance().create(editor.document),
-                                       editor.project?.let(UndoManager::getInstance))
+  override fun create(editor: Editor): NotebookIntervalPointerFactory {
+    val notebookCellLines = NotebookCellLines.get(editor)
+    val project = editor.project
+    val factory = NotebookIntervalPointerFactoryImpl(notebookCellLines,
+                                                     DocumentReferenceManager.getInstance().create(editor.document),
+                                                     project?.let(UndoManager::getInstance))
+
+    notebookCellLines.intervalListeners.addListener(factory)
+    project?.let {
+      Disposer.register(project) {
+        notebookCellLines.intervalListeners.removeListener(factory)
+        NotebookIntervalPointerFactory.key.set(editor.document, null)
+      }
+    }
+
+    return factory
+  }
 }
 
 
@@ -56,7 +70,6 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
 
   init {
     pointers.addAll(notebookCellLines.intervals.asSequence().map { NotebookIntervalPointerImpl(it) })
-    notebookCellLines.intervalListeners.addListener(this)
   }
 
   override fun create(interval: NotebookCellLines.Interval): NotebookIntervalPointer {
@@ -78,18 +91,16 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
       override fun undo() {
         val invertedChanges = invertChanges(eventChanges)
         updatePointersByChanges(invertedChanges)
-        changeListeners.multicaster.onUpdated(
-          NotebookIntervalPointersEvent(invertedChanges, cellLinesEvent = null, EventSource.UNDO_ACTION))
+        onUpdated(NotebookIntervalPointersEvent(invertedChanges, cellLinesEvent = null, EventSource.UNDO_ACTION))
       }
 
       override fun redo() {
         updatePointersByChanges(eventChanges)
-        changeListeners.multicaster.onUpdated(
-          NotebookIntervalPointersEvent(eventChanges, cellLinesEvent = null, EventSource.REDO_ACTION))
+        onUpdated(NotebookIntervalPointersEvent(eventChanges, cellLinesEvent = null, EventSource.REDO_ACTION))
       }
     })
 
-    changeListeners.multicaster.onUpdated(pointerEvent)
+    onUpdated(pointerEvent)
   }
 
   override fun documentChanged(event: NotebookCellLinesEvent) {
@@ -100,7 +111,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
         is RedoContext -> documentChangedByRedo(event, context)
         null -> documentChangedByAction(event, null) // changesContext is null if undo manager is unavailable
       }
-      changeListeners.multicaster.onUpdated(pointersEvent)
+      onUpdated(pointersEvent)
     }
     catch (ex: Exception) {
       thisLogger().error(ex)
@@ -123,7 +134,8 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
         }
       })
       changesContext = context
-    } catch (ex: Exception) {
+    }
+    catch (ex: Exception) {
       thisLogger().error(ex)
       // DS-3893 consume exception, don't prevent document updating
     }
@@ -245,7 +257,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     }
   }
 
-  private fun applyChanges(changes: Iterable<NotebookIntervalPointerFactory.Change>, eventChanges: NotebookIntervalPointersEventChanges){
+  private fun applyChanges(changes: Iterable<NotebookIntervalPointerFactory.Change>, eventChanges: NotebookIntervalPointersEventChanges) {
     for (hint in changes) {
       when (hint) {
         is NotebookIntervalPointerFactory.Invalidate -> {
@@ -305,6 +317,15 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
       is OnSwapped -> OnSwapped(first = PointerSnapshot(change.first.pointer, change.second.interval),
                                 second = PointerSnapshot(change.second.pointer, change.first.interval))
     }
+
+  private fun onUpdated(event: NotebookIntervalPointersEvent) {
+    try {
+      changeListeners.multicaster.onUpdated(event)
+    }
+    catch (e: Exception) {
+      thisLogger().error("NotebookIntervalPointerFactory.ChangeListener shouldn't throw exceptions", e)
+    }
+  }
 
   @TestOnly
   fun pointersCount(): Int = pointers.size

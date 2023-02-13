@@ -23,10 +23,8 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.StringWriter;
@@ -357,7 +355,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // from any: bg or current if can't
   @Override
   public void run(@NotNull Task task) {
-    if (task.isHeadless() && !shouldKeepTasksAsynchronousInHeadlessMode()) {
+    if (isSynchronousHeadless(task)) {
       if (SwingUtilities.isEventDispatchThread()) {
         runProcessWithProgressSynchronously(task);
       }
@@ -370,13 +368,21 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
     else {
       Task.Backgroundable backgroundable = task.asBackgroundable();
-      if (backgroundable.isConditionalModal() && !backgroundable.shouldStartInBackground()) {
+      if (isSynchronous(backgroundable)) {
         runProcessWithProgressSynchronously(backgroundable);
       }
       else {
         runAsynchronously(backgroundable);
       }
     }
+  }
+
+  private static boolean isSynchronousHeadless(Task task) {
+    return task.isHeadless() && !shouldKeepTasksAsynchronousInHeadlessMode();
+  }
+
+  private static boolean isSynchronous(Task.Backgroundable backgroundable) {
+    return backgroundable.isConditionalModal() && !backgroundable.shouldStartInBackground();
   }
 
   // from any: bg
@@ -518,7 +524,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     boolean result = application.runProcessWithProgressSynchronously(taskContainer,
                                                                      task.getTitle(),
                                                                      task.isCancellable(),
-                                                                     task.isModal(),
+                                                                     shouldEnterModalityState(task),
                                                                      task.getProject(),
                                                                      task.getParentComponent(),
                                                                      task.getCancelText());
@@ -527,6 +533,15 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
                                            application.getDefaultModalityState(),
                                            () -> finishTask(task, !result, exceptionRef.get()));
     return result;
+  }
+
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static boolean shouldEnterModalityState(@NotNull Task task) {
+    return task.isModal() ||
+           EDT.isCurrentThreadEdt() &&
+           !isSynchronousHeadless(task) &&
+           isSynchronous(task.asBackgroundable());
   }
 
   public void runProcessWithProgressInCurrentThread(@NotNull Task task,

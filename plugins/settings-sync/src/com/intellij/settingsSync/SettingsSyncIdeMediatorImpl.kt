@@ -93,7 +93,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
 
     val pluginsState = SettingsSyncPluginManager.getInstance().updateStateFromIdeOnStart(lastSavedSnapshot.plugins)
     LOG.debug("Collected following plugin state: $pluginsState")
-    return SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), fileStates, pluginsState)
+    return SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), fileStates, pluginsState, emptySet())
   }
 
   override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
@@ -110,7 +110,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     }
 
     val snapshot = SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()),
-                                    setOf(FileState.Modified(file, content)), plugins = null)
+                                    setOf(FileState.Modified(file, content)), plugins = null, emptySet())
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
   }
 
@@ -178,7 +178,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     }
     if (deleted) {
       val snapshot = SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()),
-                                      setOf(FileState.Deleted(adjustedSpec)), plugins = null)
+                                      setOf(FileState.Deleted(adjustedSpec)), plugins = null, emptySet())
       SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
     }
     return deleted
