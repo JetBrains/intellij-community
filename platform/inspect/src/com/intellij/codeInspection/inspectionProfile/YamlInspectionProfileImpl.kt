@@ -226,7 +226,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       try {
         return NamedScope.UnnamedScope(PackageSetFactory.getInstance().compile(scope))
       } catch (e: ParsingException) {
-        LOG.error("Unknown scope format: $scope", e)
+        LOG.warn("Unknown scope format: $scope", e)
       }
     }
 
