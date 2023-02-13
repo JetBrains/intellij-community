@@ -1,0 +1,6 @@
+.idea
+musl
+*.tgz
+*.tar.gz
+wslproxy
+wslhash
