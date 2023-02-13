@@ -5076,11 +5076,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       if (mySettings.isWheelFontChangeEnabled()) {
         if (EditorUtil.isChangeFontSize(e)) {
-          float size = myScheme.getEditorFontSize2D() - e.getWheelRotation();
+          boolean isWheelFontChangePersistent = EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()
+                                                && !UISettings.getInstance().getPresentationMode();
+          float shift = e.getWheelRotation();
+          float size = myScheme.getEditorFontSize2D();
+          if (isWheelFontChangePersistent) {
+            size = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
+          }
+
+          size -= shift;
           if (size >= MIN_FONT_SIZE) {
-            setFontSize(size, SwingUtilities.convertPoint(this, e.getPoint(), getViewport()));
-            if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
+            if (isWheelFontChangePersistent) {
+              setFontSize(UISettingsUtils.getInstance().scaleFontSize(size),
+                          SwingUtilities.convertPoint(this, e.getPoint(), getViewport()));
               adjustGlobalFontSize(size);
+            }
+            else {
+              setFontSize(size, SwingUtilities.convertPoint(this, e.getPoint(), getViewport()));
             }
           }
           return;

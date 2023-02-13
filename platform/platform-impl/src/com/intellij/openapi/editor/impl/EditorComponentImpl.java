@@ -104,7 +104,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         float size = Math.max((float)(currentSize * scale), defaultFontSize);
         myEditor.setFontSize(size);
         if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
-          myEditor.adjustGlobalFontSize(size);
+          myEditor.adjustGlobalFontSize(UISettingsUtils.scaleFontSize(size, 1 / UISettingsUtils.getInstance().getCurrentIdeScale()));
         }
 
         return myEditor.visualPositionToXY(magnificationPosition);
