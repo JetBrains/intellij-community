@@ -1107,7 +1107,9 @@ open class FileEditorManagerImpl(
       IdeDocumentHistory.getInstance(project).onSelectionChanged()
     }
 
-    window.setFilePinned(composite, pinned = options.pin)
+    options.pin?.let {
+      window.setFilePinned(composite, pinned = it)
+    }
 
     if (newEditor) {
       val messageBus = project.messageBus
