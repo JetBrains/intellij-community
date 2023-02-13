@@ -7647,6 +7647,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/deprecatedSymbolUsage/publishedApi/genericFunction.kt");
             }
 
+            @TestMetadata("infix.kt")
+            public void testInfix() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/publishedApi/infix.kt");
+            }
+
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/publishedApi/simple.kt");
