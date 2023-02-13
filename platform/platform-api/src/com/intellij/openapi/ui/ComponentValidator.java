@@ -405,12 +405,18 @@ public class ComponentValidator {
   }
 
   private static Optional<Component> getFocusable(Component source) {
-    return (source instanceof JComboBox && !((JComboBox<?>)source).isEditable() ||
-            source instanceof JCheckBox ||
-            source instanceof JRadioButton ||
-            source instanceof TagButton) ?
-           Optional.of(source) :
-           UIUtil.uiTraverser(source).filter(c -> c instanceof JTextComponent && c.isFocusable()).toList().stream().findFirst();
+    if (source instanceof JComboBox && !((JComboBox<?>)source).isEditable() ||
+        source instanceof JCheckBox ||
+        source instanceof JRadioButton ||
+        source instanceof TagButton) {
+      return Optional.of(source);
+    }
+    return UIUtil.uiTraverser(source)
+      .filter(c -> (
+        (c instanceof JTextComponent && c.isFocusable())
+        || (c instanceof EditorTextComponent && c instanceof FocusListener)) // EditorTextField
+      )
+      .toList().stream().findFirst();
   }
 
   private class ValidationFocusListener implements FocusListener {
