@@ -11,6 +11,10 @@ interface XSourcePositionEx : XSourcePosition {
    * returning a non-empty flow will make the platform update the execution point highlighting
    * and scroll to the updated position on each new update emitted be the returned flow.
    */
-  val positionUpdateFlow: Flow<XSourcePosition?>
+  val positionUpdateFlow: Flow<NavigationMode>
     get() = emptyFlow()
+
+  enum class NavigationMode {
+    NONE, SCROLL, OPEN
+  }
 }

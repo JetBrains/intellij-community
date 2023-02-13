@@ -17,19 +17,21 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.asSafely
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.resettableLazy
 import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.impl.XSourcePositionEx.NavigationMode
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter
 import com.intellij.xdebugger.ui.DebuggerColors
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.BufferOverflow.*
 import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -40,7 +42,7 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
                                               parentScope: CoroutineScope) {
   private val coroutineScope: CoroutineScope = parentScope.childScope(Dispatchers.EDT + CoroutineName(javaClass.simpleName))
 
-  private val navigationRequestFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val navigationRequestFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
 
   private val _executionPointState = MutableStateFlow<ExecutionPoint?>(null)
   private val executionPointState: StateFlow<ExecutionPoint?> = _executionPointState.asStateFlow()
@@ -81,18 +83,13 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
       .onCompletion { emit(null) }
       .transformLatest { executionPoint ->
         kotlin.runCatching {
-          val sourcePosition = executionPoint?.getSourcePosition(sourceKind)
+          val sourcePosition = executionPoint?.getSourcePosition(sourceKind) ?: return@transformLatest emit(null)
           val positionUpdateFlow = sourcePosition.asSafely<XSourcePositionEx>()?.positionUpdateFlow ?: emptyFlow()
 
           positionUpdateFlow
-            .onStart { emit(sourcePosition) } // initial
-            .collectLatest { updatedSourcePosition ->
-              if (updatedSourcePosition != null) {
-                show(updatedSourcePosition, sourceKind, executionPoint?.isTopFrame == true)
-              }
-              else {
-                emit(null)
-              }
+            .onStart { emit(NavigationMode.OPEN) } // initial open
+            .collectLatest { navigationMode ->
+              show(sourcePosition, sourceKind, executionPoint.isTopFrame, navigationMode)
             }
         }.getOrLogException(LOG)
       }
@@ -100,7 +97,8 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
 
   private suspend fun FlowCollector<PositionPresentation>.show(sourcePosition: XSourcePosition,
                                                                sourceKind: XSourceKind,
-                                                               isTopFrame: Boolean): Nothing = coroutineScope {
+                                                               isTopFrame: Boolean,
+                                                               initialNavigationMode: NavigationMode): Nothing = coroutineScope {
     PositionPresentation(project, sourceKind, sourcePosition, isTopFrame).use { presentation ->
       emit(presentation)
 
@@ -113,9 +111,11 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
       }.launchIn(this)
 
       navigationRequestFlow
+        .map { NavigationMode.OPEN }
+        .onStart { emit(initialNavigationMode) }
         .debounce(10.milliseconds)
-        .onEach {
-          presentation.navigator.navigateTo()
+        .onEach { navigationMode ->
+          presentation.navigator.navigateTo(navigationMode)
         }.launchIn(this)
 
       awaitCancellation()
@@ -242,16 +242,21 @@ private class PositionNavigator(
 ) {
   var isActiveSourceKind: Boolean = false
 
-  private val navigateToEditorLazy = resettableLazy {
-    XDebuggerUtilImpl.createEditor(openFileDescriptor)
-  }
+  private var openedEditor: Editor? = null
 
-  fun navigateTo(): Editor? {
-    if (!isActiveSourceKind) return null
-    val editor = navigateToEditorLazy.value?.takeUnless { it.isDisposed }
-    if (editor != null) return editor
-    navigateToEditorLazy.reset()
-    return navigateToEditorLazy.value
+  fun navigateTo(navigationMode: NavigationMode) {
+    if (navigationMode == NavigationMode.NONE) return
+
+    if (navigationMode == NavigationMode.OPEN && isActiveSourceKind) {
+      openedEditor = XDebuggerUtilImpl.createEditor(openFileDescriptor)
+    }
+    else {
+      val fileEditorManager = FileEditorManager.getInstance(openFileDescriptor.project)
+      val editor = openedEditor?.takeUnless { it.isDisposed }
+                   ?: fileEditorManager.getSelectedEditor(openFileDescriptor.file).asSafely<TextEditor>()?.editor
+                   ?: return
+      openFileDescriptor.navigateIn(editor)
+    }
   }
 
   fun disposeDescriptor() {
