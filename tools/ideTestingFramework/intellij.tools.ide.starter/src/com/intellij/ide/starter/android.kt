@@ -143,12 +143,12 @@ fun IDETestContext.downloadAndroidPluginProject(): IDETestContext {
     assert(script.exists()) { "File $script does not exist" }
     val scriptContent = script.readText().replace("clone", "clone --depth 1")
     val commandLineArgs = scriptContent.split(" ")
-    val adjustedCommandLineArgs = when (communityUrlSuffix) {
+    val adjustedCommandLineArgs = when (communityUrlSuffix.second) {
       "master" -> commandLineArgs
       else -> {
         val listOfArgs = commandLineArgs.toMutableList()
         listOfArgs.add(2, "-b")
-        listOfArgs.add(3, communityUrlSuffix)
+        listOfArgs.add(3, communityUrlSuffix.second)
         listOfArgs.add(4, "--single-branch")
         listOfArgs
       }
@@ -172,11 +172,11 @@ fun IDETestContext.downloadAndroidPluginProject(): IDETestContext {
 
 val communityUrlSuffix = communityUrlSuffix(Git.getDefaultBranch)
 
-fun communityUrlSuffix(branch: String): String {
+fun communityUrlSuffix(branch: String): Pair<String, String> {
   val majorVersion = branch.substringBefore(".")
-  return when (majorVersion.isNumeric()) {
-    true -> "refs/heads/$majorVersion"
-    false -> "master"
+  return when (majorVersion.isNumeric() && majorVersion.length == 3) {
+    true -> "refs/heads/$majorVersion" to majorVersion
+    false -> "master" to "master"
   }
 }
 
