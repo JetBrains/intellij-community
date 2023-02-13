@@ -23,6 +23,7 @@ import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchUtil
+import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopup
@@ -93,6 +94,9 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     val state = getState(project, gitRepository)
 
     e.presentation.putClientProperty(projectKey, project)
+    if (gitRepository != null && gitRepository != e.presentation.getClientProperty(repositoryKey)) {
+      GitVcsSettings.getInstance(project).setRecentRoot(gitRepository.root.path)
+    }
     e.presentation.putClientProperty(repositoryKey, gitRepository)
 
     when(state) {
