@@ -444,7 +444,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
           return null;
         }
         else {
-          LOG.error("Invalid editor dimension mapping", new Throwable(), com.intellij.openapi.diagnostic.AttachmentFactory.createContext(
+          LOG.error("Invalid editor dimension mapping", new Throwable(), AttachmentFactory.createContext(
             "Expected to map visual position '" +
             visualPosition + "' to offset " + newOffset + " but got the following: -> offset " + tmpOffset +
             ". State: " + myEditor.dumpState()));

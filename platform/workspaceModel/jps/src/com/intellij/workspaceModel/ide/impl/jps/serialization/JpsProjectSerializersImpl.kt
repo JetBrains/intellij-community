@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspaceModel.jps.*
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
@@ -410,20 +407,19 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       val externalModuleListSerializerUrl = it.externalModuleListSerializer?.fileUrl
 
       if (externalFileUrl != null && FileUtil.exists(JpsPathUtil.urlToPath(externalFileUrl.url))) {
-        attachments[externalFileUrl.url] = com.intellij.openapi.diagnostic.AttachmentFactory.createAttachment(
-          externalFileUrl.toPath(), false)
+        attachments[externalFileUrl.url] = AttachmentFactory.createAttachment(externalFileUrl.toPath(), false)
       }
       if (FileUtil.exists(JpsPathUtil.urlToPath(fileUrl.url))) {
-        attachments[fileUrl.url] = com.intellij.openapi.diagnostic.AttachmentFactory.createAttachment(fileUrl.toPath(),
-                                                                                                      false)
+        attachments[fileUrl.url] = AttachmentFactory.createAttachment(fileUrl.toPath(), false)
       }
       if (internalModuleListSerializerUrl != null && FileUtil.exists(JpsPathUtil.urlToPath(internalModuleListSerializerUrl))) {
-        attachments[internalModuleListSerializerUrl] = com.intellij.openapi.diagnostic.AttachmentFactory.createAttachment(
-          Path.of(JpsPathUtil.urlToPath(internalModuleListSerializerUrl)
-          ), false)
+        attachments[internalModuleListSerializerUrl] = AttachmentFactory.createAttachment(
+          Path.of(JpsPathUtil.urlToPath(internalModuleListSerializerUrl)), 
+          false
+        )
       }
       if (externalModuleListSerializerUrl != null && FileUtil.exists(JpsPathUtil.urlToPath(externalModuleListSerializerUrl))) {
-        attachments[externalModuleListSerializerUrl] = com.intellij.openapi.diagnostic.AttachmentFactory.createAttachment(
+        attachments[externalModuleListSerializerUrl] = AttachmentFactory.createAttachment(
           Path.of(JpsPathUtil.urlToPath(externalModuleListSerializerUrl)), false
         )
       }

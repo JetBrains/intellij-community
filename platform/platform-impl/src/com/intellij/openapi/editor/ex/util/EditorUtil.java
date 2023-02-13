@@ -178,7 +178,7 @@ public final class EditorUtil {
     CharSequence editorInfo = "editor's class: " + editor.getClass()
                               + ", all soft wraps: " + editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength())
                               + ", fold regions: " + Arrays.toString(editor.getFoldingModel().getAllFoldRegions());
-    LOG.error("Can't calculate last visual column", new Throwable(), com.intellij.openapi.diagnostic.AttachmentFactory.createContext(String.format(
+    LOG.error("Can't calculate last visual column", new Throwable(), AttachmentFactory.createContext(String.format(
       "Target visual line: %d, mapped logical line: %d, visual lines range for the mapped logical line: [%s]-[%s], soft wraps for "
       + "the target logical line: %s. Editor info: %s",
       line, resultLogLine, resVisStart, resVisEnd, softWraps, editorInfo
