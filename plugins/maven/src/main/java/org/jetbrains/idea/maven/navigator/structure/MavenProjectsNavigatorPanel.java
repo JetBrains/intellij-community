@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiFile;
@@ -64,10 +65,6 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
     }
   };
 
-  SimpleTree getTree() {
-    return myTree;
-  }
-
   public MavenProjectsNavigatorPanel(Project project, SimpleTree tree) {
     super(true, true);
     myProject = project;
@@ -98,7 +95,7 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
       }
 
       @Nullable
-      private String getMenuId(Collection<? extends MavenSimpleNode> nodes) {
+      private static String getMenuId(Collection<? extends MavenSimpleNode> nodes) {
         String id = null;
         for (MavenSimpleNode node : nodes) {
           String menuId = node.getMenuId();
@@ -154,7 +151,7 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
     return null;
   }
 
-  private VirtualFile extractVirtualFile(@NotNull List<MavenSimpleNode> selectedNodes) {
+  private static VirtualFile extractVirtualFile(@NotNull List<MavenSimpleNode> selectedNodes) {
     for (MavenSimpleNode each : selectedNodes) {
       VirtualFile file = each.getVirtualFile();
       if (file != null && file.isValid()) return file;
@@ -163,20 +160,20 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
     var projectNode = getContextProjectNode(selectedNodes);
     if (projectNode == null) return null;
     VirtualFile file = projectNode.getMavenProject().getFile();
-    if (file == null || !file.isValid()) return null;
+    if (!file.isValid()) return null;
     return file;
   }
 
-  private Object extractVirtualFiles(@NotNull List<MavenSimpleNode> selectedNodes) {
+  private static Object extractVirtualFiles(@NotNull List<MavenSimpleNode> selectedNodes) {
     final List<VirtualFile> files = new ArrayList<>();
     for (MavenSimpleNode each : selectedNodes) {
       VirtualFile file = each.getVirtualFile();
       if (file != null && file.isValid()) files.add(file);
     }
-    return files.isEmpty() ? null : VfsUtil.toVirtualFileArray(files);
+    return files.isEmpty() ? null : VfsUtilCore.toVirtualFileArray(files);
   }
 
-  private Object extractNavigatables(@NotNull List<MavenSimpleNode> selectedNodes) {
+  private static Object extractNavigatables(@NotNull List<MavenSimpleNode> selectedNodes) {
     final List<Navigatable> navigatables = new ArrayList<>();
     for (MavenSimpleNode each : selectedNodes) {
       Navigatable navigatable = each.getNavigatable();
@@ -197,7 +194,7 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
   }
 
   @Nullable
-  private RunnerAndConfigurationSettings extractRunSettings(@NotNull List<MavenSimpleNode> selectedNodes) {
+  private static RunnerAndConfigurationSettings extractRunSettings(@NotNull List<MavenSimpleNode> selectedNodes) {
     @Nullable MavenSimpleNode node = selectedNodes.isEmpty() ? null : selectedNodes.get(0);
     if (!(node instanceof RunConfigurationNode)) return null;
 
@@ -248,7 +245,7 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
     return parent;
   }
 
-  private Object extractProfiles(@NotNull List<MavenSimpleNode> selectedNodes) {
+  private static Object extractProfiles(@NotNull List<MavenSimpleNode> selectedNodes) {
     List<ProfileNode> profileNodes = filterNodesByClass(selectedNodes, ProfileNode.class);
     final Map<String, MavenProfileKind> profiles = new HashMap<>();
     for (ProfileNode node : profileNodes) {
@@ -257,7 +254,7 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
     return profiles;
   }
 
-  private Set<MavenArtifact> extractDependencies(@NotNull List<MavenSimpleNode> selectedNodes) {
+  private static Set<MavenArtifact> extractDependencies(@NotNull List<MavenSimpleNode> selectedNodes) {
     Set<MavenArtifact> result = new HashSet<>();
     List<ProjectNode> projectNodes = filterNodesByClass(selectedNodes, ProjectNode.class);
 
@@ -284,14 +281,14 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
     return result;
   }
 
-  private <T extends MavenSimpleNode> List<T> filterNodesByClass(@NotNull List<MavenSimpleNode> nodes,
-                                                                 Class<T> aClass) {
+  private static <T extends MavenSimpleNode> List<T> filterNodesByClass(@NotNull List<MavenSimpleNode> nodes,
+                                                                        Class<T> aClass) {
     List<T> filtered = ContainerUtil.filterIsInstance(nodes, aClass);
     return filtered.size() == nodes.size() ? filtered : Collections.emptyList();
   }
 
 
-  private @Nullable MavenProjectNode getContextProjectNode(@NotNull List<MavenSimpleNode> selectedNodes) {
+  private static @Nullable MavenProjectNode getContextProjectNode(@NotNull List<MavenSimpleNode> selectedNodes) {
     List<ProjectNode> projectNodes = filterNodesByClass(selectedNodes, ProjectNode.class);
     ProjectNode projectNode = projectNodes.size() == 1 ? projectNodes.get(0) : null;
     if (projectNode != null) return projectNode;
