@@ -17,7 +17,7 @@ internal class GitLabMergeRequestTimelineFile(connectionId: String,
                                               val mergeRequestId: GitLabMergeRequestId)
   : GitLabProjectVirtualFile(connectionId, project, glProject) {
 
-  override fun getName() = "#${mergeRequestId.iid}"
+  override fun getName() = "!${mergeRequestId.iid}"
   override fun getPresentableName(): @Nls String = GitLabBundle.message("merge.request.timeline.file.name", mergeRequestId.iid)
 
   override fun getPath(): String = (fileSystem as GitLabVirtualFileSystem).getPath(connectionId, project, glProject,

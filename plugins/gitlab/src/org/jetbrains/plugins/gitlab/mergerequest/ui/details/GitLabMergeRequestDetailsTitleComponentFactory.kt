@@ -64,7 +64,7 @@ internal object GitLabMergeRequestDetailsTitleComponentFactory {
       .nbsp()
       .append(
         HtmlChunk
-          .link(url, "#${reviewNumber}")
+          .link(url, "!${reviewNumber}")
           .wrapWith(HtmlChunk.font(ColorUtil.toHex(NamedColorUtil.getInactiveTextColor())))
       )
       .wrapWithHtmlBody()
