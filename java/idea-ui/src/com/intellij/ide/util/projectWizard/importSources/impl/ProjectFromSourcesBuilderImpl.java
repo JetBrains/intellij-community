@@ -171,8 +171,12 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     List<Module> result = new ArrayList<>();
     Map<String, Module> contentRootToModule = new HashMap<>();
     for (Module module : moduleModel.getModules()) {
-      for (String url : updatedModulesProvider.getRootModel(module).getContentRootUrls()) {
-        contentRootToModule.put(url, module);
+      // check that module exists in provider
+      if (null != updatedModulesProvider.getModule(module.getName())) {
+        ModuleRootModel moduleRootModel = updatedModulesProvider.getRootModel(module);
+        for (String url : moduleRootModel.getContentRootUrls()) {
+          contentRootToModule.put(url, module);
+        }
       }
     }
     for (ProjectDescriptor descriptor : getSelectedDescriptors()) {
