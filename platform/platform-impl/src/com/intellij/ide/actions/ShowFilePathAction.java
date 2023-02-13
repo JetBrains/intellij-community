@@ -60,15 +60,14 @@ public class ShowFilePathAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    DataContext asyncContext = Utils.wrapToAsyncDataContext(e.getDataContext());
-    VirtualFile file = getFile(e);
+    var file = getFile(e);
     if (file != null) {
+      var asyncContext = Utils.wrapToAsyncDataContext(e.getDataContext());
       show(file, popup -> popup.showInBestPositionFor(asyncContext));
     }
   }
 
-  @Nullable
-  private static VirtualFile getFile(@NotNull AnActionEvent e) {
+  private static @Nullable VirtualFile getFile(AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     return files == null || files.length == 1 ? e.getData(CommonDataKeys.VIRTUAL_FILE) : null;
   }
@@ -81,7 +80,7 @@ public class ShowFilePathAction extends DumbAwareAction {
     });
   }
 
-  private static void show(@NotNull VirtualFile file, @NotNull Consumer<? super ListPopup> action) {
+  private static void show(VirtualFile file, Consumer<ListPopup> action) {
     if (!RevealFileAction.isSupported()) return;
 
     List<VirtualFile> files = new ArrayList<>();
@@ -115,16 +114,15 @@ public class ShowFilePathAction extends DumbAwareAction {
     return url;
   }
 
-  private static ListPopup createPopup(List<? extends VirtualFile> files, List<? extends Icon> icons) {
+  private static ListPopup createPopup(List<VirtualFile> files, List<Icon> icons) {
     BaseListPopupStep<VirtualFile> step = new BaseListPopupStep<>(RevealFileAction.getActionName(), files, icons) {
-      @NotNull
       @Override
-      public String getTextFor(VirtualFile value) {
+      public @NotNull String getTextFor(VirtualFile value) {
         return value.getPresentableName();
       }
 
       @Override
-      public PopupStep onChosen(VirtualFile selectedValue, boolean finalChoice) {
+      public PopupStep<?> onChosen(VirtualFile selectedValue, boolean finalChoice) {
         File selectedFile = new File(getPresentableUrl(selectedValue));
         if (selectedFile.exists()) {
           ApplicationManager.getApplication().executeOnPooledThread(() -> RevealFileAction.openFile(selectedFile));
@@ -137,29 +135,29 @@ public class ShowFilePathAction extends DumbAwareAction {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link RevealFileAction#FILE_SELECTING_LISTENER} (to be removed in IDEA 2021.3) */
+  /** @deprecated use {@link RevealFileAction#FILE_SELECTING_LISTENER} */
   @Deprecated(forRemoval = true)
   public static final NotificationListener FILE_SELECTING_LISTENER = RevealFileAction.FILE_SELECTING_LISTENER;
 
-  /** @deprecated use {@link RevealFileAction#getFileManagerName} (to be removed in IDEA 2021.3) */
+  /** @deprecated use {@link RevealFileAction#getFileManagerName} */
   @Deprecated(forRemoval = true)
   public static @NotNull String getFileManagerName() {
     return RevealFileAction.getFileManagerName();
   }
 
-  /** @deprecated use {@link RevealFileAction#openFile} (to be removed in IDEA 2021.3) */
+  /** @deprecated use {@link RevealFileAction#openFile} */
   @Deprecated(forRemoval = true)
   public static void openFile(@NotNull File file) {
     RevealFileAction.openFile(file);
   }
 
-  /** @deprecated use {@link RevealFileAction#openDirectory} (to be removed in IDEA 2021.3) */
+  /** @deprecated use {@link RevealFileAction#openDirectory}  */
   @Deprecated(forRemoval = true)
   public static void openDirectory(@NotNull File directory) {
     RevealFileAction.openDirectory(directory);
   }
 
-  /** @deprecated use {@link RevealFileAction#findLocalFile} (to be removed in IDEA 2021.3) */
+  /** @deprecated use {@link RevealFileAction#findLocalFile} */
   @Deprecated(forRemoval = true)
   public static @Nullable VirtualFile findLocalFile(@Nullable VirtualFile file) {
     return RevealFileAction.findLocalFile(file);
