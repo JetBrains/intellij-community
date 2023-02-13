@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diff.impl.patch.FilePatch
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.changes.GitParsedChangesBundle
 import org.jetbrains.plugins.github.api.data.GHCommit
@@ -11,6 +13,9 @@ interface GHPRChangesDataProvider {
 
   @RequiresEdt
   fun loadChanges(): CompletableFuture<GitParsedChangesBundle>
+
+  @RequiresEdt
+  fun loadPatchFromMergeBase(progressIndicator: ProgressIndicator, commitSha: String, filePath: String): CompletableFuture<FilePatch?>
 
   @RequiresEdt
   fun reloadChanges()

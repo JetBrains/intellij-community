@@ -153,6 +153,17 @@ object GithubApiRequests {
             })
           }
         }.withOperationName("get diff for ref")
+
+      @JvmStatic
+      fun getDiff(repository: GHRepositoryCoordinates, refA: String, refB: String) =
+        object : Get<String>(getUrl(repository, "/compare/$refA...$refB"),
+                             GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
+          override fun extractResult(response: GithubApiResponse): String {
+            return response.handleBody(ThrowableConvertor {
+              it.reader().use { it.readText() }
+            })
+          }
+        }.withOperationName("get diff between refs")
     }
 
     object Forks : Entity("/forks") {
