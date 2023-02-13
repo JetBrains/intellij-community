@@ -26,6 +26,7 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFact
 import org.jetbrains.plugins.gradle.testFramework.util.openProjectAsyncAndWait
 import org.jetbrains.plugins.gradle.testFramework.util.refreshAndWait
 import org.jetbrains.plugins.gradle.util.whenResolveTaskStarted
+import kotlin.time.Duration.Companion.minutes
 
 internal class GradleProjectTestFixtureImpl private constructor(
   override val projectName: String,
@@ -73,7 +74,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
   override fun tearDown() {
     runAll(
       { runBlocking { fileFixture.root.refreshAndWait() } },
-      { projectOperations.getOperationPromise(testDisposable).waitForPromise() },
+      { projectOperations.getOperationPromise(testDisposable).waitForPromise(1.minutes) },
       { if (_project.isInitialized) runBlocking { _project.closeProjectAsync() } },
       { Disposer.dispose(testDisposable) },
       { fileFixture.tearDown() },

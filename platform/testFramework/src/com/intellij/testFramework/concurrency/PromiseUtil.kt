@@ -9,10 +9,9 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.await
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
 fun <R> Promise<R>.waitForPromise(
-  timeout: Duration = 1.minutes
+  timeout: Duration
 ): R {
   val application = ApplicationManager.getApplication()
   val result = when (application.isDispatchThread) {
@@ -24,7 +23,7 @@ fun <R> Promise<R>.waitForPromise(
 }
 
 fun <R> Promise<*>.waitForPromise(
-  timeout: Duration = 1.minutes,
+  timeout: Duration,
   action: ThrowableComputable<R, Throwable>
 ): R {
   val result = action.compute()
@@ -33,7 +32,7 @@ fun <R> Promise<*>.waitForPromise(
 }
 
 suspend fun <R> Promise<R>.awaitPromise(
-  timeout: Duration = 1.minutes
+  timeout: Duration
 ): R {
   return withTimeout(timeout) {
     await()
@@ -41,7 +40,7 @@ suspend fun <R> Promise<R>.awaitPromise(
 }
 
 suspend fun <R> Promise<*>.awaitPromise(
-  timeout: Duration = 1.minutes,
+  timeout: Duration,
   action: suspend () -> R
 ): R {
   val result = action()

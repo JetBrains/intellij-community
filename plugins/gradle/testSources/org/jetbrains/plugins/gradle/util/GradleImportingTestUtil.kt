@@ -14,6 +14,7 @@ import com.intellij.testFramework.concurrency.waitForPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.all
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * @param action or some async calls have to produce project reload
@@ -22,25 +23,25 @@ import java.nio.file.Path
  */
 fun <R> waitForMultipleProjectsReload(expectedProjects: List<Path>, action: ThrowableComputable<R, Throwable>): R {
   return Disposer.newDisposable("waitForMultipleProjectsReload").use { disposable ->
-    getMultipleReloadProjectPromise(expectedProjects, disposable).waitForPromise(action = action)
+    getMultipleReloadProjectPromise(expectedProjects, disposable).waitForPromise(2.minutes, action = action)
   }
 }
 
 fun <R> waitForProjectReload(action: ThrowableComputable<R, Throwable>): R {
   return Disposer.newDisposable("waitForProjectReload").use { disposable ->
-    getReloadProjectPromise(disposable).waitForPromise(action = action)
+    getReloadProjectPromise(disposable).waitForPromise(2.minutes, action = action)
   }
 }
 
 fun <R> waitForTaskExecution(action: ThrowableComputable<R, Throwable>): R {
   return Disposer.newDisposable("waitForTaskExecution").use { disposable ->
-    getExecutionTaskPromise(disposable).waitForPromise(action = action)
+    getExecutionTaskPromise(disposable).waitForPromise(2.minutes, action = action)
   }
 }
 
 suspend fun <R> awaitProjectReload(action: suspend () -> R): R {
   return Disposer.newDisposable("awaitProjectReload").use { disposable ->
-    getReloadProjectPromise(disposable).awaitPromise(action = action)
+    getReloadProjectPromise(disposable).awaitPromise(2.minutes, action = action)
   }
 }
 
