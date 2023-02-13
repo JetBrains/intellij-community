@@ -159,7 +159,7 @@ public final class ExportTestResultsAction extends DumbAwareAction {
             }
             catch (Throwable ignored) { }
 
-            LOG.error("Failed to export test results", ex, AttachmentFactory.createAttachment(tempFile, false));
+            LOG.error("Failed to export test results", ex, AttachmentFactory.createAttachment(tempFile.toPath(), false));
             FileUtil.delete(tempFile);
             return;
           }

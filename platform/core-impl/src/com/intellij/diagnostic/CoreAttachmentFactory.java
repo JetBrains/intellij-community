@@ -2,6 +2,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -11,6 +12,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class CoreAttachmentFactory {
+  private static final Logger LOG = Logger.getInstance(CoreAttachmentFactory.class);
+  
   public static @NotNull Attachment createAttachment(@NotNull Document document) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     return new Attachment(file != null ? file.getPath() : "unknown.txt", document.getText());
@@ -25,7 +28,8 @@ public class CoreAttachmentFactory {
       return com.intellij.openapi.diagnostic.AttachmentFactory.createAttachment(path, inputStream, file.getLength(), file.getFileType().isBinary());
     }
     catch (IOException e) {
-      return com.intellij.openapi.diagnostic.AttachmentFactory.handleException(e, file.getPath());
+      LOG.warn("failed to create an attachment from " + file.getPath(), e);
+      return new Attachment(file.getPath(), e);
     }
   }
 }

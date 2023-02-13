@@ -7,7 +7,6 @@ import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -19,22 +18,14 @@ public class AttachmentFactory {
   private static final Logger LOG = Logger.getInstance(AttachmentFactory.class);
   private static final long BIG_FILE_THRESHOLD_BYTES = 50 * 1024;
 
-  public static @NotNull Attachment createAttachment(@NotNull File file, boolean isBinary) {
-    return createAttachment(file.toPath(), isBinary);
-  }
-
   public static @NotNull Attachment createAttachment(@NotNull Path file, boolean isBinary) {
     try (InputStream inputStream = Files.newInputStream(file)) {
       return createAttachment(file.toString(), inputStream, Files.size(file), isBinary);
     }
     catch (IOException e) {
-      return handleException(e, file.toString());
+      LOG.warn("failed to create an attachment from " + file, e);
+      return new Attachment(file.toString(), e);
     }
-  }
-
-  public static Attachment handleException(Throwable t, String path) {
-    LOG.warn("failed to create an attachment from " + path, t);
-    return new Attachment(path, t);
   }
 
   public static Attachment createAttachment(String path, InputStream content, long contentLength, boolean isBinary) throws IOException {
@@ -50,9 +41,7 @@ public class AttachmentFactory {
     }
   }
 
-  public static @NotNull Attachment createContext(@NotNull @NonNls Object start, @NonNls Object... more) {
-    StringBuilder builder = new StringBuilder(String.valueOf(start));
-    for (Object o : more) builder.append(",").append(o);
-    return new Attachment("current-context.txt", builder.length() > 0 ? builder.toString() : "(unknown)");
+  public static @NotNull Attachment createContext(@NotNull @NonNls String context) {
+    return new Attachment("current-context.txt", !context.isEmpty() ? context : "(unknown)");
   }
 }

@@ -204,7 +204,7 @@ public class SoftWrapApplianceManager implements Dumpable {
   private void recalculateSoftWraps(@NotNull IncrementalCacheUpdateEvent event) {
     if (myInProgress) {
       LOG.error("Detected race condition at soft wraps recalculation", new Throwable(),
-                AttachmentFactory.createContext(myEditor.dumpState(), event));
+                AttachmentFactory.createContext(myEditor.dumpState() + "\n" + event));
     }
     myInProgress = true;
     try {

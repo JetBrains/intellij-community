@@ -57,7 +57,7 @@ class RangesAssert {
     }
 
     Throwable t = problematicLanguageClass != null ? PluginException.createByClass("", null, problematicLanguageClass) : null;
-    LOG.error(messageBuffer.toString(), t, AttachmentFactory.createContext(buffer));
+    LOG.error(messageBuffer.toString(), t, AttachmentFactory.createContext(buffer.toString()));
   }
 
   public boolean checkChildRange(@NotNull TextRange parentRange, @NotNull TextRange childRange, @NotNull FormattingDocumentModel model) {
