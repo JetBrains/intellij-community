@@ -3,7 +3,6 @@ package com.intellij.codeInspection.ui
 
 import com.intellij.codeInspection.options.OptStringList
 import com.intellij.codeInspection.options.StringValidator
-import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -112,11 +111,11 @@ internal fun addColumnValidators(table: ListTable, components: List<OptStringLis
         val text = cellEditor.text ?: return@Supplier null
         val errorMessage = validator.getErrorMessage(project, text)
         if (errorMessage != null) {
-          ValidationUtils.setExtension(cellEditor, ValidationUtils.ERROR_EXTENSION, true)
-          ValidationInfo(errorMessage, cellEditor)
+          ValidationUtils.setExtension(cellEditor, ValidationUtils.WARNING_EXTENSION, true)
+          ValidationInfo(errorMessage, cellEditor).asWarning()
         }
         else {
-          ValidationUtils.setExtension(cellEditor, ValidationUtils.ERROR_EXTENSION, false)
+          ValidationUtils.setExtension(cellEditor, ValidationUtils.WARNING_EXTENSION, false)
           null
         }
       }
@@ -130,7 +129,6 @@ internal fun addColumnValidators(table: ListTable, components: List<OptStringLis
       .bindToEditorSize {
         cellEditor.preferredSize
       }
-      .withCustomIcon(AllIcons.Ide.FatalErrorRead)
       .withCellValidator(object : TableCellValidator {
         override fun validate(value: Any?, row: Int, column: Int): ValidationInfo? {
           val stringValue = (value as? String) ?: ""
@@ -138,7 +136,7 @@ internal fun addColumnValidators(table: ListTable, components: List<OptStringLis
           val previous = validationHolder.getResult(row, column, dumb)
           if (previous != null && stringValue == previous.value && dumb == previous.isDumbMode) {
             @NlsSafe val previousResult = previous.errorMessage ?: return null
-            return ValidationInfo(previousResult, null)
+            return ValidationInfo(previousResult, null).asWarning()
           }
           return null
         }
@@ -154,7 +152,6 @@ internal fun addColumnValidators(table: ListTable, components: List<OptStringLis
 
     CellTooltipManager(parent)
       .withCellComponentProvider(CellComponentProvider.forTable(table))
-      .showUnderIcon()
       .installOn(table)
   }
 }
