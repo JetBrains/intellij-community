@@ -6,7 +6,6 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
@@ -47,19 +46,19 @@ abstract class ProductProperties {
    */
   lateinit var applicationInfoModule: String
 
-  @Internal
+  @ApiStatus.Internal
   var productPluginSourceModuleName: String? = null
 
   /**
    * Enables fast activation of a running IDE instance from the launcher
    * (at the moment, it is only implemented in the native Windows one).
    */
-  var fastInstanceActivation = true
+  var fastInstanceActivation: Boolean = true
 
   /**
    * An entry point into application's Java code, usually [com.intellij.idea.Main].
    */
-  var mainClassName = "com.intellij.idea.Main"
+  var mainClassName: String = "com.intellij.idea.Main"
 
   /**
    * Paths to directories containing images specified by 'logo/@url' and 'icon/@ico' attributes in ApplicationInfo.xml file.
@@ -73,19 +72,19 @@ abstract class ProductProperties {
    * (returned by [com.intellij.openapi.application.ApplicationStarter.getCommandName]).
    * This property will be also used to name sh/bat scripts which execute this command.
    */
-  var inspectCommandName = "inspect"
+  var inspectCommandName: String = "inspect"
 
   /**
    * `true` if tools.jar from JDK must be added to the IDE classpath.
    */
-  var toolsJarRequired = false
+  var toolsJarRequired: Boolean = false
 
-  var isAntRequired = false
+  var isAntRequired: Boolean = false
 
   /**
    * Whether to use splash for application start-up.
    */
-  var useSplash = false
+  var useSplash: Boolean = false
 
   /**
    * Class-loader that product application should use by default.
@@ -117,13 +116,13 @@ abstract class ProductProperties {
    * If `true`, Alt+Button1 shortcut will be removed from 'Quick Evaluate Expression' action and assigned to 'Add/Remove Caret' action
    * (instead of Alt+Shift+Button1) in the default keymap.
    */
-  var reassignAltClickToMultipleCarets = false
+  var reassignAltClickToMultipleCarets: Boolean = false
 
   /**
    * Now file containing information about third-party libraries is bundled and shown inside the IDE.
    * If `true`, HTML & JSON files of third-party libraries will be placed alongside built artifacts.
    */
-  var generateLibraryLicensesTable = true
+  var generateLibraryLicensesTable: Boolean = true
 
   /**
    * List of licenses information about all libraries which can be used in the product modules.
@@ -168,7 +167,7 @@ abstract class ProductProperties {
   /**
    * Strings which are forbidden as a part of resulting class file path
    */
-  var forbiddenClassFileSubPaths: List<String> = emptyList()
+  var forbiddenClassFileSubPaths: PersistentList<String> = persistentListOf()
 
   /**
    * Paths to properties files the content of which should be appended to idea.properties file.
@@ -229,7 +228,7 @@ abstract class ProductProperties {
    * Specified modules which tests need to be compiled when product is built.
    * todo(nik) get rid of this
    */
-  var modulesToCompileTests: List<String> = emptyList()
+  var modulesToCompileTests: PersistentList<String> = persistentListOf()
 
   var runtimeDistribution: JetBrainsRuntimeDistribution = JetBrainsRuntimeDistribution.JCEF
 
