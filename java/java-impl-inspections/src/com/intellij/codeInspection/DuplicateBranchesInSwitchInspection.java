@@ -125,15 +125,19 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     private void highlightDefaultDuplicate(@NotNull BranchBase<?> branch) {
+      List<LocalQuickFix> fixes = new ArrayList<>();
       LocalQuickFix deleteCaseFix = branch.deleteCaseFix();
+      ContainerUtil.addIfNotNull(fixes, deleteCaseFix);
       LocalQuickFix mergeWithDefaultFix = branch.mergeWithDefaultFix();
-      if (deleteCaseFix == null && mergeWithDefaultFix == null) return;
-      registerProblem(branch, branch.getDefaultBranchMessage(), deleteCaseFix, mergeWithDefaultFix);
+      ContainerUtil.addIfNotNull(fixes, mergeWithDefaultFix);
+      if (!fixes.isEmpty()) {
+        registerProblem(branch, branch.getDefaultBranchMessage(), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+      }
     }
 
     private void registerProblem(@NotNull BranchBase<?> duplicate,
                                  @NotNull @InspectionMessage String message,
-                                 LocalQuickFix @NotNull ... fixes) {
+                                 @NotNull LocalQuickFix @NotNull ... fixes) {
       ProblemDescriptor descriptor = InspectionManager.getInstance(myHolder.getProject())
         .createProblemDescriptor(duplicate.myStatements[0], duplicate.myStatements[duplicate.myStatements.length - 1],
                                  message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,

@@ -80,7 +80,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
           UseCompareMethodInspection.this, "suggestFloatingCompare",
           JavaAnalysisBundle.message("inspection.use.compare.method.turn.off.double"), false) : null;
         holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.expression.can.be.replaced.with.message", info.myClass.getClassName() + ".compare"),
-                               new ReplaceWithPrimitiveCompareFix(info.getReplacementText()), turnOffFloating);
+                               LocalQuickFix.notNullElements(new ReplaceWithPrimitiveCompareFix(info.getReplacementText()), turnOffFloating));
       }
     };
   }

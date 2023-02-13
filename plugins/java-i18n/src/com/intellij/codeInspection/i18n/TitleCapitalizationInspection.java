@@ -72,7 +72,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
               message = JavaI18nBundle.message("inspection.title.capitalization.description",
                                                titleValue, getCapitalizationName(capitalization));
             }
-            holder.registerProblem(element, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
+            holder.registerProblem(element, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, LocalQuickFix.notNullElements(fix));
           }
         }
       }

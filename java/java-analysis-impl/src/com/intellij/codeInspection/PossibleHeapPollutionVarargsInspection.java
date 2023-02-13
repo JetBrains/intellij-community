@@ -208,7 +208,8 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
                              OverridingMethodsSearch.search(method).findFirst() == null;
         quickFix = canBeFinal ? new MakeFinalAndAnnotateQuickFix(method) : null;
       }
-      myHolder.registerProblem(nameIdentifier, JavaAnalysisBundle.message("possible.heap.pollution.from.parameterized.vararg.type.loc"), quickFix);
+      myHolder.registerProblem(nameIdentifier, JavaAnalysisBundle.message("possible.heap.pollution.from.parameterized.vararg.type.loc"),
+                               LocalQuickFix.notNullElements(quickFix));
     }
   }
 }

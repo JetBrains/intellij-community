@@ -2,10 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
-import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
@@ -65,15 +62,15 @@ class SuspiciousCallableReferenceInLambdaInspection : AbstractKotlinInspection()
             }
 
             val quickFix = if (canMove(lambdaExpression, callableReference, context))
-                IntentionWrapper(MoveIntoParenthesesIntention())
+                arrayOf(IntentionWrapper(MoveIntoParenthesesIntention()))
             else
-                null
+                LocalQuickFix.EMPTY_ARRAY
 
             holder.registerProblem(
                 lambdaExpression,
                 KotlinBundle.message("suspicious.callable.reference.as.the.only.lambda.element"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                quickFix
+                *quickFix
             )
         })
 

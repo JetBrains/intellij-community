@@ -73,7 +73,7 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
             && refExpr.isReferenceTo(variable)) {
           holder.registerProblem(refExpr,
                                  JavaBundle.message("assignment.to.declared.variable.problem.descriptor", variable.getName()),
-                                 createRemoveAssignmentFix(refExpr));
+                                 LocalQuickFix.notNullElements(createRemoveAssignmentFix(refExpr)));
         }
       }
     };

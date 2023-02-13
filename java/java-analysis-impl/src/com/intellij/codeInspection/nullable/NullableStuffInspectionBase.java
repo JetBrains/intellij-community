@@ -165,7 +165,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           if (targetType instanceof PsiArrayType && targetType.getAnnotations().length == 0) {
             additionalFix = new MoveAnnotationToArrayFix();
           }
-          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.primitive.type.annotation", additionalFix);
+          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.primitive.type.annotation", LocalQuickFix.notNullElements(additionalFix));
         }
         if (type instanceof PsiClassType) {
           PsiElement context = ((PsiClassType)type).getPsiContext();
@@ -381,7 +381,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     reportProblem(holder, anchor, fix == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[] {fix}, messageKey, args);
   }
 
-  protected void reportProblem(@NotNull ProblemsHolder holder, @NotNull PsiElement anchor, LocalQuickFix @NotNull [] fixes,
+  protected void reportProblem(@NotNull ProblemsHolder holder, @NotNull PsiElement anchor, @NotNull LocalQuickFix @NotNull [] fixes,
                                @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String messageKey, Object... args) {
     holder.registerProblem(anchor,
                            JavaAnalysisBundle.message(messageKey, args),
@@ -702,7 +702,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   private void reportIncorrectLocation(ProblemsHolder holder, PsiAnnotation annotation,
                                               @Nullable PsiModifierListOwner listOwner,
                                               @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String messageKey,
-                                              LocalQuickFix... additionalFixes) {
+                                              @NotNull LocalQuickFix @NotNull ... additionalFixes) {
     RemoveAnnotationQuickFix fix = new RemoveAnnotationQuickFix(annotation, listOwner) {
       @Override
       protected boolean shouldRemoveInheritors() {

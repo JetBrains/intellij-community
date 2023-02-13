@@ -277,7 +277,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       }
 
       @Override
-      public QuickFix @Nullable [] getFixes() {
+      public @NotNull QuickFix @Nullable [] getFixes() {
         return QuickFix.EMPTY_ARRAY;
       }
     };

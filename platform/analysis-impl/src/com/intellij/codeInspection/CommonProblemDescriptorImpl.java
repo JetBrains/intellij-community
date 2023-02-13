@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FunctionUtil;
@@ -9,14 +10,20 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
   private static final Logger LOG = Logger.getInstance(CommonProblemDescriptorImpl.class);
   private final QuickFix<?> @NotNull [] myFixes;
   private final @InspectionMessage String myDescriptionTemplate;
 
-  CommonProblemDescriptorImpl(@NotNull @InspectionMessage String descriptionTemplate, QuickFix<?> @Nullable [] fixes) {
+  CommonProblemDescriptorImpl(@NotNull @InspectionMessage String descriptionTemplate, @NotNull QuickFix<?> @Nullable [] fixes) {
     QuickFix<?>[] filteredFixes = fixes;
     if (fixes != null && fixes.length > 0) {
+      if (ApplicationManager.getApplication().isUnitTestMode() && ArrayUtil.contains(null, fixes)) {
+        // throw only in the test mode for now, to avoid irrecoverable failures in plugins
+        throw new IllegalArgumentException("'fixes' argument must not contain null elements, for consistency and performance reasons, but got: `" + Arrays.asList(fixes) + "'");
+      }
       if (ArrayUtil.contains(null, fixes)) {
         filteredFixes = ContainerUtil.mapNotNull(fixes, FunctionUtil.id(), ArrayUtil.newArray(ArrayUtil.getComponentType(fixes), 0));
       }
@@ -24,14 +31,12 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
         for (QuickFix<?> fix : fixes) {
           if (fix instanceof LocalQuickFix) {
             LOG.error("Local quick fix expect ProblemDescriptor, but here only CommonProblemDescriptor available: " +
-                      this.getClass().getName() +
-                      "; descr: " +
-                      descriptionTemplate);
+                      this.getClass().getName() + "; descr: " + descriptionTemplate);
           }
         }
       }
     }
-    myFixes = filteredFixes == null || filteredFixes.length == 0 ? QuickFix.EMPTY_ARRAY : filteredFixes;
+    myFixes = filteredFixes == null || filteredFixes.length == 0 ? LocalQuickFix.EMPTY_ARRAY : filteredFixes;
     myDescriptionTemplate = descriptionTemplate;
   }
 
@@ -42,7 +47,7 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
   }
 
   @Override
-  public QuickFix<?> @NotNull [] getFixes() {
+  public @NotNull QuickFix<?> @Nullable [] getFixes() {
     return myFixes;
   }
 

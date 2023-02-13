@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
@@ -113,7 +114,8 @@ public class PyShadowingNamesInspection extends PyInspection {
                   return;
                 }
                 registerProblem(problemElement, PyPsiBundle.message("INSP.shadows.name.from.outer.scope", name),
-                                ProblemHighlightType.WEAK_WARNING, null, PythonUiService.getInstance().createPyRenameElementQuickFix(problemElement));
+                                ProblemHighlightType.WEAK_WARNING, null,
+                                LocalQuickFix.notNullElements(PythonUiService.getInstance().createPyRenameElementQuickFix(problemElement)));
                 return;
               }
             }

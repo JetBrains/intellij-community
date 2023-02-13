@@ -21,7 +21,7 @@ public class TypeChecker extends GroovyStaticTypeCheckVisitorBase {
   @Override
   protected void registerError(@NotNull PsiElement location,
                                @InspectionMessage @NotNull String description,
-                               LocalQuickFix @Nullable [] fixes,
+                               @NotNull LocalQuickFix @Nullable [] fixes,
                                @NotNull ProblemHighlightType highlightType) {
 
     if (highlightType == ProblemHighlightType.GENERIC_ERROR) {
