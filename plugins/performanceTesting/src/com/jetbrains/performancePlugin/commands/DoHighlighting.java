@@ -1,6 +1,7 @@
 package com.jetbrains.performancePlugin.commands;
 
 import com.google.common.base.Stopwatch;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.GlobalInspectionTool;
@@ -78,7 +79,7 @@ public final class DoHighlighting extends PerformanceCommand {
         });
         actionCallback.setDone();
         return null;
-      })).submit(AppExecutorUtil.getAppExecutorService());
+      })).wrapProgress(new DaemonProgressIndicator()).submit(AppExecutorUtil.getAppExecutorService());
     }));
     return Promises.toPromise(actionCallback);
   }
