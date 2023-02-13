@@ -33,7 +33,7 @@ public final class PercentageCoverageColumnInfo extends ColumnInfo<NodeDescripto
         if (percentageIndex1 > -1 && percentageIndex2 >-1) {
           final String percentage1 = val1.substring(0, percentageIndex1);
           final String percentage2 = val2.substring(0, percentageIndex2);
-          final int compare = Comparing.compare(safeParseDouble(percentage1), safeParseDouble(percentage2));
+          final int compare = Double.compare(safeParseDouble(percentage1), safeParseDouble(percentage2));
           if (compare == 0) {
             final int total1 = val1.indexOf('/');
             final int total2 = val2.indexOf('/');
@@ -41,8 +41,8 @@ public final class PercentageCoverageColumnInfo extends ColumnInfo<NodeDescripto
               final int r1 = val1.indexOf(')', total1);
               final int r2 = val2.indexOf(')', total2);
               if (r1 > -1 && r2 > -1) {
-                return Comparing.compare(safeParseDouble(val1.substring(total1 + 1, r1)),
-                                         safeParseDouble(val2.substring(total2 + 1, r2)));
+                return Double.compare(safeParseDouble(val1.substring(total1 + 1, r1)),
+                                      safeParseDouble(val2.substring(total2 + 1, r2)));
               }
             }
           }

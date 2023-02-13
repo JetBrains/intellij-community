@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.usages.UsageGroup;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +30,7 @@ public abstract class UsageGroupBase implements UsageGroup {
     if (!(o instanceof UsageGroupBase)) {
       return -1;
     }
-    int order = Comparing.compare(myOrder, ((UsageGroupBase)o).myOrder);
+    int order = Integer.compare(myOrder, ((UsageGroupBase)o).myOrder);
     if (order != 0) {
       return order;
     }

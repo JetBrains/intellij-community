@@ -2,7 +2,6 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -324,7 +323,7 @@ public final class PersistentHashMapValueStorage {
   private long compactValuesWithoutChunks(@NotNull List<CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage)
     throws IOException {
     //infos = new ArrayList<PersistentHashMap.CompactionRecordInfo>(infos);
-    infos.sort((info, info2) -> Comparing.compare(info.valueAddress, info2.valueAddress));
+    infos.sort((info, info2) -> Long.compare(info.valueAddress, info2.valueAddress));
 
     final int fileBufferLength = 256 * 1024;
     final byte[] buffer = new byte[fileBufferLength];
@@ -391,7 +390,7 @@ public final class PersistentHashMapValueStorage {
     }
 
     PriorityQueue<CompactionRecordInfo> records = new PriorityQueue<>(
-      infos.size(), (info, info2) -> Comparing.compare(info2.valueAddress, info.valueAddress));
+      infos.size(), (info, info2) -> Long.compare(info2.valueAddress, info.valueAddress));
 
     records.addAll(infos);
 
