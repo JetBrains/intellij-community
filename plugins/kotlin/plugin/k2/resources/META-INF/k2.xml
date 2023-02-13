@@ -73,6 +73,11 @@
                  defaultValue="false"
                  restartRequired="false"/>
 
+    <registryKey key="kotlin.k2.scripting.enabled"
+                 description="Enable scripting support in the Kotlin K2 plugin"
+                 defaultValue="false"
+                 restartRequired="true"/>
+
     <completion.contributor language="kotlin"
                             id="KotlinCompletionContributor"
                             order="first"

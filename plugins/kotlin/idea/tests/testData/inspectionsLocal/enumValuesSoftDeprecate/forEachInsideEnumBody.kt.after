@@ -7,3 +7,5 @@ enum class EnumClass {
         entries.forEach {}
     }
 }
+
+// IGNORE_FIR
