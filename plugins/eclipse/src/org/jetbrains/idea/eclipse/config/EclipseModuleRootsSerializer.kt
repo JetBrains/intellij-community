@@ -14,9 +14,9 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
 import com.intellij.util.Function
 import com.intellij.util.text.UniqueNameGenerator
-import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.EntitySource
@@ -27,8 +27,10 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jdom.output.EclipseJDOMUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.eclipse.AbstractEclipseClasspathReader
 import org.jetbrains.idea.eclipse.AbstractEclipseClasspathReader.expandLinkedResourcesPath
+import org.jetbrains.idea.eclipse.EclipseBundle
 import org.jetbrains.idea.eclipse.EclipseXml
 import org.jetbrains.idea.eclipse.IdeaXml
 import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper
@@ -126,7 +128,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                                 imlFileUrl: VirtualFileUrl,
                                 virtualUrlManager: VirtualFileUrlManager,
                                 moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>) {
-    fun reportError(message: String) {
+    fun reportError(message: @Nls String) {
       errorReporter.reportError(message, storageRootUrl.append(EclipseXml.CLASSPATH_FILE))
     }
     fun getUrlByRelativePath(path: String): VirtualFileUrl {
@@ -157,12 +159,12 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     classpathTag.getChildren(EclipseXml.CLASSPATHENTRY_TAG).forEachIndexed { index, entryTag ->
       val kind = entryTag.getAttributeValue(EclipseXml.KIND_ATTR)
       if (kind == null) {
-        reportError("'${EclipseXml.KIND_ATTR}' attribute is missing in '${EclipseXml.CLASSPATHENTRY_TAG}' tag")
+        reportError(EclipseBundle.message("error.message.0.attribute.is.missing.in.1.tag", EclipseXml.KIND_ATTR, EclipseXml.CLASSPATHENTRY_TAG))
         return@forEachIndexed
       }
       val path = entryTag.getAttributeValue(EclipseXml.PATH_ATTR)
       if (path == null) {
-        reportError("'${EclipseXml.PATH_ATTR}' attribute is missing in '${EclipseXml.CLASSPATHENTRY_TAG}' tag")
+        reportError(EclipseBundle.message("error.message.0.attribute.is.missing.in.1.tag", EclipseXml.PATH_ATTR,EclipseXml.CLASSPATHENTRY_TAG))
         return@forEachIndexed
       }
       val exported = EclipseXml.TRUE_VALUE == entryTag.getAttributeValue(EclipseXml.EXPORTED_ATTR)
@@ -271,7 +273,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
         EclipseXml.VAR_KIND -> {
           val slash = path.indexOf('/')
           if (slash == 0) {
-            reportError("'${EclipseXml.PATH_ATTR}' attribute format is incorrect for '${EclipseXml.VAR_KIND}': $path")
+            reportError(EclipseBundle.message("error.message.0.attribute.format.is.incorrect.for.1.2", EclipseXml.PATH_ATTR, EclipseXml.VAR_KIND, path))
             return@forEachIndexed
           }
           val libName = generateUniqueLibraryName(path, libraryNames)
@@ -357,7 +359,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           }
         }
         else -> {
-          reportError("Unknown '${EclipseXml.KIND_ATTR}' in '${EclipseXml.CLASSPATHENTRY_TAG}': $kind")
+          reportError(EclipseBundle.message("error.message.unknown.0.in.1.2", EclipseXml.KIND_ATTR, EclipseXml.CLASSPATHENTRY_TAG, kind))
         }
       }
     }
