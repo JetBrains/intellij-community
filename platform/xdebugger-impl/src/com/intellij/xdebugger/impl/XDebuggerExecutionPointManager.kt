@@ -42,6 +42,7 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
                                               parentScope: CoroutineScope) {
   private val coroutineScope: CoroutineScope = parentScope.childScope(Dispatchers.EDT + CoroutineName(javaClass.simpleName))
 
+  private val updateRequestFlow = MutableSharedFlow<PositionUpdateRequest>(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
   private val navigationRequestFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
 
   private val _executionPointState = MutableStateFlow<ExecutionPoint?>(null)
@@ -85,8 +86,11 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
         kotlin.runCatching {
           val sourcePosition = executionPoint?.getSourcePosition(sourceKind) ?: return@transformLatest emit(null)
           val positionUpdateFlow = sourcePosition.asSafely<XSourcePositionEx>()?.positionUpdateFlow ?: emptyFlow()
+          val externalUpdateFlow = updateRequestFlow
+            .filter { it.file == sourcePosition.file }
+            .map { it.navigationMode }
 
-          positionUpdateFlow
+          merge(positionUpdateFlow, externalUpdateFlow)
             .onStart { emit(NavigationMode.OPEN) } // initial open
             .collectLatest { navigationMode ->
               show(sourcePosition, sourceKind, executionPoint.isTopFrame, navigationMode)
@@ -138,9 +142,25 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
     return highlight.isFullLineHighlighterAt(file, line)
   }
 
+  private fun isCurrentFile(file: VirtualFile): Boolean {
+    val point = executionPoint ?: return false
+    return point.getSourcePosition(XSourceKind.MAIN)?.file == file ||
+           point.getSourcePosition(XSourceKind.ALTERNATIVE)?.file == file
+  }
+
+  fun updateExecutionPosition(file: VirtualFile, toNavigate: Boolean) {
+    if (isCurrentFile(file)) {
+      val navigationMode = if (toNavigate) NavigationMode.OPEN else NavigationMode.NONE
+      val updateRequest = PositionUpdateRequest(file, navigationMode)
+      updateRequestFlow.tryEmit(updateRequest).also { check(it) }
+    }
+  }
+
   fun showExecutionPosition() {
     navigationRequestFlow.tryEmit(Unit).also { check(it) }
   }
+
+  private data class PositionUpdateRequest(val file: VirtualFile, val navigationMode: NavigationMode)
 }
 
 internal class ExecutionPoint(

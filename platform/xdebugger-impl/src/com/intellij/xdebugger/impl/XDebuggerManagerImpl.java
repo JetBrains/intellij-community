@@ -212,7 +212,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   }
 
   private void updateExecutionPoint(@NotNull VirtualFile file, boolean navigate) {
-    //myExecutionPointManager.update(navigate);
+    myExecutionPointManager.updateExecutionPosition(file, navigate);
   }
 
   @Override
