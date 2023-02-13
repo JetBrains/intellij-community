@@ -33,7 +33,7 @@ import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
 public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
   public static final String SHORT_NAME = "Annotator";
   public boolean highlightErrorElements = true;
-  public boolean runAnnotators = false;
+  public boolean runAnnotators = true;
   public boolean runVisitors = false;
 
   @Override
