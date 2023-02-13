@@ -621,20 +621,9 @@
             </action>
             <separator/>
             <action id="ToggleCompactMode" class="com.intellij.ide.actions.ToggleCompactModeAction" />
-          </group>
-          <group id="ZoomIDE" class="com.intellij.ide.actions.ZoomIdeActionGroup">
             <separator/>
-            <action id="CurrentIdeScaleAction" class="com.intellij.ide.actions.CurrentIdeScaleAction">
-              <synonym key="action.CurrentIdeScaleAction.text"/>
-            </action>
-            <action id="ZoomInIdeAction" class="com.intellij.ide.actions.ZoomInIdeAction">
-              <synonym key="action.ZoomInIdeAction.text"/>
-            </action>
-            <action id="ZoomOutIdeAction" class="com.intellij.ide.actions.ZoomOutIdeAction">
-              <synonym key="action.ZoomOutIdeAction.text"/>
-            </action>
-            <action id="ResetIdeScaleAction" class="com.intellij.ide.actions.ResetIdeScaleAction">
-              <synonym key="action.ResetIdeScaleAction.text"/>
+            <action id="SwitchIdeScaleAction" class="com.intellij.ide.actions.SwitchIdeScaleAction">
+              <synonym key="action.SwitchIdeScaleAction.text"/>
             </action>
           </group>
 
@@ -904,6 +893,16 @@
 
       <group id="OtherMenu" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
+
+    <action id="ZoomInIdeAction" class="com.intellij.ide.actions.ZoomInIdeAction">
+      <synonym key="action.ZoomInIdeAction.text"/>
+    </action>
+    <action id="ZoomOutIdeAction" class="com.intellij.ide.actions.ZoomOutIdeAction">
+      <synonym key="action.ZoomOutIdeAction.text"/>
+    </action>
+    <action id="ResetIdeScaleAction" class="com.intellij.ide.actions.ResetIdeScaleAction">
+      <synonym key="action.ResetIdeScaleAction.text"/>
+    </action>
 
     <group id="MainToolbarPopupActions" searchable="false">
       <reference id="ViewToolBar"/>
