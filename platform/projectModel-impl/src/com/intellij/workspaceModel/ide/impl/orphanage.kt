@@ -17,7 +17,9 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import kotlin.system.measureTimeMillis
 
 class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
-  override val entityStorage: VersionedEntityStorageImpl = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
+  private val entityStorage: VersionedEntityStorageImpl = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
+  override val currentSnapshot: EntityStorageSnapshot
+    get() = entityStorage.current
 
   @RequiresWriteLock
   override fun update(updater: (MutableEntityStorage) -> Unit) {
@@ -84,7 +86,7 @@ class OrphanListener(private val project: Project) : WorkspaceModelChangeListene
         .filterIsInstance<EntityChange.Added<ModuleEntity>>()
         .map { it.entity }
 
-      val orphanage = EntitiesOrphanage.getInstance(project).entityStorage.pointer.storage
+      val orphanage = EntitiesOrphanage.getInstance(project).currentSnapshot
       val orphanModules = changedModules.mapNotNull {
         orphanage.resolve(it.symbolicId)?.let { om -> om to it }
       }

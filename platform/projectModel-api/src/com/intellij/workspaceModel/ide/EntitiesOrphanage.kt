@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
@@ -31,7 +32,7 @@ import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
  *     have `dumb="true"` tag in iml file.
  */
 interface EntitiesOrphanage {
-  val entityStorage: VersionedEntityStorageImpl
+  val currentSnapshot: EntityStorageSnapshot
 
   @RequiresWriteLock
   fun update(updater: (MutableEntityStorage) -> Unit)
