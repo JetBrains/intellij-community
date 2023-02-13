@@ -43,14 +43,19 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
   val sitFile = (if (context.publishSitArchive) context.paths.artifactDir else context.paths.tempDir).resolve("$targetName.sit")
   macZip.moveTo(sitFile, overwrite = true)
   signMacBinaries(context, listOf(sitFile))
+  val useNotaryRestApi = useNotaryRestApi()
+  val useNotaryXcodeApi = notarize && !useNotaryRestApi
+  if (notarize && useNotaryRestApi) {
+    notarize(sitFile, context)
+  }
   val useMacHost = macHostProperties?.host != null &&
                    macHostProperties.userName != null &&
                    macHostProperties.password != null
-  if (useMacHost && (notarize || !context.isStepSkipped(BuildOptions.MAC_DMG_STEP))) {
-    notarizeAndBuildDmgViaMacBuilderHost(sitFile, requireNotNull(macHostProperties), notarize, customizer, context)
+  if (useMacHost && (useNotaryXcodeApi || !context.isStepSkipped(BuildOptions.MAC_DMG_STEP))) {
+    notarizeAndBuildDmgViaMacBuilderHost(sitFile, requireNotNull(macHostProperties), notarize = useNotaryXcodeApi, customizer, context)
   }
   else {
-    buildLocally(sitFile, targetName, notarize, customizer, context)
+    buildLocally(sitFile, targetName, notarize = useNotaryXcodeApi, customizer, context)
   }
   check(Files.exists(sitFile)) {
     "$sitFile wasn't created"
