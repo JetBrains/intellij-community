@@ -85,6 +85,9 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
    *
    * <button onclick="sendPingRequest()">Ping it</button>
    * ```
+   *
+   * **Note to implementers**: as there is no way to verify whether the request was initiated by a user,
+   * please make sure the listener doesn't perform any potentially dangerous action.
    */
   interface JsQueryHandler {
     suspend fun query(id: Long, request: String): String
