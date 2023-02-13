@@ -283,7 +283,7 @@ fun configureFacetByGradleModule(
         ?: KotlinGradleFacadeImpl.findKotlinPluginVersion(moduleNode)
 
     if (compilerVersion == null) {
-        logger.error("[Kotlin Facet]: cannot create facet for module '${ideModule.name}' due to unknown compiler version " +
+        logger.error("[Kotlin Facet]: cannot create facet for module '${ideModule.name}' due to unknown compiler version. " +
                              "Some functionality might become unavailable!")
         return null
     }
