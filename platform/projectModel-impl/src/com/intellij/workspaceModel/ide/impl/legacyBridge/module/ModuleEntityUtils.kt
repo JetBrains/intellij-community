@@ -20,14 +20,6 @@ fun ModuleEntity.findModule(snapshot: EntityStorage): ModuleBridge? {
 }
 
 /**
- * Check if the module is unloaded. **Note** even if the module is unloaded all related entities will continue store at project model
- * thus the changes with these entities will be available for listening via [com.intellij.workspaceModel.ide.WorkspaceModelChangeListener]
- */
-fun ModuleEntity.isModuleUnloaded(snapshot: EntityStorage): Boolean {
-  return this.findModule(snapshot) == null
-}
-
-/**
  * Returns all module-level libraries defined in this module.
  */
 fun ModuleEntity.getModuleLevelLibraries(snapshot: EntityStorage): Sequence<LibraryEntity> {

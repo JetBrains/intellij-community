@@ -1930,7 +1930,7 @@ public final class BuildManager implements Disposable {
               final Pair<SourceRootEntity, EntityStorage> p = getEntityAndStorage(event, change);
               final SourceRootEntity entity = p.first; // added, changed or removed source root in some module
               final EntityStorage storage = p.second;  // storage state relevant to the change
-              if (entity != null && !ModuleEntityUtils.isModuleUnloaded(entity.getContentRoot().getModule(), storage)) {
+              if (entity != null) {
                 needFSRescan = true;
                 break;
               }
