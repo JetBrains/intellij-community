@@ -16,10 +16,18 @@ internal fun NavBarItem.pathToItem(): List<NavBarItem> {
   }.toList().asReversed()
 }
 
-private fun NavBarItem.findParent(): NavBarItem? =
-  NavBarItemProvider.EP_NAME
-    .extensionList
-    .firstNotNullOfOrNull { ext -> ext.findParent(this) }
+private fun NavBarItem.findParent(): NavBarItem? {
+  for (ext in NavBarItemProvider.EP_NAME.extensionList) {
+    val parentCandidate = ext.findParent(this) ?: continue
+
+    if (parentCandidate is PsiNavBarItem && !parentCandidate.data.isValid) {
+      continue
+    }
+
+    return parentCandidate
+  }
+  return null
+}
 
 internal fun NavBarItem.children(): List<NavBarItem> {
   ApplicationManager.getApplication().assertReadAccessAllowed()
