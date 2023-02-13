@@ -126,7 +126,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
                                                           @NotNull String place,
                                                           @NotNull Presentation presentation,
                                                           Supplier<? extends @NotNull Dimension> minimumSize) {
-        MyActionButton button = new MyActionButton(action);
+        MyActionButton button = new MyActionButton(action, presentation);
         button.setFocusable(true);
         applyToolbarLook(look, presentation, button);
         return button;
@@ -141,8 +141,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   }
 
   private static final class MyActionButton extends ActionButton {
-    MyActionButton(@NotNull AnAction action) {
-      super(action, action.getTemplatePresentation().clone(), "Vcs.Log.SearchTextField", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+    MyActionButton(@NotNull AnAction action, @NotNull Presentation presentation) {
+      super(action, presentation, "Vcs.Log.SearchTextField", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
       updateIcon();
     }
 
