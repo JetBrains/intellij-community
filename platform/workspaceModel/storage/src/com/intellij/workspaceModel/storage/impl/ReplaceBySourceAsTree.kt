@@ -197,7 +197,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       // Here we bind them again, so I guess we can remove "parents binding" from [createDetachedEntity], but let's do it twice for now.
       // Actually, I hope to get rid of [createDetachedEntity] at some moment.
       targetParents.groupBy { it::class }.forEach { (_, entities) ->
-        modifiableEntity.updateReferenceToEntity(entities.first().getEntityInterface().kotlin, false, entities)
+        modifiableEntity.updateReferenceToEntity(entities.first().getEntityInterface(), false, entities)
       }
       targetStorage.addEntity(modifiableEntity)
       targetStorage.indexes.updateExternalMappingForEntityId(replaceWithDataSource, modifiableEntity.id, replaceWithStorage.indexes)
