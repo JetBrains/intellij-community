@@ -350,6 +350,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../completion/testData/weighers/basic/AfterNullable.kt");
         }
 
+        @TestMetadata("AlphabeticalOrder.kt")
+        public void testAlphabeticalOrder() throws Exception {
+            runTest("../completion/testData/weighers/basic/AlphabeticalOrder.kt");
+        }
+
         @TestMetadata("CallableReference_NothingLast.kt")
         public void testCallableReference_NothingLast() throws Exception {
             runTest("../completion/testData/weighers/basic/CallableReference_NothingLast.kt");

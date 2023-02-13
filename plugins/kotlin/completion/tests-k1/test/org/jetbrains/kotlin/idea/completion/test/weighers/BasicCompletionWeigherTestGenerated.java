@@ -350,6 +350,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/AfterNullable.kt");
         }
 
+        @TestMetadata("AlphabeticalOrder.kt")
+        public void testAlphabeticalOrder() throws Exception {
+            runTest("../testData/weighers/basic/AlphabeticalOrder.kt");
+        }
+
         @TestMetadata("CallableReference_NothingLast.kt")
         public void testCallableReference_NothingLast() throws Exception {
             runTest("../testData/weighers/basic/CallableReference_NothingLast.kt");
