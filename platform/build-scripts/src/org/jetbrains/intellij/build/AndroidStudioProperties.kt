@@ -69,7 +69,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.searchEverywhereMl",
       "intellij.statsCollector",
       "intellij.xpath",
-      "intellij.xslt.debugger",
     )
   }
 
