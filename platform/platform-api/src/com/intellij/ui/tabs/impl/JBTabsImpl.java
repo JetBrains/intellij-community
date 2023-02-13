@@ -1455,7 +1455,8 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateAll(final boolean forcedRelayout) {
-    mySelectedInfo = getSelectedInfo();
+    TabInfo toSelect = getSelectedInfo();
+    setSelectedInfo(toSelect);
     updateContainer(forcedRelayout, false);
     removeDeferred();
     updateListeners();
@@ -1524,7 +1525,7 @@ public class JBTabsImpl extends JComponent
     }
 
     TabInfo oldInfo = mySelectedInfo;
-    mySelectedInfo = info;
+    setSelectedInfo(info);
     TabInfo newInfo = getSelectedInfo();
 
     TabLabel label = myInfo2Label.get(info);
@@ -1534,8 +1535,6 @@ public class JBTabsImpl extends JComponent
     if (myScrollBar != null) {
       setComponentZOrder(myScrollBar, 0);
     }
-
-    myInfo2Toolbar.forEach((tabInfo, toolbar) -> toolbar.setVisible(Objects.equals(newInfo, tabInfo)));
 
     fireBeforeSelectionChanged(oldInfo, newInfo);
     boolean oldValue = myMouseInsideTabsArea;
@@ -1769,7 +1768,8 @@ public class JBTabsImpl extends JComponent
     if (update) {
       resetTabsCache();
       if (mySelectedInfo != null && myHiddenInfos.containsKey(mySelectedInfo)) {
-        mySelectedInfo = getToSelectOnRemoveOf(mySelectedInfo);
+        TabInfo toSelect = getToSelectOnRemoveOf(mySelectedInfo);
+        setSelectedInfo(toSelect);
       }
       updateAll(true);
     }
@@ -1869,9 +1869,15 @@ public class JBTabsImpl extends JComponent
     if (myOldSelection != null) return myOldSelection;
 
     if (!myVisibleInfos.contains(mySelectedInfo)) {
-      mySelectedInfo = null;
+      setSelectedInfo(null);
     }
     return mySelectedInfo != null ? mySelectedInfo : !myVisibleInfos.isEmpty() ? myVisibleInfos.get(0) : null;
+  }
+
+  private void setSelectedInfo(@Nullable TabInfo info) {
+    mySelectedInfo = info;
+
+    myInfo2Toolbar.forEach((tabInfo, toolbar) -> toolbar.setVisible(Objects.equals(info, tabInfo)));
   }
 
   @Override
@@ -2621,7 +2627,7 @@ public class JBTabsImpl extends JComponent
       boolean transferFocus = isFocused(info);
       processRemove(info, false);
       if (clearSelection) {
-        mySelectedInfo = info;
+        setSelectedInfo(info);
       }
       _setSelected(toSelect, transferFocus, true).doWhenProcessed(() -> removeDeferred().notifyWhenDone(result));
     }
