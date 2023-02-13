@@ -18,9 +18,9 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
-internal class WorkspaceFileIndexData(private val contributorList: List<WorkspaceFileIndexContributor<*>>,
-                                      private val project: Project,
-                                      private val rootFileSupplier: RootFileSupplier) {
+internal class WorkspaceFileIndexDataImpl(private val contributorList: List<WorkspaceFileIndexContributor<*>>,
+                                          private val project: Project,
+                                          private val rootFileSupplier: RootFileSupplier): WorkspaceFileIndexData {
   private val contributors = contributorList.filter { it.storageKind == EntityStorageKind.MAIN }.groupBy { it.entityClass }
   private val contributorsForUnloaded = contributorList.filter { it.storageKind == EntityStorageKind.UNLOADED }.groupBy { it.entityClass }
   private val contributorDependencies = contributorList.associateWith { it.dependenciesOnOtherEntities }
@@ -61,11 +61,11 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
     }
   }
 
-  fun getFileInfo(file: VirtualFile,
-                  honorExclusion: Boolean,
-                  includeContentSets: Boolean,
-                  includeExternalSets: Boolean,
-                  includeExternalSourceSets: Boolean): WorkspaceFileInternalInfo {
+  override fun getFileInfo(file: VirtualFile,
+                           honorExclusion: Boolean,
+                           includeContentSets: Boolean,
+                           includeExternalSets: Boolean,
+                           includeExternalSourceSets: Boolean): WorkspaceFileInternalInfo {
     if (!file.isValid) return WorkspaceFileInternalInfo.NonWorkspace.INVALID
     ensureIsUpToDate()
 
@@ -128,7 +128,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
     nonIncrementalContributors.updateIfNeeded(fileSets, fileSetsByPackagePrefix, nonExistingFilesRegistry)
   }
 
-  fun visitFileSets(visitor: WorkspaceFileSetVisitor) {
+  override fun visitFileSets(visitor: WorkspaceFileSetVisitor) {
     ensureIsUpToDate()
     for (value in fileSets.values) {
       value.forEach { storedFileSet ->
@@ -216,20 +216,20 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
     }
   }
 
-  fun resetCustomContributors() {
+  override fun resetCustomContributors() {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     nonIncrementalContributors.resetCache()
     resetFileCache()
   }
 
-  fun markDirty(entities: Collection<EntityReference<WorkspaceEntity>>, files: Collection<VirtualFile>) {
+  override fun markDirty(entityReferences: Collection<EntityReference<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    dirtyEntities.addAll(entities)
-    dirtyFiles.addAll(files)
+    dirtyEntities.addAll(entityReferences)
+    dirtyFiles.addAll(filesToInvalidate)
     hasDirtyEntities = dirtyEntities.isNotEmpty()
   }
 
-  fun onEntitiesChanged(event: VersionedStorageChange, storageKind: EntityStorageKind) {
+  override fun onEntitiesChanged(event: VersionedStorageChange, storageKind: EntityStorageKind) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     contributorList.filter { it.storageKind == storageKind }.forEach { 
       processChangesByContributor(it, storageKind, event)
@@ -237,7 +237,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
     resetFileCache()
   }
 
-  fun updateDirtyEntities() {
+  override fun updateDirtyEntities() {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     for (file in dirtyFiles) {
       fileSets.remove(file)
@@ -256,7 +256,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
     hasDirtyEntities = false
   }
 
-  fun resetFileCache() {
+  override fun resetFileCache() {
     fileIdWithoutFileSets.clear()
     packageDirectoryCache.clear()
   }
@@ -273,7 +273,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
     }
   }
 
-  fun getPackageName(dir: VirtualFile): String? {
+  override fun getPackageName(dir: VirtualFile): String? {
     if (!dir.isDirectory) return null
 
     val fileSet = when (val info = getFileInfo(dir, true, true, true, true)) {
@@ -292,7 +292,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
     }
   }
 
-  fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile> {
+  override fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile> {
     val query = CollectionQuery(packageDirectoryCache.getDirectoriesByPackageName(packageName))
     if (includeLibrarySources) return query
     return query.filtering {
@@ -300,15 +300,15 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
     }
   }
 
-  fun onLowMemory() {
+  override fun onLowMemory() {
     packageDirectoryCache.onLowMemory()
   }
 
-  fun clearPackageDirectoryCache() {
+  override fun clearPackageDirectoryCache() {
     packageDirectoryCache.clear()
   }
 
-  fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? {
+  override fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? {
     return nonExistingFilesRegistry.analyzeVfsChanges(events)
   }
 

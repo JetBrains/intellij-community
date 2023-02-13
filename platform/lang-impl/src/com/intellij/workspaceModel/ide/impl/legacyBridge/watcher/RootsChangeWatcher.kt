@@ -1,11 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.watcher
 
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.*
-import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.openapi.vfs.AsyncFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.indexing.EntityIndexingServiceEx
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
@@ -24,7 +23,7 @@ internal object RootsChangeWatcher {
   
   internal fun prepareChange(events: List<VFileEvent>, project: Project): AsyncFileListener.ChangeApplier? {
     val fileIndex = WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx
-    val applier = fileIndex.analyzeVfsChanges(events) ?: return null
+    val applier = fileIndex.indexData.analyzeVfsChanges(events) ?: return null
     return object : AsyncFileListener.ChangeApplier {
       override fun beforeVfsChange() {
         applier.beforeVfsChange()
