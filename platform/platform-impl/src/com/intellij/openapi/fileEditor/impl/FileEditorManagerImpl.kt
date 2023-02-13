@@ -178,6 +178,12 @@ open class FileEditorManagerImpl(
    * Removes invalid editor and updates "modified" status.
    */
   private val editorPropertyChangeListener = MyEditorPropertyChangeListener()
+
+  /**
+   * Updates file tooltip
+   */
+  private val editorCompositeListener = MyEditorCompositeListener()
+
   private var contentFactory: DockableEditorContainerFactory? = null
   private val openedComposites = CopyOnWriteArrayList<EditorComposite>()
   private val listenerList = MessageListenerList(project.messageBus, FileEditorManagerListener.FILE_EDITOR_MANAGER)
@@ -1160,7 +1166,9 @@ open class FileEditorManagerImpl(
       editor.addPropertyChangeListener(editorPropertyChangeListener)
       editor.putUserData(DUMB_AWARE, DumbService.isDumbAware(editorWithProvider.provider))
     }
-    return createCompositeInstance(file, editorsWithProviders)
+    return createCompositeInstance(file, editorsWithProviders)?.also { composite ->
+      composite.addListener(editorCompositeListener, disposable = this)
+    }
   }
 
   @Contract("_, _ -> new")
@@ -1907,6 +1915,15 @@ open class FileEditorManagerImpl(
       coroutineScope.launch {
         withContext(Dispatchers.EDT) { getActiveSplittersAsync() }.await()?.updateFileName(null)
       }
+    }
+  }
+
+  /**
+   * Listen for preview status change to update file tooltip
+   */
+  private inner class MyEditorCompositeListener : EditorCompositeListener {
+    override fun isPreviewChanged(composite: EditorComposite, value: Boolean) {
+      updateFileName(composite.file)
     }
   }
 

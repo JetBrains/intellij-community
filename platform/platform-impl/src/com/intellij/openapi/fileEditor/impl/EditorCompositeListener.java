@@ -13,9 +13,9 @@ import java.util.EventListener;
 @ApiStatus.Experimental
 @ApiStatus.Internal
 public interface EditorCompositeListener extends EventListener {
-  default void isPinnedChanged(boolean value) { }
+  default void isPinnedChanged(@NotNull EditorComposite composite, boolean value) { }
 
-  default void isPreviewChanged(boolean value) { }
+  default void isPreviewChanged(@NotNull EditorComposite composite, boolean value) { }
 
   default void editorAdded(@NotNull FileEditorWithProvider editorWithProvider) { }
 

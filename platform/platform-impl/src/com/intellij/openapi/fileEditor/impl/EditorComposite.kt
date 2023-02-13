@@ -225,7 +225,7 @@ open class EditorComposite internal constructor(
         ClientProperty.put(it, JBTabsImpl.PINNED, if (field) true else null)
       }
       if (pinned != oldPinned) {
-        dispatcher.multicaster.isPinnedChanged(pinned)
+        dispatcher.multicaster.isPinnedChanged(this, pinned)
       }
     }
 
@@ -236,7 +236,7 @@ open class EditorComposite internal constructor(
     set(preview) {
       if (preview != field) {
         field = preview
-        dispatcher.multicaster.isPreviewChanged(preview)
+        dispatcher.multicaster.isPreviewChanged(this, preview)
       }
     }
 
