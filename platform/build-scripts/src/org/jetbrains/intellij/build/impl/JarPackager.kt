@@ -75,6 +75,7 @@ private val extraMergeRules: PersistentMap<String, (String) -> Boolean> = persis
   map.put("groovy.jar") { it.startsWith("org.codehaus.groovy:") }
   map.put("jsch-agent.jar") { it.startsWith("jsch-agent") }
   map.put("rd.jar") { it.startsWith("rd-") }
+  map.put(PRODUCT_JAR) { it.startsWith("License") }
   // see ClassPathUtil.getUtilClassPath
   map.put("3rd-party-rt.jar") {
     libsThatUsedInJps.contains(it) || it.startsWith("kotlinx-") || it == "kotlin-reflect" ||
