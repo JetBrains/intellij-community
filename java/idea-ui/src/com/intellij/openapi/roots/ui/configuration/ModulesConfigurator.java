@@ -171,7 +171,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   @NotNull
   public ModuleEditor getOrCreateModuleEditor(@NotNull Module module) {
-    LOG.assertTrue(getModule(module.getName()) != null, "Module has been deleted");
+    String moduleName = module.getName();
+    LOG.assertTrue(getModule(moduleName) != null, "Module " + moduleName + " has been deleted");
     ModuleEditor editor = getModuleEditor(module);
     if (editor == null) {
       editor = doCreateModuleEditor(module);
