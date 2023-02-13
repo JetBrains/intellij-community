@@ -9,7 +9,8 @@ import com.intellij.collaboration.ui.util.bindContent
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.collaboration.ui.util.gap
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.panels.Wrapper
@@ -20,7 +21,6 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRefreshDetails
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
@@ -42,15 +42,16 @@ internal object GitLabMergeRequestDetailsComponentFactory {
         when (loadingState) {
           GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Loading -> LoadingLabel()
           is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Error -> SimpleHtmlPane(loadingState.exception.localizedMessage)
-          is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result -> createDetailsComponent(
-            project, contentCs, loadingState.detailsVm, avatarIconsProvider
-          ).apply {
-            val actionGroup = DefaultActionGroup(GitLabMergeRequestRefreshDetails())
-            PopupHandler.installPopupMenu(this, actionGroup, "GitLabMergeRequestDetailsPanelPopup")
-            DataManager.registerDataProvider(this) { dataId ->
-              when {
-                GitLabMergeRequestsActionKeys.REVIEW_DETAILS_LOADING_VM.`is`(dataId) -> detailsLoadingVm
-                else -> null
+          is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result -> {
+            val detailsVm = loadingState.detailsVm
+            createDetailsComponent(project, contentCs, detailsVm, avatarIconsProvider).apply {
+              val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Requests.Details.Popup") as ActionGroup
+              PopupHandler.installPopupMenu(this, actionGroup, "GitLabMergeRequestDetailsPanelPopup")
+              DataManager.registerDataProvider(this) { dataId ->
+                when {
+                  GitLabMergeRequestsActionKeys.MERGE_REQUEST.`is`(dataId) -> detailsVm.detailsInfoVm.mergeRequest
+                  else -> null
+                }
               }
             }
           }

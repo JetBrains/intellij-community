@@ -39,6 +39,8 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
 
   val changes: Flow<GitLabMergeRequestChanges>
 
+  fun refreshData()
+
   suspend fun merge(commitMessage: String)
 
   suspend fun squashAndMerge(commitMessage: String)
@@ -79,6 +81,8 @@ internal class LoadedGitLabMergeRequest(
   override val url: String = mergeRequest.webUrl
   override val author: GitLabUserDTO = mergeRequest.author
 
+  private val mergeRequestRefreshRequest = MutableSharedFlow<Unit>()
+
   private val mergeRequestDetailsState: MutableStateFlow<GitLabMergeRequestFullDetails> =
     MutableStateFlow(GitLabMergeRequestFullDetails.fromGraphQL(mergeRequest))
 
@@ -117,6 +121,21 @@ internal class LoadedGitLabMergeRequest(
 
   private val milestoneEvents by lazy {
     cs.async(Dispatchers.IO) { api.loadMergeRequestMilestoneEvents(glProject, mergeRequest).body().orEmpty() }
+  }
+
+  init {
+    cs.launch(cs.coroutineContext + Dispatchers.IO) {
+      mergeRequestRefreshRequest.collectLatest {
+        val updatedMergeRequest = api.loadMergeRequest(glProject, mergeRequestDetailsState.value).body()!!
+        mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+      }
+    }
+  }
+
+  override fun refreshData() {
+    cs.launch {
+      mergeRequestRefreshRequest.emit(Unit)
+    }
   }
 
   override suspend fun merge(commitMessage: String) {
