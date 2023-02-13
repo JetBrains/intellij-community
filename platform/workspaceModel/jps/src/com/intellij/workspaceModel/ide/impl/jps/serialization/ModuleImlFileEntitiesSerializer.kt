@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspaceModel.jps.*
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
@@ -202,7 +201,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       externalSystemId = pair.second
 
       customRootsSerializer = moduleOptions[JpsProjectLoader.CLASSPATH_ATTRIBUTE]?.let { customSerializerId ->
-        val serializer = CustomModuleRootsSerializer.EP_NAME.extensionList.firstOrNull { it.id == customSerializerId }
+        val serializer = context.customModuleRootsSerializers.firstOrNull { it.id == customSerializerId }
         if (serializer == null) {
           errorReporter.reportError(
             WorkspaceModelJpsBundle.message("error.message.unknown.classpath.provider", fileUrl.fileName, customSerializerId), fileUrl)
@@ -254,7 +253,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       }
     }
 
-    CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensionList.forEach {
+    context.customModuleComponentSerializers.forEach {
       it.loadComponent(moduleEntity, reader, fileUrl, errorReporter, virtualFileManager)
     }
 
@@ -690,7 +689,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     val moduleOptions = customImlData?.customModuleOptions
     val customSerializerId = moduleOptions?.get(JpsProjectLoader.CLASSPATH_ATTRIBUTE)
     if (customSerializerId != null) {
-      val serializer = CustomModuleRootsSerializer.EP_NAME.extensionList.firstOrNull { it.id == customSerializerId }
+      val serializer = context.customModuleRootsSerializers.firstOrNull { it.id == customSerializerId }
       if (serializer != null) {
         val customDir = moduleOptions[JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE]
         serializer.saveRoots(module, entities, writer, customDir, fileUrl, storage, context.virtualFileUrlManager)
@@ -703,7 +702,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     else {
       saveRootManagerElement(module, customImlData, entities, writer)
     }
-    for (it in CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensionList) {
+    for (it in context.customModuleComponentSerializers) {
       it.saveComponent(module, fileUrl, writer)
     }
     saveTestModuleProperty(module, writer)
@@ -930,7 +929,6 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       orderOfKnownAttributes.indexOf(o1.name).compareTo(orderOfKnownAttributes.indexOf(o2.name))
     }.reversed()
 
-    private val CUSTOM_MODULE_COMPONENT_SERIALIZER_EP = ExtensionPointName.create<CustomModuleComponentSerializer>("com.intellij.workspaceModel.customModuleComponentSerializer")
   }
 }
 

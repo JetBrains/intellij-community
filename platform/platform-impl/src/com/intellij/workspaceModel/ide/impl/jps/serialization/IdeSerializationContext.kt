@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
@@ -15,6 +16,17 @@ abstract class BaseIdeSerializationContext : SerializationContext {
   
   override val isOrphanageEnabled: Boolean
     get() = EntitiesOrphanage.isEnabled
+  override val customModuleComponentSerializers: List<CustomModuleComponentSerializer>
+    get() = CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensionList
+  override val customModuleRootsSerializers: List<CustomModuleRootsSerializer>
+    get() = CUSTOM_MODULE_ROOTS_SERIALIZER_EP.extensionList
+
+  companion object {
+    private val CUSTOM_MODULE_COMPONENT_SERIALIZER_EP: ExtensionPointName<CustomModuleComponentSerializer> = 
+      ExtensionPointName.create("com.intellij.workspaceModel.customModuleComponentSerializer")
+    val CUSTOM_MODULE_ROOTS_SERIALIZER_EP: ExtensionPointName<CustomModuleRootsSerializer> = 
+      ExtensionPointName.create("com.intellij.workspaceModel.customModuleRootsSerializer")
+  }
 }
 
 open class IdeSerializationContext(
