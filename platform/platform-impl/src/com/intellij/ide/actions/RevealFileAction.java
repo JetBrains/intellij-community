@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,13 +46,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -131,8 +133,10 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
   }
 
-  public static @ActionText @NotNull String getFileManagerName() {
-    return Holder.getFileManagerName();
+  public static @NotNull @ActionText String getFileManagerName() {
+    return SystemInfo.isMac ? IdeBundle.message("action.finder.text") :
+           SystemInfo.isWindows ? IdeBundle.message("action.explorer.text") :
+           Objects.requireNonNullElseGet(Holder.fileManagerName, () -> IdeBundle.message("action.file.manager.text"));
   }
 
   public static @Nullable VirtualFile findLocalFile(@Nullable VirtualFile file) {
@@ -288,50 +292,44 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   private static class Holder {
     private static final String[] supportedFileManagers = {"nautilus", "pantheon-files", "dolphin", "dde-file-manager"};
 
-    private static final String fileManagerApp =
-      readDesktopEntryKey("Exec")
-        .map(line -> line.split(" ")[0])
-        .filter(exec -> ContainerUtil.exists(supportedFileManagers, supportedFileManager -> exec.endsWith(supportedFileManager)))
-        .orElse(null);
+    private static final @Nullable String fileManagerApp;
+    private static final @Nullable @NlsSafe String fileManagerName;
 
-    @ActionText
-    @NotNull
-    private static String getFileManagerName() {
-      return SystemInfo.isMac ? IdeBundle.message("action.finder.text") :
-             SystemInfo.isWindows ? IdeBundle.message("action.explorer.text") :
-             readDesktopEntryKey("Name").orElse(IdeBundle.message("action.file.manager.text"));
-    }
-
-    private static Optional<String> readDesktopEntryKey(String key) {
+    static {
+      String fmApp = null, fmName = null;
       if (SystemInfo.hasXdgMime()) {
-        String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
-        if (appName != null && appName.endsWith(".desktop")) {
-          return Stream.of(getXdgDataDirectories().split(":"))
-            .map(dir -> new File(dir, "applications/" + appName))
-            .filter(File::exists)
-            .findFirst()
-            .map(file -> readDesktopEntryKey(file, key));
+        var desktopEntryName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
+        if (desktopEntryName != null && desktopEntryName.endsWith(".desktop")) {
+          var desktopFile = Stream.of(getXdgDataDirectories().split(":"))
+            .map(dir -> Path.of(dir, "applications", desktopEntryName))
+            .filter(Files::exists)
+            .findFirst();
+          if (desktopFile.isPresent()) {
+            try {
+              var lines = Files.readAllLines(desktopFile.get());
+              fmApp = lines.stream()
+                .filter(line -> line.startsWith("Exec="))
+                .map(line -> line.substring(5).split(" ")[0])
+                .filter(app -> ContainerUtil.exists(supportedFileManagers, supportedFileManager -> app.endsWith(supportedFileManager)))
+                .findFirst().orElse(null);
+              fmName = lines.stream()
+                .filter(line -> line.startsWith("Name="))
+                .map(line -> line.substring(5))
+                .findFirst().orElse(null);
+            }
+            catch (InvalidPathException | IOException e) {
+              LOG.error(e);
+            }
+          }
         }
       }
-
-      return Optional.empty();
+      fileManagerApp = fmApp;
+      fileManagerName = fmName;
     }
 
     private static String getXdgDataDirectories() {
       return StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_HOME"), SystemProperties.getUserHome() + "/.local/share") + ':' +
              StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_DIRS"), "/usr/local/share:/usr/share");
-    }
-
-    private static String readDesktopEntryKey(File file, String key) {
-      if (LOG.isDebugEnabled()) LOG.debug("looking for '" + key + "' in " + file);
-      String prefix = key + '=';
-      try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-        return reader.lines().filter(l -> l.startsWith(prefix)).map(l -> l.substring(prefix.length())).findFirst().orElse(null);
-      }
-      catch (IOException | UncheckedIOException e) {
-        LOG.info("Cannot read: " + file, e);
-        return null;
-      }
     }
   }
 
