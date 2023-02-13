@@ -75,6 +75,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
+import static com.intellij.codeInsight.lookup.LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
+
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable, LookupElementListPresenter {
   private static final Logger LOG = Logger.getInstance(LookupImpl.class);
 
@@ -110,6 +112,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final ClientId myClientId = ClientId.getCurrent();
   private final AtomicInteger myDummyItemCount = new AtomicInteger();
   private final EmptyLookupItem myDummyItem = new EmptyLookupItem(CommonBundle.message("tree.node.loading"), true);
+  private boolean myFirstElementAdded = false;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger) {
     super(new JPanel(new BorderLayout()));
@@ -426,6 +429,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       toSelect = 0;
     }
 
+    if (!myFirstElementAdded && !items.isEmpty()) {
+      myFirstElementAdded = true;
+      myListeners.forEach(LookupListener::firstElementShown);
+    }
+
     myOffsets.checkMinPrefixLengthChanges(items, this);
     List<LookupElement> oldModel = listModel.toList();
 
@@ -433,6 +441,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       synchronized (myUiLock) {
         model.removeAll();
         if (!items.isEmpty()) {
+          Long currentTimeMillis = System.currentTimeMillis();
+          items.forEach(item -> item.putUserDataIfAbsent(LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS, currentTimeMillis));
           model.add(items);
           addDummyItems(myDummyItemCount.get());
         }
@@ -680,7 +690,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     LOG.assertTrue(!myShown);
     myShown = true;
     myStampShown = System.currentTimeMillis();
-
     fireLookupShown();
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return true;
@@ -693,6 +702,21 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     LookupUsageTracker.trackLookup(myCreatedTimestamp, this);
 
     return doShowLookup();
+  }
+
+  /**
+   * @return The timestamp (in milliseconds) at which the lookup window was shown.
+   * If the window has not been shown, 0 is returned.
+   */
+  public long getShownTimestampMillis() {
+    return myStampShown;
+  }
+
+  /**
+   * @return The timestamp (in milliseconds) at which the lookup was obtained.
+   */
+  public long getCreatedTimestampMillis() {
+    return myCreatedTimestamp;
   }
 
   protected boolean doShowLookup() {

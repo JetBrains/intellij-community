@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.util.ClassConditionKey;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
@@ -25,6 +26,12 @@ import java.util.Set;
  */
 public abstract class LookupElement extends UserDataHolderBase {
   public static final LookupElement[] EMPTY_ARRAY = new LookupElement[0];
+  /**
+   * The timestamp when the item was shown in the lookup window during the completion session for the first time.
+   * It is recorded only if it is used later by completion logs {@link com.intellij.stats.completion.tracker.CompletionLogger}
+   * or FUS logs of the completion {@link com.intellij.codeInsight.lookup.impl.LookupUsageTracker}
+   */
+  public static final Key<Long> LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS = Key.create("lookup element shown timestamp");
 
   /**
    * @return the string which will be inserted into the editor when this lookup element is chosen
