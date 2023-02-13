@@ -8,7 +8,8 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 class ExperimentalUiCollector : CounterUsagesCollector() {
 
   enum class SwitchSource {
-    ENABLE_NEW_UI_ACTION
+    ENABLE_NEW_UI_ACTION,
+    WELCOME_PROMO
   }
 
   override fun getGroup() = GROUP

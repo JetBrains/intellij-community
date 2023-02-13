@@ -44,6 +44,7 @@ public abstract class ExperimentalUI {
   public static final String KEY = "ide.experimental.ui";
 
   public static final String NEW_UI_USED_PROPERTY = "experimental.ui.used.once";
+  public static final String NEW_UI_PROMO_BANNER_DISABLED_PROPERTY = "experimental.ui.promo.banner.disabled";
 
   private static final String FIRST_PROMOTION_DATE_FORMAT = "yyyy/MM/dd";
   private static final String FIRST_PROMOTION_DATE_PROPERTY = "experimental.ui.first.promotion.date";

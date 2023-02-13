@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -32,7 +31,10 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MouseEventAdapter;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -48,9 +50,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public final class WelcomeScreenComponentFactory {
   static @NotNull JComponent createSmallLogo() {
@@ -371,17 +372,27 @@ public final class WelcomeScreenComponentFactory {
     return panel;
   }
 
-  static @Nullable JPanel getSinglePromotion(boolean isEmptyState) {
+  static @Nullable JComponent getSinglePromotion(boolean isEmptyState) {
     StartPagePromoter[] extensions = StartPagePromoter.START_PAGE_PROMOTER_EP.getExtensions();
-    JPanel result = null;
+    List<StartPagePromoter> promoters = new ArrayList<>();
+    int maxPriorityLevel = Integer.MIN_VALUE;
+
     for (StartPagePromoter promoter : extensions) {
-      JPanel content = promoter.getPromotion(isEmptyState);
-      if (content == null) continue;
-      if (result != null) {
-        Logger.getInstance(WelcomeScreenComponentFactory.class).error("Several welcome screen promotions are found.");
+      int priorityLevel = promoter.getPriorityLevel();
+      if (priorityLevel >= maxPriorityLevel && promoter.canCreatePromo(isEmptyState)) {
+        if (priorityLevel > maxPriorityLevel) {
+          maxPriorityLevel = priorityLevel;
+          promoters.clear();
+        }
+        promoters.add(promoter);
       }
-      result = content;
     }
-    return result;
+
+    if (promoters.isEmpty()) {
+      return null;
+    }
+
+    StartPagePromoter selectedPromoter = promoters.get(new Random().nextInt(promoters.size()));
+    return selectedPromoter.getPromotion(isEmptyState);
   }
 }

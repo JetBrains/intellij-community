@@ -531,6 +531,8 @@
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
 
+    <startPagePromoter id="NewUiPromoter" implementation="com.intellij.openapi.wm.impl.welcomeScreen.NewUiPromoter"/>
+
     <applicationService serviceImplementation="com.intellij.ui.IdeUICustomization" preload="notHeadless"/>
 
     <!-- General -->
