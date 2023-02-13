@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
-import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navbar.impl.children
@@ -9,19 +8,19 @@ import com.intellij.ide.navbar.vm.NavBarItemVm
 import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.navbar.vm.NavBarVm.SelectionShift
 import com.intellij.model.Pointer
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.project.Project
 import com.intellij.util.flow.zipWithNext
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 internal class NavBarVmImpl(
-  private val cs: CoroutineScope,
-  private val project: Project,
+  cs: CoroutineScope,
   initialItems: List<NavBarVmItem>,
   contextItems: Flow<List<NavBarVmItem>>,
+  private val requestNavigation: (NavBarVmItem) -> Unit,
 ) : NavBarVm {
 
   init {
@@ -148,7 +147,7 @@ internal class NavBarVmImpl(
                        ?: return
     when (expandResult) {
       is ExpandResult.NavigateTo -> {
-        navigateTo(project, expandResult.target)
+        requestNavigation(expandResult.target)
         return
       }
       is ExpandResult.NextPopup -> {
@@ -199,9 +198,7 @@ internal class NavBarVmImpl(
     }
 
     override fun activate() {
-      cs.launch {
-        navigateTo(project, item)
-      }
+      requestNavigation(item)
     }
   }
 }
@@ -256,14 +253,6 @@ private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
         return ExpandResult.NextPopup(expanded + currentItem, children)
       }
     }
-  }
-}
-
-private suspend fun navigateTo(project: Project, item: NavBarVmItem) {
-  val navigationRequest = item.fetch(NavBarItem::navigationRequest)
-                          ?: return
-  withContext(Dispatchers.EDT) {
-    navigateRequest(project, navigationRequest)
   }
 }
 

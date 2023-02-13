@@ -19,7 +19,8 @@ import javax.swing.JPanel
 internal class StaticNavBarPanel(
   private val project: Project,
   private val cs: CoroutineScope,
-  private val updateRequests: Flow<Unit>,
+  private val updateRequests: Flow<Any>,
+  private val requestNavigation: (NavBarVmItem) -> Unit,
 ) : JPanel(BorderLayout()), Activatable {
 
   init {
@@ -55,9 +56,9 @@ internal class StaticNavBarPanel(
     LOG.assertTrue(model === null, "model was not cleared correctly")
     val vm = NavBarVmImpl(
       this@supervisorScope,
-      project,
       initialItems = defaultModel(project),
       contextItems = contextItems(window),
+      requestNavigation,
     )
     model = vm
     try {

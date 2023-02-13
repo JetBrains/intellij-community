@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
+import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.impl.pathToItem
@@ -67,7 +68,7 @@ internal class NavBarService(private val project: Project, cs: CoroutineScope) {
 
   fun createNavBarPanel(): JComponent {
     EDT.assertIsEdt()
-    return StaticNavBarPanel(project, cs, updateRequests)
+    return StaticNavBarPanel(project, cs, updateRequests, ::requestNavigation)
   }
 
   fun showFloatingNavbar(dataContext: DataContext) {
@@ -80,7 +81,7 @@ internal class NavBarService(private val project: Project, cs: CoroutineScope) {
         defaultModel(project)
       }
       val barScope = this@launch
-      val vm = NavBarVmImpl(cs = barScope, project, model, contextItems = emptyFlow())
+      val vm = NavBarVmImpl(cs = barScope, model, contextItems = emptyFlow(), ::requestNavigation)
       withContext(Dispatchers.EDT) {
         val component = NewNavBarPanel(barScope, vm, project, true)
         while (component.componentCount == 0) {
@@ -97,6 +98,20 @@ internal class NavBarService(private val project: Project, cs: CoroutineScope) {
 
     job.invokeOnCompletion {
       floatingBarJob = null
+    }
+  }
+
+  private fun requestNavigation(item: NavBarVmItem) {
+    cs.launch {
+      navigateTo(item)
+    }
+  }
+
+  private suspend fun navigateTo(item: NavBarVmItem) {
+    val navigationRequest = item.fetch(NavBarItem::navigationRequest)
+                            ?: return
+    withContext(Dispatchers.EDT) {
+      navigateRequest(project, navigationRequest)
     }
   }
 }
