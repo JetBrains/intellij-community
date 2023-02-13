@@ -87,10 +87,7 @@ internal object CallableMetadataProvider {
         substitutor: KtSubstitutor
     ): CallableMetadata {
         callableWeightByReceiver(symbol, context, substitutor, returnCastRequiredOnReceiverMismatch = true)?.let { return it }
-        return when (symbol.getContainingSymbol()) {
-            null, is KtPackageSymbol, is KtClassifierSymbol -> CallableMetadata.globalOrStatic
-            else -> CallableMetadata.local
-        }
+        return if (symbol.callableIdIfNonLocal != null) CallableMetadata.globalOrStatic else CallableMetadata.local
     }
 
     private fun KtAnalysisSession.callableWeightByReceiver(
