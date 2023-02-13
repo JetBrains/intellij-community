@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.VetoableProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -143,6 +144,17 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
                + processHandler.getClass() + ", " + processHandler + ")");
       return true;
     }
+    Disposable disposable = Disposer.newDisposable();
+    Registry.get("ide.instant.shutdown").setValue(false, disposable);
+    try {
+      return doAskUserAndWait(processHandler, sessionName, task);
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
+  private boolean doAskUserAndWait(@NotNull ProcessHandler processHandler, @NotNull String sessionName, @NotNull WaitForProcessTask task) {
     ProcessCloseConfirmation rc = TerminateRemoteProcessDialog.show(myProject, sessionName, processHandler);
     if (rc == null) { // cancel
       return false;
