@@ -221,7 +221,7 @@ public final class JBCefApp {
     // NOTE: List of keys: https://peter.sh/experiments/chromium-command-line-switches/
     String extraArgsProp = System.getProperty("ide.browser.jcef.extra.args", "");
     if (!extraArgsProp.isEmpty()) {
-      String[] extraArgs = extraArgsProp.split(" ");
+      String[] extraArgs = extraArgsProp.split(",");
       if (extraArgs.length > 0) {
         LOG.debug("add extra CEF args: [" + Arrays.toString(extraArgs) + "]");
         args = ArrayUtil.mergeArrays(args, extraArgs);
