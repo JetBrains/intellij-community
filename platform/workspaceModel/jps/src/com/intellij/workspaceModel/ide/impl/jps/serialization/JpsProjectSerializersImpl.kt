@@ -10,7 +10,7 @@ import com.intellij.platform.workspaceModel.jps.*
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
 import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
-import com.intellij.projectModel.ProjectModelBundle
+import com.intellij.platform.workspaceModel.jps.serialization.impl.WorkspaceModelJpsBundle
 import com.intellij.util.PathUtilRt
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.BidirectionalMultiMap
@@ -270,7 +270,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                                               reader: JpsFileContentReader,
                                               errorReporter: ErrorReporter) {
     fun reportError(e: Exception, url: VirtualFileUrl) {
-      errorReporter.reportError(ProjectModelBundle.message("module.cannot.load.error", url.presentableUrl, e.localizedMessage), url)
+      errorReporter.reportError(WorkspaceModelJpsBundle.message("module.cannot.load.error", url.presentableUrl, e.localizedMessage), url)
     }
 
     val newEntities = serializer.loadEntities(reader, errorReporter, virtualFileManager)

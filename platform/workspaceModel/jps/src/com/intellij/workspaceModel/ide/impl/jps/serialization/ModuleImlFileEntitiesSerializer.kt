@@ -8,7 +8,7 @@ import com.intellij.platform.workspaceModel.jps.*
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
 import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
-import com.intellij.projectModel.ProjectModelBundle
+import com.intellij.platform.workspaceModel.jps.serialization.impl.WorkspaceModelJpsBundle
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader.isModulePropertiesBridgeEnabled
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -205,7 +205,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         val serializer = CustomModuleRootsSerializer.EP_NAME.extensionList.firstOrNull { it.id == customSerializerId }
         if (serializer == null) {
           errorReporter.reportError(
-            ProjectModelBundle.message("error.message.unknown.classpath.provider", fileUrl.fileName, customSerializerId), fileUrl)
+            WorkspaceModelJpsBundle.message("error.message.unknown.classpath.provider", fileUrl.fileName, customSerializerId), fileUrl)
         }
         return@let serializer
       }
