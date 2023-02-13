@@ -197,6 +197,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           .gap(RightGap.SMALL)
           .bindSelected(settings::overrideLafFonts) {
             settings.overrideLafFonts = it
+            if (!it) {
+              getDefaultFont().let { defaultFont ->
+                settings.fontFace = defaultFont.family
+                settings.fontSize = defaultFont.size
+              }
+            }
           }
           .onChanged { checkbox ->
             if (!checkbox.isSelected) resetCustomFont?.invoke()
