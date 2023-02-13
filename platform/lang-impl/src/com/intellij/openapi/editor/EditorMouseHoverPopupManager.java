@@ -65,7 +65,6 @@ import java.awt.event.WindowEvent;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled;
 import static com.intellij.lang.documentation.ide.impl.DocumentationTargetHoverInfoKt.calcTargetDocumentationInfo;
@@ -131,8 +130,6 @@ public class EditorMouseHoverPopupManager implements Disposable {
   public void dispose() {}
 
   protected void handleMouseMoved(@NotNull EditorMouseEvent e) {
-    long startTimestamp = System.currentTimeMillis();
-
     cancelCurrentProcessing();
 
     if (ignoreEvent(e)) return;
@@ -143,37 +140,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
       return;
     }
 
-    int targetOffset = getTargetOffset(e);
-    if (targetOffset < 0) {
-      closeHint();
-      return;
-    }
-    createAndConsumeContext(editor, targetOffset, startTimestamp, context -> {
-      if (context == null || !editor.getContentComponent().isShowing()) {
-        closeHint();
-        return;
-      }
-      Context.Relation relation = isHintShown() ? context.compareTo(myContext) : Context.Relation.DIFFERENT;
-      if (relation == Context.Relation.SAME) {
-        return;
-      }
-      else if (relation == Context.Relation.DIFFERENT) {
-        closeHint();
-      }
-      scheduleProcessing(editor, context, relation == Context.Relation.SIMILAR, false, false);
-    });
-  }
-
-  private void createAndConsumeContext(Editor editor, int targetOffset, long startTimestamp, Consumer<Context> uiThreadConsumer) {
-    myPreparationTask = ReadAction.nonBlocking(() -> createContext(editor, targetOffset, startTimestamp))
-      .coalesceBy(this)
-      .withDocumentsCommitted(Objects.requireNonNull(editor.getProject()))
-      .expireWhen(() -> editor.isDisposed())
-      .finishOnUiThread(ModalityState.any(), context -> {
-        myPreparationTask = null;
-        uiThreadConsumer.accept(context);
-      })
-      .submit(AppExecutorUtil.getAppExecutorService());
+    showInfoTooltip(e, false);
   }
 
   protected void cancelCurrentProcessing() {
@@ -357,7 +324,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
   }
 
   @Nullable
-  protected Context createContext(Editor editor, int offset, long startTimestamp) {
+  protected Context createContext(Editor editor, int offset, long startTimestamp, boolean showImmediately) {
     Project project = Objects.requireNonNull(editor.getProject());
 
     HighlightInfo info = null;
@@ -371,7 +338,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     PsiElement elementForQuickDoc = findElementForQuickDoc(editor, offset, project);
     return info == null && elementForQuickDoc == null
            ? null
-           : new Context(startTimestamp, offset, info, elementForQuickDoc);
+           : new Context(startTimestamp, offset, info, elementForQuickDoc, showImmediately);
   }
 
   protected static @Nullable PsiElement findElementForQuickDoc(@NotNull Editor editor, int offset, @NotNull Project project) {
@@ -433,41 +400,38 @@ public class EditorMouseHoverPopupManager implements Disposable {
     return hint;
   }
 
-  public void showInfoTooltip(EditorMouseEvent e) {
+  private void showInfoTooltip(@NotNull EditorMouseEvent e, boolean showImmediately) {
+    long startTimestamp = System.currentTimeMillis();
     Editor editor = e.getEditor();
-    if (editor.getProject() == null) return;
-    int offset = getTargetOffset(e);
-    cancelProcessingAndCloseHint();
-    createAndConsumeContext(editor, offset, System.currentTimeMillis(), context -> {
-      if (context != null) {
-        HighlightInfo info = context.getHighlightInfo();
-        if (info != null) {
-          showInfoTooltip(editor, info, offset, false, context.getElementForQuickDoc(), true, context.startTimestamp);
+    int targetOffset = getTargetOffset(e);
+    if (targetOffset < 0) {
+      closeHint();
+      return;
+    }
+    myPreparationTask = ReadAction.nonBlocking(() -> createContext(editor, targetOffset, startTimestamp, showImmediately))
+      .coalesceBy(this)
+      .withDocumentsCommitted(Objects.requireNonNull(editor.getProject()))
+      .expireWhen(() -> editor.isDisposed())
+      .finishOnUiThread(ModalityState.any(), context -> {
+        myPreparationTask = null;
+        if (context == null || !editor.getContentComponent().isShowing()) {
+          closeHint();
+          return;
         }
-      }
-    });
+        Context.Relation relation = isHintShown() ? context.compareTo(myContext) : Context.Relation.DIFFERENT;
+        if (relation == Context.Relation.SAME) {
+          return;
+        }
+        else if (relation == Context.Relation.DIFFERENT) {
+          closeHint();
+        }
+        scheduleProcessing(editor, context, relation == Context.Relation.SIMILAR, showImmediately, false);
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private void showInfoTooltip(@NotNull Editor editor,
-                               @NotNull HighlightInfo info,
-                               int offset,
-                               boolean requestFocus,
-                               @Nullable PsiElement elementForQuickDoc,
-                               boolean showImmediately,
-                               long startTimestamp) {
-    if (editor.getProject() == null) return;
-    Context context = new Context(startTimestamp, offset, info, elementForQuickDoc) {
-      @Override
-      public long getShowingDelay() {
-        return showImmediately ? 0 : super.getShowingDelay();
-      }
-
-      @Override
-      public boolean showDocumentation() {
-        return elementForQuickDoc != null;
-      }
-    };
-    scheduleProcessing(editor, context, false, true, requestFocus);
+  public void showInfoTooltip(EditorMouseEvent e) {
+    showInfoTooltip(e, true);
   }
 
   public void showInfoTooltip(@NotNull Editor editor,
@@ -475,21 +439,34 @@ public class EditorMouseHoverPopupManager implements Disposable {
                               int offset,
                               boolean requestFocus,
                               boolean showImmediately) {
+    if (editor.getProject() == null) return;
     cancelProcessingAndCloseHint();
-    showInfoTooltip(editor, info, offset, requestFocus, null, showImmediately, System.currentTimeMillis());
+    Context context = new Context(System.currentTimeMillis(), offset, info, null, showImmediately) {
+      @Override
+      public boolean showDocumentation() {
+        return false;
+      }
+    };
+    scheduleProcessing(editor, context, false, true, requestFocus);
   }
 
   protected static class Context {
     private final long startTimestamp;
+    private final boolean showImmediately;
     private final int targetOffset;
     private final WeakReference<HighlightInfo> highlightInfo;
     private final WeakReference<PsiElement> elementForQuickDoc;
 
-    protected Context(long startTimestamp, int targetOffset, HighlightInfo highlightInfo, PsiElement elementForQuickDoc) {
+    protected Context(long startTimestamp,
+                      int targetOffset,
+                      HighlightInfo highlightInfo,
+                      PsiElement elementForQuickDoc,
+                      boolean showImmediately) {
       this.startTimestamp = startTimestamp;
       this.targetOffset = targetOffset;
       this.highlightInfo = highlightInfo == null ? null : new WeakReference<>(highlightInfo);
       this.elementForQuickDoc = elementForQuickDoc == null ? null : new WeakReference<>(elementForQuickDoc);
+      this.showImmediately = showImmediately;
     }
 
     public @Nullable PsiElement getElementForQuickDoc() {
@@ -518,6 +495,9 @@ public class EditorMouseHoverPopupManager implements Disposable {
     }
 
     public long getShowingDelay() {
+      if (showImmediately) {
+        return 0;
+      }
       return Math.max(0, EditorSettingsExternalizable.getInstance().getTooltipsDelay() - (System.currentTimeMillis() - startTimestamp));
     }
 
