@@ -47,8 +47,8 @@ public class Main {
   private static List<String> testNestedUseName() {
       List<String> list = new ArrayList<>();
       for (int x = 0; x < 20; x++) {
-          Integer integer = x;
-          long limit = integer;
+          Integer i = x;
+          long limit = i;
           for (String str = ""; ; str = "a" + str) {
               if (limit-- == 0) break;
               list.add(str);

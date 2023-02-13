@@ -44,7 +44,7 @@ public class CodeStyleManagerTest extends LightJavaCodeInsightFixtureTestCase {
                                  JANUARY
                               }
                           }
-                          """, VariableKind.LOCAL_VARIABLE, "some", "s");
+                          """, VariableKind.LOCAL_VARIABLE, "some", "s", "string");
   }
 
   public void testSuggestSemanticNameVariableNameParameter() {
@@ -60,6 +60,37 @@ public class CodeStyleManagerTest extends LightJavaCodeInsightFixtureTestCase {
                               }
                           }
                           """, VariableKind.PARAMETER, "month2", "month");
+  }
+
+  public void testShortNameForBoxedTypes() {
+    //noinspection ALL
+    checkSuggestedNames("""
+                          class X {
+                            void x() {
+                              Integer.<caret>valueOf(1);
+                            }
+                          }
+                          """, VariableKind.LOCAL_VARIABLE, "valueOf", "value", "i", "integer");
+  }
+
+  public void testHashCode() {
+    checkSuggestedNames("""
+                          class X {
+                            void x(String s) {
+                              s.<caret>hashCode()
+                            }
+                          }
+                          """, VariableKind.LOCAL_VARIABLE, "hashCode", "code", "hash", "i");
+  }
+
+  public void testCompareTo() {
+    checkSuggestedNames("""
+                          class X {
+                            void x(String s) {
+                              s.<caret>compareTo("");
+                            }
+                          }
+                          """, VariableKind.PARAMETER, "compareTo", "compare", "i");
   }
 
   private void checkSuggestedNames(@NotNull @Language("JAVA") String code, @NotNull VariableKind kind, String @NotNull ... expected) {

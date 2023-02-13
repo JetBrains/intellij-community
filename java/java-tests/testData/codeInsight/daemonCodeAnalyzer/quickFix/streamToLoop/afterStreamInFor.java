@@ -36,8 +36,8 @@ public class Main {
         System.out.println(j);
 
         StringJoiner joiner = new StringJoiner(",");
-        for (String s1 : list) {
-            joiner.add(s1);
+        for (String string : list) {
+            joiner.add(string);
         }
         for(String s = joiner.toString(); !s.isEmpty(); s = s.substring(1)) {
             System.out.println(s);
