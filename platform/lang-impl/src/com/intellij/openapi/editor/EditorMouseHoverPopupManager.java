@@ -434,19 +434,20 @@ public class EditorMouseHoverPopupManager implements Disposable {
     if (context != null) {
       HighlightInfo info = context.getHighlightInfo();
       if (info != null) {
-        showInfoTooltip(editor, info, offset, false, true);
+        showInfoTooltip(editor, info, offset, false, context.getElementForQuickDoc(), true);
       }
     }
   }
 
-  public void showInfoTooltip(@NotNull Editor editor,
+  private void showInfoTooltip(@NotNull Editor editor,
                               @NotNull HighlightInfo info,
                               int offset,
                               boolean requestFocus,
+                              PsiElement elementForQuickDoc,
                               boolean showImmediately) {
     if (editor.getProject() == null) return;
     cancelProcessingAndCloseHint();
-    Context context = new Context(System.currentTimeMillis(), offset, info, null) {
+    Context context = new Context(System.currentTimeMillis(), offset, info, elementForQuickDoc) {
       @Override
       public long getShowingDelay() {
         return showImmediately ? 0 : super.getShowingDelay();
@@ -454,10 +455,18 @@ public class EditorMouseHoverPopupManager implements Disposable {
 
       @Override
       public boolean showDocumentation() {
-        return false;
+        return elementForQuickDoc != null;
       }
     };
     scheduleProcessing(editor, context, false, true, requestFocus);
+  }
+
+  public void showInfoTooltip(@NotNull Editor editor,
+                              @NotNull HighlightInfo info,
+                              int offset,
+                              boolean requestFocus,
+                              boolean showImmediately) {
+    showInfoTooltip(editor, info, offset, requestFocus, null, showImmediately);
   }
 
   protected static class Context {
