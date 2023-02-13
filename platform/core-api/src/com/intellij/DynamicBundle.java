@@ -48,7 +48,7 @@ public class DynamicBundle extends AbstractBundle {
    * Use this constructor in bundle classes which inherit from this class.
    * Note that it's better to prefer delegation to inheritance, and use {@link #DynamicBundle(Class, String)} instead.
    */
-  public DynamicBundle(@NotNull String pathToBundle) {
+  protected DynamicBundle(@NotNull String pathToBundle) {
     super(pathToBundle);
   }
 
