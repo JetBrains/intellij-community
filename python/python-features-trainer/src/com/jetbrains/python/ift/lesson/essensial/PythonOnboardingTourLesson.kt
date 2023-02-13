@@ -257,7 +257,6 @@ class PythonOnboardingTourLesson :
       gotItStep(Balloon.Position.above, width = 0,
                 PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",
                                             strong(UIBundle.message("tool.window.name.debug")),
-                                            if (UIExperiment.isNewDebuggerUIEnabled()) 0 else 1,
                                             strong(LessonsBundle.message("debug.workflow.lesson.name"))))
       restoreIfModified(sample)
     }

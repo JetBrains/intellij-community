@@ -4,7 +4,7 @@ package training.dsl
 import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled
-import com.intellij.execution.ui.UIExperiment
+import com.intellij.execution.ui.layout.impl.JBRunnerTabs
 import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionManager
@@ -60,6 +60,7 @@ import training.learn.lesson.LessonManager
 import training.ui.*
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.getActionById
+import training.util.isToStringContains
 import training.util.learningToolWindow
 import training.util.surroundWithNonBreakSpaces
 import java.awt.*
@@ -414,14 +415,15 @@ fun LessonContext.highlightRunToolbar(highlightInside: Boolean = true, usePulsat
 
 fun LessonContext.highlightDebugActionsToolbar(highlightInside: Boolean = true, usePulsation: Boolean = true) {
   task {
-    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", highlightInside, usePulsation)
+    // wait for the treads & variables tab to be become selected
+    // otherwise the incorrect toolbar can be highlighted in the next task
+    triggerUI().component { tabs: JBRunnerTabs ->
+      tabs.selectedInfo?.text.isToStringContains(XDebuggerBundle.message("xdebugger.threads.vars.tab.title"))
+    }
   }
 
   task {
-    if (!UIExperiment.isNewDebuggerUIEnabled()) {
-      highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint",
-                                 highlightInside, usePulsation, clearPreviousHighlights = false)
-    }
+    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", highlightInside, usePulsation)
   }
 }
 
