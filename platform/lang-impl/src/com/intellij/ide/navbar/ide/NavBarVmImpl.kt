@@ -10,7 +10,6 @@ import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.navbar.vm.NavBarVm.SelectionShift
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.flow.zipWithNext
 import com.intellij.util.ui.EDT
@@ -125,7 +124,7 @@ internal class NavBarVmImpl(
       return
     }
     val items = _items.value
-    val children = items[index].item.children() ?: return
+    val children = items[index].item.childItems() ?: return
     if (children.isEmpty()) {
       return
     }
@@ -215,7 +214,7 @@ private sealed interface ExpandResult {
 private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
   var expanded = emptyList<NavBarVmItem>()
   var currentItem = child
-  var (children, navigateOnClick) = currentItem.fetch(childrenSelector, NavBarItem::navigateOnClick) ?: return null
+  var (children, navigateOnClick) = currentItem.childItemsAndNavigation() ?: return null
 
   if (children.isEmpty() || navigateOnClick) {
     return ExpandResult.NavigateTo(currentItem)
@@ -247,7 +246,7 @@ private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
           // Performing auto-expand, keeping invariant
           expanded = expanded + currentItem
           currentItem = children.single()
-          val fetch = currentItem.fetch(childrenSelector, NavBarItem::navigateOnClick) ?: return null
+          val fetch = currentItem.childItemsAndNavigation() ?: return null
           children = fetch.first
           navigateOnClick = fetch.second
         }
@@ -268,21 +267,18 @@ private suspend fun navigateTo(project: Project, item: NavBarVmItem) {
   }
 }
 
-private suspend fun NavBarVmItem.children(): List<NavBarVmItem>? {
-  return fetch(childrenSelector)
-}
-
-private suspend fun <T> NavBarVmItem.fetch(selector: NavBarItem.() -> T): T? {
-  return readAction {
-    pointer.dereference()?.selector()
+private suspend fun NavBarVmItem.childItems(): List<NavBarVmItem>? {
+  return fetch {
+    childItems()
   }
 }
 
-private suspend fun <T1, T2> NavBarVmItem.fetch(
-  selector1: NavBarItem.() -> T1,
-  selector2: NavBarItem.() -> T2
-): Pair<T1, T2>? = fetch { Pair(selector1(), selector2()) }
+private suspend fun NavBarVmItem.childItemsAndNavigation(): Pair<List<NavBarVmItem>, Boolean>? {
+  return fetch {
+    Pair(childItems(), navigateOnClick())
+  }
+}
 
-private val childrenSelector: NavBarItem.() -> List<NavBarVmItem> = {
-  children().toVmItems()
+private fun NavBarItem.childItems(): List<NavBarVmItem> {
+  return children().toVmItems()
 }
