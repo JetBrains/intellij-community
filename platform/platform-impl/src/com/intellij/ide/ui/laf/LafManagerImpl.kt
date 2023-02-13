@@ -645,7 +645,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
     settingsUtils.setCurrentIdeScale(1f) // need to temporarily reset this to correctly apply new size values
     UISettings.getInstance().fireUISettingsChanged()
-    setCurrentLookAndFeel(currentLookAndFeel!!)
+    setCurrentLookAndFeel(currentLookAndFeel!!, true)
     updateUI()
     settingsUtils.setCurrentIdeScale(ideScale)
     UISettings.getInstance().fireUISettingsChanged()
