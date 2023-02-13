@@ -4,6 +4,7 @@ package com.intellij.ui.popup.list;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxPopupState;
+import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -247,8 +248,13 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
 
     @Override
     public @Nullable ListSeparator getSeparatorAbove(T value) {
-      if (myGetRenderer.get() instanceof GroupedComboBoxRenderer<? super T> renderer) {
+      final ListCellRenderer<? super T> cellRenderer = myGetRenderer.get();
+      if (cellRenderer instanceof GroupedComboBoxRenderer<? super T> renderer) {
         return renderer.separatorFor(value);
+      }
+      if (cellRenderer instanceof ComboBoxWithWidePopup<? super T>.AdjustingListCellRenderer renderer
+          && renderer.delegate instanceof GroupedComboBoxRenderer<? super T> delegate) {
+        return delegate.separatorFor(value);
       }
       return null;
     }
