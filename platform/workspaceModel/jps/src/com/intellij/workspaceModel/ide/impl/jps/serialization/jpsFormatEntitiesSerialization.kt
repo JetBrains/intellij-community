@@ -154,7 +154,7 @@ data class ReloadingResult(
 )
 
 interface ErrorReporter {
-  fun reportError(@Nls message: String, file: VirtualFileUrl)
+  fun reportError(message: @Nls String, file: VirtualFileUrl)
 }
 
 data class JpsConfigurationFilesChange(val addedFileUrls: Collection<String>,
