@@ -44,8 +44,6 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
   "plugins/maven/lib/artifact-resolver-m3.jar" to "1.7",
   "plugins/maven/lib/artifact-resolver-m31.jar" to "1.7",
   "plugins/xpath/lib/rt/xslt-rt.jar" to "1.7",
-  "plugins/xslt-debugger/lib/xslt-debugger-rt.jar" to "1.7",
-  "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar" to "1.8",
 )
 
 /**
@@ -86,7 +84,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.junit",
   "intellij.testng",
   "intellij.xpath",
-  "intellij.xslt.debugger",
   "intellij.android.plugin",
   "intellij.android.design-plugin",
   "intellij.java.i18n",
