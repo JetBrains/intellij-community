@@ -1037,7 +1037,7 @@ public class JBTabsImpl extends JComponent
           component = new JPanel();
           BoxLayout layout = new BoxLayout(component, BoxLayout.X_AXIS);
           component.setLayout(layout);
-          component.setBorder(JBUI.Borders.empty(0, 17, 0, 4));
+          component.setBorder(JBUI.Borders.empty(0, 9, 0, 3));
 
           UISettings settings = UISettings.getInstance();
           if (!settings.getCloseTabButtonOnTheRight()) {
@@ -1063,8 +1063,9 @@ public class JBTabsImpl extends JComponent
 
           JComponent result = layoutComponent(component);
           if (result instanceof SelectablePanel selectablePanel) {
-            selectablePanel.setBorder(JBUI.Borders.empty(0, 4));
-            selectablePanel.setSelectionInsets(JBInsets.create(0, 4));
+            selectablePanel.setBorder(JBUI.Borders.empty(0, 5));
+            selectablePanel.setSelectionInsets(JBInsets.create(0, 5));
+            selectablePanel.setPreferredHeight(JBUI.scale(26));
           }
           return result;
         }
