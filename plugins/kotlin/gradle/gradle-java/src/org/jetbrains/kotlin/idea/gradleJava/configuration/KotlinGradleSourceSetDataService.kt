@@ -72,6 +72,9 @@ var Module.compilerArgumentsBySourceSet
 var Module.sourceSetName
         by UserDataProperty(Key.create<String>("SOURCE_SET_NAME"))
 
+private val logger = Logger.getInstance("#org.jetbrains.kotlin.idea.gradleJava.configuration")
+
+
 interface GradleProjectImportHandler {
     companion object : ProjectExtensionDescriptor<GradleProjectImportHandler>(
         "org.jetbrains.kotlin.gradleProjectImportHandler",
@@ -278,7 +281,12 @@ fun configureFacetByGradleModule(
     val compilerVersion = kotlinGradleSourceSetDataNode?.data?.kotlinPluginVersion?.let(IdeKotlinVersion::opt)
     // required for GradleFacetImportTest.{testCommonImportByPlatformPlugin, testKotlinAndroidPluginDetection}
         ?: KotlinGradleFacadeImpl.findKotlinPluginVersion(moduleNode)
-        ?: return null
+
+    if (compilerVersion == null) {
+        logger.error("[Kotlin Facet]: cannot create facet for module '${ideModule.name}' due to unknown compiler version " +
+                             "Some functionality might become unavailable!")
+        return null
+    }
 
     // TODO there should be a way to figure out the correct platform version
     val platform = platformKind?.defaultPlatform
