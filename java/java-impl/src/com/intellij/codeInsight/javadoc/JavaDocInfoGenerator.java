@@ -2617,7 +2617,8 @@ public class JavaDocInfoGenerator {
     TextAttributes attributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
     Color color = attributes.getForegroundColor();
-    return "<span style=\"color:" + ColorUtil.toHtmlColor(color)+"\">";
+    String htmlColor = color == null ? "red" : ColorUtil.toHtmlColor(color);
+    return "<span style=\"color:" + htmlColor + "\">";
   }
 
   /**
