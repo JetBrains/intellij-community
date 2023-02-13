@@ -116,7 +116,7 @@ open class XDebugSessionTabNewUI(
     toolbar.add(more, Constraints(Anchor.BEFORE, ""))
   }
 
-  open fun isSingleContent() = false
+  open fun isSingleContent() = Registry.`is`("debugger.new.tool.window.layout.single.content", false)
   override fun getSupplier(): SingleContentSupplier? = mySingleContentSupplier
 }
 
