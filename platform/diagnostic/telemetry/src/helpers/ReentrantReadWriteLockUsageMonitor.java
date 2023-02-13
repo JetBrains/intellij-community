@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diagnostic.telemetry;
+package com.intellij.diagnostic.telemetry.helpers;
 
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -25,22 +26,28 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public class ReentrantReadWriteLockUsageMonitor implements AutoCloseable {
 
-  public static final int DEFAULT_SAMPLING_INTERVAL_MS = SystemProperties.getIntProperty("ReentrantReadWriteLockUsageMonitor.DEFAULT_SAMPLING_INTERVAL_MS", 500);
+  public static final int DEFAULT_SAMPLING_INTERVAL_MS =
+    SystemProperties.getIntProperty("ReentrantReadWriteLockUsageMonitor.DEFAULT_SAMPLING_INTERVAL_MS", 500);
 
-  private final ReentrantReadWriteLock lockToMonitor;
+  private final Supplier<ReentrantReadWriteLock> lockToMonitor;
 
   private final ScheduledFuture<?> scheduledSamplerHandle;
 
   private final ObservableDoubleMeasurement competingThreadsAvg;
-  private final ObservableLongMeasurement   competingThreads90P;
-  private final ObservableLongMeasurement   competingThreadsMax;
+  private final ObservableLongMeasurement competingThreads90P;
+  private final ObservableLongMeasurement competingThreadsMax;
   private final BatchCallback meterHandle;
 
   //@GuardedBy(this)
   private final Histogram competingThreadsHisto = new Histogram(3);
 
-
   public ReentrantReadWriteLockUsageMonitor(final @NotNull ReentrantReadWriteLock toMonitor,
+                                            final @NotNull String measurementName,
+                                            final @NotNull Meter otelMeter) {
+    this(() -> toMonitor, measurementName, otelMeter);
+  }
+
+  public ReentrantReadWriteLockUsageMonitor(final @NotNull Supplier<ReentrantReadWriteLock> toMonitor,
                                             final @NotNull String measurementName,
                                             final @NotNull Meter otelMeter) {
     lockToMonitor = toMonitor;
@@ -56,19 +63,29 @@ public class ReentrantReadWriteLockUsageMonitor implements AutoCloseable {
   }
 
   private synchronized void sampleLockUsage() {
-    final boolean isWriteLocked = lockToMonitor.isWriteLocked();
-    final int queueLength = lockToMonitor.getQueueLength();
+    final ReentrantReadWriteLock lock = lockToMonitor.get();
+    if (lock != null) {
+      final boolean isWriteLocked = lock.isWriteLocked();
+      final int queueLength = lock.getQueueLength();
 
-    final int competingThreads = queueLength + (isWriteLocked ? 1 : lockToMonitor.getReadLockCount());
-    competingThreadsHisto.recordValue(competingThreads);
+      final int competingThreads = queueLength + (isWriteLocked ? 1 : lock.getReadLockCount());
+      competingThreadsHisto.recordValue(competingThreads);
+    }
   }
 
   private synchronized void drainValuesToOtel() {
-    competingThreadsAvg.record(competingThreadsHisto.getMean());
-    competingThreads90P.record(competingThreadsHisto.getValueAtPercentile(90));
-    competingThreadsMax.record(competingThreadsHisto.getMaxValue());
+    if (competingThreadsHisto.getTotalCount() > 0) {
+      competingThreadsAvg.record(competingThreadsHisto.getMean());
+      competingThreads90P.record(competingThreadsHisto.getValueAtPercentile(90));
+      competingThreadsMax.record(competingThreadsHisto.getMaxValue());
 
-    competingThreadsHisto.reset();
+      competingThreadsHisto.reset();
+    }
+    else {
+      competingThreadsAvg.record(0);
+      competingThreads90P.record(0);
+      competingThreadsMax.record(0);
+    }
   }
 
   @Override
@@ -76,5 +93,4 @@ public class ReentrantReadWriteLockUsageMonitor implements AutoCloseable {
     scheduledSamplerHandle.cancel(false);
     meterHandle.close();
   }
-
 }

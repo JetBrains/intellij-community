@@ -4,8 +4,8 @@ package com.intellij.util.indexing.diagnostic
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.intellij.diagnostic.telemetry.ReentrantReadWriteLockUsageMonitor
 import com.intellij.diagnostic.telemetry.TraceManager
+import com.intellij.diagnostic.telemetry.helpers.ReentrantReadWriteLockUsageMonitor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PathMacroManager

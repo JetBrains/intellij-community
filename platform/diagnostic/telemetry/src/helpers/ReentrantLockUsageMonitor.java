@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diagnostic.telemetry;
+package com.intellij.diagnostic.telemetry.helpers;
 
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -29,7 +30,7 @@ public class ReentrantLockUsageMonitor implements AutoCloseable {
   public static final int DEFAULT_SAMPLING_INTERVAL_MS =
     SystemProperties.getIntProperty("ReentrantLockUsageMonitor.DEFAULT_SAMPLING_INTERVAL_MS", 500);
 
-  private final ReentrantLock lockToMonitor;
+  private final Supplier<ReentrantLock> lockToMonitor;
 
   private final ScheduledFuture<?> scheduledSamplerHandle;
 
@@ -41,8 +42,13 @@ public class ReentrantLockUsageMonitor implements AutoCloseable {
   //@GuardedBy(this)
   private final Histogram competingThreadsHisto = new Histogram(3);
 
-
   public ReentrantLockUsageMonitor(final @NotNull ReentrantLock toMonitor,
+                                   final @NotNull String measurementName,
+                                   final @NotNull Meter otelMeter) {
+    this(() -> toMonitor, measurementName, otelMeter);
+  }
+
+  public ReentrantLockUsageMonitor(final @NotNull Supplier<ReentrantLock> toMonitor,
                                    final @NotNull String measurementName,
                                    final @NotNull Meter otelMeter) {
     lockToMonitor = toMonitor;
@@ -59,18 +65,28 @@ public class ReentrantLockUsageMonitor implements AutoCloseable {
   }
 
   private synchronized void sampleLockUsage() {
-    final boolean isLocked = lockToMonitor.isLocked();
-    final int queueLength = lockToMonitor.getQueueLength();
-    final int competingThreads = queueLength + (isLocked ? 1 : 0);
-    competingThreadsHisto.recordValue(competingThreads);
+    final ReentrantLock lock = lockToMonitor.get();
+    if (lock != null) {
+      final boolean isLocked = lock.isLocked();
+      final int queueLength = lock.getQueueLength();
+      final int competingThreads = queueLength + (isLocked ? 1 : 0);
+      competingThreadsHisto.recordValue(competingThreads);
+    }
   }
 
   private synchronized void drainValuesToOtel() {
-    competingThreadsAvg.record(competingThreadsHisto.getMean());
-    competingThreads90P.record(competingThreadsHisto.getValueAtPercentile(90));
-    competingThreadsMax.record(competingThreadsHisto.getMaxValue());
+    if (competingThreadsHisto.getTotalCount() > 0) {
+      competingThreadsAvg.record(competingThreadsHisto.getMean());
+      competingThreads90P.record(competingThreadsHisto.getValueAtPercentile(90));
+      competingThreadsMax.record(competingThreadsHisto.getMaxValue());
 
-    competingThreadsHisto.reset();
+      competingThreadsHisto.reset();
+    }
+    else {
+      competingThreadsAvg.record(0);
+      competingThreads90P.record(0);
+      competingThreadsMax.record(0);
+    }
   }
 
   @Override
