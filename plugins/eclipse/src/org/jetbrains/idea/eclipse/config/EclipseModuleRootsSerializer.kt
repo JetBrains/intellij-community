@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
 import com.intellij.util.Function
@@ -203,9 +202,9 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
             sourceRoots.add(sourceRoot.url)
             dependencies.removeIf { it is ModuleDependencyItem.ModuleSourceDependency }
             dependencies.add(ModuleDependencyItem.ModuleSourceDependency)
-            editEclipseProperties {
-              it.expectedModuleSourcePlace = dependencies.size - 1
-              it.srcPlace = it.srcPlace.toMutableMap().also { it[srcUrl.url] = index }
+            editEclipseProperties { eclipseProperties ->
+              eclipseProperties.expectedModuleSourcePlace = dependencies.size - 1
+              eclipseProperties.srcPlace = eclipseProperties.srcPlace.toMutableMap().also { it[srcUrl.url] = index }
             }
           }
         }
@@ -343,9 +342,9 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           else {
             val definedCons = EclipseNatureImporter.getAllDefinedCons()
             if (path in definedCons) {
-              editEclipseProperties {
-                it.knownCons += path
-                it.srcPlace = it.srcPlace.toMutableMap().also { it[path] = index }
+              editEclipseProperties { eclipseProperties ->
+                eclipseProperties.knownCons += path
+                eclipseProperties.srcPlace = eclipseProperties.srcPlace.toMutableMap().also { it[path] = index }
               }
             }
             else {
@@ -466,7 +465,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           try {
             emlFile.delete(this)
           }
-          catch (e: IOException) {
+          catch (_: IOException) {
           }
         }
       }
@@ -497,7 +496,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
       when (item) {
         ModuleDependencyItem.ModuleSourceDependency -> {
           val shouldPlaceSeparately = eclipseProperties?.expectedModuleSourcePlace == itemIndex
-          val comparator = module.mainContentRoot?.getSourceRootsComparator() ?: compareBy<SourceRootEntity> { it.url.url }
+          val comparator = module.mainContentRoot?.getSourceRootsComparator() ?: compareBy { it.url.url }
           for (sourceRoot in sourceRoots.sortedWith(comparator)) {
             var relativePath = convertToEclipsePath(sourceRoot.url, module, entitySource, pathShortener)
             if (sourceRoot.contentRoot.url != module.mainContentRoot?.url) {
@@ -548,7 +547,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                   addClasspathEntry(if (link) EclipseXml.LIB_KIND else EclipseXml.VAR_KIND, eclipseVariablePath)
                 }
                 else {
-                  LOG.assertTrue(!StringUtil.isEmptyOrSpaces(firstUrl), "Library: $libraryName")
+                  LOG.assertTrue(!firstUrl.isNullOrBlank(), "Library: $libraryName")
                   addClasspathEntry(EclipseXml.LIB_KIND, convertToEclipsePath(firstRoot, module, entitySource, pathShortener))
                 }
 
