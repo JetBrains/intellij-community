@@ -54,6 +54,11 @@ interface GHPRReviewService {
     : CompletableFuture<GHPullRequestReviewCommentWithPendingReview>
 
   @CalledInAny
+  fun addComment(progressIndicator: ProgressIndicator, reviewId: String,
+                 body: String, commitSha: String, fileName: String, diffLine: Int)
+    : CompletableFuture<GHPullRequestReviewCommentWithPendingReview>
+
+  @CalledInAny
   fun deleteComment(progressIndicator: ProgressIndicator,
                     pullRequestId: GHPRIdentifier,
                     commentId: String): CompletableFuture<GHPullRequestPendingReview>
