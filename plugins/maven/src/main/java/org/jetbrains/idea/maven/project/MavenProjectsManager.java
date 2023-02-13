@@ -1001,6 +1001,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     MavenSyncConsole console = getSyncConsole();
     console.startImport(myProgressListener, spec);
     StructuredIdeActivity activity = MavenImportStats.startImportActivity(myProject);
+    myMavenProjectResolver.clearPluginCache();
     fireImportAndResolveScheduled(spec);
     AsyncPromise<List<Module>> promise = scheduleResolve();
     promise.onProcessed(m -> {
@@ -1184,7 +1185,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void schedulePluginsResolve(final MavenProject project, final NativeMavenProjectHolder nativeMavenProject) {
     runWhenFullyOpen(() -> myPluginsResolvingProcessor
-      .scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project, nativeMavenProject, myProjectsTree, forceUpdateSnapshots)));
+      .scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project, nativeMavenProject, myProjectsTree, myMavenProjectResolver,
+                                                                   forceUpdateSnapshots)));
   }
 
   public void scheduleArtifactsDownloading(final Collection<MavenProject> projects,
