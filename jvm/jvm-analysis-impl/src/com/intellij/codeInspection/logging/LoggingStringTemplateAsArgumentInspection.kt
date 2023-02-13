@@ -26,7 +26,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectionTool() {
 
   @JvmField
-  var myLimitLevelType: LimitLevelType = LimitLevelType.ALL
+  var myLimitLevelType: LimitLevelType = LimitLevelType.DEBUG_AND_LOWER
 
   @JvmField
   var mySkipPrimitives: Boolean = true
