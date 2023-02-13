@@ -40,11 +40,6 @@ public abstract class Ikv implements AutoCloseable {
     return mappedBuffer.asReadOnlyBuffer().order(ByteOrder.LITTLE_ENDIAN).position(position);
   }
 
-  public void readByteArrayAt(int position, byte[] data, int size) {
-    mappedBuffer.position(position);
-    mappedBuffer.get(data, 0, size);
-  }
-
   public static final class SizeAwareIkv extends Ikv {
     private final StrippedLongToLongMap index;
 
