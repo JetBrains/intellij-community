@@ -19,7 +19,7 @@
                  description="Enable new algorithm for ReplaceBySource operation"/>
     <registryKey key="ide.workspace.model.generated.code.for.cache" defaultValue="true" restartRequired="false"
                  description="Enable new method of workspace model caching"/>
-    <registryKey key="ide.workspace.model.separate.component.for.roots" defaultValue="false" restartRequired="true"
+    <registryKey key="ide.workspace.model.separate.component.for.roots" defaultValue="true" restartRequired="true"
                  description="Enables storing of additional roots in the separate iml component"/>
     <workspaceModel.customFacetRelatedEntitySerializer implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DefaultFacetEntitySerializer" />
   </extensions>
