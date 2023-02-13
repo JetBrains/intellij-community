@@ -27,7 +27,7 @@ class J {
         c = (c.code.toDouble() / d).toInt().toChar()
         c = (c.code.toDouble() % (f + d + f)).toInt().toChar()
 
-        // TODO KTIJ-24547
+        // TODO KTIJ-24541
         var b: Byte = 1
         b = (b + f).toByte()
         b = (b - d).toByte()
@@ -35,7 +35,7 @@ class J {
         b = (b / d).toByte()
         b = (b % (f + d + f)).toByte()
 
-        // TODO KTIJ-24547
+        // TODO KTIJ-24541
         var s: Short = 1
         s = (s + f).toShort()
         s = (s - d).toShort()
@@ -64,7 +64,7 @@ class J {
         charArr[0] = (charArr[0].code.toDouble() / d).toInt().toChar()
         charArr[0] = (charArr[0].code.toDouble() % (f + d + f)).toInt().toChar()
 
-        // TODO KTIJ-24547
+        // TODO KTIJ-24541
         val byteArr = byteArrayOf(1)
         byteArr[0] = (byteArr[0] + f).toByte()
         byteArr[0] = (byteArr[0] - d).toByte()
@@ -72,7 +72,7 @@ class J {
         byteArr[0] = (byteArr[0] / d).toByte()
         byteArr[0] = (byteArr[0] % (f + d + f)).toByte()
 
-        // TODO KTIJ-24547
+        // TODO KTIJ-24541
         val shortArr = shortArrayOf(1)
         shortArr[0] = (shortArr[0] + f).toShort()
         shortArr[0] = (shortArr[0] - d).toShort()
