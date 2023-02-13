@@ -1,13 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -46,13 +43,13 @@ import java.util.List;
 public class ShowFilePathAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean visible = !SystemInfo.isMac && RevealFileAction.isSupported();
+    var visible = RevealFileAction.isSupported();
     e.getPresentation().setVisible(visible);
     if (visible) {
-      VirtualFile file = getFile(e);
+      var file = getFile(e);
       e.getPresentation().setEnabled(file != null);
-      e.getPresentation().setText(
-        ActionsBundle.messagePointer(file != null && file.isDirectory() ? "action.ShowFilePath.directory" : "action.ShowFilePath.file"));
+      var isPopup = ActionPlaces.PROJECT_VIEW_POPUP.equals(e.getPlace()) || ActionPlaces.EDITOR_TAB_POPUP.equals(e.getPlace());
+      e.getPresentation().setText(ActionsBundle.message(isPopup ? "action.ShowFilePath.popup" : "action.ShowFilePath.text"));
     }
   }
 
