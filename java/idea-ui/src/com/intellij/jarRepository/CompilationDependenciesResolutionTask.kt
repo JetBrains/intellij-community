@@ -43,6 +43,7 @@ internal class CompilationDependenciesResolutionTask : CompileTask {
     for (module in affectedModules) {
       OrderEnumerator.orderEntries(module)
         .recursively()
+        .exportedOnly()
         .compileOnly()
         .withoutSdk()
         .forEachLibrary { library ->
