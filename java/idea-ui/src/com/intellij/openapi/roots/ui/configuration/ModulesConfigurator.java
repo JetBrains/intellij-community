@@ -397,23 +397,21 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     var builder = runWizard(wizard);
     if (null == builder) return null;
 
-    final List<Module> modules = new ArrayList<>();
-    final List<Module> committedModules;
+    List<Module> modules;
     if (builder instanceof ProjectImportBuilder<?>) {
       var artifactModel = myProjectStructureConfigurable.getArtifactsStructureConfigurable().getModifiableArtifactModel();
-      committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
+      modules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
     }
     else {
-      committedModules = builder.commit(myProject, myModuleModel, this);
+      modules = builder.commit(myProject, myModuleModel, this);
     }
-    if (committedModules != null) {
-      modules.addAll(committedModules);
+    if (null != modules && !modules.isEmpty()) {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        for (Module module : modules) {
+          getOrCreateModuleEditor(module);
+        }
+      });
     }
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      for (Module module : modules) {
-        getOrCreateModuleEditor(module);
-      }
-    });
     return modules;
   }
 
