@@ -485,6 +485,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/MethodsFromAnyExplicitReceiver2.kt");
         }
 
+        @TestMetadata("MethodsFromIntersectionType.kt")
+        public void testMethodsFromIntersectionType() throws Exception {
+            runTest("../testData/weighers/basic/MethodsFromIntersectionType.kt");
+        }
+
         @TestMetadata("NamedArgumentNonTypableVariables.kt")
         public void testNamedArgumentNonTypableVariables() throws Exception {
             runTest("../testData/weighers/basic/NamedArgumentNonTypableVariables.kt");

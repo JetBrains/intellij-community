@@ -485,6 +485,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../completion/testData/weighers/basic/MethodsFromAnyExplicitReceiver2.kt");
         }
 
+        @TestMetadata("MethodsFromIntersectionType.kt")
+        public void testMethodsFromIntersectionType() throws Exception {
+            runTest("../completion/testData/weighers/basic/MethodsFromIntersectionType.kt");
+        }
+
         @TestMetadata("NamedArgumentNonTypableVariables.kt")
         public void testNamedArgumentNonTypableVariables() throws Exception {
             runTest("../completion/testData/weighers/basic/NamedArgumentNonTypableVariables.kt");

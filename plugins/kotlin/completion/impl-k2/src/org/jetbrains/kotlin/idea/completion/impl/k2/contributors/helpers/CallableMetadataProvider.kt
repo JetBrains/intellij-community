@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
@@ -214,19 +215,26 @@ internal object CallableMetadataProvider {
         symbol: KtCallableSymbol,
         actualReceiverType: KtType,
         expectedReceiverType: KtType,
-    ): CallableKind? = when {
-        actualReceiverType isEqualTo expectedReceiverType -> when {
-            isExtensionCallOnTypeParameterReceiver(symbol) -> CallableKind.TypeParameterExtension
-            symbol.isExtension -> CallableKind.ThisTypeExtension
-            else -> CallableKind.ThisClassMember
+    ): CallableKind? {
+        val receiverTypes = when (actualReceiverType) {
+            is KtIntersectionType -> actualReceiverType.conjuncts
+            else -> listOf(actualReceiverType)
         }
 
-        actualReceiverType isSubTypeOf expectedReceiverType -> when {
-            symbol.isExtension -> CallableKind.BaseTypeExtension
-            else -> CallableKind.BaseClassMember
-        }
+        return when {
+            receiverTypes.any { it isEqualTo expectedReceiverType } -> when {
+                isExtensionCallOnTypeParameterReceiver(symbol) -> CallableKind.TypeParameterExtension
+                symbol.isExtension -> CallableKind.ThisTypeExtension
+                else -> CallableKind.ThisClassMember
+            }
 
-        else -> null
+            receiverTypes.any { it isSubTypeOf expectedReceiverType } -> when {
+                symbol.isExtension -> CallableKind.BaseTypeExtension
+                else -> CallableKind.BaseClassMember
+            }
+
+            else -> null
+        }
     }
 
     private fun KtAnalysisSession.isExtensionCallOnTypeParameterReceiver(symbol: KtCallableSymbol): Boolean {
