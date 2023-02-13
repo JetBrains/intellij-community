@@ -602,9 +602,6 @@ object IconLoader {
     iconCache.entries.removeIf { (key, icon): Map.Entry<Pair<String, ClassLoader?>, com.intellij.openapi.util.CachedImageIcon> ->
       icon.detachClassLoader(classLoader) || key.second === classLoader
     }
-    for (map in iconToDisabledIcon.values) {
-      map.keys.removeIf { it is com.intellij.openapi.util.CachedImageIcon && it.detachClassLoader(classLoader) }
-    }
   }
 
   internal fun doResolve(path: String?,
