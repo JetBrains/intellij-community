@@ -78,9 +78,13 @@ class DescriptorStorageImpl(
       storageIO.write(descrPos, byteArrayOf((-tag.ordinal).toByte()))
       storageIO.write(descrPos + descrSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
       val op = compute()
-      assert(tag == op.tag)
+      if (tag != op.tag) {
+        throw IllegalStateException("expected $tag, got ${op.tag}")
+      }
       val data = serialize(op)
-      assert(data.size == sizeOfValueInDescriptor(descrSize))
+      if (data.size != sizeOfValueInDescriptor(descrSize)) {
+        throw IllegalStateException("for $tag expected value of size ${sizeOfValueInDescriptor(descrSize)}, got ${data.size}")
+      }
       storageIO.write(descrPos + VfsOperationTag.SIZE_BYTES, data)
       storageIO.write(descrPos, byteArrayOf(tag.ordinal.toByte()))
     }

@@ -55,7 +55,7 @@ class RecordsLogInterceptor(
       { underlying(fileId, nameId) } catchResult { result ->
         processor.enqueue {
           descriptorStorage.writeDescriptor(VfsOperationTag.REC_SET_NAME_ID) {
-            VfsOperation.RecordsOperation.SetParent(fileId, nameId, result)
+            VfsOperation.RecordsOperation.SetNameId(fileId, nameId, result)
           }
         }
       }
