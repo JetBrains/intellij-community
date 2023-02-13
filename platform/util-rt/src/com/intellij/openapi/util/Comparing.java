@@ -129,6 +129,10 @@ public final class Comparing {
     return h;
   }
 
+  /**
+   * @deprecated use {@link Byte#compare(byte, byte)} instead
+   */
+  @Deprecated
   public static int compare(byte o1, byte o2) {
     return Byte.compare(o1, o2);
   }
@@ -137,14 +141,26 @@ public final class Comparing {
     return o1 == o2 ? 0 : o1 ? 1 : -1;
   }
 
+  /**
+   * @deprecated use {@link Integer#compare(int, int)} instead
+   */
+  @Deprecated
   public static int compare(int o1, int o2) {
     return Integer.compare(o1, o2);
   }
 
+  /**
+   * @deprecated use {@link Long#compare(long, long)} instead
+   */
+  @Deprecated
   public static int compare(long o1, long o2) {
     return Long.compare(o1, o2);
   }
 
+  /**
+   * @deprecated use {@link Double#compare(double, double)} instead
+   */
+  @Deprecated
   public static int compare(double o1, double o2) {
     return Double.compare(o1, o2);
   }
