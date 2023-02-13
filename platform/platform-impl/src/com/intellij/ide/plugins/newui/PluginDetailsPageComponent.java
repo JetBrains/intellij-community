@@ -889,7 +889,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       }
     }
 
-    mySuggestedIdeBanner.suggestIde(suggestedCommercialIde);
+    mySuggestedIdeBanner.suggestIde(suggestedCommercialIde, myPlugin.getPluginId());
   }
 
   private enum EmptyState {
