@@ -515,6 +515,11 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/redundantValueArgument/namedArgument.kt");
         }
 
+        @TestMetadata("overridden.kt")
+        public void testOverridden() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantValueArgument/overridden.kt");
+        }
+
         @TestMetadata("secondArgument.kt")
         public void testSecondArgument() throws Exception {
             runTest("../testData/inspectionsLocal/redundantValueArgument/secondArgument.kt");

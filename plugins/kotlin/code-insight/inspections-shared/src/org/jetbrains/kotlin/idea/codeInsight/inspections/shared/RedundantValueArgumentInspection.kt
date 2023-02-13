@@ -10,7 +10,9 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -18,6 +20,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNa
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class RedundantValueArgumentInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = valueArgumentVisitor(fun(argument: KtValueArgument) {
@@ -32,9 +35,15 @@ class RedundantValueArgumentInspection : AbstractKotlinInspection() {
             val argumentConstantValue = argumentExpression.evaluate(CONSTANT_EXPRESSION_EVALUATION) ?: return
 
             val call = callElement.resolveCall().successfulFunctionCallOrNull() ?: return
-            val parameterSymbol = call.argumentMapping[argumentExpression]?.symbol ?: return
+            val parameterSymbol = call.argumentMapping[argumentExpression]?.symbol?.let { parameterSymbol ->
+                val overriddenSymbols = call.partiallyAppliedSymbol.symbol.getAllOverriddenSymbols()
+                val baseFunctionSymbol = overriddenSymbols.firstNotNullOfOrNull { overriddenSymbol ->
+                    overriddenSymbol.asSignature().symbol.safeAs<KtFunctionSymbol>()?.takeIf { !it.isOverride }
+                }
+                baseFunctionSymbol?.valueParameters?.firstOrNull { it.name == parameterSymbol.name } ?: parameterSymbol
+            } ?: return
             if (parameterSymbol.hasDefaultValue) {
-                val parameter = parameterSymbol.sourcePsiSafe<KtParameter>() ?: return
+                val parameter = (parameterSymbol).sourcePsiSafe<KtParameter>() ?: return
                 if (parameter.isVarArg) {
                     return
                 }
