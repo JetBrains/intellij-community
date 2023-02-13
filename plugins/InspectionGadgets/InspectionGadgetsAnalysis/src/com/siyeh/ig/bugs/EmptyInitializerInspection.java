@@ -60,9 +60,9 @@ public class EmptyInitializerInspection extends BaseInspection {
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement codeBlock = element.getParent();
-      assert codeBlock != null;
+      if (!(codeBlock instanceof PsiCodeBlock)) return;
       final PsiElement classInitializer = codeBlock.getParent();
-      assert classInitializer != null;
+      if (!(classInitializer instanceof PsiClassInitializer)) return;
       deleteElement(classInitializer);
     }
   }
