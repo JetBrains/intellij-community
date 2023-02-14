@@ -55,7 +55,7 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
         return;
       }
 
-      SlowOperations.allowSlowOperations(() -> lookup.finishLookup(finishingChar));
+      lookup.finishLookup(finishingChar);
     }
 
 
