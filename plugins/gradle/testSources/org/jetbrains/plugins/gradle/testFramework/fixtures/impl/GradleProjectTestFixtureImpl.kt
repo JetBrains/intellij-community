@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.concurrency.waitForPromise
@@ -23,8 +24,8 @@ import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWr
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.util.openProjectAsyncAndWait
 import org.jetbrains.plugins.gradle.testFramework.util.refreshAndWait
+import org.jetbrains.plugins.gradle.util.awaitProjectReload
 import org.jetbrains.plugins.gradle.util.whenResolveTaskStarted
 import kotlin.time.Duration.Companion.minutes
 
@@ -108,7 +109,11 @@ internal class GradleProjectTestFixtureImpl private constructor(
   companion object {
 
     private suspend fun createProjectCaches(projectRoot: VirtualFile) {
-      val project = openProjectAsyncAndWait(projectRoot)
+      val project = closeOpenedProjectsIfFailAsync {
+        awaitProjectReload {
+          openProjectAsync(projectRoot)
+        }
+      }
       try {
         projectRoot.refreshAndWait()
       }
