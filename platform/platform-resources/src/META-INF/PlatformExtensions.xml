@@ -9,6 +9,7 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <appStarter id="save" implementation="com.intellij.openapi.application.SaveStarter"/>
     <appStarter id="exit" implementation="com.intellij.openapi.application.ExitStarter"/>
+    <appStarter id="dumpLaunchParameters" implementation="com.intellij.openapi.application.DumpLaunchParametersStarter"/>
     <appStarter id="diff" implementation="com.intellij.diff.applications.DiffApplication"/>
     <appStarter id="merge" implementation="com.intellij.diff.applications.MergeApplication"/>
     <appStarter id="reopen" implementation="com.intellij.ui.win.RecentProjectApplication"/>
@@ -22,7 +23,6 @@
     <appStarter id="warmup" implementation="com.intellij.warmup.ProjectCachesWarmup"/>
     <appStarter id="buildEventsScheme" implementation="com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter"/>
     <appStarter id="dumpActions" implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter"/>
-    <appStarter id="dumpLaunchParameters" implementation="com.intellij.internal.statistic.utils.DumpLaunchParametersStarter"/>
     <protocolHandler implementation="com.intellij.openapi.application.JBProtocolHandler"/>
 
     <groupConfigurable id="appearance" weight="70"

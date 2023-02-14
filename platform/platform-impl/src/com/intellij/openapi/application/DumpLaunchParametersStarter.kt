@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.internal.statistic.utils
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.application
 
 import com.google.gson.GsonBuilder
 import com.intellij.idea.AppExitCodes
-import com.intellij.openapi.application.ModernApplicationStarter
+import org.jetbrains.annotations.ApiStatus
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.nio.file.Path
@@ -36,13 +36,15 @@ import kotlin.system.exitProcess
 }
  */
 
-data class DumpedLaunchParameters(
+@ApiStatus.Internal
+internal data class DumpedLaunchParameters(
   val cmdArguments: List<String>,
   val vmOptions: List<String>,
   val environmentVariables: Map<String, String>,
   val systemProperties: Map<String, String>
 )
 
+@ApiStatus.Internal
 internal class DumpLaunchParametersStarter : ModernApplicationStarter() {
   override val commandName: String
     get() = "dump-launch-parameters"
