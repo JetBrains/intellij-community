@@ -68,6 +68,12 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Shows a light bulb icon in the editor if some intention is available.
+ * <ul>
+ * <li>Hovering over the light bulb icon draws a border around the light bulb.
+ * <li>Clicking the light bulb opens a popup menu that lists the available intentions.
+ * </ul>
+ *
  * @author max
  * @author Mike
  * @author Valentin
