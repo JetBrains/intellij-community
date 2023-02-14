@@ -5,7 +5,15 @@
   <id>com.intellij.tasks</id>
   <name>Task Management</name>
   <category>Other Tools</category>
-  <description>Enables task and context management</description>
+  <description><![CDATA[
+  <p>Provides task management features for the IDE.</p>
+
+  <ul>
+  <li>Manage and track your work with tasks, including how much time you spend on each one</li>
+  <li>Integrate with issue trackers, such as YouTrack, Jira, and GitHub</li>
+  <li>Save and switch the context for every task: bookmarks, breakpoints, and editor tabs</li>
+  </ul>
+]]></description>
   <vendor>JetBrains</vendor>
 
   <!--fake dependency for Web IDE-->
