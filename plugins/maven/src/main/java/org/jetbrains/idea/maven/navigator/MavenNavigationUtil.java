@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
+import com.intellij.navigation.EmptyNavigatable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -26,6 +28,7 @@ import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author Konstantin Bulenkov
@@ -70,23 +73,21 @@ public final class MavenNavigationUtil {
                                                                     @NotNull VirtualFile file,
                                                                     @NotNull String groupId,
                                                                     @NotNull String artifactId) {
-    return new NavigatableAdapter() {
-      @Override
-      public void navigate(boolean requestFocus) {
-        if (!file.isValid()) return;
 
-        MavenDomProjectModel projectModel = MavenDomUtil.getMavenDomProjectModel(project, file);
-        if (projectModel == null) return;
-
-        MavenDomDependency dependency = findDependency(projectModel, groupId, artifactId);
-        if (dependency == null) return;
-
-        XmlTag artifactId = dependency.getArtifactId().getXmlTag();
-        if (artifactId == null) return;
-
-        navigate(project, artifactId.getContainingFile().getVirtualFile(), artifactId.getTextOffset() + artifactId.getName().length() + 2, requestFocus);
-      }
-    };
+    return Optional.of(file).filter(VirtualFile::isValid)
+      .map(f -> MavenDomUtil.getMavenDomProjectModel(project, f))
+      .map(projectModel -> findDependency(projectModel, groupId, artifactId))
+      .map(dependency -> dependency.getArtifactId().getXmlTag())
+      .map(artifactIdTag -> Pair.create(artifactIdTag.getContainingFile().getVirtualFile(),
+                                        artifactIdTag.getTextOffset() + artifactIdTag.getName().length() + 2))
+      .<Navigatable>map(pair ->
+                          new NavigatableAdapter() {
+                            @Override
+                            public void navigate(boolean requestFocus) {
+                              navigate(project, pair.getFirst(), pair.getSecond(), requestFocus);
+                            }
+                          }
+      ).orElse(EmptyNavigatable.INSTANCE);
   }
 
   @Nullable
