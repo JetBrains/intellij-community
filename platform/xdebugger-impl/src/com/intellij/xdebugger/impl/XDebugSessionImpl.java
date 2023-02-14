@@ -652,7 +652,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       boolean isTopFrame = isTopFrameSelected();
       XSourcePosition mainSourcePosition = getFrameSourcePosition(myCurrentStackFrame, XSourceKind.MAIN);
       XSourcePosition alternativeSourcePosition = getFrameSourcePosition(myCurrentStackFrame, XSourceKind.ALTERNATIVE);
-      ExecutionPoint executionPoint = new ExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame);
+      ExecutionPoint executionPoint = ExecutionPoint.create(mainSourcePosition, alternativeSourcePosition, isTopFrame);
       myExecutionPointManager.setExecutionPoint(executionPoint);
       myExecutionPointManager.setActiveSourceKind(myCurrentSourceKind);
       updateExecutionPointGutterIconRenderer();
