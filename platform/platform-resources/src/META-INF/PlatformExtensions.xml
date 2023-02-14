@@ -1388,6 +1388,8 @@
     <advancedSetting id="terminal.escape.moves.focus.to.editor" default="true" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.type.ahead" default="true" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.type.ahead.latency.threshold" default="100" groupKey="group.advanced.settings.terminal"/>
+    <advancedSetting id="terminal.disable.line.spacing.for.alternative.screen.buffer" default="false" groupKey="group.advanced.settings.terminal"/>
+    <advancedSetting id="terminal.fill.character.background.including.line.spacing" default="true" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="documentation.components.enable.inline.code.highlighting" default="false" groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="documentation.components.enable.code.blocks.highlighting" default="true" groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="documentation.components.enable.highlighting.of.links" default="false" groupKey="group.advanced.settings.documentation.components"/>

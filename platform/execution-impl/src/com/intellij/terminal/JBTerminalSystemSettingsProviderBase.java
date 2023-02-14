@@ -287,6 +287,16 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
     return editorSettings.isBlinkCaret() ? CursorShape.BLINK_VERTICAL_BAR : CursorShape.STEADY_VERTICAL_BAR;
   }
 
+  @Override
+  public boolean shouldDisableLineSpacingForAlternateScreenBuffer() {
+    return AdvancedSettings.getBoolean("terminal.disable.line.spacing.for.alternative.screen.buffer");
+  }
+
+  @Override
+  public boolean shouldFillCharacterBackgroundIncludingLineSpacing() {
+    return AdvancedSettings.getBoolean("terminal.fill.character.background.including.line.spacing");
+  }
+
   /**
    * @deprecated use {@link org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider#getNewTabActionPresentation()} instead
    */
