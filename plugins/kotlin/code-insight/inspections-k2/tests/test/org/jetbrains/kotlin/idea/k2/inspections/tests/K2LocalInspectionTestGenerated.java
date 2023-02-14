@@ -1654,6 +1654,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/annotationEntry.kt");
         }
 
+        @TestMetadata("applicableEnumEntries.kt")
+        public void testApplicableEnumEntries() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/applicableEnumEntries.kt");
+        }
+
         @TestMetadata("asReceiver.kt")
         public void testAsReceiver() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/asReceiver.kt");
@@ -1917,6 +1922,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("notApplicableEnumCompanion3.kt")
         public void testNotApplicableEnumCompanion3() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/notApplicableEnumCompanion3.kt");
+        }
+
+        @TestMetadata("notApplicableEnumEntries.kt")
+        public void testNotApplicableEnumEntries() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/notApplicableEnumEntries.kt");
+        }
+
+        @TestMetadata("notApplicableEnumEntries2.kt")
+        public void testNotApplicableEnumEntries2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/notApplicableEnumEntries2.kt");
         }
 
         @TestMetadata("notApplicableEnumEntry.kt")
