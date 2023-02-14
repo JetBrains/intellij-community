@@ -875,6 +875,10 @@
                 icon="AllIcons.Toolwindows.Notifications"
                 factoryClass="com.intellij.notification.impl.NotificationsToolWindowFactory"/>
 
+    <toolWindow id="Meet the IntelliJ IDEA New UI" anchor="right" secondary="true"
+                icon="AllIcons.Toolwindows.MeetNewUi"
+                factoryClass="com.intellij.ide.ui.experimental.meetNewUi.MeetNewUiToolWindowFactory"/>
+
     <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
                         serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>
 

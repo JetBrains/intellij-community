@@ -13,6 +13,12 @@ class ExperimentalUiCollector : CounterUsagesCollector() {
     WELCOME_PROMO
   }
 
+  enum class MeetNewUiAction {
+    NEW_UI_LINK,
+    DENSITY_CLEAN,
+    DENSITY_COMPACT
+  }
+
   override fun getGroup() = GROUP
 
   companion object {
@@ -20,12 +26,26 @@ class ExperimentalUiCollector : CounterUsagesCollector() {
 
     private val switchSourceField = EventFields.Enum<SwitchSource>("switch_source")
     private val expUiField = EventFields.Boolean("exp_ui")
-
     private val switchUi = GROUP.registerVarargEvent("switch.ui", switchSourceField, expUiField)
 
     @JvmStatic
     fun logSwitchUi(switchSource: SwitchSource, value: Boolean) = switchUi.log(
       switchSourceField with switchSource,
       expUiField with value)
+
+    private val meetNewUiActionField = EventFields.Enum<MeetNewUiAction>("action")
+    private val meetNewUiAction = GROUP.registerVarargEvent("meet.new.ui.action", meetNewUiActionField)
+
+    @JvmStatic
+    fun logMeetNewUiAction(action: MeetNewUiAction) = meetNewUiAction.log(
+      meetNewUiActionField with action)
+
+    private val meetNewUiThemeField = EventFields.StringValidatedByInlineRegexp("theme", "\\w+")
+    private val meetNewUiSwitchTheme = GROUP.registerVarargEvent("meet.new.ui.switch_theme", meetNewUiThemeField)
+
+    @JvmStatic
+    fun logMeetNewUiTheme(theme: String) = meetNewUiSwitchTheme.log(
+      meetNewUiThemeField with theme)
   }
+
 }
