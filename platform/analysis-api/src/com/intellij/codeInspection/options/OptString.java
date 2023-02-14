@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -17,7 +17,8 @@ import org.jetbrains.annotations.Nullable;
  * @param width       width of the control in approximate number of characters; if -1 then it will be determined automatically
  */
 public record OptString(@Language("jvm-field-name") @NotNull String bindId, @NotNull LocMessage splitLabel,
-                        @Nullable StringValidator validator, int width, HtmlChunk description) implements OptControl, OptDescribedComponent {
+                        @Nullable StringValidator validator, int width, HtmlChunk description) 
+  implements OptControl, OptDescribedComponent, OptRegularComponent {
 
   /**
    * @param description textual description

@@ -16,7 +16,7 @@ import java.util.List;
  * @param label label for the whole table
  * @param children list of columns 
  */
-public record OptTable(@NotNull LocMessage label, @NotNull List<@NotNull OptStringList> children,
+public record OptTable(@NotNull LocMessage label, @NotNull List<@NotNull OptTableColumn> children,
                        @Nullable HtmlChunk description) implements OptRegularComponent,
                                                                    OptDescribedComponent {
   @Override

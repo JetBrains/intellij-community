@@ -311,7 +311,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           val form = when (val validator = component.validator) {
             is StringValidatorWithSwingSelector -> ListEditForm("", component.label.label(), listWithListener, "", validator::select)
             else -> ListEditForm("", component.label.label(), listWithListener)
-          }.also { addColumnValidators(it.table, listOf(component), context.parent, context.project) }
+          }.also { addColumnValidators(it.table, listOf(component.validator), context.parent, context.project) }
           cell(form.contentPanel)
             .align(Align.FILL)
             .resizableColumn()
@@ -328,9 +328,9 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
             @Suppress("UNCHECKED_CAST") val list = context.getOption(stringList.bindId) as MutableList<String>
             ListWithListener(list) { context.setOption(stringList.bindId, list) }
           }
-          val columnNames = component.children.map { stringList -> stringList.label.label() }
+          val columnNames = component.children.map { column -> column.name.label() }
           val table = ListTable(ListWrappingTableModel(columns, *columnNames.toTypedArray()))
-            .also { addColumnValidators(it, component.children, context.parent, context.project) }
+            .also { addColumnValidators(it, component.children.map(OptTableColumn::validator), context.parent, context.project) }
           val panel = ToolbarDecorator.createDecorator(table)
             .setToolbarPosition(ActionToolbarPosition.LEFT)
             .setAddAction { _ ->

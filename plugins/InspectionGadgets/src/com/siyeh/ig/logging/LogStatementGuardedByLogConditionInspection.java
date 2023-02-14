@@ -67,8 +67,8 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
       string("loggerClassName", InspectionGadgetsBundle.message("logger.name.option"),
              new JavaClassValidator()),
       table("",
-            stringList("logMethodNameList", InspectionGadgetsBundle.message("log.method.name"), new JavaIdentifierValidator()),
-            stringList("logConditionMethodNameList", InspectionGadgetsBundle.message("log.condition.text"))),
+            column("logMethodNameList", InspectionGadgetsBundle.message("log.method.name"), new JavaIdentifierValidator()),
+            column("logConditionMethodNameList", InspectionGadgetsBundle.message("log.condition.text"))),
       checkbox("flagAllUnguarded", InspectionGadgetsBundle.message("log.statement.guarded.by.log.condition.flag.all.unguarded.option"))
     );
   }
