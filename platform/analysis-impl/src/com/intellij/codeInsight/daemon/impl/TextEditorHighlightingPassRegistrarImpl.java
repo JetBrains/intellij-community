@@ -182,10 +182,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
           continue;
         }
         TextEditorHighlightingPassFactory factory = passConfig.passFactory;
-        TextEditorHighlightingPass pass =
-          isDumb && !DumbService.isDumbAware(factory)
-          || !ProblemHighlightFilter.shouldHighlightFile(psiFile)
-          ? null : factory.createHighlightingPass(psiFile, editor);
+        TextEditorHighlightingPass pass = (!isDumb || DumbService.isDumbAware(factory))
+          && ProblemHighlightFilter.shouldHighlightFile(psiFile) ? factory.createHighlightingPass(psiFile, editor) : null;
         if (pass == null || isDumb && !DumbService.isDumbAware(pass)) {
           passesRefusedToCreate.add(passId);
         }
@@ -193,8 +191,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
           // init with editor's colors scheme
           pass.setColorsScheme(editor.getColorsScheme());
 
-          IntList ids =
-            passConfig.completionPredecessorIds.length == 0 ? IntList.of() : new IntArrayList(passConfig.completionPredecessorIds.length);
+          IntList ids = passConfig.completionPredecessorIds.length == 0 ? IntList.of() : new IntArrayList(passConfig.completionPredecessorIds.length);
           for (int id : passConfig.completionPredecessorIds) {
             if (id < frozenPassConfigs.length && frozenPassConfigs[id] != null) {
               ids.add(id);
