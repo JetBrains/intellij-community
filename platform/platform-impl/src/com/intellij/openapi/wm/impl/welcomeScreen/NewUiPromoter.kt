@@ -16,7 +16,7 @@ import javax.swing.JPanel
 class NewUiPromoter : BannerStartPagePromoter() {
 
   override val promoImage: Icon
-    get() = IconLoader.getIcon("img/idea-onboarding-tour.png", NewUiPromoter::class.java.classLoader)
+    get() = IconLoader.getIcon("welcome/newUiPromo.png", NewUiPromoter::class.java.classLoader)
 
   override fun canCreatePromo(isEmptyState: Boolean): Boolean {
     val propertyComponent = PropertiesComponent.getInstance()
