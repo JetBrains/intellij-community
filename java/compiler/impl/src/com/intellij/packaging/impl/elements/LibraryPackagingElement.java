@@ -81,7 +81,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
   @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     if (myStorage == null) {
-      new LibraryElementPresentation(myLibraryName, myLevel, myModuleName, findLibrary(context), context);
+      return new LibraryElementPresentation(myLibraryName, myLevel, myModuleName, findLibrary(context), context);
     }
     LibraryFilesPackagingElementEntity entity = (LibraryFilesPackagingElementEntity)getThisEntity();
     return new LibraryElementPresentation(getMyLibraryName(entity), getMyLevel(entity), getMyModuleName(entity), findLibrary(context),
