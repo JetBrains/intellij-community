@@ -15,7 +15,15 @@ import org.jetbrains.kotlin.idea.base.codeInsight.FrameworkAvailabilityChecker
 import org.jetbrains.kotlin.idea.base.codeInsight.isFrameworkAvailable
 import org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider
 
-object JunitKotlinTestFrameworkProvider : KotlinTestFrameworkProvider {
+class JunitKotlinTestFrameworkProvider : KotlinTestFrameworkProvider {
+    companion object {
+        @JvmStatic
+        fun getInstance(): JunitKotlinTestFrameworkProvider {
+            return KotlinTestFrameworkProvider.EP_NAME
+                .findExtensionOrFail(JunitKotlinTestFrameworkProvider::class.java)
+        }
+    }
+
     override val canRunJvmTests: Boolean
         get() = true
 
