@@ -462,6 +462,8 @@ public class WindowTabsComponent extends JBTabsImpl {
   private static void moveTabToNewWindow(@NotNull IdeFrameImpl tabFrame) {
     Foundation.executeOnMainThread(true, false, () -> {
       ID window = MacUtil.getWindowFromJavaWindow(tabFrame);
+      ID tabGroup = Foundation.invoke(window, "tabGroup");
+      Foundation.invoke(tabGroup, "setSelectedWindow:", window);
       Foundation.invoke(window, "moveTabToNewWindow:", ID.NIL);
 
       ApplicationManager.getApplication().invokeLater(() -> MacWinTabsHandlerV2.updateTabBarsAfterMove(tabFrame, null, -1));
