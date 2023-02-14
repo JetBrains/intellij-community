@@ -1,7 +1,9 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>com.intellij.java</id>
   <name>Java</name>
-  <description>Java language support.</description>
+  <description><![CDATA[
+  Adds support for the Java language, including Java projects, language syntax highlighting, inspections, and all other coding assistance features.
+]]></description>
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.ActionsBundle</resource-bundle>
 
