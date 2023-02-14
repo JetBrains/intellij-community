@@ -98,7 +98,12 @@ public class SetInspectionOptionFix extends IntentionAndQuickFixAction implement
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    return generatePreview(project, null, previewDescriptor.getPsiElement().getContainingFile());
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
     InspectionToolWrapper<?, ?> tool =
       InspectionProfileManager.getInstance(project).getCurrentProfile().getInspectionTool(myShortName, file);
     if (tool == null) return IntentionPreviewInfo.EMPTY;
