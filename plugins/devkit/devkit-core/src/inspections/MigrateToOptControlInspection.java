@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -11,10 +11,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +32,10 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
     if (!method.getUastParameters().isEmpty()) return null;
     PsiClass psiClass = method.getJavaPsi().getContainingClass();
     if (psiClass == null || !InheritanceUtil.isInheritor(psiClass, "com.intellij.codeInspection.InspectionProfileEntry")) return null;
+    if (JavaPsiFacade.getInstance(psiClass.getProject()).findClass(OPT_PANE, psiClass.getResolveScope()) == null) {
+      // Do not suggest on older SDK versions
+      return null;
+    }
     Language language = psiClass.getLanguage();
     // Currently only Java and Kotlin are supported
     if (!language.equals(JavaLanguage.INSTANCE) && !language.getID().equals("kotlin")) return null;
