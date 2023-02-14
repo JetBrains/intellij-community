@@ -86,6 +86,7 @@ internal fun notarizeAndBuildDmg(
   codesignString: String,
   fullBuildNumber: String,
   notarize: Boolean,
+  staple: Boolean,
   bundleIdentifier: String,
   appArchiveFile: Path,
   communityHome: BuildDependenciesCommunityRoot,
@@ -94,8 +95,8 @@ internal fun notarizeAndBuildDmg(
   artifactBuilt: Consumer<Path>,
   publishAppArchive: Boolean
 ) {
-  require(notarize || dmgImage != null) {
-    "Both Apple Notarization and .dmg creation are disabled"
+  require(notarize || staple || dmgImage != null) {
+    "Neither of Apple Notarization, stapling or .dmg creation are enabled"
   }
   executeTask(host, user, password, "intellij-builds/${fullBuildNumber}") { ssh, sftp, remoteDir ->
     spanBuilder("upload file")
@@ -128,10 +129,11 @@ internal fun notarizeAndBuildDmg(
       if (notarize) "yes" else "no",
       bundleIdentifier,
       codesignString,
-      publishAppArchive.toString()
+      publishAppArchive.toString(),
+      if (staple) "yes" else "no"
     )
     val buildDate = "${GlobalOptions.BUILD_DATE_IN_SECONDS}=${context.options.buildDateInSeconds}"
-    val env = sequenceOf("ARTIFACTORY_URL", "SERVICE_ACCOUNT_NAME", "SERVICE_ACCOUNT_TOKEN")
+    val env = sequenceOf("ARTIFACTORY_URL")
       .map { "$it=${System.getenv(it)}" }
       .plus(buildDate)
       .joinToString(separator = " ", postfix = " ")
