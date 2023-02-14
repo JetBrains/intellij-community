@@ -60,8 +60,9 @@ public class NlsCapitalizationUtilTest extends TestCase {
     assertNotCapitalization("Four Upper Case Words two lowercase", Nls.Capitalization.Sentence);
   }
 
-  public void testiOSDoesntNeedCapitalization() {
+  public void testAppleOSDoesntNeedCapitalization() {
     assertTitle("iOS");
+    assertTitle("macOS");
   }
 
   public void testTitle() {
