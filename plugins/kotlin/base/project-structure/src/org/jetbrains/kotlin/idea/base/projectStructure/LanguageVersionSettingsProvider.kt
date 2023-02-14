@@ -215,6 +215,10 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
                     arguments.nullabilityAnnotations
                 )
 
+            analysisFlags[AnalysisFlags.skipPrereleaseCheck] = true
+            analysisFlags[AnalysisFlags.skipMetadataVersionCheck] = true
+            analysisFlags[AnalysisFlags.allowUnstableDependencies] = true
+
             val supportDefinitelyNotNull = getSelf(module)
                 ?.supportsFeature(LanguageFeature.ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated)
                 ?: false
