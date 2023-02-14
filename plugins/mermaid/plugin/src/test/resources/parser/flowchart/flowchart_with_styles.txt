@@ -3,7 +3,7 @@ FILE
     PsiElement(Flowchart.FLOWCHART)('flowchart')
     PsiWhiteSpace(' ')
     PsiElement(DIR)('LR')
-  MermaidFlowchartDocumentImpl(FLOWCHART_DOCUMENT)
+  MermaidFlowchartBodyImpl(FLOWCHART_BODY)
     PsiElement(EOL)('\n')
     PsiWhiteSpace('  ')
     MermaidFlowchartStatementImpl(FLOWCHART_STATEMENT)

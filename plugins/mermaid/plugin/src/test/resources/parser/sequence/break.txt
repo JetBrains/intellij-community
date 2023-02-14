@@ -1,6 +1,6 @@
 FILE
   PsiElement(Sequence.SEQUENCE)('sequenceDiagram')
-  MermaidSequenceDocumentImpl(SEQUENCE_DOCUMENT)
+  MermaidSequenceBodyImpl(SEQUENCE_BODY)
     PsiElement(EOL)('\n')
     PsiWhiteSpace('  ')
     MermaidSequenceStatementImpl(SEQUENCE_STATEMENT)
@@ -55,7 +55,7 @@ FILE
           PsiElement(Sequence.MESSAGE)('fails')
         PsiElement(EOL)('\n')
         PsiWhiteSpace('    ')
-        MermaidSequenceDocumentImpl(SEQUENCE_DOCUMENT)
+        MermaidSequenceBodyImpl(SEQUENCE_BODY)
           MermaidSequenceStatementImpl(SEQUENCE_STATEMENT)
             MermaidSignalStatementImpl(SIGNAL_STATEMENT)
               MermaidComplexIdentifierImpl(COMPLEX_IDENTIFIER)

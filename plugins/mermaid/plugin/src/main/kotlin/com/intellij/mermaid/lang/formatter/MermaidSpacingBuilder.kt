@@ -201,8 +201,8 @@ internal object MermaidSpacingBuilder {
       .around(MermaidTokens.Mindmap.NODE_DESCR_END).spaceIf(false)
       .betweenInside(MermaidTokens.ID, MermaidTokens.ID, MermaidElements.MINDMAP_NODE_ID).spaces(1)
       // indent
-      .between(MermaidElements.SEQUENCE_DOCUMENT, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
-      .between(MermaidElements.SUBGRAPH_DOCUMENT, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
+      .between(MermaidElements.SEQUENCE_BODY, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
+      .between(MermaidElements.SUBGRAPH_BODY, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
       .between(MermaidElements.COMPLEX_NOTE_CONTENT, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
   }
 }

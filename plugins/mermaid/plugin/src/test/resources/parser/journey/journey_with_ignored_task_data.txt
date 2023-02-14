@@ -1,6 +1,6 @@
 FILE
   PsiElement(Journey.JOURNEY)('journey')
-  MermaidJourneyDocumentImpl(JOURNEY_DOCUMENT)
+  MermaidJourneyBodyImpl(JOURNEY_BODY)
     PsiElement(EOL)('\n')
     PsiWhiteSpace('  ')
     MermaidJourneyStatementImpl(JOURNEY_STATEMENT)
@@ -25,7 +25,7 @@ FILE
           PsiElement(SECTION_TITLE)('to')
           PsiWhiteSpace(' ')
           PsiElement(SECTION_TITLE)('work')
-        MermaidJourneySectionDocumentImpl(JOURNEY_SECTION_DOCUMENT)
+        MermaidJourneySectionBodyImpl(JOURNEY_SECTION_BODY)
           PsiElement(EOL)('\n')
           PsiWhiteSpace('    ')
           MermaidJourneySectionInnerStatementImpl(JOURNEY_SECTION_INNER_STATEMENT)

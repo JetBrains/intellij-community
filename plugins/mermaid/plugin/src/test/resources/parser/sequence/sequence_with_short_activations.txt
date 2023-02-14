@@ -1,6 +1,6 @@
 FILE
   PsiElement(Sequence.SEQUENCE)('sequenceDiagram')
-  MermaidSequenceDocumentImpl(SEQUENCE_DOCUMENT)
+  MermaidSequenceBodyImpl(SEQUENCE_BODY)
     PsiElement(EOL)('\n')
     PsiWhiteSpace('  ')
     MermaidSequenceStatementImpl(SEQUENCE_STATEMENT)

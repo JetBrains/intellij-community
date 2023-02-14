@@ -86,7 +86,7 @@ class GitGraphAnnotator : Annotator {
   private fun annotateConflictingCommitId(element: MermaidMergeStatement, holder: AnnotationHolder) {
     val identifier = element.commitIdAttribute?.commitIdValue ?: return
 
-    val parent = element.parentOfType<MermaidGitGraphDocument>() ?: return
+    val parent = element.parentOfType<MermaidGitGraphBody>() ?: return
 
     val siblings = parent
       .children()
@@ -116,7 +116,7 @@ class GitGraphAnnotator : Annotator {
   private fun annotateConflictingCommitId(element: MermaidCommitStatement, holder: AnnotationHolder) {
     val identifier = element.commitIdAttribute?.commitIdValue ?: return
 
-    val parent = element.parentOfType<MermaidGitGraphDocument>() ?: return
+    val parent = element.parentOfType<MermaidGitGraphBody>() ?: return
 
     val siblings = parent
       .children()
@@ -160,7 +160,7 @@ class GitGraphAnnotator : Annotator {
       addConflictingBranchAnnotation(holder, identifier.textRange)
     }
 
-    val parent = element.parentOfType<MermaidGitGraphDocument>() ?: return
+    val parent = element.parentOfType<MermaidGitGraphBody>() ?: return
 
     val siblings = parent
       .children()

@@ -28,11 +28,11 @@ class MermaidFoldingBuilder : CustomFoldingBuilder() {
         super.visitFoldableElement(o)
       }
 
-      override fun visitDiagramDocument(o: MermaidDiagramDocument) {
+      override fun visitDiagramBody(o: MermaidDiagramBody) {
         val startOffset = o.textRange.startOffset
         val endOffset = trimWhiteSpacesForward(o).textRange.endOffset
         addDescriptors(o, TextRange(startOffset, endOffset))
-        super.visitDiagramDocument(o)
+        super.visitDiagramBody(o)
       }
 
       override fun visitDiagramInBracesDocument(o: MermaidDiagramInBracesDocument) {

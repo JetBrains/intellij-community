@@ -32,27 +32,27 @@ object MermaidTokenTypeSets {
     MermaidElements.MINDMAP_STATEMENT
   )
 
-  val DIAGRAM_DOCUMENTS = TokenSet.create(
-    MermaidElements.PIE_DOCUMENT,
-    MermaidElements.JOURNEY_DOCUMENT,
-    MermaidElements.JOURNEY_SECTION_DOCUMENT,
-    MermaidElements.FLOWCHART_DOCUMENT,
-    MermaidElements.SUBGRAPH_DOCUMENT,
-    MermaidElements.SEQUENCE_DOCUMENT,
-    MermaidElements.CLASS_DOCUMENT,
-    MermaidElements.CLASS_MEMBERS_DOCUMENT,
-    MermaidElements.STATE_DOCUMENT,
-    MermaidElements.INNER_STATE_DOCUMENT,
+  val DIAGRAM_BODIES = TokenSet.create(
+    MermaidElements.PIE_BODY,
+    MermaidElements.JOURNEY_BODY,
+    MermaidElements.JOURNEY_SECTION_BODY,
+    MermaidElements.FLOWCHART_BODY,
+    MermaidElements.SUBGRAPH_BODY,
+    MermaidElements.SEQUENCE_BODY,
+    MermaidElements.CLASS_BODY,
+    MermaidElements.CLASS_MEMBERS_BODY,
+    MermaidElements.STATE_BODY,
+    MermaidElements.INNER_STATE_BODY,
     MermaidElements.COMPLEX_NOTE_CONTENT,
-    MermaidElements.ER_DOCUMENT,
-    MermaidElements.ER_ATTRIBUTES_DOCUMENT,
-    MermaidElements.GANTT_DOCUMENT,
-    MermaidElements.GANTT_SECTION_DOCUMENT,
-    MermaidElements.REQUIREMENT_DOCUMENT,
+    MermaidElements.ER_BODY,
+    MermaidElements.ER_ATTRIBUTES_BODY,
+    MermaidElements.GANTT_BODY,
+    MermaidElements.GANTT_SECTION_BODY,
+    MermaidElements.REQUIREMENT_DIAGRAM_BODY,
     MermaidElements.REQUIREMENT_BODY,
     MermaidElements.ELEMENT_BODY,
-    MermaidElements.GIT_GRAPH_DOCUMENT,
-    MermaidElements.C_4_DOCUMENT,
+    MermaidElements.GIT_GRAPH_BODY,
+    MermaidElements.C_4_BODY,
     MermaidElements.BOUNDARY_BODY
   )
 

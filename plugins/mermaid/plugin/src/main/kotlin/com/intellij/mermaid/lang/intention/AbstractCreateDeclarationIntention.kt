@@ -2,7 +2,7 @@ package com.intellij.mermaid.lang.intention
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction
 import com.intellij.mermaid.MermaidBundle
-import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.DIAGRAM_DOCUMENTS
+import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.DIAGRAM_BODIES
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.STATEMENTS
 import com.intellij.mermaid.lang.psi.MermaidElementFactory
 import com.intellij.mermaid.lang.psi.parentOfType
@@ -24,7 +24,7 @@ abstract class AbstractCreateDeclarationIntention(private val className: String,
 
   private fun createDeclaration(project: Project, element: PsiElement) {
     val statement = element.parentOfType(type = STATEMENTS) ?: return
-    val document = element.parentOfType(type = DIAGRAM_DOCUMENTS) ?: return
+    val document = element.parentOfType(type = DIAGRAM_BODIES) ?: return
 
     val name = buildString {
       if (isQuoted) append("\"")

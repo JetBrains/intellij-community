@@ -4,7 +4,7 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(DIR)('LR')
     PsiElement(COLON)(':')
-  MermaidGitGraphDocumentImpl(GIT_GRAPH_DOCUMENT)
+  MermaidGitGraphBodyImpl(GIT_GRAPH_BODY)
     PsiElement(EOL)('\n')
     PsiWhiteSpace('  ')
     MermaidGitGraphStatementImpl(GIT_GRAPH_STATEMENT)

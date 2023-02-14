@@ -1,7 +1,7 @@
 FILE
   MermaidC4HeaderImpl(C_4_HEADER)
     PsiElement(C4.C4_CONTEXT)('C4Context')
-  MermaidC4DocumentImpl(C_4_DOCUMENT)
+  MermaidC4BodyImpl(C_4_BODY)
     PsiElement(EOL)('\n')
     PsiWhiteSpace('  ')
     MermaidC4StatementImpl(C_4_STATEMENT)

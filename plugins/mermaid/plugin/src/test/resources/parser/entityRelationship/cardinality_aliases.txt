@@ -1,6 +1,6 @@
 FILE
   PsiElement(EntityRelationship.ENTITY_RELATIONSHIP)('erDiagram')
-  MermaidErDocumentImpl(ER_DOCUMENT)
+  MermaidErBodyImpl(ER_BODY)
     PsiElement(EOL)('\n')
     PsiWhiteSpace('  ')
     MermaidErStatementImpl(ER_STATEMENT)

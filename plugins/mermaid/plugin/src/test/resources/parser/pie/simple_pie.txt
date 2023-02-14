@@ -6,7 +6,7 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(Pie.SHOW_DATA)('showData')
   PsiWhiteSpace(' ')
-  MermaidPieDocumentImpl(PIE_DOCUMENT)
+  MermaidPieBodyImpl(PIE_BODY)
     MermaidPieStatementImpl(PIE_STATEMENT)
       MermaidTitleStatementImpl(TITLE_STATEMENT)
         PsiElement(TITLE)('title')

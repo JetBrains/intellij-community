@@ -414,7 +414,7 @@ class MermaidCompletionContributor : CompletionContributor() {
           .filter { it !is PsiErrorElement && it.elementType !in MermaidTokenTypeSets.WHITE_SPACES }
           .firstOrNull()
 
-        return sibling?.elementType in MermaidTokenTypeSets.DIAGRAM_DOCUMENTS
+        return sibling?.elementType in MermaidTokenTypeSets.DIAGRAM_BODIES
       }
     })
   }
@@ -425,7 +425,7 @@ class MermaidCompletionContributor : CompletionContributor() {
     return with(object : PatternCondition<PsiElement>("withLastDocumentLine") {
       override fun accepts(psiElement: PsiElement, context: ProcessingContext): Boolean {
         for (child in psiElement.containingFile.children) {
-          if (child.elementType in MermaidTokenTypeSets.DIAGRAM_DOCUMENTS) {
+          if (child.elementType in MermaidTokenTypeSets.DIAGRAM_BODIES) {
             val lastLine = child.lastChild
             val lastElement = lastLine.lastChild
             return documentLinePattern.accepts(lastElement)

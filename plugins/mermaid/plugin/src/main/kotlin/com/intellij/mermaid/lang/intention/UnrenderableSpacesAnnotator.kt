@@ -27,7 +27,7 @@ class UnrenderableSpacesAnnotator : Annotator {
           }
         }
 
-        is MermaidStateDocument -> {
+        is MermaidStateBody -> {
           annotateStateIdentifier(element, holder)
         }
       }

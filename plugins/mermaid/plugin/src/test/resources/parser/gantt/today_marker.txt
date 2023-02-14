@@ -1,6 +1,6 @@
 FILE
   PsiElement(Gantt.GANTT)('gantt')
-  MermaidGanttDocumentImpl(GANTT_DOCUMENT)
+  MermaidGanttBodyImpl(GANTT_BODY)
     PsiElement(EOL)('\n')
     PsiWhiteSpace('  ')
     MermaidGanttStatementImpl(GANTT_STATEMENT)

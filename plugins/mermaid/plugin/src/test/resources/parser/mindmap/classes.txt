@@ -1,6 +1,6 @@
 FILE
   PsiElement(Mindmap.MINDMAP)('mindmap')
-  MermaidMindmapDocumentImpl(MINDMAP_DOCUMENT)
+  MermaidMindmapBodyImpl(MINDMAP_BODY)
     PsiElement(EOL)('\n')
     PsiWhiteSpace('  ')
     MermaidMindmapStatementImpl(MINDMAP_STATEMENT)

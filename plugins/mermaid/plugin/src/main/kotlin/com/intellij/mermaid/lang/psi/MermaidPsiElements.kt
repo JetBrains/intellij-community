@@ -1,5 +1,5 @@
 package com.intellij.mermaid.lang.psi
 
-interface MermaidDiagramDocument: MermaidPsiElement
+interface MermaidDiagramBody : MermaidPsiElement
 
 interface MermaidDiagramInBracesDocument: MermaidPsiElement

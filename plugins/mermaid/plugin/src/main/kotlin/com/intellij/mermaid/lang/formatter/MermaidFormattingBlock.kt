@@ -3,7 +3,7 @@ package com.intellij.mermaid.lang.formatter
 import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets
-import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.DIAGRAM_DOCUMENTS
+import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.DIAGRAM_BODIES
 import com.intellij.mermaid.lang.parser.MermaidElements
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.AbstractBlock
@@ -24,14 +24,14 @@ internal open class MermaidFormattingBlock(
   }
 
   override fun getIndent(): Indent? {
-    if (node.elementType in DIAGRAM_DOCUMENTS) {
+    if (node.elementType in DIAGRAM_BODIES) {
       return Indent.getNormalIndent()
     }
     return Indent.getNoneIndent()
   }
 
   override fun buildChildren(): List<Block> {
-    if (node.elementType == MermaidElements.MINDMAP_DOCUMENT) {
+    if (node.elementType == MermaidElements.MINDMAP_BODY) {
       return node.children().map { MermaidFormattingBlock(it, settings, spacing) }.toList()
     }
     return filterFromWhitespaces(node.children()).map { MermaidFormattingBlock(it, settings, spacing) }.toList()
