@@ -16,9 +16,10 @@ import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Intention actions are invoked by pressing
- * Alt-Enter in the code editor at the location where an intention is available,
- * and can be enabled or disabled in the "Intentions" settings dialog.
+ * Intention actions are context-specific actions related to the caret position in the editor.
+ * Upon pressing Alt+Enter, a list of possible intention actions is shown, see IntentionPopup.
+ * <p>
+ * Individual intention actions can be enabled or disabled in the "Intentions" settings dialog.
  * <p>
  * To change the icon in the intention popup menu, implement {@link Iconable}.
  * <p>
