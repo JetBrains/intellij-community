@@ -94,6 +94,7 @@ internal var EXTERNAL_LISTENER: BiFunction<String, Array<String>, Int> = BiFunct
 
 private const val IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app"
 private const val DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY = "idea.disable.implicit.read.on.edt"
+private const val DISABLE_AUTOMATIC_WIL_ON_DIRTY_UI_PROPERTY = "idea.disable.automatic.wil.on.dirty.ui"
 private const val MAGIC_MAC_PATH = "/AppTranslocation/"
 
 private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResult>> = AtomicReference {
@@ -355,6 +356,9 @@ fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<Stri
 internal val isImplicitReadOnEDTDisabled: Boolean
   get() = java.lang.Boolean.getBoolean(DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY)
 
+internal val isAutomaticIWLOnDirtyUIDisabled: Boolean
+  get() = java.lang.Boolean.getBoolean(DISABLE_AUTOMATIC_WIL_ON_DIRTY_UI_PROPERTY)
+
 // called by the app after startup
 fun addExternalInstanceListener(processor: (List<String>) -> Deferred<CliResult>) {
   commandProcessor.set(processor)
@@ -499,7 +503,7 @@ private fun CoroutineScope.initUi(initAwtToolkitAndEventQueueJob: Job, preloadLa
     }
   }
 
-  if (isImplicitReadOnEDTDisabled) {
+  if (isImplicitReadOnEDTDisabled && !isAutomaticIWLOnDirtyUIDisabled) {
     runActivity("Write Intent Lock UI class transformer loading") {
       WriteIntentLockInstrumenter.instrument()
     }

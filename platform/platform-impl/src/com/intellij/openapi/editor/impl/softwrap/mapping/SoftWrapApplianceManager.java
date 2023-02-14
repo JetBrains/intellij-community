@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
@@ -96,10 +97,10 @@ public class SoftWrapApplianceManager implements Dumpable {
     myPainter = painter;
     myDataMapper = dataMapper;
     myWidthProvider = new DefaultVisibleAreaWidthProvider();
-    myEditor.getScrollingModel().addVisibleAreaListener(e -> {
+    myEditor.getScrollingModel().addVisibleAreaListener(e -> ReadAction.run(() -> {
       updateAvailableArea();
       updateLastTopLeftCornerOffset();
-    });
+    }));
   }
 
   public void registerSoftWrapIfNecessary() {

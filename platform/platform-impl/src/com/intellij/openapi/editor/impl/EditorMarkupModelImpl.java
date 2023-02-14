@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -969,7 +970,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     protected void paintTrack(@NotNull Graphics g, @NotNull JComponent c, @NotNull Rectangle trackBounds) {
       if (myEditor.isDisposed()) return;
       if (transparent()) {
-        doPaintTrack(g, c, trackBounds);
+        ReadAction.run(() -> doPaintTrack(g, c, trackBounds));
       }
       else {
         super.paintTrack(g, c, trackBounds);

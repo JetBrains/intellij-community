@@ -16,10 +16,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -681,19 +678,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void moveCaretIntoViewIfCoveredByToolWindowBelow(@NotNull VisibleAreaEvent e) {
-    Rectangle oldRectangle = e.getOldRectangle();
-    Rectangle newRectangle = e.getNewRectangle();
-    if (!myScrollingToCaret &&
-        oldRectangle != null && oldRectangle.height != newRectangle.height && oldRectangle.y == newRectangle.y && newRectangle.height > 0) {
-      int caretY = myView.visualLineToY(myCaretModel.getVisualPosition().line);
-      if (caretY < oldRectangle.getMaxY() && caretY > newRectangle.getMaxY()) {
-        myScrollingToCaret = true;
-        ApplicationManager.getApplication().invokeLater(() -> {
-          myScrollingToCaret = false;
-          if (!isReleased) EditorUtil.runWithAnimationDisabled(this, () -> myScrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE));
-        }, ModalityState.any());
+    ReadAction.run(() -> {
+      Rectangle oldRectangle = e.getOldRectangle();
+      Rectangle newRectangle = e.getNewRectangle();
+      if (!myScrollingToCaret &&
+          oldRectangle != null &&
+          oldRectangle.height != newRectangle.height &&
+          oldRectangle.y == newRectangle.y &&
+          newRectangle.height > 0) {
+        int caretY = myView.visualLineToY(myCaretModel.getVisualPosition().line);
+        if (caretY < oldRectangle.getMaxY() && caretY > newRectangle.getMaxY()) {
+          myScrollingToCaret = true;
+          ApplicationManager.getApplication().invokeLater(() -> {
+            myScrollingToCaret = false;
+            if (!isReleased) EditorUtil.runWithAnimationDisabled(this, () -> myScrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE));
+          }, ModalityState.any());
+        }
       }
-    }
+    });
   }
 
   /**
@@ -921,7 +923,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull EditorSettings getSettings() {
-    assertReadAccess();
+    // assertReadAccess();
     return mySettings;
   }
 
@@ -1924,38 +1926,40 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void paint(@NotNull Graphics2D g) {
-    Rectangle clip = g.getClipBounds();
+    ReadAction.run(() -> {
+      Rectangle clip = g.getClipBounds();
 
-    if (clip == null) {
-      return;
-    }
+      if (clip == null) {
+        return;
+      }
 
-    BufferedImage buffer = Registry.is("editor.dumb.mode.available") ? getUserData(BUFFER) : null;
-    if (buffer != null) {
-      Rectangle rect = getContentComponent().getVisibleRect();
-      StartupUiUtil.drawImage(g, buffer, null, rect.x, rect.y);
-      return;
-    }
+      BufferedImage buffer = Registry.is("editor.dumb.mode.available") ? getUserData(BUFFER) : null;
+      if (buffer != null) {
+        Rectangle rect = getContentComponent().getVisibleRect();
+        StartupUiUtil.drawImage(g, buffer, null, rect.x, rect.y);
+        return;
+      }
 
-    if (isReleased) {
-      g.setColor(getDisposedBackground());
-      g.fillRect(clip.x, clip.y, clip.width, clip.height);
-      return;
-    }
-    if (myUpdateCursor && !myPurePaintingMode) {
-      setCursorPosition();
-      myUpdateCursor = false;
-    }
-    if (myProject != null && myProject.isDisposed()) return;
+      if (isReleased) {
+        g.setColor(getDisposedBackground());
+        g.fillRect(clip.x, clip.y, clip.width, clip.height);
+        return;
+      }
+      if (myUpdateCursor && !myPurePaintingMode) {
+        setCursorPosition();
+        myUpdateCursor = false;
+      }
+      if (myProject != null && myProject.isDisposed()) return;
 
-    myView.paint(g);
+      myView.paint(g);
 
-    boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
-    if (myBackgroundImageSet != isBackgroundImageSet) {
-      myBackgroundImageSet = isBackgroundImageSet;
-      updateOpaque(myScrollPane.getHorizontalScrollBar());
-      updateOpaque(myScrollPane.getVerticalScrollBar());
-    }
+      boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
+      if (myBackgroundImageSet != isBackgroundImageSet) {
+        myBackgroundImageSet = isBackgroundImageSet;
+        updateOpaque(myScrollPane.getHorizontalScrollBar());
+        updateOpaque(myScrollPane.getVerticalScrollBar());
+      }
+    });
   }
 
   static @NotNull Color getDisposedBackground() {
@@ -2162,10 +2166,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public @NotNull Dimension getPreferredSize() {
-    return isReleased ? new Dimension()
-                      : Registry.is("idea.true.smooth.scrolling.dynamic.scrollbars")
-                        ? new Dimension(getPreferredWidthOfVisibleLines(), myView.getPreferredHeight())
-                        : myView.getPreferredSize();
+    return ReadAction.compute(() -> {
+      return isReleased ? new Dimension()
+                        : Registry.is("idea.true.smooth.scrolling.dynamic.scrollbars")
+                          ? new Dimension(getPreferredWidthOfVisibleLines(), myView.getPreferredHeight())
+                          : myView.getPreferredSize();
+    });
   }
 
   /* When idea.true.smooth.scrolling=true, this method is used to compute width of currently visible line range
@@ -5061,12 +5067,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void layout() {
-      if (isInDistractionFreeMode()) {
-        // re-calc gutter extra size after editor size is set
-        // & layout once again to avoid blinking
-        myGutterComponent.updateSize(true, true);
-      }
-      super.layout();
+      ReadAction.run(() -> {
+        if (isInDistractionFreeMode()) {
+          // re-calc gutter extra size after editor size is set
+          // & layout once again to avoid blinking
+          myGutterComponent.updateSize(true, true);
+        }
+        super.layout();
+      });
     }
 
     @Override

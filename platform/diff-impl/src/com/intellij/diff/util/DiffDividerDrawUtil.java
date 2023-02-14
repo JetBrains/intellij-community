@@ -3,6 +3,7 @@ package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.diff.util.DiffDrawUtil.MarkerRange;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -148,11 +149,13 @@ public final class DiffDividerDrawUtil {
 
   @NotNull
   private static LineRange getVisibleInterval(Editor editor) {
-    Rectangle area = editor.getScrollingModel().getVisibleArea();
-    if (area.height < 0) return new LineRange(0, 0);
-    LogicalPosition position1 = editor.xyToLogicalPosition(new Point(0, area.y));
-    LogicalPosition position2 = editor.xyToLogicalPosition(new Point(0, area.y + area.height));
-    return new LineRange(position1.line, position2.line);
+    return ReadAction.compute(() -> {
+      Rectangle area = editor.getScrollingModel().getVisibleArea();
+      if (area.height < 0) return new LineRange(0, 0);
+      LogicalPosition position1 = editor.xyToLogicalPosition(new Point(0, area.y));
+      LogicalPosition position2 = editor.xyToLogicalPosition(new Point(0, area.y + area.height));
+      return new LineRange(position1.line, position2.line);
+    });
   }
 
   public interface DividerPaintable {
