@@ -98,7 +98,7 @@ private class IdeKotlinDeclarationProvider(
             stubKey = KotlinTopLevelTypeAliasFqNameIndex.indexKey,
             key = classId.asStringForIndexes(),
             filter = { candidate -> candidate.getClassId() == classId }
-        ) ?: firstMatchingOrNull(stubKey = KotlinInnerTypeAliasClassIdIndex.key, key = classId.asString())
+        ) ?: firstMatchingOrNull(stubKey = KotlinInnerTypeAliasClassIdIndex.indexKey, key = classId.asString())
     }
 
     override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> =

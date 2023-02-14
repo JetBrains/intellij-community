@@ -215,7 +215,7 @@ public class IdeStubIndexService extends StubIndexService {
 
         ClassId classId = stub.getClassId();
         if (classId != null && !stub.isTopLevel()) {
-            sink.occurrence(KotlinInnerTypeAliasClassIdIndex.INSTANCE.getKey(), classId.asString());
+            sink.occurrence(KotlinInnerTypeAliasClassIdIndex.Helper.getIndexKey(), classId.asString());
         }
     }
 
