@@ -52,7 +52,12 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
                    macHostProperties.userName != null &&
                    macHostProperties.password != null
   if (useMacHost && (useNotaryXcodeApi || !context.isStepSkipped(BuildOptions.MAC_DMG_STEP))) {
-    notarizeAndBuildDmgViaMacBuilderHost(sitFile, requireNotNull(macHostProperties), notarize = useNotaryXcodeApi, customizer, context)
+    notarizeAndBuildDmgViaMacBuilderHost(
+      sitFile, requireNotNull(macHostProperties),
+      notarize = useNotaryXcodeApi,
+      staple = notarize,
+      customizer, context
+    )
   }
   else {
     buildLocally(sitFile, targetName, notarize = useNotaryXcodeApi, customizer, context)
@@ -90,6 +95,7 @@ private suspend fun generateIntegrityManifest(sitFile: Path, sitRoot: String, co
 private fun notarizeAndBuildDmgViaMacBuilderHost(sitFile: Path,
                                                  macHostProperties: MacHostProperties,
                                                  notarize: Boolean,
+                                                 staple: Boolean,
                                                  customizer: MacDistributionCustomizer,
                                                  context: BuildContext) {
   val dmgImage = if (context.options.buildStepsToSkip.contains(BuildOptions.MAC_DMG_STEP)) {
@@ -112,7 +118,8 @@ private fun notarizeAndBuildDmgViaMacBuilderHost(sitFile: Path,
     artifactDir = Path.of(context.paths.artifacts),
     dmgImage = dmgImage,
     artifactBuilt = context::notifyArtifactWasBuilt,
-    publishAppArchive = context.publishSitArchive
+    publishAppArchive = context.publishSitArchive,
+    staple = staple
   )
 }
 
