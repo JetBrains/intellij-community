@@ -8,7 +8,8 @@
     making more relevant results appear higher up the list.
     </p>
     <br>
-    <i>Note that sorting by machine learning is currently available only for the Classe, Files, and Actions tabs.</i>
+    <i>Machine learning ranking is currently available and switched on by default for the Classes, Files, and Actions tabs.
+    As an experiment, some portion of users will also have it enabled in the All tab.</i>
   ]]></description>
 
   <content>
