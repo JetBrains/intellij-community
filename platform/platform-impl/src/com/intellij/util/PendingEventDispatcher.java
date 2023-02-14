@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NonNls;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.EventListener;
 import java.util.HashMap;
 import java.util.List;
@@ -75,10 +74,7 @@ public final class PendingEventDispatcher <T extends EventListener> {
       }
     };
 
-    myMulticaster = (T)Proxy.newProxyInstance(listenerClass.getClassLoader(),
-                                              new Class[]{listenerClass},
-                                              handler
-    );
+    myMulticaster = ReflectionUtil.proxy(listenerClass, handler);
   }
 
   public boolean hasListeners() {

@@ -1,16 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.KeyedFactoryEPBean;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.List;
 
 public abstract class KeyedExtensionFactory<T, KeyT> {
@@ -41,8 +41,7 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
         return result;
       }
     };
-    //noinspection unchecked
-    return (T)Proxy.newProxyInstance(myInterfaceClass.getClassLoader(), new Class<?>[]{myInterfaceClass}, handler);
+    return ReflectionUtil.proxy(myInterfaceClass.getClassLoader(), myInterfaceClass, handler);
   }
 
   public T getByKey(@NotNull KeyT key) {

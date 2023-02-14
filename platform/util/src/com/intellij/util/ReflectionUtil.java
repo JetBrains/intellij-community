@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.LoadingState;
@@ -595,5 +595,33 @@ public final class ReflectionUtil {
       chunks.add(fieldName + "=" + getField(objectClass, object, null, fieldName));
     }
     return String.join("; ", chunks);
+  }
+
+  /**
+   * A convenience type-safe method to create a {@link Proxy} with a single superinterface using the classloader of the specified
+   * super-interface.
+   * 
+   * @param superInterface super-interface
+   * @param handler invocation handler to handle method calls
+   * @return new proxy instance
+   * @param <T> type of the interface to implement
+   * @see Proxy#newProxyInstance(ClassLoader, Class[], InvocationHandler) 
+   */
+  public static <T> @NotNull T proxy(@NotNull Class<? extends T> superInterface, @NotNull InvocationHandler handler) {
+    return superInterface.cast(Proxy.newProxyInstance(superInterface.getClassLoader(), new Class[]{superInterface}, handler));
+  }
+
+  /**
+   * A convenience type-safe method to create a {@link Proxy} with a single superinterface
+   * 
+   * @param loader classloader to use
+   * @param superInterface super-interface
+   * @param handler invocation handler to handle method calls
+   * @return new proxy instance
+   * @param <T> type of the interface to implement
+   * @see Proxy#newProxyInstance(ClassLoader, Class[], InvocationHandler) 
+   */
+  public static <T> @NotNull T proxy(@Nullable ClassLoader loader, @NotNull Class<? extends T> superInterface, @NotNull InvocationHandler handler) {
+    return superInterface.cast(Proxy.newProxyInstance(loader, new Class[]{superInterface}, handler));
   }
 }
