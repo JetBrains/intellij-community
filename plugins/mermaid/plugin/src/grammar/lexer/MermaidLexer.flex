@@ -424,7 +424,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 <class_diagram, class_name> {
   "link" { yypushstate(click); return LINK; }
   "callback" { yypushstate(click); return CALLBACK; }
-  "{" { yypushstate(struct); return OPEN_CURLY; }
+  "{" { yybegin(struct); return OPEN_CURLY; }
   ":::" { yypushstate(class_style_id); return STYLE_SEPARATOR; }
   "note for" { return ClassDiagram.NOTE_FOR; }
   "note" { return NOTE; }
@@ -466,9 +466,6 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "]" { return CLOSE_SQUARE; }
   "." { return DOT; }
   "," { return COMMA; }
-}
-<struct> {
-  [^] { return BAD_CHARACTER; }
 }
 <class_member> {
   [^\S\r\n]+ { return WHITE_SPACE; }
@@ -905,4 +902,4 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 [^\S\n\r]+ { return WHITE_SPACE; }
 [\n\r] { return EOL; }
-[^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
+[^] { return BAD_CHARACTER; }
