@@ -109,16 +109,9 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
                                                                sourceKind: XSourceKind,
                                                                isTopFrame: Boolean,
                                                                initialNavigationMode: NavigationMode): Nothing = coroutineScope {
-    PositionPresentation(project, sourceKind, sourcePosition, isTopFrame).use { presentation ->
+    PositionPresentation(project, this, sourceKind, sourcePosition, isTopFrame,
+                         activeSourceKindState, gutterIconRendererState).use { presentation ->
       emit(presentation)
-
-      activeSourceKindState.onEach {
-        presentation.activeSourceKind = it
-      }.launchIn(this)
-
-      gutterIconRendererState.onEach {
-        presentation.highlight?.gutterIconRenderer = it
-      }.launchIn(this)
 
       navigationRequestFlow
         .map { NavigationMode.OPEN }
@@ -193,12 +186,18 @@ internal class ExecutionPoint private constructor(
 
 private class PositionPresentation(
   project: Project,
+  coroutineScope: CoroutineScope,
   val sourceKind: XSourceKind,
   sourcePosition: XSourcePosition,
   isTopFrame: Boolean,
+  activeSourceKindState: StateFlow<XSourceKind>,
+  gutterIconRendererState: StateFlow<GutterIconRenderer?>,
 ) : AutoCloseable {
 
-  val highlight = PositionHighlight.create(project, sourcePosition, isTopFrame)
+  val highlight = PositionHighlight.create(project, sourcePosition, isTopFrame)?.apply {
+    gutterIconRenderer = gutterIconRendererState.value
+    gutterIconRendererState.onEach(::gutterIconRenderer::set).launchIn(coroutineScope)
+  }
   val navigator = PositionNavigator.create(project, sourcePosition, isTopFrame)
 
   var activeSourceKind: XSourceKind = XSourceKind.MAIN
@@ -209,6 +208,11 @@ private class PositionPresentation(
       navigator.isActiveSourceKind = isActiveSourceKind
       field = value
     }
+
+  init {
+    activeSourceKind = activeSourceKindState.value
+    activeSourceKindState.onEach(::activeSourceKind::set).launchIn(coroutineScope)
+  }
 
   override fun close() {
     highlight?.hideAndDispose()
