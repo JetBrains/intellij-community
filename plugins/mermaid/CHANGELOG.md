@@ -3,10 +3,11 @@
 ## [Unreleased]
 
 ## 0.0.8
-- [MERMAID-2](https://youtrack.jetbrains.com/issue/MERMAID-2/Handle-Mermaid-errors-in-preview) Added rendering of parsing errors in diagram preview
-- [MERMAID-9](https://youtrack.jetbrains.com/issue/MERMAID-9/Do-not-render-icons-in-mindmap-diagrams) Fixed rendering of non-existent icons in Mindmap diagram
-- [MERMAID-21](https://youtrack.jetbrains.com/issue/MERMAID-21/No-keyword-completion-between-class-definitions-in-class-diagram) Fixed keyword completion inside class diagrams
-- [MERMAID-15](https://youtrack.jetbrains.com/issue/MERMAID-15/Mermaid-diagrams-become-too-large-in-the-Preview) Fixed incorrect scaling of cached diagrams
+- [MERMAID-2](https://youtrack.jetbrains.com/issue/MERMAID-2) Added rendering of parsing errors in diagram preview
+- [MERMAID-9](https://youtrack.jetbrains.com/issue/MERMAID-9) Fixed rendering of non-existent icons in Mindmap diagram
+- [MERMAID-14](https://youtrack.jetbrains.com/issue/MERMAID-14) Fixed incorrect diagram rendering when multiple diagrams are present on the page
+- [MERMAID-15](https://youtrack.jetbrains.com/issue/MERMAID-15) Fixed incorrect scaling of cached diagrams
+- [MERMAID-21](https://youtrack.jetbrains.com/issue/MERMAID-21) Fixed keyword completion inside class diagrams
 - Added Mermaid settings page
 
 ## 0.0.7
