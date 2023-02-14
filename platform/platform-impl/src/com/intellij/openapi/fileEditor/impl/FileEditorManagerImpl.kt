@@ -1113,8 +1113,8 @@ open class FileEditorManagerImpl(
       IdeDocumentHistory.getInstance(project).onSelectionChanged()
     }
 
-    options.pin?.let {
-      window.setFilePinned(composite, pinned = it)
+    if (options.pin) {
+      window.setFilePinned(composite, pinned = true)
     }
 
     if (newEditor) {
