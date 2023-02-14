@@ -6,6 +6,7 @@ import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.CloseTabToolbarAction
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
@@ -25,7 +26,7 @@ internal class SemanticDiffFragmentBlockFactory : CombinedDiffBlockFactory<Combi
     return viewer.request is SemanticFragmentDiffRequest
   }
 
-  override fun createBlock(content: CombinedDiffBlockContent, withBorder: Boolean): CombinedDiffBlock<CombinedPathBlockId> {
+  override fun createBlock(project: Project, content: CombinedDiffBlockContent, withBorder: Boolean): CombinedDiffBlock<CombinedPathBlockId> {
     val request = (content.viewer as DiffViewerBase).request as SemanticFragmentDiffRequest
 
     return SemanticCombinedDiffBlock(request.title, content, request.closeAction)

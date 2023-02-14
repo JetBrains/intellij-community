@@ -53,7 +53,7 @@ import javax.swing.event.ChangeListener
 import kotlin.math.max
 
 class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataProvider {
-  private val project = context.project
+  private val project = context.project!! // CombinedDiffContext expected
 
   internal val contentPanel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false))
   internal val scrollPane = JBScrollPane(
@@ -148,7 +148,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
 
     val diffBlockFactory = CombinedDiffBlockFactory.findApplicable<CombinedBlockId>(content)!!
 
-    val diffBlock = diffBlockFactory.createBlock(content, needBorder)
+    val diffBlock = diffBlockFactory.createBlock(project, content, needBorder)
     val blockId = diffBlock.id
     Disposer.register(diffBlock, Disposable {
       diffBlocks.remove(blockId)
