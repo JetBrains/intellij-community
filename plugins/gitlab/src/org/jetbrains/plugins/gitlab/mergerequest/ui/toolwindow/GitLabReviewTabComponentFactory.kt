@@ -13,6 +13,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.ui.UIUtil
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
@@ -163,6 +164,7 @@ internal class GitLabReviewTabComponentFactory(
     }
 
     return JPanel(BorderLayout()).apply {
+      background = UIUtil.getListBackground()
       add(selectors, BorderLayout.NORTH)
     }
   }

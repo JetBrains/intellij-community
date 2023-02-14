@@ -35,6 +35,9 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
     return Wrapper().apply {
+      isOpaque = false
+      background = UIUtil.getListBackground()
+
       bindContent(scope, detailsLoadingVm.mergeRequestLoadingFlow) { contentCs, loadingState ->
         when (loadingState) {
           GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Loading -> LoadingLabel()
