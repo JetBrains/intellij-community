@@ -612,8 +612,12 @@
       "errorOutline.svg": "ide/fatalError-read.svg",
       "failedInProgress.svg": "status/failedInProgress.svg",
       "info.svg": "general/balloonInformation.svg",
+      "infoOutline.svg": "general/showInfos.svg",
       "warning.svg": "general/balloonWarning.svg",
-      "warningOutline.svg": "general/showWarning.svg"
+      "warningOutline.svg": [
+        "general/showWarning.svg",
+        "general/warning.svg"
+      ]
     },
     "toolbar": {
       "unknown.svg": "toolbar/unknown.svg"
