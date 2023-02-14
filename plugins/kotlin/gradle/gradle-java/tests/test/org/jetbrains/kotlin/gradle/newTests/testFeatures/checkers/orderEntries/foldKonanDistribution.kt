@@ -20,19 +20,20 @@ internal fun PrinterContext.foldKonanDist(orderEntries: List<String>, module: Mo
 
     val expectedContent = expectedKonanDistForHostAndTarget(platform).toMutableSet()
     val result = mutableListOf<String>()
-    val actualKonanDist = mutableListOf<String>()
     for (entry in orderEntries) {
-        val match = expectedContent.find { entry.startsWith(it) }
+        val match = expectedContent.find { it == entry.split(" | ")[0] }
         if (match != null) {
             expectedContent.remove(match)
-            actualKonanDist += entry
         } else {
             result += entry
         }
     }
 
-    // Some of the expected content were unmatched, bail out
-    if (expectedContent.isNotEmpty()) return orderEntries
+    // Some expected content were unmatched, bail out
+    if (expectedContent.isNotEmpty()) {
+        println("Expected Native distribution stub contains more entries then actual: ${expectedContent}")
+        return orderEntries
+    }
 
     val stubEntry = NATIVE_DISTRIBUTION_STUB_ENTRY
 
