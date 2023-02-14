@@ -4,13 +4,13 @@
         <line>25</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
-        <description>Private property name &lt;code&gt;FOO_BAR&lt;/code&gt; doesn't match regex '[a-z][A-Za-z\d]*' #loc</description>
+        <description>Private property name &lt;code&gt;FOO_BAR&lt;/code&gt; should not contain underscores in the middle or the end #loc</description>
     </problem>
     <problem>
         <file>test.kt</file>
         <line>43</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
-      <description>Private property name &lt;code&gt;ctor_private&lt;/code&gt; doesn't match regex '[a-z][A-Za-z\d]*' #loc</description>
+      <description>Private property name &lt;code&gt;ctor_private&lt;/code&gt; should not contain underscores in the middle or the end #loc</description>
     </problem>
 </problems>
