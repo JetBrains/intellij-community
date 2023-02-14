@@ -33,6 +33,9 @@ interface GradleProjectsLinkingDsl {
 }
 
 object GradleProjectsLinker {
+    // copied from GradleImportingTestCase.GRADLE_JDK_NAME
+    private val GRADLE_JDK_NAME = "Gradle JDK"
+
     fun linkGradleProject(relativeProjectPath: String, projectPath: File, project: Project) {
         val absoluteProjectPath = projectPath.resolve(relativeProjectPath).absolutePath
         val localFileSystem = LocalFileSystem.getInstance()
@@ -40,7 +43,7 @@ object GradleProjectsLinker {
             ?: error("Failed to find projectFile: $absoluteProjectPath")
 
         val settings = createLinkSettings(projectFile.toNioPath(), project).apply {
-            gradleJvm = GradleImportingTestCase.GRADLE_JDK_NAME
+            gradleJvm = GRADLE_JDK_NAME
         }
 
         ExternalSystemUtil.linkExternalProject(
