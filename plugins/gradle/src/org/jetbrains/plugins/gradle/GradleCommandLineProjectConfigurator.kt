@@ -4,6 +4,8 @@ package org.jetbrains.plugins.gradle
 import com.intellij.ide.CommandLineInspectionProgressReporter
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
+import com.intellij.ide.warmup.WarmupStatus
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
@@ -213,8 +215,13 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
     override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
       val gradleText = (if (stdOut) "" else "STDERR: ") + text
       gradleLogWriter.write(gradleText)
-      //logger.reportMessage(1, gradleText)
+      if (isValidForLogging(gradleText)) {
+        logger.reportMessage(1, gradleText)
+      }
     }
+
+    private fun isValidForLogging(gradleText: String) =
+      WarmupStatus.currentStatus(ApplicationManager.getApplication()) == WarmupStatus.InProgress && (!gradleText.startsWith("\rDownload") || gradleText.contains("took"))
 
     override fun onEnd(id: ExternalSystemTaskId) {
       gradleLogWriter.flush()
