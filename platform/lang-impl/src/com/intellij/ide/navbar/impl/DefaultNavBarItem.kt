@@ -104,7 +104,7 @@ internal class ModuleNavBarItem(data: Module) : DefaultNavBarItem<Module>(data),
   override fun dereference(): NavBarItem? = if (data.isDisposed) null else this
 
   override fun navigationRequest(): NavigationRequest? {
-    return NavigationService.instance().rawNavigationRequest(object : Navigatable {
+    return NavigationService.getInstance().rawNavigationRequest(object : Navigatable {
       override fun navigate(requestFocus: Boolean) {
         val projectView = ProjectView.getInstance(data.project)
         val projectViewPane = projectView.getProjectViewPaneById(projectView.currentViewId)
@@ -142,7 +142,7 @@ internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelEx
   }
 
   override fun navigationRequest(): NavigationRequest? {
-    return (data as? Navigatable)?.let(NavigationService.instance()::rawNavigationRequest)
+    return (data as? Navigatable)?.let(NavigationService.getInstance()::rawNavigationRequest)
   }
 
   override fun getIcon(): Icon? =

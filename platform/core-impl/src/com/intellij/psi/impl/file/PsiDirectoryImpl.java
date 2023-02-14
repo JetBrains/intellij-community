@@ -521,7 +521,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public @Nullable NavigationRequest navigationRequest() {
-    return NavigationService.instance().directoryNavigationRequest(this);
+    return NavigationService.getInstance().directoryNavigationRequest(this);
   }
 
   @Override

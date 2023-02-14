@@ -17,7 +17,7 @@ interface NavigationService {
   companion object {
 
     @JvmStatic
-    fun instance(): NavigationService = ApplicationManager.getApplication().getService(NavigationService::class.java)
+    fun getInstance(): NavigationService = ApplicationManager.getApplication().getService(NavigationService::class.java)
   }
 
   /**

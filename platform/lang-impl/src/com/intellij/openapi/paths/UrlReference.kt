@@ -57,7 +57,7 @@ private class UrlSymbol(
 
   override fun navigationRequest(): NavigationRequest? {
     // TODO support url request natively
-    return NavigationService.instance().rawNavigationRequest(UrlNavigatable(url))
+    return NavigationService.getInstance().rawNavigationRequest(UrlNavigatable(url))
   }
 }
 

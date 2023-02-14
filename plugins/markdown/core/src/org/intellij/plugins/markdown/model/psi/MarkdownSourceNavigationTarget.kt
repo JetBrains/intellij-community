@@ -18,6 +18,6 @@ internal abstract class MarkdownSourceNavigationTarget(
     if (!file.isValid) {
       return null
     }
-    return NavigationService.instance().sourceNavigationRequest(file, offset)
+    return NavigationService.getInstance().sourceNavigationRequest(file, offset)
   }
 }
