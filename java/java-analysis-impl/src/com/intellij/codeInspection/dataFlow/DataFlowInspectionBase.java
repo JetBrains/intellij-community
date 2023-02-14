@@ -197,25 +197,25 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     }
   }
 
-  protected @NotNull List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression,
-                                                         PsiType realType,
-                                                         boolean onTheFly,
-                                                         boolean alwaysFails) {
+  protected @NotNull List<@NotNull LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression,
+                                                                  PsiType realType,
+                                                                  boolean onTheFly,
+                                                                  boolean alwaysFails) {
     return Collections.emptyList();
   }
 
-  protected @NotNull List<LocalQuickFix> createNPEFixes(@Nullable PsiExpression qualifier,
-                                                        PsiExpression expression,
-                                                        boolean onTheFly,
-                                                        boolean alwaysNull) {
+  protected @NotNull List<@NotNull LocalQuickFix> createNPEFixes(@Nullable PsiExpression qualifier,
+                                                                 PsiExpression expression,
+                                                                 boolean onTheFly,
+                                                                 boolean alwaysNull) {
     return Collections.emptyList();
   }
 
-  protected @NotNull List<LocalQuickFix> createUnboxingNullableFixes(@NotNull PsiExpression qualifier, PsiElement anchor, boolean onTheFly) {
+  protected @NotNull List<@NotNull LocalQuickFix> createUnboxingNullableFixes(@NotNull PsiExpression qualifier, PsiElement anchor, boolean onTheFly) {
     return Collections.emptyList();
   }
 
-  protected List<LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef, boolean onTheFly) {
+  protected @NotNull List<@NotNull LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef, boolean onTheFly) {
     return Collections.emptyList();
   }
 
@@ -728,7 +728,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       assert castType != null;
       assert operand != null;
       List<LocalQuickFix> fixes = new ArrayList<>(createCastFixes(typeCast, realType, reporter.isOnTheFly(), alwaysFails));
-      fixes.add(createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType()));
+      ContainerUtil.addIfNotNull(fixes, createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType()));
       String text = PsiExpressionTrimRenderer.render(operand);
       String message = alwaysFails ?
                        JavaAnalysisBundle.message("dataflow.message.cce.always", text) :

@@ -88,7 +88,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   }
 
   @NotNull
-  public static List<LocalQuickFix> registerFixes(@NotNull PsiReference reference, @NotNull List<? super IntentionAction> registrar) {
+  public static List<@NotNull LocalQuickFix> registerFixes(@NotNull PsiReference reference, @NotNull List<? super IntentionAction> registrar) {
     PsiElement psiElement = reference.getElement();
     String shortReferenceName = reference.getRangeInElement().substring(psiElement.getText());
 
@@ -234,7 +234,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   private static void createModuleFixes(@NotNull PsiJavaModuleReference reference,
                                         @NotNull Module currentModule,
                                         @NotNull DependencyScope scope,
-                                        @NotNull List<? super LocalQuickFix> result) {
+                                        @NotNull List<? super @NotNull LocalQuickFix> result) {
     ProjectFileIndex index = ProjectRootManager.getInstance(currentModule.getProject()).getFileIndex();
     List<PsiElement> targets = Stream.of(reference.multiResolve(true))
       .map(ResolveResult::getElement)
@@ -272,8 +272,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                                             @NotNull String shortReferenceName,
                                             @NotNull Module currentModule,
                                             @NotNull DependencyScope scope,
-                                            @NotNull List<? super IntentionAction> registrar,
-                                            @NotNull List<? super LocalQuickFix> result) {
+                                            @NotNull List<? super @NotNull IntentionAction> registrar,
+                                            @NotNull List<? super @NotNull LocalQuickFix> result) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(currentModule.getProject());
     String fullReferenceText = reference.getCanonicalText();
     ThreeState refToAnnotation = isReferenceToAnnotation(psiElement);

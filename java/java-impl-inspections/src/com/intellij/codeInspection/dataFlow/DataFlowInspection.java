@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -69,9 +70,8 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     return target instanceof PsiField && ((PsiField)target).hasModifierProperty(PsiModifier.VOLATILE);
   }
 
-  @NotNull
   @Override
-  protected List<LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef, boolean onTheFly) {
+  protected @NotNull List<@NotNull LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef, boolean onTheFly) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(methodRef));
     if (onTheFly) {
@@ -89,11 +89,10 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
-  @NotNull
-  protected List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression,
-                                                PsiType realType,
-                                                boolean onTheFly,
-                                                boolean alwaysFails) {
+  protected @NotNull List<@NotNull LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression,
+                                                                  PsiType realType,
+                                                                  boolean onTheFly,
+                                                                  boolean alwaysFails) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     PsiExpression operand = castExpression.getOperand();
     PsiTypeElement typeElement = castExpression.getCastType();
@@ -126,15 +125,14 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
-  @NotNull
-  protected List<LocalQuickFix> createNPEFixes(@Nullable PsiExpression qualifier,
-                                               PsiExpression expression,
-                                               boolean onTheFly,
-                                               boolean alwaysNull) {
+  protected @NotNull List<@NotNull LocalQuickFix> createNPEFixes(@Nullable PsiExpression qualifier,
+                                                                 PsiExpression expression,
+                                                                 boolean onTheFly,
+                                                                 boolean alwaysNull) {
     qualifier = PsiUtil.deparenthesizeExpression(qualifier);
 
     final List<LocalQuickFix> fixes = new SmartList<>();
-    if (qualifier == null || expression == null) return fixes;
+    if (qualifier == null || expression == null) return Collections.emptyList();
 
     try {
       ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(qualifier));
@@ -178,7 +176,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
-  protected @NotNull List<LocalQuickFix> createUnboxingNullableFixes(@NotNull PsiExpression qualifier, PsiElement anchor, boolean onTheFly) {
+  protected @NotNull List<@NotNull LocalQuickFix> createUnboxingNullableFixes(@NotNull PsiExpression qualifier, PsiElement anchor, boolean onTheFly) {
     List<LocalQuickFix> result = new SmartList<>();
     if (TypeConversionUtil.isBooleanType(qualifier.getType())) {
       result.add(new ReplaceWithBooleanEqualsFix(qualifier));
@@ -188,7 +186,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     return result;
   }
 
-  private static void addCreateNullBranchFix(@NotNull PsiExpression qualifier, @NotNull List<LocalQuickFix> fixes) {
+  private static void addCreateNullBranchFix(@NotNull PsiExpression qualifier, @NotNull List<? super @NotNull LocalQuickFix> fixes) {
     if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(qualifier)) return;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(qualifier.getParent());
     if (parent instanceof PsiSwitchBlock && PsiUtil.skipParenthesizedExprDown(((PsiSwitchBlock)parent).getExpression()) == qualifier) {

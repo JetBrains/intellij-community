@@ -202,7 +202,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  public LocalQuickFix[] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     final ArrayList<LocalQuickFix> list = new ArrayList<>();
     for (Object ref: myReferences) {
       if (ref instanceof LocalQuickFixProvider) {

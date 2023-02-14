@@ -148,7 +148,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   }
 
   @Override
-  public LocalQuickFix @Nullable [] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     if (getScope() != null) {
       return new LocalQuickFix[] { new CreatePatternFix(this) };
     }

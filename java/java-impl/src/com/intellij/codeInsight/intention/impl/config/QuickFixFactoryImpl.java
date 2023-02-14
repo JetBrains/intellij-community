@@ -826,9 +826,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return new SafeDeleteFix(element);
   }
 
-  @NotNull
   @Override
-  public List<LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference, @NotNull List<? super IntentionAction> registrar) {
+  public @NotNull List<@NotNull LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference, @NotNull List<? super IntentionAction> registrar) {
     return OrderEntryFix.registerFixes(reference, registrar);
   }
 
