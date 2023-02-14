@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair
 import org.jdom.Element
 import org.jdom.Namespace
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import java.io.IOException
 import java.net.URL
 import java.nio.file.Files
@@ -32,11 +33,41 @@ fun collectCompatiblePluginsToPublish(providedModuleFile: Path, context: BuildCo
                                                           skipBundledPlugins = false,
                                                           honorCompatiblePluginsToIgnore = true,
                                                           context = context)
+
+  // While collecting PluginDescriptor maps above we may have chosen incorrect PluginLayout.
+  // Let's check that and substitute incorrectly chosen one with more suitable one or report error.
+  val moreThanOneLayoutMap = context.productProperties.productLayout.pluginLayouts.groupBy { it.mainModule }.filterValues { it.size > 1 }
+  val moreThanOneLayoutSubstitutors = HashMap<PluginLayout, PluginLayout>()
+  for ((module, layouts) in moreThanOneLayoutMap) {
+    context.messages.info("Module '$module' have ${layouts.size} layouts: $layouts")
+    val substitutor = layouts.firstOrNull  { it.bundlingRestrictions == PluginBundlingRestrictions.NONE }
+    if (substitutor != null) {
+      layouts.forEach { if (it != substitutor) moreThanOneLayoutSubstitutors.put(it, substitutor) }
+    }
+  }
+
+  val errors = ArrayList<List<PluginLayout>>()
   val result = ArrayList<PluginLayout>(descriptorMap.size)
   for (descriptor in descriptorMap.values) {
     if (isPluginCompatible(descriptor, availableModulesAndPlugins, descriptorMapWithBundled)) {
-      result.add(descriptor.pluginLayout)
+      val layout = descriptor.pluginLayout
+      val suspicious = moreThanOneLayoutMap.values.filter { it.contains(layout) }
+      if (suspicious.isNotEmpty()) {
+        check(suspicious.size == 1) { "May have only one element: $suspicious" }
+        val substitutor = moreThanOneLayoutSubstitutors.get(layout)
+        if (substitutor != null) {
+          context.messages.info("Substituting plugin layout $layout with Marketplace-ready $substitutor")
+          result.add(substitutor)
+        } else {
+          errors.add(suspicious.first())
+        }
+      } else {
+        result.add(layout)
+      }
     }
+  }
+  if (errors.isNotEmpty()) {
+    context.messages.error("Attempt to publish plugins which have more than one layout and none of them are Marketplace-ready: $errors")
   }
   return result
 }
@@ -76,6 +107,7 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
   val pluginDescriptors = LinkedHashMap<String, PluginDescriptor>()
   val productLayout = context.productProperties.productLayout
   val nonTrivialPlugins = HashMap<String, PluginLayout>(productLayout.pluginLayouts.size)
+
   for (pluginLayout in productLayout.pluginLayouts) {
     nonTrivialPlugins.putIfAbsent(pluginLayout.mainModule, pluginLayout)
   }
