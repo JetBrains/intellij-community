@@ -224,20 +224,23 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
             return;
           }
 
-          Runnable performRunnable = () -> SlowOperations.allowSlowOperations(() -> {
-            if (DumbService.isDumb(myProject)) {
-              DumbService.getInstance(myProject).showDumbModeNotification(RefactoringBundle.message("refactoring.not.available.indexing"));
-              return;
-            }
+          Runnable performRunnable = () -> {
+            try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+              if (DumbService.isDumb(myProject)) {
+                DumbService.getInstance(myProject)
+                  .showDumbModeNotification(RefactoringBundle.message("refactoring.not.available.indexing"));
+                return;
+              }
 
-            final String commandName = RefactoringBundle.message("renaming.0.1.to.2",
-                                                                 UsageViewUtil.getType(variable),
-                                                                 DescriptiveNameUtil.getDescriptiveName(variable), newName);
-            CommandProcessor.getInstance().executeCommand(myProject, () -> {
-              performRenameInner(substituted, newName);
-              PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            }, commandName, null);
-          });
+              final String commandName = RefactoringBundle.message("renaming.0.1.to.2",
+                                                                   UsageViewUtil.getType(variable),
+                                                                   DescriptiveNameUtil.getDescriptiveName(variable), newName);
+              CommandProcessor.getInstance().executeCommand(myProject, () -> {
+                performRenameInner(substituted, newName);
+                PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+              }, commandName, null);
+            }
+          };
 
           if (ApplicationManager.getApplication().isUnitTestMode()) {
             performRunnable.run();
