@@ -54,7 +54,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Edit = load("actions/edit.svg", -1253654087, 2);
     /** 16x16 */ public static final @NotNull Icon EditScheme = load("actions/editScheme.svg", 356615607, 2);
     /** 16x16 */ public static final @NotNull Icon EditSource = load("actions/editSource.svg", -1793495184, 2);
-    /** 14x14 */ public static final @NotNull Icon EnableNewUi = load("actions/enableNewUi.png", 0, 0);
+    /** 16x16 */ public static final @NotNull Icon EnableNewUi = load("actions/enableNewUi.svg", -1797379377, 0);
     /** 16x16 */ public static final @NotNull Icon Execute = load("actions/execute.svg", -1785415525, 10);
     /** 16x16 */ public static final @NotNull Icon Exit = load("actions/exit.svg", -837971561, 2);
     /** 16x16 */ public static final @NotNull Icon Expandall = load("actions/expandall.svg", 1240410990, 2);
@@ -1150,6 +1150,7 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon Documentation = load("toolwindows/documentation.svg", -109460896, 2);
     /** 13x13 */ public static final @NotNull Icon ErrorEvents = load("toolwindows/errorEvents.svg", -1325472331, 2);
     /** 13x13 */ public static final @NotNull Icon InfoEvents = load("toolwindows/infoEvents.svg", -1959104863, 2);
+    /** 13x13 */ public static final @NotNull Icon MeetNewUi = load("toolwindows/meetNewUi.svg", -807549423, 0);
     /** 13x13 */ public static final @NotNull Icon NoEvents = load("toolwindows/noEvents.svg", -54977595, 2);
     /** 13x13 */ public static final @NotNull Icon Notifications = load("toolwindows/notifications.svg", -1680199155, 2);
     /** 13x13 */ public static final @NotNull Icon NotificationsNew = load("toolwindows/notificationsNew.svg", 919374629, 2);
