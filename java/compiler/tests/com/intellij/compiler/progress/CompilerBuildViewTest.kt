@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress
 
 import com.intellij.build.BuildWorkspaceConfiguration
@@ -68,8 +68,8 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     runWithProgressExIndicatorSupport { rebuildProject() }
     buildViewTestFixture.assertBuildViewTreeEquals("-\n rebuild finished")
     buildViewTestFixture.assertBuildViewSelectedNode("rebuild finished", false) { output ->
-      assertThat(output).startsWith("Clearing build system data...\n" +
-                                    "Executing pre-compile tasks...\n" +
+      assertThat(output).startsWith("Clearing build system data…\n" +
+                                    "Executing pre-compile tasks…\n" +
                                     "Cleaning output directories…\n" +
                                     "Running 'before' tasks\n" +
                                     "Checking sources\n" +
@@ -82,14 +82,14 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Adding pattern assertions… [a]\n" +
                                     "Running 'after' tasks\n")
       assertThat(output).contains("Finished, saving caches…\n" +
-                                  "Executing post-compile tasks...\n" +
-                                  "Synchronizing output directories...")
+                                  "Executing post-compile tasks…\n" +
+                                  "Synchronizing output directories…")
     }
 
     runWithProgressExIndicatorSupport { rebuild(module) }
     buildViewTestFixture.assertBuildViewTreeEquals("-\n recompile finished")
     buildViewTestFixture.assertBuildViewSelectedNode("recompile finished", false) { output ->
-      assertThat(output).startsWith("Executing pre-compile tasks...\n" +
+      assertThat(output).startsWith("Executing pre-compile tasks…\n" +
                                     "Cleaning output directories…\n" +
                                     "Running 'before' tasks\n" +
                                     "Checking sources\n" +
@@ -102,8 +102,8 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Adding pattern assertions… [a]\n" +
                                     "Running 'after' tasks")
       assertThat(output).contains("Finished, saving caches…\n" +
-                                  "Executing post-compile tasks...\n" +
-                                  "Synchronizing output directories...")
+                                  "Executing post-compile tasks…\n" +
+                                  "Synchronizing output directories…")
     }
   }
 
