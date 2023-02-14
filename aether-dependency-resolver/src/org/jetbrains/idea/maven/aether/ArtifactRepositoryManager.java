@@ -46,8 +46,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * @author Eugene Zhuravlev
- * <p>
  * Aether-based repository manager and dependency resolver using maven implementation of this functionality.
  * <p>
  * instance of this component should be managed by the code which requires dependency resolution functionality
@@ -69,7 +67,7 @@ public final class ArtifactRepositoryManager {
 
   private static final RepositorySystem ourSystem;
   static {
-    final DefaultServiceLocator locator = MavenRepositorySystemUtils.newServiceLocator();
+    DefaultServiceLocator locator = MavenRepositorySystemUtils.newServiceLocator();
     locator.addService(RepositoryConnectorFactory.class, BasicRepositoryConnectorFactory.class);
     locator.addService(TransporterFactory.class, FileTransporterFactory.class);
     locator.addService(TransporterFactory.class, HttpTransporterFactory.class);
@@ -90,7 +88,7 @@ public final class ArtifactRepositoryManager {
     this(localRepositoryPath, ProgressConsumer.DEAF);
   }
 
-  public ArtifactRepositoryManager(@NotNull File localRepositoryPath, @NotNull final ProgressConsumer progressConsumer) {
+  public ArtifactRepositoryManager(@NotNull File localRepositoryPath, @NotNull ProgressConsumer progressConsumer) {
     // recreate remote repository objects to ensure the latest proxy settings are used
     this(localRepositoryPath, createDefaultRemoteRepositories(), progressConsumer);
   }
@@ -127,7 +125,7 @@ public final class ArtifactRepositoryManager {
     private RepositorySystemSessionFactory(@NotNull File localRepositoryPath,
                                            @NotNull ProgressConsumer progressConsumer,
                                            boolean offline) {
-      final DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
+      DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
       if (progressConsumer != ProgressConsumer.DEAF) {
         session.setTransferListener(new TransferListener() {
           @Override
@@ -146,17 +144,13 @@ public final class ArtifactRepositoryManager {
           }
 
           @Override
-          public void transferCorrupted(TransferEvent event) {
-          }
+          public void transferCorrupted(TransferEvent event) { }
 
           @Override
-          public void transferSucceeded(TransferEvent event) {
-
-          }
+          public void transferSucceeded(TransferEvent event) { }
 
           @Override
-          public void transferFailed(TransferEvent event) {
-          }
+          public void transferFailed(TransferEvent event) { }
 
           private void handle(TransferEvent event) throws TransferCancelledException {
             if (progressConsumer.isCanceled()) {
@@ -167,7 +161,6 @@ public final class ArtifactRepositoryManager {
         });
       }
       // setup session here
-
       session.setLocalRepositoryManager(new StrictLocalRepositoryManager(ourSystem.newLocalRepositoryManager(session, new LocalRepository(localRepositoryPath))));
       session.setProxySelector(ourProxySelector);
       session.setOffline(offline);
@@ -232,17 +225,16 @@ public final class ArtifactRepositoryManager {
       org.apache.maven.model.Model.class, //maven-model
       org.apache.maven.model.building.ModelBuilder.class, //maven-model-builder
       org.apache.maven.artifact.repository.metadata.Metadata.class, //maven-repository-metadata
-      //org.codehaus.plexus.component.annotations.Component.class, //plexus-component-annotations
       org.codehaus.plexus.interpolation.Interpolator.class, //plexus-interpolation
       org.eclipse.aether.RepositorySystem.class, //aether-api
       org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory.class, //aether-connector-basic
       org.eclipse.aether.spi.connector.RepositoryConnector.class, //aether-spi
-      org.eclipse.aether.util.StringUtils.class, //aether-util
+      org.eclipse.aether.util.ConfigUtils.class, //aether-util
       org.eclipse.aether.impl.ArtifactResolver.class, //aether-impl
       org.eclipse.aether.transport.file.FileTransporterFactory.class, //aether-transport-file
       org.eclipse.aether.transport.http.HttpTransporterFactory.class, //aether-transport-http
-      org.apache.http.HttpConnection.class, //httpcore
-      org.apache.http.client.HttpClient.class, //httpclient
+      org.apache.http.HttpConnection.class, //http-core
+      org.apache.http.client.HttpClient.class, //http-client
       org.apache.commons.logging.LogFactory.class, // commons-logging
       org.slf4j.Marker.class, // slf4j
       org.apache.commons.codec.binary.Base64.class // commons-codec
@@ -284,14 +276,14 @@ public final class ArtifactRepositoryManager {
   public Collection<Artifact> resolveDependencyAsArtifact(String groupId, String artifactId, String versionConstraint,
                                                           Set<ArtifactKind> artifactKinds, boolean includeTransitiveDependencies,
                                                           List<String> excludedDependencies) throws Exception {
-    final List<Artifact> artifacts = new ArrayList<>();
-    final VersionConstraint originalConstraints = asVersionConstraint(versionConstraint);
+    List<Artifact> artifacts = new ArrayList<>();
+    VersionConstraint originalConstraints = asVersionConstraint(versionConstraint);
     for (ArtifactKind kind : artifactKinds) {
       // RepositorySystem.resolveDependencies() ignores classifiers, so we need to set classifiers explicitly for discovered dependencies.
       // Because of that we have to first discover deps and then resolve corresponding artifacts
       try {
-        final List<ArtifactRequest> requests = new ArrayList<>();
-        final Set<VersionConstraint> constraints;
+        List<ArtifactRequest> requests = new ArrayList<>();
+        Set<VersionConstraint> constraints;
         if (kind == ArtifactKind.ANNOTATIONS) {
           constraints = relaxForAnnotations(originalConstraints);
         } else {
@@ -312,7 +304,7 @@ public final class ArtifactRepositoryManager {
               if (requests.size() > 1) {
                 for (ArtifactRequest request : requests) {
                   try {
-                    final ArtifactResult result = myRetry.retry(() -> ourSystem.resolveArtifact(session, request), LOG);
+                    ArtifactResult result = myRetry.retry(() -> ourSystem.resolveArtifact(session, request), LOG);
                     artifacts.add(result.getArtifact());
                   }
                   catch (ArtifactResolutionException ignored) {
@@ -347,10 +339,10 @@ public final class ArtifactRepositoryManager {
     RepositorySystemSession session;
     if (includeTransitiveDependencies) {
       session = mySessionFactory.createSession(excludedDependencies);
-      final CollectResult collectResult = myRetry.retry(() -> ourSystem.collectDependencies(
+      CollectResult collectResult = myRetry.retry(() -> ourSystem.collectDependencies(
         session, createCollectRequest(groupId, artifactId, constraints, EnumSet.of(kind))
       ), LOG);
-      final ArtifactRequestBuilder builder = new ArtifactRequestBuilder(kind);
+      ArtifactRequestBuilder builder = new ArtifactRequestBuilder(kind);
       DependencyFilter filter = createScopeFilter();
       if (!excludedDependencies.isEmpty()) {
         filter = DependencyFilterUtils.andFilter(filter, new ExcludeDependenciesFilter(excludedDependencies));
@@ -362,8 +354,8 @@ public final class ArtifactRepositoryManager {
       session = mySessionFactory.createDefaultSession();
       for (Artifact artifact : toArtifacts(groupId, artifactId, constraints, Collections.singleton(kind))) {
         if (ourVersioning.parseVersionConstraint(artifact.getVersion()).getRange() != null) {
-          final VersionRangeRequest versionRangeRequest = new VersionRangeRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null);
-          final VersionRangeResult result = ourSystem.resolveVersionRange(session, versionRangeRequest);
+          VersionRangeRequest versionRangeRequest = new VersionRangeRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null);
+          VersionRangeResult result = ourSystem.resolveVersionRange(session, versionRangeRequest);
           if (!result.getVersions().isEmpty()) {
             Artifact newArtifact = artifact.setVersion(result.getHighestVersion().toString());
             requests.add(new ArtifactRequest(newArtifact, Collections.unmodifiableList(myRemoteRepositories), null));
@@ -381,9 +373,9 @@ public final class ArtifactRepositoryManager {
   public Collection<Artifact> resolveDependencyAsArtifactStrict(String groupId, String artifactId, String versionConstraint,
                                                                 ArtifactKind kind, boolean includeTransitiveDependencies,
                                                                 List<String> excludedDependencies) throws Exception {
-    final List<Artifact> artifacts = new ArrayList<>();
-    final List<ArtifactRequest> requests = new ArrayList<>();
-    final Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
+    List<Artifact> artifacts = new ArrayList<>();
+    List<ArtifactRequest> requests = new ArrayList<>();
+    Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
     RepositorySystemSession session = prepareRequests(groupId, artifactId, constraints, kind, includeTransitiveDependencies, excludedDependencies, requests);
 
     if (!requests.isEmpty()) {
@@ -396,10 +388,10 @@ public final class ArtifactRepositoryManager {
   }
 
   /**
-   * Modify version constraint to look for applicable annotations artifact.
+   * Modify version constraint to look for applicable "annotations" artifact.
    * <p>
-   * Annotations artifact for a given library is matched by Group Id, Artifact Id
-   * and classifier "annotations". Annotations version is selected using following rules:
+   * "Annotations" artifact for a given library is matched by Group ID, Artifact ID, and classifier "annotations".
+   * "Annotations" version is selected using following rules:
    * <ul>
    *   <li>it is larger or equal to major component of library version (or lower constraint bound).
    *   E.g., annotations artifact ver 3.1 is applicable to library ver 3.6.5 (3.1 > 3.0)</li>
@@ -408,18 +400,18 @@ public final class ArtifactRepositoryManager {
    * </ul>
    * This allows to re-use existing annotations artifacts across different library versions
    * @param constraint - version or range constraint of original library
-   * @return resulting relaxed constraint to select annotations artifact.
+   * @return resulting relaxed constraint to select "annotations" artifact.
    */
   private static Set<VersionConstraint> relaxForAnnotations(VersionConstraint constraint) {
     String annotationsConstraint = constraint.toString();
 
-    final Version version = constraint.getVersion();
+    Version version = constraint.getVersion();
     if (version != null) {
-      final String lower = chooseLowerBoundString(version);
+      String lower = chooseLowerBoundString(version);
       annotationsConstraint = "[" + lower + ", " + version + "-an10000]";
     }
 
-    final VersionRange range = constraint.getRange();
+    VersionRange range = constraint.getRange();
     if (range != null) {
       Version lowerBoundVersion = range.getLowerBound().getVersion();
 
@@ -462,20 +454,18 @@ public final class ArtifactRepositoryManager {
    * Gets the versions (in ascending order) that matched the requested range.
    */
   @NotNull
-  public List<Version> getAvailableVersions(String groupId, String artifactId, String versionConstraint, final ArtifactKind artifactKind) throws Exception {
-    final VersionRangeResult result = ourSystem.resolveVersionRange(
+  public List<Version> getAvailableVersions(String groupId, String artifactId, String versionConstraint, ArtifactKind artifactKind) throws Exception {
+    VersionRangeResult result = ourSystem.resolveVersionRange(
       mySessionFactory.createDefaultSession(), createVersionRangeRequest(groupId, artifactId, asVersionConstraint(versionConstraint), artifactKind)
     );
     return result.getVersions();
   }
 
-  public static RemoteRepository createRemoteRepository(final String id,
-                                                        final String url) {
+  public static RemoteRepository createRemoteRepository(String id, String url) {
     return createRemoteRepository(id, url, null, true);
   }
 
-  public static RemoteRepository createRemoteRepository(final String id,
-                                                        final String url,
+  public static RemoteRepository createRemoteRepository(String id, String url,
                                                         boolean allowSnapshots) {
     return createRemoteRepository(id, url, null, allowSnapshots);
   }
@@ -484,10 +474,7 @@ public final class ArtifactRepositoryManager {
     return createRemoteRepository(id, url, authenticationData, true);
   }
 
-  public static RemoteRepository createRemoteRepository(String id,
-                                                        String url,
-                                                        ArtifactAuthenticationData authenticationData,
-                                                        boolean allowSnapshots) {
+  public static RemoteRepository createRemoteRepository(String id, String url, ArtifactAuthenticationData authenticationData, boolean allowSnapshots) {
     // for maven repos repository type should be 'default'
     RemoteRepository.Builder builder = new RemoteRepository.Builder(id, "default", url);
     if (!allowSnapshots) {
@@ -503,7 +490,7 @@ public final class ArtifactRepositoryManager {
   }
 
   private static RemoteRepository createRemoteRepository(RemoteRepository prototype) {
-    final String url = prototype.getUrl();
+    String url = prototype.getUrl();
     return new RemoteRepository.Builder(prototype.getId(), prototype.getContentType(), url).setProxy(ourProxySelector.getProxy(url)).build();
   }
 
@@ -512,16 +499,16 @@ public final class ArtifactRepositoryManager {
     return Arrays.asList(createRemoteRepository(MAVEN_CENTRAL_REPOSITORY), createRemoteRepository(JBOSS_COMMUNITY_REPOSITORY));
   }
 
-  private CollectRequest createCollectRequest(String groupId, String artifactId, Collection<VersionConstraint> versions, final Set<ArtifactKind> kinds) {
-    final CollectRequest request = new CollectRequest();
+  private CollectRequest createCollectRequest(String groupId, String artifactId, Collection<VersionConstraint> versions, Set<ArtifactKind> kinds) {
+    CollectRequest request = new CollectRequest();
     for (Artifact artifact : toArtifacts(groupId, artifactId, versions, kinds)) {
       request.addDependency(new Dependency(artifact, JavaScopes.COMPILE));
     }
     return request.setRepositories(Collections.unmodifiableList(myRemoteRepositories));
   }
 
-  private VersionRangeRequest createVersionRangeRequest(String groupId, String artifactId, VersionConstraint versioning, final ArtifactKind artifactKind) {
-    final VersionRangeRequest request = new VersionRangeRequest();
+  private VersionRangeRequest createVersionRangeRequest(String groupId, String artifactId, VersionConstraint versioning, ArtifactKind artifactKind) {
+    VersionRangeRequest request = new VersionRangeRequest();
     for (Artifact artifact : toArtifacts(groupId, artifactId, Collections.singleton(versioning), EnumSet.of(artifactKind))) {
       request.setArtifact(artifact); // will be at most 1 artifact
     }
@@ -545,7 +532,7 @@ public final class ArtifactRepositoryManager {
     if (constraints.isEmpty() || kinds.isEmpty()) {
       return Collections.emptyList();
     }
-    final List<Artifact> result = new ArrayList<>(kinds.size() * constraints.size());
+    List<Artifact> result = new ArrayList<>(kinds.size() * constraints.size());
     for (ArtifactKind kind : kinds) {
       for (VersionConstraint constraint : constraints) {
         result.add(new DefaultArtifact(groupId, artifactId, kind.getClassifier(), kind.getExtension(), constraint.toString()));
@@ -604,7 +591,7 @@ public final class ArtifactRepositoryManager {
 
     @Override
     public boolean visitEnter(DependencyNode node) {
-      final Dependency dep = node.getDependency();
+      Dependency dep = node.getDependency();
       if (dep != null) {
         Artifact artifact = dep.getArtifact();
         String classifier = myKind.getClassifier();
