@@ -5,15 +5,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
 import com.intellij.ui.*;
-import com.intellij.ui.paint.PaintUtil;
-import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.EdgePrintElement;
@@ -32,8 +28,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 
 public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphCommitCell>
@@ -166,9 +162,10 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     private final @NotNull IssueLinkRenderer myIssueLinkRenderer;
     private final @NotNull VcsLogLabelPainter myReferencePainter;
 
-    protected @NotNull GraphImage myGraphImage = new GraphImage(ImageUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
+    private @NotNull Collection<? extends PrintElement> myPrintElements = Collections.emptyList();
     private @NotNull Font myFont;
     private int myHeight;
+    private int myGraphWidth = 0;
     private AffineTransform myAffineTransform;
 
     MyComponent(@NotNull VcsLogData data,
@@ -199,27 +196,15 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     public void paintComponent(Graphics g) {
       super.paintComponent(g);
 
-      int graphImageWidth = myGraphImage.getWidth();
-
       Graphics2D g2d = (Graphics2D)g;
       if (!myReferencePainter.isLeftAligned()) {
-        int start = Math.max(graphImageWidth, getWidth() - myReferencePainter.getSize().width);
+        int start = Math.max(myGraphWidth, getWidth() - myReferencePainter.getSize().width);
         myReferencePainter.paint(g2d, start, 0, getHeight());
       }
       else {
-        myReferencePainter.paint(g2d, graphImageWidth, 0, getHeight());
+        myReferencePainter.paint(g2d, myGraphWidth, 0, getHeight());
       }
-      // The image's origin (after the graphics translate is applied) is rounded by J2D with .5 coordinate ceil'd.
-      // This doesn't correspond to how the rectangle's origin is rounded, with .5 floor'd. As the result, there may be a gap
-      // b/w the background's top and the image's top (depending on the row number and the graphics translate). To avoid that,
-      // the graphics y-translate is aligned to int with .5-floor-bias.
-      AffineTransform origTx = PaintUtil.alignTxToInt(g2d, null, false, true, RoundingMode.ROUND_FLOOR_BIAS);
-      try {
-        UIUtil.drawImage(g, myGraphImage.getImage(), 0, 0, null);
-      }
-      finally {
-        if (origTx != null) g2d.setTransform(origTx);
-      }
+      myPainter.draw(g2d, myPrintElements);
     }
 
     public void customize(@NotNull GraphCommitCell cell, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -228,7 +213,9 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       acquireState(myGraphTable, isSelected, hasFocus, row, column);
       getCellState().updateRenderer(this);
 
-      myGraphImage = getGraphImage(cell.getPrintElements());
+      myPrintElements = cell.getPrintElements();
+      double maxIndex = getMaxGraphElementIndex(myPrintElements);
+      myGraphWidth = (int)(maxIndex * PaintParameters.getNodeWidth(myGraphTable.getRowHeight()));
 
       SimpleTextAttributes style = myGraphTable.applyHighlighters(this, row, column, hasFocus, isSelected);
 
@@ -246,18 +233,18 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       append(""); // appendTextPadding wont work without this
       if (myReferencePainter.isLeftAligned()) {
         myReferencePainter.customizePainter(refs, getBackground(), labelForeground, isSelected,
-                                            getAvailableWidth(column, myGraphImage.getWidth()));
+                                            getAvailableWidth(column, myGraphWidth));
 
         int referencesWidth = myReferencePainter.getSize().width;
         if (referencesWidth > 0) referencesWidth += LabelPainter.RIGHT_PADDING.get();
-        appendTextPadding(myGraphImage.getWidth() + referencesWidth);
+        appendTextPadding(myGraphWidth + referencesWidth);
         appendText(cell, style, isSelected);
       }
       else {
-        appendTextPadding(myGraphImage.getWidth());
+        appendTextPadding(myGraphWidth);
         appendText(cell, style, isSelected);
         myReferencePainter.customizePainter(refs, getBackground(), labelForeground, isSelected,
-                                            getAvailableWidth(column, myGraphImage.getWidth()));
+                                            getAvailableWidth(column, myGraphWidth));
       }
     }
 
@@ -301,20 +288,6 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       return myHeight;
     }
 
-    private @NotNull GraphImage getGraphImage(@NotNull Collection<? extends PrintElement> printElements) {
-      double maxIndex = getMaxGraphElementIndex(printElements);
-      BufferedImage image = UIUtil.createImage(myGraphTable.getGraphicsConfiguration(),
-                                               (int)(PaintParameters.getNodeWidth(myGraphTable.getRowHeight()) * (maxIndex + 2)),
-                                               myGraphTable.getRowHeight(),
-                                               BufferedImage.TYPE_INT_ARGB,
-                                               RoundingMode.CEIL);
-      Graphics2D g2 = image.createGraphics();
-      myPainter.draw(g2, printElements);
-
-      int width = (int)(maxIndex * PaintParameters.getNodeWidth(myGraphTable.getRowHeight()));
-      return new GraphImage(image, width);
-    }
-
     private int getGraphWidth(@NotNull Collection<? extends PrintElement> printElements) {
       double maxIndex = getMaxGraphElementIndex(printElements);
       return (int)(maxIndex * PaintParameters.getNodeWidth(myGraphTable.getRowHeight()));
@@ -344,30 +317,6 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @Override
     public FontMetrics getFontMetrics(Font font) {
       return myGraphTable.getFontMetrics(font);
-    }
-  }
-
-  private static class GraphImage {
-    private final int myWidth;
-    private final @NotNull Image myImage;
-
-    GraphImage(@NotNull Image image, int width) {
-      myImage = image;
-      myWidth = width;
-    }
-
-    @NotNull
-    Image getImage() {
-      return myImage;
-    }
-
-    /**
-     * Returns the "interesting" width of the painted image, i.e. the width which the text in the table should be offset by. <br/>
-     * It can be smaller than the width of {@link #getImage() the image}, because we allow the text to cover part of the graph
-     * (some diagonal edges, etc.)
-     */
-    int getWidth() {
-      return myWidth;
     }
   }
 
