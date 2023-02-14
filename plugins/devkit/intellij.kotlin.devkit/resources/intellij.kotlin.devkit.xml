@@ -20,5 +20,12 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KotlinObjectRegisteredAsExtensionInspection"
                      key="inspections.plugin.kotlin.object.registered.as.extension"/>
+
+    <localInspection language="kotlin" id="ForbiddenInSuspectContextMethodInspection"
+                     groupBundle="messages.DevKitBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.ForbiddenInSuspectContextMethodInspection"
+                     key="inspections.forbidden.method.in.suspend.context"/>
   </extensions>
 </idea-plugin>

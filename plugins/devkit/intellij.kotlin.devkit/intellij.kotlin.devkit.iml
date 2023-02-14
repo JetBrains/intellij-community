@@ -18,5 +18,8 @@
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-fe10" level="project" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
+    <orderEntry type="module" module-name="kotlin.core" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" />
   </component>
 </module>
