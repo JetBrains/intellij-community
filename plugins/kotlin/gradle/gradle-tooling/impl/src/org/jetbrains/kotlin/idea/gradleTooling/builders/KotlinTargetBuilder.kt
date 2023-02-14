@@ -9,11 +9,11 @@ import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinTargetJarReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinTargetReflection
+import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinExtras
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.idea.projectModel.KotlinTestRunTask
-import org.jetbrains.kotlin.tooling.core.mutableExtrasOf
 
 object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetReflection, KotlinTarget> {
     override fun buildComponent(origin: KotlinTargetReflection, importingContext: MultiplatformModelImportingContext): KotlinTarget? {
@@ -50,7 +50,6 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
         val testRunTasks = buildTestRunTasks(importingContext.project, origin.gradleTarget)
 
         val serializedExtras = importingContext.importReflection?.resolveExtrasSerialized(origin.gradleTarget)
-        val extras = if (serializedExtras != null) SerializedExtras.serializedExtrasOf(serializedExtras) else mutableExtrasOf()
 
         val target = KotlinTargetImpl(
             name,
@@ -62,7 +61,7 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
             nativeMainRunTasks,
             jar,
             artifacts,
-            extras = extras
+            IdeaKotlinExtras.from(serializedExtras)
         )
         compilations.forEach {
             it.disambiguationClassifier = target.disambiguationClassifier
