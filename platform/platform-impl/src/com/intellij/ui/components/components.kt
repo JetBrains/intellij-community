@@ -117,7 +117,7 @@ fun htmlComponent(@DetailedDescription text: String = "",
 
 fun RadioButton(@RadioButton text: String): JRadioButton = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))
 
-fun CheckBox(@Checkbox text: String, selected: Boolean = false, toolTip: String? = null): JCheckBox {
+fun CheckBox(@Checkbox text: String, selected: Boolean = false, toolTip: @Tooltip String? = null): JCheckBox {
   val component = JCheckBox(BundleBase.replaceMnemonicAmpersand(text), selected)
   toolTip?.let { component.toolTipText = it }
   return component
@@ -128,13 +128,13 @@ fun Panel(@BorderTitle title: String? = null, layout: LayoutManager2? = BorderLa
   return Panel(title, false, layout)
 }
 
-fun Panel(@BorderTitle title: String? = null, hasSeparator: Boolean = true, layout: LayoutManager2? = BorderLayout()): JPanel {
+fun Panel(title: @BorderTitle String? = null, hasSeparator: Boolean = true, layout: LayoutManager2? = BorderLayout()): JPanel {
   val panel = JPanel(layout)
   title?.let { setTitledBorder(it, panel, hasSeparator) }
   return panel
 }
 
-fun DialogPanel(@BorderTitle title: String? = null, layout: LayoutManager2? = BorderLayout()): DialogPanel {
+fun DialogPanel(title: @BorderTitle String? = null, layout: LayoutManager2? = BorderLayout()): DialogPanel {
   val panel = DialogPanel(layout)
   title?.let { setTitledBorder(it, panel, hasSeparator = true) }
   return panel
