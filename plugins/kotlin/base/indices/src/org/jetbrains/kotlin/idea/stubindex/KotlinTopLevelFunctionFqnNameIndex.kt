@@ -3,22 +3,22 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 /**
  * Stores package top level function (both extension and non-extension) full qualified names.
  */
-object KotlinTopLevelFunctionFqnNameIndex : KotlinStringStubIndexExtension<KtNamedFunction>(KtNamedFunction::class.java) {
-    private val KEY: StubIndexKey<String, KtNamedFunction> =
-        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex")
-
-    override fun getKey(): StubIndexKey<String, KtNamedFunction> {
-        return KEY
+class KotlinTopLevelFunctionFqnNameIndex internal constructor() : StringStubIndexExtension<KtNamedFunction>() {
+    companion object Helper : KotlinStringStubIndexHelper<KtNamedFunction>(KtNamedFunction::class.java) {
+        override val indexKey: StubIndexKey<String, KtNamedFunction> =
+            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex")
     }
 
-    override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtNamedFunction> {
-        return StubIndex.getElements(KEY, s, project, scope, KtNamedFunction::class.java)
+    override fun getKey(): StubIndexKey<String, KtNamedFunction> = indexKey
+
+    override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtNamedFunction> {
+        return Helper[key, project, scope]
     }
 }

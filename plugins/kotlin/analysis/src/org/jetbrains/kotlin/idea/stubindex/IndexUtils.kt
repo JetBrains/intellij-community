@@ -23,7 +23,7 @@ fun <TDeclaration : KtCallableDeclaration> indexExtensionInObject(stub: KotlinCa
     KotlinExtensionsInObjectsByReceiverTypeIndex.indexExtension(stub, sink)
 }
 
-private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTypeIndex.indexExtension(
+private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTypeStubIndexHelper.indexExtension(
     stub: KotlinCallableStubBase<TDeclaration>,
     sink: IndexSink
 ) {
@@ -33,10 +33,7 @@ private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTyp
     val callableName = declaration.name ?: return
     val containingTypeReference = declaration.receiverTypeReference!!
     containingTypeReference.typeElement?.index(declaration, containingTypeReference) { typeName ->
-        sink.occurrence(
-            key,
-            buildKey(typeName, callableName)
-        )
+        sink.occurrence(indexKey, buildKey(typeName, callableName))
     }
 }
 
@@ -149,7 +146,7 @@ fun indexJvmNameAnnotation(stub: KotlinAnnotationEntryStub, sink: IndexSink) {
     val annotatedElementName = stub.parentStub.parentStub.annotatedJvmNameElementName ?: return
 
     if (annotatedElementName != jvmName) {
-        sink.occurrence(KotlinJvmNameAnnotationIndex.key, jvmName)
+        sink.occurrence(KotlinJvmNameAnnotationIndex.indexKey, jvmName)
     }
 }
 

@@ -4,17 +4,19 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
-object KotlinTopLevelTypeAliasByPackageIndex : KotlinStringStubIndexExtension<KtTypeAlias>(KtTypeAlias::class.java) {
-    val KEY: StubIndexKey<String, KtTypeAlias> =
-        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasByPackageIndex")
+class KotlinTopLevelTypeAliasByPackageIndex internal constructor() : StringStubIndexExtension<KtTypeAlias>() {
+    companion object Helper : KotlinStringStubIndexHelper<KtTypeAlias>(KtTypeAlias::class.java) {
+        override val indexKey: StubIndexKey<String, KtTypeAlias> =
+            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasByPackageIndex")
+    }
 
-    override fun getKey(): StubIndexKey<String, KtTypeAlias> = KEY
+    override fun getKey(): StubIndexKey<String, KtTypeAlias> = indexKey
 
-    override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
-        return StubIndex.getElements(KEY, s, project, scope, KtTypeAlias::class.java)
+    override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
+        return Helper[key, project, scope]
     }
 }

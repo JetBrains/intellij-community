@@ -76,11 +76,10 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
     override fun findClassOrObjectDeclarationsInPackage(
         packageFqName: FqName,
         searchScope: GlobalSearchScope
-    ): Collection<KtClassOrObject> = KotlinTopLevelClassByPackageIndex[
-        packageFqName.asString(),
-        project,
-        KotlinSourceFilterScope.projectSourcesAndLibraryClasses(searchScope, project),
-    ]
+    ): Collection<KtClassOrObject> {
+        val scope = KotlinSourceFilterScope.projectSourcesAndLibraryClasses(searchScope, project)
+        return KotlinTopLevelClassByPackageIndex[packageFqName.asString(), project, scope]
+    }
 
     override fun packageExists(fqName: FqName, scope: GlobalSearchScope): Boolean = KotlinPackageIndexUtils.packageExists(
         fqName,

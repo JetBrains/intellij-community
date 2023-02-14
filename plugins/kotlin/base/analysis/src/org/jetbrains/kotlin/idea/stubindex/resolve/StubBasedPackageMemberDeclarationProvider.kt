@@ -6,8 +6,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.CommonProcessors
-import com.intellij.util.Processor
-import com.intellij.util.Processors
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
@@ -33,8 +31,8 @@ class StubBasedPackageMemberDeclarationProvider(
         val fqNameAsString = fqName.asString()
         val result = ArrayList<KtDeclaration>()
 
-        fun addFromIndex(index: KotlinStringStubIndexExtension<out KtNamedDeclaration>) {
-            index.processElements(fqNameAsString, project, searchScope) {
+        fun addFromIndex(helper: KotlinStringStubIndexHelper<out KtNamedDeclaration>) {
+            helper.processElements(fqNameAsString, project, searchScope) {
                 if (nameFilter(it.nameAsSafeName)) {
                     result.add(it)
                 }

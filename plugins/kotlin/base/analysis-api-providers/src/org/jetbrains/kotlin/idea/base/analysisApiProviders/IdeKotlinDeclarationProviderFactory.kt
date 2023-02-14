@@ -53,7 +53,7 @@ private class IdeKotlinDeclarationProvider(
     }
 
     override fun getClassLikeDeclarationByClassId(classId: ClassId): KtClassLikeDeclaration? {
-        return firstMatchingOrNull(KotlinFullClassNameIndex.KEY, key = classId.asStringForIndexes()) { candidate ->
+        return firstMatchingOrNull(KotlinFullClassNameIndex.indexKey, key = classId.asStringForIndexes()) { candidate ->
             candidate.getClassId() == classId
         } ?: getTypeAliasByClassId(classId)
     }
@@ -95,7 +95,7 @@ private class IdeKotlinDeclarationProvider(
 
     private fun getTypeAliasByClassId(classId: ClassId): KtTypeAlias? {
         return firstMatchingOrNull(
-            stubKey = KotlinTopLevelTypeAliasFqNameIndex.KEY,
+            stubKey = KotlinTopLevelTypeAliasFqNameIndex.indexKey,
             key = classId.asStringForIndexes(),
             filter = { candidate -> candidate.getClassId() == classId }
         ) ?: firstMatchingOrNull(stubKey = KotlinInnerTypeAliasClassIdIndex.key, key = classId.asString())
@@ -111,10 +111,10 @@ private class IdeKotlinDeclarationProvider(
         val callableIdString = callableId.asTopLevelStringForIndexes()
 
         return buildSet {
-            stubIndex.getContainingFilesIterator(KotlinTopLevelPropertyFqnNameIndex.key, callableIdString, project, scope).forEach { file ->
+            stubIndex.getContainingFilesIterator(KotlinTopLevelPropertyFqnNameIndex.indexKey, callableIdString, project, scope).forEach { file ->
                 psiManager.findFile(file)?.safeAs<KtFile>()?.let { add(it) }
             }
-            stubIndex.getContainingFilesIterator(KotlinTopLevelFunctionFqnNameIndex.key, callableIdString, project, scope).forEach { file ->
+            stubIndex.getContainingFilesIterator(KotlinTopLevelFunctionFqnNameIndex.indexKey, callableIdString, project, scope).forEach { file ->
                 psiManager.findFile(file)?.safeAs<KtFile>()?.let { add(it) }
             }
         }

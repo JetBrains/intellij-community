@@ -231,12 +231,12 @@ object SourceNavigationHelper {
     private fun <T : KtNamedDeclaration> findFirstMatchingInIndex(
         entity: T,
         navigationKind: NavigationKind,
-        index: StringStubIndexExtension<T>
+        helper: KotlinStringStubIndexHelper<T>
     ): T? {
         val classFqName = entity.fqName ?: return null
         return targetScopes(entity, navigationKind).firstNotNullOfOrNull { scope ->
             ProgressManager.checkCanceled()
-            index.get(classFqName.asString(), entity.project, scope).minByOrNull { it.isExpectDeclaration() }
+            helper[classFqName.asString(), entity.project, scope].minByOrNull { it.isExpectDeclaration() }
         }
     }
 
@@ -249,7 +249,7 @@ object SourceNavigationHelper {
     ): Collection<KtNamedDeclaration> {
         val scopes = targetScopes(declaration, navigationKind)
 
-        val index: StringStubIndexExtension<out KtNamedDeclaration> = when (declaration) {
+        val helper: KotlinStringStubIndexHelper<out KtNamedDeclaration> = when (declaration) {
             is KtNamedFunction -> KotlinTopLevelFunctionFqnNameIndex
             is KtProperty -> KotlinTopLevelPropertyFqnNameIndex
             else -> throw IllegalArgumentException("Neither function nor declaration: " + declaration::class.java.name)
@@ -257,7 +257,7 @@ object SourceNavigationHelper {
 
         return scopes.flatMap { scope ->
             ProgressManager.checkCanceled()
-            index.get(declaration.fqName!!.asString(), declaration.project, scope).sortedBy { it.isExpectDeclaration() }
+            helper[declaration.fqName!!.asString(), declaration.project, scope].sortedBy { it.isExpectDeclaration() }
         }
     }
 

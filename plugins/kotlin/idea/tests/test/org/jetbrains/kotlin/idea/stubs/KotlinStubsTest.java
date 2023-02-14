@@ -77,7 +77,7 @@ public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase {
         PsiFile file = myFixture.configureByText("foo.kts", "val q = UByteArray(1).<caret>asList()");
 
         CommonProcessors.CollectUniquesProcessor<KtNamedFunction> processor = new CommonProcessors.CollectUniquesProcessor<>();
-        KotlinFunctionShortNameIndex.INSTANCE.processElements("asULongArray", project, GlobalSearchScope.allScope(project), processor);
+        KotlinFunctionShortNameIndex.Helper.processElements("asULongArray", project, GlobalSearchScope.allScope(project), processor);
         Collection<KtNamedFunction> asULongArrayFunctions =
                 ContainerUtil.filter(
                         processor.getResults(),

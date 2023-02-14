@@ -8,12 +8,13 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtFile
 
-class KotlinExactPackagesIndex : StringStubIndexExtension<KtFile>() {
+class KotlinExactPackagesIndex internal constructor() : StringStubIndexExtension<KtFile>() {
     companion object {
         @JvmField
         val NAME: StubIndexKey<String, KtFile> = StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinExactPackagesIndex")
 
         @JvmStatic
+        @JvmName("getFiles")
         fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<KtFile> {
             return StubIndex.getElements(NAME, fqName, project, scope, KtFile::class.java)
         }

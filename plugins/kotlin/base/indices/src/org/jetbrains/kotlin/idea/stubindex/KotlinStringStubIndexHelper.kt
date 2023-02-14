@@ -6,41 +6,53 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.Processors
 import com.intellij.util.SmartList
 import com.intellij.util.indexing.IdFilter
 
-abstract class KotlinStringStubIndexExtension<PsiNav : NavigatablePsiElement>(private val valueClass: Class<PsiNav>) : StringStubIndexExtension<PsiNav>() {
-    fun getAllElements(s: String, project: Project, scope: GlobalSearchScope, filter: (PsiNav) -> Boolean): List<PsiNav> {
-        val values = SmartList<PsiNav>()
+private val isNestedIndexAccessEnabled: Boolean by lazy { Registry.`is`("kotlin.indices.nested.access.enabled") }
+
+abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private val valueClass: Class<Key>) {
+    abstract val indexKey: StubIndexKey<String, Key>
+
+    operator fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<Key> {
+        return StubIndex.getElements(indexKey, fqName, project, scope, valueClass)
+    }
+
+    fun getAllKeys(project: Project): Collection<String> {
+        return StubIndex.getInstance().getAllKeys(indexKey, project)
+    }
+
+    fun getAllElements(s: String, project: Project, scope: GlobalSearchScope, filter: (Key) -> Boolean): List<Key> {
+        val values = SmartList<Key>()
         processElements(s, project, scope, null, CancelableCollectFilterProcessor(values, filter))
         return values
     }
     /**
      * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
      */
-    fun processElements(s: String, project: Project, scope: GlobalSearchScope, processor: Processor<in PsiNav>): Boolean {
+    fun processElements(s: String, project: Project, scope: GlobalSearchScope, processor: Processor<in Key>): Boolean {
         return processElements(s, project, scope, null, processor)
     }
 
     /**
      * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
      */
-    fun processElements(s: String, project: Project, scope: GlobalSearchScope, idFilter: IdFilter? = null, processor: Processor<in PsiNav>): Boolean {
-        return StubIndex.getInstance().processElements(key, s, project, scope, idFilter, valueClass, processor)
+    fun processElements(s: String, project: Project, scope: GlobalSearchScope, idFilter: IdFilter? = null, processor: Processor<in Key>): Boolean {
+        return StubIndex.getInstance().processElements(indexKey, s, project, scope, idFilter, valueClass, processor)
     }
 
     fun getAllElements(
         project: Project,
         scope: GlobalSearchScope,
         keyFilter: (String) -> Boolean = { true },
-        valueFilter: (PsiNav) -> Boolean
-    ): List<PsiNav> {
-        val values = SmartList<PsiNav>()
+        valueFilter: (Key) -> Boolean
+    ): List<Key> {
+        val values = SmartList<Key>()
         processAllElements(project, scope, keyFilter, CancelableCollectFilterProcessor(values, valueFilter))
         return values
     }
@@ -49,13 +61,12 @@ abstract class KotlinStringStubIndexExtension<PsiNav : NavigatablePsiElement>(pr
         project: Project,
         scope: GlobalSearchScope,
         filter: (String) -> Boolean = { true },
-        processor: Processor<in PsiNav>
+        processor: Processor<in Key>
     ) {
         val stubIndex = StubIndex.getInstance()
-        val indexKey = key
 
         if (isNestedIndexAccessEnabled) {
-            processAllKeys(project, CancelableDelegateFilterProcessor(filter) { key ->
+            stubIndex.processAllKeys(indexKey, project, CancelableDelegateFilterProcessor(filter) { key ->
                 // process until the 1st negative result of processor
                 stubIndex.processElements(indexKey, key, project, scope, valueClass, processor)
             })
@@ -63,10 +74,10 @@ abstract class KotlinStringStubIndexExtension<PsiNav : NavigatablePsiElement>(pr
             // collect all keys, collect all values those fulfill filter into a single collection, process values after that
 
             val allKeys = HashSet<String>()
-            if (!processAllKeys(project, CancelableCollectFilterProcessor(allKeys, filter))) return
+            if (!stubIndex.processAllKeys(indexKey, project, CancelableCollectFilterProcessor(allKeys, filter))) return
 
             if (allKeys.isNotEmpty()) {
-                val values = HashSet<PsiNav>(allKeys.size)
+                val values = HashSet<Key>(allKeys.size)
                 val collectProcessor = Processors.cancelableCollectProcessor(values)
                 allKeys.forEach { s ->
                     if (!stubIndex.processElements(indexKey, s, project, scope, valueClass, collectProcessor)) return
@@ -77,13 +88,12 @@ abstract class KotlinStringStubIndexExtension<PsiNav : NavigatablePsiElement>(pr
         }
     }
 
-    fun processAllKeys(scope: GlobalSearchScope, filter: IdFilter? = null, processor: Processor<in String>): Boolean =
-        StubIndex.getInstance().processAllKeys(key, processor, scope, filter)
+    fun processAllKeys(scope: GlobalSearchScope, filter: IdFilter? = null, processor: Processor<in String>): Boolean {
+        return StubIndex.getInstance().processAllKeys(indexKey, processor, scope, filter)
+    }
 
-    companion object {
-        val isNestedIndexAccessEnabled: Boolean by lazy {
-            Registry.`is`("kotlin.indices.nested.access.enabled")
-        }
+    fun processAllKeys(project: Project, processor: Processor<in String>): Boolean {
+        return StubIndex.getInstance().processAllKeys(indexKey, project, processor)
     }
 }
 
