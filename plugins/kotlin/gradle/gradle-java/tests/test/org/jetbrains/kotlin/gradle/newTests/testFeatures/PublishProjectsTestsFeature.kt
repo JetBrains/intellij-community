@@ -50,6 +50,9 @@ object GradleProjectsPublisher {
     fun publishSubproject(subprojectName: String, importedProjectRoot: File, importedProject: Project) {
         val subprojectDirectory = importedProjectRoot.resolve(subprojectName)
         require(subprojectDirectory.exists()) { "Can't find subproject $subprojectName, checked at ${subprojectDirectory.canonicalPath}" }
+        requireNotNull(subprojectDirectory.walk().firstOrNull { it.isFile && it.extension == "kt" }) {
+            "Can't publish subproject $subprojectName because it doesn't have any .kt-sources"
+        }
 
         val output = runTaskAndGetErrorOutput(subprojectDirectory.toString(), importedProject, "publish")
         if (output.isNotEmpty()) {
