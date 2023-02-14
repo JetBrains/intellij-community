@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.projectView.KtDeclarationTreeNode.Companion.isApplicableNode
 import org.jetbrains.kotlin.psi.*
 import javax.swing.Icon
 import kotlin.properties.ReadWriteProperty
@@ -72,7 +73,7 @@ class KotlinStructureViewElement(
                     (declarations.singleOrNull() as? KtScript) ?: element
                 } else {
                     element
-                }.declarations
+                }.declarations.filter { it.isApplicableNode() }
             }
             is KtClass -> element.getStructureDeclarations()
             is KtClassOrObject -> element.declarations

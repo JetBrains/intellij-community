@@ -117,13 +117,16 @@ internal class KtDeclarationTreeNode private constructor(
             } as? KtNameReferenceExpression
         }
 
+        fun KtDeclaration.isApplicableNode(): Boolean =
+            this !is KtScriptInitializer ||  referenceExpression() != null
+
         fun create(project: Project?,
                    ktDeclaration: KtDeclaration,
                    viewSettings: ViewSettings): KtDeclarationTreeNode? =
-            if (ktDeclaration is KtScriptInitializer && ktDeclaration.referenceExpression() == null) {
-                null
-            } else {
+            if (ktDeclaration.isApplicableNode()) {
                 KtDeclarationTreeNode(project, ktDeclaration, viewSettings)
+            } else {
+                null
             }
     }
 }

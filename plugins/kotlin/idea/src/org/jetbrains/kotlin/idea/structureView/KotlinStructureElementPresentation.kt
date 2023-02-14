@@ -82,7 +82,7 @@ internal class KotlinStructureElementPresentation(
 
         navigatablePsiElement.name.takeUnless { it.isNullOrEmpty() }?.let { return it }
 
-        return (navigatablePsiElement as? KtDeclaration)?.let { tryGetRepresentableText(it) }
+        return (navigatablePsiElement as? KtDeclaration)?.let(::tryGetRepresentableText)
     }
 
     private fun getElementLocationString(isInherited: Boolean, descriptor: DeclarationDescriptor?): String? {
