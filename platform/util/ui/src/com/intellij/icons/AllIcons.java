@@ -54,6 +54,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Edit = load("actions/edit.svg", -1253654087, 2);
     /** 16x16 */ public static final @NotNull Icon EditScheme = load("actions/editScheme.svg", 356615607, 2);
     /** 16x16 */ public static final @NotNull Icon EditSource = load("actions/editSource.svg", -1793495184, 2);
+    /** 14x14 */ public static final @NotNull Icon EnableNewUi = load("actions/enableNewUi.png", 0, 0);
     /** 16x16 */ public static final @NotNull Icon Execute = load("actions/execute.svg", -1785415525, 10);
     /** 16x16 */ public static final @NotNull Icon Exit = load("actions/exit.svg", -837971561, 2);
     /** 16x16 */ public static final @NotNull Icon Expandall = load("actions/expandall.svg", 1240410990, 2);
