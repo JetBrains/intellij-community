@@ -13,10 +13,12 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.serialization.deserialization.getName
 
 @ApiStatus.Internal
-object KotlinTopLevelCallableByPackageShortNameIndex : NameByPackageShortNameIndex() {
-    val KEY = ID.create<FqName, List<Name>>(KotlinTopLevelCallableByPackageShortNameIndex::class.java.name)
+class KotlinTopLevelCallableByPackageShortNameIndex : NameByPackageShortNameIndex() {
+    companion object {
+        val NAME = ID.create<FqName, List<Name>>(KotlinTopLevelCallableByPackageShortNameIndex::class.java.name)
+    }
 
-    override fun getName(): ID<FqName, List<Name>> = KEY
+    override fun getName(): ID<FqName, List<Name>> = NAME
 
     override fun getDeclarationNamesByKtFile(ktFile: KtFile): List<Name> = buildList {
         for (declaration in ktFile.declarations) {

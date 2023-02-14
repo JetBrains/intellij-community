@@ -24,6 +24,13 @@ import java.io.DataInput
 import java.io.DataOutput
 
 @ApiStatus.Internal
+fun getNamesInPackage(indexId: ID<FqName, List<Name>>, packageFqName: FqName, scope: GlobalSearchScope): Set<Name> {
+    return buildSet {
+        FileBasedIndex.getInstance().getValues(indexId, packageFqName, scope).forEach(::addAll)
+    }
+}
+
+@ApiStatus.Internal
 abstract class NameByPackageShortNameIndex : FileBasedIndexExtension<FqName, List<Name>>() {
     private val LOG = logger<KotlinPartialPackageNamesIndex>()
 
@@ -67,10 +74,6 @@ abstract class NameByPackageShortNameIndex : FileBasedIndexExtension<FqName, Lis
         if (binaryClass.classHeader.kind == KotlinClassHeader.Kind.SYNTHETIC_CLASS) return emptyMap()
         if (binaryClass.classId.isLocal) return emptyMap()
         return mapOf(packageName to getDeclarationNamesByMetadata(binaryClass).distinct())
-    }
-
-    fun getNamesInPackage(packageFqName: FqName, scope: GlobalSearchScope): Set<Name> = buildSet {
-        FileBasedIndex.getInstance().getValues(name, packageFqName, scope).forEach(::addAll)
     }
 }
 
