@@ -1,5 +1,6 @@
 FILE
-  PsiElement(Requirement.REQUIREMENT_DIAGRAM)('requirementDiagram')
+  MermaidRequirementDiagramHeaderImpl(REQUIREMENT_DIAGRAM_HEADER)
+    PsiElement(Requirement.REQUIREMENT_DIAGRAM)('requirementDiagram')
   MermaidRequirementDiagramBodyImpl(REQUIREMENT_DIAGRAM_BODY)
     PsiElement(EOL)('\n')
     PsiWhiteSpace('  ')

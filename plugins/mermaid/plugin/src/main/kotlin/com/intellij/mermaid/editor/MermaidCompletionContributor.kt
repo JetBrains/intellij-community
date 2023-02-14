@@ -69,12 +69,12 @@ class MermaidCompletionContributor : CompletionContributor() {
     //region Sequence
     extend(
       CompletionType.BASIC,
-      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidTokens.Sequence.SEQUENCE)),
+      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.SEQUENCE_HEADER)),
       SequenceCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
-      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidTokens.Sequence.SEQUENCE)),
+      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.SEQUENCE_HEADER)),
       SequenceSimpleCompletionProvider("autonumber")
     )
     extend(
@@ -118,14 +118,14 @@ class MermaidCompletionContributor : CompletionContributor() {
     extend(
       CompletionType.BASIC,
       or(
-        psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidTokens.Journey.JOURNEY)),
+        psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.JOURNEY_HEADER)),
         psiElement().afterLeaf(psiElement(MermaidTokens.Journey.JOURNEY))
       ),
       TitleCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
-      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidTokens.Journey.JOURNEY)),
+      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.JOURNEY_HEADER)),
       BranchCompletionProvider("section")
     )
     //endregion
@@ -133,14 +133,14 @@ class MermaidCompletionContributor : CompletionContributor() {
     //region Class Diagram
     extend(
       CompletionType.BASIC,
-      psiElement().atTopLevelOfDiagram(psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM)),
+      psiElement().atTopLevelOfDiagram(psiElement(MermaidElements.CLASS_DIAGRAM_HEADER)),
       ClassDiagramSimpleCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
       and(
         psiElement().afterLeaf(psiElement(MermaidTokens.ANNOTATION_START)),
-        psiElement().insideDiagram(psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM))
+        psiElement().insideDiagram(psiElement(MermaidElements.CLASS_DIAGRAM_HEADER))
       ),
       ClassDiagramAnnotationCompletionProvider()
     )
@@ -149,12 +149,12 @@ class MermaidCompletionContributor : CompletionContributor() {
     //region State Diagram
     extend(
       CompletionType.BASIC,
-      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM)),
+      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.STATE_HEADER)),
       MermaidSimpleCompletionProvider(listOf("state", "direction"))
     )
     extend(
       CompletionType.BASIC,
-      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM)),
+      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.STATE_HEADER)),
       StateDiagramLiveTemplateCompletionProvider("note")
     )
     extend(
@@ -169,14 +169,14 @@ class MermaidCompletionContributor : CompletionContributor() {
       CompletionType.BASIC,
       and(
         psiElement().afterLeaf(psiElement(MermaidTokens.NOTE)),
-        psiElement().insideDiagram(psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM))
+        psiElement().insideDiagram(psiElement(MermaidElements.STATE_HEADER))
       ),
       MermaidSimpleCompletionProvider(listOf("right of", "left of"))
     )
     extend(
       CompletionType.BASIC,
       and(
-        psiElement().insideDiagram(psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM)),
+        psiElement().insideDiagram(psiElement(MermaidElements.STATE_HEADER)),
         psiElement().afterLeaf(psiElement(MermaidTokens.DOUBLE_QUOTE)),
       ),
       MermaidSimpleCompletionProvider(listOf("as"))
@@ -185,7 +185,7 @@ class MermaidCompletionContributor : CompletionContributor() {
       CompletionType.BASIC,
       and(
         psiElement().afterLeaf(psiElement(MermaidTokens.ANNOTATION_START)),
-        psiElement().insideDiagram(psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM)),
+        psiElement().insideDiagram(psiElement(MermaidElements.STATE_HEADER)),
       ),
       StateDiagramAnnotationCompletionProvider()
     )
@@ -195,24 +195,24 @@ class MermaidCompletionContributor : CompletionContributor() {
     extend(
       CompletionType.BASIC,
       or(
-        psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidTokens.Gantt.GANTT)),
+        psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.GANTT_HEADER)),
         psiElement().afterLeaf(psiElement(MermaidTokens.Gantt.GANTT))
       ),
       TitleCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
-      psiElement().insideDiagram(psiElement(MermaidTokens.Gantt.GANTT)),
+      psiElement().insideDiagram(psiElement(MermaidElements.GANTT_HEADER)),
       GanttSimpleCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
-      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidTokens.Gantt.GANTT)),
+      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.GANTT_HEADER)),
       GanttTopLevelCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
-      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidTokens.Gantt.GANTT)),
+      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.GANTT_HEADER)),
       BranchCompletionProvider("section")
     )
     //endregion
@@ -220,7 +220,7 @@ class MermaidCompletionContributor : CompletionContributor() {
     //region Requirement
     extend(
       CompletionType.BASIC,
-      psiElement().atTopLevelOfDiagram(psiElement(MermaidTokens.Requirement.REQUIREMENT_DIAGRAM)),
+      psiElement().atTopLevelOfDiagram(psiElement(MermaidElements.REQUIREMENT_DIAGRAM_HEADER)),
       RequirementCompletionProvider()
     )
     extend(

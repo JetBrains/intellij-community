@@ -1,5 +1,6 @@
 FILE
-  PsiElement(ClassDiagram.CLASS_DIAGRAM)('classDiagram')
+  MermaidClassDiagramHeaderImpl(CLASS_DIAGRAM_HEADER)
+    PsiElement(ClassDiagram.CLASS_DIAGRAM)('classDiagram')
   MermaidClassBodyImpl(CLASS_BODY)
     PsiElement(EOL)('\n')
     PsiWhiteSpace('    ')

@@ -1,5 +1,6 @@
 FILE
-  PsiElement(Journey.JOURNEY)('journey')
+  MermaidJourneyHeaderImpl(JOURNEY_HEADER)
+    PsiElement(Journey.JOURNEY)('journey')
   MermaidJourneyBodyImpl(JOURNEY_BODY)
     PsiElement(EOL)('\n')
     PsiWhiteSpace('  ')

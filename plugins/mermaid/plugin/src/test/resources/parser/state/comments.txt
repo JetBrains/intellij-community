@@ -1,7 +1,8 @@
 FILE
   PsiComment(LINE_COMMENT)('%% this is a comment')
   PsiElement(EOL)('\n')
-  PsiElement(StateDiagram.STATE_DIAGRAM)('stateDiagram')
+  MermaidStateHeaderImpl(STATE_HEADER)
+    PsiElement(StateDiagram.STATE_DIAGRAM)('stateDiagram')
   MermaidStateBodyImpl(STATE_BODY)
     PsiElement(EOL)('\n')
     PsiWhiteSpace('  ')
