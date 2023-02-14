@@ -86,6 +86,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   private static final Icon ourInactiveArrowIcon = IconManager.getInstance().createEmptyIcon(AllIcons.General.ArrowDown);
 
+  private static final Alarm ourAlarm = new Alarm();
+
   @TestOnly
   public CachedIntentions getCachedIntentions() {
     return myPopup.myCachedIntentions;
@@ -98,8 +100,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   private final Editor myEditor;
-
-  private static final Alarm myAlarm = new Alarm();
 
   private final RowIcon myHighlightedIcon;
   private final JLabel myIconLabel;
@@ -529,8 +529,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                      @NotNull HintHint hintHint) {
       myVisible = true;
       if (myShouldDelay) {
-        myAlarm.cancelAllRequests();
-        myAlarm.addRequest(() -> showImpl(parentComponent, x, y, focusBackComponent), DELAY);
+        ourAlarm.cancelAllRequests();
+        ourAlarm.addRequest(() -> showImpl(parentComponent, x, y, focusBackComponent), DELAY);
       }
       else {
         showImpl(parentComponent, x, y, focusBackComponent);
@@ -546,7 +546,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     public void hide() {
       super.hide();
       myVisible = false;
-      myAlarm.cancelAllRequests();
+      ourAlarm.cancelAllRequests();
     }
 
     @Override
