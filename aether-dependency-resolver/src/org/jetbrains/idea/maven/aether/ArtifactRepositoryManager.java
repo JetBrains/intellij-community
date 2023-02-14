@@ -241,7 +241,6 @@ public final class ArtifactRepositoryManager {
       org.eclipse.aether.impl.ArtifactResolver.class, //aether-impl
       org.eclipse.aether.transport.file.FileTransporterFactory.class, //aether-transport-file
       org.eclipse.aether.transport.http.HttpTransporterFactory.class, //aether-transport-http
-      com.google.common.base.Predicate.class, //guava
       org.apache.http.HttpConnection.class, //httpcore
       org.apache.http.client.HttpClient.class, //httpclient
       org.apache.commons.logging.LogFactory.class, // commons-logging
