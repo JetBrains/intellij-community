@@ -53,7 +53,8 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
   }
 
   @Override
-  public List<? extends PackagingElement<?>> getSubstitution(@NotNull PackagingElementResolvingContext context, @NotNull ArtifactType artifactType) {
+  public List<? extends PackagingElement<?>> getSubstitution(@NotNull PackagingElementResolvingContext context,
+                                                             @NotNull ArtifactType artifactType) {
     final Library library = findLibrary(context);
     if (library != null) {
       final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
@@ -62,7 +63,9 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
         String localPath = PathUtil.getLocalPath(file);
         if (localPath != null) {
           final String path = FileUtil.toSystemIndependentName(localPath);
-          elements.add(file.isDirectory() && file.isInLocalFileSystem() ? new DirectoryCopyPackagingElement(path) : new FileCopyPackagingElement(path));
+          elements.add(file.isDirectory() && file.isInLocalFileSystem()
+                       ? new DirectoryCopyPackagingElement(path)
+                       : new FileCopyPackagingElement(path));
         }
       }
       return elements;
@@ -266,13 +269,16 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       return context.findLibrary(level, myLibraryName1);
     }
     final ModulesProvider modulesProvider = context.getModulesProvider();
-    final Module module = modulesProvider.getModule(moduleName);
-    if (module != null) {
-      for (OrderEntry entry : modulesProvider.getRootModel(module).getOrderEntries()) {
-        if (entry instanceof LibraryOrderEntry libraryEntry && libraryEntry.isModuleLevel()) {
-          final String libraryName = libraryEntry.getLibraryName();
-          if (libraryName != null && libraryName.equals(myLibraryName)) {
-            return libraryEntry.getLibrary();
+    final Module module;
+    if (moduleName != null) {
+      module = modulesProvider.getModule(moduleName);
+      if (module != null) {
+        for (OrderEntry entry : modulesProvider.getRootModel(module).getOrderEntries()) {
+          if (entry instanceof LibraryOrderEntry libraryEntry && libraryEntry.isModuleLevel()) {
+            final String libraryName = libraryEntry.getLibraryName();
+            if (libraryName != null && libraryName.equals(myLibraryName)) {
+              return libraryEntry.getLibrary();
+            }
           }
         }
       }
